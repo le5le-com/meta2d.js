@@ -1,0 +1,15 @@
+{
+  "packages": ["packages/*", "bundle"],
+  "command": {
+    "publish": {
+      "ignoreChanges": ["ignored-file", "*.md"]
+    }
+  },
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "publishConfig": {
+    "access": "public",
+    "directory": "/dist"
+  },
+  "version": "0.2.24"
+}
