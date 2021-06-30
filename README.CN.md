@@ -1,8 +1,8 @@
 [English](./README.md) | 简体中文
 
-# Le5le-topology
+# Topology
 
-Le5le-topology 是一个可视化在线绘图工具，使用 Canvas + Typescript。支持 topology, UML、微服务架构、动态流量、SCADA 场景等。
+Topology 是一个集动态交互、丰富展示、数据管理等一体的全功能可视化引擎，为物联网、工业互联网、电力能源、水利工程、智慧农业、智慧医疗、智慧城市等智能可视化场景而生。
 
 # 为什么使用
 

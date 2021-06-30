@@ -1,10 +1,6 @@
 # core
 
-The topology core.
-
-# store
-
-Store provides a way to pass data through snapshot/subcribe/unsubscribe .
+The core of topology.
 
 # How to Contribute
 

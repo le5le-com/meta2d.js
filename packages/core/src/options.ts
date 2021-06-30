@@ -1,3 +1,5 @@
+import { Padding } from './utils/padding';
+
 export enum KeyType {
   Any = -1,
   CtrlOrAlt,
@@ -13,23 +15,20 @@ export enum KeydownType {
   Canvas,
 }
 
-export type Padding = number | string | number[];
+export const textKeys = ['textColor', 'fontFamily', 'fontSize', 'lineHeight', 'textAlign', 'textBaseline'];
 
 export interface Options {
-  cacheLen?: number;
   extDpiRatio?: number;
-  width?: string | number;
-  height?: string | number;
   color?: string;
   activeColor?: string;
   hoverColor?: string;
   anchorRadius?: number;
-  anchorFillStyle?: string;
-  dockStrokeStyle?: string;
-  dockFillStyle?: string;
+  anchorBackground?: string;
+  dockColor?: string;
+  dockBackground?: string;
   dragColor?: string;
   animateColor?: string;
-  fontColor?: string;
+  textColor?: string;
   fontFamily?: string;
   fontSize?: number;
   lineHeight?: number;
@@ -37,12 +36,12 @@ export interface Options {
   textBaseline?: string;
   rotateCursor?: string;
   hoverCursor?: string;
-  hideInput?: boolean;
-  hideRotateCP?: boolean;
-  hideSizeCP?: boolean;
-  hideAnchor?: boolean;
-  disableSizeX?: boolean;
-  disableSizeY?: boolean;
+  disableInput?: boolean;
+  disableRotate?: boolean;
+  disableSize?: boolean;
+  disableAnchor?: boolean;
+  disableWidth?: boolean;
+  disableHeight?: boolean;
   anchorSize?: number;
   alwaysAnchor?: boolean;
   autoAnchor?: boolean;
@@ -62,22 +61,16 @@ export interface Options {
   maxScale?: number;
   keydown?: KeydownType;
   viewPadding?: Padding;
-  bkColor?: string;
+  background?: string;
   grid?: boolean;
   gridColor?: string;
   gridSize?: number;
   rule?: boolean;
   ruleColor?: string;
-  refresh?: number;
-  on?: (event: string, data: any) => void;
 }
 
-export const fontKeys = ['fontColor', 'fontFamily', 'fontSize', 'lineHeight', 'textAlign', 'textBaseline'];
-
-export const options: Options = {
-  cacheLen: 30,
-  refresh: 30,
-  fontColor: '#222222',
+export const defaultOptions: Options = {
+  textColor: '#222222',
   fontFamily: '"Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial',
   fontSize: 12,
   lineHeight: 1.5,
@@ -87,9 +80,9 @@ export const options: Options = {
   activeColor: '#1890ff',
   hoverColor: '#fa541c',
   anchorRadius: 4,
-  anchorFillStyle: '#fff',
-  dockStrokeStyle: '#fa541c',
-  dockFillStyle: '#fa541c',
+  anchorBackground: '#fff',
+  dockColor: '#fa541c',
+  dockBackground: '#fa541c',
   dragColor: '#1890ff',
   rotateCursor: '/assets/img/rotate.cur',
   hoverCursor: 'pointer',

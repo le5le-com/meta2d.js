@@ -1,4 +1,4 @@
-import { Padding } from '../options';
+export type Padding = number | string | number[];
 
 /**
  * turn padding into [top, right, bottom, left]

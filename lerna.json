@@ -1,8 +1,14 @@
 {
-  "packages": ["packages/*", "bundle"],
+  "packages": [
+    "packages/*",
+    "bundle"
+  ],
   "command": {
     "publish": {
-      "ignoreChanges": ["ignored-file", "*.md"]
+      "ignoreChanges": [
+        "ignored-file",
+        "*.md"
+      ]
     }
   },
   "npmClient": "yarn",
@@ -11,5 +17,5 @@
     "access": "public",
     "directory": "/dist"
   },
-  "version": "0.2.24"
+  "version": "1.0.0"
 }

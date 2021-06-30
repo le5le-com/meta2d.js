@@ -1,8 +1,8 @@
 English | [简体中文](./README.CN.md)
 
-# Le5le-topology v1
+# Topology
 
-Le5le-topology is a diagram visualization framework uses canvas and typescript. Developers are able to build diagram (topology, UML), micro-services architecture, SCADA and so on.
+Topology is a diagram visualization framework uses canvas and typescript. Developers are able to build topology, UML,diagram, architecture, SCADA and so on.
 
 # Why
 
