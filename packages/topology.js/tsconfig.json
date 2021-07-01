@@ -1,0 +1,24 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "module": "esnext",
+    "target": "esnext",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports":true,
+    "paths": {
+      "@topology/core": ["../packages/core"],
+      "@topology/core/*": ["../packages/core/src/*"],
+      "@topology/flow-diagram": ["../packages/flow-diagram"],
+      "@topology/activity-diagram": ["../packages/activity-diagram"],
+      "@topology/class-diagram": ["../packages/class-diagram"],
+      "@topology/sequence-diagram": ["../packages/sequence-diagram"],
+      "@topology/chart-diagram": ["../packages/chart-diagram"],
+      "@topology/layout": ["../packages/layout"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}

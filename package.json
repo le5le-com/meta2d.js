@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "bundle"
+    "packages/*"
   ],
   "publishConfig": {
     "access": "public"
@@ -13,13 +12,14 @@
     "start": "",
     "build": "yarn workspaces run build",
     "v": "lerna publish --skip-npm",
-    "docs": "typedoc --out ./docs --target es6 --theme minimal --mode file packages"
+    "docs": "typedoc --out ./docs packages"
   },
   "devDependencies": {
     "copyfiles": "latest",
     "lerna": "latest",
     "typedoc": "latest",
     "tslint": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "stats.js": "latest"
   }
 }

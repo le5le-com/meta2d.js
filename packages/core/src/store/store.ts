@@ -46,7 +46,6 @@ export interface TopologyStore {
   hover: WeakMap<TopologyPen, any>;
   animate: WeakMap<TopologyPen, any>;
   options: Object;
-  parentElement: HTMLElement;
   emitter: Emitter;
 }
 

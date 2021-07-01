@@ -1,17 +1,16 @@
 {
-  "name": "@topology/core",
+  "name": "@topology/layout",
   "version": "1.0.0",
-  "description": "@topology/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
+  "description": "A layout tool for topology.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/core/",
+    "copy": "copyfiles  package.json ../../dist/layout/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
     "topology",
-    "diagram",
-    "2D",
+    "chart",
     "canvas"
   ],
   "author": "alsmile123@qq.com",
@@ -24,9 +23,8 @@
     "url": "https://github.com/le5le-com/topology.js/issues"
   },
   "homepage": "https://github.com/le5le-com/topology.js#readme",
-  "dependencies": {
-    "mitt": "^2.1.0",
-    "mqtt": "^4.2.6"
+  "peerDependencies": {
+    "@topology/core": "^1.0.0"
   },
   "publishConfig": {
     "access": "public"
