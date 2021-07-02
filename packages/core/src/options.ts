@@ -67,6 +67,7 @@ export interface Options {
   gridSize?: number;
   rule?: boolean;
   ruleColor?: string;
+  interval?: number;
 }
 
 export const defaultOptions: Options = {

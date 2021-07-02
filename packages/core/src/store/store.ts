@@ -1,13 +1,17 @@
-import { default as mitt, Emitter, EventType, Handler } from 'mitt';
+import { default as mitt, Emitter } from 'mitt';
 
-import { TopologyPen } from '../pen';
-import { defaultOptions } from '../options';
+import { LockState, TopologyPen } from '../pen';
+import { defaultOptions, Options } from '../options';
 
 import pkg from '../../package.json';
+import { Rect } from '../rect';
+import { Point } from '../point';
 
 export interface TopologyData {
   pens: { [key: string]: TopologyPen; };
   children: { [key: string]: string[]; };
+  scale: number;
+  locked: LockState;
   layer: string[];
   websocket?: string;
   mqtt?: string;
@@ -37,24 +41,28 @@ export interface TopologyStore {
   // An id of topology instance.
   topologyId: string;
   data: TopologyData;
+  worldRect: Map<string, Rect>;
+  worldAnchor: Map<string, Point[]>;
   // Websocket instance.
   websocket?: any;
   // mqtt instance.
   mqtt?: any;
   histories?: EditAction[];
-  active: WeakMap<TopologyPen, any>;
-  hover: WeakMap<TopologyPen, any>;
-  animate: WeakMap<TopologyPen, any>;
-  options: Object;
+  layerMap: Map<string, number>;
+  active: Map<string, number>;
+  hover: Map<string, number>;
+  animate: Map<string, number>;
+  dirty: Map<string, number>;
+  options: Options;
   emitter: Emitter;
 }
 
 export const store: {
   version: string;
-  doms: object;
+  htmlElements: object;
 } = {
   version: pkg.version,
-  doms: {}
+  htmlElements: {}
 };
 
 // Return a data store, if not exists will create a store.
@@ -68,9 +76,12 @@ export const useStore = (id = 'default') => {
         layer: []
       },
       histories: [],
-      active: new WeakMap(),
-      hover: new WeakMap(),
-      animate: new WeakMap(),
+      worldRect: new Map(),
+      worldAnchor: new Map(),
+      active: new Map(),
+      hover: new Map(),
+      animate: new Map(),
+      dirty: new Map(),
       options: Object.assign({}, defaultOptions),
       emitter: mitt()
     } as TopologyStore;

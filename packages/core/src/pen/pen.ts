@@ -1,3 +1,4 @@
+import { Point } from '../point';
 
 export enum PenType {
   Node,
@@ -7,8 +8,9 @@ export enum PenType {
 export enum LockState {
   None,
   Readonly,
-  NoMove,
-  NoEvent = 10,
+  DisableMove,
+  DisableActive,
+  Disable = 10,
 }
 
 export enum AnchorMode {
@@ -27,11 +29,6 @@ export interface TopologyPen {
   y: number;
   width?: number;
   height?: number;
-  // Realative position if parentId not null.
-  relativeX?: number;
-  relativeY?: number;
-  relativeWidth?: number;
-  relativeHeight?: number;
   // Hidden only visible === false
   visible?: boolean;
   locked?: LockState;
@@ -49,7 +46,6 @@ export interface TopologyPen {
 
   lineWidth?: number;
   rotate?: number;
-  relativeRotate?: number;
   globalAlpha?: number;
   lineDash?: number[];
   lineDashOffset?: number;
@@ -100,4 +96,6 @@ export interface TopologyPen {
   strokeImage?: string;
 
   children?: TopologyPen[];
+
+  anchors?: Point[];
 }
