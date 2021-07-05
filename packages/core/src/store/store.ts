@@ -34,7 +34,6 @@ export enum EditType {
 export interface EditAction {
   type: EditType;
   data: any;
-  layer: number;
 }
 
 export interface TopologyStore {
@@ -42,19 +41,21 @@ export interface TopologyStore {
   topologyId: string;
   data: TopologyData;
   worldRect: Map<string, Rect>;
+  worldRotate: Map<string, number>;
   worldAnchor: Map<string, Point[]>;
   // Websocket instance.
   websocket?: any;
   // mqtt instance.
   mqtt?: any;
   histories?: EditAction[];
-  layerMap: Map<string, number>;
+  path2dMap: Map<string, Path2D>;
   active: Map<string, number>;
   hover: Map<string, number>;
   animate: Map<string, number>;
-  dirty: Map<string, number>;
+  dirty: string[];
   options: Options;
   emitter: Emitter;
+  registerPens: any;
 }
 
 export const store: {
@@ -78,10 +79,12 @@ export const useStore = (id = 'default') => {
       histories: [],
       worldRect: new Map(),
       worldAnchor: new Map(),
+      worldRotate: new Map(),
       active: new Map(),
       hover: new Map(),
       animate: new Map(),
-      dirty: new Map(),
+      path2dMap: new Map(),
+      dirty: [],
       options: Object.assign({}, defaultOptions),
       emitter: mitt()
     } as TopologyStore;

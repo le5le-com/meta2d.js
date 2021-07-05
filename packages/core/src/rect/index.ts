@@ -1,4 +1,4 @@
-import { Point, pointRotate } from '../point';
+import { Point, rotatePoint } from '../point';
 
 export interface Rect {
   x: number;
@@ -32,7 +32,7 @@ export function pointInRect(pt: Point, rect: Rect) {
     { x: rect.x, y: rect.ey },
   ];
   pts.forEach((item: Point) => {
-    pointRotate(item, rect.rotate, rect.center);
+    rotatePoint(item, rect.rotate, rect.center);
   });
 
   return pointInVertices(pt, pts);

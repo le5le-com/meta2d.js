@@ -1,6 +1,9 @@
+import { commonPens } from './common-diagram';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
+import { TopologyPen } from './pen';
+import { Point } from './point';
 import { store, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
@@ -16,9 +19,35 @@ export class Topology {
     this.store = useStore(s8());
     this.setOptions(opts);
     this.init(parent);
+    this.register(commonPens());
     if (window) {
       window.topology = this;
     }
+  }
+
+  get beforeAddPen() {
+    return this.canvas.beforeAddPen;
+  }
+  set beforeAddPen(fn: (pen: TopologyPen) => boolean) {
+    this.canvas.beforeAddPen = fn;
+  }
+  get beforeAddAnchor() {
+    return this.canvas.beforeAddAnchor;
+  }
+  set beforeAddAnchor(fn: (pen: TopologyPen, anchor: Point) => boolean) {
+    this.canvas.beforeAddAnchor = fn;
+  }
+  get beforeRemovePen() {
+    return this.canvas.beforeRemovePen;
+  }
+  set beforeRemovePen(fn: (pen: TopologyPen) => boolean) {
+    this.canvas.beforeRemovePen = fn;
+  }
+  get beforeRemoveAnchor() {
+    return this.canvas.beforeAddAnchor;
+  }
+  set beforeRemoveAnchor(fn: (pen: TopologyPen, anchor: Point) => boolean) {
+    this.canvas.beforeAddAnchor = fn;
   }
 
   setOptions(opts: Options = {}) {
@@ -77,6 +106,10 @@ export class Topology {
   off(eventType: EventType, handler: Handler) {
     this.store.emitter.off(eventType, handler);
     return this;
+  }
+
+  register(pens: any) {
+    this.store.registerPens = Object.assign({}, this.store.registerPens, pens);
   }
 
   destroy() {

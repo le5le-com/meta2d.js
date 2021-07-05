@@ -1,7 +1,8 @@
 import { KeydownType } from '../options';
+import { calcCenter, LockState, renderPen, TopologyPen } from '../pen';
 import { hitPoint, Point } from '../point';
 import { pointInRect, Rect } from '../rect';
-import { TopologyStore } from '../store';
+import { EditType, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { createOffscreen } from './offscreen';
 
@@ -23,7 +24,7 @@ enum MoveType {
 }
 
 export class Canvas {
-  view = document.createElement('canvas');
+  canvas = document.createElement('canvas');
   active = createOffscreen();
   hover = createOffscreen();
   animate = createOffscreen();
@@ -39,7 +40,7 @@ export class Canvas {
   sizeCP = 0;
   anchor: Point;
   mouseDown: { x: number; y: number; restore?: boolean; };
-  touchedNode: any;
+  cacheNode: TopologyPen;
   touchCenter?: { x: number; y: number; };
   touches?: TouchList;
 
@@ -47,8 +48,14 @@ export class Canvas {
   lastRender = 0;
   touchStart = 0;
   timer: any;
+
+  beforeAddPen: (pen: TopologyPen) => boolean;
+  beforeAddAnchor: (pen: TopologyPen, anchor: Point) => boolean;
+  beforeRemovePen: (pen: TopologyPen) => boolean;
+  beforeRemoveAnchor: (pen: TopologyPen, anchor: Point) => boolean;
+
   constructor(public parentElement: HTMLElement, public store: TopologyStore) {
-    parentElement.appendChild(this.view);
+    parentElement.appendChild(this.canvas);
 
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
@@ -232,19 +239,6 @@ export class Canvas {
       altKey: event.altKey,
       buttons: 1,
     });
-
-    if (!this.touchedNode) {
-      return;
-    }
-
-    this.touchedNode.rect.x =
-      event.changedTouches[0].pageX - (window ? window.scrollX : 0) - this.bounding.x - this.touchedNode.rect.width / 2;
-    this.touchedNode.rect.y =
-      event.changedTouches[0].pageY - (window ? window.scrollY : 0) - this.bounding.y - this.touchedNode.rect.height / 2;
-
-    // const node = new Node(this.touchedNode);
-    // this.addNode(node, true);
-    this.touchedNode = undefined;
   };
 
   onGesturestart = (e: any) => {
@@ -291,7 +285,20 @@ export class Canvas {
     ctrlKey?: boolean;
     shiftKey?: boolean;
     altKey?: boolean;
-  }) => { };
+  }) => {
+    if (this.cacheNode) {
+      this.cacheNode.x = e.x - this.cacheNode.width / 2;
+      this.cacheNode.y = e.y - this.cacheNode.height / 2;
+
+      if (this.beforeAddPen && this.beforeAddPen(this.cacheNode) != true) {
+        return;
+      }
+
+      this.addPen(this.cacheNode);
+      this.cacheNode = undefined;
+      return;
+    }
+  };
 
   onResize = () => {
     if (this.timer) {
@@ -304,10 +311,18 @@ export class Canvas {
   };
 
   private getHover(pt: Point) {
+    this.moveType = MoveType.None;
     this.store.hover.clear();
+    if (this.store.data.locked === LockState.Disable) {
+      return;
+    }
     let i = 0;
     for (const id of this.store.data.layer) {
-      if (!this.store.data.locked) {
+      const pen = this.store.data.pens[id];
+      if (pen.visible == false || pen.locked === LockState.Disable) {
+        continue;
+      }
+      if (!pen.type) {
         if (!this.store.options.disableRotate) {
           // 旋转控制点
           if (this.rotateCP && hitPoint(pt, this.rotateCP, 10)) {
@@ -339,9 +354,42 @@ export class Canvas {
             }
           }
         }
-      }
-      if (pointInRect(pt, this.store.worldRect.get(id))) {
-        this.store.hover.set(id, i);
+
+        if (pointInRect(pt, this.store.worldRect.get(id))) {
+          this.store.hover.set(id, i);
+          return;
+        }
+      } else {
+        if (pen.from) {
+          if (hitPoint(pt, pen.from)) {
+            this.moveType = MoveType.LineFrom;
+            this.store.hover.set(id, i);
+            if (this.store.data.locked || pen.locked) {
+              this.externalElements.style.cursor = this.store.options.hoverCursor;
+            } else {
+              this.externalElements.style.cursor = 'move';
+            }
+            return;
+          }
+
+          if (hitPoint(pt, pen.to)) {
+            this.moveType = MoveType.LineTo;
+            this.store.hover.set(id, i);
+            if (this.store.data.locked || pen.locked) {
+              this.externalElements.style.cursor = this.store.options.hoverCursor;
+            } else {
+              this.externalElements.style.cursor = 'move';
+            }
+            return;
+          }
+
+          if (pen.pointIn && pen.pointIn(pt)) {
+            this.moveType = MoveType.LineTo;
+            this.store.hover.set(id, i);
+            this.externalElements.style.cursor = this.store.options.hoverCursor;
+            return;
+          }
+        }
       }
 
       ++i;
@@ -352,8 +400,8 @@ export class Canvas {
     w = w || this.parentElement.clientWidth;
     h = h || this.parentElement.clientHeight;
 
-    this.view.width = w;
-    this.view.height = h;
+    this.canvas.width = w;
+    this.canvas.height = h;
 
     this.active.width = w;
     this.active.height = h;
@@ -373,25 +421,61 @@ export class Canvas {
     this.bounding = this.externalElements.getBoundingClientRect();
   }
 
+  addPen(pen: TopologyPen) {
+    pen.id = s8();
+    this.store.data.pens[pen.id] = pen;
+    pen.layer = this.store.data.layer.length;
+    this.store.data.layer.push(pen.id);
+    calcCenter(pen);
+
+    this.store.path2dMap.set(pen.id, this.store.registerPens[pen.name](pen));
+    this.store.dirty.push(pen.id);
+    if (this.store.data.locked === LockState.None) {
+      this.store.histories.push({
+        type: EditType.Add,
+        data: pen
+      });
+    }
+    this.render();
+    this.store.emitter.emit('addPen', pen);
+  }
+
   render = () => {
-    if (!this.store.active.size && !this.store.hover.size && !this.store.animate.size && !this.store.dirty.size) {
+    if (!this.store.active.size && !this.store.hover.size && !this.store.animate.size && !this.store.dirty.length) {
       return;
     }
 
     if (this.rendering) {
       cancelAnimationFrame(this.rendering);
+      this.rendering = 0;
     }
-
-    this.rendering = 0;
 
     const now = performance.now();
     if (now - this.lastRender < this.store.options.interval) {
+      requestAnimationFrame(this.render);
       return;
     }
     this.lastRender = now;
 
-    requestAnimationFrame(this.render);
+    this.renderPens();
+
+    this.canvas.getContext('2d').drawImage(this.offscreen, 0, 0, this.canvas.width, this.canvas.height);
+    this.rendering = requestAnimationFrame(this.render);
   };
+
+  renderPens = () => {
+    const ctx = this.offscreen.getContext('2d');
+    ctx.strokeStyle = this.store.options.color;
+
+    this.store.dirty.forEach((id) => {
+      renderPen(ctx, this.store.data.pens[id], this.store.path2dMap.get(id), this.store.worldRotate.get(id));
+    });
+
+    this.store.dirty = [];
+  };
+  renderActive = () => { };
+  renderHover = () => { };
+  renderAnimate = () => { };
 
   destroy() {
     this.externalElements.removeEventListener('gesturestart', this.onGesturestart);

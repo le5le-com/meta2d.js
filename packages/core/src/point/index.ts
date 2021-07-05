@@ -2,9 +2,11 @@
 export interface Point {
   x: number;
   y: number;
+  id?: number | string;
+  penId?: string;
 }
 
-export function pointRotate(pt: Point, angle: number, center: Point) {
+export function rotatePoint(pt: Point, angle: number, center: Point) {
   if (!angle || angle % 360 === 0) {
     return;
   }
