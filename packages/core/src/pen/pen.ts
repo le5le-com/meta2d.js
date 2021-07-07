@@ -1,4 +1,6 @@
 import { Point } from '../point';
+import { Rect } from '../rect';
+import { s8 } from '../utils';
 
 export enum PenType {
   Node,
@@ -61,6 +63,9 @@ export interface TopologyPen {
   lineDashOffset?: number;
   color?: string;
   background?: string;
+  hoverAnchorColor?: string;
+  hoverColor?: string;
+  hoverBackground?: string;
   bkType?: number;
   lineCap?: string;
   shadowColor?: string;
@@ -109,9 +114,22 @@ export interface TopologyPen {
   children?: TopologyPen[];
 
   anchors?: Point[];
+  anchorRadius?: number;
+  anchorBackground?: string;
+
+  beforeAddPen: (pen: TopologyPen) => boolean;
+  beforeAddAnchor: (pen: TopologyPen, anchor: Point) => boolean;
+  beforeRemovePen: (pen: TopologyPen) => boolean;
+  beforeRemoveAnchor: (pen: TopologyPen, anchor: Point) => boolean;
 }
 
-export function renderPen(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: TopologyPen, path: Path2D, rotate = 0) {
+export function renderPen(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: TopologyPen, path: Path2D,
+  rotate = 0,
+  color = '',
+  background = ''
+) {
   ctx.save();
   ctx.beginPath();
 
@@ -137,6 +155,8 @@ export function renderPen(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
     // } else {
     //   pen.loadStrokeImg();
     // }
+  } else if (color) {
+    ctx.strokeStyle = color;
   } else if (pen.color) {
     ctx.strokeStyle = pen.color;
   }
@@ -147,6 +167,8 @@ export function renderPen(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
     // } else {
     //   pen.loadFillImg();
     // }
+  } else if (background) {
+    ctx.fillStyle = background;
   } else if (pen.background) {
     ctx.fillStyle = pen.background;
   }
@@ -175,15 +197,97 @@ export function renderPen(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
     ctx.shadowBlur = pen.shadowBlur;
   }
 
-  (pen.background || pen.bkType) && ctx.fill(path);
+  (background || pen.background || pen.bkType) && ctx.fill(path);
   ctx.stroke(path);
 
   ctx.restore();
 }
 
-export function calcCenter(pen: TopologyPen) {
-  pen.center = {
-    x: pen.x + pen.width / 2,
-    y: pen.y + pen.height / 2
+export function calcWorldRects(pens: any, worldRects: WeakMap<TopologyPen, Rect>, pen: TopologyPen) {
+  const rect: Rect = {
+    x: pen.x,
+    y: pen.y
   };
+
+  if (!pen.parentId) {
+    rect.ex = pen.x + pen.width;
+    rect.ey = pen.y + pen.height;
+    rect.width = pen.width;
+    rect.height = pen.height;
+    rect.rotate = pen.rotate;
+    rect.center = {
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2
+    };
+  } else {
+    let parentRect = worldRects.get(pens[pen.parentId]);
+    if (!parentRect) {
+      parentRect = calcWorldRects(pens, worldRects, pens[pen.parentId]);
+    }
+
+    rect.x = parentRect.x + (pen.x >= 1 ? pen.x : parentRect.width * pen.x);
+    rect.y = parentRect.y + (pen.y >= 1 ? pen.y : parentRect.height * pen.y);
+    rect.width = pen.width >= 1 ? pen.width : parentRect.width * pen.width;
+    rect.height = pen.height >= 1 ? pen.height : parentRect.height * pen.height;
+    rect.ex = rect.x + rect.width;
+    rect.ey = rect.y + rect.height;
+
+    rect.rotate = parentRect.rotate + pen.rotate;
+    rect.center = {
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2
+    };
+  }
+
+  worldRects.set(pen, rect);
+
+  return rect;
+}
+
+export function calcWorldAnchors(worldAnchors: WeakMap<TopologyPen, Point[]>, pen: TopologyPen, wordRect: Rect) {
+  const anchors: Point[] = [];
+  if (pen.anchors) {
+    pen.anchors.forEach((anchor) => {
+      anchors.push(pen, {
+        id: anchor.id || s8(),
+        penId: pen.id,
+        x: wordRect.x + wordRect.width * anchor.x,
+        y: wordRect.y + wordRect.height * anchor.y,
+        color: anchor.color,
+        background: anchor.background
+      });
+    });
+  }
+
+  if (!anchors.length) {
+    anchors.push(pen, {
+      id: s8(),
+      penId: pen.id,
+      x: wordRect.x + wordRect.width * 0.5,
+      y: wordRect.y,
+    });
+
+    anchors.push(pen, {
+      id: s8(),
+      penId: pen.id,
+      x: wordRect.x + wordRect.width,
+      y: wordRect.y + wordRect.height * 0.5,
+    });
+
+    anchors.push(pen, {
+      id: s8(),
+      penId: pen.id,
+      x: wordRect.x + wordRect.width * 0.5,
+      y: wordRect.y + wordRect.height,
+    });
+
+    anchors.push(pen, {
+      id: s8(),
+      penId: pen.id,
+      x: wordRect.x,
+      y: wordRect.y + wordRect.height * 0.5,
+    });
+  }
+
+  worldAnchors.set(pen, anchors);
 }

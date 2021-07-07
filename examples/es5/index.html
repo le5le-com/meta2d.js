@@ -11,27 +11,15 @@
     />
 
     <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
-    <style>
-      * {
-        padding: 0;
-        margin: 0;
-        outline: none;
-        box-sizing: border-box;
-        word-break: break-all;
-        word-break: break-word;
-      }
-
-      body,
-      .topology {
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-      }
-    </style>
+    <link href="index.css" rel="stylesheet" />
   </head>
 
   <body>
     <div class="topology" id="topology"></div>
+    <div class="btns">
+      <input id="count" placeholder="1000" />
+      <button id="make-nodes" class="button" onclick="makeNodes()">生产节点 ( Make nodes )</button>
+    </div>
     <script src="../../dist/topology/topology.js"></script>
     <script src="stats.min.js"></script>
     <script src="index.js"></script>

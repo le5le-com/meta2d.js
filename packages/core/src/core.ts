@@ -4,7 +4,7 @@ import { Canvas } from './canvas';
 import { Options } from './options';
 import { TopologyPen } from './pen';
 import { Point } from './point';
-import { store, TopologyData, TopologyStore, useStore } from './store';
+import { clearStore, createStore, store, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
 
@@ -87,15 +87,27 @@ export class Topology {
     this.store.emitter.emit('resize', { width, height });
   }
 
+  addPen(pen: TopologyPen, edited?: boolean) {
+    return this.canvas.addPen(pen, edited);
+  }
+
+  render() {
+    this.canvas.render();
+  }
+
   open(data?: TopologyData) {
-    this.canvas.unListen();
+    clearStore(this.store);
     if (data && data.mqttOptions && !data.mqttOptions.customClientId) {
       data.mqttOptions.clientId = s8();
     }
-
-    this.canvas.listen();
     this.canvas.render();
     this.store.emitter.emit('opened');
+  }
+
+  clear() {
+    clearStore(this.store);
+    this.canvas.clearCanvas();
+    this.canvas.render();
   }
 
   on(eventType: EventType, handler: Handler) {
@@ -116,5 +128,6 @@ export class Topology {
     this.canvas.destroy();
     // Clear data.
     store[this.store.topologyId] = undefined;
+    this.canvas = undefined;
   }
 }

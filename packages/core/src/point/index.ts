@@ -2,6 +2,9 @@
 export interface Point {
   x: number;
   y: number;
+  radius?: number;
+  color?: string;
+  background?: string;
   id?: number | string;
   penId?: string;
 }

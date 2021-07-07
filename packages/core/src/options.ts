@@ -22,6 +22,8 @@ export interface Options {
   color?: string;
   activeColor?: string;
   hoverColor?: string;
+  hoverBackground?: string;
+  hoverAnchorColor?: string;
   anchorRadius?: number;
   anchorBackground?: string;
   dockColor?: string;
@@ -79,7 +81,9 @@ export const defaultOptions: Options = {
   textBaseline: 'middle',
   color: '#222222',
   activeColor: '#1890ff',
-  hoverColor: '#fa541c',
+  hoverColor: '#1890ff',
+  hoverBackground: '#1890ff10',
+  hoverAnchorColor: '#fa541c',
   anchorRadius: 4,
   anchorBackground: '#fff',
   dockColor: '#fa541c',
@@ -95,4 +99,5 @@ export const defaultOptions: Options = {
   gridSize: 10,
   gridColor: '#f3f3f3',
   ruleColor: '#888888',
+  interval: 17
 };

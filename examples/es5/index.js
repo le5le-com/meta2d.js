@@ -15,3 +15,30 @@ function animate() {
 }
 
 requestAnimationFrame(animate);
+
+function makeNodes() {
+  topology.clear();
+
+  const count = +document.getElementById('count').value || 1000;
+  let x = 100;
+  let y = 100;
+  console.time('makeNodes');
+  for (let i = 0; i < count; i++) {
+    topology.addPen(
+      {
+        name: 'rectangle',
+        x,
+        y,
+        width: 100,
+        height: 100,
+      },
+      false
+    );
+    x += 150;
+    if (i && i % 50 === 0) {
+      x = 100;
+      y += 150;
+    }
+  }
+  console.timeEnd('makeNodes');
+}

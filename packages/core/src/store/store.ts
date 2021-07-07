@@ -8,11 +8,10 @@ import { Rect } from '../rect';
 import { Point } from '../point';
 
 export interface TopologyData {
-  pens: { [key: string]: TopologyPen; };
+  pens: TopologyPen[];
   children: { [key: string]: string[]; };
-  scale: number;
-  locked: LockState;
-  layer: string[];
+  scale?: number;
+  locked?: LockState;
   websocket?: string;
   mqtt?: string;
   mqttOptions?: {
@@ -40,22 +39,24 @@ export interface TopologyStore {
   // An id of topology instance.
   topologyId: string;
   data: TopologyData;
-  worldRect: Map<string, Rect>;
-  worldRotate: Map<string, number>;
-  worldAnchor: Map<string, Point[]>;
+  pens: any;
+  worldRects: WeakMap<TopologyPen, Rect>;
+  worldRotates: WeakMap<TopologyPen, number>;
+  worldAnchors: WeakMap<TopologyPen, Point[]>;
   // Websocket instance.
   websocket?: any;
   // mqtt instance.
   mqtt?: any;
   histories?: EditAction[];
-  path2dMap: Map<string, Path2D>;
-  active: Map<string, number>;
-  hover: Map<string, number>;
-  animate: Map<string, number>;
-  dirty: string[];
+  path2dMap: WeakMap<TopologyPen, Path2D>;
+  active: Map<TopologyPen, number>;
+  hover: TopologyPen;
+  animate: Map<TopologyPen, number>;
+  dirty: Map<TopologyPen, number>;
   options: Options;
   emitter: Emitter;
   registerPens: any;
+  dpiRatio?: number;
 }
 
 export const store: {
@@ -66,29 +67,51 @@ export const store: {
   htmlElements: {}
 };
 
+export const createStore = () => {
+  return {
+    data: {
+      pens: [],
+      children: {},
+    },
+    histories: [],
+    pens: {},
+    worldRects: new WeakMap(),
+    worldAnchors: new WeakMap(),
+    worldRotates: new WeakMap(),
+    path2dMap: new WeakMap(),
+    active: new Map(),
+    animate: new Map(),
+    dirty: new Map(),
+    options: Object.assign({}, defaultOptions),
+    emitter: mitt()
+  } as TopologyStore;
+};
+
 // Return a data store, if not exists will create a store.
 export const useStore = (id = 'default') => {
   if (!store[id]) {
-    store[id] = {
-      topologyId: id,
-      data: {
-        pens: {},
-        children: {},
-        layer: []
-      },
-      histories: [],
-      worldRect: new Map(),
-      worldAnchor: new Map(),
-      worldRotate: new Map(),
-      active: new Map(),
-      hover: new Map(),
-      animate: new Map(),
-      path2dMap: new Map(),
-      dirty: [],
-      options: Object.assign({}, defaultOptions),
-      emitter: mitt()
-    } as TopologyStore;
+    store[id] = createStore();
+    store[id].topologyId = id;
   }
 
   return store[id];
 };
+
+export const clearStore = (store: TopologyStore) => {
+  store.data = {
+    pens: [],
+    children: {},
+  };
+  store.pens = {};
+  store.histories = [];
+  store.worldRects = new WeakMap();
+  store.worldAnchors = new WeakMap();
+  store.worldRotates = new WeakMap();
+  store.path2dMap = new WeakMap();
+  store.active.clear();
+  store.hover = undefined;
+  store.animate.clear();
+  store.dirty.clear();
+};
+
+

@@ -1,0 +1,58 @@
+* {
+  padding: 0;
+  margin: 0;
+  outline: none;
+  box-sizing: border-box;
+  word-break: break-all;
+  word-break: break-word;
+}
+
+body,
+.topology {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+button {
+  display: inline-block !important;
+  text-align: center;
+  outline: none;
+  border: 1px solid #1890ff;
+  border-radius: 2px;
+  color: #1890ff;
+  background-color: transparent;
+  padding: 0 15px;
+  line-height: 28px;
+  cursor: pointer;
+}
+
+
+button:hover {
+  border-color: #096dd9;
+  color: #096dd9;
+}
+
+.btns {
+  position: fixed;
+  top : 0;
+  right: 0;
+  padding: 10px 20px;
+}
+
+input {
+  color: #333333;
+  padding: 5px 10px;
+  outline: none;
+  border: 1px solid #aaaaaa;
+  line-height: 20px;
+  box-sizing: border-box;
+  background-color: #fff;
+  border-radius: 2px;
+  margin-right: 5px;
+}
+
+input:hover,
+input:focus {
+  border-color: #1890ff;
+}

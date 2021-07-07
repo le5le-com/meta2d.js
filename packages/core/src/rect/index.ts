@@ -12,12 +12,15 @@ export interface Rect {
 }
 
 export function pointInRect(pt: Point, rect: Rect) {
+  if (!rect) {
+    return;
+  }
   if (rect.ex == null) {
     rect.ex = rect.x + rect.width;
     rect.ey = rect.y + rect.height;
   }
 
-  if (rect.rotate === 0 || rect.width < 20 || rect.height < 20 || rect.rotate % 360 === 0) {
+  if (!rect.rotate || rect.width < 20 || rect.height < 20 || rect.rotate % 360 === 0) {
     return pt.x > rect.x && pt.x < rect.ex && pt.y > rect.y && pt.y < rect.ey;
   }
 
@@ -39,6 +42,9 @@ export function pointInRect(pt: Point, rect: Rect) {
 }
 
 export function calcCenter(rect: Rect) {
+  if (!rect.center) {
+    rect.center = {} as Rect;
+  }
   rect.center.x = rect.x + rect.width / 2;
   rect.center.y = rect.y + rect.height / 2;
 }
