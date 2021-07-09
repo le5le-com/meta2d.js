@@ -9,9 +9,9 @@ export enum PenType {
 
 export enum LockState {
   None,
-  Readonly,
+  DisableEdit,
   DisableMove,
-  DisableActive,
+  // DisableActive,
   Disable = 10,
 }
 
@@ -37,9 +37,7 @@ export interface TopologyPen {
   // Hidden only visible === false
   visible?: boolean;
   locked?: LockState;
-  // 作为子节点，是否可以直接点击选中
-  stand?: boolean;
-
+  active?: boolean;
 
   center?: Point;
 
@@ -47,7 +45,6 @@ export interface TopologyPen {
   to?: Point;
   pointIn?: (pt: Point) => boolean;
 
-  text?: string;
   tags?: string[];
   title?: string;
   markdown?: string;
@@ -66,6 +63,8 @@ export interface TopologyPen {
   hoverAnchorColor?: string;
   hoverColor?: string;
   hoverBackground?: string;
+  activeColor?: string;
+  activeBackground?: string;
   bkType?: number;
   lineCap?: string;
   shadowColor?: string;
@@ -73,12 +72,11 @@ export interface TopologyPen {
   shadowOffsetX?: number;
   shadowOffsetY?: number;
 
-  textX?: number;
-  textY?: number;
+  text?: string;
   textWidth?: number;
   textHeight?: number;
-  textOffsetX: number;
-  textOffsetY: number;
+  textOffsetX?: number;
+  textOffsetY?: number;
   textColor?: string;
   fontFamily?: string;
   fontSize?: number;
@@ -88,8 +86,21 @@ export interface TopologyPen {
   textAlign?: string;
   textBaseline?: string;
   textBackground?: string;
-  textMaxLines: number;
   whiteSpace?: string;
+  ellipsis?: boolean;
+
+  image?: string;
+  icon?: string;
+  iconWidth?: number;
+  iconHeight?: number;
+  iconTop?: number;
+  iconRight?: number;
+  iconBottom?: number;
+  iconLeft?: number;
+  iconColor?: string;
+  iconFamily?: string;
+  iconSize?: number;
+  iconAlign?: string;
 
   animateStart?: number;
   // Cycle count. Infinite if <= 0.
@@ -117,19 +128,41 @@ export interface TopologyPen {
   anchorRadius?: number;
   anchorBackground?: string;
 
+  calculative?: {
+    worldRect?: Rect;
+    worldRotate?: number;
+    worldAnchors?: Point[];
+    worldIconRect?: Rect;
+    worldTextRect?: Rect;
+    textDrawRect?: Rect;
+    textLines?: string[];
+  };
+
   beforeAddPen: (pen: TopologyPen) => boolean;
   beforeAddAnchor: (pen: TopologyPen, anchor: Point) => boolean;
   beforeRemovePen: (pen: TopologyPen) => boolean;
   beforeRemoveAnchor: (pen: TopologyPen, anchor: Point) => boolean;
 }
 
+export function getParent(pens: any, pen: TopologyPen) {
+  if (!pen.parentId) {
+    return pen;
+  }
+
+  return getParent(pens, pens[pen.parentId]);
+}
+
 export function renderPen(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: TopologyPen, path: Path2D,
-  rotate = 0,
+  pen: TopologyPen,
+  path: Path2D,
   color = '',
   background = ''
 ) {
+  if (!path) {
+    return;
+  }
+
   ctx.save();
   ctx.beginPath();
 
@@ -139,9 +172,9 @@ export function renderPen(
   }
   // end
 
-  if (rotate) {
+  if (pen.calculative.worldRotate) {
     ctx.translate(pen.center.x, pen.center.y);
-    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.rotate((pen.calculative.worldRotate * Math.PI) / 180);
     ctx.translate(-pen.center.x, -pen.center.y);
   }
 
@@ -149,26 +182,26 @@ export function renderPen(
     ctx.lineWidth = pen.lineWidth;
   }
 
-  if (pen.strokeImage) {
+  if (color) {
+    ctx.strokeStyle = color;
+  } else if (pen.strokeImage) {
     // if (pen.strokeImage === pen.lastStrokeImage && pen.strokeImg) {
     //   ctx.strokeStyle = ctx.createPattern(pen.strokeImg, "repeat");
     // } else {
     //   pen.loadStrokeImg();
     // }
-  } else if (color) {
-    ctx.strokeStyle = color;
   } else if (pen.color) {
     ctx.strokeStyle = pen.color;
   }
 
-  if (pen.backgroundImage) {
+  if (background) {
+    ctx.fillStyle = background;
+  } else if (pen.backgroundImage) {
     // if (pen.fillImage === pen.lastFillImage && pen.fillImg) {
     //   ctx.fillStyle = ctx.createPattern(pen.fillImg, "repeat");
     // } else {
     //   pen.loadFillImg();
     // }
-  } else if (background) {
-    ctx.fillStyle = background;
   } else if (pen.background) {
     ctx.fillStyle = pen.background;
   }
@@ -200,10 +233,61 @@ export function renderPen(
   (background || pen.background || pen.bkType) && ctx.fill(path);
   ctx.stroke(path);
 
+  if (pen.text) {
+    ctx.save();
+    ctx.fillStyle = pen.textColor || pen.color;
+    if (pen.textBackground) {
+      ctx.save();
+      ctx.fillStyle = pen.textBackground;
+      let x = 0;
+      if (pen.textAlign === 'right') {
+        x = pen.calculative.textDrawRect.width;
+      }
+      ctx.fillRect(pen.calculative.textDrawRect.x - x, pen.calculative.textDrawRect.y, pen.calculative.textDrawRect.width, pen.calculative.textDrawRect.height);
+      ctx.restore();
+    }
+
+    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.fontWeight || 'normal'
+      } ${pen.fontSize}px/${pen.lineHeight} ${pen.fontFamily}`;
+
+    if (pen.textAlign) {
+      ctx.textAlign = pen.textAlign as any;
+    } else {
+      ctx.textAlign = 'center';
+    }
+
+    if (pen.textBaseline) {
+      ctx.textBaseline = pen.textBaseline as any;
+    }
+
+    let y = 0.5;
+    switch (pen.textBaseline) {
+      case 'top':
+        y = 0;
+        break;
+      case 'bottom':
+        y = 1;
+        break;
+    }
+    pen.calculative.textLines.forEach((text, i) => {
+      let x = 0;
+      if (!pen.textAlign) {
+        x = pen.calculative.textDrawRect.width / 2;
+      }
+      ctx.fillText(
+        text,
+        pen.calculative.textDrawRect.x + x,
+        pen.calculative.textDrawRect.y + (i + y) * pen.fontSize * pen.lineHeight
+      );
+    });
+
+    ctx.restore();
+  }
+
   ctx.restore();
 }
 
-export function calcWorldRects(pens: any, worldRects: WeakMap<TopologyPen, Rect>, pen: TopologyPen) {
+export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
   const rect: Rect = {
     x: pen.x,
     y: pen.y
@@ -220,9 +304,9 @@ export function calcWorldRects(pens: any, worldRects: WeakMap<TopologyPen, Rect>
       y: rect.y + rect.height / 2
     };
   } else {
-    let parentRect = worldRects.get(pens[pen.parentId]);
+    let parentRect = pens[pen.parentId].calculative.worldRect;
     if (!parentRect) {
-      parentRect = calcWorldRects(pens, worldRects, pens[pen.parentId]);
+      parentRect = calcWorldRects(pens, pens[pen.parentId]);
     }
 
     rect.x = parentRect.x + (pen.x >= 1 ? pen.x : parentRect.width * pen.x);
@@ -239,55 +323,93 @@ export function calcWorldRects(pens: any, worldRects: WeakMap<TopologyPen, Rect>
     };
   }
 
-  worldRects.set(pen, rect);
+  if (!pen.calculative) {
+    pen.calculative = {};
+  }
+  pen.calculative.worldRect = rect;
 
   return rect;
 }
 
-export function calcWorldAnchors(worldAnchors: WeakMap<TopologyPen, Point[]>, pen: TopologyPen, wordRect: Rect) {
+export function calcWorldAnchors(pen: TopologyPen) {
   const anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
-      anchors.push(pen, {
-        id: anchor.id || s8(),
-        penId: pen.id,
-        x: wordRect.x + wordRect.width * anchor.x,
-        y: wordRect.y + wordRect.height * anchor.y,
-        color: anchor.color,
-        background: anchor.background
-      });
+      if (anchor.custom) {
+        anchors.push({
+          id: anchor.id || s8(),
+          penId: pen.id,
+          x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.x,
+          y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.y,
+          color: anchor.color,
+          background: anchor.background,
+          custom: true
+        });
+      }
     });
   }
 
   if (!anchors.length) {
-    anchors.push(pen, {
+    anchors.push({
       id: s8(),
       penId: pen.id,
-      x: wordRect.x + wordRect.width * 0.5,
-      y: wordRect.y,
+      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * 0.5,
+      y: pen.calculative.worldRect.y,
     });
 
-    anchors.push(pen, {
+    anchors.push({
       id: s8(),
       penId: pen.id,
-      x: wordRect.x + wordRect.width,
-      y: wordRect.y + wordRect.height * 0.5,
+      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width,
+      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * 0.5,
     });
 
-    anchors.push(pen, {
+    anchors.push({
       id: s8(),
       penId: pen.id,
-      x: wordRect.x + wordRect.width * 0.5,
-      y: wordRect.y + wordRect.height,
+      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * 0.5,
+      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height,
     });
 
-    anchors.push(pen, {
+    anchors.push({
       id: s8(),
       penId: pen.id,
-      x: wordRect.x,
-      y: wordRect.y + wordRect.height * 0.5,
+      x: pen.calculative.worldRect.x,
+      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * 0.5,
     });
   }
 
-  worldAnchors.set(pen, anchors);
+  pen.calculative.worldAnchors = anchors;
+}
+
+export function calcIconRect(pen: TopologyPen) {
+  let x = pen.iconLeft || 0;
+  let y = pen.iconTop || 0;
+  let width = pen.iconWidth || pen.width;
+  let height = pen.iconHeight || pen.height;
+
+  if (Math.abs(x) < 1) {
+    x = pen.width * pen.iconLeft;
+  }
+
+  if (Math.abs(y) < 1) {
+    x = pen.height * pen.iconLeft;
+  }
+
+  if (Math.abs(width) < 1) {
+    width = pen.width * pen.iconWidth;
+  }
+
+  if (Math.abs(height) < 1) {
+    height = pen.height * pen.iconHeight;
+  }
+
+  pen.calculative.worldIconRect = {
+    x: pen.calculative.worldRect.x + x,
+    y: pen.calculative.worldRect.y + y,
+    width,
+    height,
+    ex: pen.calculative.worldRect.x + x + width,
+    ey: pen.calculative.worldRect.y + y + height,
+  };
 }

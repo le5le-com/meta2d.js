@@ -7,6 +7,7 @@ export interface Point {
   background?: string;
   id?: number | string;
   penId?: string;
+  custom?: boolean;
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {

@@ -21,6 +21,7 @@ export interface Options {
   extDpiRatio?: number;
   color?: string;
   activeColor?: string;
+  activeBackground?: string;
   hoverColor?: string;
   hoverBackground?: string;
   hoverAnchorColor?: string;
@@ -82,9 +83,8 @@ export const defaultOptions: Options = {
   color: '#222222',
   activeColor: '#1890ff',
   hoverColor: '#1890ff',
-  hoverBackground: '#1890ff10',
   hoverAnchorColor: '#fa541c',
-  anchorRadius: 4,
+  anchorRadius: 5,
   anchorBackground: '#fff',
   dockColor: '#fa541c',
   dockBackground: '#fa541c',

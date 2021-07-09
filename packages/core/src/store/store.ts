@@ -4,8 +4,6 @@ import { LockState, TopologyPen } from '../pen';
 import { defaultOptions, Options } from '../options';
 
 import pkg from '../../package.json';
-import { Rect } from '../rect';
-import { Point } from '../point';
 
 export interface TopologyData {
   pens: TopologyPen[];
@@ -40,23 +38,23 @@ export interface TopologyStore {
   topologyId: string;
   data: TopologyData;
   pens: any;
-  worldRects: WeakMap<TopologyPen, Rect>;
-  worldRotates: WeakMap<TopologyPen, number>;
-  worldAnchors: WeakMap<TopologyPen, Point[]>;
+
   // Websocket instance.
   websocket?: any;
   // mqtt instance.
   mqtt?: any;
   histories?: EditAction[];
   path2dMap: WeakMap<TopologyPen, Path2D>;
-  active: Map<TopologyPen, number>;
+  active: TopologyPen[];
   hover: TopologyPen;
+  lastHover: TopologyPen;
   animate: Map<TopologyPen, number>;
   dirty: Map<TopologyPen, number>;
   options: Options;
   emitter: Emitter;
   registerPens: any;
   dpiRatio?: number;
+  debug?: boolean;
 }
 
 export const store: {
@@ -75,11 +73,8 @@ export const createStore = () => {
     },
     histories: [],
     pens: {},
-    worldRects: new WeakMap(),
-    worldAnchors: new WeakMap(),
-    worldRotates: new WeakMap(),
     path2dMap: new WeakMap(),
-    active: new Map(),
+    active: [],
     animate: new Map(),
     dirty: new Map(),
     options: Object.assign({}, defaultOptions),
@@ -104,12 +99,10 @@ export const clearStore = (store: TopologyStore) => {
   };
   store.pens = {};
   store.histories = [];
-  store.worldRects = new WeakMap();
-  store.worldAnchors = new WeakMap();
-  store.worldRotates = new WeakMap();
   store.path2dMap = new WeakMap();
-  store.active.clear();
+  store.active = [];
   store.hover = undefined;
+  store.lastHover = undefined;
   store.animate.clear();
   store.dirty.clear();
 };

@@ -101,7 +101,7 @@ export class Topology {
       data.mqttOptions.clientId = s8();
     }
     this.canvas.render();
-    this.store.emitter.emit('opened');
+    this.store.emitter.emit('open');
   }
 
   clear() {

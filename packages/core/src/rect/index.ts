@@ -1,3 +1,4 @@
+import { TopologyPen } from '../pen';
 import { Point, rotatePoint } from '../point';
 
 export interface Rect {
@@ -66,4 +67,50 @@ export function pointInVertices(point: { x: number; y: number; }, vertices: Poin
   }
 
   return isIn;
+}
+
+export function getRect(pens: TopologyPen[] | Map<TopologyPen, number>) {
+  const points: Point[] = [];
+  pens.forEach((pen, pen2) => {
+    if (pen2.calculative) {
+      pen = pen2;
+    }
+    const rect = pen.calculative.worldRect;
+    if (rect) {
+      const pts = rectToPoints(rect);
+      pts.forEach((pt) => {
+        rotatePoint(pt, pen.calculative.worldRotate, rect.center);
+      });
+
+      points.push(...pts);
+    }
+  });
+
+  const rect = getRectOfPoints(points);
+  calcCenter(rect);
+  return rect;
+}
+
+export function rectToPoints(rect: Rect) {
+  return [
+    { x: rect.x, y: rect.y },
+    { x: rect.ex, y: rect.y },
+    { x: rect.ex, y: rect.ey },
+    { x: rect.x, y: rect.ey },
+  ];
+}
+
+export function getRectOfPoints(points: Point[]) {
+  let x = Infinity;
+  let y = Infinity;
+  let ex = -Infinity;
+  let ey = -Infinity;
+
+  points.forEach((item) => {
+    x = Math.min(x, item.x);
+    y = Math.min(y, item.y);
+    ex = Math.max(ex, item.x);
+    ey = Math.max(ey, item.y);
+  });
+  return { x, y, ex, ey, width: ex - x, height: ey - y };
 }

@@ -19,23 +19,32 @@ requestAnimationFrame(animate);
 function makeNodes() {
   topology.clear();
 
-  const count = +document.getElementById('count').value || 1000;
+  const count = +document.getElementById('count').value || 10000;
   let x = 100;
   let y = 100;
   console.time('makeNodes');
   for (let i = 0; i < count; i++) {
     topology.addPen(
       {
-        name: 'rectangle',
+        name: i % 2 ? 'rectangle' : 'circle',
         x,
         y,
         width: 100,
         height: 100,
+        text: i % 100 === 0 ? '乐吾乐\nTopology' : undefined,
+        image: 'btn.svg',
+        icon: '\ue8e7',
+        iconFamily: 't-icon',
+        iconSize: 20,
+        ellipsis: true,
+        // textBackground: '#eeeeee',
+        // textAlign: 'right',
+        // textBaseline: 'bottom',
       },
       false
     );
     x += 150;
-    if (i && i % 50 === 0) {
+    if (i && i % 20 === 0) {
       x = 100;
       y += 150;
     }
