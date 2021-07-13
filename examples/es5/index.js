@@ -32,7 +32,7 @@ function makeNodes() {
         width: 100,
         height: 100,
         text: i % 100 === 0 ? '乐吾乐\nTopology' : undefined,
-        image: 'btn.svg',
+        image: i % 3 === 0 ? undefined : 'btn.svg',
         icon: '\ue8e7',
         iconFamily: 't-icon',
         iconSize: 20,

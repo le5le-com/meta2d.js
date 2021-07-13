@@ -1,8 +1,8 @@
 import { KeydownType } from '../options';
-import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, PenType, renderPen, TopologyPen } from '../pen';
+import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, renderPen, TopologyPen } from '../pen';
 import { hitPoint, Point } from '../point';
-import { calcCenter, getRect, pointInRect, Rect, rectToPoints } from '../rect';
-import { EditType, TopologyStore } from '../store';
+import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints } from '../rect';
+import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { createOffscreen } from './offscreen';
 
@@ -273,7 +273,7 @@ export class Canvas {
       case MoveType.None:
         if (this.store.active.length) {
           this.store.active.forEach((pen) => {
-            pen.active = undefined;
+            pen.calculative.active = undefined;
           });
           this.store.active = [];
           this.dirty = true;
@@ -288,23 +288,23 @@ export class Canvas {
             if (this.store.hover.parentId) {
               break;
             }
-            if (this.store.hover.active) {
-              this.store.hover.active = undefined;
+            if (this.store.hover.calculative.active) {
+              this.store.hover.calculative.active = undefined;
               this.store.active.splice(this.store.active.findIndex((pen) => pen === this.store.hover), 1);
               this.store.emitter.emit('inactive', this.store.hover);
             } else {
-              this.store.hover.active = true;
+              this.store.hover.calculative.active = true;
               this.store.active.push(this.store.hover);
               this.store.emitter.emit('active', this.store.hover);
             }
             this.dirty = true;
           } else if (e.altKey) {
-            if (this.store.active.length > 1 || !this.store.hover.active) {
+            if (this.store.active.length > 1 || !this.store.hover.calculative.active) {
               this.store.active.forEach((pen) => {
-                pen.active = undefined;
+                pen.calculative.active = undefined;
               });
               this.store.active = [this.store.hover];
-              this.store.hover.active = true;
+              this.store.hover.calculative.active = true;
               this.store.emitter.emit('active', this.store.hover);
               this.dirty = true;
             }
@@ -312,10 +312,10 @@ export class Canvas {
             const pen = getParent(this.store.pens, this.store.hover);
             if (!pen.active) {
               this.store.active.forEach((pen) => {
-                pen.active = undefined;
+                pen.calculative.active = undefined;
               });
               this.store.active = [pen];
-              this.store.hover.active = true;
+              this.store.hover.calculative.active = true;
               this.store.emitter.emit('active', pen);
               this.dirty = true;
             }
@@ -393,7 +393,6 @@ export class Canvas {
       return;
     }
 
-    const ctx = this.offscreen.getContext('2d');
     let moveType = MoveType.None;
 
     if (this.store.active.length === 1) {
@@ -401,7 +400,6 @@ export class Canvas {
         // 旋转控制点
         if (this.rotateCP && hitPoint(pt, this.rotateCP, 10)) {
           moveType = MoveType.Rotate;
-          this.store.lastHover = this.store.hover;
           this.store.hover = this.store.active[0];
         }
       } else {
@@ -409,7 +407,6 @@ export class Canvas {
         for (let i = 0; i < 4; i++) {
           if (hitPoint(pt, this.sizeCPs[i], 10)) {
             moveType = MoveType.ResizeCP;
-            this.store.lastHover = this.store.hover;
             this.store.hover = this.store.active[0];
             this.sizeCP = i;
             break;
@@ -433,7 +430,6 @@ export class Canvas {
                 if (hitPoint(pt, anchor, 10)) {
                   moveType = MoveType.Anchors;
                   this.anchor = anchor;
-                  this.store.lastHover = this.store.hover;
                   this.store.hover = pen;
                   this.externalElements.style.cursor = 'crosshair';
                   break;
@@ -449,7 +445,6 @@ export class Canvas {
           //     this.externalElements.style.cursor = this.store.options.hoverCursor;
           //   }
 
-          //   this.store.lastHover = this.store.hover;
           //   this.store.hover = pen;
           //   moveType = MoveType.Nodes;
           //   break;
@@ -461,7 +456,6 @@ export class Canvas {
               this.externalElements.style.cursor = this.store.options.hoverCursor;
             }
 
-            this.store.lastHover = this.store.hover;
             this.store.hover = pen;
             moveType = MoveType.Nodes;
             break;
@@ -470,7 +464,6 @@ export class Canvas {
           if (pen.from) {
             if (hitPoint(pt, pen.from)) {
               moveType = MoveType.LineFrom;
-              this.store.lastHover = this.store.hover;
               this.store.hover = pen;
               if (this.store.data.locked || pen.locked) {
                 this.externalElements.style.cursor = this.store.options.hoverCursor;
@@ -482,7 +475,6 @@ export class Canvas {
 
             if (pen.to && hitPoint(pt, pen.to)) {
               moveType = MoveType.LineTo;
-              this.store.lastHover = this.store.hover;
               this.store.hover = pen;
               if (this.store.data.locked || pen.locked) {
                 this.externalElements.style.cursor = this.store.options.hoverCursor;
@@ -494,7 +486,6 @@ export class Canvas {
 
             if (pen.pointIn && pen.pointIn(pt)) {
               moveType = MoveType.LineTo;
-              this.store.lastHover = this.store.hover;
               this.store.hover = pen;
               this.externalElements.style.cursor = this.store.options.hoverCursor;
               break;
@@ -513,11 +504,14 @@ export class Canvas {
     if (this.store.lastHover !== this.store.hover) {
       this.dirty = true;
       if (this.store.lastHover) {
+        this.store.lastHover.calculative.hover = undefined;
         this.store.emitter.emit('leave', this.store.lastHover);
       }
       if (this.store.hover) {
+        this.store.hover.calculative.hover = true;
         this.store.emitter.emit('enter', this.store.hover);
       }
+      this.store.lastHover = this.store.hover;
     }
   };
 
@@ -576,15 +570,7 @@ export class Canvas {
       return;
     }
 
-    if (!pen.id) {
-      pen.id = s8();
-    }
-    this.store.data.pens.push(pen);
-    this.store.pens[pen.id] = pen;
-    calcCenter(pen);
-
-    this.dirtyRect(pen);
-    this.store.path2dMap.set(pen, this.store.registerPens[pen.name](pen));
+    this.makePen(pen);
 
     this.render();
     this.store.emitter.emit('addPen', pen);
@@ -601,6 +587,88 @@ export class Canvas {
     return pen;
   }
 
+  makePen(pen: TopologyPen) {
+    if (!pen.id) {
+      pen.id = s8();
+    }
+    this.store.data.pens.push(pen);
+    this.store.pens[pen.id] = pen;
+    calcCenter(pen);
+
+    this.dirtyRect(pen);
+    this.store.path2dMap.set(pen, this.store.registerPens[pen.name](pen));
+    this.loadImage(pen);
+  }
+
+  loadImage(pen: TopologyPen) {
+    if (pen.image !== pen.calculative.image) {
+      pen.calculative.img = undefined;
+      if (pen.image) {
+        if (globalStore.htmlElements[pen.image]) {
+          const img = globalStore.htmlElements[pen.image];
+          pen.calculative.img = img;
+          pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
+          pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
+        } else {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = pen.image;
+          img.onload = () => {
+            pen.calculative.img = img;
+            pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
+            pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
+            globalStore.htmlElements[pen.image] = img;
+            this.dirty = true;
+            this.render();
+          };
+        }
+      }
+      pen.calculative.image = pen.image;
+    }
+
+    if (pen.backgroundImage !== pen.calculative.backgroundImage) {
+      pen.calculative.backgroundImg = undefined;
+      if (pen.backgroundImage) {
+        if (globalStore.htmlElements[pen.backgroundImage]) {
+          const img = globalStore.htmlElements[pen.backgroundImage];
+          pen.calculative.backgroundImg = img;
+        } else {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = pen.backgroundImage;
+          img.onload = () => {
+            pen.calculative.backgroundImg = img;
+            globalStore.htmlElements[pen.backgroundImage] = img;
+            this.dirty = true;
+            this.render();
+          };
+        }
+      }
+      pen.calculative.backgroundImage = pen.backgroundImage;
+    }
+
+    if (pen.strokeImage !== pen.calculative.strokeImage) {
+      pen.calculative.strokeImg = undefined;
+      if (pen.strokeImage) {
+        if (globalStore.htmlElements[pen.strokeImage]) {
+          const img = globalStore.htmlElements[pen.strokeImage];
+          pen.calculative.strokeImg = img;
+        } else {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = pen.strokeImage;
+          img.onload = () => {
+            pen.calculative.strokeImg = img;
+            globalStore.htmlElements[pen.strokeImage] = img;
+            this.dirty = true;
+            this.render();
+          };
+        }
+      }
+      pen.calculative.strokeImage = pen.strokeImage;
+    }
+  }
+
   dirtyProps(pen: TopologyPen) {
     this.dirty = true;
     this.store.dirty.set(pen, 1);
@@ -609,7 +677,7 @@ export class Canvas {
   dirtyRect(pen: TopologyPen) {
     calcWorldRects(this.store.pens, pen);
     calcWorldAnchors(pen);
-    calcIconRect(pen);
+    calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
     this.dirty = true;
     this.store.dirty.set(pen, 1);
@@ -653,21 +721,22 @@ export class Canvas {
     ctx.save();
     ctx.strokeStyle = this.store.options.color;
     ctx.translate(0.5, 0.5);
+    const canvasRect = {
+      x: 0,
+      y: 0,
+      ex: this.width,
+      ey: this.height,
+      width: this.width,
+      height: this.height,
+    };
     this.store.data.pens.forEach((pen: TopologyPen) => {
+      if (!rectInRect(pen.calculative.worldRect, canvasRect)) {
+        return;
+      }
       if (this.store.hover === pen && (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground)) {
         return;
       }
-      if (pen.active) {
-        renderPen(
-          ctx,
-          pen,
-          this.store.path2dMap.get(pen),
-          pen.activeColor || this.store.options.activeColor,
-          pen.activeBackground || this.store.options.activeBackground,
-        );
-      } else {
-        renderPen(ctx, pen, this.store.path2dMap.get(pen));
-      }
+      renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store.options);
 
     });
     ctx.restore();
@@ -701,26 +770,11 @@ export class Canvas {
 
         // Draw size control points.
         ctx.beginPath();
+        ctx.strokeStyle = this.store.options.activeColor;
         ctx.fillStyle = "#ffffff";
         ctx.arc(this.activeRect.center.x, this.activeRect.y - 30, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
-
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.y - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.y - 5.5, 10, 10);
-
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.y - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.y - 5.5, 10, 10);
-
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.ey - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.ey - 5.5, 10, 10);
-
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.ey - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.ey - 5.5, 10, 10);
 
         ctx.restore();
       }
@@ -728,42 +782,57 @@ export class Canvas {
   };
 
   renderHover = () => {
-    if (!this.store.hover) {
-      return;
-    }
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.translate(0.5, 0.5);
-    if (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground) {
-      renderPen(
-        ctx,
-        this.store.hover,
-        this.store.path2dMap.get(this.store.hover),
-        this.store.hover.hoverColor || this.store.options.hoverColor,
-        this.store.hover.hoverBackground || this.store.options.hoverBackground,
-      );
+    if (this.store.hover) {
+      if (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground) {
+        renderPen(ctx, this.store.hover, this.store.path2dMap.get(this.store.hover), this.store.options);
+      }
+
+      if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
+        const anchors = this.store.hover.calculative.worldAnchors;
+        if (anchors) {
+          ctx.strokeStyle = this.store.hover.hoverAnchorColor || this.store.options.hoverAnchorColor;
+          ctx.fillStyle = this.store.hover.anchorBackground || this.store.options.anchorBackground;
+          anchors.forEach((anchor) => {
+            ctx.beginPath();
+            ctx.arc(anchor.x, anchor.y, anchor.radius || this.store.options.anchorRadius, 0, Math.PI * 2);
+            if (anchor.color || anchor.background) {
+              ctx.save();
+              ctx.strokeStyle = anchor.color;
+              ctx.fillStyle = anchor.background;
+            }
+            ctx.fill();
+            ctx.stroke();
+            if (anchor.color || anchor.background) {
+              ctx.restore();
+            }
+          });
+        }
+      }
     }
 
-    if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
-      const anchors = this.store.hover.calculative.worldAnchors;
-      if (anchors) {
-        ctx.strokeStyle = this.store.hover.hoverAnchorColor || this.store.options.hoverAnchorColor;
-        ctx.fillStyle = this.store.hover.anchorBackground || this.store.options.anchorBackground;
-        anchors.forEach((anchor) => {
-          ctx.beginPath();
-          ctx.arc(anchor.x, anchor.y, anchor.radius || this.store.options.anchorRadius, 0, Math.PI * 2);
-          if (anchor.color || anchor.background) {
-            ctx.save();
-            ctx.strokeStyle = anchor.color;
-            ctx.fillStyle = anchor.background;
-          }
-          ctx.fill();
-          ctx.stroke();
-          if (anchor.color || anchor.background) {
-            ctx.restore();
-          }
-        });
-      }
+    // Draw size control points.
+    if (!this.store.data.locked && this.activeRect) {
+      ctx.strokeStyle = this.store.options.activeColor;
+      ctx.fillStyle = "#ffffff";
+
+      ctx.beginPath();
+      ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.y - 4.5, 8, 8);
+      ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.y - 5.5, 10, 10);
+
+      ctx.beginPath();
+      ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.y - 4.5, 8, 8);
+      ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.y - 5.5, 10, 10);
+
+      ctx.beginPath();
+      ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.ey - 4.5, 8, 8);
+      ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.ey - 5.5, 10, 10);
+
+      ctx.beginPath();
+      ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.ey - 4.5, 8, 8);
+      ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.ey - 5.5, 10, 10);
     }
     ctx.restore();
   };

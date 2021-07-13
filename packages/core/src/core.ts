@@ -4,7 +4,7 @@ import { Canvas } from './canvas';
 import { Options } from './options';
 import { TopologyPen } from './pen';
 import { Point } from './point';
-import { clearStore, createStore, store, TopologyData, TopologyStore, useStore } from './store';
+import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
 
@@ -124,10 +124,14 @@ export class Topology {
     this.store.registerPens = Object.assign({}, this.store.registerPens, pens);
   }
 
-  destroy() {
+  destroy(global?: boolean) {
     this.canvas.destroy();
     // Clear data.
-    store[this.store.topologyId] = undefined;
+    globalStore[this.store.topologyId] = undefined;
     this.canvas = undefined;
+
+    if (global) {
+      globalStore.htmlElements = {};
+    }
   }
 }

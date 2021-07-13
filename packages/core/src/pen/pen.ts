@@ -1,3 +1,4 @@
+import { Options } from '../options';
 import { Point } from '../point';
 import { Rect } from '../rect';
 import { s8 } from '../utils';
@@ -37,7 +38,6 @@ export interface TopologyPen {
   // Hidden only visible === false
   visible?: boolean;
   locked?: LockState;
-  active?: boolean;
 
   center?: Point;
 
@@ -91,6 +91,7 @@ export interface TopologyPen {
 
   image?: string;
   icon?: string;
+  iconRotate?: number;
   iconWidth?: number;
   iconHeight?: number;
   iconTop?: number;
@@ -136,6 +137,17 @@ export interface TopologyPen {
     worldTextRect?: Rect;
     textDrawRect?: Rect;
     textLines?: string[];
+    image?: string;
+    img?: HTMLImageElement;
+    imgNaturalWidth?: number;
+    imgNaturalHeight?: number;
+    backgroundImage?: string;
+    strokeImage?: string;
+    backgroundImg?: HTMLImageElement;
+    strokeImg?: HTMLImageElement;
+
+    active?: boolean;
+    hover?: boolean;
   };
 
   beforeAddPen: (pen: TopologyPen) => boolean;
@@ -156,8 +168,7 @@ export function renderPen(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: TopologyPen,
   path: Path2D,
-  color = '',
-  background = ''
+  options: Options,
 ) {
   if (!path) {
     return;
@@ -182,28 +193,34 @@ export function renderPen(
     ctx.lineWidth = pen.lineWidth;
   }
 
-  if (color) {
-    ctx.strokeStyle = color;
-  } else if (pen.strokeImage) {
-    // if (pen.strokeImage === pen.lastStrokeImage && pen.strokeImg) {
-    //   ctx.strokeStyle = ctx.createPattern(pen.strokeImg, "repeat");
-    // } else {
-    //   pen.loadStrokeImg();
-    // }
-  } else if (pen.color) {
-    ctx.strokeStyle = pen.color;
-  }
+  let fill: any;
+  if (pen.calculative.hover) {
+    ctx.strokeStyle = pen.hoverColor || options.hoverColor;
+    ctx.fillStyle = pen.hoverBackground || options.hoverBackground;
+    fill = pen.hoverBackground || options.hoverBackground;
+  } else if (pen.calculative.active) {
+    ctx.strokeStyle = pen.activeColor || options.activeColor;
+    ctx.fillStyle = pen.activeBackground || options.activeBackground;
+    fill = pen.activeBackground || options.activeBackground;
+  } else {
+    if (pen.strokeImage) {
+      if (pen.calculative.strokeImg) {
+        ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, "repeat");
+        fill = true;
+      }
+    } else {
+      ctx.strokeStyle = pen.color;
+    }
 
-  if (background) {
-    ctx.fillStyle = background;
-  } else if (pen.backgroundImage) {
-    // if (pen.fillImage === pen.lastFillImage && pen.fillImg) {
-    //   ctx.fillStyle = ctx.createPattern(pen.fillImg, "repeat");
-    // } else {
-    //   pen.loadFillImg();
-    // }
-  } else if (pen.background) {
-    ctx.fillStyle = pen.background;
+    if (pen.backgroundImage) {
+      if (pen.calculative.backgroundImg) {
+        ctx.fillStyle = ctx.createPattern(pen.calculative.backgroundImg, "repeat");
+        fill = true;
+      }
+    } else {
+      ctx.fillStyle = pen.background;
+      fill = pen.background;
+    }
   }
 
   if (pen.lineCap) {
@@ -230,8 +247,73 @@ export function renderPen(
     ctx.shadowBlur = pen.shadowBlur;
   }
 
-  (background || pen.background || pen.bkType) && ctx.fill(path);
+  fill && ctx.fill(path);
   ctx.stroke(path);
+
+  if (pen.image && pen.calculative.img) {
+    ctx.save();
+    ctx.shadowColor = '';
+    ctx.shadowBlur = 0;
+    const rect = pen.calculative.worldIconRect;
+    let x = rect.x;
+    let y = rect.y;
+    let w = rect.width;
+    let h = rect.height;
+    if (pen.iconWidth) {
+      w = pen.iconWidth;
+    }
+    if (pen.iconHeight) {
+      h = pen.iconHeight;
+    }
+    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight) {
+      if (pen.iconWidth) {
+        h = (pen.calculative.imgNaturalHeight / pen.calculative.imgNaturalWidth) * w;
+      } else {
+        w = (pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight) * h;
+      }
+    }
+    x += (rect.width - w) / 2;
+    y += (rect.height - h) / 2;
+
+    if (pen.iconRotate) {
+      ctx.translate(rect.center.x, rect.center.y);
+      ctx.rotate((pen.iconRotate * Math.PI) / 180);
+      ctx.translate(-rect.center.x, -rect.center.y);
+    }
+
+    ctx.drawImage(pen.calculative.img, x, y, w, h);
+    ctx.restore();
+  } else if (pen.icon) {
+    ctx.save();
+    ctx.shadowColor = '';
+    ctx.shadowBlur = 0;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const iconRect = pen.calculative.worldIconRect;
+    let x = iconRect.x + iconRect.width / 2;
+    let y = iconRect.y + iconRect.height / 2;
+
+    if (pen.iconSize > 0) {
+      ctx.font = `${pen.iconSize}px ${pen.iconFamily}`;
+    } else if (iconRect.width > iconRect.height) {
+      ctx.font = `${iconRect.height}px ${pen.iconFamily}`;
+    } else {
+      ctx.font = `${iconRect.width}px ${pen.iconFamily}`;
+    }
+    ctx.fillStyle = pen.iconColor || pen.textColor || options.textColor;
+
+    if (pen.calculative.worldRect.rotate) {
+      ctx.translate(iconRect.center.x, iconRect.center.y);
+      ctx.rotate((pen.calculative.worldRect.rotate * Math.PI) / 180);
+      ctx.translate(-iconRect.center.x, -iconRect.center.y);
+    }
+
+    ctx.beginPath();
+    ctx.fillText(pen.icon, x, y);
+
+    ctx.restore();
+  }
 
   if (pen.text) {
     ctx.save();
@@ -382,26 +464,31 @@ export function calcWorldAnchors(pen: TopologyPen) {
   pen.calculative.worldAnchors = anchors;
 }
 
-export function calcIconRect(pen: TopologyPen) {
+export function calcIconRect(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
   let x = pen.iconLeft || 0;
   let y = pen.iconTop || 0;
   let width = pen.iconWidth || pen.width;
   let height = pen.iconHeight || pen.height;
-
-  if (Math.abs(x) < 1) {
+  if (x && Math.abs(x) < 1) {
     x = pen.width * pen.iconLeft;
   }
 
-  if (Math.abs(y) < 1) {
-    x = pen.height * pen.iconLeft;
+  if (y && Math.abs(y) < 1) {
+    y = pen.height * pen.iconLeft;
   }
-
-  if (Math.abs(width) < 1) {
+  if (width && Math.abs(width) < 1) {
     width = pen.width * pen.iconWidth;
   }
 
-  if (Math.abs(height) < 1) {
+  if (height && Math.abs(height) < 1) {
     height = pen.height * pen.iconHeight;
+  }
+
+  let rotate = pen.iconRotate || 0;
+  let parentRect = pens[pen.parentId].calculative.worldRect;
+  if (parentRect) {
+    rotate += parentRect.rotate;
+    rotate %= 360;
   }
 
   pen.calculative.worldIconRect = {
@@ -411,5 +498,6 @@ export function calcIconRect(pen: TopologyPen) {
     height,
     ex: pen.calculative.worldRect.x + x + width,
     ey: pen.calculative.worldRect.y + y + height,
+    rotate,
   };
 }

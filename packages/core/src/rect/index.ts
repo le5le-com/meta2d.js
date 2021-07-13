@@ -114,3 +114,12 @@ export function getRectOfPoints(points: Point[]) {
   });
   return { x, y, ex, ey, width: ex - x, height: ey - y };
 }
+
+export function rectInRect(source: Rect, target: Rect) {
+  return (
+    (source.x > target.x && source.x < target.ex && source.y > target.y && source.y < target.ey) ||
+    (source.ex > target.x && source.ex < target.ex && source.y > target.y && source.y < target.ey) ||
+    (source.ex > target.x && source.ex < target.ex && source.ey > target.y && source.ey < target.ey) ||
+    (source.x > target.x && source.x < target.ex && source.ey > target.y && source.ey < target.ey)
+  );
+}

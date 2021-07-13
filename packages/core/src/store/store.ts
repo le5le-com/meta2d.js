@@ -57,9 +57,9 @@ export interface TopologyStore {
   debug?: boolean;
 }
 
-export const store: {
+export const globalStore: {
   version: string;
-  htmlElements: object;
+  htmlElements: { [key: string]: any; };
 } = {
   version: pkg.version,
   htmlElements: {}
@@ -84,12 +84,12 @@ export const createStore = () => {
 
 // Return a data store, if not exists will create a store.
 export const useStore = (id = 'default') => {
-  if (!store[id]) {
-    store[id] = createStore();
-    store[id].topologyId = id;
+  if (!globalStore[id]) {
+    globalStore[id] = createStore();
+    globalStore[id].topologyId = id;
   }
 
-  return store[id];
+  return globalStore[id];
 };
 
 export const clearStore = (store: TopologyStore) => {
