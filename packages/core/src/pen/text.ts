@@ -5,17 +5,17 @@ export function calcTextRect(pen: TopologyPen) {
   if (!pen.text) {
     return;
   }
-  let x = pen.textOffsetX || 0;
-  let y = pen.textOffsetY || 0;
+  let x = pen.textLeft || 0;
+  let y = pen.textTop || 0;
   let width = pen.textWidth || pen.width;
   let height = pen.textHeight || pen.height;
 
-  if (pen.textOffsetX && Math.abs(x) < 1) {
-    x = pen.width * pen.textOffsetX;
+  if (pen.textLeft && Math.abs(x) < 1) {
+    x = pen.width * pen.textLeft;
   }
 
-  if (pen.textOffsetY && Math.abs(y) < 1) {
-    x = pen.height * pen.textOffsetY;
+  if (pen.textTop && Math.abs(y) < 1) {
+    x = pen.height * pen.textTop;
   }
 
   if (Math.abs(width) < 1) {
@@ -26,13 +26,16 @@ export function calcTextRect(pen: TopologyPen) {
     height = pen.height * pen.textHeight;
   }
 
+  x = pen.calculative.worldRect.x + x;
+  y = pen.calculative.worldRect.y + y;
+
   const rect = {
-    x: pen.calculative.worldRect.x + x,
-    y: pen.calculative.worldRect.y + y,
+    x,
+    y,
     width,
     height,
-    ex: pen.calculative.worldRect.x + x + width,
-    ey: pen.calculative.worldRect.y + y + height,
+    ex: x + width,
+    ey: y + height,
   };
   pen.calculative.worldTextRect = rect;
 

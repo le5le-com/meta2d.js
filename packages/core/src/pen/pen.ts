@@ -75,8 +75,8 @@ export interface TopologyPen {
   text?: string;
   textWidth?: number;
   textHeight?: number;
-  textOffsetX?: number;
-  textOffsetY?: number;
+  textLeft?: number;
+  textTop?: number;
   textColor?: string;
   fontFamily?: string;
   fontSize?: number;
@@ -95,8 +95,6 @@ export interface TopologyPen {
   iconWidth?: number;
   iconHeight?: number;
   iconTop?: number;
-  iconRight?: number;
-  iconBottom?: number;
   iconLeft?: number;
   iconColor?: string;
   iconFamily?: string;
@@ -485,19 +483,23 @@ export function calcIconRect(pens: { [key: string]: TopologyPen; }, pen: Topolog
   }
 
   let rotate = pen.iconRotate || 0;
-  let parentRect = pens[pen.parentId].calculative.worldRect;
-  if (parentRect) {
-    rotate += parentRect.rotate;
-    rotate %= 360;
+  if (pen.parentId) {
+    const parentRect = pens[pen.parentId].calculative.worldRect;
+    if (parentRect) {
+      rotate += parentRect.rotate;
+      rotate %= 360;
+    }
   }
 
+  x = pen.calculative.worldRect.x + x;
+  y = pen.calculative.worldRect.y + y;
   pen.calculative.worldIconRect = {
-    x: pen.calculative.worldRect.x + x,
-    y: pen.calculative.worldRect.y + y,
+    x,
+    y,
     width,
     height,
-    ex: pen.calculative.worldRect.x + x + width,
-    ey: pen.calculative.worldRect.y + y + height,
+    ex: x + width,
+    ey: y + height,
     rotate,
   };
 }
