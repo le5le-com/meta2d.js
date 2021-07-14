@@ -1,4 +1,4 @@
-import { TopologyPen } from '../pen';
+import { TopologyPen } from '../../pen';
 
 export function svgPath(pen: TopologyPen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
