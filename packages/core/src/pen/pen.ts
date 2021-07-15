@@ -136,6 +136,7 @@ export interface TopologyPen {
     worldIconRect?: Rect;
     worldTextRect?: Rect;
     textDrawRect?: Rect;
+    svgRect?: Rect;
     textLines?: string[];
     image?: string;
     img?: HTMLImageElement;
