@@ -41,6 +41,9 @@ export class Canvas {
   sizeCP = 0;
   anchor: Point;
   mouseDown: { x: number; y: number; restore?: boolean; };
+  isTranslate: boolean;
+  translateX: number;
+  translateY: number;
   cacheNode: TopologyPen;
   touchCenter?: { x: number; y: number; };
   touches?: TouchList;
@@ -125,13 +128,13 @@ export class Canvas {
 
     this.externalElements.ondblclick = (e: any) => { };
     this.externalElements.onblur = () => { this.mouseDown = undefined; };
-    this.externalElements.onwheel = (e: any) => { };
+    this.externalElements.onwheel = this.onwheel;
 
     switch (this.store.options.keydown) {
       case KeydownType.Document:
         document.addEventListener('keydown', this.onkey);
         document.addEventListener('keyup', () => {
-
+          this.isTranslate = false;
         });
         break;
       case KeydownType.Canvas:
@@ -140,8 +143,96 @@ export class Canvas {
     }
   }
 
-  onkey = (e: any) => {
-    this.mouseDown = undefined;
+  onwheel = (e: any) => {
+    if (this.store.options.disableScale) {
+      return;
+    }
+
+    const now = performance.now();
+    if (now - this.touchStart < 50) {
+      return;
+    }
+    this.touchStart = now;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const pos = {
+      x: e.x,
+      y: e.y
+    };
+    if (this.store.data.scale == null) {
+      this.store.data.scale = 1;
+    }
+    if (e.deltaY < 0) {
+      this.store.data.scale += 0.1;
+    } else {
+      this.store.data.scale -= 0.1;
+    }
+    this.render(Infinity);
+  };
+
+  onkey = (e: KeyboardEvent) => {
+    if (
+      this.store.data.locked ||
+      (e.target as HTMLElement).tagName === 'INPUT' ||
+      (e.target as HTMLElement).tagName === 'TEXTAREA'
+    ) {
+      return;
+    }
+
+    switch (e.key) {
+      case ' ':
+      case 'Control':
+      case 'Meta':
+        this.isTranslate = true;
+        break;
+      case 'a':
+      case 'A':
+
+        break;
+      case 'Delete':
+      case 'Backspace':
+
+        break;
+      case 'ArrowLeft':
+
+        break;
+      case 'ArrowUp':
+
+        break;
+      case 'ArrowRight':
+
+        break;
+      case 'ArrowDown':
+
+        break;
+      case 'x':
+      case 'X':
+
+        break;
+      case 'c':
+      case 'C':
+
+        break;
+      case 'v':
+      case 'V':
+
+        break;
+      case 'y':
+      case 'Y':
+
+        break;
+      case 'z':
+      case 'Z':
+
+        break;
+      case 'Enter':
+
+        break;
+      case 'Escape':
+
+        break;
+    }
   };
 
   ondrop = (event: any) => {
@@ -268,6 +359,13 @@ export class Canvas {
     e.y -= this.bounding.top || this.bounding.y;
 
     this.mouseDown = e;
+    if (e.ctrlKey || (this.store.options.rightMouseTranslate && e.buttons == 2)) {
+      this.isTranslate = true;
+    }
+    if (this.isTranslate) {
+      this.translateX = e.x;
+      this.translateY = e.y;
+    }
 
     switch (this.moveType) {
       case MoveType.None:
@@ -346,6 +444,11 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
+    if (this.mouseDown && this.isTranslate && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
+      this.translate(e.x, e.y);
+      return false;
+    }
+
     this.store.debug && console.time('hover');
     this.getHover(e);
     this.store.debug && console.timeEnd('hover');
@@ -365,6 +468,10 @@ export class Canvas {
     e.y -= this.bounding.top || this.bounding.y;
 
     this.mouseDown = undefined;
+    if (this.isTranslate) {
+      this.isTranslate = false;
+      this.store.emitter.emit('translate');
+    }
 
     if (this.cacheNode) {
       this.cacheNode.x = e.x - this.cacheNode.width / 2;
@@ -387,11 +494,22 @@ export class Canvas {
     }, 100);
   };
 
+  calibrateMouse = (pt: Point) => {
+    if (this.store.data.scale && this.store.data.scale !== 1) {
+
+    }
+
+    pt.x -= this.store.data.x || 0;
+    pt.y -= this.store.data.y || 0;
+  };
+
   private getHover = (pt: Point) => {
     if (this.store.data.locked === LockState.Disable) {
       this.moveType = MoveType.None;
       return;
     }
+
+    this.calibrateMouse(pt);
 
     let moveType = MoveType.None;
 
@@ -683,12 +801,18 @@ export class Canvas {
     this.store.dirty.set(pen, 1);
   }
 
-  render = () => {
+  render = (now?: number) => {
+    if (now === Infinity) {
+      this.dirty = true;
+      now = performance.now();
+    }
     if (!this.dirty) {
       return;
     }
+    if (now == null) {
+      now = performance.now();
+    }
 
-    const now = performance.now();
     if (now - this.lastRender < this.store.options.interval) {
       requestAnimationFrame(this.render);
       return;
@@ -707,7 +831,11 @@ export class Canvas {
 
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.save();
+    ctx.translate(this.store.data.x, this.store.data.y);
+    ctx.scale(this.store.data.scale, this.store.data.scale);
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
+    ctx.restore();
     this.dirty = false;
 
     // console.log('render');
@@ -838,6 +966,28 @@ export class Canvas {
   };
 
   renderAnimate = () => { };
+
+  translate(x: number, y: number) {
+    const offsetX = x - this.translateX;
+    const offsetY = y - this.translateY;
+    this.translateX = x;
+    this.translateY = y;
+    // for (const item of this.store.data.pens) {
+    //   translate(item, offsetX, offsetY);
+    // }
+
+    if (!this.store.data.x) {
+      this.store.data.x = 0;
+    }
+    if (!this.store.data.y) {
+      this.store.data.y = 0;
+    }
+
+    this.store.data.x += offsetX;
+    this.store.data.y += offsetY;
+    this.render(Infinity);
+    !this.isTranslate && this.store.emitter.emit('translate');
+  }
 
   destroy() {
     // ios

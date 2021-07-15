@@ -4,11 +4,15 @@ import { LockState, TopologyPen } from '../pen';
 import { defaultOptions, Options } from '../options';
 
 import pkg from '../../package.json';
+import { Point } from '../point';
 
 export interface TopologyData {
   pens: TopologyPen[];
   children: { [key: string]: string[]; };
+  x?: number;
+  y?: number;
   scale?: number;
+  center?: Point;
   locked?: LockState;
   websocket?: string;
   mqtt?: string;

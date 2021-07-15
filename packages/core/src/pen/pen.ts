@@ -506,3 +506,7 @@ export function calcIconRect(pens: { [key: string]: TopologyPen; }, pen: Topolog
     rotate,
   };
 }
+
+export function translate(pen: TopologyPen, x: number, y: number) {
+
+}

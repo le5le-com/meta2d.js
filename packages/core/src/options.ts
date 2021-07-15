@@ -1,14 +1,5 @@
 import { Padding } from './utils/padding';
 
-export enum KeyType {
-  Any = -1,
-  CtrlOrAlt,
-  Ctrl,
-  Shift,
-  Alt,
-  Right,
-}
-
 export enum KeydownType {
   None = -1,
   Document,
@@ -58,8 +49,7 @@ export interface Options {
   pauseIcon?: string;
   fullScreenIcon?: string;
   loopIcon?: string;
-  translateKey?: KeyType;
-  scaleKey?: KeyType;
+  rightMouseTranslate?: boolean;
   minScale?: number;
   maxScale?: number;
   keydown?: KeydownType;

@@ -123,3 +123,15 @@ export function rectInRect(source: Rect, target: Rect) {
     (source.x > target.x && source.x < target.ex && source.ey > target.y && source.ey < target.ey)
   );
 }
+
+export function translateRect(rect: Rect, x: number, y: number) {
+  rect.x += x;
+  rect.y += y;
+  rect.ex += x;
+  rect.ey += y;
+
+  if (rect.center) {
+    rect.center.x += x;
+    rect.center.y += y;
+  }
+}
