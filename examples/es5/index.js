@@ -25,7 +25,7 @@ function makeNodes() {
   console.time('makeNodes');
   for (let i = 0; i < count; i++) {
     const pen = {
-      name: i % 2 ? 'rectangle' : 'circle',
+      name: i % 2 === 0 ? 'rectangle' : 'circle',
       x,
       y,
       width: 100,

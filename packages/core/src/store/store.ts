@@ -6,13 +6,22 @@ import { defaultOptions, Options } from '../options';
 import pkg from '../../package.json';
 import { Point } from '../point';
 
+export const globalStore: {
+  version: string;
+  htmlElements: { [key: string]: any; };
+  paths: { [key: string]: string; };
+} = {
+  version: pkg.version,
+  htmlElements: {},
+  paths: {}
+};
+
 export interface TopologyData {
   pens: TopologyPen[];
   children: { [key: string]: string[]; };
-  x?: number;
-  y?: number;
-  scale?: number;
-  center?: Point;
+  x: number;
+  y: number;
+  scale: number;
   locked?: LockState;
   websocket?: string;
   mqtt?: string;
@@ -43,6 +52,11 @@ export interface TopologyStore {
   data: TopologyData;
   pens: any;
 
+  // world offset
+  x: number;
+  y: number;
+  center: Point;
+
   // Websocket instance.
   websocket?: any;
   // mqtt instance.
@@ -61,20 +75,17 @@ export interface TopologyStore {
   debug?: boolean;
 }
 
-export const globalStore: {
-  version: string;
-  htmlElements: { [key: string]: any; };
-} = {
-  version: pkg.version,
-  htmlElements: {}
-};
-
 export const createStore = () => {
   return {
     data: {
+      x: 0,
+      y: 0,
+      scale: 1,
       pens: [],
       children: {},
     },
+    x: 0,
+    y: 0,
     histories: [],
     pens: {},
     path2dMap: new WeakMap(),
@@ -98,9 +109,15 @@ export const useStore = (id = 'default') => {
 
 export const clearStore = (store: TopologyStore) => {
   store.data = {
+    x: 0,
+    y: 0,
+    scale: 1,
     pens: [],
     children: {},
   };
+  store.x = 0;
+  store.y = 0;
+  store.center = { x: 0, y: 0 };
   store.pens = {};
   store.histories = [];
   store.path2dMap = new WeakMap();

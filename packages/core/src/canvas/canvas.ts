@@ -1,6 +1,6 @@
 import { KeydownType } from '../options';
 import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, renderPen, TopologyPen } from '../pen';
-import { hitPoint, Point } from '../point';
+import { hitPoint, Point, scalePoint } from '../point';
 import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
@@ -32,6 +32,7 @@ export class Canvas {
 
   externalElements = document.createElement('div');
   bounding?: DOMRect;
+  canvasRect: Rect;
 
   rotateCP: { x: number; y: number; id: string; };
   activeRect: Rect;
@@ -68,7 +69,7 @@ export class Canvas {
     this.externalElements.style.background = 'transparent';
     parentElement.appendChild(this.externalElements);
 
-    this.store.dpiRatio = (window ? window.devicePixelRatio : 0);
+    this.store.dpiRatio = (window ? window.devicePixelRatio : 1);
 
     if (this.store.dpiRatio < 1) {
       this.store.dpiRatio = 1;
@@ -156,19 +157,19 @@ export class Canvas {
     e.preventDefault();
     e.stopPropagation();
 
-    const pos = {
-      x: e.x,
-      y: e.y
+    const center = {
+      x: e.x - (this.bounding.left || this.bounding.x),
+      y: e.y - (this.bounding.top || this.bounding.y)
     };
-    if (this.store.data.scale == null) {
-      this.store.data.scale = 1;
+    if (window) {
+      center.x -= window.scrollX;
+      center.y -= window.scrollY;
     }
     if (e.deltaY < 0) {
-      this.store.data.scale += 0.1;
+      this.scale(this.store.data.scale + 0.1, center);
     } else {
-      this.store.data.scale -= 0.1;
+      this.scale(this.store.data.scale - 0.1, center);
     }
-    this.render(Infinity);
   };
 
   onkey = (e: KeyboardEvent) => {
@@ -445,7 +446,11 @@ export class Canvas {
     e.y -= this.bounding.top || this.bounding.y;
 
     if (this.mouseDown && this.isTranslate && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
-      this.translate(e.x, e.y);
+      const x = e.x - this.translateX;
+      const y = e.y - this.translateY;
+      this.translateX = e.x;
+      this.translateY = e.y;
+      this.translate(x, y);
       return false;
     }
 
@@ -495,12 +500,12 @@ export class Canvas {
   };
 
   calibrateMouse = (pt: Point) => {
-    if (this.store.data.scale && this.store.data.scale !== 1) {
-
+    if (this.store.data.scale !== 1) {
+      scalePoint(pt, 1 / this.store.data.scale, { x: 0, y: 0 });
     }
 
-    pt.x -= this.store.data.x || 0;
-    pt.y -= this.store.data.y || 0;
+    pt.x -= this.store.x;
+    pt.y -= this.store.y;
   };
 
   private getHover = (pt: Point) => {
@@ -713,6 +718,18 @@ export class Canvas {
     this.store.pens[pen.id] = pen;
     calcCenter(pen);
 
+    // 集中存储path，避免数据冗余过大
+    if (pen.path) {
+      if (!pen.pathId) {
+        pen.pathId = s8();
+      }
+      if (!globalStore.paths[pen.pathId]) {
+        globalStore.paths[pen.pathId] = pen.path;
+      }
+
+      pen.path = undefined;
+    }
+    // end
     this.dirtyRect(pen);
     this.store.path2dMap.set(pen, this.store.registerPens[pen.name](pen));
     this.loadImage(pen);
@@ -819,26 +836,23 @@ export class Canvas {
     }
     this.lastRender = now;
 
-    // if (!this.store.dirty.size) {
-    //   this.offscreen.getContext('2d').drawImage(this.pensLayer, 0, 0, this.pensLayer.width, this.pensLayer.height);
-    //   return;
-    // }
-    this.offscreen.getContext('2d').clearRect(0, 0, this.offscreen.width, this.offscreen.height);
+    const offscreen = this.offscreen.getContext('2d');
+    offscreen.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
+    offscreen.save();
+    offscreen.translate(this.store.x, this.store.y);
+    offscreen.scale(this.store.data.scale, this.store.data.scale);
     this.renderPens();
     this.renderAnimate();
     this.renderActive();
     this.renderHover();
+    offscreen.restore();
 
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.save();
-    ctx.translate(this.store.data.x, this.store.data.y);
-    ctx.scale(this.store.data.scale, this.store.data.scale);
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
-    ctx.restore();
+
     this.dirty = false;
 
-    // console.log('render');
     if (this.store.animate.size) {
       requestAnimationFrame(this.render);
     }
@@ -857,8 +871,16 @@ export class Canvas {
       width: this.width,
       height: this.height,
     };
+
     this.store.data.pens.forEach((pen: TopologyPen) => {
-      if (!rectInRect(pen.calculative.worldRect, canvasRect)) {
+      const x = pen.calculative.worldRect.x + (this.store.data.x || 0);
+      const y = pen.calculative.worldRect.y + (this.store.data.y || 0);
+      if (!rectInRect({
+        x,
+        y,
+        ex: x + pen.calculative.worldRect.width,
+        ey: y + pen.calculative.worldRect.height
+      }, canvasRect)) {
         return;
       }
       if (this.store.hover === pen && (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground)) {
@@ -968,25 +990,33 @@ export class Canvas {
   renderAnimate = () => { };
 
   translate(x: number, y: number) {
-    const offsetX = x - this.translateX;
-    const offsetY = y - this.translateY;
-    this.translateX = x;
-    this.translateY = y;
-    // for (const item of this.store.data.pens) {
-    //   translate(item, offsetX, offsetY);
-    // }
-
-    if (!this.store.data.x) {
-      this.store.data.x = 0;
-    }
-    if (!this.store.data.y) {
-      this.store.data.y = 0;
-    }
-
-    this.store.data.x += offsetX;
-    this.store.data.y += offsetY;
+    this.store.data.x += x;
+    this.store.data.y += y;
+    this.store.x += x;
+    this.store.y += y;
     this.render(Infinity);
     !this.isTranslate && this.store.emitter.emit('translate');
+  }
+
+  scale(scale: number, center = { x: 0, y: 0 }) {
+    if (scale < 0.01) {
+      return;
+    }
+    this.store.data.scale = scale;
+    this.store.x = this.store.data.x;
+    this.store.y = this.store.data.y;
+
+    if ((this.store.center.x || this.store.center.y) && (center.x !== this.store.center.x || center.y !== this.store.center.y)) {
+      // console.log(1111);
+      // scalePoint(center, 1 / this.store.data.scale, { x: 0, y: 0 });
+      // this.store.x -= center.x - this.store.center.x;
+      // this.store.y -= center.y - this.store.center.y;
+    }
+
+    scalePoint(this.store, scale, center);
+    console.log(1111, this.store.x, scale, center);
+    this.store.center = center;
+    this.render(Infinity);
   }
 
   destroy() {

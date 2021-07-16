@@ -127,6 +127,7 @@ export interface TopologyPen {
   anchorRadius?: number;
   anchorBackground?: string;
 
+  pathId?: string;
   path?: string;
 
   calculative?: {

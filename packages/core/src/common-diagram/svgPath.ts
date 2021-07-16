@@ -1,5 +1,6 @@
 import { TopologyPen } from '../pen';
 import { calcCenter } from '../rect';
+import { globalStore } from '../store';
 import { getRect, parseSvgPath, pathToString, scalePath, translatePath } from './svg/parse';
 
 export function svgPath(pen: TopologyPen) {
@@ -7,7 +8,12 @@ export function svgPath(pen: TopologyPen) {
     return;
   }
 
-  const path = parseSvgPath(pen.path);
+  const pathText = globalStore.paths[pen.pathId];
+  if (!pathText) {
+    return new Path2D();
+  }
+
+  const path = parseSvgPath(pathText);
   pen.calculative.svgRect = getRect(path);
   calcCenter(pen.calculative.svgRect);
 

@@ -25,3 +25,8 @@ export function rotatePoint(pt: Point, angle: number, center: Point) {
 export function hitPoint(pt: Point, target: Point, radius = 5) {
   return pt.x > target.x - radius && pt.x < target.x + radius && pt.y > target.y - radius && pt.y < target.y + radius;
 }
+
+export function scalePoint(pt: Point, scale: number, center: Point) {
+  pt.x = center.x - (center.x - pt.x) * scale;
+  pt.y = center.y - (center.y - pt.y) * scale;
+}
