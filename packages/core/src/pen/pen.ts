@@ -1,5 +1,5 @@
 import { Options } from '../options';
-import { Point } from '../point';
+import { Point, rotatePoint } from '../point';
 import { Rect } from '../rect';
 import { s8 } from '../utils';
 
@@ -463,6 +463,11 @@ export function calcWorldAnchors(pen: TopologyPen) {
     });
   }
 
+  if (pen.rotate) {
+    anchors.forEach((anchor) => {
+      rotatePoint(anchor, pen.rotate, pen.calculative.worldRect.center);
+    });
+  }
   pen.calculative.worldAnchors = anchors;
 }
 

@@ -92,12 +92,22 @@ export function getRect(pens: TopologyPen[] | Map<TopologyPen, number>) {
 }
 
 export function rectToPoints(rect: Rect) {
-  return [
+  const pts = [
     { x: rect.x, y: rect.y },
     { x: rect.ex, y: rect.y },
     { x: rect.ex, y: rect.ey },
     { x: rect.x, y: rect.ey },
   ];
+
+  if (rect.rotate) {
+    if (!rect.center) {
+      calcCenter(rect);
+    }
+    pts.forEach((pt) => {
+      rotatePoint(pt, rect.rotate, rect.center);
+    });
+  }
+  return pts;
 }
 
 export function getRectOfPoints(points: Point[]) {

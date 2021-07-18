@@ -30,3 +30,26 @@ export function scalePoint(pt: Point, scale: number, center: Point) {
   pt.x = center.x - (center.x - pt.x) * scale;
   pt.y = center.y - (center.y - pt.y) * scale;
 }
+
+export function calcRotate(pt: Point, center: Point) {
+  if (pt.x === center.x) {
+    return pt.y <= center.y ? 0 : 180;
+  }
+
+  if (pt.y === center.y) {
+    return pt.x < center.x ? 270 : 90;
+  }
+
+  const x = pt.x - center.x;
+  const y = pt.y - center.y;
+  let angle = (Math.atan(Math.abs(x / y)) / (2 * Math.PI)) * 360;
+  if (x > 0 && y > 0) {
+    angle = 180 - angle;
+  } else if (x < 0 && y > 0) {
+    angle += 180;
+  } else if (x < 0 && y < 0) {
+    angle = 360 - angle;
+  }
+
+  return angle;
+}

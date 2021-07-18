@@ -22,6 +22,7 @@ export interface TopologyData {
   x: number;
   y: number;
   scale: number;
+  center: Point;
   locked?: LockState;
   websocket?: string;
   mqtt?: string;
@@ -83,9 +84,11 @@ export const createStore = () => {
       scale: 1,
       pens: [],
       children: {},
+      center: { x: 0, y: 0 },
     },
     x: 0,
     y: 0,
+    center: { x: 0, y: 0 },
     histories: [],
     pens: {},
     path2dMap: new WeakMap(),
@@ -114,6 +117,7 @@ export const clearStore = (store: TopologyStore) => {
     scale: 1,
     pens: [],
     children: {},
+    center: { x: 0, y: 0 },
   };
   store.x = 0;
   store.y = 0;

@@ -33,12 +33,13 @@ function makeNodes() {
       iconFamily: 't-icon',
       iconSize: 20,
       ellipsis: true,
+      text: i + 1 + '',
       // textBackground: '#eeeeee',
       // textAlign: 'right',
       // textBaseline: 'bottom',
     };
     if (i % 7 === 1) {
-      pen.text = '乐吾乐\nTopology';
+      pen.text += '\n乐吾乐\nTopology';
     }
     if (i % 3) {
       pen.image = 'btn.svg';
@@ -55,7 +56,7 @@ function makeNodes() {
 
     topology.addPen(pen, false);
     x += 150;
-    if (i && i % 20 === 0) {
+    if (i && i % 10 === 0) {
       x = 100;
       y += 150;
     }

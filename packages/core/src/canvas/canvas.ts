@@ -1,9 +1,10 @@
 import { KeydownType } from '../options';
 import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, renderPen, TopologyPen } from '../pen';
-import { hitPoint, Point, scalePoint } from '../point';
+import { calcRotate, hitPoint, Point, rotatePoint, scalePoint } from '../point';
 import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
+import { defaultCursors, rotatedCursors } from './cursor';
 import { createOffscreen } from './offscreen';
 
 enum MoveType {
@@ -34,8 +35,8 @@ export class Canvas {
   bounding?: DOMRect;
   canvasRect: Rect;
 
-  rotateCP: { x: number; y: number; id: string; };
   activeRect: Rect;
+  activeRotate = 0;
   sizeCPs: Point[];
 
   moveType = MoveType.None;
@@ -354,6 +355,11 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    if (this.store.data.locked === LockState.Disable) {
+      this.moveType = MoveType.None;
+      return;
+    }
+
     if (e.buttons !== 1 && e.buttons !== 2) return;
 
     e.x -= this.bounding.left || this.bounding.x;
@@ -420,7 +426,14 @@ export class Canvas {
             }
           }
 
-          this.activeRect = getRect(this.store.active);
+          if (this.store.active.length === 1) {
+            this.activeRect = this.store.active[0].calculative.worldRect;
+            this.activeRotate = this.store.active[0].rotate;
+            this.activeRect.rotate = this.activeRotate;
+          } else {
+            this.activeRotate = 0;
+            this.activeRect = getRect(this.store.active);
+          }
           this.sizeCPs = rectToPoints(this.activeRect);
         }
         break;
@@ -437,6 +450,11 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    if (this.store.data.locked === LockState.Disable) {
+      this.moveType = MoveType.None;
+      return;
+    }
+
     // 防止异常情况导致mouseup事件没有触发
     if (this.mouseDown && !this.mouseDown.restore && (e.buttons !== 1 && e.buttons !== 2)) {
       this.onMouseUp(e);
@@ -445,7 +463,8 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
-    if (this.mouseDown && this.isTranslate && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
+    // Translate
+    if (this.translateX && this.translateY && this.mouseDown && this.isTranslate && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
       const x = e.x - this.translateX;
       const y = e.y - this.translateY;
       this.translateX = e.x;
@@ -454,7 +473,23 @@ export class Canvas {
       return false;
     }
 
+    // Rotate
+    if (this.moveType === MoveType.Rotate && this.mouseDown) {
+      this.activeRotate = calcRotate(e, this.activeRect.center);
+      if (this.store.active.length === 1) {
+        this.store.active[0].calculative.worldRotate = this.activeRotate;
+      } else {
+        this.store.active.forEach((pen) => {
+          pen.calculative.worldRotate = pen.rotate + this.activeRotate;
+        });
+      }
+
+      this.render(Infinity);
+      return;
+    }
+
     this.store.debug && console.time('hover');
+    this.calibrateMouse(e);
     this.getHover(e);
     this.store.debug && console.timeEnd('hover');
     this.render();
@@ -468,16 +503,17 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    if (this.store.data.locked === LockState.Disable) {
+      this.moveType = MoveType.None;
+      return;
+    }
 
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
     this.mouseDown = undefined;
-    if (this.isTranslate) {
-      this.isTranslate = false;
-      this.store.emitter.emit('translate');
-    }
 
+    // Add pen
     if (this.cacheNode) {
       this.cacheNode.x = e.x - this.cacheNode.width / 2;
       this.cacheNode.y = e.y - this.cacheNode.height / 2;
@@ -485,6 +521,23 @@ export class Canvas {
 
       this.addPen(this.cacheNode);
       this.cacheNode = undefined;
+      return;
+    }
+
+    if (this.isTranslate) {
+      this.isTranslate = false;
+      this.store.emitter.emit('translate');
+    }
+
+    // Rotate
+    if (this.moveType === MoveType.Rotate) {
+      this.store.active.forEach((pen) => {
+        pen.rotate = pen.calculative.worldRotate;
+        pen.calculative.worldRect.rotate = pen.rotate;
+        calcWorldAnchors(pen);
+      });
+
+      this.sizeCPs = rectToPoints(this.activeRect);
       return;
     }
   };
@@ -500,40 +553,47 @@ export class Canvas {
   };
 
   calibrateMouse = (pt: Point) => {
-    if (this.store.data.scale !== 1) {
-      scalePoint(pt, 1 / this.store.data.scale, { x: 0, y: 0 });
-    }
+    pt.x -= this.store.data.x;
+    pt.y -= this.store.data.y;
 
-    pt.x -= this.store.x;
-    pt.y -= this.store.y;
+    pt.x /= this.store.data.scale;
+    pt.y /= this.store.data.scale;
+
+    return pt;
   };
 
   private getHover = (pt: Point) => {
-    if (this.store.data.locked === LockState.Disable) {
-      this.moveType = MoveType.None;
-      return;
-    }
-
-    this.calibrateMouse(pt);
-
     let moveType = MoveType.None;
-
-    if (this.store.active.length === 1) {
+    const size = this.store.data.scale * 10;
+    if (this.activeRect) {
       if (!this.store.options.disableRotate) {
-        // 旋转控制点
-        if (this.rotateCP && hitPoint(pt, this.rotateCP, 10)) {
-          moveType = MoveType.Rotate;
-          this.store.hover = this.store.active[0];
+        const rotatePt = { x: this.activeRect.center.x, y: this.activeRect.y - 30 };
+        if (this.activeRotate) {
+          rotatePoint(rotatePt, this.activeRotate, this.activeRect.center);
         }
-      } else {
-        // 大小控制点
-        for (let i = 0; i < 4; i++) {
-          if (hitPoint(pt, this.sizeCPs[i], 10)) {
-            moveType = MoveType.ResizeCP;
-            this.store.hover = this.store.active[0];
-            this.sizeCP = i;
-            break;
+        // 旋转控制点
+        if (hitPoint(pt, rotatePt, size)) {
+          moveType = MoveType.Rotate;
+          this.externalElements.style.cursor = 'url("rotate.cur"), auto';
+        }
+      }
+
+      // 大小控制点
+      for (let i = 0; i < 4; i++) {
+        if (hitPoint(pt, this.sizeCPs[i], size)) {
+          let cursors = defaultCursors;
+          let offset = 0;
+          if (Math.abs(this.activeRotate % 90 - 45) < 25) {
+            cursors = rotatedCursors;
+            offset = Math.round((this.activeRotate - 45) / 90);
+          } else {
+            offset = Math.round(this.activeRotate / 90);
           }
+          moveType = MoveType.ResizeCP;
+          this.store.hover = this.store.active[0];
+          this.sizeCP = i;
+          this.externalElements.style.cursor = cursors[(i + offset) % 4];
+          break;
         }
       }
     }
@@ -550,7 +610,7 @@ export class Canvas {
             // 锚点
             if (pen.calculative.worldAnchors) {
               for (const anchor of pen.calculative.worldAnchors) {
-                if (hitPoint(pt, anchor, 10)) {
+                if (hitPoint(pt, anchor, size)) {
                   moveType = MoveType.Anchors;
                   this.anchor = anchor;
                   this.store.hover = pen;
@@ -561,17 +621,6 @@ export class Canvas {
             }
           }
 
-          // if (ctx.isPointInPath(this.store.path2dMap.get(pen), pt.x, pt.y)) {
-          //   if (!this.store.data.locked && !pen.locked) {
-          //     this.externalElements.style.cursor = 'move';
-          //   } else {
-          //     this.externalElements.style.cursor = this.store.options.hoverCursor;
-          //   }
-
-          //   this.store.hover = pen;
-          //   moveType = MoveType.Nodes;
-          //   break;
-          // }
           if (pointInRect(pt, pen.calculative.worldRect)) {
             if (!this.store.data.locked && !pen.locked) {
               this.externalElements.style.cursor = 'move';
@@ -731,6 +780,8 @@ export class Canvas {
     }
     // end
     this.dirtyRect(pen);
+    !pen.rotate && (pen.rotate = 0);
+    pen.calculative.worldRotate = pen.rotate;
     this.store.path2dMap.set(pen, this.store.registerPens[pen.name](pen));
     this.loadImage(pen);
   }
@@ -839,12 +890,12 @@ export class Canvas {
     const offscreen = this.offscreen.getContext('2d');
     offscreen.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
     offscreen.save();
-    offscreen.translate(this.store.x, this.store.y);
+    offscreen.translate(this.store.data.x, this.store.data.y);
     offscreen.scale(this.store.data.scale, this.store.data.scale);
     this.renderPens();
     this.renderAnimate();
-    this.renderActive();
-    this.renderHover();
+    this.renderBorder();
+    this.renderCP();
     offscreen.restore();
 
     const ctx = this.canvas.getContext('2d');
@@ -872,15 +923,19 @@ export class Canvas {
       height: this.height,
     };
 
+
+
     this.store.data.pens.forEach((pen: TopologyPen) => {
-      const x = pen.calculative.worldRect.x + (this.store.data.x || 0);
-      const y = pen.calculative.worldRect.y + (this.store.data.y || 0);
-      if (!rectInRect({
+      const x = pen.calculative.worldRect.x + this.store.data.x;
+      const y = pen.calculative.worldRect.y + this.store.data.y;
+      const penRect = {
         x,
         y,
         ex: x + pen.calculative.worldRect.width,
         ey: y + pen.calculative.worldRect.height
-      }, canvasRect)) {
+      };
+      scalePoint(canvasRect, this.store.data.scale, this.store.data.center);
+      if (!rectInRect(penRect, canvasRect)) {
         return;
       }
       if (this.store.hover === pen && (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground)) {
@@ -893,19 +948,19 @@ export class Canvas {
     this.store.dirty.clear();
   };
 
-  renderActive = () => {
+  renderBorder = () => {
     if (!this.store.data.locked) {
       // Occupied territory.
       if (this.activeRect) {
         const ctx = this.offscreen.getContext('2d');
         ctx.save();
         ctx.translate(0.5, 0.5);
-        ctx.strokeStyle = this.store.options.activeColor;
-        if (this.store.active.length === 1 && this.store.active[0].calculative.worldRotate % 360) {
+        if (this.activeRotate) {
           ctx.translate(this.activeRect.center.x, this.activeRect.center.y);
-          ctx.rotate((this.store.active[0].calculative.worldRotate * Math.PI) / 180);
+          ctx.rotate((this.activeRotate * Math.PI) / 180);
           ctx.translate(-this.activeRect.center.x, -this.activeRect.center.y);
         }
+        ctx.strokeStyle = this.store.options.activeColor;
 
         ctx.globalAlpha = 0.3;
         ctx.beginPath();
@@ -918,7 +973,7 @@ export class Canvas {
         ctx.lineTo(this.activeRect.center.x, this.activeRect.y - 30);
         ctx.stroke();
 
-        // Draw size control points.
+        // Draw rotate control points.
         ctx.beginPath();
         ctx.strokeStyle = this.store.options.activeColor;
         ctx.fillStyle = "#ffffff";
@@ -931,7 +986,7 @@ export class Canvas {
     }
   };
 
-  renderHover = () => {
+  renderCP = () => {
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.translate(0.5, 0.5);
@@ -939,7 +994,6 @@ export class Canvas {
       if (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground) {
         renderPen(ctx, this.store.hover, this.store.path2dMap.get(this.store.hover), this.store.options);
       }
-
       if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
         const anchors = this.store.hover.calculative.worldAnchors;
         if (anchors) {
@@ -965,6 +1019,11 @@ export class Canvas {
 
     // Draw size control points.
     if (!this.store.data.locked && this.activeRect) {
+      if (this.activeRotate) {
+        ctx.translate(this.activeRect.center.x, this.activeRect.center.y);
+        ctx.rotate((this.activeRotate * Math.PI) / 180);
+        ctx.translate(-this.activeRect.center.x, -this.activeRect.center.y);
+      }
       ctx.strokeStyle = this.store.options.activeColor;
       ctx.fillStyle = "#ffffff";
 
@@ -990,8 +1049,8 @@ export class Canvas {
   renderAnimate = () => { };
 
   translate(x: number, y: number) {
-    this.store.data.x += x;
-    this.store.data.y += y;
+    this.store.data.x += x * this.store.data.scale;
+    this.store.data.y += y * this.store.data.scale;
     this.store.x += x;
     this.store.y += y;
     this.render(Infinity);
@@ -1002,21 +1061,28 @@ export class Canvas {
     if (scale < 0.01) {
       return;
     }
-    this.store.data.scale = scale;
-    this.store.x = this.store.data.x;
-    this.store.y = this.store.data.y;
 
-    if ((this.store.center.x || this.store.center.y) && (center.x !== this.store.center.x || center.y !== this.store.center.y)) {
-      // console.log(1111);
-      // scalePoint(center, 1 / this.store.data.scale, { x: 0, y: 0 });
-      // this.store.x -= center.x - this.store.center.x;
-      // this.store.y -= center.y - this.store.center.y;
+    this.calibrateMouse(center);
+
+    if (this.store.data.scale !== scale) {
+      this.calibrateMouse(this.store.data.center);
+      scalePoint(this.store.data, 1 / this.store.data.scale, this.store.data.center);
     }
 
-    scalePoint(this.store, scale, center);
-    console.log(1111, this.store.x, scale, center);
-    this.store.center = center;
+    this.store.data.scale = scale;
+    this.store.data.center = center;
+    scalePoint(this.store.data, scale, center);
+
     this.render(Infinity);
+  }
+
+  rotating() {
+    this.store.active.forEach((pen) => {
+      pen.calculative.worldRotate = pen.rotate + this.activeRotate;
+    });
+
+    this.render(Infinity);
+    this.store.emitter.emit('rotate', { angle: this.activeRotate, pens: 1 });
   }
 
   destroy() {
