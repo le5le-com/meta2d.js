@@ -1,6 +1,6 @@
 import { KeydownType } from '../options';
-import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, renderPen, TopologyPen } from '../pen';
-import { calcRotate, hitPoint, Point, rotatePoint, scalePoint } from '../point';
+import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, PenType, renderPen, TopologyPen } from '../pen';
+import { calcDistance, calcRotate, hitPoint, Point, rotatePoint, scalePoint } from '../point';
 import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
@@ -14,7 +14,7 @@ enum MoveType {
   LineTo,
   LineControlPoint,
   Nodes,
-  ResizeCP,
+  Resize,
   Anchors,
   AutoAnchor,
   Rotate,
@@ -40,7 +40,7 @@ export class Canvas {
   sizeCPs: Point[];
 
   moveType = MoveType.None;
-  sizeCP = 0;
+  resizeIndex = 0;
   anchor: Point;
   mouseDown: { x: number; y: number; restore?: boolean; };
   isTranslate: boolean;
@@ -463,29 +463,37 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
-    // Translate
-    if (this.translateX && this.translateY && this.mouseDown && this.isTranslate && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
-      const x = e.x - this.translateX;
-      const y = e.y - this.translateY;
-      this.translateX = e.x;
-      this.translateY = e.y;
-      this.translate(x, y);
-      return false;
-    }
-
-    // Rotate
-    if (this.moveType === MoveType.Rotate && this.mouseDown) {
-      this.activeRotate = calcRotate(e, this.activeRect.center);
-      if (this.store.active.length === 1) {
-        this.store.active[0].calculative.worldRotate = this.activeRotate;
-      } else {
-        this.store.active.forEach((pen) => {
-          pen.calculative.worldRotate = pen.rotate + this.activeRotate;
-        });
+    if (this.mouseDown) {
+      // Translate
+      if (this.translateX && this.translateY && this.isTranslate && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
+        const x = e.x - this.translateX;
+        const y = e.y - this.translateY;
+        this.translateX = e.x;
+        this.translateY = e.y;
+        this.translate(x, y);
+        return false;
       }
 
-      this.render(Infinity);
-      return;
+      // Rotate
+      if (this.moveType === MoveType.Rotate) {
+        this.activeRotate = calcRotate(e, this.activeRect.center);
+        if (this.store.active.length === 1) {
+          this.store.active[0].calculative.worldRotate = this.activeRotate;
+        } else {
+          this.store.active.forEach((pen) => {
+            pen.calculative.worldRotate = pen.rotate + this.activeRotate;
+          });
+        }
+
+        this.render(Infinity);
+        return;
+      }
+
+      // Resize
+      if (this.moveType === MoveType.Resize) {
+        this.resizePens(e);
+        return;
+      }
     }
 
     this.store.debug && console.time('hover');
@@ -589,9 +597,9 @@ export class Canvas {
           } else {
             offset = Math.round(this.activeRotate / 90);
           }
-          moveType = MoveType.ResizeCP;
+          moveType = MoveType.Resize;
           this.store.hover = this.store.active[0];
-          this.sizeCP = i;
+          this.resizeIndex = i;
           this.externalElements.style.cursor = cursors[(i + offset) % 4];
           break;
         }
@@ -1083,6 +1091,11 @@ export class Canvas {
 
     this.render(Infinity);
     this.store.emitter.emit('rotate', { angle: this.activeRotate, pens: 1 });
+  }
+
+  resizePens(e: Point) {
+    const distance = calcDistance(this.mouseDown, e);
+
   }
 
   destroy() {

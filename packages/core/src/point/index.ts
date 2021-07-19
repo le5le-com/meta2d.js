@@ -53,3 +53,7 @@ export function calcRotate(pt: Point, center: Point) {
 
   return angle;
 }
+
+export function calcDistance(pt1: Point, pt2: Point): number {
+  return Math.sqrt(Math.pow(Math.abs(pt1.x - pt2.x), 2) + Math.pow(Math.abs(pt1.y - pt2.y), 2));
+}
