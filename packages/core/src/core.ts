@@ -110,6 +110,10 @@ export class Topology {
     this.canvas.render();
   }
 
+  emit(eventType: EventType, data: any) {
+    this.store.emitter.emit(eventType, data);
+  }
+
   on(eventType: EventType, handler: Handler) {
     this.store.emitter.on(eventType, handler);
     return this;

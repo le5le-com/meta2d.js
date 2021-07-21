@@ -54,8 +54,6 @@ export interface TopologyStore {
   pens: any;
 
   // world offset
-  x: number;
-  y: number;
   center: Point;
 
   // Websocket instance.
@@ -68,7 +66,6 @@ export interface TopologyStore {
   hover: TopologyPen;
   lastHover: TopologyPen;
   animate: Map<TopologyPen, number>;
-  dirty: Map<TopologyPen, number>;
   options: Options;
   emitter: Emitter;
   registerPens: any;
@@ -86,15 +83,11 @@ export const createStore = () => {
       children: {},
       center: { x: 0, y: 0 },
     },
-    x: 0,
-    y: 0,
-    center: { x: 0, y: 0 },
     histories: [],
     pens: {},
     path2dMap: new WeakMap(),
     active: [],
     animate: new Map(),
-    dirty: new Map(),
     options: Object.assign({}, defaultOptions),
     emitter: mitt()
   } as TopologyStore;
@@ -119,8 +112,6 @@ export const clearStore = (store: TopologyStore) => {
     children: {},
     center: { x: 0, y: 0 },
   };
-  store.x = 0;
-  store.y = 0;
   store.center = { x: 0, y: 0 };
   store.pens = {};
   store.histories = [];
@@ -129,7 +120,6 @@ export const clearStore = (store: TopologyStore) => {
   store.hover = undefined;
   store.lastHover = undefined;
   store.animate.clear();
-  store.dirty.clear();
 };
 
 

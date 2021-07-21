@@ -1,5 +1,5 @@
 import { TopologyPen } from '../pen';
-import { Point, rotatePoint } from '../point';
+import { Point, rotatePoint, scalePoint } from '../point';
 
 export interface Rect {
   x: number;
@@ -145,3 +145,18 @@ export function translateRect(rect: Rect, x: number, y: number) {
     rect.center.y += y;
   }
 }
+
+export function scaleRect(rect: Rect, scale: number, center: Point) {
+  if (!rect) {
+    return;
+  }
+  rect.width *= scale;
+  rect.height *= scale;
+  scalePoint(rect, scale, center);
+
+  rect.ex += rect.x + rect.width;
+  rect.ey += rect.y + rect.height;
+  rect.center.x = rect.x + rect.width / 2;
+  rect.center.y = rect.y + rect.height / 2;
+}
+

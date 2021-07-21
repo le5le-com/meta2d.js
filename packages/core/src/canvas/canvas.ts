@@ -1,7 +1,7 @@
 import { KeydownType } from '../options';
-import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, PenType, renderPen, TopologyPen } from '../pen';
-import { calcDistance, calcRotate, hitPoint, Point, rotatePoint, scalePoint } from '../point';
-import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints } from '../rect';
+import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, PenType, renderPen, scalePen, TopologyPen } from '../pen';
+import { distance, calcRotate, hitPoint, Point, rotatePoint } from '../point';
+import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints, scaleRect } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, rotatedCursors } from './cursor';
@@ -47,7 +47,7 @@ export class Canvas {
   translateX: number;
   translateY: number;
   cacheNode: TopologyPen;
-  touchCenter?: { x: number; y: number; };
+  touchCenter?: Point;
   touches?: TouchList;
 
   dirty = false;
@@ -158,19 +158,19 @@ export class Canvas {
     e.preventDefault();
     e.stopPropagation();
 
-    const center = {
-      x: e.x - (this.bounding.left || this.bounding.x),
-      y: e.y - (this.bounding.top || this.bounding.y)
-    };
+    let x = e.x - (this.bounding.left || this.bounding.x);
+    let y = e.y - (this.bounding.top || this.bounding.y);
+
     if (window) {
-      center.x -= window.scrollX;
-      center.y -= window.scrollY;
+      x -= window.scrollX;
+      y -= window.scrollY;
     }
     if (e.deltaY < 0) {
-      this.scale(this.store.data.scale + 0.1, center);
+      this.scale(this.store.data.scale + 0.1, { x, y });
     } else {
-      this.scale(this.store.data.scale - 0.1, center);
+      this.scale(this.store.data.scale - 0.1, { x, y });
     }
+    this.store.emitter.emit('scale', this.store.data.scale);
   };
 
   onkey = (e: KeyboardEvent) => {
@@ -347,6 +347,7 @@ export class Canvas {
     e.preventDefault();
   };
 
+
   onMouseDown = (e: {
     x: number;
     y: number;
@@ -426,15 +427,7 @@ export class Canvas {
             }
           }
 
-          if (this.store.active.length === 1) {
-            this.activeRect = this.store.active[0].calculative.worldRect;
-            this.activeRotate = this.store.active[0].rotate;
-            this.activeRect.rotate = this.activeRotate;
-          } else {
-            this.activeRotate = 0;
-            this.activeRect = getRect(this.store.active);
-          }
-          this.sizeCPs = rectToPoints(this.activeRect);
+          this.calcActiveRect();
         }
         break;
     }
@@ -564,8 +557,8 @@ export class Canvas {
     pt.x -= this.store.data.x;
     pt.y -= this.store.data.y;
 
-    pt.x /= this.store.data.scale;
-    pt.y /= this.store.data.scale;
+    // pt.x /= this.store.data.scale;
+    // pt.y /= this.store.data.scale;
 
     return pt;
   };
@@ -723,19 +716,7 @@ export class Canvas {
     this.offscreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
     this.offscreen.getContext('2d').textBaseline = 'middle';
 
-    this.dirtyAll();
-    this.render();
-  }
-
-  dirtyAll() {
-    this.dirty = true;
-    this.store.dirty.clear();
-    this.store.data.pens.forEach((pen, i) => {
-      this.store.dirty.set(pen, i);
-      calcWorldRects(this.store.pens, pen);
-    });
-
-    this.clearCanvas();
+    this.render(Infinity);
   }
 
   clearCanvas() {
@@ -790,7 +771,6 @@ export class Canvas {
     this.dirtyRect(pen);
     !pen.rotate && (pen.rotate = 0);
     pen.calculative.worldRotate = pen.rotate;
-    this.store.path2dMap.set(pen, this.store.registerPens[pen.name](pen));
     this.loadImage(pen);
   }
 
@@ -863,18 +843,13 @@ export class Canvas {
     }
   }
 
-  dirtyProps(pen: TopologyPen) {
-    this.dirty = true;
-    this.store.dirty.set(pen, 1);
-  }
-
   dirtyRect(pen: TopologyPen) {
     calcWorldRects(this.store.pens, pen);
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
+    this.store.path2dMap.set(pen, this.store.registerPens[pen.name](pen));
     this.dirty = true;
-    this.store.dirty.set(pen, 1);
   }
 
   render = (now?: number) => {
@@ -894,22 +869,19 @@ export class Canvas {
       return;
     }
     this.lastRender = now;
-
-    const offscreen = this.offscreen.getContext('2d');
-    offscreen.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
-    offscreen.save();
-    offscreen.translate(this.store.data.x, this.store.data.y);
-    offscreen.scale(this.store.data.scale, this.store.data.scale);
+    const offscreenCtx = this.offscreen.getContext('2d');
+    offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
+    offscreenCtx.save();
+    offscreenCtx.translate(this.store.data.x, this.store.data.y);
     this.renderPens();
     this.renderAnimate();
     this.renderBorder();
     this.renderCP();
-    offscreen.restore();
+    offscreenCtx.restore();
 
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
-
     this.dirty = false;
 
     if (this.store.animate.size) {
@@ -921,7 +893,6 @@ export class Canvas {
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.strokeStyle = this.store.options.color;
-    ctx.translate(0.5, 0.5);
     const canvasRect = {
       x: 0,
       y: 0,
@@ -930,8 +901,6 @@ export class Canvas {
       width: this.width,
       height: this.height,
     };
-
-
 
     this.store.data.pens.forEach((pen: TopologyPen) => {
       const x = pen.calculative.worldRect.x + this.store.data.x;
@@ -942,18 +911,12 @@ export class Canvas {
         ex: x + pen.calculative.worldRect.width,
         ey: y + pen.calculative.worldRect.height
       };
-      scalePoint(canvasRect, this.store.data.scale, this.store.data.center);
       if (!rectInRect(penRect, canvasRect)) {
         return;
       }
-      if (this.store.hover === pen && (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground)) {
-        return;
-      }
       renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store.options);
-
     });
     ctx.restore();
-    this.store.dirty.clear();
   };
 
   renderBorder = () => {
@@ -999,9 +962,6 @@ export class Canvas {
     ctx.save();
     ctx.translate(0.5, 0.5);
     if (this.store.hover) {
-      if (this.store.hover.hoverColor || this.store.hover.hoverBackground || this.store.options.hoverColor || this.store.options.hoverBackground) {
-        renderPen(ctx, this.store.hover, this.store.path2dMap.get(this.store.hover), this.store.options);
-      }
       if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
         const anchors = this.store.hover.calculative.worldAnchors;
         if (anchors) {
@@ -1057,29 +1017,29 @@ export class Canvas {
   renderAnimate = () => { };
 
   translate(x: number, y: number) {
-    this.store.data.x += x * this.store.data.scale;
-    this.store.data.y += y * this.store.data.scale;
-    this.store.x += x;
-    this.store.y += y;
+    this.store.data.x += x;
+    this.store.data.y += y;
+    this.store.data.x = Math.round(this.store.data.x);
+    this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
-    !this.isTranslate && this.store.emitter.emit('translate');
+    !this.isTranslate && this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
-    if (scale < 0.01) {
+    if (scale < this.store.options.minScale || scale > this.store.options.maxScale) {
       return;
     }
 
     this.calibrateMouse(center);
-
-    if (this.store.data.scale !== scale) {
-      this.calibrateMouse(this.store.data.center);
-      scalePoint(this.store.data, 1 / this.store.data.scale, this.store.data.center);
-    }
-
+    this.dirty = true;
+    const s = scale / this.store.data.scale;
+    this.store.data.pens.forEach((pen) => {
+      scalePen(pen, s, center);
+      this.dirtyRect(pen);
+    });
+    this.calcActiveRect();
     this.store.data.scale = scale;
     this.store.data.center = center;
-    scalePoint(this.store.data, scale, center);
 
     this.render(Infinity);
   }
@@ -1094,8 +1054,20 @@ export class Canvas {
   }
 
   resizePens(e: Point) {
-    const distance = calcDistance(this.mouseDown, e);
+    const dt = distance(this.mouseDown, e);
 
+  }
+
+  calcActiveRect() {
+    if (this.store.active.length === 1) {
+      this.activeRect = this.store.active[0].calculative.worldRect;
+      this.activeRotate = this.store.active[0].rotate;
+      this.activeRect.rotate = this.activeRotate;
+    } else {
+      this.activeRotate = 0;
+      this.activeRect = getRect(this.store.active);
+    }
+    this.sizeCPs = rectToPoints(this.activeRect);
   }
 
   destroy() {

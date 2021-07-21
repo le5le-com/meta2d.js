@@ -89,5 +89,5 @@ export const defaultOptions: Options = {
   gridSize: 10,
   gridColor: '#f3f3f3',
   ruleColor: '#888888',
-  interval: 17
+  interval: 20
 };

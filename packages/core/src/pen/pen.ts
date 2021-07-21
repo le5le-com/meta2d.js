@@ -1,6 +1,6 @@
 import { Options } from '../options';
 import { Point, rotatePoint } from '../point';
-import { Rect } from '../rect';
+import { Rect, scaleRect } from '../rect';
 import { s8 } from '../utils';
 
 export enum PenType {
@@ -177,8 +177,8 @@ export function renderPen(
   }
 
   ctx.save();
+  ctx.translate(0.5, 0.5);
   ctx.beginPath();
-
   // for canvas2svg
   if ((ctx as any).setAttrs) {
     (ctx as any).setAttrs(pen);
@@ -373,9 +373,11 @@ export function renderPen(
 
 export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
   const rect: Rect = {
-    x: pen.x,
-    y: pen.y
+    x: Math.round(pen.x),
+    y: Math.round(pen.y)
   };
+  pen.width = Math.round(pen.width);
+  pen.height = Math.round(pen.height);
 
   if (!pen.parentId) {
     rect.ex = pen.x + pen.width;
@@ -513,6 +515,61 @@ export function calcIconRect(pens: { [key: string]: TopologyPen; }, pen: Topolog
   };
 }
 
-export function translate(pen: TopologyPen, x: number, y: number) {
-
+export function scalePen(pen: TopologyPen, scale: number, center: Point) {
+  if (!pen.lineWidth) {
+    pen.lineWidth = 1;
+  }
+  pen.lineWidth *= scale;
+  pen.lineHeight *= scale;
+  pen.fontSize *= scale;
+  pen.iconSize *= scale;
+  if (pen.iconWidth > 0) {
+    pen.iconWidth *= scale;
+    if (pen.iconWidth <= 1) {
+      pen.iconWidth = 1.01;
+    }
+  }
+  if (pen.iconHeight > 0) {
+    pen.iconHeight *= scale;
+    if (pen.iconHeight <= 1) {
+      pen.iconHeight = 1.01;
+    }
+  }
+  if (pen.iconLeft > 0) {
+    pen.iconLeft *= scale;
+    if (pen.iconLeft <= 1) {
+      pen.iconLeft = 1.01;
+    }
+  }
+  if (pen.iconTop > 0) {
+    pen.iconTop *= scale;
+    if (pen.iconTop <= 1) {
+      pen.iconTop = 1.01;
+    }
+  }
+  if (pen.textWidth > 0) {
+    pen.textWidth *= scale;
+    if (pen.textWidth <= 1) {
+      pen.textWidth = 1.01;
+    }
+  }
+  if (pen.textHeight > 0) {
+    pen.textHeight *= scale;
+    if (pen.textHeight <= 1) {
+      pen.textHeight = 1.01;
+    }
+  }
+  if (pen.textLeft > 0) {
+    pen.textLeft *= scale;
+    if (pen.textLeft <= 1) {
+      pen.textLeft = 1.01;
+    }
+  }
+  if (pen.textTop > 0) {
+    pen.textTop *= scale;
+    if (pen.textTop <= 1) {
+      pen.textTop = 1.01;
+    }
+  }
+  scaleRect(pen, scale, center);
 }
