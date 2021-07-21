@@ -132,7 +132,6 @@ export interface TopologyPen {
 
   calculative?: {
     worldRect?: Rect;
-    worldRotate?: number;
     worldAnchors?: Point[];
     worldIconRect?: Rect;
     worldTextRect?: Rect;
@@ -185,10 +184,10 @@ export function renderPen(
   }
   // end
 
-  if (pen.calculative.worldRotate) {
-    ctx.translate(pen.center.x, pen.center.y);
-    ctx.rotate((pen.calculative.worldRotate * Math.PI) / 180);
-    ctx.translate(-pen.center.x, -pen.center.y);
+  if (pen.rotate) {
+    ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
+    ctx.rotate((pen.rotate * Math.PI) / 180);
+    ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
   }
 
   if (pen.lineWidth > 1) {
@@ -373,11 +372,9 @@ export function renderPen(
 
 export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
   const rect: Rect = {
-    x: Math.round(pen.x),
-    y: Math.round(pen.y)
+    x: pen.x,
+    y: pen.y
   };
-  pen.width = Math.round(pen.width);
-  pen.height = Math.round(pen.height);
 
   if (!pen.parentId) {
     rect.ex = pen.x + pen.width;

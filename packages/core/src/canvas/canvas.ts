@@ -37,13 +37,14 @@ export class Canvas {
 
   activeRect: Rect;
   activeRotate = 0;
+  lastActiveRotate = 0;
   sizeCPs: Point[];
 
   moveType = MoveType.None;
   resizeIndex = 0;
   anchor: Point;
   mouseDown: { x: number; y: number; restore?: boolean; };
-  isTranslate: boolean;
+  ctrl: boolean;
   translateX: number;
   translateY: number;
   cacheNode: TopologyPen;
@@ -136,7 +137,11 @@ export class Canvas {
       case KeydownType.Document:
         document.addEventListener('keydown', this.onkey);
         document.addEventListener('keyup', () => {
-          this.isTranslate = false;
+          if (this.ctrl) {
+            this.ctrl = false;
+            this.render(Infinity);
+          }
+          this.ctrl = false;
         });
         break;
       case KeydownType.Canvas:
@@ -186,7 +191,7 @@ export class Canvas {
       case ' ':
       case 'Control':
       case 'Meta':
-        this.isTranslate = true;
+        this.ctrl = true;
         break;
       case 'a':
       case 'A':
@@ -234,6 +239,10 @@ export class Canvas {
       case 'Escape':
 
         break;
+    }
+
+    if (this.ctrl) {
+      this.render(Infinity);
     }
   };
 
@@ -367,10 +376,8 @@ export class Canvas {
     e.y -= this.bounding.top || this.bounding.y;
 
     this.mouseDown = e;
-    if (e.ctrlKey || (this.store.options.rightMouseTranslate && e.buttons == 2)) {
-      this.isTranslate = true;
-    }
-    if (this.isTranslate) {
+
+    if (this.ctrl) {
       this.translateX = e.x;
       this.translateY = e.y;
     }
@@ -458,7 +465,7 @@ export class Canvas {
 
     if (this.mouseDown) {
       // Translate
-      if (this.translateX && this.translateY && this.isTranslate && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
+      if (this.translateX && this.translateY && this.ctrl && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
         const x = e.x - this.translateX;
         const y = e.y - this.translateY;
         this.translateX = e.x;
@@ -471,13 +478,23 @@ export class Canvas {
       if (this.moveType === MoveType.Rotate) {
         this.activeRotate = calcRotate(e, this.activeRect.center);
         if (this.store.active.length === 1) {
-          this.store.active[0].calculative.worldRotate = this.activeRotate;
+          this.store.active[0].rotate = this.activeRotate;
+          this.dirtyRect(this.store.active[0]);
         } else {
+          const angle = this.activeRotate - this.lastActiveRotate;
+
           this.store.active.forEach((pen) => {
-            pen.calculative.worldRotate = pen.rotate + this.activeRotate;
+            if (pen.parentId) {
+              return;
+            }
+            pen.rotate += angle;
+            rotatePoint(pen.calculative.worldRect.center, angle, this.activeRect.center);
+            pen.x = pen.calculative.worldRect.center.x - pen.width / 2;
+            pen.y = pen.calculative.worldRect.center.y - pen.height / 2;
+            this.dirtyRect(pen);
           });
         }
-
+        this.lastActiveRotate = this.activeRotate;
         this.render(Infinity);
         return;
       }
@@ -525,23 +542,49 @@ export class Canvas {
       return;
     }
 
-    if (this.isTranslate) {
-      this.isTranslate = false;
+    if (this.ctrl) {
+      this.ctrl = false;
       this.store.emitter.emit('translate');
     }
 
     // Rotate
     if (this.moveType === MoveType.Rotate) {
-      this.store.active.forEach((pen) => {
-        pen.rotate = pen.calculative.worldRotate;
-        pen.calculative.worldRect.rotate = pen.rotate;
-        calcWorldAnchors(pen);
-      });
-
-      this.sizeCPs = rectToPoints(this.activeRect);
+      this.getSizeCPs();
       return;
     }
   };
+
+  getSizeCPs() {
+    this.sizeCPs = rectToPoints(this.activeRect);
+
+    let pt = {
+      x: this.activeRect.x + this.activeRect.width * 0.5,
+      y: this.activeRect.y,
+    };
+    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    this.sizeCPs.push(pt);
+
+    pt = {
+      x: this.activeRect.ex,
+      y: this.activeRect.y + this.activeRect.height * 0.5,
+    };
+    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    this.sizeCPs.push(pt);
+
+    pt = {
+      x: this.activeRect.x + this.activeRect.width * 0.5,
+      y: this.activeRect.ey,
+    };
+    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    this.sizeCPs.push(pt);
+
+    pt = {
+      x: this.activeRect.x,
+      y: this.activeRect.y + this.activeRect.height * 0.5,
+    };
+    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    this.sizeCPs.push(pt);
+  }
 
   onResize = () => {
     if (this.timer) {
@@ -557,9 +600,6 @@ export class Canvas {
     pt.x -= this.store.data.x;
     pt.y -= this.store.data.y;
 
-    // pt.x /= this.store.data.scale;
-    // pt.y /= this.store.data.scale;
-
     return pt;
   };
 
@@ -573,7 +613,7 @@ export class Canvas {
           rotatePoint(rotatePt, this.activeRotate, this.activeRect.center);
         }
         // 旋转控制点
-        if (hitPoint(pt, rotatePt, size)) {
+        if (!this.ctrl && hitPoint(pt, rotatePt, size)) {
           moveType = MoveType.Rotate;
           this.externalElements.style.cursor = 'url("rotate.cur"), auto';
         }
@@ -595,6 +635,26 @@ export class Canvas {
           this.resizeIndex = i;
           this.externalElements.style.cursor = cursors[(i + offset) % 4];
           break;
+        }
+      }
+
+      if (this.ctrl) {
+        for (let i = 4; i < 8; i++) {
+          if (hitPoint(pt, this.sizeCPs[i], size)) {
+            let cursors = rotatedCursors;
+            let offset = 0;
+            if (Math.abs(this.activeRotate % 90 - 45) < 25) {
+              cursors = defaultCursors;
+              offset = Math.round((this.activeRotate - 45) / 90) + 1;
+            } else {
+              offset = Math.round(this.activeRotate / 90);
+            }
+            moveType = MoveType.Resize;
+            this.store.hover = this.store.active[0];
+            this.resizeIndex = i;
+            this.externalElements.style.cursor = cursors[(i + offset) % 4];
+            break;
+          }
         }
       }
     }
@@ -770,7 +830,6 @@ export class Canvas {
     // end
     this.dirtyRect(pen);
     !pen.rotate && (pen.rotate = 0);
-    pen.calculative.worldRotate = pen.rotate;
     this.loadImage(pen);
   }
 
@@ -961,7 +1020,7 @@ export class Canvas {
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.translate(0.5, 0.5);
-    if (this.store.hover) {
+    if (this.store.hover && (!this.ctrl || this.store.active.length !== 1 || this.store.active[0] !== this.store.hover)) {
       if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
         const anchors = this.store.hover.calculative.worldAnchors;
         if (anchors) {
@@ -1010,6 +1069,24 @@ export class Canvas {
       ctx.beginPath();
       ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.ey - 4.5, 8, 8);
       ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.ey - 5.5, 10, 10);
+
+      if (this.ctrl) {
+        ctx.beginPath();
+        ctx.fillRect(this.activeRect.center.x - 4.5, this.activeRect.y - 4.5, 8, 8);
+        ctx.strokeRect(this.activeRect.center.x - 5.5, this.activeRect.y - 5.5, 10, 10);
+
+        ctx.beginPath();
+        ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.center.y - 4.5, 8, 8);
+        ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.center.y - 5.5, 10, 10);
+
+        ctx.beginPath();
+        ctx.fillRect(this.activeRect.center.x - 4.5, this.activeRect.ey - 4.5, 8, 8);
+        ctx.strokeRect(this.activeRect.center.x - 5.5, this.activeRect.ey - 5.5, 10, 10);
+
+        ctx.beginPath();
+        ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.center.y - 4.5, 8, 8);
+        ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.center.y - 5.5, 10, 10);
+      }
     }
     ctx.restore();
   };
@@ -1022,7 +1099,7 @@ export class Canvas {
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
-    !this.isTranslate && this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
+    !this.ctrl && this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -1044,15 +1121,6 @@ export class Canvas {
     this.render(Infinity);
   }
 
-  rotating() {
-    this.store.active.forEach((pen) => {
-      pen.calculative.worldRotate = pen.rotate + this.activeRotate;
-    });
-
-    this.render(Infinity);
-    this.store.emitter.emit('rotate', { angle: this.activeRotate, pens: 1 });
-  }
-
   resizePens(e: Point) {
     const dt = distance(this.mouseDown, e);
 
@@ -1067,7 +1135,8 @@ export class Canvas {
       this.activeRotate = 0;
       this.activeRect = getRect(this.store.active);
     }
-    this.sizeCPs = rectToPoints(this.activeRect);
+    this.lastActiveRotate = 0;
+    this.getSizeCPs();
   }
 
   destroy() {
