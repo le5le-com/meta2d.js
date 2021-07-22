@@ -578,3 +578,37 @@ export function scalePen(pen: TopologyPen, scale: number, center: Point) {
   }
   scaleRect(pen, scale, center);
 }
+
+export function addPenAnchor(pen: TopologyPen, pt: Point) {
+  if (!pen.anchors) {
+    pen.anchors = [];
+  }
+  if (pen.rotate % 360) {
+    rotatePoint(pt, -pen.rotate, pen.calculative.worldRect.center);
+  }
+  const anchor = {
+    id: s8(),
+    penId: pen.id,
+    x: (pt.x - pen.calculative.worldRect.x) / pen.calculative.worldRect.width,
+    y: (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
+    custom: true
+  };
+  pen.anchors.push(anchor);
+
+  calcWorldAnchors(pen);
+}
+
+export function removePenAnchor(pen: TopologyPen, anchor: Point) {
+  if (!pen.anchors) {
+    return;
+  }
+  const i = pen.anchors.findIndex(a => a.id === anchor.id);
+  if (i < 0) {
+    return;
+  }
+
+  pen.anchors.splice(i, 1);
+  calcWorldAnchors(pen);
+
+  return true;
+}

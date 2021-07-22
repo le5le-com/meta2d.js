@@ -1,5 +1,5 @@
 import { KeydownType } from '../options';
-import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, renderPen, scalePen, TopologyPen } from '../pen';
+import { addPenAnchor, calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, removePenAnchor, renderPen, scalePen, TopologyPen } from '../pen';
 import { calcRotate, hitPoint, Point, rotatePoint } from '../point';
 import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints, translateRect } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
@@ -45,6 +45,7 @@ export class Canvas {
   anchor: Point;
   mouseDown: { x: number; y: number; restore?: boolean; };
   ctrl: boolean;
+  addAnchorReady: boolean;
   translateX: number;
   translateY: number;
   cacheNode: TopologyPen;
@@ -195,6 +196,16 @@ export class Canvas {
       case 'Control':
       case 'Meta':
         this.ctrl = true;
+        break;
+      case 'Shift':
+        if (this.addAnchorReady !== e.shiftKey) {
+          this.dirty = true;
+        }
+        this.addAnchorReady = e.shiftKey;
+        if (this.addAnchorReady && this.store.hover) {
+          this.render();
+          return;
+        }
         break;
       case 'a':
       case 'A':
@@ -379,6 +390,20 @@ export class Canvas {
 
     this.mouseDown = e;
 
+    // Set anchor of pen.
+    if (this.addAnchorReady) {
+      if (this.anchor && this.anchor.custom) {
+        removePenAnchor(this.store.hover, this.anchor);
+        this.anchor = undefined;
+      } else if (this.store.hover) {
+        const pt = { x: e.x, y: e.y };
+        this.calibrateMouse(pt);
+        addPenAnchor(this.store.hover, pt);
+      }
+      this.render(Infinity);
+      return;
+    }
+
     if (this.ctrl) {
       this.translateX = e.x;
       this.translateY = e.y;
@@ -399,7 +424,7 @@ export class Canvas {
         break;
       case MoveType.Nodes:
         if (this.store.hover) {
-          if (e.ctrlKey || e.shiftKey) {
+          if (e.ctrlKey) {
             if (this.store.hover.parentId) {
               break;
             }
@@ -472,6 +497,15 @@ export class Canvas {
     }
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
+
+    if (this.addAnchorReady !== e.shiftKey) {
+      this.dirty = true;
+    }
+    this.addAnchorReady = e.shiftKey;
+    if (this.addAnchorReady && this.store.hover) {
+      this.render();
+      return;
+    }
 
     if (this.mouseDown) {
       // Rotate
@@ -628,6 +662,7 @@ export class Canvas {
   private getHover = (pt: Point) => {
     let moveType = MoveType.None;
     const size = 8;
+    this.anchor = undefined;
     if (this.activeRect) {
       if (!this.store.options.disableRotate) {
         const rotatePt = { x: this.activeRect.center.x, y: this.activeRect.y - 30 };
@@ -1048,7 +1083,7 @@ export class Canvas {
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.translate(0.5, 0.5);
-    if (this.store.hover && (!this.ctrl || this.store.active.length !== 1 || this.store.active[0] !== this.store.hover)) {
+    if (this.store.hover && ((!this.ctrl || this.addAnchorReady) || this.store.active.length !== 1 || this.store.active[0] !== this.store.hover)) {
       if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
         const anchors = this.store.hover.calculative.worldAnchors;
         if (anchors) {
@@ -1073,7 +1108,7 @@ export class Canvas {
     }
 
     // Draw size control points.
-    if (!this.store.data.locked && this.activeRect) {
+    if (!this.store.data.locked && !this.addAnchorReady && this.activeRect) {
       ctx.strokeStyle = this.store.options.activeColor;
       ctx.fillStyle = "#ffffff";
       this.sizeCPs.forEach((pt, i) => {
@@ -1203,6 +1238,9 @@ export class Canvas {
   }
 
   movePens(e: Point) {
+    if (!this.activeRect) {
+      return;
+    }
     const p1 = { x: this.mouseDown.x, y: this.mouseDown.y };
     const p2 = { x: e.x, y: e.y };
     rotatePoint(p1, -this.activeRect.rotate, this.activeRect.center);
