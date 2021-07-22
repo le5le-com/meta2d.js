@@ -155,10 +155,10 @@ export interface TopologyPen {
 
 export function getParent(pens: any, pen: TopologyPen) {
   if (!pen.parentId) {
-    return pen;
+    return undefined;
   }
 
-  return getParent(pens, pens[pen.parentId]);
+  return getParent(pens, pens[pen.parentId]) || pens[pen.parentId];
 }
 
 export function renderPen(

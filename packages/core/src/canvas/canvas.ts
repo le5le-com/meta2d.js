@@ -1,7 +1,7 @@
 import { KeydownType } from '../options';
 import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, renderPen, scalePen, TopologyPen } from '../pen';
 import { calcRotate, hitPoint, Point, rotatePoint } from '../point';
-import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints } from '../rect';
+import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints, translateRect } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, rotatedCursors } from './cursor';
@@ -424,14 +424,13 @@ export class Canvas {
               this.dirty = true;
             }
           } else {
-            const pen = getParent(this.store.pens, this.store.hover);
-            if (!pen.active) {
+            if (!this.store.hover.calculative.active) {
               this.store.active.forEach((pen) => {
                 pen.calculative.active = undefined;
               });
-              this.store.active = [pen];
+              this.store.active = [this.store.hover];
               this.store.hover.calculative.active = true;
-              this.store.emitter.emit('active', pen);
+              this.store.emitter.emit('active', this.store.hover);
               this.dirty = true;
             }
           }
@@ -504,6 +503,12 @@ export class Canvas {
       // Resize
       if (this.moveType === MoveType.Resize) {
         this.resizePens(e);
+        return;
+      }
+
+      // Move
+      if (this.moveType === MoveType.Nodes) {
+        this.movePens(e);
         return;
       }
 
@@ -739,6 +744,14 @@ export class Canvas {
           }
         }
       }
+    }
+
+    if (moveType === MoveType.None && pointInRect(pt, this.activeRect)) {
+      if (!this.store.data.locked) {
+        this.externalElements.style.cursor = 'move';
+      }
+      this.store.hover = undefined;
+      moveType = MoveType.Nodes;
     }
 
     this.moveType = moveType;
@@ -1181,6 +1194,33 @@ export class Canvas {
       pen.y = (this.activeInitPos[i].y * this.activeRect.height) + this.activeRect.y;
       pen.width *= scaleX;
       pen.height *= scaleY;
+      this.dirtyRect(pen);
+    });
+    this.getSizeCPs();
+    this.render(Infinity);
+  }
+
+  movePens(e: Point) {
+    const p1 = { x: this.mouseDown.x, y: this.mouseDown.y };
+    const p2 = { x: e.x, y: e.y };
+    rotatePoint(p1, -this.activeRect.rotate, this.activeRect.center);
+    rotatePoint(p2, -this.activeRect.rotate, this.activeRect.center);
+
+    const x = p2.x - p1.x;
+    const y = p2.y - p1.y;
+
+    const offsetX = x - this.lastOffsetX;
+    const offsetY = y - this.lastOffsetY;
+    this.lastOffsetX = x;
+    this.lastOffsetY = y;
+
+    translateRect(this.activeRect, offsetX, offsetY);
+
+    this.store.active.forEach((pen, i) => {
+      if (pen.parentId) {
+        return;
+      }
+      translateRect(pen, offsetX, offsetY);
       this.dirtyRect(pen);
     });
     this.getSizeCPs();
