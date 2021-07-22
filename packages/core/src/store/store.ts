@@ -3,18 +3,8 @@ import { default as mitt, Emitter } from 'mitt';
 import { LockState, TopologyPen } from '../pen';
 import { defaultOptions, Options } from '../options';
 
-import pkg from '../../package.json';
 import { Point } from '../point';
-
-export const globalStore: {
-  version: string;
-  htmlElements: { [key: string]: any; };
-  paths: { [key: string]: string; };
-} = {
-  version: pkg.version,
-  htmlElements: {},
-  paths: {}
-};
+import { globalStore } from '.';
 
 export interface TopologyData {
   pens: TopologyPen[];
@@ -68,7 +58,7 @@ export interface TopologyStore {
   animate: Map<TopologyPen, number>;
   options: Options;
   emitter: Emitter;
-  registerPens: any;
+  penPaths: any;
   dpiRatio?: number;
   debug?: boolean;
 }

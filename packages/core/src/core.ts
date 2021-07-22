@@ -124,8 +124,16 @@ export class Topology {
     return this;
   }
 
-  register(pens: any) {
-    this.store.registerPens = Object.assign({}, this.store.registerPens, pens);
+  register(penPaths: any) {
+    this.store.penPaths = Object.assign({}, this.store.penPaths, penPaths);
+  }
+
+  registerDraw(name: string, draw?: Function) {
+    globalStore.draws[name] = draw;
+  }
+
+  registerIndependentDraw(name: string, draw?: Function) {
+    globalStore.independentDraws[name] = draw;
   }
 
   destroy(global?: boolean) {

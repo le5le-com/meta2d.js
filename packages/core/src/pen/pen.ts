@@ -1,6 +1,7 @@
 import { Options } from '../options';
 import { Point, rotatePoint } from '../point';
 import { Rect, scaleRect } from '../rect';
+import { globalStore } from '../store';
 import { s8 } from '../utils';
 
 export enum PenType {
@@ -150,11 +151,6 @@ export interface TopologyPen {
     active?: boolean;
     hover?: boolean;
   };
-
-  beforeAddPen: (pen: TopologyPen) => boolean;
-  beforeAddAnchor: (pen: TopologyPen, anchor: Point) => boolean;
-  beforeRemovePen: (pen: TopologyPen) => boolean;
-  beforeRemoveAnchor: (pen: TopologyPen, anchor: Point) => boolean;
 }
 
 export function getParent(pens: any, pen: TopologyPen) {
@@ -171,7 +167,10 @@ export function renderPen(
   path: Path2D,
   options: Options,
 ) {
-  if (!path) {
+  if (globalStore.independentDraws[pen.name]) {
+    ctx.save();
+    globalStore.independentDraws[pen.name](ctx, pen, options);
+    ctx.restore();
     return;
   }
 
@@ -248,8 +247,17 @@ export function renderPen(
     ctx.shadowBlur = pen.shadowBlur;
   }
 
-  fill && ctx.fill(path);
-  ctx.stroke(path);
+  if (path) {
+    fill && ctx.fill(path);
+    ctx.stroke(path);
+  }
+
+  if (globalStore.draws[pen.name]) {
+    ctx.save();
+    globalStore.draws[pen.name](ctx, pen, options);
+    ctx.restore();
+    return;
+  }
 
   if (pen.image && pen.calculative.img) {
     ctx.save();

@@ -1,7 +1,7 @@
 import { KeydownType } from '../options';
-import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, PenType, renderPen, scalePen, TopologyPen } from '../pen';
-import { distance, calcRotate, hitPoint, Point, rotatePoint } from '../point';
-import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints, scaleRect } from '../rect';
+import { calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, renderPen, scalePen, TopologyPen } from '../pen';
+import { calcRotate, hitPoint, Point, rotatePoint } from '../point';
+import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, rotatedCursors } from './cursor';
@@ -36,8 +36,7 @@ export class Canvas {
   canvasRect: Rect;
 
   activeRect: Rect;
-  activeRotate = 0;
-  lastActiveRotate = 0;
+  lastRotate = 0;
   sizeCPs: Point[];
 
   moveType = MoveType.None;
@@ -50,6 +49,9 @@ export class Canvas {
   cacheNode: TopologyPen;
   touchCenter?: Point;
   touches?: TouchList;
+
+  lastOffsetX = 0;
+  lastOffsetY = 0;
 
   dirty = false;
   lastRender = 0;
@@ -476,12 +478,12 @@ export class Canvas {
 
       // Rotate
       if (this.moveType === MoveType.Rotate) {
-        this.activeRotate = calcRotate(e, this.activeRect.center);
+        this.activeRect.rotate = calcRotate(e, this.activeRect.center);
         if (this.store.active.length === 1) {
-          this.store.active[0].rotate = this.activeRotate;
+          this.store.active[0].rotate = this.activeRect.rotate;
           this.dirtyRect(this.store.active[0]);
         } else {
-          const angle = this.activeRotate - this.lastActiveRotate;
+          const angle = this.activeRect.rotate - this.lastRotate;
 
           this.store.active.forEach((pen) => {
             if (pen.parentId) {
@@ -494,7 +496,8 @@ export class Canvas {
             this.dirtyRect(pen);
           });
         }
-        this.lastActiveRotate = this.activeRotate;
+        this.lastRotate = this.activeRect.rotate;
+        this.getSizeCPs();
         this.render(Infinity);
         return;
       }
@@ -530,6 +533,8 @@ export class Canvas {
     e.y -= this.bounding.top || this.bounding.y;
 
     this.mouseDown = undefined;
+    this.lastOffsetX = 0;
+    this.lastOffsetY = 0;
 
     // Add pen
     if (this.cacheNode) {
@@ -556,33 +561,36 @@ export class Canvas {
 
   getSizeCPs() {
     this.sizeCPs = rectToPoints(this.activeRect);
+    if (this.store.active.length === 1) {
+
+    }
 
     let pt = {
       x: this.activeRect.x + this.activeRect.width * 0.5,
       y: this.activeRect.y,
     };
-    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
     this.sizeCPs.push(pt);
 
     pt = {
       x: this.activeRect.ex,
       y: this.activeRect.y + this.activeRect.height * 0.5,
     };
-    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
     this.sizeCPs.push(pt);
 
     pt = {
       x: this.activeRect.x + this.activeRect.width * 0.5,
       y: this.activeRect.ey,
     };
-    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
     this.sizeCPs.push(pt);
 
     pt = {
       x: this.activeRect.x,
       y: this.activeRect.y + this.activeRect.height * 0.5,
     };
-    rotatePoint(pt, this.activeRotate, this.activeRect.center);
+    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
     this.sizeCPs.push(pt);
   }
 
@@ -605,12 +613,12 @@ export class Canvas {
 
   private getHover = (pt: Point) => {
     let moveType = MoveType.None;
-    const size = this.store.data.scale * 10;
+    const size = 8;
     if (this.activeRect) {
       if (!this.store.options.disableRotate) {
         const rotatePt = { x: this.activeRect.center.x, y: this.activeRect.y - 30 };
-        if (this.activeRotate) {
-          rotatePoint(rotatePt, this.activeRotate, this.activeRect.center);
+        if (this.activeRect.rotate) {
+          rotatePoint(rotatePt, this.activeRect.rotate, this.activeRect.center);
         }
         // 旋转控制点
         if (!this.ctrl && hitPoint(pt, rotatePt, size)) {
@@ -624,11 +632,11 @@ export class Canvas {
         if (hitPoint(pt, this.sizeCPs[i], size)) {
           let cursors = defaultCursors;
           let offset = 0;
-          if (Math.abs(this.activeRotate % 90 - 45) < 25) {
+          if (Math.abs(this.activeRect.rotate % 90 - 45) < 25) {
             cursors = rotatedCursors;
-            offset = Math.round((this.activeRotate - 45) / 90);
+            offset = Math.round((this.activeRect.rotate - 45) / 90);
           } else {
-            offset = Math.round(this.activeRotate / 90);
+            offset = Math.round(this.activeRect.rotate / 90);
           }
           moveType = MoveType.Resize;
           this.store.hover = this.store.active[0];
@@ -643,11 +651,11 @@ export class Canvas {
           if (hitPoint(pt, this.sizeCPs[i], size)) {
             let cursors = rotatedCursors;
             let offset = 0;
-            if (Math.abs(this.activeRotate % 90 - 45) < 25) {
+            if (Math.abs(this.activeRect.rotate % 90 - 45) < 25) {
               cursors = defaultCursors;
-              offset = Math.round((this.activeRotate - 45) / 90) + 1;
+              offset = Math.round((this.activeRect.rotate - 45) / 90) + 1;
             } else {
-              offset = Math.round(this.activeRotate / 90);
+              offset = Math.round(this.activeRect.rotate / 90);
             }
             moveType = MoveType.Resize;
             this.store.hover = this.store.active[0];
@@ -682,7 +690,7 @@ export class Canvas {
             }
           }
 
-          if (pointInRect(pt, pen.calculative.worldRect)) {
+          if (moveType === MoveType.None && pointInRect(pt, pen.calculative.worldRect)) {
             if (!this.store.data.locked && !pen.locked) {
               this.externalElements.style.cursor = 'move';
             } else {
@@ -780,14 +788,14 @@ export class Canvas {
   }
 
   clearCanvas() {
+    this.activeRect = undefined;
+    this.sizeCPs = undefined;
     this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.offscreen.getContext('2d').clearRect(0, 0, this.offscreen.width, this.offscreen.height);
   }
 
   addPen(pen: TopologyPen, edited?: boolean) {
-    if (pen.beforeAddPen && pen.beforeAddPen(pen) != true) {
-      return;
-    } else if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
+    if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
       return;
     }
 
@@ -907,7 +915,7 @@ export class Canvas {
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
-    this.store.path2dMap.set(pen, this.store.registerPens[pen.name](pen));
+    this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
     this.dirty = true;
   }
 
@@ -985,9 +993,9 @@ export class Canvas {
         const ctx = this.offscreen.getContext('2d');
         ctx.save();
         ctx.translate(0.5, 0.5);
-        if (this.activeRotate) {
+        if (this.activeRect.rotate) {
           ctx.translate(this.activeRect.center.x, this.activeRect.center.y);
-          ctx.rotate((this.activeRotate * Math.PI) / 180);
+          ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
           ctx.translate(-this.activeRect.center.x, -this.activeRect.center.y);
         }
         ctx.strokeStyle = this.store.options.activeColor;
@@ -1046,47 +1054,24 @@ export class Canvas {
 
     // Draw size control points.
     if (!this.store.data.locked && this.activeRect) {
-      if (this.activeRotate) {
-        ctx.translate(this.activeRect.center.x, this.activeRect.center.y);
-        ctx.rotate((this.activeRotate * Math.PI) / 180);
-        ctx.translate(-this.activeRect.center.x, -this.activeRect.center.y);
-      }
       ctx.strokeStyle = this.store.options.activeColor;
       ctx.fillStyle = "#ffffff";
-
-      ctx.beginPath();
-      ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.y - 4.5, 8, 8);
-      ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.y - 5.5, 10, 10);
-
-      ctx.beginPath();
-      ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.y - 4.5, 8, 8);
-      ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.y - 5.5, 10, 10);
-
-      ctx.beginPath();
-      ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.ey - 4.5, 8, 8);
-      ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.ey - 5.5, 10, 10);
-
-      ctx.beginPath();
-      ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.ey - 4.5, 8, 8);
-      ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.ey - 5.5, 10, 10);
-
-      if (this.ctrl) {
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.center.x - 4.5, this.activeRect.y - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.center.x - 5.5, this.activeRect.y - 5.5, 10, 10);
-
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.ex - 4.5, this.activeRect.center.y - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.ex - 5.5, this.activeRect.center.y - 5.5, 10, 10);
-
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.center.x - 4.5, this.activeRect.ey - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.center.x - 5.5, this.activeRect.ey - 5.5, 10, 10);
-
-        ctx.beginPath();
-        ctx.fillRect(this.activeRect.x - 4.5, this.activeRect.center.y - 4.5, 8, 8);
-        ctx.strokeRect(this.activeRect.x - 5.5, this.activeRect.center.y - 5.5, 10, 10);
-      }
+      this.sizeCPs.forEach((pt, i) => {
+        if (this.activeRect.rotate) {
+          ctx.save();
+          ctx.translate(pt.x, pt.y);
+          ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
+          ctx.translate(-pt.x, -pt.y);
+        }
+        if (i < 4 || this.ctrl) {
+          ctx.beginPath();
+          ctx.fillRect(pt.x - 4.5, pt.y - 4.5, 8, 8);
+          ctx.strokeRect(pt.x - 5.5, pt.y - 5.5, 10, 10);
+        }
+        if (this.activeRect.rotate) {
+          ctx.restore();
+        }
+      });
     }
     ctx.restore();
   };
@@ -1122,20 +1107,65 @@ export class Canvas {
   }
 
   resizePens(e: Point) {
-    const dt = distance(this.mouseDown, e);
+    const scale = Math.cos(this.activeRect.rotate * Math.PI / 180);
+    const x = (e.x - this.mouseDown.x) / scale;
+    const y = (e.y - this.mouseDown.y) / scale;
+    const offsetX = x - this.lastOffsetX;
+    const offsetY = y - this.lastOffsetY;
+    this.lastOffsetX = x;
+    this.lastOffsetY = y;
 
+    console.log(this.resizeIndex, scale, x, y, offsetX, offsetY);
+    switch (this.resizeIndex) {
+      case 0:
+        this.activeRect.width -= offsetX;
+        this.activeRect.height -= offsetY;
+        break;
+      case 1:
+        this.activeRect.width += offsetX;
+        this.activeRect.height -= offsetY;
+        break;
+      case 2:
+        this.activeRect.width += offsetX;
+        this.activeRect.height += offsetY;
+        break;
+      case 3:
+        this.activeRect.width -= offsetX;
+        this.activeRect.height += offsetY;
+        break;
+      case 4:
+        this.activeRect.height -= offsetY;
+        break;
+      case 5:
+        this.activeRect.width += offsetX;
+        break;
+      case 6:
+        this.activeRect.height += offsetY;
+        break;
+      case 7:
+        this.activeRect.width -= offsetX;
+        break;
+    }
+
+
+    // this.store.active.forEach((pen) => {
+
+    //   scalePen(pen, s, center);
+    //   this.dirtyRect(pen);
+    // });
+    this.getSizeCPs();
+    this.render(Infinity);
   }
 
   calcActiveRect() {
     if (this.store.active.length === 1) {
       this.activeRect = this.store.active[0].calculative.worldRect;
-      this.activeRotate = this.store.active[0].rotate;
-      this.activeRect.rotate = this.activeRotate;
+      this.activeRect.rotate = this.store.active[0].rotate;
     } else {
-      this.activeRotate = 0;
+      this.activeRect.rotate = 0;
       this.activeRect = getRect(this.store.active);
     }
-    this.lastActiveRotate = 0;
+    this.lastRotate = 0;
     this.getSizeCPs();
   }
 
