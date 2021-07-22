@@ -476,7 +476,9 @@ export class Canvas {
     if (this.mouseDown) {
       // Rotate
       if (this.moveType === MoveType.Rotate) {
-        this.activeRect.rotate = calcRotate(e, this.activeRect.center);
+        const pt = { x: e.x, y: e.y };
+        this.calibrateMouse(pt);
+        this.activeRect.rotate = calcRotate(pt, this.activeRect.center);
         if (this.store.active.length === 1) {
           this.store.active[0].rotate = this.activeRect.rotate;
           this.dirtyRect(this.store.active[0]);
