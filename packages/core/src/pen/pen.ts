@@ -275,10 +275,18 @@ export function renderPen(
       h = pen.iconHeight;
     }
     if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight) {
+      let scaleW = rect.width / pen.calculative.imgNaturalWidth;
+      let scaleH = rect.height / pen.calculative.imgNaturalHeight;
+      let scaleMin = scaleW > scaleH ? scaleH : scaleW; 
       if (pen.iconWidth) {
-        h = (pen.calculative.imgNaturalHeight / pen.calculative.imgNaturalWidth) * w;
+        h = scaleMin * pen.iconWidth; //(pen.calculative.imgNaturalHeight / pen.calculative.imgNaturalWidth) * w;
       } else {
-        w = (pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight) * h;
+        w = scaleMin * pen.calculative.imgNaturalWidth; // (pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight) * h;
+      }
+      if (pen.iconHeight) {
+        h = scaleMin * pen.iconHeight;
+      } else {
+        h = scaleMin * pen.calculative.imgNaturalHeight;
       }
     }
     x += (rect.width - w) / 2;
