@@ -10,6 +10,9 @@ export function lifeline(pen: any) {
   }else{
     height = pen.data.headHeight;
   }
+  if(!pen.borderRadius){
+    pen.borderRadius = 0;
+  }
   let wr = pen.borderRadius;
   let hr = pen.borderRadius;
   if (pen.borderRadius < 1) {
