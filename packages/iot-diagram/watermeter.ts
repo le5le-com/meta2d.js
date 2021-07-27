@@ -148,7 +148,8 @@ function drawCircle(path: Path2D, pen: any) {
   
     ctx.beginPath();
     ctx.fillStyle = '#000';
-    ctx.font = 'normal 12px Arial';
+    let fontSize =R/10;
+    ctx.font = fontSize+'px Arial';
     // 最大值和最小值都存在
     if (minValue && maxValue) {
       if (minX > maxX) {
@@ -169,7 +170,7 @@ function drawCircle(path: Path2D, pen: any) {
           ctx.fillText(
             minValue,
             minX - scaleLineWidth - deltaX,
-            y + ((100 - minValue) / 100) * canvasHeight + 15
+            y + ((100 - minValue) / 100) * canvasHeight + fontSize
           );
   
           ctx.moveTo(maxX, y + ((100 - maxValue) / 100) * canvasHeight);
@@ -186,7 +187,7 @@ function drawCircle(path: Path2D, pen: any) {
           ctx.fillText(
             maxValue,
             maxX - scaleLineWidth,
-            y + ((100 - maxValue) / 100) * canvasHeight + 15
+            y + ((100 - maxValue) / 100) * canvasHeight + fontSize
           );
         } else {
           ctx.moveTo(
@@ -206,7 +207,7 @@ function drawCircle(path: Path2D, pen: any) {
           ctx.fillText(
             minValue,
             minX - scaleLineWidth - deltaX,
-            y + ((100 - minValue) / 100) * canvasHeight + lR / 2 - R / 2 + 15
+            y + ((100 - minValue) / 100) * canvasHeight + lR / 2 - R / 2 +fontSize
           );
   
           ctx.moveTo(
@@ -226,7 +227,7 @@ function drawCircle(path: Path2D, pen: any) {
           ctx.fillText(
             maxValue,
             maxX - scaleLineWidth,
-            y + ((100 - maxValue) / 100) * canvasHeight + lR / 2 - R / 2 + 15
+            y + ((100 - maxValue) / 100) * canvasHeight + lR / 2 - R / 2 + fontSize
           );
         }
       } else {
@@ -283,7 +284,7 @@ function drawCircle(path: Path2D, pen: any) {
           ctx.fillText(
             minValue,
             minX - scaleLineWidth,
-            y + ((100 - minValue) / 100) * canvasHeight + lR / 2 - R / 2 + 15
+            y + ((100 - minValue) / 100) * canvasHeight + lR / 2 - R / 2 + fontSize
           );
   
           ctx.moveTo(
@@ -303,7 +304,7 @@ function drawCircle(path: Path2D, pen: any) {
           ctx.fillText(
             maxValue,
             maxX - scaleLineWidth - deltaX,
-            y + ((100 - maxValue) / 100) * canvasHeight + lR / 2 - R / 2 + 15
+            y + ((100 - maxValue) / 100) * canvasHeight + lR / 2 - R / 2 + fontSize
           );
         }
       }
@@ -343,7 +344,7 @@ function drawCircle(path: Path2D, pen: any) {
         ctx.fillText(
           minValue,
           minX - scaleLineWidth,
-          y + ((100 - minValue) / 100) * canvasHeight + lR / 2 - R / 2 + 15
+          y + ((100 - minValue) / 100) * canvasHeight + lR / 2 - R / 2 + fontSize
         );
       }
     } else if (maxValue && !minValue) {
@@ -382,7 +383,7 @@ function drawCircle(path: Path2D, pen: any) {
         ctx.fillText(
           maxValue,
           maxX - scaleLineWidth,
-          y + ((100 - maxValue) / 100) * canvasHeight + lR / 2 - R / 2 + 15
+          y + ((100 - maxValue) / 100) * canvasHeight + lR / 2 - R / 2 + fontSize
         );
       }
     }

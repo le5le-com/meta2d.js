@@ -42,10 +42,12 @@ export function thermometer(pen: any) {
 export function thermometerDrawScaleByCtx(ctx: CanvasRenderingContext2D,
   pen: any){
     let R: number, r: number;
-    if (pen.calculative.worldRect.width < pen.calculative.worldRect.height / 2) {
+    let h = pen.calculative.worldRect.height;
+    let w = pen.calculative.worldRect.width;
+    if (w < h / 2) {
       R = Math.floor(pen.calculative.worldRect.width / 2);
     } else {
-      R = Math.floor(pen.calculative.worldRect.height / 4);
+      R = Math.floor(h / 4);
     }
     r = Math.round((R * 1) / 2);
 
@@ -54,6 +56,11 @@ export function thermometerDrawScaleByCtx(ctx: CanvasRenderingContext2D,
     let x = pen.calculative.worldRect.x + 3 * r;
     let ey = pen.calculative.worldRect.y;
     ctx.fillStyle = pen.fontColor ?? '#000';
+    let fontSize = w>h/2?h/20:w/10
+    ctx.font = fontSize + 'px Arial';
+    // ctx.textBaseline = 'bottom';
+    // ctx.textAlign = 'center';
+
     for (let i = min; i <= max; i++) {
       // 刻度线
       const y = getYByValue(pen, i, R, r,pen.data.thermometer);
@@ -62,7 +69,7 @@ export function thermometerDrawScaleByCtx(ctx: CanvasRenderingContext2D,
       if (i % 10 == 0) {
         ctx.lineWidth = 2;
         ctx.lineTo(x + (r * 2) / 3, y + ey);
-        ctx.fillText(i as any, x + 15, y + 6 + ey);
+        ctx.fillText(i as any, x + 15+fontSize, y + 6 + ey);
         ctx.stroke();
       } else {
         ctx.lineWidth = 1;

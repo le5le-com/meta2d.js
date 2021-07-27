@@ -47,20 +47,13 @@ export function votingGateChartByCtx(
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
 
+  let fontSize = myw*2>myh*10?myh:myw/5;
   ctx.fillStyle = '#333333';
-  ctx.font = myh + 'px Arial';
+  ctx.font = fontSize + 'px Arial';
   ctx.textBaseline = 'bottom';
   ctx.textAlign = 'center';
   ctx.fillText('o', x + myw, y + pen.calculative.worldRect.height);
-
-  ctx.font = myh + 'px Arial';
-  ctx.textBaseline = 'bottom';
-  ctx.textAlign = 'center';
   ctx.fillText('m', x + (myw * 2) / 5, y + pen.calculative.worldRect.height);
-
-  ctx.font = myh + 'px Arial';
-  ctx.textBaseline = 'bottom';
-  ctx.textAlign = 'center';
   ctx.fillText('o', x + (myw * 8) / 5, y + pen.calculative.worldRect.height);
   ctx.closePath();
   ctx.restore();
