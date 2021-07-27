@@ -1,4 +1,3 @@
-
 new Le5le.Topology('topology');
 
 var stats = new Stats();
@@ -17,12 +16,11 @@ function animate() {
 
 requestAnimationFrame(animate);
 
-
 function makeNodesAn() {
   topology.clear();
   topology.register(activityDiagram());
   // const count = +document.getElementById('count').value || 10000;
-  const count = 1;
+  const count = 5;
   let x = 100;
   let y = 100;
   // console.time('makeNodes');
@@ -36,13 +34,22 @@ function makeNodesAn() {
       iconFamily: 't-icon',
       iconSize: 20,
       ellipsis: true,
-     
+
       // textBackground: '#eeeeee',
       // textAlign: 'right',
       // textBaseline: 'bottom',
     };
-
-    pen.name = 'activityFinal';
+    if (i === 0) {
+      pen.name = 'activityFinal';
+    } else if (i === 1) {
+      pen.name = 'forkV';
+    } else if (i === 2) {
+      pen.name = 'forkH';
+    } else if (i === 3) {
+      pen.name = 'swimlaneH';
+    } else if (i === 4) {
+      pen.name = 'swimlaneV';
+    }
 
     topology.addPen(pen, false);
     x += 150;
