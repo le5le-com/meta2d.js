@@ -1,11 +1,15 @@
-import { TopologyPen } from '../core/src/pen';
-export function lifeline(pen: TopologyPen) {
+export function lifeline(pen: any) {
   if (!pen.calculative || !pen.calculative.worldRect) {
      return;
   }
   const path = new Path2D();
  
-  const height = 50;
+  let height =0;
+  if(!pen.data.headHeight){
+    height = 50;
+  }else{
+    height = pen.data.headHeight;
+  }
   let wr = pen.borderRadius;
   let hr = pen.borderRadius;
   if (pen.borderRadius < 1) {
@@ -25,16 +29,23 @@ export function lifeline(pen: TopologyPen) {
   path.arcTo(pen.calculative.worldRect.x + pen.calculative.worldRect.width, pen.calculative.worldRect.y + height, pen.calculative.worldRect.x, pen.calculative.worldRect.y + height, r);
   path.arcTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + height, pen.calculative.worldRect.x, pen.calculative.worldRect.y, r);
   path.arcTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y, pen.calculative.worldRect.x + pen.calculative.worldRect.width, pen.calculative.worldRect.y, r);
-
-
-  pen.lineWidth = 1;
-  path.setLineDash([7, 7]);
-  const middle = pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
-  path.moveTo(middle, pen.calculative.worldRect.y + height + 1);
-  path.lineTo(middle, pen.calculative.worldRect.ey);
-  path.stroke();
-  path.restore();
-
   path.closePath();
   return path;
+}
+
+export function lifelineDashByCtx(ctx: CanvasRenderingContext2D, pen: any) {
+  let height =0;
+  if(!pen.data.headHeight){
+    height = 50;
+  }else{
+    height = pen.data.headHeight;
+  }
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.setLineDash([7, 7]);
+    const middle = pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
+    ctx.moveTo(middle, pen.calculative.worldRect.y + height + 1);
+    ctx.lineTo(middle, pen.calculative.worldRect.ey);
+    ctx.stroke();
+    ctx.restore();
 }

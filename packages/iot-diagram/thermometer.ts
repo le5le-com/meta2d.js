@@ -74,6 +74,7 @@ export function thermometerDrawScaleByCtx(ctx: CanvasRenderingContext2D,
       }
       ctx.stroke();
     }
+    ctx.restore();
   }
 
 function fillValuethermometer(

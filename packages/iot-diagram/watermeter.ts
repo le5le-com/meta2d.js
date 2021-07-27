@@ -388,4 +388,5 @@ function drawCircle(path: Path2D, pen: any) {
     }
     ctx.stroke();
   ctx.closePath();
+  ctx.restore();
   }

@@ -23,9 +23,11 @@ function makeNodesAn() {
   topology.register(ftaPens());
   topology.register(iotPens());
   topology.register(classPens());
-  // topology.registerDraw('votingGate',ftaPens().votingGateChartByCtx);
-  // topology.registerDraw('thermometer',iotPens().thermometerDrawScaleByCtx);
-  // topology.registerDraw('watermeter',iotPens().watermeterScaleByCtx);
+  topology.register(sequencePens());
+  topology.registerDraw('votingGate',ftaPens().votingGateChartByCtx);
+  topology.registerDraw('thermometer',iotPens().thermometerDrawScaleByCtx);
+  topology.registerDraw('watermeter',iotPens().watermeterScaleByCtx);
+  topology.registerDraw('lifeline',sequencePens().lifelineDashByCtx);
   const count = +document.getElementById('count').value || 10000;
   let x = 100;
   let y = 100;
@@ -240,6 +242,17 @@ function makeNodesAn() {
       pen.height = 150;
       pen.borderRadius = 20;
 
+    }
+    if (i % 50 === 46) {
+      pen.name = 'focus';
+
+    }
+    if (i % 50 === 47) {
+      pen.name = 'lifeline';
+      pen.borderRadius = 10;
+      pen.data= {
+        headHight:50
+      }
     }
     topology.addPen(pen, false);
     x += 150;

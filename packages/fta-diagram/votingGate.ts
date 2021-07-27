@@ -63,4 +63,5 @@ export function votingGateChartByCtx(
   ctx.textAlign = 'center';
   ctx.fillText('o', x + (myw * 8) / 5, y + pen.calculative.worldRect.height);
   ctx.closePath();
+  ctx.restore();
 }
