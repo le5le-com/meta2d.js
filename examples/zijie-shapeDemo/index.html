@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title i18n>Topology</title>
+    <meta charset="UTF-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta
+      name="viewport"
+      content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"
+    />
+
+    <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <link href="index.css" rel="stylesheet" />
+    <link href="//at.alicdn.com/t/font_2030495_6tq2su2jmyx.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div class="topology" id="topology"></div>
+    <div class="btns">
+      <input id="count" placeholder="10000" />
+      <button id="make-nodes" class="button" onclick="makeNodesAn()">生产节点 ( Make nodes )</button>
+      <button id="" onclick="getSvgPathSize()">点击</button>
+    </div>
+    <script src="../../dist/topology/topology.js"></script>
+    <!-- <script src = "../../dist/fta-diagram/index.js"> </script>
+    <script src = "../../dist/iot-diagram/index.js"> </script> -->
+    <script src="stats.min.js"></script>
+    <script src="index.js"></script>
+    <script src="parseSvgSize.js"></script>
+  </body>
+</html>
