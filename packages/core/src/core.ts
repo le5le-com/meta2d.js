@@ -1,6 +1,4 @@
 import { commonPens } from './common-diagram';
-import { ftaPens } from './fta-diagram';
-import { iotPens } from './iot-diagram';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
@@ -22,8 +20,11 @@ export class Topology {
     this.setOptions(opts);
     this.init(parent);
     this.register(commonPens());
-    this.register(ftaPens());
-    this.register(iotPens());
+    // this.register(ftaPens());
+    // this.register(iotPens());
+    // this.registerDraw('votingGate',ftaPens().votingGateChartByCtx);
+    // this.registerDraw('thermometer',iotPens().thermometerDrawScaleByCtx);
+    // this.registerDraw('watermeter',iotPens().watermeterScaleByCtx);
     if (window) {
       window.topology = this;
     }
