@@ -20,11 +20,6 @@ export class Topology {
     this.setOptions(opts);
     this.init(parent);
     this.register(commonPens());
-    // this.register(ftaPens());
-    // this.register(iotPens());
-    // this.registerDraw('votingGate',ftaPens().votingGateChartByCtx);
-    // this.registerDraw('thermometer',iotPens().thermometerDrawScaleByCtx);
-    // this.registerDraw('watermeter',iotPens().watermeterScaleByCtx);
     if (window) {
       window.topology = this;
     }

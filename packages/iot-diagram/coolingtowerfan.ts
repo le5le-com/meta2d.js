@@ -56,7 +56,7 @@ function fanblade(path:Path2D, pen: TopologyPen, rote: any, myw: any, myh: any, 
 function fanheart(path:Path2D, pen: TopologyPen) {
     let hx=pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
     let hy = pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2;
-    path.moveTo(hx, hy);
     let r = pen.calculative.worldRect.width> pen.calculative.worldRect.height? pen.calculative.worldRect.height/12: pen.calculative.worldRect.width / 12;
+    path.moveTo(hx+r, hy);
     path.arc(hx, hy, r, 0, Math.PI * 2, false);
 }
