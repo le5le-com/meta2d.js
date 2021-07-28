@@ -15,20 +15,29 @@ export function circular(pen: any) {
   let y = pen.calculative.worldRect.y;
 
   let value = pen.data.value;
-  //   pen.text = (value * 100).toFixed(0) + '%';
+    pen.text = (value * 100).toFixed(0) + '%';
   path.arc(x + w/2, y +h/2, R, 0, 2 * Math.PI);
-  // let lineWidth = pen.lineWidth;
-  const path1 = new Path2D();
-  // pen.lineWith =4*lineWidth;
-  //   path.lineCap = 'round';
-  path1.moveTo( x + w/2, y +h/2);
-  path1.arcTo(
+
+  path.moveTo( x + w/2, y +h/2-R);
+  path.arc(
     x + w/2, y +h/2,
-    R,
+    R+2,
     -0.5 * Math.PI,
     (Math.PI / 180) * (value * 360) - 0.5 * Math.PI
   );
-  path.addPath(path1);
-  path.closePath();
+  // path.closePath();
   return path;
 }
+
+
+export function circularNumberByCtx(ctx: CanvasRenderingContext2D,
+  pen: any){
+    let w = pen.calculative.worldRect.width;
+    let h = pen.calculative.worldRect.height;
+    ctx.fillStyle = pen.fontColor ?? '#000';
+    ctx.textAlign = 'center';
+    let fontSize = w>h?h/5:w/5
+    ctx.font = fontSize + 'px Arial';
+    ctx.fillText( (pen.data.value * 100).toFixed(0) + '%', w/2 + pen.calculative.worldRect.x, pen.calculative.worldRect.y + h/2);
+    ctx.restore();
+  }

@@ -13,7 +13,7 @@ export * from './watermeter';
 export * from './waterpumpbody';
 
 import { airvalve } from './airvalve';
-import { circular } from './circular';
+import { circular,circularNumberByCtx } from './circular';
 import { coolingtowerfan } from './coolingtowerfan';
 import { electricvalve } from './electricvalve';
 import { elevatordoor } from './elevatordoor';
@@ -31,6 +31,7 @@ export function iotPens(){
     return {
         airvalve,
         circular,
+        circularNumberByCtx,
         coolingtowerfan,
         electricvalve,
         elevatordoor,

@@ -26,6 +26,7 @@ function makeNodesAn() {
   topology.register(sequencePens());
   topology.register(flowPens());
   topology.registerDraw('votingGate',ftaPens().votingGateChartByCtx);
+  topology.registerDraw('circular',iotPens().circularNumberByCtx);
   topology.registerDraw('thermometer',iotPens().thermometerDrawScaleByCtx);
   topology.registerDraw('watermeter',iotPens().watermeterScaleByCtx);
   topology.registerDraw('lifeline',sequencePens().lifelineDashByCtx);
@@ -174,7 +175,7 @@ function makeNodesAn() {
     if (i % 100 === 32) {
       pen.name = 'circular';
       pen.data ={
-        value:0.25
+        value:0.5
       };
       pen.lineWidth= 5;
     }
