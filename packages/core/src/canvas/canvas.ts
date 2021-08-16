@@ -602,6 +602,13 @@ export class Canvas {
     this.lastOffsetX = 0;
     this.lastOffsetY = 0;
 
+    if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
+      this.store.emitter.emit('contextmenu', {
+        e,
+        bounding: this.bounding
+      });
+    }
+
     // Add pen
     if (this.addCache) {
       this.addCache.x = e.x - this.addCache.width / 2;
@@ -1250,7 +1257,12 @@ export class Canvas {
     this.render(Infinity);
   }
 
-  movePens(e: Point) {
+  movePens(e: {
+    x: number;
+    y: number;
+    shiftKey?: boolean;
+    altKey?: boolean;
+  }) {
     if (!this.activeRect || this.store.data.locked) {
       return;
     }
@@ -1263,8 +1275,14 @@ export class Canvas {
     const x = p2.x - p1.x;
     const y = p2.y - p1.y;
 
-    const offsetX = x - this.lastOffsetX;
-    const offsetY = y - this.lastOffsetY;
+    let offsetX = x - this.lastOffsetX;
+    let offsetY = y - this.lastOffsetY;
+    if (e.shiftKey) {
+      offsetY = 0;
+    }
+    if (e.altKey) {
+      offsetX = 0;
+    }
     this.lastOffsetX = x;
     this.lastOffsetY = y;
 
