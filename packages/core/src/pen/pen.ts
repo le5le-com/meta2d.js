@@ -1,7 +1,7 @@
-import { Options } from '../options';
+
 import { Point, rotatePoint } from '../point';
 import { Rect, scaleRect } from '../rect';
-import { globalStore } from '../store';
+import { globalStore, TopologyStore } from '../store';
 import { s8 } from '../utils';
 
 export enum PenType {
@@ -68,6 +68,7 @@ export interface TopologyPen {
   activeBackground?: string;
   bkType?: number;
   lineCap?: string;
+  lineJoin?: string;
   shadowColor?: string;
   shadowBlur?: number;
   shadowOffsetX?: number;
@@ -165,11 +166,11 @@ export function renderPen(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: TopologyPen,
   path: Path2D,
-  options: Options,
+  store: TopologyStore,
 ) {
   if (globalStore.independentDraws[pen.name]) {
     ctx.save();
-    globalStore.independentDraws[pen.name](ctx, pen, options);
+    globalStore.independentDraws[pen.name](ctx, pen, store);
     ctx.restore();
     return;
   }
@@ -195,13 +196,13 @@ export function renderPen(
 
   let fill: any;
   if (pen.calculative.hover) {
-    ctx.strokeStyle = pen.hoverColor || options.hoverColor;
-    ctx.fillStyle = pen.hoverBackground || options.hoverBackground;
-    fill = pen.hoverBackground || options.hoverBackground;
+    ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
+    ctx.fillStyle = pen.hoverBackground || store.options.hoverBackground;
+    fill = pen.hoverBackground || store.options.hoverBackground;
   } else if (pen.calculative.active) {
-    ctx.strokeStyle = pen.activeColor || options.activeColor;
-    ctx.fillStyle = pen.activeBackground || options.activeBackground;
-    fill = pen.activeBackground || options.activeBackground;
+    ctx.strokeStyle = pen.activeColor || store.options.activeColor;
+    ctx.fillStyle = pen.activeBackground || store.options.activeBackground;
+    fill = pen.activeBackground || store.options.activeBackground;
   } else {
     if (pen.strokeImage) {
       if (pen.calculative.strokeImg) {
@@ -229,6 +230,12 @@ export function renderPen(
     ctx.lineCap = 'round';
   }
 
+  if (pen.lineJoin) {
+    ctx.lineJoin = pen.lineJoin as CanvasLineJoin;
+  } else if (pen.type === PenType.Line) {
+    ctx.lineJoin = 'round';
+  }
+
   if (pen.globalAlpha < 1) {
     ctx.globalAlpha = pen.globalAlpha;
   }
@@ -254,9 +261,12 @@ export function renderPen(
 
   if (globalStore.draws[pen.name]) {
     ctx.save();
-    globalStore.draws[pen.name](ctx, pen, options);
+    const ret = globalStore.draws[pen.name](ctx, pen, store);
     ctx.restore();
-    return;
+    // Finished on render.
+    if (ret) {
+      return;
+    }
   }
 
   if (pen.image && pen.calculative.img) {
@@ -277,7 +287,7 @@ export function renderPen(
     if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight) {
       let scaleW = rect.width / pen.calculative.imgNaturalWidth;
       let scaleH = rect.height / pen.calculative.imgNaturalHeight;
-      let scaleMin = scaleW > scaleH ? scaleH : scaleW; 
+      let scaleMin = scaleW > scaleH ? scaleH : scaleW;
       if (pen.iconWidth) {
         h = scaleMin * pen.iconWidth; //(pen.calculative.imgNaturalHeight / pen.calculative.imgNaturalWidth) * w;
       } else {
@@ -318,7 +328,7 @@ export function renderPen(
     } else {
       ctx.font = `${iconRect.width}px ${pen.iconFamily}`;
     }
-    ctx.fillStyle = pen.iconColor || pen.textColor || options.textColor;
+    ctx.fillStyle = pen.iconColor || pen.textColor || store.options.textColor;
 
     if (pen.calculative.worldRect.rotate) {
       ctx.translate(iconRect.center.x, iconRect.center.y);

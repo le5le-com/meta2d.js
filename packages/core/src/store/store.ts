@@ -60,7 +60,6 @@ export interface TopologyStore {
   emitter: Emitter;
   penPaths: any;
   dpiRatio?: number;
-  debug?: boolean;
 }
 
 export const createStore = () => {

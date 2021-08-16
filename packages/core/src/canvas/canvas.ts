@@ -1,5 +1,5 @@
 import { KeydownType } from '../options';
-import { addPenAnchor, calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, getParent, LockState, removePenAnchor, renderPen, scalePen, TopologyPen } from '../pen';
+import { addPenAnchor, calcIconRect, calcTextRect, calcWorldAnchors, calcWorldRects, LockState, removePenAnchor, renderPen, scalePen, TopologyPen } from '../pen';
 import { calcRotate, hitPoint, Point, rotatePoint } from '../point';
 import { calcCenter, getRect, pointInRect, Rect, rectInRect, rectToPoints, translateRect } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
@@ -7,7 +7,7 @@ import { isMobile, s8 } from '../utils';
 import { defaultCursors, rotatedCursors } from './cursor';
 import { createOffscreen } from './offscreen';
 
-enum MoveType {
+export enum HoverType {
   None,
   Line,
   LineFrom,
@@ -22,6 +22,20 @@ enum MoveType {
   Graffiti,
   LinesReady,
   Lines
+}
+
+export enum HotkeyType {
+  None,
+  Translate,
+  Select,
+  Resize,
+  Anchor
+}
+
+export enum MouseRight {
+  None,
+  TranslateOrContextMenu,
+  Translate
 }
 
 export class Canvas {
@@ -40,15 +54,15 @@ export class Canvas {
   sizeCPs: Point[];
   activeInitPos: Point[];
 
-  moveType = MoveType.None;
+  hoverType = HoverType.None;
   resizeIndex = 0;
   anchor: Point;
   mouseDown: { x: number; y: number; restore?: boolean; };
-  ctrl: boolean;
-  addAnchorReady: boolean;
+  hotkeyType: HotkeyType;
+  mouseRight: MouseRight;
   translateX: number;
   translateY: number;
-  cacheNode: TopologyPen;
+  addCache: TopologyPen;
   touchCenter?: Point;
   touches?: TouchList;
 
@@ -95,6 +109,7 @@ export class Canvas {
 
     this.externalElements.ondragover = (e: any) => e.preventDefault();
     this.externalElements.ondrop = this.ondrop;
+    this.externalElements.oncontextmenu = (e: any) => e.preventDefault();
     if (isMobile()) {
       this.store.options.interval = 50;
       this.externalElements.ontouchstart = this.ontouchstart;
@@ -141,11 +156,10 @@ export class Canvas {
       case KeydownType.Document:
         document.addEventListener('keydown', this.onkey);
         document.addEventListener('keyup', () => {
-          if (this.ctrl) {
-            this.ctrl = false;
+          if (this.hotkeyType) {
             this.render(Infinity);
           }
-          this.ctrl = false;
+          this.hotkeyType = HotkeyType.None;
         });
         break;
       case KeydownType.Canvas:
@@ -190,21 +204,28 @@ export class Canvas {
     ) {
       return;
     }
-
     switch (e.key) {
       case ' ':
+        this.hotkeyType = HotkeyType.Translate;
+        break;
       case 'Control':
+        if (this.hotkeyType === HotkeyType.None) {
+          this.dirty = true;
+          this.hotkeyType = HotkeyType.Select;
+        }
+        break;
       case 'Meta':
-        this.ctrl = true;
         break;
       case 'Shift':
-        if (this.addAnchorReady !== e.shiftKey) {
+        if (this.hotkeyType === HotkeyType.None) {
           this.dirty = true;
+          this.hotkeyType = HotkeyType.Resize;
         }
-        this.addAnchorReady = e.shiftKey;
-        if (this.addAnchorReady && this.store.hover) {
-          this.render();
-          return;
+        break;
+      case 'Alt':
+        if (this.hotkeyType === HotkeyType.None) {
+          this.dirty = true;
+          this.hotkeyType = HotkeyType.Anchor;
         }
         break;
       case 'a':
@@ -255,9 +276,7 @@ export class Canvas {
         break;
     }
 
-    if (this.ctrl) {
-      this.render(Infinity);
-    }
+    this.render();
   };
 
   ondrop = (event: any) => {
@@ -378,12 +397,14 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
-    if (this.store.data.locked === LockState.Disable) {
-      this.moveType = MoveType.None;
+    if (this.store.data.locked === LockState.Disable || (e.buttons !== 1 && e.buttons !== 2)) {
+      this.hoverType = HoverType.None;
       return;
     }
 
-    if (e.buttons !== 1 && e.buttons !== 2) return;
+    if (e.buttons === 2) {
+      this.mouseRight = MouseRight.TranslateOrContextMenu;
+    }
 
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
@@ -391,7 +412,7 @@ export class Canvas {
     this.mouseDown = e;
 
     // Set anchor of pen.
-    if (this.addAnchorReady) {
+    if (this.hotkeyType === HotkeyType.Anchor) {
       if (this.anchor && this.anchor.custom) {
         removePenAnchor(this.store.hover, this.anchor);
         this.anchor = undefined;
@@ -404,13 +425,11 @@ export class Canvas {
       return;
     }
 
-    if (this.ctrl) {
-      this.translateX = e.x;
-      this.translateY = e.y;
-    }
+    this.translateX = e.x;
+    this.translateY = e.y;
 
-    switch (this.moveType) {
-      case MoveType.None:
+    switch (this.hoverType) {
+      case HoverType.None:
         if (this.store.active.length) {
           this.store.active.forEach((pen) => {
             pen.calculative.active = undefined;
@@ -422,7 +441,7 @@ export class Canvas {
           this.sizeCPs = undefined;
         }
         break;
-      case MoveType.Nodes:
+      case HoverType.Nodes:
         if (this.store.hover) {
           if (e.ctrlKey) {
             if (this.store.hover.parentId) {
@@ -463,7 +482,7 @@ export class Canvas {
           this.calcActiveRect();
         }
         break;
-      case MoveType.Resize:
+      case HoverType.Resize:
         this.activeInitPos = [];
         this.store.active.forEach((pen) => {
           this.activeInitPos.push({
@@ -486,7 +505,7 @@ export class Canvas {
     altKey?: boolean;
   }) => {
     if (this.store.data.locked === LockState.Disable) {
-      this.moveType = MoveType.None;
+      this.hoverType = HoverType.None;
       return;
     }
 
@@ -498,24 +517,31 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
-    if (this.addAnchorReady !== e.shiftKey) {
-      this.dirty = true;
-    }
-    this.addAnchorReady = e.shiftKey;
-    if (this.addAnchorReady && this.store.hover) {
-      this.render();
-      return;
-    }
-
     if (this.mouseDown) {
+      if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
+        this.mouseRight = MouseRight.Translate;
+      }
+
+      // Translate
+      if (this.hotkeyType === HotkeyType.Translate || this.mouseRight === MouseRight.Translate) {
+        if (this.translateX && this.translateY && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
+          const x = e.x - this.translateX;
+          const y = e.y - this.translateY;
+          this.translateX = e.x;
+          this.translateY = e.y;
+          this.translate(x, y);
+          return false;
+        }
+      }
+
       // Rotate
-      if (this.moveType === MoveType.Rotate) {
+      if (this.hoverType === HoverType.Rotate) {
         const pt = { x: e.x, y: e.y };
         this.calibrateMouse(pt);
         this.activeRect.rotate = calcRotate(pt, this.activeRect.center);
         if (this.store.active.length === 1) {
           this.store.active[0].rotate = this.activeRect.rotate;
-          this.dirtyRect(this.store.active[0]);
+          this.dirtyPenRect(this.store.active[0]);
         } else {
           const angle = this.activeRect.rotate - this.lastRotate;
 
@@ -527,7 +553,7 @@ export class Canvas {
             rotatePoint(pen.calculative.worldRect.center, angle, this.activeRect.center);
             pen.x = pen.calculative.worldRect.center.x - pen.width / 2;
             pen.y = pen.calculative.worldRect.center.y - pen.height / 2;
-            this.dirtyRect(pen);
+            this.dirtyPenRect(pen);
           });
         }
         this.lastRotate = this.activeRect.rotate;
@@ -537,32 +563,22 @@ export class Canvas {
       }
 
       // Resize
-      if (this.moveType === MoveType.Resize) {
+      if (this.hoverType === HoverType.Resize) {
         this.resizePens(e);
         return;
       }
 
       // Move
-      if (this.moveType === MoveType.Nodes) {
+      if (this.hoverType === HoverType.Nodes) {
         this.movePens(e);
         return;
       }
-
-      // Translate
-      if (this.translateX && this.translateY && this.ctrl && (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)) {
-        const x = e.x - this.translateX;
-        const y = e.y - this.translateY;
-        this.translateX = e.x;
-        this.translateY = e.y;
-        this.translate(x, y);
-        return false;
-      }
     }
 
-    this.store.debug && console.time('hover');
+    (window as any).debug && console.time('hover');
     this.calibrateMouse(e);
     this.getHover(e);
-    this.store.debug && console.timeEnd('hover');
+    (window as any).debug && console.timeEnd('hover');
     this.render();
   };
 
@@ -575,7 +591,7 @@ export class Canvas {
     altKey?: boolean;
   }) => {
     if (this.store.data.locked === LockState.Disable) {
-      this.moveType = MoveType.None;
+      this.hoverType = HoverType.None;
       return;
     }
 
@@ -587,25 +603,18 @@ export class Canvas {
     this.lastOffsetY = 0;
 
     // Add pen
-    if (this.cacheNode) {
-      this.cacheNode.x = e.x - this.cacheNode.width / 2;
-      this.cacheNode.y = e.y - this.cacheNode.height / 2;
+    if (this.addCache) {
+      this.addCache.x = e.x - this.addCache.width / 2;
+      this.addCache.y = e.y - this.addCache.height / 2;
 
 
-      this.addPen(this.cacheNode);
-      this.cacheNode = undefined;
+      this.addPen(this.addCache);
+      this.addCache = undefined;
       return;
     }
 
-    if (this.ctrl) {
-      if (this.moveType !== MoveType.Resize) {
-        this.ctrl = false;
-      }
-      this.store.emitter.emit('translate');
-    }
-
     // Rotate
-    if (this.moveType === MoveType.Rotate) {
+    if (this.hoverType === HoverType.Rotate) {
       this.getSizeCPs();
       return;
     }
@@ -660,41 +669,42 @@ export class Canvas {
   };
 
   private getHover = (pt: Point) => {
-    let moveType = MoveType.None;
+    let hoverType = HoverType.None;
     const size = 8;
     this.anchor = undefined;
-    if (this.activeRect) {
+    if (this.activeRect && !this.store.data.locked) {
       if (!this.store.options.disableRotate) {
         const rotatePt = { x: this.activeRect.center.x, y: this.activeRect.y - 30 };
         if (this.activeRect.rotate) {
           rotatePoint(rotatePt, this.activeRect.rotate, this.activeRect.center);
         }
         // 旋转控制点
-        if (!this.ctrl && hitPoint(pt, rotatePt, size)) {
-          moveType = MoveType.Rotate;
+        if (!this.hotkeyType && hitPoint(pt, rotatePt, size)) {
+          hoverType = HoverType.Rotate;
           this.externalElements.style.cursor = 'url("rotate.cur"), auto';
         }
       }
 
       // 大小控制点
-      for (let i = 0; i < 4; i++) {
-        if (hitPoint(pt, this.sizeCPs[i], size)) {
-          let cursors = defaultCursors;
-          let offset = 0;
-          if (Math.abs(this.activeRect.rotate % 90 - 45) < 25) {
-            cursors = rotatedCursors;
-            offset = Math.round((this.activeRect.rotate - 45) / 90);
-          } else {
-            offset = Math.round(this.activeRect.rotate / 90);
+      if (!this.hotkeyType || this.hotkeyType === HotkeyType.Resize) {
+        for (let i = 0; i < 4; i++) {
+          if (hitPoint(pt, this.sizeCPs[i], size)) {
+            let cursors = defaultCursors;
+            let offset = 0;
+            if (Math.abs(this.activeRect.rotate % 90 - 45) < 25) {
+              cursors = rotatedCursors;
+              offset = Math.round((this.activeRect.rotate - 45) / 90);
+            } else {
+              offset = Math.round(this.activeRect.rotate / 90);
+            }
+            hoverType = HoverType.Resize;
+            this.resizeIndex = i;
+            this.externalElements.style.cursor = cursors[(i + offset) % 4];
+            break;
           }
-          moveType = MoveType.Resize;
-          this.resizeIndex = i;
-          this.externalElements.style.cursor = cursors[(i + offset) % 4];
-          break;
         }
       }
-
-      if (this.ctrl) {
+      if (this.hotkeyType === HotkeyType.Resize) {
         for (let i = 4; i < 8; i++) {
           if (hitPoint(pt, this.sizeCPs[i], size)) {
             let cursors = rotatedCursors;
@@ -705,7 +715,7 @@ export class Canvas {
             } else {
               offset = Math.round(this.activeRect.rotate / 90);
             }
-            moveType = MoveType.Resize;
+            hoverType = HoverType.Resize;
             this.resizeIndex = i;
             this.externalElements.style.cursor = cursors[(i + offset) % 4];
             break;
@@ -714,7 +724,7 @@ export class Canvas {
       }
     }
 
-    if (moveType === MoveType.None) {
+    if (hoverType === HoverType.None) {
       for (let i = this.store.data.pens.length - 1; i >= 0; --i) {
         const pen = this.store.data.pens[i];
         if (pen.visible == false || pen.locked === LockState.Disable) {
@@ -722,12 +732,12 @@ export class Canvas {
         }
 
         if (!pen.type) {
-          if (!this.store.options.disableAnchor && !this.ctrl) {
+          if (!this.store.data.locked && !this.store.options.disableAnchor && this.hotkeyType !== HotkeyType.Resize) {
             // 锚点
             if (pen.calculative.worldAnchors) {
               for (const anchor of pen.calculative.worldAnchors) {
                 if (hitPoint(pt, anchor, size)) {
-                  moveType = MoveType.Anchors;
+                  hoverType = HoverType.Anchors;
                   this.anchor = anchor;
                   this.store.hover = pen;
                   this.externalElements.style.cursor = 'crosshair';
@@ -737,7 +747,7 @@ export class Canvas {
             }
           }
 
-          if (moveType === MoveType.None && pointInRect(pt, pen.calculative.worldRect)) {
+          if (hoverType === HoverType.None && pointInRect(pt, pen.calculative.worldRect)) {
             if (!this.store.data.locked && !pen.locked) {
               this.externalElements.style.cursor = 'move';
             } else {
@@ -745,13 +755,13 @@ export class Canvas {
             }
 
             this.store.hover = pen;
-            moveType = MoveType.Nodes;
+            hoverType = HoverType.Nodes;
             break;
           }
         } else {
           if (pen.from) {
             if (hitPoint(pt, pen.from)) {
-              moveType = MoveType.LineFrom;
+              hoverType = HoverType.LineFrom;
               this.store.hover = pen;
               if (this.store.data.locked || pen.locked) {
                 this.externalElements.style.cursor = this.store.options.hoverCursor;
@@ -762,7 +772,7 @@ export class Canvas {
             }
 
             if (pen.to && hitPoint(pt, pen.to)) {
-              moveType = MoveType.LineTo;
+              hoverType = HoverType.LineTo;
               this.store.hover = pen;
               if (this.store.data.locked || pen.locked) {
                 this.externalElements.style.cursor = this.store.options.hoverCursor;
@@ -773,7 +783,7 @@ export class Canvas {
             }
 
             if (pen.pointIn && pen.pointIn(pt)) {
-              moveType = MoveType.LineTo;
+              hoverType = HoverType.Line;
               this.store.hover = pen;
               this.externalElements.style.cursor = this.store.options.hoverCursor;
               break;
@@ -783,16 +793,16 @@ export class Canvas {
       }
     }
 
-    if (moveType === MoveType.None && pointInRect(pt, this.activeRect)) {
+    if (hoverType === HoverType.None && pointInRect(pt, this.activeRect)) {
       if (!this.store.data.locked) {
         this.externalElements.style.cursor = 'move';
       }
       this.store.hover = undefined;
-      moveType = MoveType.Nodes;
+      hoverType = HoverType.Nodes;
     }
 
-    this.moveType = moveType;
-    if (moveType === MoveType.None && !this.mouseDown) {
+    this.hoverType = hoverType;
+    if (hoverType === HoverType.None && !this.mouseDown) {
       this.externalElements.style.cursor = 'default';
       this.store.hover = undefined;
     }
@@ -891,7 +901,7 @@ export class Canvas {
       pen.path = undefined;
     }
     // end
-    this.dirtyRect(pen);
+    this.dirtyPenRect(pen);
     !pen.rotate && (pen.rotate = 0);
     this.loadImage(pen);
   }
@@ -965,7 +975,7 @@ export class Canvas {
     }
   }
 
-  dirtyRect(pen: TopologyPen) {
+  dirtyPenRect(pen: TopologyPen) {
     calcWorldRects(this.store.pens, pen);
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
@@ -1036,7 +1046,7 @@ export class Canvas {
       if (!rectInRect(penRect, canvasRect)) {
         return;
       }
-      renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store.options);
+      renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store);
     });
     ctx.restore();
   };
@@ -1080,10 +1090,13 @@ export class Canvas {
   };
 
   renderCP = () => {
+    if (this.store.data.locked) {
+      return;
+    }
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.translate(0.5, 0.5);
-    if (this.store.hover && ((!this.ctrl || this.addAnchorReady) || this.store.active.length !== 1 || this.store.active[0] !== this.store.hover)) {
+    if (this.store.hover && (this.hotkeyType !== HotkeyType.Resize || this.store.active.length !== 1 || this.store.active[0] !== this.store.hover)) {
       if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
         const anchors = this.store.hover.calculative.worldAnchors;
         if (anchors) {
@@ -1108,7 +1121,7 @@ export class Canvas {
     }
 
     // Draw size control points.
-    if (!this.store.data.locked && !this.addAnchorReady && this.activeRect) {
+    if (this.hotkeyType !== HotkeyType.Anchor && this.activeRect) {
       ctx.strokeStyle = this.store.options.activeColor;
       ctx.fillStyle = "#ffffff";
       this.sizeCPs.forEach((pt, i) => {
@@ -1118,7 +1131,7 @@ export class Canvas {
           ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
           ctx.translate(-pt.x, -pt.y);
         }
-        if (i < 4 || this.ctrl) {
+        if (i < 4 || this.hotkeyType === HotkeyType.Resize) {
           ctx.beginPath();
           ctx.fillRect(pt.x - 4.5, pt.y - 4.5, 8, 8);
           ctx.strokeRect(pt.x - 5.5, pt.y - 5.5, 10, 10);
@@ -1139,7 +1152,7 @@ export class Canvas {
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
-    !this.ctrl && this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
+    this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -1152,7 +1165,7 @@ export class Canvas {
     const s = scale / this.store.data.scale;
     this.store.data.pens.forEach((pen) => {
       scalePen(pen, s, center);
-      this.dirtyRect(pen);
+      this.dirtyPenRect(pen);
     });
     this.calcActiveRect();
     this.store.data.scale = scale;
@@ -1231,16 +1244,17 @@ export class Canvas {
       pen.y = (this.activeInitPos[i].y * this.activeRect.height) + this.activeRect.y;
       pen.width *= scaleX;
       pen.height *= scaleY;
-      this.dirtyRect(pen);
+      this.dirtyPenRect(pen);
     });
     this.getSizeCPs();
     this.render(Infinity);
   }
 
   movePens(e: Point) {
-    if (!this.activeRect) {
+    if (!this.activeRect || this.store.data.locked) {
       return;
     }
+
     const p1 = { x: this.mouseDown.x, y: this.mouseDown.y };
     const p2 = { x: e.x, y: e.y };
     rotatePoint(p1, -this.activeRect.rotate, this.activeRect.center);
@@ -1261,7 +1275,7 @@ export class Canvas {
         return;
       }
       translateRect(pen, offsetX, offsetY);
-      this.dirtyRect(pen);
+      this.dirtyPenRect(pen);
     });
     this.getSizeCPs();
     this.render(Infinity);
