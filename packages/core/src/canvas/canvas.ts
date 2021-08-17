@@ -69,6 +69,9 @@ export class Canvas {
   lastOffsetX = 0;
   lastOffsetY = 0;
 
+  drawingLine?: string;
+  drawLineFns = ['curve', 'ployline', 'line', 'mindCurve'];
+
   dirty = false;
   lastRender = 0;
   touchStart = 0;
@@ -127,6 +130,7 @@ export class Canvas {
         });
       };
       this.externalElements.onmousemove = (e) => {
+
         this.onMouseMove({
           x: e.x,
           y: e.y,
@@ -173,10 +177,13 @@ export class Canvas {
       return;
     }
 
+    const isTouchPad = e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0;
+
     const now = performance.now();
     if (now - this.touchStart < 50) {
       return;
     }
+
     this.touchStart = now;
     e.preventDefault();
     e.stopPropagation();
@@ -188,12 +195,16 @@ export class Canvas {
       x -= window.scrollX;
       y -= window.scrollY;
     }
-    if (e.deltaY < 0) {
-      this.scale(this.store.data.scale + 0.1, { x, y });
+
+    if (isTouchPad) {
+      this.translate(e.wheelDeltaX, e.wheelDeltaY);
     } else {
-      this.scale(this.store.data.scale - 0.1, { x, y });
+      if (e.deltaY < 0) {
+        this.scale(this.store.data.scale + 0.1, { x, y });
+      } else {
+        this.scale(this.store.data.scale - 0.1, { x, y });
+      }
     }
-    this.store.emitter.emit('scale', this.store.data.scale);
   };
 
   onkey = (e: KeyboardEvent) => {
@@ -217,7 +228,10 @@ export class Canvas {
       case 'Meta':
         break;
       case 'Shift':
-        if (this.hotkeyType === HotkeyType.None) {
+        if (this.drawingLine) {
+          const index = this.drawLineFns.indexOf(this.drawingLine);
+          this.drawingLine = this.drawLineFns[(index + 1) % this.drawLineFns.length];
+        } else if (this.hotkeyType === HotkeyType.None) {
           this.dirty = true;
           this.hotkeyType = HotkeyType.Resize;
         }
@@ -336,9 +350,11 @@ export class Canvas {
 
     const x = event.changedTouches[0].pageX - (window ? window.scrollX : 0);
     const y = event.changedTouches[0].pageY - (window ? window.scrollY : 0);
-
     if (len > 1) {
       if (len === 2) {
+        if (now - this.touchStart < 200) {
+          return;
+        }
         const scale =
           (event as any).scale ||
           Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) /
@@ -347,11 +363,14 @@ export class Canvas {
             this.touches[0].pageY - this.touches[1].pageY
           );
         event.preventDefault();
-        // this.scaleTo(scale * this.touchScale, this.touchCenter);
+        // this.scale(scale * this.touchScale, this.touchCenter);
+        if (scale < 0) {
+          this.scale(this.store.data.scale + 0.1, this.touchCenter);
+        } else {
+          this.scale(this.store.data.scale - 0.1, this.touchCenter);
+        }
       } else if (len === 3) {
-
-
-        // this.translate(x, y, true);
+        this.translate(x, y);
       }
 
       return;
@@ -1179,6 +1198,8 @@ export class Canvas {
     this.store.data.center = center;
 
     this.render(Infinity);
+
+    this.store.emitter.emit('scale', this.store.data.scale);
   }
 
   resizePens(e: Point) {

@@ -63,3 +63,7 @@ function makeNodes() {
   }
   console.timeEnd('makeNodes');
 }
+
+function drawLine() {
+  topology.drawLine('curve');
+}

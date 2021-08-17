@@ -6,7 +6,8 @@ import { s8 } from '../utils';
 
 export enum PenType {
   Node,
-  Line,
+  Polyline,
+  Curve
 }
 
 export enum LockState {
@@ -44,6 +45,7 @@ export interface TopologyPen {
 
   from?: Point;
   to?: Point;
+  close?: boolean;
   pointIn?: (pt: Point) => boolean;
 
   tags?: string[];
@@ -137,6 +139,8 @@ export interface TopologyPen {
     worldAnchors?: Point[];
     worldIconRect?: Rect;
     worldTextRect?: Rect;
+    worldFrom?: Point;
+    worldTo?: Point;
     textDrawRect?: Rect;
     svgRect?: Rect;
     textLines?: string[];
@@ -226,13 +230,13 @@ export function renderPen(
 
   if (pen.lineCap) {
     ctx.lineCap = pen.lineCap as CanvasLineCap;
-  } else if (pen.type === PenType.Line) {
+  } else if (pen.type) {
     ctx.lineCap = 'round';
   }
 
   if (pen.lineJoin) {
     ctx.lineJoin = pen.lineJoin as CanvasLineJoin;
-  } else if (pen.type === PenType.Line) {
+  } else if (pen.type) {
     ctx.lineJoin = 'round';
   }
 
@@ -397,10 +401,19 @@ export function renderPen(
 }
 
 export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
+  if (!pen.calculative) {
+    pen.calculative = {};
+  }
+
   const rect: Rect = {
     x: pen.x,
     y: pen.y
   };
+
+  if (pen.type) {
+    pen.calculative.worldFrom = Object.assign({}, pen.from);
+    pen.calculative.worldTo = Object.assign({}, pen.to);
+  }
 
   if (!pen.parentId) {
     rect.ex = pen.x + pen.width;
@@ -430,11 +443,15 @@ export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: Topol
       x: rect.x + rect.width / 2,
       y: rect.y + rect.height / 2
     };
+
+    if (pen.type) {
+      pen.calculative.worldFrom.x = parentRect.x + (pen.from.x >= 1 ? pen.x : parentRect.width * pen.from.x);
+      pen.calculative.worldFrom.y = parentRect.y + (pen.from.y >= 1 ? pen.y : parentRect.height * pen.from.y);
+      pen.calculative.worldTo.x = parentRect.x + (pen.to.x >= 1 ? pen.x : parentRect.width * pen.to.x);
+      pen.calculative.worldTo.y = parentRect.y + (pen.to.y >= 1 ? pen.y : parentRect.height * pen.to.y);
+    }
   }
 
-  if (!pen.calculative) {
-    pen.calculative = {};
-  }
   pen.calculative.worldRect = rect;
 
   return rect;

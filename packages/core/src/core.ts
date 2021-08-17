@@ -104,6 +104,22 @@ export class Topology {
     this.store.emitter.emit('open');
   }
 
+  drawLine(lineName?: string) {
+    this.canvas.drawingLine = lineName;
+  }
+
+  addDrawLineFn(fnName: string, fn: Function) {
+    this[fnName] = fn;
+    this.canvas.drawLineFns.push(fnName);
+  }
+
+  removeDrawLineFn(fnName: string) {
+    const index = this.canvas.drawLineFns.indexOf(fnName);
+    if (index > -1) {
+      this.canvas.drawLineFns.splice(index, 1);
+    }
+  }
+
   clear() {
     clearStore(this.store);
     this.canvas.clearCanvas();

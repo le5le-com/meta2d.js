@@ -13,7 +13,6 @@ export * from './file';
 export * from './cube';
 export * from './people';
 export * from './line';
-export * from './mindLine';
 
 import { rectangle } from './rectangle';
 import { circle } from './circle';
@@ -23,14 +22,13 @@ import { triangle } from './triangle';
 import { pentagon } from './pentagon';
 import { pentagram } from './pentagram';
 import { hexagon } from './hexagon';
-import {leftArrow,rightArrow,twowayArrow} from './arrow';
+import { leftArrow, rightArrow, twowayArrow } from './arrow';
 import { message } from './message';
 import { cloud } from './cloud';
 import { file } from './file';
-import {cube} from './cube';
-import {people} from './people';
-import {line} from './line';
-import {mindLine} from './mindLine';
+import { cube } from './cube';
+import { people } from './people';
+import { line } from './line';
 
 export function commonPens() {
   return {
@@ -51,6 +49,5 @@ export function commonPens() {
     cube,
     people,
     line,
-    mindLine
   };
 }
