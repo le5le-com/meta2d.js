@@ -13,8 +13,3 @@ export function abs(num: number, percent: number | string): number {
   return (num * +percent) / 100;
 }
 
-export function distance(pt1: { x: number; y: number; }, pt2: { x: number; y: number; }) {
-  const x = pt1.x - pt2.x;
-  const y = pt1.y - pt2.y;
-  return Math.sqrt(x * x + y * y);
-}

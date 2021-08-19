@@ -1,13 +1,14 @@
 
-import { Point, rotatePoint } from '../point';
+import { Direction } from '../data';
+import { distance, facePoint, Point, rotatePoint } from '../point';
 import { Rect, scaleRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
 import { s8 } from '../utils';
+import { deepClone } from '../utils/clone';
 
 export enum PenType {
   Node,
-  Polyline,
-  Curve
+  Line,
 }
 
 export enum LockState {
@@ -29,7 +30,7 @@ export interface TopologyPen {
   id: string;
   parentId?: string;
   type: PenType;
-  name: string;
+  name?: string;
   x: number;
   y: number;
   width?: number;
@@ -155,6 +156,7 @@ export interface TopologyPen {
 
     active?: boolean;
     hover?: boolean;
+    activeAnchor?: Point;
   };
 }
 
@@ -261,6 +263,13 @@ export function renderPen(
   if (path) {
     fill && ctx.fill(path);
     ctx.stroke(path);
+  }
+
+  if (pen.type && pen.calculative.active) {
+    ctx.save();
+    ctx.fillStyle = pen.activeBackground || store.options.activeBackground;
+    renderLineAnchors(ctx, pen);
+    ctx.restore();
   }
 
   if (globalStore.draws[pen.name]) {
@@ -400,21 +409,90 @@ export function renderPen(
   ctx.restore();
 }
 
+export function renderLineAnchors(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: TopologyPen,
+) {
+  renderAnchor(ctx, pen.calculative.worldFrom, pen.calculative.activeAnchor === pen.calculative.worldFrom);
+  pen.calculative.worldAnchors.forEach(pt => {
+    renderAnchor(ctx, pt, pen.calculative.activeAnchor === pt);
+  });
+  renderAnchor(ctx, pen.calculative.worldTo, pen.calculative.activeAnchor === pen.calculative.worldTo);
+}
+
+export function renderAnchor(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pt: Point,
+  active?: boolean
+) {
+  const r = 3;
+
+  if (active) {
+    if (pt.prev) {
+      ctx.save();
+      ctx.strokeStyle = '#fa541c';
+      ctx.beginPath();
+      ctx.moveTo(pt.prev.x, pt.prev.y);
+      ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(pt.prev.x, pt.prev.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (pt.next) {
+      ctx.save();
+      ctx.strokeStyle = '#fa541c';
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pt.y);
+      ctx.lineTo(pt.next.x, pt.next.y);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(pt.next.x, pt.next.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  } else {
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+
 export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
   if (!pen.calculative) {
     pen.calculative = {};
   }
 
-  const rect: Rect = {
+  let rect: Rect = {
     x: pen.x,
     y: pen.y
   };
 
   if (pen.type) {
-    pen.calculative.worldFrom = Object.assign({}, pen.from);
-    pen.calculative.worldTo = Object.assign({}, pen.to);
+    pen.calculative.worldFrom = deepClone(pen.from);
+    pen.calculative.worldTo = deepClone(pen.to);
   }
-
   if (!pen.parentId) {
     rect.ex = pen.x + pen.width;
     rect.ey = pen.y + pen.height;
@@ -461,8 +539,8 @@ export function calcWorldAnchors(pen: TopologyPen) {
   const anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
-      if (anchor.custom) {
-        anchors.push({
+      if (anchor.custom || pen.type) {
+        const p: Point = {
           id: anchor.id || s8(),
           penId: pen.id,
           x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.x,
@@ -470,12 +548,28 @@ export function calcWorldAnchors(pen: TopologyPen) {
           color: anchor.color,
           background: anchor.background,
           custom: true
-        });
+        };
+        if (anchor.prev) {
+          p.prev = {
+            penId: pen.id,
+            x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.prev.x,
+            y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.prev.y,
+          };
+        }
+        if (anchor.next) {
+          p.next = {
+            penId: pen.id,
+            x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.next.x,
+            y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.next.y,
+          };
+        }
+        anchors.push(p);
       }
     });
   }
 
-  if (!anchors.length) {
+  // Default anchors of node
+  if (!anchors.length && !pen.type) {
     anchors.push({
       id: s8(),
       penId: pen.id,
@@ -510,7 +604,10 @@ export function calcWorldAnchors(pen: TopologyPen) {
       rotatePoint(anchor, pen.rotate, pen.calculative.worldRect.center);
     });
   }
-  pen.calculative.worldAnchors = anchors;
+
+  if (!pen.type || pen.anchors) {
+    pen.calculative.worldAnchors = anchors;
+  }
 }
 
 export function calcIconRect(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
@@ -618,6 +715,10 @@ export function addPenAnchor(pen: TopologyPen, pt: Point) {
   if (!pen.anchors) {
     pen.anchors = [];
   }
+  if (!pen.calculative.worldAnchors) {
+    pen.calculative.worldAnchors = [];
+  }
+
   if (pen.rotate % 360) {
     rotatePoint(pt, -pen.rotate, pen.calculative.worldRect.center);
   }
@@ -630,7 +731,11 @@ export function addPenAnchor(pen: TopologyPen, pt: Point) {
   };
   pen.anchors.push(anchor);
 
-  calcWorldAnchors(pen);
+  const worldAnchor = { ...anchor };
+  worldAnchor.x = pt.x;
+  worldAnchor.y = pt.y;
+  pen.calculative.worldAnchors.push(worldAnchor);
+  return worldAnchor;
 }
 
 export function removePenAnchor(pen: TopologyPen, anchor: Point) {
@@ -646,4 +751,27 @@ export function removePenAnchor(pen: TopologyPen, anchor: Point) {
   calcWorldAnchors(pen);
 
   return true;
+}
+
+export function facePen(pt: Point, pen?: TopologyPen) {
+  if (!pen || !pen.calculative || !pen.calculative.worldRect.center) {
+    return Direction.None;
+  }
+
+  return facePoint(pt, pen.calculative.worldRect.center);
+}
+
+
+export function nearestAnchor(pt: Point, pen: TopologyPen) {
+  let dis = Infinity;
+  let anchor: Point;
+  pen.calculative.worldAnchors.forEach((a: Point) => {
+    const d = distance(pt, a);
+    if (dis > d) {
+      dis = d;
+      anchor = a;
+    }
+  });
+
+  return anchor;
 }

@@ -1,3 +1,4 @@
+import { Direction } from '../data';
 
 export interface Point {
   x: number;
@@ -5,9 +6,12 @@ export interface Point {
   radius?: number;
   color?: string;
   background?: string;
-  id?: number | string;
+  id?: string;
   penId?: string;
+  anchorId?: string;
   custom?: boolean;
+  prev?: Point;
+  next?: Point;
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
@@ -58,4 +62,30 @@ export function distance(pt1: Point, pt2: Point): number {
   const x = pt1.x - pt2.x;
   const y = pt1.y - pt2.y;
   return Math.sqrt(x * x + y * y);
+}
+
+export function facePoint(pt: Point, targetPt?: Point) {
+  let d = Direction.None;
+  if (!targetPt) {
+    return d;
+  }
+
+  const disX = pt.x - targetPt.x;
+  const disY = pt.y - targetPt.y;
+
+  if (Math.abs(disX) > Math.abs(disY)) {
+    if (disX > 0) {
+      d = Direction.Right;
+    } else {
+      d = Direction.Left;
+    }
+  } else {
+    if (disY > 0) {
+      d = Direction.Bottom;
+    } else {
+      d = Direction.Up;
+    }
+  }
+
+  return d;
 }

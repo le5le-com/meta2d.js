@@ -2,7 +2,7 @@ import { commonPens } from './common-diagram';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { TopologyPen } from './pen';
+import { facePen, TopologyPen } from './pen';
 import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
@@ -23,6 +23,8 @@ export class Topology {
     if (window) {
       window.topology = this;
     }
+
+    this['facePen'] = facePen;
   }
 
   get beforeAddPen() {
@@ -105,11 +107,11 @@ export class Topology {
   }
 
   drawLine(lineName?: string) {
-    this.canvas.drawingLine = lineName;
+    this.canvas.drawingLineName = lineName;
   }
 
   addDrawLineFn(fnName: string, fn: Function) {
-    this[fnName] = fn;
+    this.canvas[fnName] = fn;
     this.canvas.drawLineFns.push(fnName);
   }
 

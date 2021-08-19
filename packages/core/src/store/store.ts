@@ -77,7 +77,7 @@ export const createStore = () => {
     path2dMap: new WeakMap(),
     active: [],
     animate: new Map(),
-    options: Object.assign({}, defaultOptions),
+    options: { ...defaultOptions },
     emitter: mitt()
   } as TopologyStore;
 };

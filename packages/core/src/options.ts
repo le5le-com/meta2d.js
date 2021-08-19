@@ -6,8 +6,6 @@ export enum KeydownType {
   Canvas,
 }
 
-export const textKeys = ['textColor', 'fontFamily', 'fontSize', 'lineHeight', 'textAlign', 'textBaseline'];
-
 export interface Options {
   extDpiRatio?: number;
   color?: string;
@@ -36,7 +34,6 @@ export interface Options {
   disableAnchor?: boolean;
   disableWidth?: boolean;
   disableHeight?: boolean;
-  anchorSize?: number;
   alwaysAnchor?: boolean;
   autoAnchor?: boolean;
   disableEmptyLine?: boolean;
@@ -60,6 +57,7 @@ export interface Options {
   gridSize?: number;
   rule?: boolean;
   ruleColor?: string;
+  drawingLineName?: string;
   interval?: number;
 }
 
@@ -74,7 +72,7 @@ export const defaultOptions: Options = {
   activeColor: '#1890ff',
   hoverColor: '#1890ff',
   hoverAnchorColor: '#fa541c',
-  anchorRadius: 5,
+  anchorRadius: 3,
   anchorBackground: '#fff',
   dockColor: '#fa541c',
   dockBackground: '#fa541c',
@@ -83,11 +81,11 @@ export const defaultOptions: Options = {
   hoverCursor: 'pointer',
   minScale: 0.3,
   maxScale: 5,
-  anchorSize: 5,
   keydown: KeydownType.Document,
   viewPadding: 0,
   gridSize: 10,
   gridColor: '#f3f3f3',
   ruleColor: '#888888',
+  drawingLineName: 'curve',
   interval: 20
 };

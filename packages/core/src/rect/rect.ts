@@ -157,3 +157,38 @@ export function scaleRect(rect: Rect, scale: number, center: Point) {
   rect.center.y = rect.y + rect.height / 2;
 }
 
+export function calcRelativeRect(rect: Rect, worldRect: Rect) {
+  const relRect: Rect = {
+    x: (rect.x - worldRect.x) / worldRect.width,
+    y: (rect.y - worldRect.y) / worldRect.height,
+    width: rect.width / worldRect.width,
+    height: rect.height / worldRect.height,
+  };
+  relRect.ex = relRect.x + relRect.width;
+  relRect.ey = relRect.y + relRect.height;
+
+  return relRect;
+}
+
+export function calcRelativePoint(pt: Point, worldRect: Rect) {
+  const point: Point = {
+    penId: pt.penId,
+    x: (pt.x - worldRect.x) / worldRect.width,
+    y: (pt.y - worldRect.y) / worldRect.height,
+  };
+  if (pt.prev) {
+    point.prev = {
+      penId: pt.penId,
+      x: (pt.prev.x - worldRect.x) / worldRect.width,
+      y: (pt.prev.y - worldRect.y) / worldRect.height,
+    };
+  }
+  if (pt.next) {
+    point.next = {
+      penId: pt.penId,
+      x: (pt.next.x - worldRect.x) / worldRect.width,
+      y: (pt.next.y - worldRect.y) / worldRect.height,
+    };
+  }
+  return point;
+}
