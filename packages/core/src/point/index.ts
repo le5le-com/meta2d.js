@@ -12,6 +12,7 @@ export interface Point {
   custom?: boolean;
   prev?: Point;
   next?: Point;
+  start?: boolean;
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {

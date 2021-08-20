@@ -6,26 +6,26 @@ import { TopologyStore } from '../store';
 import { s8 } from '../utils';
 
 export function line(pen: TopologyPen) {
-  if (!pen.to || !pen.calculative) {
-    return;
-  }
   const path = new Path2D();
   let from = pen.calculative.worldFrom;
+  from.start = true;
   pen.calculative.worldAnchors.forEach((pt: Point) => {
     draw(path, from, pt);
     from = pt;
   });
   draw(path, from, pen.calculative.worldTo);
-
   pen.close && path.closePath();
 
   return path;
 }
 
 function draw(path: Path2D, from: Point, to: Point) {
+  if (!to) {
+    return;
+  }
   if (from.next) {
     if (to.prev) {
-      path.moveTo(from.x, from.y);
+      from.start && path.moveTo(from.x, from.y);
       path.bezierCurveTo(
         from.next.x,
         from.next.y,
@@ -35,7 +35,7 @@ function draw(path: Path2D, from: Point, to: Point) {
         to.y
       );
     } else {
-      path.moveTo(from.x, from.y);
+      from.start && path.moveTo(from.x, from.y);
       path.quadraticCurveTo(
         from.next.x,
         from.next.y,
@@ -45,7 +45,7 @@ function draw(path: Path2D, from: Point, to: Point) {
     }
   } else {
     if (to.prev) {
-      path.moveTo(from.x, from.y);
+      from.start && path.moveTo(from.x, from.y);
       path.quadraticCurveTo(
         to.prev.x,
         to.prev.y,
@@ -53,7 +53,7 @@ function draw(path: Path2D, from: Point, to: Point) {
         to.y
       );
     } else {
-      path.moveTo(from.x, from.y);
+      from.start && path.moveTo(from.x, from.y);
       path.lineTo(
         to.x,
         to.y
@@ -62,22 +62,19 @@ function draw(path: Path2D, from: Point, to: Point) {
   }
 }
 
-export function curve(store: TopologyStore, pen: TopologyPen, mouseDown?: Point) {
-  if (mouseDown) {
+export function curve(store: TopologyStore, pen: TopologyPen, mouse?: Point) {
+  if (mouse) {
     if (pen.calculative.activeAnchor) {
-      pen.calculative.activeAnchor.next = { id: s8(), penId: pen.id, x: pen.calculative.worldTo.x, y: pen.calculative.worldTo.y };
+      pen.calculative.activeAnchor.next = { id: s8(), penId: pen.id, x: mouse.x, y: mouse.y };
       pen.calculative.activeAnchor.prev = { ...pen.calculative.activeAnchor.next };
       rotatePoint(pen.calculative.activeAnchor.prev, 180, pen.calculative.activeAnchor);
-
-      pen.calculative.worldTo.x = pen.calculative.activeAnchor.x;
-      pen.calculative.worldTo.y = pen.calculative.activeAnchor.y;
     }
   } else {
     if (!pen.calculative.worldFrom.next) {
       const fromFace = facePen(pen.calculative.worldFrom, store.pens[pen.from.penId]);
       calcCurveCP(pen.calculative.worldFrom, fromFace, 30);
     }
-    if (!pen.calculative.worldTo.next) {
+    if (pen.calculative.worldTo && !pen.calculative.worldTo.next) {
       const toFace = facePen(pen.calculative.worldTo, store.pens[pen.to.penId]);
       calcCurveCP(pen.calculative.worldTo, toFace, -30);
     }
@@ -189,6 +186,10 @@ export function getLinePoints(pen: TopologyPen) {
 
 export function getPoints(from: Point, to: Point) {
   const pts: Point[] = [];
+  if (!to) {
+    return pts;
+  }
+
   if (from.next) {
     if (to.prev) {
       for (let i = 0.02; i < 1; i += 0.02) {

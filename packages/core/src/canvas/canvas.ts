@@ -436,6 +436,8 @@ export class Canvas {
     }
 
     if (this.drawingLineName) {
+      this.inactive(true);
+
       const pt: Point = { x: e.x, y: e.y };
       this.calibrateMouse(pt);
 
@@ -447,7 +449,6 @@ export class Canvas {
       // 在锚点上，完成绘画
       if (this.hoverType && this.hoverType < HoverType.Line && this.drawingLine) {
         this.finishDrawline();
-        this.render(Infinity);
         return;
       }
 
@@ -468,8 +469,10 @@ export class Canvas {
       }
       if (this.drawingLine) {
         const anchor = addPenAnchor(this.drawingLine, pt);
-        this.drawingLine.to = pt;
-        this.drawline(anchor);
+        this.drawingLine.calculative.activeAnchor = anchor;
+        this.drawingLine.calculative.worldTo = undefined;
+        this.drawingLine.to = undefined;
+        this.drawline();
       } else {
         this.drawingLine = {
           id: s8(),
@@ -477,16 +480,18 @@ export class Canvas {
           x: pt.x,
           y: pt.y,
           type: PenType.Line,
-          from: pt,
+          from: { ...pt },
+          calculative: {
+            worldFrom: { ...pt }
+          }
         };
+        this.drawingLine.calculative.activeAnchor = this.drawingLine.calculative.worldFrom;
+        this.drawline();
       }
     } else {
       switch (this.hoverType) {
         case HoverType.None:
-          if (this.store.active.length) {
-            this.inactive();
-            this.store.emitter.emit('space', e);
-          }
+          this.inactive();
           break;
         case HoverType.Node:
           if (this.store.hover) {
@@ -497,11 +502,11 @@ export class Canvas {
               if (this.store.hover.calculative.active) {
                 this.store.hover.calculative.active = undefined;
                 this.store.active.splice(this.store.active.findIndex((pen) => pen === this.store.hover), 1);
-                this.store.emitter.emit('inactive', this.store.hover);
+                this.store.emitter.emit('inactive', [this.store.hover]);
               } else {
                 this.store.hover.calculative.active = true;
                 this.store.active.push(this.store.hover);
-                this.store.emitter.emit('active', this.store.hover);
+                this.store.emitter.emit('active', [this.store.hover]);
               }
               this.dirty = true;
             } else if (e.altKey) {
@@ -511,18 +516,12 @@ export class Canvas {
                 });
                 this.store.active = [this.store.hover];
                 this.store.hover.calculative.active = true;
-                this.store.emitter.emit('active', this.store.hover);
+                this.store.emitter.emit('active', [this.store.hover]);
                 this.dirty = true;
               }
             } else {
               if (!this.store.hover.calculative.active) {
-                this.store.active.forEach((pen) => {
-                  pen.calculative.active = undefined;
-                });
-                this.store.active = [this.store.hover];
-                this.store.hover.calculative.active = true;
-                this.store.emitter.emit('active', this.store.hover);
-                this.dirty = true;
+                this.active([this.store.hover]);
               }
             }
 
@@ -568,16 +567,21 @@ export class Canvas {
     if (this.drawingLine) {
       const pt: Point = { x: e.x, y: e.y };
       this.calibrateMouse(pt);
-      this.drawingLine.to = { ...pt };
-      if (this.hoverType && this.hoverType < HoverType.Line && this.anchor) {
-        if (this.anchor.id !== this.drawingLine.from.anchorId) {
-          this.drawingLine.to.x = this.anchor.x;
-          this.drawingLine.to.y = this.anchor.y;
-          this.drawingLine.to.penId = this.anchor.penId;
-          this.drawingLine.to.anchorId = this.anchor.id;
+      if (this.mouseDown) {
+        this.drawline(pt);
+      } else {
+        this.drawingLine.to = { ...pt };
+        if (this.hoverType && this.hoverType < HoverType.Line && this.anchor) {
+          if (this.anchor.id !== this.drawingLine.from.anchorId) {
+            this.drawingLine.to.x = this.anchor.x;
+            this.drawingLine.to.y = this.anchor.y;
+            this.drawingLine.to.penId = this.anchor.penId;
+            this.drawingLine.to.anchorId = this.anchor.id;
+          }
         }
+        this.drawingLine.calculative.worldTo = deepClone(this.drawingLine.to);
+        this.drawline();
       }
-      this.drawline();
     } else if (this.mouseDown) {
       if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
         this.mouseRight = MouseRight.Translate;
@@ -688,15 +692,34 @@ export class Canvas {
     }
   };
 
-  inactive() {
+  inactive(drawing?: boolean) {
+    if (!this.store.active.length) {
+      return;
+    }
+    this.store.active.forEach((pen) => {
+      pen.calculative.active = undefined;
+    });
+    !drawing && this.store.emitter.emit('inactive', this.store.active);
+    this.store.active = [];
+    this.activeRect = undefined;
+    this.sizeCPs = undefined;
+
+    this.dirty = true;
+  }
+
+  active(pens: TopologyPen[]) {
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
     });
     this.store.active = [];
-    this.dirty = true;
 
-    this.activeRect = undefined;
-    this.sizeCPs = undefined;
+    pens.forEach((pen) => {
+      pen.calculative.active = true;
+    });
+    this.store.active.push(...pens);
+    this.calcActiveRect();
+    this.dirty = true;
+    this.store.emitter.emit('active', this.store.active);
   }
 
   getSizeCPs() {
@@ -1045,18 +1068,13 @@ export class Canvas {
     this.loadImage(pen);
   }
 
-  drawline(activeAnchor?: Point) {
+  drawline(mouse?: Point) {
     if (!this.drawingLine) {
       return;
     }
-    if (!this.drawingLine.calculative) {
-      this.inactive();
-      this.drawingLine.calculative = { active: true };
-    }
-    this.drawingLine.calculative.worldFrom = deepClone(this.drawingLine.from);
-    this.drawingLine.calculative.worldTo = deepClone(this.drawingLine.to);
+    this.drawingLine.calculative.active = true;
     if (this[this.drawingLineName]) {
-      this[this.drawingLineName](this.store, this.drawingLine, this.mouseDown);
+      this[this.drawingLineName](this.store, this.drawingLine, mouse);
     }
     const rect = getLineRect(this.drawingLine);
     this.drawingLine.x = rect.x;
@@ -1071,28 +1089,38 @@ export class Canvas {
         this.drawingLine.anchors.push(calcRelativePoint(pt, this.drawingLine.calculative.worldRect));
       });
     }
-    this.drawingLine.calculative.activeAnchor = activeAnchor || this.drawingLine.calculative.worldFrom;
     this.dirty = true;
   }
 
   finishDrawline(close?: boolean) {
     if (this.drawingLine) {
       this.drawingLine.close = close;
+      if (this.drawingLine.calculative.worldAnchors.length) {
+        this.drawingLine.calculative.worldTo = this.drawingLine.calculative.worldAnchors.pop();
+        this.drawingLine.to = this.drawingLine.anchors.pop();
+        this.store.path2dMap.set(this.drawingLine, this.store.penPaths[this.drawingLine.name](this.drawingLine));
+      } else {
+        this.drawline();
+        this.render();
+        this.drawingLine = undefined;
+        this.drawingLineName = undefined;
+        return;
+      }
       this.drawingLine.calculative.activeAnchor = this.drawingLine.calculative.worldTo;
       if (!this.beforeAddPen || this.beforeAddPen(this.drawingLine)) {
         this.store.data.pens.push(this.drawingLine);
         this.store.pens[this.drawingLine.id] = this.drawingLine;
-        this.store.active.push(this.drawingLine);
         this.store.emitter.emit('addPen', this.drawingLine);
+        this.active([this.drawingLine]);
         this.store.histories.push({
           type: EditType.Add,
           data: this.drawingLine
         });
-      } else {
-        this.render(Infinity);
       }
-      this.drawingLine = undefined;
     }
+    this.drawline();
+    this.render();
+    this.drawingLine = undefined;
     this.drawingLineName = undefined;
   }
 
@@ -1247,7 +1275,7 @@ export class Canvas {
   renderBorder = () => {
     if (!this.store.data.locked) {
       // Occupied territory.
-      if (this.activeRect) {
+      if (this.activeRect && !(this.store.active.length === 1 && this.store.active[0].type)) {
         const ctx = this.offscreen.getContext('2d');
         ctx.save();
         ctx.translate(0.5, 0.5);
@@ -1314,7 +1342,7 @@ export class Canvas {
     }
 
     // Draw size control points.
-    if (this.hotkeyType !== HotkeyType.Anchor && this.activeRect) {
+    if (this.hotkeyType !== HotkeyType.Anchor && this.activeRect && !(this.store.active.length === 1 && this.store.active[0].type)) {
       ctx.strokeStyle = this.store.options.activeColor;
       ctx.fillStyle = "#ffffff";
       this.sizeCPs.forEach((pt, i) => {
@@ -1491,6 +1519,7 @@ export class Canvas {
     if (this.store.active.length === 1) {
       this.activeRect = this.store.active[0].calculative.worldRect;
       this.activeRect.rotate = this.store.active[0].rotate;
+      calcCenter(this.activeRect);
     } else {
       this.activeRect = getRect(this.store.active);
       this.activeRect.rotate = 0;

@@ -266,10 +266,7 @@ export function renderPen(
   }
 
   if (pen.type && pen.calculative.active) {
-    ctx.save();
-    ctx.fillStyle = pen.activeBackground || store.options.activeBackground;
-    renderLineAnchors(ctx, pen);
-    ctx.restore();
+    renderLineAnchors(ctx, pen, store);
   }
 
   if (globalStore.draws[pen.name]) {
@@ -412,12 +409,16 @@ export function renderPen(
 export function renderLineAnchors(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: TopologyPen,
+  store: TopologyStore,
 ) {
+  ctx.save();
+  ctx.fillStyle = pen.activeColor || store.options.activeColor;
   renderAnchor(ctx, pen.calculative.worldFrom, pen.calculative.activeAnchor === pen.calculative.worldFrom);
   pen.calculative.worldAnchors.forEach(pt => {
     renderAnchor(ctx, pt, pen.calculative.activeAnchor === pt);
   });
-  renderAnchor(ctx, pen.calculative.worldTo, pen.calculative.activeAnchor === pen.calculative.worldTo);
+  pen.calculative.worldTo && renderAnchor(ctx, pen.calculative.worldTo, pen.calculative.activeAnchor === pen.calculative.worldTo);
+  ctx.restore();
 }
 
 export function renderAnchor(
@@ -467,6 +468,11 @@ export function renderAnchor(
       ctx.fill();
       ctx.stroke();
     }
+
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
   } else {
     ctx.save();
     ctx.fillStyle = '#ffffff';

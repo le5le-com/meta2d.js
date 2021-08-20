@@ -72,7 +72,7 @@ export const defaultOptions: Options = {
   activeColor: '#1890ff',
   hoverColor: '#1890ff',
   hoverAnchorColor: '#fa541c',
-  anchorRadius: 3,
+  anchorRadius: 4,
   anchorBackground: '#fff',
   dockColor: '#fa541c',
   dockBackground: '#fa541c',
