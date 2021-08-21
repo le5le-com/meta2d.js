@@ -173,12 +173,14 @@ export function calcRelativeRect(rect: Rect, worldRect: Rect) {
 export function calcRelativePoint(pt: Point, worldRect: Rect) {
   const point: Point = {
     penId: pt.penId,
+    connectTo: pt.connectTo,
     x: (pt.x - worldRect.x) / worldRect.width,
     y: (pt.y - worldRect.y) / worldRect.height,
   };
   if (pt.prev) {
     point.prev = {
       penId: pt.penId,
+      connectTo: pt.connectTo,
       x: (pt.prev.x - worldRect.x) / worldRect.width,
       y: (pt.prev.y - worldRect.y) / worldRect.height,
     };
@@ -186,6 +188,7 @@ export function calcRelativePoint(pt: Point, worldRect: Rect) {
   if (pt.next) {
     point.next = {
       penId: pt.penId,
+      connectTo: pt.connectTo,
       x: (pt.next.x - worldRect.x) / worldRect.width,
       y: (pt.next.y - worldRect.y) / worldRect.height,
     };

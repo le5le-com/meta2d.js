@@ -47,7 +47,7 @@ export interface TopologyPen {
   from?: Point;
   to?: Point;
   close?: boolean;
-  pointIn?: (pt: Point) => boolean;
+  length?: number;
 
   tags?: string[];
   title?: string;
@@ -64,7 +64,7 @@ export interface TopologyPen {
   lineDashOffset?: number;
   color?: string;
   background?: string;
-  hoverAnchorColor?: string;
+  anchorColor?: string;
   hoverColor?: string;
   hoverBackground?: string;
   activeColor?: string;
@@ -549,6 +549,7 @@ export function calcWorldAnchors(pen: TopologyPen) {
         const p: Point = {
           id: anchor.id || s8(),
           penId: pen.id,
+          connectTo: anchor.connectTo,
           x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.x,
           y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.y,
           color: anchor.color,
@@ -558,6 +559,7 @@ export function calcWorldAnchors(pen: TopologyPen) {
         if (anchor.prev) {
           p.prev = {
             penId: pen.id,
+            connectTo: anchor.prev.connectTo,
             x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.prev.x,
             y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.prev.y,
           };
@@ -565,6 +567,7 @@ export function calcWorldAnchors(pen: TopologyPen) {
         if (anchor.next) {
           p.next = {
             penId: pen.id,
+            connectTo: anchor.next.connectTo,
             x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.next.x,
             y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.next.y,
           };
@@ -725,22 +728,29 @@ export function addPenAnchor(pen: TopologyPen, pt: Point) {
     pen.calculative.worldAnchors = [];
   }
 
-  if (pen.rotate % 360) {
-    rotatePoint(pt, -pen.rotate, pen.calculative.worldRect.center);
-  }
-  const anchor = {
+  const worldAnchor = {
     id: s8(),
     penId: pen.id,
-    x: (pt.x - pen.calculative.worldRect.x) / pen.calculative.worldRect.width,
-    y: (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
-    custom: true
+    x: pt.x,
+    y: pt.y
   };
-  pen.anchors.push(anchor);
-
-  const worldAnchor = { ...anchor };
-  worldAnchor.x = pt.x;
-  worldAnchor.y = pt.y;
   pen.calculative.worldAnchors.push(worldAnchor);
+
+  if (pen.calculative.worldRect) {
+    if (pen.rotate % 360) {
+      rotatePoint(pt, -pen.rotate, pen.calculative.worldRect.center);
+    }
+
+    const anchor = {
+      id: s8(),
+      penId: pen.id,
+      x: (pt.x - pen.calculative.worldRect.x) / pen.calculative.worldRect.width,
+      y: (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
+      custom: true
+    };
+    pen.anchors.push(anchor);
+  }
+
   return worldAnchor;
 }
 

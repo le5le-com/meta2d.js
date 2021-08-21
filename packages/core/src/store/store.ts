@@ -52,9 +52,10 @@ export interface TopologyStore {
   mqtt?: any;
   histories?: EditAction[];
   path2dMap: WeakMap<TopologyPen, Path2D>;
-  active: TopologyPen[];
-  hover: TopologyPen;
-  lastHover: TopologyPen;
+  active?: TopologyPen[];
+  hover?: TopologyPen;
+  lastHover?: TopologyPen;
+  anchor?: Point;
   animate: Map<TopologyPen, number>;
   options: Options;
   emitter: Emitter;

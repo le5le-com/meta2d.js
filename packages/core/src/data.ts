@@ -1,8 +1,6 @@
 
 export enum HoverType {
   None,
-  LineFrom,
-  LineTo,
   LineAnchor,
   NodeAnchor,
   Line,

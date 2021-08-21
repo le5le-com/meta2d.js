@@ -13,7 +13,7 @@ export interface Options {
   activeBackground?: string;
   hoverColor?: string;
   hoverBackground?: string;
-  hoverAnchorColor?: string;
+  anchorColor?: string;
   anchorRadius?: number;
   anchorBackground?: string;
   dockColor?: string;
@@ -71,7 +71,7 @@ export const defaultOptions: Options = {
   color: '#222222',
   activeColor: '#1890ff',
   hoverColor: '#1890ff',
-  hoverAnchorColor: '#fa541c',
+  anchorColor: '#fa541c',
   anchorRadius: 4,
   anchorBackground: '#fff',
   dockColor: '#fa541c',

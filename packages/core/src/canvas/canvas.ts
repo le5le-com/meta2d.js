@@ -6,7 +6,7 @@ import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, getLineRect } from '../common-diagram';
+import { curve, getLineRect, pointInLine } from '../common-diagram';
 import { deepClone } from '../utils/clone';
 
 
@@ -28,7 +28,6 @@ export class Canvas {
 
   hoverType = HoverType.None;
   resizeIndex = 0;
-  anchor: Point;
   mouseDown: { x: number; y: number; restore?: boolean; };
   hotkeyType: HotkeyType;
   mouseRight: MouseRight;
@@ -45,10 +44,14 @@ export class Canvas {
   drawLineFns: string[] = [...defaultDrawLineFns];
   drawingLine?: TopologyPen;
 
+  lastMouseTime = 0;
+
   dirty = false;
   lastRender = 0;
   touchStart = 0;
   timer: any;
+
+  pointSize = 8;
 
   beforeAddPen: (pen: TopologyPen) => boolean;
   beforeAddAnchor: (pen: TopologyPen, anchor: Point) => boolean;
@@ -263,7 +266,16 @@ export class Canvas {
         break;
       case 'Enter':
         if (this.drawingLineName) {
-          this.finishDrawline(true);
+          this.finishDrawline();
+        } else if (this.store.active) {
+          this.store.active.forEach(pen => {
+            if (pen.type) {
+              pen.close = !pen.close;
+              this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
+              this.dirty = true;
+            }
+          });
+          this.render();
         }
         break;
       case 'Escape':
@@ -412,12 +424,13 @@ export class Canvas {
     e.y -= this.bounding.top || this.bounding.y;
 
     this.mouseDown = e;
+    this.lastMouseTime = performance.now();
 
     // Set anchor of pen.
     if (this.hotkeyType === HotkeyType.Anchor) {
-      if (this.anchor && this.anchor.custom) {
-        removePenAnchor(this.store.hover, this.anchor);
-        this.anchor = undefined;
+      if (this.store.anchor && this.store.anchor.custom) {
+        removePenAnchor(this.store.hover, this.store.anchor);
+        this.store.anchor = undefined;
       } else if (this.store.hover) {
         const pt = { x: e.x, y: e.y };
         this.calibrateMouse(pt);
@@ -454,18 +467,18 @@ export class Canvas {
 
       if (this.hoverType === HoverType.Node) {
         if (this.store.options.autoAnchor) {
-          this.anchor = nearestAnchor(pt, this.store.hover);
+          this.store.anchor = nearestAnchor(pt, this.store.hover);
         } else {
-          this.anchor = addPenAnchor(this.store.hover, pt);
+          this.store.anchor = addPenAnchor(this.store.hover, pt);
         }
       } else if (this.hoverType === HoverType.Line) {
-        this.anchor = addPenAnchor(this.store.hover, pt);
+        this.store.anchor = addPenAnchor(this.store.hover, pt);
       }
-      if (this.hoverType && this.hoverType < HoverType.Resize && this.anchor) {
-        pt.x = this.anchor.x;
-        pt.y = this.anchor.y;
-        pt.penId = this.anchor.penId;
-        pt.anchorId = this.anchor.id;
+      if (this.hoverType && this.hoverType < HoverType.Resize && this.store.anchor) {
+        pt.x = this.store.anchor.x;
+        pt.y = this.store.anchor.y;
+        pt.connectTo = this.store.anchor.penId;
+        pt.anchorId = this.store.anchor.id;
       }
       if (this.drawingLine) {
         const anchor = addPenAnchor(this.drawingLine, pt);
@@ -474,8 +487,10 @@ export class Canvas {
         this.drawingLine.to = undefined;
         this.drawline();
       } else {
+        const id = s8();
+        pt.penId = id;
         this.drawingLine = {
-          id: s8(),
+          id,
           name: 'line',
           x: pt.x,
           y: pt.y,
@@ -528,6 +543,13 @@ export class Canvas {
             this.calcActiveRect();
           }
           break;
+        case HoverType.Line:
+          this.active([this.store.hover]);
+          break;
+        case HoverType.LineAnchor:
+          this.store.hover.calculative.activeAnchor = this.store.anchor;
+          this.active([this.store.hover]);
+          break;
         case HoverType.Resize:
           this.activeInitPos = [];
           this.store.active.forEach((pen) => {
@@ -561,22 +583,34 @@ export class Canvas {
       this.onMouseUp(e);
       return;
     }
+
+    // 避免鼠标点击和移动一起触发，误抖动
+    if (this.lastMouseTime) {
+      const now = performance.now();
+      if (now - this.lastMouseTime < 50) {
+        this.lastMouseTime = 0;
+        return;
+      }
+      this.lastMouseTime = 0;
+    }
+
+
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
     if (this.drawingLine) {
-      const pt: Point = { x: e.x, y: e.y };
+      const pt: Point = { x: e.x, y: e.y, penId: this.drawingLine.id };
       this.calibrateMouse(pt);
       if (this.mouseDown) {
         this.drawline(pt);
       } else {
         this.drawingLine.to = { ...pt };
-        if (this.hoverType && this.hoverType < HoverType.Line && this.anchor) {
-          if (this.anchor.id !== this.drawingLine.from.anchorId) {
-            this.drawingLine.to.x = this.anchor.x;
-            this.drawingLine.to.y = this.anchor.y;
-            this.drawingLine.to.penId = this.anchor.penId;
-            this.drawingLine.to.anchorId = this.anchor.id;
+        if (this.hoverType && this.hoverType < HoverType.Line && this.store.anchor) {
+          if (this.store.anchor.id !== this.drawingLine.from.anchorId) {
+            this.drawingLine.to.x = this.store.anchor.x;
+            this.drawingLine.to.y = this.store.anchor.y;
+            this.drawingLine.to.connectTo = this.store.anchor.penId;
+            this.drawingLine.to.anchorId = this.store.anchor.id;
           }
         }
         this.drawingLine.calculative.worldTo = deepClone(this.drawingLine.to);
@@ -772,16 +806,15 @@ export class Canvas {
 
   private getHover = (pt: Point) => {
     let hoverType = HoverType.None;
-    const size = 8;
-    this.anchor = undefined;
-    if (!this.drawingLineName && this.activeRect && !this.store.data.locked) {
+    this.store.anchor = undefined;
+    if (!this.drawingLineName && this.activeRect && !(this.store.active.length === 1 && this.store.active[0].type) && !this.store.data.locked) {
       if (!this.store.options.disableRotate) {
         const rotatePt = { x: this.activeRect.center.x, y: this.activeRect.y - 30 };
         if (this.activeRect.rotate) {
           rotatePoint(rotatePt, this.activeRect.rotate, this.activeRect.center);
         }
         // 旋转控制点
-        if (!this.hotkeyType && hitPoint(pt, rotatePt, size)) {
+        if (!this.hotkeyType && hitPoint(pt, rotatePt, this.pointSize)) {
           hoverType = HoverType.Rotate;
           this.externalElements.style.cursor = 'url("rotate.cur"), auto';
         }
@@ -790,7 +823,7 @@ export class Canvas {
       // 大小控制点
       if (!this.hotkeyType || this.hotkeyType === HotkeyType.Resize) {
         for (let i = 0; i < 4; i++) {
-          if (hitPoint(pt, this.sizeCPs[i], size)) {
+          if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
             let cursors = defaultCursors;
             let offset = 0;
             if (Math.abs(this.activeRect.rotate % 90 - 45) < 25) {
@@ -808,7 +841,7 @@ export class Canvas {
       }
       if (this.hotkeyType === HotkeyType.Resize) {
         for (let i = 4; i < 8; i++) {
-          if (hitPoint(pt, this.sizeCPs[i], size)) {
+          if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
             let cursors = rotatedCursors;
             let offset = 0;
             if (Math.abs(this.activeRect.rotate % 90 - 45) < 25) {
@@ -825,7 +858,6 @@ export class Canvas {
         }
       }
     }
-
     if (hoverType === HoverType.None) {
       for (let i = this.store.data.pens.length - 1; i >= 0; --i) {
         const pen = this.store.data.pens[i];
@@ -833,23 +865,44 @@ export class Canvas {
           continue;
         }
 
-        if (!pen.type) {
-          if (!this.store.data.locked && !this.store.options.disableAnchor && this.hotkeyType !== HotkeyType.Resize) {
-            // 锚点
-            if (pen.calculative.worldAnchors) {
-              for (const anchor of pen.calculative.worldAnchors) {
-                if (hitPoint(pt, anchor, size)) {
-                  hoverType = HoverType.NodeAnchor;
-                  this.anchor = anchor;
-                  this.store.hover = pen;
-                  this.externalElements.style.cursor = 'crosshair';
-                  break;
-                }
+        // 锚点
+        if (!this.store.data.locked && !this.store.options.disableAnchor && this.hotkeyType !== HotkeyType.Resize) {
+          hoverType = this.inAnchor(pt, pen, pen.calculative.worldFrom);
+          if (hoverType) {
+            break;
+          }
+          hoverType = this.inAnchor(pt, pen, pen.calculative.worldTo);
+          if (hoverType) {
+            break;
+          }
+          if (pen.calculative.worldAnchors) {
+            for (const anchor of pen.calculative.worldAnchors) {
+              hoverType = this.inAnchor(pt, pen, anchor);
+              if (hoverType) {
+                break;
               }
             }
           }
+          if (hoverType) {
+            break;
+          }
+        }
 
-          if (hoverType === HoverType.None && pointInRect(pt, pen.calculative.worldRect)) {
+        // 图形
+        if (pen.type) {
+          if (pointInLine(pt, pen)) {
+            if (!this.store.data.locked && !pen.locked) {
+              this.externalElements.style.cursor = 'move';
+            } else {
+              this.externalElements.style.cursor = this.store.options.hoverCursor;
+            }
+
+            this.store.hover = pen;
+            hoverType = HoverType.Line;
+            break;
+          }
+        } else {
+          if (pointInRect(pt, pen.calculative.worldRect)) {
             if (!this.store.data.locked && !pen.locked) {
               this.externalElements.style.cursor = 'move';
             } else {
@@ -860,106 +913,8 @@ export class Canvas {
             hoverType = HoverType.Node;
             break;
           }
-        } else {
-          if (pen.from) {
-            if (hitPoint(pt, pen.calculative.worldFrom)) {
-              hoverType = HoverType.LineFrom;
-              this.store.hover = pen;
-              if (this.store.data.locked || pen.locked) {
-                this.externalElements.style.cursor = this.store.options.hoverCursor;
-              } else {
-                this.externalElements.style.cursor = 'move';
-              }
-              break;
-            }
-
-            if (pen.calculative.active && pen.calculative.worldFrom.prev && hitPoint(pt, pen.calculative.worldFrom.prev, size)) {
-              hoverType = HoverType.LineAnchorPrev;
-              this.store.hover = pen;
-              this.anchor = pen.calculative.worldFrom;
-              this.externalElements.style.cursor = 'pointer';
-              break;
-            }
-            if (pen.calculative.active && pen.calculative.worldFrom.next && hitPoint(pt, pen.calculative.worldFrom.next, size)) {
-              hoverType = HoverType.LineAnchorNext;
-              this.store.hover = pen;
-              this.anchor = pen.calculative.worldFrom;
-              this.externalElements.style.cursor = 'pointer';
-              break;
-            }
-
-            if (pen.to && hitPoint(pt, pen.calculative.worldTo)) {
-              hoverType = HoverType.LineTo;
-              this.store.hover = pen;
-              if (this.store.data.locked || pen.locked) {
-                this.externalElements.style.cursor = this.store.options.hoverCursor;
-              } else {
-                this.externalElements.style.cursor = 'move';
-              }
-              break;
-            }
-            if (pen.calculative.active && pen.calculative.worldTo.prev && hitPoint(pt, pen.calculative.worldTo.prev, size)) {
-              hoverType = HoverType.LineAnchorPrev;
-              this.store.hover = pen;
-              this.anchor = pen.calculative.worldTo;
-              this.externalElements.style.cursor = 'pointer';
-              break;
-            }
-            if (pen.calculative.active && pen.calculative.worldTo.next && hitPoint(pt, pen.calculative.worldTo.next, size)) {
-              hoverType = HoverType.LineAnchorNext;
-              this.store.hover = pen;
-              this.anchor = pen.calculative.worldTo;
-              this.externalElements.style.cursor = 'pointer';
-              break;
-            }
-
-            if (!this.store.data.locked) {
-              // 锚点
-              if (pen.calculative.worldAnchors) {
-                for (const anchor of pen.calculative.worldAnchors) {
-                  if (hitPoint(pt, anchor, size)) {
-                    hoverType = HoverType.LineAnchor;
-                    this.anchor = anchor;
-                    this.store.hover = pen;
-                    this.externalElements.style.cursor = 'crosshair';
-                    break;
-                  }
-
-                  if (pen.calculative.active && anchor.prev && hitPoint(pt, anchor.prev, size)) {
-                    hoverType = HoverType.LineAnchorPrev;
-                    this.anchor = anchor;
-                    this.store.hover = pen;
-                    this.externalElements.style.cursor = 'pointer';
-                    break;
-                  }
-                  if (pen.calculative.active && anchor.next && hitPoint(pt, anchor.next, size)) {
-                    hoverType = HoverType.LineAnchorNext;
-                    this.anchor = anchor;
-                    this.store.hover = pen;
-                    this.externalElements.style.cursor = 'pointer';
-                    break;
-                  }
-                }
-              }
-            }
-
-            if (pen.pointIn && pen.pointIn(pt)) {
-              hoverType = HoverType.Line;
-              this.store.hover = pen;
-              this.externalElements.style.cursor = this.store.options.hoverCursor;
-              break;
-            }
-          }
         }
       }
-    }
-
-    if (hoverType === HoverType.None && pointInRect(pt, this.activeRect)) {
-      if (!this.store.data.locked) {
-        this.externalElements.style.cursor = 'move';
-      }
-      this.store.hover = undefined;
-      hoverType = HoverType.Node;
     }
 
     this.hoverType = hoverType;
@@ -985,6 +940,40 @@ export class Canvas {
       this.store.lastHover = this.store.hover;
     }
   };
+
+  inAnchor(pt: Point, pen: TopologyPen, anchor: Point) {
+    if (!anchor) {
+      return HoverType.None;
+    }
+    if (hitPoint(pt, anchor, this.pointSize)) {
+      this.store.anchor = anchor;
+      this.store.hover = pen;
+      if (pen.name === 'line') {
+        this.externalElements.style.cursor = 'pointer';
+        return HoverType.LineAnchor;
+      }
+      this.externalElements.style.cursor = 'crosshair';
+      return HoverType.NodeAnchor;
+    }
+
+    if (pen.name === 'line') {
+      if (pen.calculative.active && anchor.prev && hitPoint(pt, anchor.prev, this.pointSize)) {
+        this.store.anchor = anchor;
+        this.store.hover = pen;
+        this.externalElements.style.cursor = 'pointer';
+        return HoverType.LineAnchorPrev;
+      }
+
+      if (pen.calculative.active && anchor.next && hitPoint(pt, anchor.next, this.pointSize)) {
+        this.store.anchor = anchor;
+        this.store.hover = pen;
+        this.externalElements.style.cursor = 'pointer';
+        return HoverType.LineAnchorNext;
+      }
+    }
+
+    return HoverType.None;
+  }
 
   resize(w?: number, h?: number) {
     w = w || this.parentElement.clientWidth;
@@ -1076,35 +1065,54 @@ export class Canvas {
     if (this[this.drawingLineName]) {
       this[this.drawingLineName](this.store, this.drawingLine, mouse);
     }
-    const rect = getLineRect(this.drawingLine);
-    this.drawingLine.x = rect.x;
-    this.drawingLine.y = rect.y;
-    this.drawingLine.width = rect.width;
-    this.drawingLine.height = rect.height;
-    this.drawingLine.calculative.worldRect = rect;
+    // const rect = getLineRect(this.drawingLine);
+    // this.drawingLine.x = rect.x;
+    // this.drawingLine.y = rect.y;
+    // this.drawingLine.width = rect.width;
+    // this.drawingLine.height = rect.height;
+    // this.drawingLine.calculative.worldRect = rect;
     this.store.path2dMap.set(this.drawingLine, this.store.penPaths[this.drawingLine.name](this.drawingLine));
-    if (this.drawingLine.calculative.worldAnchors) {
-      this.drawingLine.anchors = [];
-      this.drawingLine.calculative.worldAnchors.forEach(pt => {
-        this.drawingLine.anchors.push(calcRelativePoint(pt, this.drawingLine.calculative.worldRect));
-      });
-    }
+    // if (this.drawingLine.calculative.worldAnchors) {
+    //   this.drawingLine.anchors = [];
+    //   this.drawingLine.calculative.worldAnchors.forEach(pt => {
+    //     this.drawingLine.anchors.push(calcRelativePoint(pt, this.drawingLine.calculative.worldRect));
+    //   });
+    // }
     this.dirty = true;
   }
 
   finishDrawline(close?: boolean) {
     if (this.drawingLine) {
       this.drawingLine.close = close;
-      if (this.drawingLine.calculative.worldAnchors.length) {
-        this.drawingLine.calculative.worldTo = this.drawingLine.calculative.worldAnchors.pop();
-        this.drawingLine.to = this.drawingLine.anchors.pop();
-        this.store.path2dMap.set(this.drawingLine, this.store.penPaths[this.drawingLine.name](this.drawingLine));
-      } else {
-        this.drawline();
-        this.render();
-        this.drawingLine = undefined;
-        this.drawingLineName = undefined;
-        return;
+      const rect = getLineRect(this.drawingLine);
+      this.drawingLine.x = rect.x;
+      this.drawingLine.y = rect.y;
+      this.drawingLine.width = rect.width;
+      this.drawingLine.height = rect.height;
+      this.drawingLine.calculative.worldRect = rect;
+      this.store.path2dMap.set(this.drawingLine, this.store.penPaths[this.drawingLine.name](this.drawingLine));
+      if (this.drawingLine.calculative.worldAnchors) {
+        this.drawingLine.anchors = [];
+        this.drawingLine.calculative.worldAnchors.forEach(pt => {
+          this.drawingLine.anchors.push(calcRelativePoint(pt, this.drawingLine.calculative.worldRect));
+        });
+      }
+
+      if (!(this.drawingLine.calculative.worldTo && this.drawingLine.calculative.worldTo.connectTo)) {
+        if (this.drawingLine.calculative.worldAnchors.length) {
+          this.drawingLine.calculative.worldTo = this.drawingLine.calculative.worldAnchors.pop();
+          this.drawingLine.to = this.drawingLine.anchors.pop();
+          if (this.drawingLine.to.connectTo === this.drawingLine.id) {
+            this.drawingLine.to.connectTo = undefined;
+            this.drawingLine.calculative.worldTo.connectTo = undefined;
+          }
+        } else {
+          this.drawline();
+          this.render();
+          this.drawingLine = undefined;
+          this.drawingLineName = undefined;
+          return;
+        }
       }
       this.drawingLine.calculative.activeAnchor = this.drawingLine.calculative.worldTo;
       if (!this.beforeAddPen || this.beforeAddPen(this.drawingLine)) {
@@ -1319,21 +1327,37 @@ export class Canvas {
     ctx.translate(0.5, 0.5);
     if (this.store.hover && (this.hotkeyType !== HotkeyType.Resize || this.store.active.length !== 1 || this.store.active[0] !== this.store.hover)) {
       if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
-        const anchors = this.store.hover.calculative.worldAnchors;
+        const anchors = [...this.store.hover.calculative.worldAnchors];
+        if (this.store.hover.calculative.worldFrom) {
+          anchors.unshift(this.store.hover.calculative.worldFrom);
+        }
+        if (this.store.hover.calculative.worldTo) {
+          anchors.push(this.store.hover.calculative.worldTo);
+        }
         if (anchors) {
-          ctx.strokeStyle = this.store.hover.hoverAnchorColor || this.store.options.hoverAnchorColor;
+          ctx.strokeStyle = this.store.hover.anchorColor || this.store.options.anchorColor;
           ctx.fillStyle = this.store.hover.anchorBackground || this.store.options.anchorBackground;
           anchors.forEach((anchor) => {
             ctx.beginPath();
-            ctx.arc(anchor.x, anchor.y, anchor.radius || this.store.options.anchorRadius, 0, Math.PI * 2);
-            if (anchor.color || anchor.background) {
+            let size = anchor.radius || this.store.options.anchorRadius;
+            if (this.store.hover.type) {
+              size = 3;
+            }
+            ctx.arc(anchor.x, anchor.y, size, 0, Math.PI * 2);
+            if (this.store.hover.type && this.store.anchor === anchor) {
+              ctx.save();
+              ctx.strokeStyle = this.store.hover.activeColor || this.store.options.activeColor;
+              ctx.fillStyle = ctx.strokeStyle;
+            } else if (anchor.color || anchor.background) {
               ctx.save();
               ctx.strokeStyle = anchor.color;
               ctx.fillStyle = anchor.background;
             }
             ctx.fill();
             ctx.stroke();
-            if (anchor.color || anchor.background) {
+            if (this.store.hover.type && this.store.anchor === anchor) {
+              ctx.restore();
+            } else if (anchor.color || anchor.background) {
               ctx.restore();
             }
           });

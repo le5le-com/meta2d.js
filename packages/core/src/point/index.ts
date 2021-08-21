@@ -8,11 +8,14 @@ export interface Point {
   background?: string;
   id?: string;
   penId?: string;
+  connectTo?: string;
   anchorId?: string;
   custom?: boolean;
   prev?: Point;
   next?: Point;
   start?: boolean;
+  lineLength?: number;
+  curvePoints?: Point[];
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
