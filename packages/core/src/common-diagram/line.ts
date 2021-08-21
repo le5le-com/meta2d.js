@@ -1,7 +1,7 @@
 import { Direction } from '../data';
 import { facePen, TopologyPen } from '../pen';
 import { hitPoint, Point, rotatePoint } from '../point';
-import { getRectOfPoints } from '../rect';
+import { getRectOfPoints, pointInRect, pointInSimpleRect } from '../rect';
 import { TopologyStore } from '../store';
 import { s8 } from '../utils';
 
@@ -231,6 +231,9 @@ export function pointInLine(pt: Point, pen: TopologyPen) {
   let r = 4;
   if (pen.lineWidth) {
     r += pen.lineWidth / 2;
+  }
+  if (!pointInSimpleRect(pt, pen.calculative.worldRect, r)) {
+    return false;
   }
 
   let from = pen.calculative.worldFrom;

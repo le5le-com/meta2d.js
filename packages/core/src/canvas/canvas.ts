@@ -1065,19 +1065,7 @@ export class Canvas {
     if (this[this.drawingLineName]) {
       this[this.drawingLineName](this.store, this.drawingLine, mouse);
     }
-    // const rect = getLineRect(this.drawingLine);
-    // this.drawingLine.x = rect.x;
-    // this.drawingLine.y = rect.y;
-    // this.drawingLine.width = rect.width;
-    // this.drawingLine.height = rect.height;
-    // this.drawingLine.calculative.worldRect = rect;
     this.store.path2dMap.set(this.drawingLine, this.store.penPaths[this.drawingLine.name](this.drawingLine));
-    // if (this.drawingLine.calculative.worldAnchors) {
-    //   this.drawingLine.anchors = [];
-    //   this.drawingLine.calculative.worldAnchors.forEach(pt => {
-    //     this.drawingLine.anchors.push(calcRelativePoint(pt, this.drawingLine.calculative.worldRect));
-    //   });
-    // }
     this.dirty = true;
   }
 

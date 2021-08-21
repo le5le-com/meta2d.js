@@ -42,6 +42,11 @@ export function pointInRect(pt: Point, rect: Rect) {
   return pointInVertices(pt, pts);
 }
 
+export function pointInSimpleRect(pt: Point, rect: Rect, r = 0) {
+  const { x, y, ex, ey } = rect;
+  return pt.x >= x - r && pt.x <= ex + r && pt.y >= y - r && pt.y <= ey + r;
+}
+
 export function calcCenter(rect: Rect) {
   if (!rect.center) {
     rect.center = {} as Rect;
