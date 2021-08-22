@@ -1,7 +1,7 @@
 import { Direction } from '../data';
 import { facePen, TopologyPen } from '../pen';
 import { hitPoint, Point, rotatePoint } from '../point';
-import { getRectOfPoints, pointInRect, pointInSimpleRect } from '../rect';
+import { getRectOfPoints, pointInSimpleRect } from '../rect';
 import { TopologyStore } from '../store';
 import { s8 } from '../utils';
 
@@ -178,10 +178,10 @@ export function getLinePoints(pen: TopologyPen) {
   const pts: Point[] = [pen.calculative.worldFrom];
   let from = pen.calculative.worldFrom;
   pen.calculative.worldAnchors.forEach((pt: Point) => {
-    pts.push(...getPoints(from, pt));
+    pts.push(...getPoints(from, pt, pen));
     from = pt;
   });
-  pts.push(...getPoints(from, pen.calculative.worldTo));
+  pts.push(...getPoints(from, pen.calculative.worldTo, pen));
   return pts;
 }
 
@@ -194,11 +194,11 @@ export function getPoints(from: Point, to: Point, pen?: TopologyPen) {
   let step = 0.02;
   if (from.lineLength) {
     // 曲线切成大小为4 + lineWidht /2 的等份
-    let r = 4;
+    let r = 8;
     if (pen && pen.lineWidth) {
-      r += pen.lineWidth / 2;
+      r += pen.lineWidth;
     }
-    step = from.lineLength / 100 / r;
+    step = r / from.lineLength;
   }
   if (from.next) {
     if (to.prev) {
@@ -219,7 +219,6 @@ export function getPoints(from: Point, to: Point, pen?: TopologyPen) {
       pts.push({ x: to.x, y: to.y });
     }
   }
-
   if (pts.length > 1) {
     from.curvePoints = pts;
   }
@@ -296,9 +295,6 @@ function lineLen(from: Point, cp1?: Point, cp2?: Point, to?: Point): number {
 }
 
 export function getLineLength(pen: TopologyPen): number {
-  if (!pen.calculative.worldTo) {
-    return 0;
-  }
   let len = 0;
   let from = pen.calculative.worldFrom;
   pen.calculative.worldAnchors.forEach((pt: Point) => {
@@ -306,8 +302,10 @@ export function getLineLength(pen: TopologyPen): number {
     len += from.lineLength;
     from = pt;
   });
-  from.lineLength = lineLen(from, from.next, pen.calculative.worldTo.prev, pen.calculative.worldTo);
-  len += from.lineLength;
+  if (pen.calculative.worldTo) {
+    from.lineLength = lineLen(from, from.next, pen.calculative.worldTo.prev, pen.calculative.worldTo);
+    len += from.lineLength;
+  }
   pen.length = len;
   return len;
 }

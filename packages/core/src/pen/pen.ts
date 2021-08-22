@@ -495,10 +495,6 @@ export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: Topol
     y: pen.y
   };
 
-  if (pen.type) {
-    pen.calculative.worldFrom = deepClone(pen.from);
-    pen.calculative.worldTo = deepClone(pen.to);
-  }
   if (!pen.parentId) {
     rect.ex = pen.x + pen.width;
     rect.ey = pen.y + pen.height;
@@ -527,13 +523,6 @@ export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: Topol
       x: rect.x + rect.width / 2,
       y: rect.y + rect.height / 2
     };
-
-    if (pen.type) {
-      pen.calculative.worldFrom.x = parentRect.x + (pen.from.x >= 1 ? pen.x : parentRect.width * pen.from.x);
-      pen.calculative.worldFrom.y = parentRect.y + (pen.from.y >= 1 ? pen.y : parentRect.height * pen.from.y);
-      pen.calculative.worldTo.x = parentRect.x + (pen.to.x >= 1 ? pen.x : parentRect.width * pen.to.x);
-      pen.calculative.worldTo.y = parentRect.y + (pen.to.y >= 1 ? pen.y : parentRect.height * pen.to.y);
-    }
   }
 
   pen.calculative.worldRect = rect;
@@ -546,33 +535,7 @@ export function calcWorldAnchors(pen: TopologyPen) {
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
       if (anchor.custom || pen.type) {
-        const p: Point = {
-          id: anchor.id || s8(),
-          penId: pen.id,
-          connectTo: anchor.connectTo,
-          x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.x,
-          y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.y,
-          color: anchor.color,
-          background: anchor.background,
-          custom: true
-        };
-        if (anchor.prev) {
-          p.prev = {
-            penId: pen.id,
-            connectTo: anchor.prev.connectTo,
-            x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.prev.x,
-            y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.prev.y,
-          };
-        }
-        if (anchor.next) {
-          p.next = {
-            penId: pen.id,
-            connectTo: anchor.next.connectTo,
-            x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * anchor.next.x,
-            y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * anchor.next.y,
-          };
-        }
-        anchors.push(p);
+        anchors.push(calcWorldPointOfPen(pen, anchor));
       }
     });
   }
@@ -608,15 +571,45 @@ export function calcWorldAnchors(pen: TopologyPen) {
     });
   }
 
+  pen.from && (pen.calculative.worldFrom = calcWorldPointOfPen(pen, pen.from));
+  pen.to && (pen.calculative.worldTo = calcWorldPointOfPen(pen, pen.to));
+
   if (pen.rotate) {
     anchors.forEach((anchor) => {
       rotatePoint(anchor, pen.rotate, pen.calculative.worldRect.center);
     });
+
+    pen.from && rotatePoint(pen.calculative.worldFrom, pen.rotate, pen.calculative.worldRect.center);
+    pen.to && rotatePoint(pen.calculative.worldTo, pen.rotate, pen.calculative.worldRect.center);
   }
 
   if (!pen.type || pen.anchors) {
     pen.calculative.worldAnchors = anchors;
   }
+}
+
+export function calcWorldPointOfPen(pen: TopologyPen, pt: Point) {
+  const p: Point = { ...pt };
+  p.x = pen.calculative.worldRect.x + pen.calculative.worldRect.width * pt.x;
+  p.y = pen.calculative.worldRect.y + pen.calculative.worldRect.height * pt.y;
+  if (pt.prev) {
+    pt.prev = {
+      penId: pen.id,
+      connectTo: pt.prev.connectTo,
+      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * pt.prev.x,
+      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * pt.prev.y,
+    };
+  }
+  if (pt.next) {
+    pt.next = {
+      penId: pen.id,
+      connectTo: pt.next.connectTo,
+      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * pt.next.x,
+      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * pt.next.y,
+    };
+  }
+
+  return p;
 }
 
 export function calcIconRect(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
@@ -778,7 +771,7 @@ export function facePen(pt: Point, pen?: TopologyPen) {
 }
 
 
-export function nearestAnchor(pt: Point, pen: TopologyPen) {
+export function nearestAnchor(pen: TopologyPen, pt: Point) {
   let dis = Infinity;
   let anchor: Point;
   pen.calculative.worldAnchors.forEach((a: Point) => {
