@@ -16,7 +16,7 @@ export enum HotkeyType {
   Translate,
   Select,
   Resize,
-  Anchor
+  AddAnchor
 }
 
 export enum MouseRight {

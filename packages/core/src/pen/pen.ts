@@ -1,10 +1,9 @@
-
+import { getSplitAnchor } from '../common-diagram';
 import { Direction } from '../data';
-import { distance, facePoint, Point, rotatePoint } from '../point';
-import { Rect, scaleRect } from '../rect';
+import { distance, facePoint, Point, rotatePoint, translatePoint } from '../point';
+import { calcRelativePoint, Rect, scaleRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
 import { s8 } from '../utils';
-import { deepClone } from '../utils/clone';
 
 export enum PenType {
   Node,
@@ -24,7 +23,6 @@ export enum AnchorMode {
   In,
   Out,
 }
-
 
 export interface TopologyPen {
   id: string;
@@ -157,6 +155,8 @@ export interface TopologyPen {
     active?: boolean;
     hover?: boolean;
     activeAnchor?: Point;
+
+    dirty?: boolean;
   };
 }
 
@@ -172,7 +172,7 @@ export function renderPen(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: TopologyPen,
   path: Path2D,
-  store: TopologyStore,
+  store: TopologyStore
 ) {
   if (globalStore.independentDraws[pen.name]) {
     ctx.save();
@@ -212,7 +212,7 @@ export function renderPen(
   } else {
     if (pen.strokeImage) {
       if (pen.calculative.strokeImg) {
-        ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, "repeat");
+        ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, 'repeat');
         fill = true;
       }
     } else {
@@ -221,7 +221,7 @@ export function renderPen(
 
     if (pen.backgroundImage) {
       if (pen.calculative.backgroundImg) {
-        ctx.fillStyle = ctx.createPattern(pen.calculative.backgroundImg, "repeat");
+        ctx.fillStyle = ctx.createPattern(pen.calculative.backgroundImg, 'repeat');
         fill = true;
       }
     } else {
@@ -362,12 +362,18 @@ export function renderPen(
       if (pen.textAlign === 'right') {
         x = pen.calculative.textDrawRect.width;
       }
-      ctx.fillRect(pen.calculative.textDrawRect.x - x, pen.calculative.textDrawRect.y, pen.calculative.textDrawRect.width, pen.calculative.textDrawRect.height);
+      ctx.fillRect(
+        pen.calculative.textDrawRect.x - x,
+        pen.calculative.textDrawRect.y,
+        pen.calculative.textDrawRect.width,
+        pen.calculative.textDrawRect.height
+      );
       ctx.restore();
     }
 
-    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.fontWeight || 'normal'
-      } ${pen.fontSize}px/${pen.lineHeight} ${pen.fontFamily}`;
+    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.fontWeight || 'normal'} ${pen.fontSize}px/${pen.lineHeight} ${
+      pen.fontFamily
+    }`;
 
     if (pen.textAlign) {
       ctx.textAlign = pen.textAlign as any;
@@ -409,15 +415,16 @@ export function renderPen(
 export function renderLineAnchors(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: TopologyPen,
-  store: TopologyStore,
+  store: TopologyStore
 ) {
   ctx.save();
   ctx.fillStyle = pen.activeColor || store.options.activeColor;
   renderAnchor(ctx, pen.calculative.worldFrom, pen.calculative.activeAnchor === pen.calculative.worldFrom);
-  pen.calculative.worldAnchors.forEach(pt => {
+  pen.calculative.worldAnchors.forEach((pt) => {
     renderAnchor(ctx, pt, pen.calculative.activeAnchor === pt);
   });
-  pen.calculative.worldTo && renderAnchor(ctx, pen.calculative.worldTo, pen.calculative.activeAnchor === pen.calculative.worldTo);
+  pen.calculative.worldTo &&
+    renderAnchor(ctx, pen.calculative.worldTo, pen.calculative.activeAnchor === pen.calculative.worldTo);
   ctx.restore();
 }
 
@@ -484,15 +491,14 @@ export function renderAnchor(
   }
 }
 
-
-export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
+export function calcWorldRects(pens: { [key: string]: TopologyPen }, pen: TopologyPen) {
   if (!pen.calculative) {
     pen.calculative = {};
   }
 
   let rect: Rect = {
     x: pen.x,
-    y: pen.y
+    y: pen.y,
   };
 
   if (!pen.parentId) {
@@ -503,7 +509,7 @@ export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: Topol
     rect.rotate = pen.rotate;
     rect.center = {
       x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2
+      y: rect.y + rect.height / 2,
     };
   } else {
     let parentRect = pens[pen.parentId].calculative.worldRect;
@@ -521,7 +527,7 @@ export function calcWorldRects(pens: { [key: string]: TopologyPen; }, pen: Topol
     rect.rotate = parentRect.rotate + pen.rotate;
     rect.center = {
       x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2
+      y: rect.y + rect.height / 2,
     };
   }
 
@@ -612,7 +618,7 @@ export function calcWorldPointOfPen(pen: TopologyPen, pt: Point) {
   return p;
 }
 
-export function calcIconRect(pens: { [key: string]: TopologyPen; }, pen: TopologyPen) {
+export function calcIconRect(pens: { [key: string]: TopologyPen }, pen: TopologyPen) {
   let x = pen.iconLeft || 0;
   let y = pen.iconTop || 0;
   let width = pen.iconWidth || pen.width;
@@ -711,9 +717,13 @@ export function scalePen(pen: TopologyPen, scale: number, center: Point) {
     }
   }
   scaleRect(pen, scale, center);
+  if (pen.type) {
+    calcWorldAnchors(pen);
+    console.log(123123, pen);
+  }
 }
 
-export function addPenAnchor(pen: TopologyPen, pt: Point) {
+export function pushPenAnchor(pen: TopologyPen, pt: Point) {
   if (!pen.anchors) {
     pen.anchors = [];
   }
@@ -725,7 +735,7 @@ export function addPenAnchor(pen: TopologyPen, pt: Point) {
     id: s8(),
     penId: pen.id,
     x: pt.x,
-    y: pt.y
+    y: pt.y,
   };
   pen.calculative.worldAnchors.push(worldAnchor);
 
@@ -739,27 +749,46 @@ export function addPenAnchor(pen: TopologyPen, pt: Point) {
       penId: pen.id,
       x: (pt.x - pen.calculative.worldRect.x) / pen.calculative.worldRect.width,
       y: (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
-      custom: true
+      custom: true,
     };
     pen.anchors.push(anchor);
+  }
+
+  if (!pen.type) {
+    calcWorldAnchors(pen);
   }
 
   return worldAnchor;
 }
 
-export function removePenAnchor(pen: TopologyPen, anchor: Point) {
+export function addLineAnchor(pen: TopologyPen, pt: Point, index: number) {
   if (!pen.anchors) {
-    return;
+    pen.anchors = [];
   }
-  const i = pen.anchors.findIndex(a => a.id === anchor.id);
-  if (i < 0) {
-    return;
+  if (!pen.calculative.worldAnchors) {
+    pen.calculative.worldAnchors = [];
   }
 
-  pen.anchors.splice(i, 1);
-  calcWorldAnchors(pen);
+  const worldAnchor = getSplitAnchor(pen, pt, index);
+  pen.calculative.worldAnchors.splice(index, 0, worldAnchor);
+  pen.anchors.splice(index, 0, calcRelativePoint(worldAnchor, pen.calculative.worldRect));
+  pen.calculative.activeAnchor = worldAnchor;
+  return worldAnchor;
+}
 
-  return true;
+export function removePenAnchor(pen: TopologyPen, anchor: Point) {
+  if (!pen.calculative.worldAnchors) {
+    return;
+  }
+  let i = pen.calculative.worldAnchors.findIndex((a) => a.id === anchor.id);
+  if (i > -1) {
+    pen.calculative.worldAnchors.splice(i, 1);
+  }
+
+  i = pen.anchors.findIndex((a) => a.id === anchor.id);
+  if (i > -1) {
+    pen.anchors.splice(i, 1);
+  }
 }
 
 export function facePen(pt: Point, pen?: TopologyPen) {
@@ -769,7 +798,6 @@ export function facePen(pt: Point, pen?: TopologyPen) {
 
   return facePoint(pt, pen.calculative.worldRect.center);
 }
-
 
 export function nearestAnchor(pen: TopologyPen, pt: Point) {
   let dis = Infinity;
@@ -783,4 +811,28 @@ export function nearestAnchor(pen: TopologyPen, pt: Point) {
   });
 
   return anchor;
+}
+
+export function translateLine(pen: TopologyPen, x: number, y: number) {
+  pen.x += x;
+  pen.y += y;
+
+  translatePoint(pen.from, x, y);
+  translatePoint(pen.calculative.worldFrom, x, y);
+  translatePoint(pen.to, x, y);
+  translatePoint(pen.calculative.worldTo, x, y);
+
+  if (pen.anchors) {
+    pen.anchors.forEach((a) => {
+      translatePoint(a, x, y);
+    });
+  }
+
+  if (pen.calculative.worldAnchors) {
+    pen.calculative.worldAnchors.forEach((a) => {
+      translatePoint(a, x, y);
+    });
+  }
+
+  pen.calculative.dirty = true;
 }

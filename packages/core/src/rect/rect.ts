@@ -55,14 +55,14 @@ export function calcCenter(rect: Rect) {
   rect.center.y = rect.y + rect.height / 2;
 }
 
-export function pointInVertices(point: { x: number; y: number; }, vertices: Point[]): boolean {
+export function pointInVertices(point: { x: number; y: number }, vertices: Point[]): boolean {
   if (vertices.length < 3) {
     return false;
   }
   let isIn = false;
   let last = vertices[vertices.length - 1];
   for (const item of vertices) {
-    if (((last.y > point.y) !== (item.y > point.y))) {
+    if (last.y > point.y !== item.y > point.y) {
       if (item.x + ((point.y - item.y) * (last.x - item.x)) / (last.y - item.y) > point.x) {
         isIn = !isIn;
       }
@@ -158,8 +158,10 @@ export function scaleRect(rect: Rect, scale: number, center: Point) {
 
   rect.ex += rect.x + rect.width;
   rect.ey += rect.y + rect.height;
-  rect.center.x = rect.x + rect.width / 2;
-  rect.center.y = rect.y + rect.height / 2;
+  rect.center = {
+    x: rect.x + rect.width / 2,
+    y: rect.y + rect.height / 2,
+  };
 }
 
 export function calcRelativeRect(rect: Rect, worldRect: Rect) {
