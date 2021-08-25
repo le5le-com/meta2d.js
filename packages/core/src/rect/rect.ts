@@ -179,6 +179,7 @@ export function calcRelativeRect(rect: Rect, worldRect: Rect) {
 
 export function calcRelativePoint(pt: Point, worldRect: Rect) {
   const point: Point = {
+    id: pt.id,
     penId: pt.penId,
     connectTo: pt.connectTo,
     x: (pt.x - worldRect.x) / worldRect.width,

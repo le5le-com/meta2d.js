@@ -319,6 +319,10 @@ export class Canvas {
         break;
       case 'v':
       case 'V':
+        if (e.ctrlKey || e.metaKey) {
+        } else {
+          this.drawingLineName = this.drawingLineName ? '' : 'curve';
+        }
         break;
       case 'y':
       case 'Y':
@@ -415,7 +419,6 @@ export class Canvas {
           Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) /
             Math.hypot(this.touches[0].pageX - this.touches[1].pageX, this.touches[0].pageY - this.touches[1].pageY);
         event.preventDefault();
-        // this.scale(scale * this.touchScale, this.touchCenter);
         if (scale < 0) {
           this.scale(this.store.data.scale + 0.1, this.touchCenter);
         } else {
@@ -505,6 +508,7 @@ export class Canvas {
           pushPenAnchor(this.store.hover, pt);
         }
       }
+      this.hotkeyType = HotkeyType.None;
       this.render(Infinity);
       return;
     }
@@ -520,7 +524,7 @@ export class Canvas {
     if (this.drawingLineName) {
       this.inactive(true);
 
-      const pt: Point = { x: e.x, y: e.y };
+      const pt: Point = { x: e.x, y: e.y, id: s8() };
       this.calibrateMouse(pt);
 
       // 右键，完成绘画
@@ -1179,6 +1183,7 @@ export class Canvas {
     }
     // end
     this.dirtyPenRect(pen);
+    pen.type && this.initLineRect(pen);
     !pen.rotate && (pen.rotate = 0);
     this.loadImage(pen);
   }
@@ -1229,9 +1234,8 @@ export class Canvas {
             this.drawingLine.calculative.worldTo.connectTo = undefined;
           }
         } else {
-          this.drawline();
-          this.render();
           this.drawingLine = undefined;
+          this.render(Infinity);
           return;
         }
       }
@@ -1545,6 +1549,7 @@ export class Canvas {
     this.store.data.pens.forEach((pen) => {
       scalePen(pen, s, center);
       this.dirtyPenRect(pen);
+      pen.type && this.initLineRect(pen);
     });
     this.calcActiveRect();
     this.store.data.scale = scale;

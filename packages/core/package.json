@@ -2,7 +2,7 @@
   "name": "@topology/core",
   "version": "1.0.0",
   "description": "@topology/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
-  "main": "index.js",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
     "copy": "copyfiles  package.json ../../dist/core/",

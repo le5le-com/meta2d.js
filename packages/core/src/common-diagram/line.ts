@@ -385,5 +385,6 @@ export function getSplitAnchor(pen: TopologyPen, pt: Point, index: number) {
     to.prev = undefined;
   }
 
+  anchor.id = s8();
   return anchor;
 }

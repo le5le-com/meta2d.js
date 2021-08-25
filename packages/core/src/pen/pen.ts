@@ -517,10 +517,10 @@ export function calcWorldRects(pens: { [key: string]: TopologyPen }, pen: Topolo
       parentRect = calcWorldRects(pens, pens[pen.parentId]);
     }
 
-    rect.x = parentRect.x + (pen.x >= 1 ? pen.x : parentRect.width * pen.x);
-    rect.y = parentRect.y + (pen.y >= 1 ? pen.y : parentRect.height * pen.y);
-    rect.width = pen.width >= 1 ? pen.width : parentRect.width * pen.width;
-    rect.height = pen.height >= 1 ? pen.height : parentRect.height * pen.height;
+    rect.x = parentRect.x + parentRect.width * pen.x;
+    rect.y = parentRect.y + parentRect.height * pen.y;
+    rect.width = parentRect.width * pen.width;
+    rect.height = parentRect.height * pen.height;
     rect.ex = rect.x + rect.width;
     rect.ey = rect.y + rect.height;
 
@@ -592,6 +592,20 @@ export function calcWorldAnchors(pen: TopologyPen) {
   if (!pen.type || pen.anchors) {
     pen.calculative.worldAnchors = anchors;
   }
+
+  if (pen.calculative.activeAnchor) {
+    if (anchors.length) {
+      pen.calculative.activeAnchor = anchors.find((a) => {
+        a.id === pen.calculative.activeAnchor.id;
+      });
+    }
+    if (pen.calculative.worldFrom && pen.calculative.activeAnchor.id === pen.calculative.worldFrom.id) {
+      pen.calculative.activeAnchor = pen.calculative.worldFrom;
+    }
+    if (pen.calculative.worldTo && pen.calculative.activeAnchor.id === pen.calculative.worldTo.id) {
+      pen.calculative.activeAnchor = pen.calculative.worldTo;
+    }
+  }
 }
 
 export function calcWorldPointOfPen(pen: TopologyPen, pt: Point) {
@@ -599,7 +613,7 @@ export function calcWorldPointOfPen(pen: TopologyPen, pt: Point) {
   p.x = pen.calculative.worldRect.x + pen.calculative.worldRect.width * pt.x;
   p.y = pen.calculative.worldRect.y + pen.calculative.worldRect.height * pt.y;
   if (pt.prev) {
-    pt.prev = {
+    p.prev = {
       penId: pen.id,
       connectTo: pt.prev.connectTo,
       x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * pt.prev.x,
@@ -607,7 +621,7 @@ export function calcWorldPointOfPen(pen: TopologyPen, pt: Point) {
     };
   }
   if (pt.next) {
-    pt.next = {
+    p.next = {
       penId: pen.id,
       connectTo: pt.next.connectTo,
       x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * pt.next.x,
@@ -668,58 +682,17 @@ export function scalePen(pen: TopologyPen, scale: number, center: Point) {
   pen.lineHeight *= scale;
   pen.fontSize *= scale;
   pen.iconSize *= scale;
-  if (pen.iconWidth > 0) {
-    pen.iconWidth *= scale;
-    if (pen.iconWidth <= 1) {
-      pen.iconWidth = 1.01;
-    }
-  }
-  if (pen.iconHeight > 0) {
-    pen.iconHeight *= scale;
-    if (pen.iconHeight <= 1) {
-      pen.iconHeight = 1.01;
-    }
-  }
-  if (pen.iconLeft > 0) {
-    pen.iconLeft *= scale;
-    if (pen.iconLeft <= 1) {
-      pen.iconLeft = 1.01;
-    }
-  }
-  if (pen.iconTop > 0) {
-    pen.iconTop *= scale;
-    if (pen.iconTop <= 1) {
-      pen.iconTop = 1.01;
-    }
-  }
-  if (pen.textWidth > 0) {
-    pen.textWidth *= scale;
-    if (pen.textWidth <= 1) {
-      pen.textWidth = 1.01;
-    }
-  }
-  if (pen.textHeight > 0) {
-    pen.textHeight *= scale;
-    if (pen.textHeight <= 1) {
-      pen.textHeight = 1.01;
-    }
-  }
-  if (pen.textLeft > 0) {
-    pen.textLeft *= scale;
-    if (pen.textLeft <= 1) {
-      pen.textLeft = 1.01;
-    }
-  }
-  if (pen.textTop > 0) {
-    pen.textTop *= scale;
-    if (pen.textTop <= 1) {
-      pen.textTop = 1.01;
-    }
-  }
+  pen.iconWidth *= scale;
+  pen.iconHeight *= scale;
+  pen.iconLeft *= scale;
+  pen.iconTop *= scale;
+  pen.textWidth *= scale;
+  pen.textHeight *= scale;
+  pen.textLeft *= scale;
+  pen.textTop *= scale;
   scaleRect(pen, scale, center);
   if (pen.type) {
     calcWorldAnchors(pen);
-    console.log(123123, pen);
   }
 }
 
@@ -732,7 +705,7 @@ export function pushPenAnchor(pen: TopologyPen, pt: Point) {
   }
 
   const worldAnchor = {
-    id: s8(),
+    id: pt.id,
     penId: pen.id,
     x: pt.x,
     y: pt.y,
@@ -745,7 +718,7 @@ export function pushPenAnchor(pen: TopologyPen, pt: Point) {
     }
 
     const anchor = {
-      id: s8(),
+      id: pt.id,
       penId: pen.id,
       x: (pt.x - pen.calculative.worldRect.x) / pen.calculative.worldRect.width,
       y: (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
