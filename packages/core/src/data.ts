@@ -1,4 +1,3 @@
-
 export enum HoverType {
   None,
   LineAnchor,
@@ -8,7 +7,7 @@ export enum HoverType {
   Resize,
   Rotate,
   LineAnchorPrev,
-  LineAnchorNext
+  LineAnchorNext,
 }
 
 export enum HotkeyType {
@@ -16,13 +15,13 @@ export enum HotkeyType {
   Translate,
   Select,
   Resize,
-  AddAnchor
+  AddAnchor,
 }
 
 export enum MouseRight {
   None,
   TranslateOrContextMenu,
-  Translate
+  Translate,
 }
 
 export enum Direction {
@@ -30,11 +29,10 @@ export enum Direction {
   Up,
   Right,
   Bottom,
-  Left
+  Left,
 }
 
 export const defaultCursors = ['nw-resize', 'ne-resize', 'se-resize', 'sw-resize'];
 export const rotatedCursors = ['n-resize', 'e-resize', 's-resize', 'w-resize'];
 
-export const defaultDrawLineFns = ['curve', 'ployline', 'line', 'curveMind'];
-
+export const defaultDrawLineFns = ['curve', 'ployline', 'curveMind'];

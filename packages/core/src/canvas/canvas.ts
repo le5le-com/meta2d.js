@@ -31,6 +31,7 @@ import { isMobile, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
 import { curve, getLineRect, pointInLine } from '../common-diagram';
+import { ployline } from '../common-diagram/line/ployline';
 
 export class Canvas {
   canvas = document.createElement('canvas');
@@ -105,6 +106,7 @@ export class Canvas {
     this.listen();
 
     this['curve'] = curve;
+    this['ployline'] = ployline;
 
     window && window.addEventListener('resize', this.onResize);
   }
@@ -526,6 +528,12 @@ export class Canvas {
 
       const pt: Point = { x: e.x, y: e.y, id: s8() };
       this.calibrateMouse(pt);
+
+      if (this.drawingLine && this.drawingLine.calculative.worldAnchors) {
+        this.drawingLine.calculative.worldAnchors.forEach((anchor: any) => {
+          anchor.temp = undefined;
+        });
+      }
 
       // 右键，完成绘画
       if (e.buttons === 2) {
