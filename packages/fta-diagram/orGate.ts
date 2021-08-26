@@ -1,6 +1,6 @@
-import { TopologyPen } from '../core/src/pen';
+import { Pen } from '../core/src/pen';
 
-export function orGate(pen: TopologyPen) {
+export function orGate(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -22,9 +22,8 @@ export function orGate(pen: TopologyPen) {
   path.lineTo(x + (myw * 2) / 5, y + pen.calculative.worldRect.height);
   path.moveTo(x + (myw * 8) / 5, y + (pen.calculative.worldRect.height * 201) / 250);
   path.lineTo(x + (myw * 8) / 5, y + pen.calculative.worldRect.height);
-  
+
   path.closePath();
 
   return path;
 }
-

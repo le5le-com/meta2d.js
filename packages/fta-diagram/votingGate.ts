@@ -1,5 +1,5 @@
-import { TopologyPen } from '../core/src/pen';
-export function votingGate(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function votingGate(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -18,36 +18,21 @@ export function votingGate(pen: TopologyPen) {
   path.quadraticCurveTo(x + myw, y + myh * 6, x + myw * 2, y + myh * 9);
   path.moveTo(x + myw, y + (pen.calculative.worldRect.height * 3) / 4);
   path.lineTo(x + myw, y + (pen.calculative.worldRect.height * 9) / 10);
-  path.moveTo(
-    x + (myw * 2) / 5,
-    y + (pen.calculative.worldRect.height * 201) / 250
-  );
-  path.lineTo(
-    x + (myw * 2) / 5,
-    y + (pen.calculative.worldRect.height * 9) / 10
-  );
-  path.moveTo(
-    x + (myw * 8) / 5,
-    y + (pen.calculative.worldRect.height * 201) / 250
-  );
-  path.lineTo(
-    x + (myw * 8) / 5,
-    y + (pen.calculative.worldRect.height * 9) / 10
-  );
+  path.moveTo(x + (myw * 2) / 5, y + (pen.calculative.worldRect.height * 201) / 250);
+  path.lineTo(x + (myw * 2) / 5, y + (pen.calculative.worldRect.height * 9) / 10);
+  path.moveTo(x + (myw * 8) / 5, y + (pen.calculative.worldRect.height * 201) / 250);
+  path.lineTo(x + (myw * 8) / 5, y + (pen.calculative.worldRect.height * 9) / 10);
   return path;
 }
 
-export function votingGateChartByCtx(
-  ctx: CanvasRenderingContext2D,
-  pen: TopologyPen
-) {
+export function votingGateChartByCtx(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.beginPath();
   let myw = pen.calculative.worldRect.width / 2;
   let myh = pen.calculative.worldRect.height / 10;
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
 
-  let fontSize = myw*2>myh*10?myh:myw/5;
+  let fontSize = myw * 2 > myh * 10 ? myh : myw / 5;
   ctx.fillStyle = '#333333';
   ctx.font = fontSize + 'px Arial';
   ctx.textBaseline = 'bottom';

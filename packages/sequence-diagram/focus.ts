@@ -1,12 +1,17 @@
-import { TopologyPen } from '../core/src/pen';
-export function focus(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function focus(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
-     return;
+    return;
   }
   const path = new Path2D();
- 
-  path.rect(pen.calculative.worldRect.x, pen.calculative.worldRect.y, pen.calculative.worldRect.width, pen.calculative.worldRect.height);
-  
+
+  path.rect(
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.y,
+    pen.calculative.worldRect.width,
+    pen.calculative.worldRect.height
+  );
+
   path.closePath();
   return path;
 }

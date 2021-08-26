@@ -1,7 +1,6 @@
-import { TopologyPen } from '.';
+import { Pen } from '.';
 
-
-export function calcTextRect(pen: TopologyPen) {
+export function calcTextRect(pen: Pen) {
   if (!pen.text) {
     return;
   }
@@ -69,11 +68,11 @@ export function calcTextRect(pen: TopologyPen) {
     width,
     height: h,
     ex: x + width,
-    ey: y + h
+    ey: y + h,
   };
 }
 
-export function calcTextLines(pen: TopologyPen) {
+export function calcTextLines(pen: Pen) {
   if (!pen.fontSize) {
     pen.fontSize = 12;
   }
@@ -146,7 +145,7 @@ export function getWords(txt: string) {
   return words;
 }
 
-export function wrapLines(words: string[], pen: TopologyPen) {
+export function wrapLines(words: string[], pen: Pen) {
   const lines = [];
   let currentLine = words[0] || '';
   for (let i = 1; i < words.length; ++i) {
@@ -154,7 +153,10 @@ export function wrapLines(words: string[], pen: TopologyPen) {
     const text = currentLine + word;
     const chinese = text.match(/[\u4e00-\u9fa5]/g) || '';
     const chineseLen = chinese.length;
-    if ((text.length - chineseLen) * pen.fontSize * 0.6 + chineseLen * pen.fontSize < pen.calculative.worldTextRect.width) {
+    if (
+      (text.length - chineseLen) * pen.fontSize * 0.6 + chineseLen * pen.fontSize <
+      pen.calculative.worldTextRect.width
+    ) {
       currentLine += word;
     } else {
       currentLine.length && lines.push(currentLine);

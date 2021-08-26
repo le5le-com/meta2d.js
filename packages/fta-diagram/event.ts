@@ -1,6 +1,6 @@
-import { TopologyPen } from '../core/src/pen';
+import { Pen } from '../core/src/pen';
 
-export function event(pen: TopologyPen) {
+export function event(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -15,9 +15,8 @@ export function event(pen: TopologyPen) {
   path.rect(x, y + myh, myw * 2, myh * 2);
   path.moveTo(x + myw, y + 3 * myh);
   path.lineTo(x + myw, y + 4 * myh);
-  
+
   path.closePath();
 
   return path;
 }
-

@@ -1,11 +1,11 @@
-import { TopologyPen } from '../core/src/pen';
+import { Pen } from '../core/src/pen';
 
-export function xorGate(pen: TopologyPen) {
+export function xorGate(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
   const path = new Path2D();
- 
+
   let myw = pen.calculative.worldRect.width / 2;
   let myh = pen.calculative.worldRect.height / 10;
   let x = pen.calculative.worldRect.x;

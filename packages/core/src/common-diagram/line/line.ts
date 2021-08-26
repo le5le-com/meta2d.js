@@ -1,9 +1,9 @@
-import { TopologyPen } from '../../pen';
+import { Pen } from '../../pen';
 import { hitPoint, Point } from '../../point';
 import { getRectOfPoints, pointInSimpleRect } from '../../rect';
 import { getBezierPoint, getQuadraticPoint } from './curve';
 
-export function line(pen: TopologyPen) {
+export function line(pen: Pen) {
   const path = new Path2D();
   let from = pen.calculative.worldFrom;
   from.start = true;
@@ -20,7 +20,7 @@ export function line(pen: TopologyPen) {
 }
 
 function draw(path: Path2D, from: Point, to: Point) {
-  if (!to) {
+  if (!to || to.hidden) {
     return;
   }
   if (from.next) {
@@ -42,12 +42,12 @@ function draw(path: Path2D, from: Point, to: Point) {
   }
 }
 
-export function getLineRect(pen: TopologyPen) {
+export function getLineRect(pen: Pen) {
   getLineLength(pen);
   return getRectOfPoints(getLinePoints(pen));
 }
 
-export function getLinePoints(pen: TopologyPen) {
+export function getLinePoints(pen: Pen) {
   const pts: Point[] = [pen.calculative.worldFrom];
   let from = pen.calculative.worldFrom;
   pen.calculative.worldAnchors.forEach((pt: Point) => {
@@ -61,7 +61,7 @@ export function getLinePoints(pen: TopologyPen) {
   return pts;
 }
 
-export function getPoints(from: Point, to: Point, pen?: TopologyPen) {
+export function getPoints(from: Point, to: Point, pen?: Pen) {
   const pts: Point[] = [];
   if (!to) {
     return pts;
@@ -101,7 +101,7 @@ export function getPoints(from: Point, to: Point, pen?: TopologyPen) {
   return pts;
 }
 
-export function pointInLine(pt: Point, pen: TopologyPen) {
+export function pointInLine(pt: Point, pen: Pen) {
   let r = 4;
   if (pen.lineWidth) {
     r += pen.lineWidth / 2;
@@ -203,7 +203,7 @@ function lineLen(from: Point, cp1?: Point, cp2?: Point, to?: Point): number {
   return path.getTotalLength() || 0;
 }
 
-export function getLineLength(pen: TopologyPen): number {
+export function getLineLength(pen: Pen): number {
   let len = 0;
   let from = pen.calculative.worldFrom;
   pen.calculative.worldAnchors.forEach((pt: Point) => {

@@ -1,6 +1,6 @@
-import { TopologyPen } from '../core/src/pen';
+import { Pen } from '../core/src/pen';
 
-export function basicEvent(pen: TopologyPen) {
+export function basicEvent(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -12,17 +12,9 @@ export function basicEvent(pen: TopologyPen) {
   path.moveTo(x + pen.calculative.worldRect.width / 2, y);
   path.lineTo(x + pen.calculative.worldRect.width / 2, y + vlineL);
   path.moveTo(x + pen.calculative.worldRect.width, y + radius + vlineL);
-  path.arc(
-    x + pen.calculative.worldRect.width / 2,
-    y + radius + vlineL,
-    radius,
-    0,
-    Math.PI * 2,
-    false
-  );
-  
+  path.arc(x + pen.calculative.worldRect.width / 2, y + radius + vlineL, radius, 0, Math.PI * 2, false);
+
   path.closePath();
 
   return path;
 }
-

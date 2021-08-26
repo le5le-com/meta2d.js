@@ -1,4 +1,4 @@
-import { TopologyPen } from '../pen';
+import { Pen } from '../pen';
 import { Point, rotatePoint, scalePoint } from '../point';
 
 export interface Rect {
@@ -74,7 +74,7 @@ export function pointInVertices(point: { x: number; y: number }, vertices: Point
   return isIn;
 }
 
-export function getRect(pens: TopologyPen[]) {
+export function getRect(pens: Pen[]) {
   const points: Point[] = [];
   pens.forEach((pen) => {
     const rect = pen.calculative.worldRect;

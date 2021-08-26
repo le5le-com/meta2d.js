@@ -1,7 +1,7 @@
-import { TopologyPen } from '../core/src/pen';
-export function flowExternStorage(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function flowExternStorage(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
-     return;
+    return;
   }
   const path = new Path2D();
   const offsetX = pen.calculative.worldRect.width / 10;

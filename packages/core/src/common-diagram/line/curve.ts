@@ -1,10 +1,10 @@
 import { Direction } from '../../data';
-import { facePen, TopologyPen } from '../../pen';
+import { facePen, Pen } from '../../pen';
 import { Point, rotatePoint } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
-export function curve(store: TopologyStore, pen: TopologyPen, mouse?: Point) {
+export function curve(store: TopologyStore, pen: Pen, mouse?: Point) {
   if (mouse) {
     if (pen.calculative.activeAnchor) {
       pen.calculative.activeAnchor.next = { id: s8(), penId: pen.id, x: mouse.x, y: mouse.y };
@@ -110,7 +110,7 @@ function lerp(pt1: Point, pt2: Point, t: number) {
   };
 }
 
-export function getSplitAnchor(pen: TopologyPen, pt: Point, index: number) {
+export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
   let from: Point;
   let to: Point;
   if (index === 0) {

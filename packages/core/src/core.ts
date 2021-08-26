@@ -2,7 +2,7 @@ import { commonPens } from './common-diagram';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { facePen, TopologyPen } from './pen';
+import { facePen, Pen } from './pen';
 import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
@@ -30,25 +30,25 @@ export class Topology {
   get beforeAddPen() {
     return this.canvas.beforeAddPen;
   }
-  set beforeAddPen(fn: (pen: TopologyPen) => boolean) {
+  set beforeAddPen(fn: (pen: Pen) => boolean) {
     this.canvas.beforeAddPen = fn;
   }
   get beforeAddAnchor() {
     return this.canvas.beforeAddAnchor;
   }
-  set beforeAddAnchor(fn: (pen: TopologyPen, anchor: Point) => boolean) {
+  set beforeAddAnchor(fn: (pen: Pen, anchor: Point) => boolean) {
     this.canvas.beforeAddAnchor = fn;
   }
   get beforeRemovePen() {
     return this.canvas.beforeRemovePen;
   }
-  set beforeRemovePen(fn: (pen: TopologyPen) => boolean) {
+  set beforeRemovePen(fn: (pen: Pen) => boolean) {
     this.canvas.beforeRemovePen = fn;
   }
   get beforeRemoveAnchor() {
     return this.canvas.beforeAddAnchor;
   }
-  set beforeRemoveAnchor(fn: (pen: TopologyPen, anchor: Point) => boolean) {
+  set beforeRemoveAnchor(fn: (pen: Pen, anchor: Point) => boolean) {
     this.canvas.beforeAddAnchor = fn;
   }
 
@@ -89,7 +89,7 @@ export class Topology {
     this.store.emitter.emit('resize', { width, height });
   }
 
-  addPen(pen: TopologyPen, edited?: boolean) {
+  addPen(pen: Pen, edited?: boolean) {
     return this.canvas.addPen(pen, edited);
   }
 

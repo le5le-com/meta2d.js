@@ -1,6 +1,6 @@
-import { TopologyPen } from '../pen';
+import { Pen } from '../pen';
 
-export function rectangle(pen: TopologyPen) {
+export function rectangle(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -35,7 +35,13 @@ export function rectangle(pen: TopologyPen) {
     r
   );
   path.arcTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey, pen.x, pen.y, r);
-  path.arcTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y, pen.calculative.worldRect.ex, pen.calculative.worldRect.y, r);
+  path.arcTo(
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.y,
+    pen.calculative.worldRect.ex,
+    pen.calculative.worldRect.y,
+    r
+  );
   path.closePath();
 
   return path;

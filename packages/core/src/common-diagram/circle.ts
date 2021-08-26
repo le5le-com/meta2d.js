@@ -1,6 +1,6 @@
-import { TopologyPen } from '../pen';
+import { Pen } from '../pen';
 
-export function circle(pen: TopologyPen) {
+export function circle(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }

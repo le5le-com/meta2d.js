@@ -1,10 +1,10 @@
-import { TopologyPen } from '../core/src/pen';
+import { Pen } from '../core/src/pen';
 
 export function escalator(pen: any) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
-    const path = new Path2D();
+  const path = new Path2D();
 
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -82,7 +82,7 @@ export function escalator(pen: any) {
     path.lineTo(x + offsetx + myw * 2, y + offsety);
   }
 
-  function armrest(pen: TopologyPen, x: any, y: any, myw: any, myh: any) {
+  function armrest(pen: Pen, x: any, y: any, myw: any, myh: any) {
     let Offset = myw * 2;
     //左边扶手
     path.moveTo(x + myw * 23, y + myh * 48);
@@ -103,20 +103,10 @@ export function escalator(pen: any) {
     path.lineTo(x + myw * 103, y + myh * 193);
 
     path.moveTo(x + myw * 129, y + pen.calculative.worldRect.height);
-    path.quadraticCurveTo(
-      x + myw * 134 + Offset,
-      y + myh * 191.5,
-      x + myw * 129,
-      y + myh * 179
-    );
+    path.quadraticCurveTo(x + myw * 134 + Offset, y + myh * 191.5, x + myw * 129, y + myh * 179);
 
     path.moveTo(x + myw * 5, y + myh * 43);
-    path.quadraticCurveTo(
-      x - Offset,
-      y + myh * 30.5,
-      x + myw * 5,
-      y + myh * 18
-    );
+    path.quadraticCurveTo(x - Offset, y + myh * 30.5, x + myw * 5, y + myh * 18);
 
     //手扶条
     path.moveTo(x + myw * 103, y + myh * 168);
@@ -138,19 +128,9 @@ export function escalator(pen: any) {
     path.lineTo(x + myw * 129, y + myh * 179);
 
     path.moveTo(x + myw * 129, y + myh * 179);
-    path.quadraticCurveTo(
-      x + myw * 134 + Offset,
-      y + myh * 191.5,
-      x + myw * 129,
-      y + pen.calculative.worldRect.height
-    );
+    path.quadraticCurveTo(x + myw * 134 + Offset, y + myh * 191.5, x + myw * 129, y + pen.calculative.worldRect.height);
     path.lineTo(x + myw * 134, y + pen.calculative.worldRect.height - myh * 5);
-    path.quadraticCurveTo(
-      x + myw * 139 + Offset,
-      y + myh * 186.5,
-      x + myw * 134,
-      y + myh * 174
-    );
+    path.quadraticCurveTo(x + myw * 139 + Offset, y + myh * 186.5, x + myw * 134, y + myh * 174);
     path.lineTo(x + myw * 129, y + myh * 179);
   }
 

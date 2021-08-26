@@ -1,5 +1,5 @@
-import { TopologyPen } from '../core/src/pen';
-export function electricvalve(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function electricvalve(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -49,13 +49,13 @@ export function electricvalve(pen: TopologyPen) {
   path.rect(x + halfWidth - 10 * myw, y + myh * 29, myw * 20, myh * 2);
 
   let r = myw > myh ? myh : myw;
-  path.moveTo(x + halfWidth+6.5*r, y + myh * 53);
+  path.moveTo(x + halfWidth + 6.5 * r, y + myh * 53);
   path.arc(x + halfWidth, y + myh * 53, 6.5 * r, 0, Math.PI * 2, false);
-  path.moveTo(x + halfWidth+3.5*r, y + myh * 53);
+  path.moveTo(x + halfWidth + 3.5 * r, y + myh * 53);
   path.arc(x + halfWidth, y + myh * 53, 3.5 * r, 0, Math.PI * 2, false);
-  path.moveTo(x + halfWidth - 5 * myw+4*r, y + myh * 66);
+  path.moveTo(x + halfWidth - 5 * myw + 4 * r, y + myh * 66);
   path.arc(x + halfWidth - 5 * myw, y + myh * 66, 4 * r, 0, Math.PI * 2, false);
-  path.moveTo(x + halfWidth + 5 * myw+4*r, y + myh * 66);
+  path.moveTo(x + halfWidth + 5 * myw + 4 * r, y + myh * 66);
   path.arc(x + halfWidth + 5 * myw, y + myh * 66, 4 * r, 0, Math.PI * 2, false);
 
   path.moveTo(x + halfWidth - 5 * myw, y + myh * 66);

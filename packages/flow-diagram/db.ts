@@ -1,7 +1,7 @@
-import { TopologyPen } from '../core/src/pen';
-export function db(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function db(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
-     return;
+    return;
   }
   const path = new Path2D();
   const offsetY = pen.calculative.worldRect.height / 7;
@@ -33,6 +33,6 @@ export function db(pen: TopologyPen) {
     pen.calculative.worldRect.ex,
     pen.calculative.worldRect.ey - offsetY
   );
-//   path.closePath();
+  //   path.closePath();
   return path;
 }

@@ -1,10 +1,10 @@
-import { TopologyPen } from '../core/src/pen';
-export function interfaceClass(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function interfaceClass(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
-     return;
+    return;
   }
   const path = new Path2D();
- 
+
   let wr = pen.borderRadius;
   let hr = pen.borderRadius;
   if (pen.borderRadius < 1) {
@@ -54,7 +54,6 @@ export function interfaceClass(pen: TopologyPen) {
   const height = pen.calculative.worldRect.y + topHeight + (pen.calculative.worldRect.height - topHeight) / 2;
   path.moveTo(pen.calculative.worldRect.x, height);
   path.lineTo(pen.calculative.worldRect.ex, height);
-
 
   path.closePath();
   return path;

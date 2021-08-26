@@ -1,5 +1,5 @@
-import { TopologyPen } from '../core/src/pen';
-export function filter(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function filter(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -10,12 +10,7 @@ export function filter(pen: TopologyPen) {
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
 
-  path.rect(
-    x,
-    y,
-    pen.calculative.worldRect.width,
-    pen.calculative.worldRect.height
-  );
+  path.rect(x, y, pen.calculative.worldRect.width, pen.calculative.worldRect.height);
 
   for (let i = 1; i < 6; i++) {
     path.moveTo(x, y + myh * i);

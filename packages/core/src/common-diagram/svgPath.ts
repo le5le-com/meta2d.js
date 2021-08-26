@@ -1,9 +1,9 @@
-import { TopologyPen } from '../pen';
+import { Pen } from '../pen';
 import { calcCenter } from '../rect';
 import { globalStore } from '../store';
 import { getRect, parseSvgPath, pathToString, scalePath, translatePath } from './svg/parse';
 
-export function svgPath(pen: TopologyPen) {
+export function svgPath(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }

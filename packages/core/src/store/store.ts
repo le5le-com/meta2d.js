@@ -1,14 +1,14 @@
 import { default as mitt, Emitter } from 'mitt';
 
-import { LockState, TopologyPen } from '../pen';
+import { LockState, Pen } from '../pen';
 import { defaultOptions, Options } from '../options';
 
 import { Point } from '../point';
 import { globalStore } from '.';
 
 export interface TopologyData {
-  pens: TopologyPen[];
-  children: { [key: string]: string[]; };
+  pens: Pen[];
+  children: { [key: string]: string[] };
   x: number;
   y: number;
   scale: number;
@@ -29,7 +29,7 @@ export enum EditType {
   Add,
   Update,
   Delete,
-  Layer
+  Layer,
 }
 
 export interface EditAction {
@@ -51,14 +51,14 @@ export interface TopologyStore {
   // mqtt instance.
   mqtt?: any;
   histories?: EditAction[];
-  path2dMap: WeakMap<TopologyPen, Path2D>;
-  active?: TopologyPen[];
-  hover?: TopologyPen;
-  lastHover?: TopologyPen;
+  path2dMap: WeakMap<Pen, Path2D>;
+  active?: Pen[];
+  hover?: Pen;
+  lastHover?: Pen;
   anchor?: Point;
   pointAt?: Point;
   pointAtIndex?: number;
-  animate: Map<TopologyPen, number>;
+  animate: Map<Pen, number>;
   options: Options;
   emitter: Emitter;
   penPaths: any;
@@ -81,7 +81,7 @@ export const createStore = () => {
     active: [],
     animate: new Map(),
     options: { ...defaultOptions },
-    emitter: mitt()
+    emitter: mitt(),
   } as TopologyStore;
 };
 
@@ -113,5 +113,3 @@ export const clearStore = (store: TopologyStore) => {
   store.lastHover = undefined;
   store.animate.clear();
 };
-
-

@@ -1,6 +1,6 @@
-import { TopologyPen } from '../core/src/pen';
+import { Pen } from '../core/src/pen';
 
-export function forbiddenGate(pen: TopologyPen) {
+export function forbiddenGate(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -21,9 +21,8 @@ export function forbiddenGate(pen: TopologyPen) {
   path.lineTo(x + myw * 4, y + myh * 4);
   path.moveTo(x + myw * 2, y + myh * 6);
   path.lineTo(x + myw * 2, y + myh * 8);
-  
+
   path.closePath();
 
   return path;
 }
-

@@ -1,10 +1,9 @@
 import { Direction } from '../data';
 
-
 export enum PrevNextType {
   Mirror,
   Bilateral,
-  Free
+  Free,
 }
 
 export interface Point {
@@ -17,7 +16,7 @@ export interface Point {
   penId?: string;
   connectTo?: string;
   anchorId?: string;
-  custom?: boolean;
+  default?: boolean;
   prev?: Point;
   next?: Point;
   prevNextType?: PrevNextType;
@@ -25,6 +24,7 @@ export interface Point {
   lineLength?: number;
   step?: number;
   curvePoints?: Point[];
+  hidden?: boolean;
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {

@@ -1,11 +1,11 @@
-import { TopologyPen } from '../core/src/pen';
+import { Pen } from '../core/src/pen';
 
-export function unexpandedEvent(pen: TopologyPen) {
+export function unexpandedEvent(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
   const path = new Path2D();
-  
+
   let myh = pen.calculative.worldRect.height / 3;
   let myw = 0.5 * pen.calculative.worldRect.width;
   let x = pen.calculative.worldRect.x;

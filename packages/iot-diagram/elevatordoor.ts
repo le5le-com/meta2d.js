@@ -1,5 +1,5 @@
-import { TopologyPen } from '../core/src/pen';
-export function elevatordoor(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function elevatordoor(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -9,13 +9,8 @@ export function elevatordoor(pen: TopologyPen) {
   let y = pen.calculative.worldRect.y;
   let halfWidth = pen.calculative.worldRect.width / 2;
 
-  path.rect(
-    x,
-    y,
-    pen.calculative.worldRect.width,
-    pen.calculative.worldRect.height
-  );
-  
+  path.rect(x, y, pen.calculative.worldRect.width, pen.calculative.worldRect.height);
+
   path.closePath();
 
   const path1 = new Path2D();

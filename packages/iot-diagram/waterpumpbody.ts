@@ -1,5 +1,5 @@
-import { TopologyPen } from '../core/src/pen';
-export function waterpumpbody(pen: TopologyPen) {
+import { Pen } from '../core/src/pen';
+export function waterpumpbody(pen: Pen) {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
   }
@@ -16,37 +16,17 @@ export function waterpumpbody(pen: TopologyPen) {
   //   path.strokeStyle = pen.data.strokeColor;
   //   path.beginPath();
   path.moveTo(x + myw / 2 - (basic * 7) / 2, y + myh / 2 - basic / 4);
-  path.rect(
-    x + myw / 2 - (basic * 7) / 2,
-    y + myh / 2 - basic / 4,
-    basic,
-    basic / 2
-  );
+  path.rect(x + myw / 2 - (basic * 7) / 2, y + myh / 2 - basic / 4, basic, basic / 2);
   path.moveTo(x + myw / 2 + (basic * 5) / 2, y + myh / 2 - basic / 4);
 
-  path.rect(
-    x + myw / 2 + (basic * 5) / 2,
-    y + myh / 2 - basic / 4,
-    basic,
-    basic / 2
-  );
+  path.rect(x + myw / 2 + (basic * 5) / 2, y + myh / 2 - basic / 4, basic, basic / 2);
 
   path.moveTo(x + myw / 2 - basic / 4, y + myh / 2 - (basic * 7) / 2);
 
-  path.rect(
-    x + myw / 2 - basic / 4,
-    y + myh / 2 - (basic * 7) / 2,
-    basic / 2,
-    basic
-  );
+  path.rect(x + myw / 2 - basic / 4, y + myh / 2 - (basic * 7) / 2, basic / 2, basic);
   path.moveTo(x + myw / 2 - basic / 4, y + myh / 2 + (basic * 5) / 2);
 
-  path.rect(
-    x + myw / 2 - basic / 4,
-    y + myh / 2 + (basic * 5) / 2,
-    basic / 2,
-    basic
-  );
+  path.rect(x + myw / 2 - basic / 4, y + myh / 2 + (basic * 5) / 2, basic / 2, basic);
 
   path.moveTo(x + myw / 2 + (basic * 5) / 2, y + myh / 2);
 
