@@ -14,6 +14,7 @@ import {
   scalePen,
   Pen,
   translateLine,
+  deleteTempAnchor,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
@@ -30,7 +31,7 @@ import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, getLineRect, pentagon, pointInLine } from '../common-diagram';
+import { curve, curveMind, getLineRect, pointInLine } from '../common-diagram';
 import { ployline } from '../common-diagram/line/ployline';
 
 export class Canvas {
@@ -107,6 +108,7 @@ export class Canvas {
 
     this['curve'] = curve;
     this['ployline'] = ployline;
+    this['curveMind'] = curveMind;
 
     window && window.addEventListener('resize', this.onResize);
   }
@@ -239,7 +241,8 @@ export class Canvas {
       case 'Meta':
         break;
       case 'Shift':
-        if (this.drawingLineName) {
+        if (this.drawingLine) {
+          deleteTempAnchor(this.drawingLine);
           const index = this.drawLineFns.indexOf(this.drawingLineName);
           this.drawingLineName = this.drawLineFns[(index + 1) % this.drawLineFns.length];
           this.drawline();
@@ -531,10 +534,16 @@ export class Canvas {
       const pt: Point = { x: e.x, y: e.y, id: s8() };
       this.calibrateMouse(pt);
 
-      if (this.drawingLine && this.drawingLine.calculative.worldAnchors) {
-        this.drawingLine.calculative.worldAnchors.forEach((anchor: any) => {
-          anchor.temp = undefined;
-        });
+      if (this.drawingLine) {
+        if (this.drawingLine.calculative.worldAnchors) {
+          this.drawingLine.calculative.worldAnchors.forEach((anchor: any) => {
+            anchor.temp = undefined;
+          });
+        }
+
+        if (this.drawingLine.calculative.worldTo) {
+          this.drawingLine.calculative.worldTo.temp = undefined;
+        }
       }
 
       // 右键，完成绘画
@@ -564,14 +573,15 @@ export class Canvas {
         pt.anchorId = this.store.anchor.id;
       }
       if (this.drawingLine) {
-        if (this.drawingLine.calculative.worldTo.hidden) {
+        if (this.drawingLine.calculative.worldTo && this.drawingLine.calculative.worldTo.hidden) {
           let anchor: Point = this.drawingLine.calculative.worldFrom;
           if (this.drawingLine.calculative.worldAnchors && this.drawingLine.calculative.worldAnchors.length) {
             anchor = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
           }
           this.drawingLine.calculative.activeAnchor = anchor;
         } else {
-          const anchor = pushPenAnchor(this.drawingLine, pt);
+          const anchor = this.drawingLine.calculative.worldTo;
+          this.drawingLine.calculative.worldAnchors.push(anchor);
           this.drawingLine.calculative.activeAnchor = anchor;
         }
         this.drawingLine.calculative.worldTo = undefined;
@@ -700,6 +710,7 @@ export class Canvas {
     if (this.drawingLine) {
       const pt: Point = { ...e };
       pt.penId = this.drawingLine.id;
+      pt.temp = true;
       this.calibrateMouse(pt);
       if (this.mouseDown) {
         this.drawline(pt);
@@ -1259,17 +1270,7 @@ export class Canvas {
           this.render(Infinity);
           return;
         }
-        if (this.drawingLine.calculative.worldAnchors.length) {
-          do {
-            this.drawingLine.calculative.worldTo = this.drawingLine.calculative.worldAnchors.pop();
-          } while (
-            this.drawingLine.calculative.worldAnchors.length &&
-            this.drawingLine.calculative.worldTo !== this.drawingLine.calculative.activeAnchor
-          );
-          if (this.drawingLine.calculative.worldTo.connectTo === this.drawingLine.id) {
-            this.drawingLine.calculative.worldTo.connectTo = undefined;
-          }
-        }
+        deleteTempAnchor(this.drawingLine);
       }
       this.drawingLine.calculative.activeAnchor = this.drawingLine.calculative.worldTo;
       if (!this.beforeAddPen || this.beforeAddPen(this.drawingLine)) {

@@ -1,10 +1,14 @@
 import { Direction } from '../../data';
 import { facePen, Pen } from '../../pen';
-import { Point, rotatePoint } from '../../point';
+import { facePoint, Point, rotatePoint } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
 export function curve(store: TopologyStore, pen: Pen, mouse?: Point) {
+  if (!pen.calculative.worldAnchors) {
+    pen.calculative.worldAnchors = [];
+  }
+
   if (mouse) {
     if (pen.calculative.activeAnchor) {
       pen.calculative.activeAnchor.next = { id: s8(), penId: pen.id, x: mouse.x, y: mouse.y };
@@ -20,10 +24,6 @@ export function curve(store: TopologyStore, pen: Pen, mouse?: Point) {
       const toFace = facePen(pen.calculative.worldTo, store.pens[pen.calculative.worldTo.connectTo]);
       calcCurveCP(pen.calculative.worldTo, toFace, -30);
     }
-  }
-
-  if (!pen.calculative.worldAnchors) {
-    pen.calculative.worldAnchors = [];
   }
 }
 
@@ -165,4 +165,48 @@ export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
 
   anchor.id = s8();
   return anchor;
+}
+
+export function curveMind(store: TopologyStore, pen: Pen, mouse?: Point) {
+  if (!pen.calculative.worldAnchors) {
+    pen.calculative.worldAnchors = [];
+  }
+
+  let from = pen.calculative.activeAnchor;
+  let to = mouse || pen.calculative.worldTo;
+  if (!from || !to || !to.temp) {
+    return;
+  }
+
+  const dis = 20;
+
+  const fromPen = store.pens[from.connectTo];
+  let fromFace = facePen(from, fromPen);
+  if (fromFace === Direction.None) {
+    if (to.x > from.x) {
+      fromFace = Direction.Right;
+    } else {
+      fromFace = Direction.Left;
+    }
+  }
+  from.next = { id: s8(), penId: pen.id, x: from.x, y: from.y, prevNextType: 2 };
+  to.prev = { id: s8(), penId: pen.id, x: to.x, y: to.y, prevNextType: 2 };
+  switch (fromFace) {
+    case Direction.Up:
+      from.next.y -= dis;
+      to.prev.y = from.y;
+      break;
+    case Direction.Bottom:
+      from.next.y += dis;
+      to.prev.y = from.y;
+      break;
+    case Direction.Left:
+      from.next.x -= dis;
+      to.prev.x = from.x;
+      break;
+    default:
+      from.next.x += dis;
+      to.prev.x = from.x;
+      break;
+  }
 }

@@ -436,6 +436,10 @@ export function renderAnchor(
   pt: Point,
   active?: boolean
 ) {
+  if (!pt) {
+    return;
+  }
+
   const r = 3;
 
   if (active) {
@@ -601,16 +605,18 @@ export function calcWorldAnchors(pen: Pen) {
   }
 
   if (pen.calculative.activeAnchor) {
+    if (pen.calculative.worldFrom && pen.calculative.activeAnchor.id === pen.calculative.worldFrom.id) {
+      pen.calculative.activeAnchor = pen.calculative.worldFrom;
+      return;
+    }
+    if (pen.calculative.worldTo && pen.calculative.activeAnchor.id === pen.calculative.worldTo.id) {
+      pen.calculative.activeAnchor = pen.calculative.worldTo;
+      return;
+    }
     if (anchors.length) {
       pen.calculative.activeAnchor = anchors.find((a) => {
         a.id === pen.calculative.activeAnchor.id;
       });
-    }
-    if (pen.calculative.worldFrom && pen.calculative.activeAnchor.id === pen.calculative.worldFrom.id) {
-      pen.calculative.activeAnchor = pen.calculative.worldFrom;
-    }
-    if (pen.calculative.worldTo && pen.calculative.activeAnchor.id === pen.calculative.worldTo.id) {
-      pen.calculative.activeAnchor = pen.calculative.worldTo;
     }
   }
 }
@@ -814,4 +820,12 @@ export function translateLine(pen: Pen, x: number, y: number) {
   }
 
   pen.calculative.dirty = true;
+}
+
+export function deleteTempAnchor(pen: Pen) {
+  if (pen && pen.calculative && pen.calculative.worldAnchors.length) {
+    do {
+      pen.calculative.worldTo = pen.calculative.worldAnchors.pop();
+    } while (pen.calculative.worldAnchors.length && pen.calculative.worldTo !== pen.calculative.activeAnchor);
+  }
 }

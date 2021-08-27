@@ -60,7 +60,7 @@ export function ployline(store: TopologyStore, pen: Pen, mouse?: Point) {
   pts.forEach((anchor: Point) => {
     anchor.id = s8();
     anchor.penId = pen.id;
-    (anchor as any).temp = true;
+    anchor.temp = true;
     pen.calculative.worldAnchors.push(anchor);
   });
 }
@@ -304,16 +304,18 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
     pen.calculative.drawlineH = Math.abs(to.x - firstPt.x) > Math.abs(to.y - firstPt.y);
   }
 
-  pen.calculative.worldTo.hidden = undefined;
-  if (pen.calculative.drawlineH) {
-    pts.push({ x: to.x, y: from.y });
-    if (Math.abs(to.y - from.y) < 30) {
-      pen.calculative.worldTo.hidden = true;
-    }
-  } else {
-    pts.push({ x: from.x, y: to.y });
-    if (Math.abs(to.x - from.x) < 30) {
-      pen.calculative.worldTo.hidden = true;
+  if (pen.calculative.worldTo) {
+    pen.calculative.worldTo.hidden = undefined;
+    if (pen.calculative.drawlineH) {
+      pts.push({ x: to.x, y: from.y });
+      if (Math.abs(to.y - from.y) < 30) {
+        pen.calculative.worldTo.hidden = true;
+      }
+    } else {
+      pts.push({ x: from.x, y: to.y });
+      if (Math.abs(to.x - from.x) < 30) {
+        pen.calculative.worldTo.hidden = true;
+      }
     }
   }
 
