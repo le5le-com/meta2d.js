@@ -55,7 +55,8 @@ export interface TopologyStore {
   active?: Pen[];
   hover?: Pen;
   lastHover?: Pen;
-  anchor?: Point;
+  activeAnchor?: Point;
+  hoverAnchor?: Point;
   pointAt?: Point;
   pointAtIndex?: number;
   animate: Map<Pen, number>;

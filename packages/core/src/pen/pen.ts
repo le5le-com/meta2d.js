@@ -155,7 +155,6 @@ export interface Pen {
     active?: boolean;
     hover?: boolean;
     activeAnchor?: Point;
-
     dirty?: boolean;
 
     drawlineH?: boolean;
@@ -762,7 +761,7 @@ export function addLineAnchor(pen: Pen, pt: Point, index: number) {
 }
 
 export function removePenAnchor(pen: Pen, anchor: Point) {
-  if (!pen.calculative.worldAnchors) {
+  if (!pen || !pen.calculative.worldAnchors) {
     return;
   }
   let i = pen.calculative.worldAnchors.findIndex((a) => a.id === anchor.id);

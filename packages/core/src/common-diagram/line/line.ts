@@ -1,6 +1,6 @@
 import { Pen } from '../../pen';
 import { hitPoint, Point } from '../../point';
-import { getRectOfPoints, pointInSimpleRect } from '../../rect';
+import { getRectOfPoints } from '../../rect';
 import { getBezierPoint, getQuadraticPoint } from './curve';
 
 export function line(pen: Pen) {
@@ -105,9 +105,6 @@ export function pointInLine(pt: Point, pen: Pen) {
   let r = 4;
   if (pen.lineWidth) {
     r += pen.lineWidth / 2;
-  }
-  if (!pointInSimpleRect(pt, pen.calculative.worldRect, r)) {
-    return;
   }
 
   let i = 0;

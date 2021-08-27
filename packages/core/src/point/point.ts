@@ -6,6 +6,12 @@ export enum PrevNextType {
   Free,
 }
 
+export enum TwoWay {
+  Default,
+  In,
+  Out,
+}
+
 export interface Point {
   x: number;
   y: number;
@@ -16,6 +22,7 @@ export interface Point {
   penId?: string;
   connectTo?: string;
   anchorId?: string;
+  twoWay?: TwoWay;
   default?: boolean;
   prev?: Point;
   next?: Point;

@@ -1,6 +1,6 @@
 import { Direction } from '../../data';
 import { facePen, Pen } from '../../pen';
-import { facePoint, Point, rotatePoint } from '../../point';
+import { Point, rotatePoint } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
@@ -18,11 +18,11 @@ export function curve(store: TopologyStore, pen: Pen, mouse?: Point) {
   } else {
     if (!pen.calculative.worldFrom.next) {
       const fromFace = facePen(pen.calculative.worldFrom, store.pens[pen.calculative.worldFrom.connectTo]);
-      calcCurveCP(pen.calculative.worldFrom, fromFace, 30);
+      calcCurveCP(pen.calculative.worldFrom, fromFace, 50);
     }
     if (pen.calculative.worldTo && !pen.calculative.worldTo.prev) {
       const toFace = facePen(pen.calculative.worldTo, store.pens[pen.calculative.worldTo.connectTo]);
-      calcCurveCP(pen.calculative.worldTo, toFace, -30);
+      calcCurveCP(pen.calculative.worldTo, toFace, -50);
     }
   }
 }
