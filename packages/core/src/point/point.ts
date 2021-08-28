@@ -23,7 +23,6 @@ export interface Point {
   connectTo?: string;
   anchorId?: string;
   twoWay?: TwoWay;
-  default?: boolean;
   prev?: Point;
   next?: Point;
   prevNextType?: PrevNextType;

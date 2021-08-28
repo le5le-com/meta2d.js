@@ -3,7 +3,6 @@ import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, translatePoint } from '../point';
 import { calcRelativePoint, Rect, scaleRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
-import { s8 } from '../utils';
 
 export enum PenType {
   Node,
@@ -132,6 +131,8 @@ export interface Pen {
 
   pathId?: string;
   path?: string;
+
+  connectedLines?: { lineId: string; lineAnchor: string; anchor: string }[];
 
   calculative?: {
     worldRect?: Rect;
@@ -546,44 +547,38 @@ export function calcWorldAnchors(pen: Pen) {
   const anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
-      if (!anchor.default) {
-        anchors.push(calcWorldPointOfPen(pen, anchor));
-      }
+      anchors.push(calcWorldPointOfPen(pen, anchor));
     });
   }
 
   // Default anchors of node
   if (!anchors.length && !pen.type) {
     anchors.push({
-      id: s8(),
+      id: '0',
       penId: pen.id,
       x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * 0.5,
       y: pen.calculative.worldRect.y,
-      default: true,
     });
 
     anchors.push({
-      id: s8(),
+      id: '1',
       penId: pen.id,
       x: pen.calculative.worldRect.x + pen.calculative.worldRect.width,
       y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * 0.5,
-      default: true,
     });
 
     anchors.push({
-      id: s8(),
+      id: '2',
       penId: pen.id,
       x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * 0.5,
       y: pen.calculative.worldRect.y + pen.calculative.worldRect.height,
-      default: true,
     });
 
     anchors.push({
-      id: s8(),
+      id: '3',
       penId: pen.id,
       x: pen.calculative.worldRect.x,
       y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * 0.5,
-      default: true,
     });
   }
 
@@ -738,10 +733,6 @@ export function pushPenAnchor(pen: Pen, pt: Point) {
     pen.anchors.push(anchor);
   }
 
-  if (!pen.type) {
-    calcWorldAnchors(pen);
-  }
-
   return worldAnchor;
 }
 
@@ -826,5 +817,64 @@ export function deleteTempAnchor(pen: Pen) {
     do {
       pen.calculative.worldTo = pen.calculative.worldAnchors.pop();
     } while (pen.calculative.worldAnchors.length && pen.calculative.worldTo !== pen.calculative.activeAnchor);
+  }
+}
+
+export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
+  if (!pen || !lineId || !lineAnchor || !anchor) {
+    return;
+  }
+
+  if (!pen.connectedLines) {
+    pen.connectedLines = [];
+  }
+
+  const i = pen.connectedLines.findIndex(
+    (item) => item.lineId === lineId && item.lineAnchor === lineAnchor && item.anchor === anchor
+  );
+
+  if (i < 0) {
+    pen.connectedLines.push({
+      lineId,
+      lineAnchor,
+      anchor,
+    });
+  }
+}
+
+export function disconnectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
+  if (!pen || !lineId || !lineAnchor || !anchor) {
+    return;
+  }
+
+  if (!pen.connectedLines) {
+    pen.connectedLines = [];
+  }
+
+  const i = pen.connectedLines.findIndex(
+    (item) => item.lineId === lineId && item.lineAnchor === lineAnchor && item.anchor === anchor
+  );
+  i > -1 && pen.connectedLines.splice(i, 1);
+}
+
+export function getAnchor(pen: Pen, anchorId: string) {
+  if (!pen || !anchorId) {
+    return;
+  }
+
+  if (pen.calculative.worldFrom && pen.calculative.worldFrom.id === anchorId) {
+    return pen.calculative.worldFrom;
+  }
+
+  if (pen.calculative.worldTo && pen.calculative.worldTo.id === anchorId) {
+    return pen.calculative.worldTo;
+  }
+
+  if (pen.calculative.worldAnchors) {
+    for (const item of pen.calculative.worldAnchors) {
+      if (item.id === anchorId) {
+        return item;
+      }
+    }
   }
 }
