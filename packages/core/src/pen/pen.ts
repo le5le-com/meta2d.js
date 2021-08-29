@@ -41,8 +41,6 @@ export interface Pen {
 
   center?: Point;
 
-  from?: Point;
-  to?: Point;
   close?: boolean;
   length?: number;
 
@@ -139,8 +137,6 @@ export interface Pen {
     worldAnchors?: Point[];
     worldIconRect?: Rect;
     worldTextRect?: Rect;
-    worldFrom?: Point;
-    worldTo?: Point;
     textDrawRect?: Rect;
     svgRect?: Rect;
     textLines?: string[];
@@ -421,13 +417,9 @@ export function renderLineAnchors(
 ) {
   ctx.save();
   ctx.fillStyle = pen.activeColor || store.options.activeColor;
-  renderAnchor(ctx, pen.calculative.worldFrom, pen.calculative.activeAnchor === pen.calculative.worldFrom);
   pen.calculative.worldAnchors.forEach((pt) => {
-    renderAnchor(ctx, pt, pen.calculative.activeAnchor === pt);
+    !pt.hidden && renderAnchor(ctx, pt, pen.calculative.activeAnchor === pt);
   });
-  pen.calculative.worldTo &&
-    !pen.calculative.worldTo.hidden &&
-    renderAnchor(ctx, pen.calculative.worldTo, pen.calculative.activeAnchor === pen.calculative.worldTo);
   ctx.restore();
 }
 
@@ -582,36 +574,20 @@ export function calcWorldAnchors(pen: Pen) {
     });
   }
 
-  pen.from && (pen.calculative.worldFrom = calcWorldPointOfPen(pen, pen.from));
-  pen.to && (pen.calculative.worldTo = calcWorldPointOfPen(pen, pen.to));
-
   if (pen.rotate) {
     anchors.forEach((anchor) => {
       rotatePoint(anchor, pen.rotate, pen.calculative.worldRect.center);
     });
-
-    pen.from && rotatePoint(pen.calculative.worldFrom, pen.rotate, pen.calculative.worldRect.center);
-    pen.to && rotatePoint(pen.calculative.worldTo, pen.rotate, pen.calculative.worldRect.center);
   }
 
   if (!pen.type || pen.anchors) {
     pen.calculative.worldAnchors = anchors;
   }
 
-  if (pen.calculative.activeAnchor) {
-    if (pen.calculative.worldFrom && pen.calculative.activeAnchor.id === pen.calculative.worldFrom.id) {
-      pen.calculative.activeAnchor = pen.calculative.worldFrom;
-      return;
-    }
-    if (pen.calculative.worldTo && pen.calculative.activeAnchor.id === pen.calculative.worldTo.id) {
-      pen.calculative.activeAnchor = pen.calculative.worldTo;
-      return;
-    }
-    if (anchors.length) {
-      pen.calculative.activeAnchor = anchors.find((a) => {
-        a.id === pen.calculative.activeAnchor.id;
-      });
-    }
+  if (pen.calculative.activeAnchor && anchors.length) {
+    pen.calculative.activeAnchor = anchors.find((a) => {
+      a.id === pen.calculative.activeAnchor.id;
+    });
   }
 }
 
@@ -745,8 +721,8 @@ export function addLineAnchor(pen: Pen, pt: Point, index: number) {
   }
 
   const worldAnchor = getSplitAnchor(pen, pt, index);
-  pen.calculative.worldAnchors.splice(index, 0, worldAnchor);
-  pen.anchors.splice(index, 0, calcRelativePoint(worldAnchor, pen.calculative.worldRect));
+  pen.calculative.worldAnchors.splice(index + 1, 0, worldAnchor);
+  pen.anchors.splice(index + 1, 0, calcRelativePoint(worldAnchor, pen.calculative.worldRect));
   pen.calculative.activeAnchor = worldAnchor;
   return worldAnchor;
 }
@@ -792,11 +768,6 @@ export function translateLine(pen: Pen, x: number, y: number) {
   pen.x += x;
   pen.y += y;
 
-  translatePoint(pen.from, x, y);
-  translatePoint(pen.calculative.worldFrom, x, y);
-  translatePoint(pen.to, x, y);
-  translatePoint(pen.calculative.worldTo, x, y);
-
   if (pen.anchors) {
     pen.anchors.forEach((a) => {
       translatePoint(a, x, y);
@@ -814,9 +785,11 @@ export function translateLine(pen: Pen, x: number, y: number) {
 
 export function deleteTempAnchor(pen: Pen) {
   if (pen && pen.calculative && pen.calculative.worldAnchors.length) {
-    do {
-      pen.calculative.worldTo = pen.calculative.worldAnchors.pop();
-    } while (pen.calculative.worldAnchors.length && pen.calculative.worldTo !== pen.calculative.activeAnchor);
+    let to: Point = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    while (pen.calculative.worldAnchors.length && to !== pen.calculative.activeAnchor) {
+      pen.calculative.worldAnchors.pop();
+      to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    }
   }
 }
 
@@ -862,14 +835,6 @@ export function getAnchor(pen: Pen, anchorId: string) {
     return;
   }
 
-  if (pen.calculative.worldFrom && pen.calculative.worldFrom.id === anchorId) {
-    return pen.calculative.worldFrom;
-  }
-
-  if (pen.calculative.worldTo && pen.calculative.worldTo.id === anchorId) {
-    return pen.calculative.worldTo;
-  }
-
   if (pen.calculative.worldAnchors) {
     for (const item of pen.calculative.worldAnchors) {
       if (item.id === anchorId) {
@@ -877,4 +842,20 @@ export function getAnchor(pen: Pen, anchorId: string) {
       }
     }
   }
+}
+
+export function getFromAnchor(pen: Pen) {
+  if (!pen || !pen.calculative.worldAnchors) {
+    return;
+  }
+
+  return pen.calculative.worldAnchors[0];
+}
+
+export function getToAnchor(pen: Pen) {
+  if (!pen || !pen.calculative.worldAnchors) {
+    return;
+  }
+
+  return pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
 }

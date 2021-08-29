@@ -1,29 +1,31 @@
 import { Direction } from '../../data';
-import { facePen, Pen } from '../../pen';
+import { deleteTempAnchor, facePen, Pen } from '../../pen';
 import { Point } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
-export function ployline(store: TopologyStore, pen: Pen, mouse?: Point) {
+export function ployline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }
 
-  let from = pen.calculative.activeAnchor;
-  let to = mouse || pen.calculative.worldTo;
-  if (!from || !to) {
+  if (pen.calculative.worldAnchors.length < 2) {
     return;
   }
 
-  from.next = undefined;
-  if (pen.from && from === pen.calculative.worldFrom) {
-    pen.from.next = undefined;
+  let from = pen.calculative.activeAnchor;
+  let to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+  if (!from || !to || !to.id || from === to) {
+    return;
   }
+  from.next = undefined;
+  deleteTempAnchor(pen);
 
   const pts: Point[] = [];
 
   const fromPen = store.pens[from.connectTo];
   const toPen = store.pens[to.connectTo];
+
   const fromFace = facePen(from, fromPen);
   const toFace = facePen(to, toPen);
 
@@ -35,7 +37,9 @@ export function ployline(store: TopologyStore, pen: Pen, mouse?: Point) {
   a = getFacePoint(to, toFace, 30);
   if (a) {
     to = a;
+    pts.push(a);
   }
+
   switch (fromFace) {
     case Direction.Up:
       pts.push(...getNextPointsOfUp(from, to, toFace));
@@ -54,15 +58,13 @@ export function ployline(store: TopologyStore, pen: Pen, mouse?: Point) {
       a = undefined;
       break;
   }
-  a && pts.push(a);
 
-  pen.calculative.worldAnchors = pen.calculative.worldAnchors.filter((a: any) => !a.temp);
   pts.forEach((anchor: Point) => {
     anchor.id = s8();
     anchor.penId = pen.id;
-    anchor.temp = true;
     pen.calculative.worldAnchors.push(anchor);
   });
+  pen.calculative.worldAnchors.push(to);
 }
 
 function getFacePoint(pt: Point, d: Direction, dis: number) {
@@ -299,22 +301,20 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
   const pts: Point[] = [];
 
   if (pen.calculative.drawlineH == null) {
-    let firstPt: Point = pen.calculative.activeAnchor || from;
-
-    pen.calculative.drawlineH = Math.abs(to.x - firstPt.x) > Math.abs(to.y - firstPt.y);
+    pen.calculative.drawlineH = Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
   }
 
-  if (pen.calculative.worldTo) {
-    pen.calculative.worldTo.hidden = undefined;
+  if (pen.calculative.worldAnchors.length) {
+    to.hidden = undefined;
     if (pen.calculative.drawlineH) {
       pts.push({ x: to.x, y: from.y });
       if (Math.abs(to.y - from.y) < 30) {
-        pen.calculative.worldTo.hidden = true;
+        to.hidden = true;
       }
     } else {
       pts.push({ x: from.x, y: to.y });
       if (Math.abs(to.x - from.x) < 30) {
-        pen.calculative.worldTo.hidden = true;
+        to.hidden = true;
       }
     }
   }

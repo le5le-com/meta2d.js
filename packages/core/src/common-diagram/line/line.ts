@@ -5,17 +5,20 @@ import { getBezierPoint, getQuadraticPoint } from './curve';
 
 export function line(pen: Pen) {
   const path = new Path2D();
-  let from = pen.calculative.worldFrom;
-  from.start = true;
-  pen.calculative.worldAnchors.forEach((pt: Point) => {
-    draw(path, from, pt);
-    from = pt;
-  });
-  draw(path, from, pen.calculative.worldTo);
-  if (pen.close) {
-    draw(path, pen.calculative.worldTo, pen.calculative.worldFrom);
+  if (pen.calculative.worldAnchors.length > 1) {
+    let from: Point;
+    pen.calculative.worldAnchors.forEach((pt: Point) => {
+      if (from) {
+        draw(path, from, pt);
+      } else {
+        pt.start = true;
+      }
+      from = pt;
+    });
+    if (pen.close) {
+      draw(path, from, pen.calculative.worldAnchors[0]);
+    }
   }
-
   return path;
 }
 
@@ -48,15 +51,14 @@ export function getLineRect(pen: Pen) {
 }
 
 export function getLinePoints(pen: Pen) {
-  const pts: Point[] = [pen.calculative.worldFrom];
-  let from = pen.calculative.worldFrom;
+  const pts: Point[] = [];
+  let from: Point;
   pen.calculative.worldAnchors.forEach((pt: Point) => {
-    pts.push(...getPoints(from, pt, pen));
+    from && pts.push(...getPoints(from, pt, pen));
     from = pt;
   });
-  pts.push(...getPoints(from, pen.calculative.worldTo, pen));
-  if (pen.close) {
-    pts.push(...getPoints(pen.calculative.worldTo, pen.calculative.worldFrom, pen));
+  if (pen.close && pen.calculative.worldAnchors.length > 1) {
+    pts.push(...getPoints(from, pen.calculative.worldAnchors[0], pen));
   }
   return pts;
 }
@@ -108,34 +110,30 @@ export function pointInLine(pt: Point, pen: Pen) {
   }
 
   let i = 0;
-  let from = pen.calculative.worldFrom;
+  let from: Point;
   let point: Point;
   for (const anchor of pen.calculative.worldAnchors) {
-    point = pointInLineSegment(pt, from, anchor, r);
-    if (point) {
-      return {
-        i,
-        point,
-      };
+    if (from) {
+      point = pointInLineSegment(pt, from, anchor, r);
+      if (point) {
+        return {
+          i,
+          point,
+        };
+      }
+      ++i;
     }
-    ++i;
     from = anchor;
   }
-  if (pen.calculative.worldTo) {
-    point = pointInLineSegment(pt, from, pen.calculative.worldTo, r);
-    if (point) {
-      return {
-        i,
-        point,
-      };
-    }
-    ++i;
-    if (pen.close && (point = pointInLineSegment(pt, pen.calculative.worldTo, pen.calculative.worldFrom, r))) {
-      return {
-        i,
-        point,
-      };
-    }
+  if (
+    pen.close &&
+    pen.calculative.worldAnchors.length > 1 &&
+    (point = pointInLineSegment(pt, from, pen.calculative[0], r))
+  ) {
+    return {
+      i,
+      point,
+    };
   }
 }
 export function pointInLineSegment(pt: Point, pt1: Point, pt2: Point, r = 4) {
@@ -201,20 +199,22 @@ function lineLen(from: Point, cp1?: Point, cp2?: Point, to?: Point): number {
 }
 
 export function getLineLength(pen: Pen): number {
+  if (pen.calculative.worldAnchors.length < 2) {
+    return 0;
+  }
+
   let len = 0;
-  let from = pen.calculative.worldFrom;
+  let from: Point;
   pen.calculative.worldAnchors.forEach((pt: Point) => {
-    from.lineLength = lineLen(from, from.next, pt.prev, pt);
-    len += from.lineLength;
+    if (from) {
+      from.lineLength = lineLen(from, from.next, pt.prev, pt);
+      len += from.lineLength;
+    }
     from = pt;
   });
-  if (pen.calculative.worldTo) {
-    from.lineLength = lineLen(from, from.next, pen.calculative.worldTo.prev, pen.calculative.worldTo);
-    len += from.lineLength;
-  }
   if (pen.close) {
-    from = pen.calculative.worldTo;
-    from.lineLength = lineLen(from, from.next, pen.calculative.worldFrom.prev, pen.calculative.worldFrom);
+    let to = pen.calculative.worldAnchors[0];
+    from.lineLength = lineLen(from, from.next, to.prev, to);
     len += from.lineLength;
   }
   pen.length = len;

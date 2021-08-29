@@ -244,7 +244,16 @@ export class Canvas {
         break;
       case 'Shift':
         if (this.drawingLine) {
-          deleteTempAnchor(this.drawingLine);
+          const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+          if (to !== this.drawingLine.calculative.activeAnchor) {
+            deleteTempAnchor(this.drawingLine);
+            this.drawingLine.calculative.worldAnchors.push(to);
+          } else {
+            this.drawingLine.calculative.worldAnchors.push({
+              x: to.x,
+              y: to.y,
+            });
+          }
           const index = this.drawLineFns.indexOf(this.drawingLineName);
           this.drawingLineName = this.drawLineFns[(index + 1) % this.drawLineFns.length];
           this.drawline();
@@ -553,28 +562,17 @@ export class Canvas {
 
       const pt: Point = { x: e.x, y: e.y, id: s8() };
 
-      if (this.drawingLine) {
-        if (this.drawingLine.calculative.worldAnchors) {
-          this.drawingLine.calculative.worldAnchors.forEach((anchor: any) => {
-            anchor.temp = undefined;
-          });
-        }
-
-        if (this.drawingLine.calculative.worldTo) {
-          this.drawingLine.calculative.worldTo.temp = undefined;
-        }
-      }
-
       // 在锚点上，完成绘画
-      if (this.hoverType && this.hoverType < HoverType.Line && this.drawingLine) {
-        this.drawingLine.calculative.worldTo.connectTo = this.store.hover.id;
-        this.drawingLine.calculative.worldTo.anchorId = this.store.hoverAnchor.id;
-        connectLine(
-          this.store.pens[this.store.hover.id],
-          this.drawingLine.id,
-          this.drawingLine.calculative.worldTo.id,
-          this.drawingLine.calculative.worldTo.anchorId
-        );
+      if (
+        this.hoverType &&
+        this.hoverType < HoverType.Line &&
+        this.drawingLine &&
+        this.drawingLine.calculative.worldAnchors.length > 1
+      ) {
+        const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+        to.connectTo = this.store.hover.id;
+        to.anchorId = this.store.hoverAnchor.id;
+        connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, to.anchorId);
         this.finishDrawline(true);
         return;
       }
@@ -593,15 +591,13 @@ export class Canvas {
         }
 
         if (this.store.hoverAnchor) {
-          this.store.hoverAnchor.connectTo = this.store.hover.id;
           if (this.drawingLine) {
-            this.drawingLine.calculative.worldTo = this.store.hoverAnchor;
-            connectLine(
-              this.store.pens[this.store.hover.id],
-              this.drawingLine.id,
-              this.drawingLine.calculative.worldTo.id,
-              this.store.hoverAnchor.id
-            );
+            const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+            to.x = this.store.hoverAnchor.x;
+            to.y = this.store.hoverAnchor.y;
+            to.connectTo = this.store.hover.id;
+            to.anchorId = this.store.hoverAnchor.id;
+            connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, this.store.hoverAnchor.id);
             this.drawline();
             this.finishDrawline(true);
             return;
@@ -612,13 +608,12 @@ export class Canvas {
         if (this.store.hoverAnchor) {
           this.store.hoverAnchor.connectTo = this.store.hover.id;
           if (this.drawingLine) {
-            this.drawingLine.calculative.worldTo = this.store.hoverAnchor;
-            connectLine(
-              this.store.pens[this.store.hover.id],
-              this.drawingLine.id,
-              this.drawingLine.calculative.worldTo.id,
-              this.store.hoverAnchor.id
-            );
+            const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+            to.x = this.store.hoverAnchor.x;
+            to.y = this.store.hoverAnchor.y;
+            to.connectTo = this.store.hover.id;
+            to.anchorId = this.store.hoverAnchor.id;
+            connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, this.store.hoverAnchor.id);
             this.drawline();
             this.finishDrawline(true);
             return;
@@ -632,19 +627,14 @@ export class Canvas {
         pt.anchorId = this.store.hoverAnchor.id;
       }
       if (this.drawingLine) {
-        if (this.drawingLine.calculative.worldTo && this.drawingLine.calculative.worldTo.hidden) {
-          let anchor: Point = this.drawingLine.calculative.worldFrom;
-          if (this.drawingLine.calculative.worldAnchors && this.drawingLine.calculative.worldAnchors.length) {
-            anchor = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
-          }
-          this.drawingLine.calculative.activeAnchor = anchor;
+        const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+        if (to.hidden) {
+          to.hidden = undefined;
         } else {
-          const anchor = this.drawingLine.calculative.worldTo;
-          this.drawingLine.calculative.worldAnchors.push(anchor);
-          this.drawingLine.calculative.activeAnchor = anchor;
+          this.drawingLine.calculative.activeAnchor = to;
+          this.drawingLine.calculative.worldAnchors.push({ x: to.x, y: to.y, penId: to.penId });
         }
-        this.drawingLine.calculative.worldTo = undefined;
-        this.drawingLine.to = undefined;
+
         this.drawingLine.calculative.drawlineH = undefined;
         this.drawline();
       } else {
@@ -657,10 +647,10 @@ export class Canvas {
           y: pt.y,
           type: PenType.Line,
           calculative: {
-            worldFrom: { ...pt },
+            worldAnchors: [pt],
           },
         };
-        this.drawingLine.calculative.activeAnchor = this.drawingLine.calculative.worldFrom;
+        this.drawingLine.calculative.activeAnchor = pt;
         this.drawline();
         if (pt.connectTo) {
           connectLine(this.store.pens[pt.connectTo], this.drawingLine.id, pt.id, pt.anchorId);
@@ -775,39 +765,39 @@ export class Canvas {
       const pt: Point = { ...e };
       pt.id = s8();
       pt.penId = this.drawingLine.id;
-      pt.temp = true;
       if (this.mouseDown) {
         this.drawline(pt);
       } else {
-        if (this.drawingLine.calculative.worldTo && this.drawingLine.calculative.worldTo.connectTo) {
-          disconnectLine(
-            this.store.pens[this.drawingLine.calculative.worldTo.connectTo],
-            this.drawingLine.id,
-            this.drawingLine.calculative.worldTo.id,
-            this.drawingLine.calculative.worldTo.anchorId
-          );
+        let to: Point;
+        if (this.drawingLine.calculative.worldAnchors.length > 1) {
+          to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+          disconnectLine(this.store.pens[to.connectTo], this.drawingLine.id, to.id, to.anchorId);
         }
-        this.drawingLine.calculative.worldTo = { ...pt };
+
+        if (to) {
+          to.prev = undefined;
+          to.next = undefined;
+          if (!to.id) {
+            to.id = s8();
+          }
+          to.x = pt.x;
+          to.y = pt.y;
+        } else {
+          to = { ...pt };
+          this.drawingLine.calculative.worldAnchors.push(to);
+        }
+
         if (this.hoverType && this.hoverType < HoverType.Line && this.store.hoverAnchor) {
-          if (
-            !(
-              this.store.hoverAnchor.id === this.drawingLine.calculative.worldFrom.anchorId &&
-              this.store.hover.id === this.drawingLine.calculative.worldFrom.connectTo
-            )
-          ) {
-            this.drawingLine.calculative.worldTo.x = this.store.hoverAnchor.x;
-            this.drawingLine.calculative.worldTo.y = this.store.hoverAnchor.y;
-            this.drawingLine.calculative.worldTo.connectTo = this.store.hoverAnchor.penId;
-            this.drawingLine.calculative.worldTo.anchorId = this.store.hoverAnchor.id;
+          const from = this.drawingLine.calculative.worldAnchors[0];
+          if (!(this.store.hoverAnchor.id === from.anchorId && this.store.hover.id === from.connectTo)) {
+            to.x = this.store.hoverAnchor.x;
+            to.y = this.store.hoverAnchor.y;
+            to.connectTo = this.store.hoverAnchor.penId;
+            to.anchorId = this.store.hoverAnchor.id;
           }
         }
-        if (this.drawingLine.calculative.worldTo.connectTo) {
-          connectLine(
-            this.store.pens[this.drawingLine.calculative.worldTo.connectTo],
-            this.drawingLine.id,
-            this.drawingLine.calculative.worldTo.id,
-            this.drawingLine.calculative.worldTo.anchorId
-          );
+        if (to.connectTo) {
+          connectLine(this.store.pens[to.connectTo], this.drawingLine.id, to.id, to.anchorId);
         }
         this.drawline();
       }
@@ -1136,15 +1126,6 @@ export class Canvas {
       }
       // 锚点
       if (!this.store.data.locked && !this.store.options.disableAnchor && this.hotkeyType !== HotkeyType.Resize) {
-        hoverType = this.inAnchor(pt, pen, pen.calculative.worldFrom);
-        if (hoverType) {
-          break;
-        }
-        hoverType = this.inAnchor(pt, pen, pen.calculative.worldTo);
-
-        if (hoverType) {
-          break;
-        }
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
@@ -1221,14 +1202,6 @@ export class Canvas {
       this.store.hover = pen;
       // 锚点
       if (!this.store.options.disableAnchor && this.hotkeyType !== HotkeyType.Resize) {
-        hoverType = this.inAnchor(pt, pen, pen.calculative.worldFrom);
-        if (hoverType) {
-          break;
-        }
-        hoverType = this.inAnchor(pt, pen, pen.calculative.worldTo);
-        if (hoverType) {
-          break;
-        }
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
@@ -1404,8 +1377,6 @@ export class Canvas {
     pen.height = rect.height;
     pen.calculative.worldRect = rect;
     this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
-    pen.from = calcRelativePoint(pen.calculative.worldFrom, pen.calculative.worldRect);
-    pen.to = calcRelativePoint(pen.calculative.worldTo, pen.calculative.worldRect);
     if (pen.calculative.worldAnchors) {
       pen.anchors = [];
       pen.calculative.worldAnchors.forEach((pt) => {
@@ -1423,14 +1394,15 @@ export class Canvas {
       this.drawingLine.height = rect.height;
       this.drawingLine.calculative.worldRect = rect;
       if (!end) {
-        if (this.drawingLine.calculative.worldFrom === this.drawingLine.calculative.activeAnchor) {
+        if (this.drawingLine.calculative.worldAnchors[0] === this.drawingLine.calculative.activeAnchor) {
           this.drawingLine = undefined;
           this.render(Infinity);
           return;
         }
         deleteTempAnchor(this.drawingLine);
       }
-      this.drawingLine.calculative.activeAnchor = this.drawingLine.calculative.worldTo;
+      this.drawingLine.calculative.activeAnchor =
+        this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
       this.store.activeAnchor = this.drawingLine.calculative.activeAnchor;
       if (!this.beforeAddPen || this.beforeAddPen(this.drawingLine)) {
         this.initLineRect(this.drawingLine);
@@ -1654,12 +1626,6 @@ export class Canvas {
 
         if (this.store.pointAt && (this.hotkeyType === HotkeyType.AddAnchor || this.alt)) {
           anchors.push(this.store.pointAt);
-        }
-        if (this.store.hover.calculative.worldFrom) {
-          anchors.unshift(this.store.hover.calculative.worldFrom);
-        }
-        if (this.store.hover.calculative.worldTo) {
-          anchors.push(this.store.hover.calculative.worldTo);
         }
         if (anchors) {
           ctx.strokeStyle = this.store.hover.anchorColor || this.store.options.anchorColor;
@@ -1960,14 +1926,14 @@ export class Canvas {
     if (
       this.store.active.length === 1 &&
       this.store.active[0].type &&
-      (this.store.active[0].from.connectTo || this.store.active[0].to.connectTo)
+      this.store.active[0].anchors.findIndex((pt) => pt.connectTo) > -1
     ) {
       return;
     }
 
     translateRect(this.activeRect, x, y);
     this.store.active.forEach((pen) => {
-      if (pen.parentId || (pen.type && (pen.from.connectTo || pen.to.connectTo))) {
+      if (pen.parentId || (pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1)) {
         return;
       }
 
@@ -1977,8 +1943,8 @@ export class Canvas {
       } else {
         translateRect(pen, x, y);
         this.dirtyPenRect(pen);
+        this.updateLines(pen);
       }
-      !pen.type && this.updateLines(pen, doing);
     });
     this.getSizeCPs();
 
@@ -1991,7 +1957,7 @@ export class Canvas {
     this.render(Infinity);
   }
 
-  updateLines(pen: Pen, doing?: boolean) {
+  updateLines(pen: Pen) {
     if (!pen.connectedLines) {
       return;
     }

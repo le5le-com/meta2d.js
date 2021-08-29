@@ -1,28 +1,31 @@
 import { Direction } from '../../data';
 import { facePen, Pen } from '../../pen';
-import { Point, rotatePoint } from '../../point';
+import { Point, PrevNextType, rotatePoint } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
-export function curve(store: TopologyStore, pen: Pen, mouse?: Point) {
+export function curve(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }
 
-  if (mouse) {
+  if (mousedwon) {
     if (pen.calculative.activeAnchor) {
-      pen.calculative.activeAnchor.next = { id: s8(), penId: pen.id, x: mouse.x, y: mouse.y };
+      pen.calculative.activeAnchor.next = { id: s8(), penId: pen.id, x: mousedwon.x, y: mousedwon.y };
       pen.calculative.activeAnchor.prev = { ...pen.calculative.activeAnchor.next };
       rotatePoint(pen.calculative.activeAnchor.prev, 180, pen.calculative.activeAnchor);
     }
   } else {
-    if (!pen.calculative.worldFrom.next) {
-      const fromFace = facePen(pen.calculative.worldFrom, store.pens[pen.calculative.worldFrom.connectTo]);
-      calcCurveCP(pen.calculative.worldFrom, fromFace, 50);
+    const from = pen.calculative.worldAnchors[0];
+    if (!from.next) {
+      const fromFace = facePen(from, store.pens[from.connectTo]);
+      calcCurveCP(from, fromFace, 50);
     }
-    if (pen.calculative.worldTo && !pen.calculative.worldTo.prev) {
-      const toFace = facePen(pen.calculative.worldTo, store.pens[pen.calculative.worldTo.connectTo]);
-      calcCurveCP(pen.calculative.worldTo, toFace, -50);
+
+    const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    if (to && to !== from && !to.prev) {
+      const toFace = facePen(to, store.pens[to.connectTo]);
+      calcCurveCP(to, toFace, -50);
     }
   }
 }
@@ -111,19 +114,8 @@ function lerp(pt1: Point, pt2: Point, t: number) {
 }
 
 export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
-  let from: Point;
-  let to: Point;
-  if (index === 0) {
-    from = pen.calculative.worldFrom;
-  } else {
-    from = pen.calculative.worldAnchors[index - 1];
-  }
-
-  if (pen.calculative.worldAnchors && index < pen.calculative.worldAnchors.length) {
-    to = pen.calculative.worldAnchors[index];
-  } else {
-    to = pen.calculative.worldTo;
-  }
+  let from = pen.calculative.worldAnchors[index];
+  let to = pen.calculative.worldAnchors[index + 1];
 
   const t = pt.step;
   let anchor: Point;
@@ -164,17 +156,22 @@ export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
   }
 
   anchor.id = s8();
+  anchor.prevNextType = PrevNextType.Bilateral;
   return anchor;
 }
 
-export function curveMind(store: TopologyStore, pen: Pen, mouse?: Point) {
+export function curveMind(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }
 
+  if (pen.calculative.worldAnchors.length < 2) {
+    return;
+  }
+
   let from = pen.calculative.activeAnchor;
-  let to = mouse || pen.calculative.worldTo;
-  if (!from || !to || !to.temp) {
+  let to = mousedwon || pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+  if (!from || !to) {
     return;
   }
 

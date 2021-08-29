@@ -31,7 +31,6 @@ export interface Point {
   step?: number;
   curvePoints?: Point[];
   hidden?: boolean;
-  temp?: boolean;
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
