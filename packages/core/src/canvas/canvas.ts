@@ -72,7 +72,7 @@ export class Canvas {
   drawLineFns: string[] = [...defaultDrawLineFns];
   drawingLine?: Pen;
 
-  dirtyLines?: Pen[] = [];
+  dirtyLines?: Set<Pen> = new Set();
 
   prevAnchor: Point;
   nextAnchor: Point;
@@ -930,7 +930,7 @@ export class Canvas {
         this.initLineRect(pen);
       }
     });
-    this.dirtyLines = [];
+    this.dirtyLines.clear();
 
     this.mouseDown = undefined;
     this.lastOffsetX = 0;
@@ -1866,7 +1866,7 @@ export class Canvas {
     }
 
     const line = this.store.active[0];
-    this.dirtyLines.push(line);
+    this.dirtyLines.add(line);
     this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
     this.render(Infinity);
   }
@@ -1891,7 +1891,7 @@ export class Canvas {
       }
     }
     const line = this.store.active[0];
-    this.dirtyLines.push(line);
+    this.dirtyLines.add(line);
     this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
     this.render(Infinity);
   }
@@ -1917,7 +1917,7 @@ export class Canvas {
     }
 
     const line = this.store.active[0];
-    this.dirtyLines.push(line);
+    this.dirtyLines.add(line);
     this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
     this.render(Infinity);
   }
@@ -1939,6 +1939,7 @@ export class Canvas {
 
       if (pen.type) {
         translateLine(pen, x, y);
+        this.dirtyLines.add(pen);
         this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
       } else {
         translateRect(pen, x, y);
@@ -1978,7 +1979,7 @@ export class Canvas {
       }
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
       this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
-      this.dirtyLines.push(line);
+      this.dirtyLines.add(line);
     });
   }
 
