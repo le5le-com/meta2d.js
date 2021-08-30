@@ -1846,12 +1846,6 @@ export class Canvas {
 
     let x = e.x - this.mouseDown.x;
     let y = e.y - this.mouseDown.y;
-    if (e.shiftKey) {
-      x = 0;
-    }
-    if (e.ctrlKey) {
-      y = 0;
-    }
 
     const rect = deepClone(this.dragRect);
     translateRect(rect, x, y);
@@ -1863,7 +1857,16 @@ export class Canvas {
       rect.y += this.dock.yDock.step;
     }
 
-    this.translatePens(rect.x - this.activeRect.x, rect.y - this.activeRect.y, true);
+    x = rect.x - this.activeRect.x;
+    y = rect.y - this.activeRect.y;
+    if (e.shiftKey) {
+      x = 0;
+    }
+    if (e.ctrlKey) {
+      y = 0;
+    }
+
+    this.translatePens(x, y, true);
   }
 
   moveLineAnchor(e: { x: number; y: number }) {
