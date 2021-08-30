@@ -18,6 +18,8 @@ import {
   connectLine,
   disconnectLine,
   getAnchor,
+  calcAnchorDock,
+  calcRectDock,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
@@ -37,6 +39,7 @@ import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, 
 import { createOffscreen } from './offscreen';
 import { curve, curveMind, getLineRect, pointInLine } from '../common-diagram';
 import { ployline } from '../common-diagram/line/ployline';
+import { deepClone } from '../utils/clone';
 
 export class Canvas {
   canvas = document.createElement('canvas');
@@ -50,6 +53,7 @@ export class Canvas {
   canvasRect: Rect;
 
   activeRect: Rect;
+  dragRect: Rect;
   lastRotate = 0;
   sizeCPs: Point[];
   activeInitPos: Point[];
@@ -73,6 +77,7 @@ export class Canvas {
   drawingLine?: Pen;
 
   dirtyLines?: Set<Pen> = new Set();
+  dock: { xDock: Point; yDock: Point };
 
   prevAnchor: Point;
   nextAnchor: Point;
@@ -935,6 +940,8 @@ export class Canvas {
     this.mouseDown = undefined;
     this.lastOffsetX = 0;
     this.lastOffsetY = 0;
+    this.dock = undefined;
+    this.dragRect = undefined;
   };
 
   inactive(drawing?: boolean) {
@@ -1551,6 +1558,11 @@ export class Canvas {
     };
 
     this.store.data.pens.forEach((pen: Pen) => {
+      if (pen.visible === false) {
+        pen.calculative.visible = false;
+        return;
+      }
+
       const x = pen.calculative.worldRect.x + this.store.data.x;
       const y = pen.calculative.worldRect.y + this.store.data.y;
       const penRect = {
@@ -1560,8 +1572,10 @@ export class Canvas {
         ey: y + pen.calculative.worldRect.height,
       };
       if (!rectInRect(penRect, canvasRect)) {
+        pen.calculative.visible = false;
         return;
       }
+      pen.calculative.visible = true;
       renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store);
     });
     if (this.drawingLine) {
@@ -1691,6 +1705,23 @@ export class Canvas {
         }
       });
     }
+
+    if (this.dock) {
+      ctx.strokeStyle = '#eb5ef7';
+      if (this.dock.xDock) {
+        ctx.beginPath();
+        ctx.moveTo(this.dock.xDock.x, this.dock.xDock.y);
+        ctx.lineTo(this.dock.xDock.x, this.dock.xDock.prev.y);
+        ctx.stroke();
+      }
+
+      if (this.dock.yDock) {
+        ctx.beginPath();
+        ctx.moveTo(this.dock.yDock.x, this.dock.yDock.y);
+        ctx.lineTo(this.dock.yDock.prev.x, this.dock.yDock.y);
+        ctx.stroke();
+      }
+    }
     ctx.restore();
   };
 
@@ -1807,21 +1838,32 @@ export class Canvas {
     if (!this.activeRect || this.store.data.locked) {
       return;
     }
-    const x = e.x - this.mouseDown.x;
-    const y = e.y - this.mouseDown.y;
 
-    let offsetX = x - this.lastOffsetX;
-    let offsetY = y - this.lastOffsetY;
+    if (!this.dragRect) {
+      this.dragRect = deepClone(this.activeRect);
+      return;
+    }
+
+    let x = e.x - this.mouseDown.x;
+    let y = e.y - this.mouseDown.y;
     if (e.shiftKey) {
-      offsetY = 0;
+      x = 0;
     }
     if (e.ctrlKey) {
-      offsetX = 0;
+      y = 0;
     }
-    this.lastOffsetX = x;
-    this.lastOffsetY = y;
 
-    this.translatePens(offsetX, offsetY, true);
+    const rect = deepClone(this.dragRect);
+    translateRect(rect, x, y);
+    this.dock = calcRectDock(rect, this.store);
+    if (this.dock.xDock) {
+      rect.x += this.dock.xDock.step;
+    }
+    if (this.dock.yDock) {
+      rect.y += this.dock.yDock.step;
+    }
+
+    this.translatePens(rect.x - this.activeRect.x, rect.y - this.activeRect.y, true);
   }
 
   moveLineAnchor(e: { x: number; y: number }) {
@@ -1848,6 +1890,7 @@ export class Canvas {
     let offsetY = y - this.lastOffsetY;
     this.lastOffsetX = x;
     this.lastOffsetY = y;
+
     translatePoint(this.store.activeAnchor, offsetX, offsetY);
 
     if (this.store.hover && this.store.hoverAnchor && this.store.hoverAnchor.penId !== this.store.activeAnchor.penId) {
@@ -1863,6 +1906,19 @@ export class Canvas {
         this.store.activeAnchor.id,
         this.store.activeAnchor.anchorId
       );
+    } else {
+      this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store.active[0], this.store);
+      if (this.dock.xDock || this.dock.yDock) {
+        offsetX = 0;
+        offsetY = 0;
+        if (this.dock.xDock) {
+          offsetX = this.dock.xDock.x - this.store.activeAnchor.x;
+        }
+        if (this.dock.yDock) {
+          offsetY = this.dock.yDock.y - this.store.activeAnchor.y;
+        }
+        translatePoint(this.store.activeAnchor, offsetX, offsetY);
+      }
     }
 
     const line = this.store.active[0];
@@ -1932,6 +1988,7 @@ export class Canvas {
     }
 
     translateRect(this.activeRect, x, y);
+
     this.store.active.forEach((pen) => {
       if (pen.parentId || (pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1)) {
         return;

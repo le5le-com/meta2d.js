@@ -154,6 +154,8 @@ export interface Pen {
     activeAnchor?: Point;
     dirty?: boolean;
 
+    visible?: boolean;
+
     drawlineH?: boolean;
   };
 }
@@ -437,7 +439,7 @@ export function renderAnchor(
   if (active) {
     if (pt.prev) {
       ctx.save();
-      ctx.strokeStyle = '#fa541c';
+      ctx.strokeStyle = '#4dffff';
       ctx.beginPath();
       ctx.moveTo(pt.prev.x, pt.prev.y);
       ctx.lineTo(pt.x, pt.y);
@@ -454,7 +456,7 @@ export function renderAnchor(
     }
     if (pt.next) {
       ctx.save();
-      ctx.strokeStyle = '#fa541c';
+      ctx.strokeStyle = '#4dffff';
       ctx.beginPath();
       ctx.moveTo(pt.x, pt.y);
       ctx.lineTo(pt.next.x, pt.next.y);
