@@ -25,35 +25,35 @@ export enum AnchorMode {
 
 export interface Pen {
   id: string;
+  tags?: string[];
   parentId?: string;
   type: PenType;
   name?: string;
   x: number;
   y: number;
+  ex?: number;
+  ey?: number;
   width?: number;
   height?: number;
+  rotate?: number;
+  center?: Point;
   borderRadius?: number;
-
   layer?: number;
   // Hidden only visible === false
   visible?: boolean;
   locked?: LockState;
 
-  center?: Point;
-
+  // 连线是否闭合路径
   close?: boolean;
+  // 连线长度
   length?: number;
 
-  tags?: string[];
   title?: string;
   markdown?: string;
-  // 外部用于提示的dom id
-  tipDom?: string;
 
   autoRect?: boolean;
 
   lineWidth?: number;
-  rotate?: number;
   globalAlpha?: number;
   lineDash?: number[];
   lineDashOffset?: number;
@@ -101,13 +101,6 @@ export interface Pen {
   iconSize?: number;
   iconAlign?: string;
 
-  animateStart?: number;
-  // Cycle count. Infinite if <= 0.
-  animateCycle?: number;
-  animateCycleIndex?: number;
-  nextAnimate?: string;
-  autoPlay?: boolean;
-
   disableInput?: boolean;
   disableRotate?: boolean;
   disableSize?: boolean;
@@ -132,6 +125,11 @@ export interface Pen {
 
   connectedLines?: { lineId: string; lineAnchor: string; anchor: string }[];
 
+  // Cycle count. Infinite if <= 0.
+  animateCycle?: number;
+  nextAnimate?: string;
+  autoPlay?: boolean;
+
   calculative?: {
     worldRect?: Rect;
     worldAnchors?: Point[];
@@ -148,15 +146,15 @@ export interface Pen {
     strokeImage?: string;
     backgroundImg?: HTMLImageElement;
     strokeImg?: HTMLImageElement;
-
     active?: boolean;
     hover?: boolean;
     activeAnchor?: Point;
     dirty?: boolean;
-
     visible?: boolean;
-
     drawlineH?: boolean;
+
+    animateStart?: number;
+    animateCycleIndex?: number;
   };
 }
 
@@ -168,12 +166,7 @@ export function getParent(pens: any, pen: Pen) {
   return getParent(pens, pens[pen.parentId]) || pens[pen.parentId];
 }
 
-export function renderPen(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  path: Path2D,
-  store: TopologyStore
-) {
+export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D, store: TopologyStore) {
   if (globalStore.independentDraws[pen.name]) {
     ctx.save();
     globalStore.independentDraws[pen.name](ctx, pen, store);
@@ -412,11 +405,7 @@ export function renderPen(
   ctx.restore();
 }
 
-export function renderLineAnchors(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore
-) {
+export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
   ctx.save();
   ctx.fillStyle = pen.activeColor || store.options.activeColor;
   pen.calculative.worldAnchors.forEach((pt) => {
@@ -425,11 +414,7 @@ export function renderLineAnchors(
   ctx.restore();
 }
 
-export function renderAnchor(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pt: Point,
-  active?: boolean
-) {
+export function renderAnchor(ctx: CanvasRenderingContext2D, pt: Point, active?: boolean) {
   if (!pt) {
     return;
   }

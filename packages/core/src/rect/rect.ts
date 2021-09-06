@@ -128,12 +128,7 @@ export function getRectOfPoints(points: Point[]) {
 }
 
 export function rectInRect(source: Rect, target: Rect) {
-  return (
-    (source.x > target.x && source.x < target.ex && source.y > target.y && source.y < target.ey) ||
-    (source.ex > target.x && source.ex < target.ex && source.y > target.y && source.y < target.ey) ||
-    (source.ex > target.x && source.ex < target.ex && source.ey > target.y && source.ey < target.ey) ||
-    (source.x > target.x && source.x < target.ex && source.ey > target.y && source.ey < target.ey)
-  );
+  return !(source.x > target.ex || source.ex < target.x || source.ey < target.y || source.y > target.ey);
 }
 
 export function translateRect(rect: Rect, x: number, y: number) {
