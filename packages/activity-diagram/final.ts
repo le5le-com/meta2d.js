@@ -1,4 +1,4 @@
-import { Pen } from '../core/src/pen';
+import { Pen } from '@topology/core';
 export function activityFinal(pen: Pen): Path2D {
   if (!pen.calculative || !pen.calculative.worldRect) {
     return;
