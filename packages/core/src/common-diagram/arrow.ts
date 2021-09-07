@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
 export function leftArrow(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2);
@@ -38,9 +35,6 @@ export function leftArrow(pen: Pen) {
 }
 
 export function rightArrow(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.height / 3);
   path.lineTo(
@@ -71,9 +65,6 @@ export function rightArrow(pen: Pen) {
 }
 
 export function twowayArrow(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2);

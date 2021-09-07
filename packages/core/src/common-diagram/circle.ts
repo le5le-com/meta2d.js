@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
 export function circle(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   path.ellipse(
     pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2,

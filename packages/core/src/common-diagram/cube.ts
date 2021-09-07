@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
 export function cube(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   const offset = pen.calculative.worldRect.width / 4;
   path.moveTo(pen.calculative.worldRect.x + offset, pen.calculative.worldRect.y);

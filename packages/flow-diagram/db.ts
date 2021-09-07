@@ -1,8 +1,5 @@
 import { Pen } from '../core/src/pen';
 export function db(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   const offsetY = pen.calculative.worldRect.height / 7;
   path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + offsetY);

@@ -151,8 +151,8 @@ export function scaleRect(rect: Rect, scale: number, center: Point) {
   rect.height *= scale;
   scalePoint(rect, scale, center);
 
-  rect.ex += rect.x + rect.width;
-  rect.ey += rect.y + rect.height;
+  rect.ex = rect.x + rect.width;
+  rect.ey = rect.y + rect.height;
   rect.center = {
     x: rect.x + rect.width / 2,
     y: rect.y + rect.height / 2,

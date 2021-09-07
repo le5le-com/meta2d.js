@@ -1,9 +1,6 @@
 import { Pen } from '../core/src/pen';
 
 export function escalator(pen: any) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   let x = pen.calculative.worldRect.x;

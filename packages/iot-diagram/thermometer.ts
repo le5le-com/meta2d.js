@@ -1,9 +1,6 @@
 import { Pen } from '../core/src/pen';
 
 export function thermometer(pen: any) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   let R: number, r: number;
   if (pen.calculative.worldRect.width < pen.calculative.worldRect.height / 2) {

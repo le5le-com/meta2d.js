@@ -1,8 +1,5 @@
 import { Pen } from '../core/src/pen';
 export function flowInternalStorage(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y);
   path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y);

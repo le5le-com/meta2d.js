@@ -4,25 +4,25 @@ export function calcTextRect(pen: Pen) {
   if (!pen.text) {
     return;
   }
-  let x = pen.textLeft || 0;
-  let y = pen.textTop || 0;
-  let width = pen.textWidth || pen.width;
-  let height = pen.textHeight || pen.height;
+  let x = pen.calculative.textLeft || 0;
+  let y = pen.calculative.textTop || 0;
+  let width = pen.calculative.textWidth || pen.calculative.worldRect.width;
+  let height = pen.calculative.textHeight || pen.calculative.worldRect.height;
 
-  if (pen.textLeft && Math.abs(x) < 1) {
-    x = pen.width * pen.textLeft;
+  if (pen.calculative.textLeft && Math.abs(x) < 1) {
+    x = pen.calculative.worldRect.width * pen.calculative.textLeft;
   }
 
-  if (pen.textTop && Math.abs(y) < 1) {
-    x = pen.height * pen.textTop;
+  if (pen.calculative.textTop && Math.abs(y) < 1) {
+    x = pen.calculative.worldRect.height * pen.calculative.textTop;
   }
 
   if (Math.abs(width) < 1) {
-    width = pen.width * pen.textWidth;
+    width = pen.calculative.worldRect.width * pen.calculative.textWidth;
   }
 
   if (Math.abs(height) < 1) {
-    height = pen.height * pen.textHeight;
+    height = pen.calculative.worldRect.height * pen.calculative.textHeight;
   }
 
   x = pen.calculative.worldRect.x + x;

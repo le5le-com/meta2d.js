@@ -1,8 +1,5 @@
 import { Pen } from '../core/src/pen';
 export function waterpumpbody(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   let x = pen.calculative.worldRect.x;

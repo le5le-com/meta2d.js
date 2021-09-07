@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
 export function file(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   const offsetX = pen.calculative.worldRect.width / 6;
   path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y);

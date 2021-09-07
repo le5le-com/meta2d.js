@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
 export function pentagram(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   let r =

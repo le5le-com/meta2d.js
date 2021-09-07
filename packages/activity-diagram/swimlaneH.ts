@@ -1,8 +1,5 @@
 import { Pen } from '../core/src/pen';
 export function swimlaneH(pen: Pen): Path2D {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   if (!pen.borderRadius) {

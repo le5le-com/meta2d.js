@@ -1,8 +1,5 @@
 import { Pen } from '../core/src/pen';
 export function elevatordoor(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   pen.lineWidth = 2;
   let x = pen.calculative.worldRect.x;

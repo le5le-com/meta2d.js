@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
 export function cloud(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   path.moveTo(

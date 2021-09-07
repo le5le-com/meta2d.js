@@ -1,9 +1,6 @@
 import { Pen } from '../core/src/pen';
 
 export function andGate(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   let myh = pen.calculative.worldRect.height / 6;

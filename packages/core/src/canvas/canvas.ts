@@ -1345,6 +1345,15 @@ export class Canvas {
       pen.path = undefined;
     }
     // end
+
+    pen.calculative = {};
+    for (const k in pen) {
+      if (typeof pen[k] !== 'object' || k === 'lineDash') {
+        pen.calculative[k] = pen[k];
+      }
+    }
+    pen.calculative.image = undefined;
+
     this.dirtyPenRect(pen);
     if (pen.type) {
       this.initLineRect(pen);
@@ -1498,8 +1507,8 @@ export class Canvas {
     }
   }
 
-  dirtyPenRect(pen: Pen) {
-    calcWorldRects(this.store.pens, pen);
+  dirtyPenRect(pen: Pen, worldRectIsReady?: boolean) {
+    !worldRectIsReady && calcWorldRects(this.store.pens, pen);
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
@@ -1746,7 +1755,7 @@ export class Canvas {
     const s = scale / this.store.data.scale;
     this.store.data.pens.forEach((pen) => {
       scalePen(pen, s, center);
-      this.dirtyPenRect(pen);
+      this.dirtyPenRect(pen, true);
       pen.type && this.initLineRect(pen);
     });
     this.calcActiveRect();

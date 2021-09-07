@@ -1,8 +1,5 @@
 import { Pen } from '../core/src/pen';
 export function document(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   const x = pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
   const y = pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 6) / 7;

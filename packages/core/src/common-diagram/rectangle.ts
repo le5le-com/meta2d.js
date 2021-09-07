@@ -1,10 +1,6 @@
 import { Pen } from '../pen';
 
 export function rectangle(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
-
   let wr = pen.borderRadius || 0;
   let hr = pen.borderRadius || 0;
   if (wr < 1) {

@@ -1,9 +1,6 @@
 import { Pen } from '../core/src/pen';
 
 export function fan(pen: any) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
   let myw = pen.calculative.worldRect.width / 5;
   let myh = pen.calculative.worldRect.height / 5;

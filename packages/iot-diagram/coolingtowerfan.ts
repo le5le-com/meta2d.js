@@ -2,9 +2,6 @@ import { Pen } from '../core/src/pen';
 // const path = new Path2D();
 
 export function coolingtowerfan(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   let myw = pen.calculative.worldRect.width / 5;

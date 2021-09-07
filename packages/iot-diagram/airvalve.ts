@@ -1,7 +1,4 @@
 export function airvalve(pen: any) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   let myw = pen.calculative.worldRect.width / 6;
@@ -34,12 +31,7 @@ export function airvalve(pen: any) {
   } else {
     for (let i = 0; i < 3; i++) {
       path.moveTo(x + myw / 2, y + myh / 2 + ((myh * 5.5) / 3) * i);
-      path.rect(
-        x + myw / 2,
-        y + myh / 2 + ((myh * 5.5) / 3) * i,
-        myw * 5,
-        (myh * 5.5) / 3
-      );
+      path.rect(x + myw / 2, y + myh / 2 + ((myh * 5.5) / 3) * i, myw * 5, (myh * 5.5) / 3);
     }
   }
 

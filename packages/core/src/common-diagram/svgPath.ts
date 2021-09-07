@@ -4,10 +4,6 @@ import { globalStore } from '../store';
 import { getRect, parseSvgPath, pathToString, scalePath, translatePath } from './svg/parse';
 
 export function svgPath(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
-
   const pathText = globalStore.paths[pen.pathId];
   if (!pathText) {
     return new Path2D();
@@ -17,8 +13,15 @@ export function svgPath(pen: Pen) {
   pen.calculative.svgRect = getRect(path);
   calcCenter(pen.calculative.svgRect);
 
-  if (pen.calculative.svgRect.width !== pen.width || pen.calculative.svgRect.height !== pen.height) {
-    scalePath(path, pen.width / pen.calculative.svgRect.width, pen.height / pen.calculative.svgRect.height);
+  if (
+    pen.calculative.svgRect.width !== pen.calculative.worldRect.width ||
+    pen.calculative.svgRect.height !== pen.calculative.worldRect.height
+  ) {
+    scalePath(
+      path,
+      pen.calculative.worldRect.width / pen.calculative.svgRect.width,
+      pen.calculative.worldRect.height / pen.calculative.svgRect.height
+    );
     const rect = getRect(path);
     calcCenter(rect);
     translatePath(path, pen.calculative.worldRect.x - rect.x, pen.calculative.worldRect.y - rect.y);

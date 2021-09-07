@@ -1,8 +1,5 @@
 import { Pen } from '@topology/core';
 export function activityFinal(pen: Pen): Path2D {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path1 = new Path2D();
 
   const worldRect = pen.calculative.worldRect;

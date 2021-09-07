@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
 export function people(pen: Pen) {
-  if (!pen.calculative || !pen.calculative.worldRect) {
-    return;
-  }
   const path = new Path2D();
 
   const r = pen.calculative.worldRect.width / 4;

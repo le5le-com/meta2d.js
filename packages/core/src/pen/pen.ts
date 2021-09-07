@@ -137,6 +137,48 @@ export interface Pen {
     worldTextRect?: Rect;
     textDrawRect?: Rect;
     svgRect?: Rect;
+
+    rotate?: number;
+    lineWidth?: number;
+    globalAlpha?: number;
+    lineDash?: number[];
+    lineDashOffset?: number;
+    color?: string;
+    background?: string;
+    anchorColor?: string;
+    hoverColor?: string;
+    hoverBackground?: string;
+    activeColor?: string;
+    activeBackground?: string;
+    bkType?: number;
+    lineCap?: string;
+    lineJoin?: string;
+    shadowColor?: string;
+    shadowBlur?: number;
+    shadowOffsetX?: number;
+    shadowOffsetY?: number;
+
+    text?: string;
+    textWidth?: number;
+    textHeight?: number;
+    textLeft?: number;
+    textTop?: number;
+    textColor?: string;
+    fontFamily?: string;
+    fontSize?: number;
+    lineHeight?: number;
+    fontStyle?: string;
+    fontWeight?: string;
+    textBackground?: string;
+    iconSize?: number;
+    icon?: string;
+    iconRotate?: number;
+    iconWidth?: number;
+    iconHeight?: number;
+    iconTop?: number;
+    iconLeft?: number;
+    iconColor?: string;
+
     textLines?: string[];
     image?: string;
     img?: HTMLImageElement;
@@ -183,14 +225,14 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
   }
   // end
 
-  if (pen.rotate) {
+  if (pen.calculative.rotate) {
     ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
-    ctx.rotate((pen.rotate * Math.PI) / 180);
+    ctx.rotate((pen.calculative.rotate * Math.PI) / 180);
     ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
   }
 
-  if (pen.lineWidth > 1) {
-    ctx.lineWidth = pen.lineWidth;
+  if (pen.calculative.lineWidth > 1) {
+    ctx.lineWidth = pen.calculative.lineWidth;
   }
 
   let fill: any;
@@ -223,34 +265,34 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     }
   }
 
-  if (pen.lineCap) {
-    ctx.lineCap = pen.lineCap as CanvasLineCap;
+  if (pen.calculative.lineCap) {
+    ctx.lineCap = pen.calculative.lineCap as CanvasLineCap;
   } else if (pen.type) {
     ctx.lineCap = 'round';
   }
 
-  if (pen.lineJoin) {
-    ctx.lineJoin = pen.lineJoin as CanvasLineJoin;
+  if (pen.calculative.lineJoin) {
+    ctx.lineJoin = pen.calculative.lineJoin as CanvasLineJoin;
   } else if (pen.type) {
     ctx.lineJoin = 'round';
   }
 
-  if (pen.globalAlpha < 1) {
-    ctx.globalAlpha = pen.globalAlpha;
+  if (pen.calculative.globalAlpha < 1) {
+    ctx.globalAlpha = pen.calculative.globalAlpha;
   }
 
-  if (pen.lineDash) {
-    ctx.setLineDash(pen.lineDash);
+  if (pen.calculative.lineDash) {
+    ctx.setLineDash(pen.calculative.lineDash);
   }
-  if (pen.lineDashOffset) {
-    ctx.lineDashOffset = pen.lineDashOffset;
+  if (pen.calculative.lineDashOffset) {
+    ctx.lineDashOffset = pen.calculative.lineDashOffset;
   }
 
-  if (pen.shadowColor) {
-    ctx.shadowColor = pen.shadowColor;
-    ctx.shadowOffsetX = pen.shadowOffsetX;
-    ctx.shadowOffsetY = pen.shadowOffsetY;
-    ctx.shadowBlur = pen.shadowBlur;
+  if (pen.calculative.shadowColor) {
+    ctx.shadowColor = pen.calculative.shadowColor;
+    ctx.shadowOffsetX = pen.calculative.shadowOffsetX;
+    ctx.shadowOffsetY = pen.calculative.shadowOffsetY;
+    ctx.shadowBlur = pen.calculative.shadowBlur;
   }
 
   if (path) {
@@ -281,11 +323,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     let y = rect.y;
     let w = rect.width;
     let h = rect.height;
-    if (pen.iconWidth) {
-      w = pen.iconWidth;
+    if (pen.calculative.iconWidth) {
+      w = pen.calculative.iconWidth;
     }
-    if (pen.iconHeight) {
-      h = pen.iconHeight;
+    if (pen.calculative.iconHeight) {
+      h = pen.calculative.iconHeight;
     }
     if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight) {
       let scaleW = rect.width / pen.calculative.imgNaturalWidth;
@@ -324,8 +366,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     let x = iconRect.x + iconRect.width / 2;
     let y = iconRect.y + iconRect.height / 2;
 
-    if (pen.iconSize > 0) {
-      ctx.font = `${pen.iconSize}px ${pen.iconFamily}`;
+    if (pen.calculative.iconSize > 0) {
+      ctx.font = `${pen.calculative.iconSize}px ${pen.iconFamily}`;
     } else if (iconRect.width > iconRect.height) {
       ctx.font = `${iconRect.height}px ${pen.iconFamily}`;
     } else {
@@ -348,9 +390,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
   if (pen.text) {
     ctx.save();
     ctx.fillStyle = pen.textColor || pen.color;
-    if (pen.textBackground) {
+    if (pen.calculative.textBackground) {
       ctx.save();
-      ctx.fillStyle = pen.textBackground;
+      ctx.fillStyle = pen.calculative.textBackground;
       let x = 0;
       if (pen.textAlign === 'right') {
         x = pen.calculative.textDrawRect.width;
@@ -478,10 +520,6 @@ export function renderAnchor(ctx: CanvasRenderingContext2D, pt: Point, active?: 
 }
 
 export function calcWorldRects(pens: { [key: string]: Pen }, pen: Pen) {
-  if (!pen.calculative) {
-    pen.calculative = {};
-  }
-
   let rect: Rect = {
     x: pen.x,
     y: pen.y,
@@ -603,30 +641,30 @@ export function calcWorldPointOfPen(pen: Pen, pt: Point) {
 }
 
 export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
-  let x = pen.iconLeft || 0;
-  let y = pen.iconTop || 0;
-  let width = pen.iconWidth || pen.width;
-  let height = pen.iconHeight || pen.height;
+  let x = pen.calculative.iconLeft || 0;
+  let y = pen.calculative.iconTop || 0;
+  let width = pen.calculative.iconWidth || pen.calculative.worldRect.width;
+  let height = pen.calculative.iconHeight || pen.calculative.worldRect.height;
   if (x && Math.abs(x) < 1) {
-    x = pen.width * pen.iconLeft;
+    x = pen.calculative.worldRect.width * pen.calculative.iconLeft;
   }
 
   if (y && Math.abs(y) < 1) {
-    y = pen.height * pen.iconLeft;
+    y = pen.calculative.worldRect.height * pen.calculative.iconLeft;
   }
   if (width && Math.abs(width) < 1) {
-    width = pen.width * pen.iconWidth;
+    width = pen.calculative.worldRect.width * pen.calculative.iconWidth;
   }
 
   if (height && Math.abs(height) < 1) {
-    height = pen.height * pen.iconHeight;
+    height = pen.calculative.worldRect.height * pen.calculative.iconHeight;
   }
 
-  let rotate = pen.iconRotate || 0;
+  let rotate = pen.calculative.iconRotate || 0;
   if (pen.parentId) {
-    const parentRect = pens[pen.parentId].calculative.worldRect;
-    if (parentRect) {
-      rotate += parentRect.rotate;
+    const parentPen = pens[pen.parentId].calculative;
+    if (parentPen) {
+      rotate += parentPen.rotate;
       rotate %= 360;
     }
   }
@@ -648,19 +686,19 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
   if (!pen.lineWidth) {
     pen.lineWidth = 1;
   }
-  pen.lineWidth *= scale;
-  pen.lineHeight *= scale;
-  pen.fontSize *= scale;
-  pen.iconSize *= scale;
-  pen.iconWidth *= scale;
-  pen.iconHeight *= scale;
-  pen.iconLeft *= scale;
-  pen.iconTop *= scale;
-  pen.textWidth *= scale;
-  pen.textHeight *= scale;
-  pen.textLeft *= scale;
-  pen.textTop *= scale;
-  scaleRect(pen, scale, center);
+  pen.calculative.lineWidth = pen.lineWidth * scale;
+  pen.calculative.lineHeight = pen.lineHeight * scale;
+  pen.calculative.fontSize = pen.fontSize * scale;
+  pen.calculative.iconSize = pen.iconSize * scale;
+  pen.calculative.iconWidth = pen.iconWidth * scale;
+  pen.calculative.iconHeight = pen.iconHeight * scale;
+  pen.calculative.iconLeft = pen.iconLeft * scale;
+  pen.calculative.iconTop = pen.iconTop * scale;
+  pen.calculative.textWidth = pen.textWidth * scale;
+  pen.calculative.textHeight = pen.textHeight * scale;
+  pen.calculative.textLeft = pen.textLeft * scale;
+  pen.calculative.textTop = pen.textTop * scale;
+  scaleRect(pen.calculative.worldRect, scale, center);
   if (pen.type) {
     calcWorldAnchors(pen);
   }
