@@ -9,7 +9,11 @@
     "moduleResolution": "node",
     "target": "es5",
     "allowJs": true,
-    "lib": ["es2018", "dom"],
+    "lib": [
+      "es2018",
+      "dom"
+    ],
+    "downlevelIteration": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports":true,
     "paths": {

@@ -131,7 +131,7 @@ export function rectInRect(source: Rect, target: Rect) {
   return !(source.x > target.ex || source.ex < target.x || source.ey < target.y || source.y > target.ey);
 }
 
-export function translateRect(rect: Rect, x: number, y: number) {
+export function translateRect(rect: Rect | Pen, x: number, y: number) {
   rect.x += x;
   rect.y += y;
   rect.ex += x;

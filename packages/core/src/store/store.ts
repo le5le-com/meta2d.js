@@ -59,7 +59,7 @@ export interface TopologyStore {
   hoverAnchor?: Point;
   pointAt?: Point;
   pointAtIndex?: number;
-  animate: Map<Pen, number>;
+  animates: Set<Pen>;
   options: Options;
   emitter: Emitter;
   penPaths: any;
@@ -80,7 +80,7 @@ export const createStore = () => {
     pens: {},
     path2dMap: new WeakMap(),
     active: [],
-    animate: new Map(),
+    animates: new Set(),
     options: { ...defaultOptions },
     emitter: mitt(),
   } as TopologyStore;
@@ -112,5 +112,5 @@ export const clearStore = (store: TopologyStore) => {
   store.active = [];
   store.hover = undefined;
   store.lastHover = undefined;
-  store.animate.clear();
+  store.animates.clear();
 };

@@ -154,6 +154,16 @@ export class Topology {
     globalStore.independentDraws[name] = draw;
   }
 
+  startAnimate(pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.active;
+    }
+    pens.forEach((pen) => {
+      this.store.animates.add(pen);
+    });
+    this.canvas.animate();
+  }
+
   destroy(global?: boolean) {
     this.canvas.destroy();
     // Clear data.

@@ -20,6 +20,8 @@ import {
   getAnchor,
   calcAnchorDock,
   calcRectDock,
+  setPenAnimate,
+  calcTextLines,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
@@ -89,8 +91,10 @@ export class Canvas {
   touchStart = 0;
   timer: any;
 
-  alt?: boolean;
+  lastAnimateRender = 0;
+  animateRendering = false;
 
+  alt?: boolean;
   pointSize = 8;
 
   beforeAddPen: (pen: Pen) => boolean;
@@ -1547,10 +1551,6 @@ export class Canvas {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
     this.dirty = false;
-
-    if (this.store.animate.size) {
-      requestAnimationFrame(this.render);
-    }
   };
 
   renderPens = () => {
@@ -2012,6 +2012,8 @@ export class Canvas {
         this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
       } else {
         translateRect(pen, x, y);
+        pen.calculative.x = pen.x;
+        pen.calculative.y = pen.y;
         this.dirtyPenRect(pen);
         this.updateLines(pen);
       }
@@ -2063,6 +2065,67 @@ export class Canvas {
     }
     this.lastRotate = 0;
     this.getSizeCPs();
+  }
+
+  animate() {
+    requestAnimationFrame(() => {
+      const now = Date.now();
+      if (this.animateRendering || now - this.lastAnimateRender < this.store.options.animateInterval) {
+        if (this.store.animates.size > 0) {
+          this.animate();
+        }
+        return;
+      }
+      this.lastAnimateRender = now;
+      this.animateRendering = true;
+      const dels: Pen[] = [];
+      let active = false;
+      for (let pen of this.store.animates) {
+        if (setPenAnimate(this.store, pen, now)) {
+          this.dirty = true;
+          if (pen.calculative.dirty) {
+            this.dirtyPenRect(pen, true);
+            pen.type && this.initLineRect(pen);
+            if (pen.calculative.active) {
+              active = true;
+            }
+          }
+        } else {
+          if (pen.calculative.dirty) {
+            this.dirtyPenRect(pen);
+            pen.type && this.initLineRect(pen);
+            if (pen.calculative.active) {
+              active = true;
+            }
+          }
+          if (pen.calculative.text !== pen.text) {
+            pen.calculative.text = pen.text;
+            calcTextLines(pen);
+          }
+          for (const k in pen) {
+            if (typeof pen[k] !== 'object' || k === 'lineDash') {
+              pen.calculative[k] = pen[k];
+            }
+          }
+          dels.push(pen);
+        }
+
+        this.updateLines(pen);
+      }
+
+      if (active) {
+        this.calcActiveRect();
+      }
+
+      dels.forEach((pen) => {
+        this.store.animates.delete(pen);
+      });
+      this.animateRendering = false;
+
+      this.render();
+
+      this.animate();
+    });
   }
 
   destroy() {

@@ -59,6 +59,7 @@ export interface Options {
   ruleColor?: string;
   drawingLineName?: string;
   interval?: number;
+  animateInterval?: number;
 }
 
 export const defaultOptions: Options = {
@@ -87,5 +88,6 @@ export const defaultOptions: Options = {
   gridColor: '#f3f3f3',
   ruleColor: '#888888',
   drawingLineName: 'curve',
-  interval: 20
+  interval: 20,
+  animateInterval: 30,
 };

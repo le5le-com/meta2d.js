@@ -82,13 +82,22 @@ export function calcTextLines(pen: Pen) {
   let lines = [];
   switch (pen.whiteSpace) {
     case 'nowrap':
-      lines.push(pen.text);
+      lines.push(pen.calculative.text);
       break;
     case 'pre-line':
-      lines = pen.text.split(/[\n]/g);
+      if (pen.calculative.text.split) {
+        lines = pen.calculative.text.split(/[\n]/g);
+      } else {
+        lines = pen.calculative.text.toString().split(/[\n]/g);
+      }
       break;
     default:
-      const paragraphs = pen.text.split(/[\n]/g);
+      let paragraphs: string[];
+      if (pen.calculative.text.split) {
+        paragraphs = pen.calculative.text.split(/[\n]/g);
+      } else {
+        paragraphs = pen.calculative.text.toString().split(/[\n]/g);
+      }
       let h = 0;
       paragraphs.forEach((item) => {
         if (h < 0) {

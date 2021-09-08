@@ -1,8 +1,9 @@
 import { getSplitAnchor } from '../diagrams';
 import { Direction } from '../data';
-import { distance, facePoint, Point, rotatePoint, translatePoint } from '../point';
-import { calcRelativePoint, Rect, scaleRect } from '../rect';
+import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
+import { calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
+import { calcTextLines } from './text';
 
 export enum PenType {
   Node,
@@ -125,29 +126,30 @@ export interface Pen {
 
   connectedLines?: { lineId: string; lineAnchor: string; anchor: string }[];
 
-  // Cycle count. Infinite if <= 0.
+  // Cycle count. Infinite if == 0.
   animateCycle?: number;
   nextAnimate?: string;
   autoPlay?: boolean;
 
-  // 动画时长
+  // 动画帧时长
   duration?: number;
-  // 动画开始时间
-  start?: number;
-  // 动画结束时间
-  end?: number;
   // 匀速渐变
-  linear: boolean;
+  linear?: boolean;
   // 主要用于动画帧的缩放
   scale?: number;
   // 连线动画速度
-  animateSpan: number;
+  animateSpan?: number;
 
   frames?: Pen[];
   // 提前预置的不同效果的动画组
   animateList?: Pen[][];
 
   calculative?: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+
     worldRect?: Rect;
     worldAnchors?: Point[];
     worldIconRect?: Rect;
@@ -212,8 +214,22 @@ export interface Pen {
     visible?: boolean;
     drawlineH?: boolean;
 
-    animateStart?: number;
-    animateCycleIndex?: number;
+    scale?: number;
+
+    // 动画开始时间
+    start?: number;
+    // 动画时长
+    duration?: number;
+    // 动画结束时间
+    end?: number;
+    // 当前动画帧
+    frameIndex?: number;
+    // 当前动画帧起止时间
+    frameStart?: number;
+    frameEnd?: number;
+    frameDuration?: number;
+    // 已经循环次数
+    cycleIndex?: number;
   };
 }
 
@@ -225,7 +241,12 @@ export function getParent(pens: any, pen: Pen) {
   return getParent(pens, pens[pen.parentId]) || pens[pen.parentId];
 }
 
-export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D, store: TopologyStore) {
+export function renderPen(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen,
+  path: Path2D,
+  store: TopologyStore
+) {
   if (globalStore.independentDraws[pen.name]) {
     ctx.save();
     globalStore.independentDraws[pen.name](ctx, pen, store);
@@ -268,7 +289,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
         fill = true;
       }
     } else {
-      ctx.strokeStyle = pen.color;
+      ctx.strokeStyle = pen.calculative.color;
     }
 
     if (pen.backgroundImage) {
@@ -404,9 +425,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     ctx.restore();
   }
 
-  if (pen.text) {
+  if (pen.calculative.text) {
     ctx.save();
-    ctx.fillStyle = pen.textColor || pen.color;
+    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
     if (pen.calculative.textBackground) {
       ctx.save();
       ctx.fillStyle = pen.calculative.textBackground;
@@ -464,7 +485,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
   ctx.restore();
 }
 
-export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
+export function renderLineAnchors(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen,
+  store: TopologyStore
+) {
   ctx.save();
   ctx.fillStyle = pen.activeColor || store.options.activeColor;
   pen.calculative.worldAnchors.forEach((pt) => {
@@ -473,7 +498,11 @@ export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen, store
   ctx.restore();
 }
 
-export function renderAnchor(ctx: CanvasRenderingContext2D, pt: Point, active?: boolean) {
+export function renderAnchor(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pt: Point,
+  active?: boolean
+) {
   if (!pt) {
     return;
   }
@@ -562,6 +591,19 @@ export function calcWorldRects(pens: { [key: string]: Pen }, pen: Pen) {
     rect.y = parentRect.y + parentRect.height * pen.y;
     rect.width = parentRect.width * pen.width;
     rect.height = parentRect.height * pen.height;
+
+    if (Math.abs(pen.x) > 1) {
+      rect.x = parentRect.x + pen.x;
+    }
+    if (Math.abs(pen.y) > 1) {
+      rect.y = parentRect.y + pen.y;
+    }
+    if (pen.width > 1) {
+      rect.width = pen.width;
+    }
+    if (pen.height > 1) {
+      rect.height = pen.height;
+    }
     rect.ex = rect.x + rect.width;
     rect.ey = rect.y + rect.height;
 
@@ -821,8 +863,6 @@ export function translateLine(pen: Pen, x: number, y: number) {
       translatePoint(a, x, y);
     });
   }
-
-  pen.calculative.dirty = true;
 }
 
 export function deleteTempAnchor(pen: Pen) {
@@ -900,4 +940,111 @@ export function getToAnchor(pen: Pen) {
   }
 
   return pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+}
+
+export function setPenAnimate(store: TopologyStore, pen: Pen, now: number) {
+  if (!pen.frames || !pen.frames.length) {
+    return 0;
+  }
+  if (!pen.calculative.duration) {
+    pen.calculative.duration = 0;
+    for (const f of pen.frames) {
+      pen.calculative.duration += f.duration;
+    }
+  }
+  if (!pen.animateCycle) {
+    pen.animateCycle = Infinity;
+  }
+
+  if (!pen.calculative.start) {
+    pen.calculative.start = Date.now();
+    pen.calculative.end = pen.calculative.start + pen.calculative.duration;
+    pen.calculative.frameIndex = 0;
+    pen.calculative.frameStart = pen.calculative.start;
+    pen.calculative.frameDuration = pen.frames[0].duration;
+    pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    pen.calculative.cycleIndex = 1;
+  } else if (now > pen.calculative.frameEnd) {
+    // 播放到尾了
+
+    if (++pen.calculative.frameIndex >= pen.frames.length) {
+      ++pen.calculative.cycleIndex;
+      pen.calculative.frameIndex = 0;
+    }
+    // 播放结束
+    if (pen.calculative.cycleIndex > pen.animateCycle) {
+      pen.calculative.start = undefined;
+      return 0;
+    }
+    pen.calculative.frameStart = pen.calculative.frameEnd;
+    pen.calculative.frameDuration = pen.frames[pen.calculative.frameIndex].duration;
+    pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+  }
+
+  const frame = pen.frames[pen.calculative.frameIndex];
+  let process = (now - pen.calculative.frameStart) / pen.calculative.frameDuration;
+  if (process > 0) {
+    let rect: Rect;
+    let scale: number;
+    for (const k in frame) {
+      if (k === 'duration') {
+        continue;
+      } else if (k === 'scale') {
+        const targetW = pen.width + (frame[k] - 1) * pen.width * process;
+        scale = (targetW / pen.calculative.width) * store.data.scale;
+        pen.calculative.width *= scale;
+        rect = pen.calculative.worldRect;
+        rect.width *= scale;
+        rect.height *= scale;
+        pen.calculative.dirty = true;
+      } else if (k === 'x') {
+        let v = pen.calculative[k];
+        if (pen.parentId && Math.abs(v) <= 1) {
+          const parentRect = store.pens[pen.parentId].calculative.worldRect;
+          v = parentRect.x + parentRect.width * v;
+        }
+        translateRect(
+          pen.calculative.worldRect,
+          v + frame[k] * process * store.data.scale - pen.calculative.worldRect[k],
+          0
+        );
+        pen.calculative.dirty = true;
+      } else if (k === 'y') {
+        let v = pen.calculative[k];
+        if (pen.parentId && Math.abs(v) <= 1) {
+          const parentRect = store.pens[pen.parentId].calculative.worldRect;
+          v = parentRect.y + parentRect.height * v;
+        }
+        translateRect(
+          pen.calculative.worldRect,
+          0,
+          v + frame[k] * process * store.data.scale - pen.calculative.worldRect[k]
+        );
+        pen.calculative.dirty = true;
+      } else if (typeof frame[k] === 'number' && pen.linear !== false) {
+        if (!pen.calculative[k]) {
+          pen.calculative[k] = 0;
+        }
+        pen.calculative[k] = Math.round(pen[k] + frame[k] * process * 100) / 100;
+      } else {
+        pen.calculative[k] = frame[k];
+      }
+
+      if (k === 'text') {
+        calcTextLines(pen);
+      }
+    }
+
+    if (rect) {
+      scalePoint(rect, scale, rect.center);
+      rect.ex = rect.x + rect.width;
+      rect.ey = rect.y + rect.height;
+      rect.center = {
+        x: rect.x + rect.width / 2,
+        y: rect.y + rect.height / 2,
+      };
+    }
+  }
+
+  return true;
 }
