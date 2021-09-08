@@ -1,4 +1,4 @@
-import { commonPens } from './common-diagram';
+import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';

@@ -37,8 +37,8 @@ import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, curveMind, getLineRect, pointInLine } from '../common-diagram';
-import { ployline } from '../common-diagram/line/ployline';
+import { curve, curveMind, getLineRect, pointInLine } from '../diagrams';
+import { ployline } from '../diagrams/line/ployline';
 import { deepClone } from '../utils/clone';
 
 export class Canvas {

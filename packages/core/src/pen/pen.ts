@@ -1,4 +1,4 @@
-import { getSplitAnchor } from '../common-diagram';
+import { getSplitAnchor } from '../diagrams';
 import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, translatePoint } from '../point';
 import { calcRelativePoint, Rect, scaleRect } from '../rect';
@@ -24,13 +24,13 @@ export enum AnchorMode {
 }
 
 export interface Pen {
-  id: string;
+  id?: string;
   tags?: string[];
   parentId?: string;
-  type: PenType;
+  type?: PenType;
   name?: string;
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
   ex?: number;
   ey?: number;
   width?: number;
@@ -129,6 +129,23 @@ export interface Pen {
   animateCycle?: number;
   nextAnimate?: string;
   autoPlay?: boolean;
+
+  // 动画时长
+  duration?: number;
+  // 动画开始时间
+  start?: number;
+  // 动画结束时间
+  end?: number;
+  // 匀速渐变
+  linear: boolean;
+  // 主要用于动画帧的缩放
+  scale?: number;
+  // 连线动画速度
+  animateSpan: number;
+
+  frames?: Pen[];
+  // 提前预置的不同效果的动画组
+  animateList?: Pen[][];
 
   calculative?: {
     worldRect?: Rect;
