@@ -20,8 +20,10 @@ import {
   getAnchor,
   calcAnchorDock,
   calcRectDock,
-  setPenAnimate,
   calcTextLines,
+  setNodeAnimate,
+  setLineAnimate,
+  calcPenRelativeRect,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
@@ -1663,6 +1665,9 @@ export class Canvas {
             let size = anchor.radius || this.store.options.anchorRadius;
             if (this.store.hover.type) {
               size = 3;
+              if (this.store.hover.calculative.lineWidth > 1) {
+                size = this.store.hover.calculative.lineWidth;
+              }
             }
             ctx.arc(anchor.x, anchor.y, size, 0, Math.PI * 2);
             if (this.store.hover.type && this.store.hoverAnchor === anchor) {
@@ -1777,8 +1782,8 @@ export class Canvas {
     const x = p2.x - p1.x;
     const y = p2.y - p1.y;
 
-    const offsetX = x - this.lastOffsetX;
-    const offsetY = y - this.lastOffsetY;
+    let offsetX = x - this.lastOffsetX;
+    let offsetY = y - this.lastOffsetY;
     this.lastOffsetX = x;
     this.lastOffsetY = y;
 
@@ -1786,42 +1791,66 @@ export class Canvas {
     const h = this.activeRect.height;
     switch (this.resizeIndex) {
       case 0:
+        if (this.activeRect.width - offsetX < 5 || this.activeRect.height - offsetY < 5) {
+          return;
+        }
         this.activeRect.x += offsetX;
         this.activeRect.y += offsetY;
         this.activeRect.width -= offsetX;
         this.activeRect.height -= offsetY;
         break;
       case 1:
+        if (this.activeRect.width + offsetX < 5 || this.activeRect.height - offsetY < 5) {
+          return;
+        }
         this.activeRect.ex += offsetX;
         this.activeRect.y += offsetY;
         this.activeRect.width += offsetX;
         this.activeRect.height -= offsetY;
         break;
       case 2:
+        if (this.activeRect.width + offsetX < 5 || this.activeRect.height + offsetY < 5) {
+          return;
+        }
         this.activeRect.ex += offsetX;
         this.activeRect.ey += offsetY;
         this.activeRect.width += offsetX;
         this.activeRect.height += offsetY;
         break;
       case 3:
+        if (this.activeRect.width - offsetX < 5 || this.activeRect.height + offsetY < 5) {
+          return;
+        }
         this.activeRect.x += offsetX;
         this.activeRect.ey += offsetY;
         this.activeRect.width -= offsetX;
         this.activeRect.height += offsetY;
         break;
       case 4:
+        if (this.activeRect.height - offsetY < 5) {
+          return;
+        }
         this.activeRect.y += offsetY;
         this.activeRect.height -= offsetY;
         break;
       case 5:
+        if (this.activeRect.width + offsetX < 5) {
+          return;
+        }
         this.activeRect.ex += offsetX;
         this.activeRect.width += offsetX;
         break;
       case 6:
+        if (this.activeRect.height + offsetY < 5) {
+          return;
+        }
         this.activeRect.ey += offsetY;
         this.activeRect.height += offsetY;
         break;
       case 7:
+        if (this.activeRect.width - offsetX < 5) {
+          return;
+        }
         this.activeRect.x += offsetX;
         this.activeRect.width -= offsetX;
         break;
@@ -2058,7 +2087,7 @@ export class Canvas {
   calcActiveRect() {
     if (this.store.active.length === 1) {
       this.activeRect = this.store.active[0].calculative.worldRect;
-      this.activeRect.rotate = this.store.active[0].calculative.rotate;
+      this.activeRect.rotate = this.store.active[0].calculative.rotate || 0;
       calcCenter(this.activeRect);
     } else {
       this.activeRect = getRect(this.store.active);
@@ -2085,41 +2114,67 @@ export class Canvas {
         if (pen.calculative.active) {
           active = true;
         }
-        if (setPenAnimate(this.store, pen, now)) {
-          this.dirty = true;
-          if (pen.calculative.dirty) {
-            this.dirtyPenRect(pen, true);
-            pen.type && this.initLineRect(pen);
-          }
-        } else {
-          if (pen.calculative.dirty) {
-            this.dirtyPenRect(pen);
-            pen.type && this.initLineRect(pen);
-          }
-          if (pen.calculative.text !== pen.text) {
-            pen.calculative.text = pen.text;
-            calcTextLines(pen);
-          }
-          for (const k in pen) {
-            if (typeof pen[k] !== 'object' || k === 'lineDash') {
-              pen.calculative[k] = pen[k];
+        if (!pen.type) {
+          if (setNodeAnimate(this.store, pen, now)) {
+            if (pen.calculative.dirty) {
+              this.dirtyPenRect(pen, true);
+              pen.type && this.initLineRect(pen);
             }
+          } else {
+            if (pen.calculative.dirty) {
+              this.dirtyPenRect(pen);
+              pen.type && this.initLineRect(pen);
+            }
+            if (pen.calculative.text !== pen.text) {
+              pen.calculative.text = pen.text;
+              calcTextLines(pen);
+            }
+            if (pen.keepAnimateState) {
+              for (const k in pen) {
+                if (typeof pen[k] !== 'object' || k === 'lineDash') {
+                  pen[k] = pen.calculative[k];
+                }
+              }
+              calcPenRelativeRect(this.store.pens, pen);
+            } else {
+              for (const k in pen) {
+                if (typeof pen[k] !== 'object' || k === 'lineDash') {
+                  pen.calculative[k] = pen[k];
+                }
+              }
+            }
+            dels.push(pen);
           }
-          this.dirty = true;
-          dels.push(pen);
+          this.updateLines(pen);
+        } else {
+          if (setLineAnimate(this.store, pen, now)) {
+          } else {
+            if (pen.keepAnimateState) {
+              for (const k in pen) {
+                if (typeof pen[k] !== 'object' || k === 'lineDash') {
+                  pen[k] = pen.calculative[k];
+                }
+              }
+              calcPenRelativeRect(this.store.pens, pen);
+            } else {
+              for (const k in pen) {
+                if (typeof pen[k] !== 'object' || k === 'lineDash') {
+                  pen.calculative[k] = pen[k];
+                }
+              }
+            }
+            dels.push(pen);
+          }
         }
-
-        this.updateLines(pen);
       }
       if (active) {
         this.calcActiveRect();
       }
-
       dels.forEach((pen) => {
         this.store.animates.delete(pen);
       });
       this.animateRendering = false;
-
+      this.dirty = true;
       this.render();
 
       this.animate();
