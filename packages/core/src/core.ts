@@ -156,7 +156,7 @@ export class Topology {
 
   startAnimate(pens?: Pen[]) {
     if (!pens) {
-      pens = this.store.active;
+      pens = this.store.data.pens;
     }
     pens.forEach((pen) => {
       this.store.animates.add(pen);

@@ -831,7 +831,7 @@ export class Canvas {
         const pt = { x: e.x, y: e.y };
         this.activeRect.rotate = calcRotate(pt, this.activeRect.center);
         if (this.store.active.length === 1) {
-          this.store.active[0].rotate = this.activeRect.rotate;
+          this.store.active[0].calculative.rotate = this.activeRect.rotate;
           this.dirtyPenRect(this.store.active[0]);
         } else {
           const angle = this.activeRect.rotate - this.lastRotate;
@@ -840,10 +840,11 @@ export class Canvas {
             if (pen.parentId) {
               return;
             }
-            pen.rotate += angle;
+            pen.calculative.rotate += angle;
             rotatePoint(pen.calculative.worldRect.center, angle, this.activeRect.center);
             pen.x = pen.calculative.worldRect.center.x - pen.width / 2;
             pen.y = pen.calculative.worldRect.center.y - pen.height / 2;
+            pen.rotate = pen.calculative.rotate;
             this.dirtyPenRect(pen);
           });
         }
@@ -2057,7 +2058,7 @@ export class Canvas {
   calcActiveRect() {
     if (this.store.active.length === 1) {
       this.activeRect = this.store.active[0].calculative.worldRect;
-      this.activeRect.rotate = this.store.active[0].rotate;
+      this.activeRect.rotate = this.store.active[0].calculative.rotate;
       calcCenter(this.activeRect);
     } else {
       this.activeRect = getRect(this.store.active);
@@ -2081,22 +2082,19 @@ export class Canvas {
       const dels: Pen[] = [];
       let active = false;
       for (let pen of this.store.animates) {
+        if (pen.calculative.active) {
+          active = true;
+        }
         if (setPenAnimate(this.store, pen, now)) {
           this.dirty = true;
           if (pen.calculative.dirty) {
             this.dirtyPenRect(pen, true);
             pen.type && this.initLineRect(pen);
-            if (pen.calculative.active) {
-              active = true;
-            }
           }
         } else {
           if (pen.calculative.dirty) {
             this.dirtyPenRect(pen);
             pen.type && this.initLineRect(pen);
-            if (pen.calculative.active) {
-              active = true;
-            }
           }
           if (pen.calculative.text !== pen.text) {
             pen.calculative.text = pen.text;
@@ -2107,12 +2105,12 @@ export class Canvas {
               pen.calculative[k] = pen[k];
             }
           }
+          this.dirty = true;
           dels.push(pen);
         }
 
         this.updateLines(pen);
       }
-
       if (active) {
         this.calcActiveRect();
       }

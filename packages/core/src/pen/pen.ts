@@ -231,6 +231,9 @@ export interface Pen {
     // 已经循环次数
     cycleIndex?: number;
   };
+
+  // 最后一个动画帧状态数据
+  lastFrame?: Pen;
 }
 
 export function getParent(pens: any, pen: Pen) {
@@ -950,6 +953,15 @@ export function setPenAnimate(store: TopologyStore, pen: Pen, now: number) {
     pen.calculative.duration = 0;
     for (const f of pen.frames) {
       pen.calculative.duration += f.duration;
+      for (const k in f) {
+        if (k !== 'duration' && !pen[k]) {
+          if (k === 'scale') {
+            pen[k] = 1;
+          } else {
+            pen[k] = undefined;
+          }
+        }
+      }
     }
   }
   if (!pen.animateCycle) {
@@ -964,9 +976,27 @@ export function setPenAnimate(store: TopologyStore, pen: Pen, now: number) {
     pen.calculative.frameDuration = pen.frames[0].duration;
     pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
     pen.calculative.cycleIndex = 1;
-  } else if (now > pen.calculative.frameEnd) {
-    // 播放到尾了
 
+    pen.lastFrame = {};
+    for (const k in pen) {
+      if (typeof pen[k] !== 'object' || k === 'lineDash') {
+        pen.lastFrame[k] = pen[k];
+      }
+
+      if (pen.parentId) {
+        const parentRect = store.pens[pen.parentId].calculative.worldRect;
+        if (Math.abs(pen.x) <= 1) {
+          pen.lastFrame.x = parentRect.x + parentRect.width * pen.x;
+        }
+        if (Math.abs(pen.y) <= 1) {
+          pen.lastFrame.y = parentRect.x + parentRect.height * pen.y;
+        }
+      }
+    }
+  } else if (now > pen.calculative.frameEnd) {
+    pen.lastFrame = { scale: pen.frames[pen.calculative.frameIndex].scale || 1 };
+
+    // 播放到尾了
     if (++pen.calculative.frameIndex >= pen.frames.length) {
       ++pen.calculative.cycleIndex;
       pen.calculative.frameIndex = 0;
@@ -979,6 +1009,12 @@ export function setPenAnimate(store: TopologyStore, pen: Pen, now: number) {
     pen.calculative.frameStart = pen.calculative.frameEnd;
     pen.calculative.frameDuration = pen.frames[pen.calculative.frameIndex].duration;
     pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+
+    for (const k in pen) {
+      if (k !== 'scale' && (typeof pen[k] !== 'object' || k === 'lineDash')) {
+        pen.lastFrame[k] = pen.calculative[k];
+      }
+    }
   }
 
   const frame = pen.frames[pen.calculative.frameIndex];
@@ -990,42 +1026,51 @@ export function setPenAnimate(store: TopologyStore, pen: Pen, now: number) {
       if (k === 'duration') {
         continue;
       } else if (k === 'scale') {
-        const targetW = pen.width + (frame[k] - 1) * pen.width * process;
-        scale = (targetW / pen.calculative.width) * store.data.scale;
-        pen.calculative.width *= scale;
+        let current = 0;
+        if (pen.calculative.frameIndex) {
+          current = pen.width * pen.lastFrame[k] + pen.width * (frame[k] - pen.lastFrame[k]) * process;
+        } else {
+          current = pen.width + pen.width * (frame[k] - pen.lastFrame[k]) * process;
+        }
+        scale = (current / pen.calculative.width) * store.data.scale;
+        pen.calculative.width = current;
         rect = pen.calculative.worldRect;
         rect.width *= scale;
         rect.height *= scale;
         pen.calculative.dirty = true;
       } else if (k === 'x') {
-        let v = pen.calculative[k];
-        if (pen.parentId && Math.abs(v) <= 1) {
-          const parentRect = store.pens[pen.parentId].calculative.worldRect;
-          v = parentRect.x + parentRect.width * v;
+        let v = 0;
+        if (pen.calculative.frameIndex) {
+          const lastV = pen.frames[pen.calculative.frameIndex - 1][k] || 0;
+          v = (frame[k] - lastV) * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
+        } else {
+          v = frame[k] * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
         }
-        translateRect(
-          pen.calculative.worldRect,
-          v + frame[k] * process * store.data.scale - pen.calculative.worldRect[k],
-          0
-        );
+        translateRect(pen.calculative.worldRect, v, 0);
         pen.calculative.dirty = true;
       } else if (k === 'y') {
-        let v = pen.calculative[k];
-        if (pen.parentId && Math.abs(v) <= 1) {
-          const parentRect = store.pens[pen.parentId].calculative.worldRect;
-          v = parentRect.y + parentRect.height * v;
+        let v = 0;
+        if (pen.calculative.frameIndex) {
+          const lastV = pen.frames[pen.calculative.frameIndex - 1][k] || 0;
+          v = (frame[k] - lastV) * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
+        } else {
+          v = frame[k] * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
         }
-        translateRect(
-          pen.calculative.worldRect,
-          0,
-          v + frame[k] * process * store.data.scale - pen.calculative.worldRect[k]
-        );
+        translateRect(pen.calculative.worldRect, 0, v);
         pen.calculative.dirty = true;
       } else if (typeof frame[k] === 'number' && pen.linear !== false) {
+        if (!pen[k]) {
+          pen[k] = 0;
+        }
         if (!pen.calculative[k]) {
           pen.calculative[k] = 0;
         }
-        pen.calculative[k] = Math.round(pen[k] + frame[k] * process * 100) / 100;
+        if (pen.calculative.frameIndex) {
+          const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
+          pen.calculative[k] = Math.round(current * 100) / 100;
+        } else {
+          pen.calculative[k] = Math.round(pen[k] + frame[k] * process * 100) / 100;
+        }
       } else {
         pen.calculative[k] = frame[k];
       }
