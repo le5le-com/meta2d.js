@@ -154,14 +154,42 @@ export class Topology {
     globalStore.independentDraws[name] = draw;
   }
 
-  startAnimate(pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
+  find(idOrTag: string) {
+    return this.store.data.pens.filter((pen) => {
+      return pen.id == idOrTag || pen.tags.indexOf(idOrTag) > -1;
+    });
+  }
+
+  startAnimate(idOrTagOrPens?: string | Pen[]) {
+    let pens: Pen[];
+    if (!idOrTagOrPens) {
+      pens = this.store.data.pens.filter((pen) => {
+        return !pen.type || pen.frames;
+      });
+    }
+    if (typeof idOrTagOrPens === 'string') {
+      pens = this.find(idOrTagOrPens);
     }
     pens.forEach((pen) => {
       this.store.animates.add(pen);
     });
     this.canvas.animate();
+  }
+
+  stopAnimate(pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    pens.forEach((pen) => {
+      pen.calculative.start = 0;
+    });
+  }
+
+  calcAnimateDuration(pen: Pen) {
+    pen.calculative.duration = 0;
+    for (const f of pen.frames) {
+      pen.calculative.duration += f.duration;
+    }
   }
 
   destroy(global?: boolean) {

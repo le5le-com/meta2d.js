@@ -47,7 +47,7 @@ export function calcRectDock(rect: Rect, store: TopologyStore) {
   let y = Infinity;
   const size = 8;
   store.data.pens.forEach((pen) => {
-    if (pen.calculative.active || pen.calculative.visible === false) {
+    if (pen.calculative.active || pen.calculative._visible === false) {
       return;
     }
 

@@ -41,7 +41,7 @@ import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, curveMind, getLineRect, pointInLine } from '../diagrams';
+import { curve, curveMind, getLineLength, getLineRect, pointInLine } from '../diagrams';
 import { ployline } from '../diagrams/line/ployline';
 import { deepClone } from '../utils/clone';
 
@@ -935,6 +935,9 @@ export class Canvas {
     // Rotate
     if (this.hoverType === HoverType.Rotate) {
       this.getSizeCPs();
+      this.store.active.forEach((pen) => {
+        pen.rotate = pen.calculative.rotate;
+      });
     }
 
     this.dirtyLines.forEach((pen) => {
@@ -1570,8 +1573,8 @@ export class Canvas {
     };
 
     this.store.data.pens.forEach((pen: Pen) => {
-      if (pen.visible === false) {
-        pen.calculative.visible = false;
+      if (pen.visible === false || pen.calculative.visible === false) {
+        pen.calculative._visible = false;
         return;
       }
 
@@ -1584,10 +1587,10 @@ export class Canvas {
         ey: y + pen.calculative.worldRect.height,
       };
       if (!rectInRect(penRect, canvasRect)) {
-        pen.calculative.visible = false;
+        pen.calculative._visible = false;
         return;
       }
-      pen.calculative.visible = true;
+      pen.calculative._visible = true;
       renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store);
     });
     if (this.drawingLine) {
@@ -2059,7 +2062,7 @@ export class Canvas {
     this.render(Infinity);
   }
 
-  updateLines(pen: Pen) {
+  updateLines(pen: Pen, change?: boolean) {
     if (!pen.connectedLines) {
       return;
     }
@@ -2081,6 +2084,8 @@ export class Canvas {
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
       this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
       this.dirtyLines.add(line);
+
+      change && getLineLength(line);
     });
   }
 
@@ -2106,6 +2111,7 @@ export class Canvas {
         }
         return;
       }
+
       this.lastAnimateRender = now;
       this.animateRendering = true;
       const dels: Pen[] = [];
@@ -2121,16 +2127,11 @@ export class Canvas {
               pen.type && this.initLineRect(pen);
             }
           } else {
-            if (pen.calculative.dirty) {
-              this.dirtyPenRect(pen);
-              pen.type && this.initLineRect(pen);
-            }
-            if (pen.calculative.text !== pen.text) {
-              pen.calculative.text = pen.text;
-              calcTextLines(pen);
-            }
             if (pen.keepAnimateState) {
               for (const k in pen) {
+                if (pen.calculative[k] === undefined) {
+                  continue;
+                }
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
                   pen[k] = pen.calculative[k];
                 }
@@ -2143,14 +2144,24 @@ export class Canvas {
                 }
               }
             }
+            if (pen.calculative.dirty) {
+              this.dirtyPenRect(pen);
+              pen.type && this.initLineRect(pen);
+            }
+            if (pen.calculative.text !== pen.text) {
+              pen.calculative.text = pen.text;
+              calcTextLines(pen);
+            }
             dels.push(pen);
           }
-          this.updateLines(pen);
+          this.updateLines(pen, true);
         } else {
-          if (setLineAnimate(this.store, pen, now)) {
-          } else {
+          if (!setLineAnimate(this.store, pen, now)) {
             if (pen.keepAnimateState) {
               for (const k in pen) {
+                if (pen.calculative[k] === undefined) {
+                  continue;
+                }
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
                   pen[k] = pen.calculative[k];
                 }

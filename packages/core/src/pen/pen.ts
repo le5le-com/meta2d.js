@@ -219,6 +219,8 @@ export interface Pen {
     activeAnchor?: Point;
     dirty?: boolean;
     visible?: boolean;
+    // 仅仅内部专用
+    _visible?: boolean;
     drawlineH?: boolean;
 
     scale?: number;
@@ -238,6 +240,9 @@ export interface Pen {
     animatePos?: number;
     // 已经循环次数
     cycleIndex?: number;
+
+    // 动画播放中的参考基准
+    _rotate?: number;
   };
 
   // 最后一个动画帧状态数据
@@ -712,9 +717,9 @@ export function calcWorldAnchors(pen: Pen) {
     });
   }
 
-  if (pen.rotate) {
+  if (pen.calculative.rotate) {
     anchors.forEach((anchor) => {
-      rotatePoint(anchor, pen.rotate, pen.calculative.worldRect.center);
+      rotatePoint(anchor, pen.calculative.rotate, pen.calculative.worldRect.center);
     });
   }
 
@@ -1043,9 +1048,23 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
           pen.lastFrame.y = parentRect.x + parentRect.height * pen.y;
         }
       }
+
+      pen.lastFrame.rotate = 0;
+      pen.lastFrame.x = 0;
+      pen.lastFrame.y = 0;
+      pen.calculative.x = pen.calculative.worldRect.x;
+      pen.calculative.y = pen.calculative.worldRect.y;
     }
   } else if (now > pen.calculative.frameEnd) {
-    pen.lastFrame = { scale: pen.frames[pen.calculative.frameIndex].scale || 1 };
+    pen.lastFrame = {
+      scale: pen.frames[pen.calculative.frameIndex].scale || 1,
+      rotate: pen.frames[pen.calculative.frameIndex].rotate || 0,
+      x: pen.frames[pen.calculative.frameIndex].x || 0,
+      y: pen.frames[pen.calculative.frameIndex].y || 0,
+    };
+    pen.calculative._rotate = pen.calculative.rotate || 0;
+    pen.calculative.x = pen.calculative.worldRect.x;
+    pen.calculative.y = pen.calculative.worldRect.y;
 
     // 播放到尾了
     if (++pen.calculative.frameIndex >= pen.frames.length) {
@@ -1062,7 +1081,13 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
     pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
 
     for (const k in pen) {
-      if (k !== 'scale' && (typeof pen[k] !== 'object' || k === 'lineDash')) {
+      if (
+        k !== 'scale' &&
+        k !== 'rotate' &&
+        k !== 'x' &&
+        k !== 'y' &&
+        (typeof pen[k] !== 'object' || k === 'lineDash')
+      ) {
         pen.lastFrame[k] = pen.calculative[k];
       }
     }
@@ -1078,8 +1103,9 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
         continue;
       } else if (k === 'scale') {
         let current = 0;
-        if (pen.calculative.frameIndex) {
+        if (pen.calculative.frameIndex || pen.calculative.cycleIndex) {
           current = pen.width * pen.lastFrame[k] + pen.width * (frame[k] - pen.lastFrame[k]) * process;
+        } else if (pen.calculative.cycleIndex) {
         } else {
           current = pen.width + pen.width * (frame[k] - pen.lastFrame[k]) * process;
         }
@@ -1090,24 +1116,27 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
         rect.height *= scale;
         pen.calculative.dirty = true;
       } else if (k === 'x') {
-        let v = 0;
-        if (pen.calculative.frameIndex) {
-          const lastV = pen.frames[pen.calculative.frameIndex - 1][k] || 0;
-          v = (frame[k] - lastV) * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
-        } else {
-          v = frame[k] * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
-        }
-        translateRect(pen.calculative.worldRect, v, 0);
+        translateRect(
+          pen.calculative.worldRect,
+          pen.calculative.x + (frame[k] - pen.lastFrame[k]) * process - pen.calculative.worldRect.x,
+          0
+        );
         pen.calculative.dirty = true;
       } else if (k === 'y') {
-        let v = 0;
-        if (pen.calculative.frameIndex) {
-          const lastV = pen.frames[pen.calculative.frameIndex - 1][k] || 0;
-          v = (frame[k] - lastV) * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
-        } else {
-          v = frame[k] * (store.options.animateInterval / pen.calculative.frameDuration) * store.data.scale;
+        translateRect(
+          pen.calculative.worldRect,
+          0,
+          pen.calculative.x + (frame[k] - pen.lastFrame[k]) * process - pen.calculative.worldRect.y
+        );
+        pen.calculative.dirty = true;
+      } else if (k === 'rotate') {
+        if (!pen.calculative._rotate) {
+          pen.calculative._rotate = pen.rotate || 0;
         }
-        translateRect(pen.calculative.worldRect, 0, v);
+        if (pen.lastFrame[k] >= 360) {
+          pen.lastFrame[k] = 0;
+        }
+        pen.calculative.rotate = (pen.calculative._rotate + (frame[k] - pen.lastFrame[k]) * process) % 360;
         pen.calculative.dirty = true;
       } else if (typeof frame[k] === 'number' && pen.linear !== false) {
         if (!pen[k]) {
@@ -1116,7 +1145,10 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
         if (!pen.calculative[k]) {
           pen.calculative[k] = 0;
         }
-        if (pen.calculative.frameIndex) {
+        if (pen.calculative.frameIndex || pen.calculative.cycleIndex) {
+          if (!pen.lastFrame[k]) {
+            pen.lastFrame[k] = 0;
+          }
           const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
           pen.calculative[k] = Math.round(current * 100) / 100;
         } else {
@@ -1181,8 +1213,10 @@ export function setLineAnimate(store: TopologyStore, pen: Pen, now: number) {
     }
     pen.calculative.frameIndex = 0;
     pen.calculative.frameStart = pen.calculative.start;
-    pen.calculative.frameDuration = pen.frames[0].duration;
-    pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    if (pen.frames && pen.frames.length) {
+      pen.calculative.frameDuration = pen.frames[0].duration;
+      pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    }
     pen.calculative.cycleIndex = 1;
 
     pen.lastFrame = {};
@@ -1205,16 +1239,22 @@ export function setLineAnimate(store: TopologyStore, pen: Pen, now: number) {
     }
     pen.calculative.animatePos = pen.animateSpan;
 
-    pen.calculative.frameStart = pen.calculative.frameEnd;
-    pen.calculative.frameDuration = pen.frames[pen.calculative.frameIndex].duration;
-    pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    if (pen.frames && pen.frames.length) {
+      pen.calculative.frameStart = pen.calculative.frameEnd;
+      pen.calculative.frameDuration = pen.frames[pen.calculative.frameIndex].duration;
+      pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
 
-    pen.lastFrame = {};
-    for (const k in pen) {
-      if (typeof pen[k] !== 'object' || k === 'lineDash') {
-        pen.lastFrame[k] = pen.calculative[k];
+      pen.lastFrame = {};
+      for (const k in pen) {
+        if (typeof pen[k] !== 'object' || k === 'lineDash') {
+          pen.lastFrame[k] = pen.calculative[k];
+        }
       }
     }
+  }
+
+  if (!pen.calculative._visible || !pen.frames || !pen.frames.length) {
+    return true;
   }
 
   const frame = pen.frames[pen.calculative.frameIndex];
@@ -1230,7 +1270,7 @@ export function setLineAnimate(store: TopologyStore, pen: Pen, now: number) {
         if (!pen.calculative[k]) {
           pen.calculative[k] = 0;
         }
-        if (pen.calculative.frameIndex) {
+        if (pen.calculative.frameIndex || pen.calculative.cycleIndex) {
           const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
           pen.calculative[k] = Math.round(current * 100) / 100;
         } else {
