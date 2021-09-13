@@ -52,7 +52,6 @@ export function calcRectDock(rect: Rect, store: TopologyStore) {
     }
 
     const r = pen.calculative.worldRect;
-
     let step = r.x - rect.x;
     let disX = Math.abs(step);
     if (disX < size && disX < x) {
@@ -75,6 +74,13 @@ export function calcRectDock(rect: Rect, store: TopologyStore) {
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.y) + 0.5 },
       };
       x = disX;
+    }
+
+    if (!r.center) {
+      r.center = {
+        x: r.x + r.width / 2,
+        y: r.y + r.height / 2,
+      };
     }
 
     step = r.center.x - rect.x;

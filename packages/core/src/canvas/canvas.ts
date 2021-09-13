@@ -24,6 +24,7 @@ import {
   setNodeAnimate,
   setLineAnimate,
   calcPenRelativeRect,
+  setChildrenActive,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
@@ -38,7 +39,7 @@ import {
   translateRect,
 } from '../rect';
 import { EditType, globalStore, TopologyStore } from '../store';
-import { isMobile, s8 } from '../utils';
+import { isMobile, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
 import { curve, curveMind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
@@ -57,6 +58,7 @@ export class Canvas {
   canvasRect: Rect;
 
   activeRect: Rect;
+  initActiveRect: Rect;
   dragRect: Rect;
   lastRotate = 0;
   sizeCPs: Point[];
@@ -860,6 +862,19 @@ export class Canvas {
       if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
         this.mouseRight = MouseRight.Translate;
       }
+
+      if (!this.store.data.locked && this.hoverType === HoverType.None) {
+        this.dragRect = {
+          x: Math.min(this.mouseDown.x, e.x),
+          y: Math.min(this.mouseDown.y, e.y),
+          ex: Math.max(this.mouseDown.x, e.x),
+          ey: Math.max(this.mouseDown.y, e.y),
+          width: Math.abs(e.x - this.mouseDown.x),
+          height: Math.abs(e.y - this.mouseDown.y),
+        };
+        this.dirty = true;
+      }
+
       // Translate
       if (this.hotkeyType === HotkeyType.Translate || this.mouseRight === MouseRight.Translate) {
         if (
@@ -993,11 +1008,24 @@ export class Canvas {
     });
     this.dirtyLines.clear();
 
+    if (this.dragRect) {
+      const pens = this.store.data.pens.filter((pen) => {
+        return (
+          pen.visible !== false &&
+          pen.locked !== LockState.Disable &&
+          !pen.parentId &&
+          rectInRect(pen.calculative.worldRect, this.dragRect)
+        );
+      });
+      this.active(pens);
+    }
+
     this.mouseDown = undefined;
     this.lastOffsetX = 0;
     this.lastOffsetY = 0;
     this.dock = undefined;
     this.dragRect = undefined;
+    this.initActiveRect = undefined;
   };
 
   inactive(drawing?: boolean) {
@@ -1006,6 +1034,7 @@ export class Canvas {
     }
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
+      setChildrenActive(this.store, pen, false);
     });
     !drawing && this.store.emitter.emit('inactive', this.store.active);
     this.store.active = [];
@@ -1018,11 +1047,13 @@ export class Canvas {
   active(pens: Pen[]) {
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
+      setChildrenActive(this.store, pen, false);
     });
     this.store.active = [];
 
     pens.forEach((pen) => {
       pen.calculative.active = true;
+      setChildrenActive(this.store, pen);
     });
     this.store.active.push(...pens);
     this.calcActiveRect();
@@ -1079,6 +1110,10 @@ export class Canvas {
   };
 
   private getHover = (pt: Point) => {
+    if (this.dragRect) {
+      return;
+    }
+
     let hoverType = HoverType.None;
     this.store.hover = undefined;
     this.store.hoverAnchor = undefined;
@@ -1605,7 +1640,7 @@ export class Canvas {
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
-    this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
+    this.store.penPaths[pen.name] && this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
     this.dirty = true;
   }
 
@@ -1810,6 +1845,16 @@ export class Canvas {
       });
     }
 
+    if (!this.store.data.locked && this.dragRect) {
+      ctx.save();
+      ctx.fillStyle = rgba(0.2, this.store.options.dragColor);
+      ctx.strokeStyle = this.store.options.dragColor;
+      ctx.beginPath();
+      ctx.strokeRect(this.dragRect.x, this.dragRect.y, this.dragRect.width, this.dragRect.height);
+      ctx.fillRect(this.dragRect.x, this.dragRect.y, this.dragRect.width, this.dragRect.height);
+      ctx.restore();
+    }
+
     if (this.dock) {
       ctx.strokeStyle = '#eb5ef7';
       if (this.dock.xDock) {
@@ -1967,15 +2012,15 @@ export class Canvas {
       return;
     }
 
-    if (!this.dragRect) {
-      this.dragRect = deepClone(this.activeRect);
+    if (!this.initActiveRect) {
+      this.initActiveRect = deepClone(this.activeRect);
       return;
     }
 
     let x = e.x - this.mouseDown.x;
     let y = e.y - this.mouseDown.y;
 
-    const rect = deepClone(this.dragRect);
+    const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
     this.dock = calcRectDock(rect, this.store);
     if (this.dock.xDock) {
@@ -2109,19 +2154,18 @@ export class Canvas {
     this.render(Infinity);
   }
 
-  translatePens(x: number, y: number, doing?: boolean) {
-    if (
-      this.store.active.length === 1 &&
-      this.store.active[0].type &&
-      this.store.active[0].anchors.findIndex((pt) => pt.connectTo) > -1
-    ) {
+  translatePens(x: number, y: number, doing?: boolean, pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.active;
+    }
+    if (pens.length === 1 && pens[0].type && pens[0].anchors.findIndex((pt) => pt.connectTo) > -1) {
       return;
     }
 
     translateRect(this.activeRect, x, y);
 
-    this.store.active.forEach((pen) => {
-      if (pen.parentId || (pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1)) {
+    pens.forEach((pen) => {
+      if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
         return;
       }
 
@@ -2135,6 +2179,23 @@ export class Canvas {
         pen.calculative.y = pen.y;
         this.dirtyPenRect(pen);
         this.updateLines(pen);
+      }
+
+      if (pen.children) {
+        pen.children.forEach((id) => {
+          const child: Pen = this.store.pens[id];
+          if (child.type) {
+            child.calculative.worldAnchors.forEach((a) => {
+              translatePoint(a, x, y);
+            });
+            this.dirtyLines.add(child);
+            this.store.path2dMap.set(child, this.store.penPaths[child.name](child));
+          } else {
+            translateRect(child.calculative.worldRect, x, y);
+            this.dirtyPenRect(child);
+            this.updateLines(child);
+          }
+        });
       }
     });
     this.getSizeCPs();

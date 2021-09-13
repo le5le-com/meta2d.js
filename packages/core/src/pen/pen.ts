@@ -115,7 +115,7 @@ export interface Pen {
   backgroundImage?: string;
   strokeImage?: string;
 
-  children?: Pen[];
+  children?: string[];
 
   anchors?: Point[];
   anchorRadius?: number;
@@ -1304,4 +1304,17 @@ export function calcPenRelativeRect(pens: { [key: string]: Pen }, pen: Pen) {
   pen.y = (pen.calculative.worldRect.y - parentRect.y) / parentRect.height;
   pen.width = pen.calculative.worldRect.width / parentRect.width;
   pen.height = pen.calculative.worldRect.height / parentRect.height;
+}
+
+export function setChildrenActive(store: TopologyStore, pen: Pen, active = true) {
+  if (!pen.children) {
+    return;
+  }
+
+  pen.children.forEach((id) => {
+    const child: Pen = store.pens[id];
+    child.calculative.active = active;
+
+    setChildrenActive(store, child);
+  });
 }

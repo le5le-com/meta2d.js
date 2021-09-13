@@ -7,6 +7,7 @@ import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
+import { calcRelativeRect, getRect } from '..';
 
 declare const window: any;
 
@@ -190,6 +191,49 @@ export class Topology {
     for (const f of pen.frames) {
       pen.calculative.duration += f.duration;
     }
+  }
+
+  combine(pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.active;
+    }
+    if (!pens || !pens.length) {
+      return;
+    }
+
+    const rect = getRect(pens);
+    const id = s8();
+    const parent = {
+      id,
+      name: 'combine',
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      children: [],
+    };
+    this.canvas.makePen(parent);
+    pens.forEach((pen) => {
+      parent.children.push(pen.id);
+      pen.parentId = id;
+      const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
+      pen.x = childRect.x;
+      pen.y = childRect.y;
+      pen.width = childRect.width;
+      pen.height = childRect.height;
+    });
+    this.canvas.active([parent]);
+    this.render();
+  }
+
+  uncombine(pen?: Pen) {}
+
+  active(pens: Pen[]) {
+    this.canvas.active(pens);
+  }
+
+  inactive() {
+    this.canvas.inactive();
   }
 
   destroy(global?: boolean) {
