@@ -41,7 +41,7 @@ import { EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, curveMind, getLineLength, getLineRect, pointInLine } from '../diagrams';
+import { curve, curveMind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
 import { ployline } from '../diagrams/line/ployline';
 import { deepClone } from '../utils/clone';
 
@@ -79,6 +79,9 @@ export class Canvas {
   drawingLineName?: string;
   drawLineFns: string[] = [...defaultDrawLineFns];
   drawingLine?: Pen;
+
+  graffiti?: boolean;
+  graffitiLine?: Pen;
 
   dirtyLines?: Set<Pen> = new Set();
   dock: { xDock: Point; yDock: Point };
@@ -293,7 +296,9 @@ export class Canvas {
             }
           } else if (this.hotkeyType === HotkeyType.AddAnchor) {
             this.hotkeyType = HotkeyType.None;
-            if (this.store.hover) {
+            if (this.store.hoverAnchor) {
+              this.externalElements.style.cursor = 'vertical-text';
+            } else if (this.store.hover) {
               this.externalElements.style.cursor = 'move';
             }
           }
@@ -354,6 +359,11 @@ export class Canvas {
           this.drawingLineName = this.drawingLineName ? '' : 'curve';
         }
         break;
+      case 'g':
+      case 'G':
+        this.graffiti = true;
+        this.externalElements.style.cursor = 'crosshair';
+        break;
       case 'y':
       case 'Y':
         break;
@@ -379,6 +389,10 @@ export class Canvas {
           this.finishDrawline();
         }
         this.drawingLineName = undefined;
+        this.graffiti = undefined;
+        this.graffitiLine = undefined;
+        this.hotkeyType = HotkeyType.None;
+        this.externalElements.style.cursor = 'default';
         break;
     }
 
@@ -537,22 +551,24 @@ export class Canvas {
 
     // Set anchor of pen.
     if (this.hotkeyType === HotkeyType.AddAnchor) {
-      if (this.store.activeAnchor) {
-        removePenAnchor(this.store.hover, this.store.activeAnchor);
+      if (this.store.hoverAnchor) {
+        removePenAnchor(this.store.hover, this.store.hoverAnchor);
         if (this.store.hover.type) {
           this.initLineRect(this.store.hover);
         }
+        this.store.hoverAnchor = undefined;
         this.store.activeAnchor = undefined;
+        this.externalElements.style.cursor = 'default';
       } else if (this.store.hover) {
         if (this.store.hover.type) {
-          addLineAnchor(this.store.hover, this.store.pointAt, this.store.pointAtIndex);
+          this.store.activeAnchor = addLineAnchor(this.store.hover, this.store.pointAt, this.store.pointAtIndex);
           this.initLineRect(this.store.hover);
 
           const pt = { x: e.x, y: e.y };
           this.getHover(pt);
         } else {
           const pt = { x: e.x, y: e.y };
-          pushPenAnchor(this.store.hover, pt);
+          this.store.activeAnchor = pushPenAnchor(this.store.hover, pt);
         }
       }
       this.hotkeyType = HotkeyType.None;
@@ -658,6 +674,7 @@ export class Canvas {
           y: pt.y,
           type: PenType.Line,
           calculative: {
+            active: true,
             worldAnchors: [pt],
           },
         };
@@ -667,6 +684,22 @@ export class Canvas {
           connectLine(this.store.pens[pt.connectTo], this.drawingLine.id, pt.id, pt.anchorId);
         }
       }
+    } else if (this.graffiti) {
+      this.inactive(true);
+      const id = s8();
+      const pt: Point = { x: e.x, y: e.y, id: s8(), penId: id };
+      this.graffitiLine = {
+        id,
+        name: 'line',
+        x: pt.x,
+        y: pt.y,
+        type: PenType.Line,
+        calculative: {
+          graffiti: true,
+          active: true,
+          worldAnchors: [pt],
+        },
+      };
     } else {
       switch (this.hoverType) {
         case HoverType.None:
@@ -812,6 +845,17 @@ export class Canvas {
         }
         this.drawline();
       }
+    } else if (this.graffiti) {
+      if (!this.mouseDown) {
+        return;
+      }
+
+      const pt: Point = { ...e };
+      pt.id = s8();
+      pt.penId = this.graffitiLine.id;
+      this.graffitiLine.calculative.worldAnchors.push(pt);
+      this.store.path2dMap.set(this.graffitiLine, this.store.penPaths[this.graffitiLine.name](this.graffitiLine));
+      this.dirty = true;
     } else if (this.mouseDown) {
       if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
         this.mouseRight = MouseRight.Translate;
@@ -922,6 +966,8 @@ export class Canvas {
     this.mouseRight = MouseRight.None;
 
     this.calibrateMouse(e);
+
+    this.graffiti && this.finishGraffiti();
 
     // Add pen
     if (this.addCache) {
@@ -1104,7 +1150,7 @@ export class Canvas {
 
     this.hoverType = hoverType;
     if (hoverType === HoverType.None) {
-      if (this.drawingLineName) {
+      if (this.drawingLineName || this.graffiti) {
         this.externalElements.style.cursor = 'crosshair';
       } else if (!this.mouseDown) {
         this.externalElements.style.cursor = 'default';
@@ -1252,7 +1298,12 @@ export class Canvas {
           this.externalElements.style.cursor = 'crosshair';
           return HoverType.NodeAnchor;
         }
-        this.externalElements.style.cursor = 'pointer';
+        if (this.hotkeyType === HotkeyType.AddAnchor) {
+          this.externalElements.style.cursor = 'vertical-text';
+        } else {
+          this.externalElements.style.cursor = 'pointer';
+        }
+
         return HoverType.LineAnchor;
       }
       this.externalElements.style.cursor = 'crosshair';
@@ -1387,7 +1438,6 @@ export class Canvas {
     if (!this.drawingLine) {
       return;
     }
-    this.drawingLine.calculative.active = true;
     if (this[this.drawingLineName]) {
       this[this.drawingLineName](this.store, this.drawingLine, mouse);
     }
@@ -1446,6 +1496,39 @@ export class Canvas {
     this.render();
     this.drawingLine = undefined;
     this.drawingLineName = undefined;
+  }
+
+  finishGraffiti() {
+    if (this.graffitiLine) {
+      let anchors: Point[] = simplify(
+        this.graffitiLine.calculative.worldAnchors,
+        10,
+        0,
+        this.graffitiLine.calculative.worldAnchors.length - 1
+      );
+      let p = this.graffitiLine.calculative.worldAnchors[0];
+      anchors.unshift({ id: p.id, penId: p.penId, x: p.x, y: p.y });
+      p = this.graffitiLine.calculative.worldAnchors[this.graffitiLine.calculative.worldAnchors.length - 1];
+      anchors.push({ id: p.id, penId: p.penId, x: p.x, y: p.y });
+      this.graffitiLine.calculative.worldAnchors = smoothLine(anchors);
+      if (this.graffitiLine.calculative.worldAnchors.length > 1) {
+        this.graffitiLine.calculative.graffiti = undefined;
+        this.store.path2dMap.set(this.graffitiLine, this.store.penPaths[this.graffitiLine.name](this.graffitiLine));
+        if (!this.beforeAddPen || this.beforeAddPen(this.graffitiLine)) {
+          this.initLineRect(this.graffitiLine);
+          this.store.data.pens.push(this.graffitiLine);
+          this.store.pens[this.graffitiLine.id] = this.graffitiLine;
+          this.store.emitter.emit('addPen', this.graffitiLine);
+          this.active([this.graffitiLine]);
+          this.store.histories.push({
+            type: EditType.Add,
+            data: this.graffitiLine,
+          });
+        }
+        this.render(Infinity);
+      }
+      this.graffitiLine = undefined;
+    }
   }
 
   loadImage(pen: Pen) {
@@ -1595,6 +1678,9 @@ export class Canvas {
     });
     if (this.drawingLine) {
       renderPen(ctx, this.drawingLine, this.store.path2dMap.get(this.drawingLine), this.store);
+    }
+    if (this.graffitiLine) {
+      renderPen(ctx, this.graffitiLine, this.store.path2dMap.get(this.graffitiLine), this.store);
     }
     ctx.restore();
   };

@@ -216,6 +216,7 @@ export interface Pen {
     strokeImg?: HTMLImageElement;
     active?: boolean;
     hover?: boolean;
+    graffiti?: boolean;
     activeAnchor?: Point;
     dirty?: boolean;
     visible?: boolean;
@@ -396,7 +397,7 @@ export function renderPen(
     }
   }
 
-  if (pen.type && pen.calculative.active) {
+  if (pen.type && pen.calculative.active && !pen.calculative.graffiti) {
     renderLineAnchors(ctx, pen, store);
   }
 
