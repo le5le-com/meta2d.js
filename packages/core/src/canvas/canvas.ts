@@ -867,7 +867,7 @@ export class Canvas {
         this.mouseRight = MouseRight.Translate;
       }
 
-      if (!this.store.data.locked && this.hoverType === HoverType.None) {
+      if (e.buttons !== 2 && !this.store.data.locked && this.hoverType === HoverType.None) {
         this.dragRect = {
           x: Math.min(this.mouseDown.x, e.x),
           y: Math.min(this.mouseDown.y, e.y),
