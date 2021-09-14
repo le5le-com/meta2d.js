@@ -316,7 +316,7 @@ export function renderPen(
       }
     } else {
       ctx.fillStyle = pen.background;
-      fill = pen.background;
+      fill = !!pen.background;
     }
   }
 
@@ -1110,7 +1110,7 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
         } else {
           current = pen.width + pen.width * (frame[k] - pen.lastFrame[k]) * process;
         }
-        scale = (current / pen.calculative.width) * store.data.scale;
+        scale = current / pen.calculative.width;
         pen.calculative.width = current;
         rect = pen.calculative.worldRect;
         rect.width *= scale;

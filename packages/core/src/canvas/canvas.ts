@@ -2322,7 +2322,6 @@ export class Canvas {
           if (setNodeAnimate(this.store, pen, now)) {
             if (pen.calculative.dirty) {
               this.dirtyPenRect(pen, false, true);
-              pen.type && this.initLineRect(pen);
             }
           } else {
             if (pen.keepAnimateState) {
