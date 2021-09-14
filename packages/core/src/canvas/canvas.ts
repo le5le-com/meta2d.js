@@ -25,11 +25,14 @@ import {
   setLineAnimate,
   calcPenRelativeRect,
   setChildrenActive,
+  getParent,
+  setHover,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
   calcCenter,
   calcRelativePoint,
+  calcRelativeRect,
   getRect,
   pointInRect,
   pointInSimpleRect,
@@ -709,21 +712,19 @@ export class Canvas {
           break;
         case HoverType.Node:
           if (this.store.hover) {
+            const pen = getParent(this.store.pens, this.store.hover) || this.store.hover;
             if (e.ctrlKey) {
-              if (this.store.hover.parentId) {
-                break;
-              }
-              if (this.store.hover.calculative.active) {
-                this.store.hover.calculative.active = undefined;
+              if (pen.calculative.active) {
+                pen.calculative.active = undefined;
                 this.store.active.splice(
-                  this.store.active.findIndex((pen) => pen === this.store.hover),
+                  this.store.active.findIndex((pen) => pen === pen),
                   1
                 );
-                this.store.emitter.emit('inactive', [this.store.hover]);
+                this.store.emitter.emit('inactive', [pen]);
               } else {
-                this.store.hover.calculative.active = true;
-                this.store.active.push(this.store.hover);
-                this.store.emitter.emit('active', [this.store.hover]);
+                pen.calculative.active = true;
+                this.store.active.push(pen);
+                this.store.emitter.emit('active', [pen]);
               }
               this.dirty = true;
             } else if (e.altKey) {
@@ -737,8 +738,8 @@ export class Canvas {
                 this.dirty = true;
               }
             } else {
-              if (!this.store.hover.calculative.active) {
-                this.active([this.store.hover]);
+              if (!pen.calculative.active) {
+                this.active([pen]);
               }
             }
 
@@ -746,7 +747,10 @@ export class Canvas {
           }
           break;
         case HoverType.Line:
-          this.active([this.store.hover]);
+          {
+            const pen = getParent(this.store.pens, this.store.hover) || this.store.hover;
+            this.active([pen]);
+          }
           break;
         case HoverType.LineAnchor:
           this.store.activeAnchor = this.store.hoverAnchor;
@@ -892,23 +896,15 @@ export class Canvas {
         const pt = { x: e.x, y: e.y };
         this.activeRect.rotate = calcRotate(pt, this.activeRect.center);
         if (this.store.active.length === 1) {
-          this.store.active[0].calculative.rotate = this.activeRect.rotate;
-          this.dirtyPenRect(this.store.active[0]);
-        } else {
-          const angle = this.activeRect.rotate - this.lastRotate;
-
-          this.store.active.forEach((pen) => {
-            if (pen.parentId) {
-              return;
-            }
-            pen.calculative.rotate += angle;
-            rotatePoint(pen.calculative.worldRect.center, angle, this.activeRect.center);
-            pen.x = pen.calculative.worldRect.center.x - pen.width / 2;
-            pen.y = pen.calculative.worldRect.center.y - pen.height / 2;
-            pen.rotate = pen.calculative.rotate;
-            this.dirtyPenRect(pen);
-          });
+          this.lastRotate = this.store.active[0].rotate || 0;
         }
+        const angle = this.activeRect.rotate - this.lastRotate;
+        this.store.active.forEach((pen) => {
+          if (pen.parentId) {
+            return;
+          }
+          this.rotatePen(pen, angle, this.activeRect);
+        });
         this.lastRotate = this.activeRect.rotate;
         this.getSizeCPs();
         this.render(Infinity);
@@ -1196,11 +1192,12 @@ export class Canvas {
     if (this.store.lastHover !== this.store.hover) {
       this.dirty = true;
       if (this.store.lastHover) {
-        this.store.lastHover.calculative.hover = undefined;
+        setHover(this.store, getParent(this.store.pens, this.store.lastHover) || this.store.lastHover, false);
         this.store.emitter.emit('leave', this.store.lastHover);
       }
       if (this.store.hover) {
         this.store.hover.calculative.hover = true;
+        setHover(this.store, getParent(this.store.pens, this.store.hover) || this.store.hover);
         this.store.emitter.emit('enter', this.store.hover);
       }
       this.store.lastHover = this.store.hover;
@@ -1257,6 +1254,17 @@ export class Canvas {
           break;
         }
       } else {
+        if (pen.children) {
+          const pens = [];
+          pen.children.forEach((id) => {
+            pens.push(this.store.pens[id]);
+          });
+
+          hoverType = this.inPens(pt, pens);
+          if (hoverType) {
+            break;
+          }
+        }
         if (pointInRect(pt, pen.calculative.worldRect)) {
           if (!this.store.data.locked && !pen.locked) {
             if (this.hotkeyType === HotkeyType.AddAnchor) {
@@ -1482,10 +1490,12 @@ export class Canvas {
 
   initLineRect(pen: Pen) {
     const rect = getLineRect(pen);
-    pen.x = rect.x;
-    pen.y = rect.y;
-    pen.width = rect.width;
-    pen.height = rect.height;
+    if (!pen.parentId) {
+      pen.x = rect.x;
+      pen.y = rect.y;
+      pen.width = rect.width;
+      pen.height = rect.height;
+    }
     pen.calculative.worldRect = rect;
     this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
     if (pen.calculative.worldAnchors) {
@@ -1635,13 +1645,20 @@ export class Canvas {
     }
   }
 
-  dirtyPenRect(pen: Pen, worldRectIsReady?: boolean) {
+  dirtyPenRect(pen: Pen, child?: boolean, worldRectIsReady?: boolean) {
     !worldRectIsReady && calcWorldRects(this.store.pens, pen);
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
     this.store.penPaths[pen.name] && this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
     this.dirty = true;
+
+    if (child && pen.children) {
+      pen.children.forEach((id) => {
+        const child: Pen = this.store.pens[id];
+        this.dirtyPenRect(child, true);
+      });
+    }
   }
 
   render = (now?: number) => {
@@ -1789,7 +1806,7 @@ export class Canvas {
             let size = anchor.radius || this.store.options.anchorRadius;
             if (this.store.hover.type) {
               size = 3;
-              if (this.store.hover.calculative.lineWidth > 1) {
+              if (this.store.hover.calculative.lineWidth > 3) {
                 size = this.store.hover.calculative.lineWidth;
               }
             }
@@ -1895,7 +1912,7 @@ export class Canvas {
     const s = scale / this.store.data.scale;
     this.store.data.pens.forEach((pen) => {
       scalePen(pen, s, center);
-      this.dirtyPenRect(pen, true);
+      this.dirtyPenRect(pen, false, true);
       pen.type && this.initLineRect(pen);
     });
     this.calcActiveRect();
@@ -2001,7 +2018,7 @@ export class Canvas {
       pen.y = this.activeInitPos[i].y * this.activeRect.height + this.activeRect.y;
       pen.width *= scaleX;
       pen.height *= scaleY;
-      this.dirtyPenRect(pen);
+      this.dirtyPenRect(pen, true);
     });
     this.getSizeCPs();
     this.render(Infinity);
@@ -2249,6 +2266,40 @@ export class Canvas {
     this.getSizeCPs();
   }
 
+  rotatePen(pen: Pen, angle: number, rect: Rect) {
+    if (pen.type) {
+      pen.calculative.worldAnchors.forEach((anchor) => {
+        rotatePoint(anchor, angle, rect.center);
+      });
+      this.initLineRect(pen);
+    } else {
+      if (pen.calculative.rotate) {
+        pen.calculative.rotate += angle;
+      } else {
+        pen.calculative.rotate = angle;
+      }
+      rotatePoint(pen.calculative.worldRect.center, angle, rect.center);
+      if (pen.parentId) {
+        pen.calculative.worldRect.x = pen.calculative.worldRect.center.x - pen.calculative.worldRect.width / 2;
+        pen.calculative.worldRect.y = pen.calculative.worldRect.center.y - pen.calculative.worldRect.height / 2;
+        pen.x = (pen.calculative.worldRect.x - rect.x) / rect.width;
+        pen.y = (pen.calculative.worldRect.y - rect.y) / rect.height;
+      } else {
+        pen.x = pen.calculative.worldRect.center.x - pen.width / 2;
+        pen.y = pen.calculative.worldRect.center.y - pen.height / 2;
+      }
+      pen.rotate = pen.calculative.rotate;
+      this.dirtyPenRect(pen);
+
+      if (pen.children) {
+        pen.children.forEach((id) => {
+          const child = this.store.pens[id];
+          this.rotatePen(child, angle, pen.calculative.worldRect);
+        });
+      }
+    }
+  }
+
   animate() {
     requestAnimationFrame(() => {
       const now = Date.now();
@@ -2270,7 +2321,7 @@ export class Canvas {
         if (!pen.type) {
           if (setNodeAnimate(this.store, pen, now)) {
             if (pen.calculative.dirty) {
-              this.dirtyPenRect(pen, true);
+              this.dirtyPenRect(pen, false, true);
               pen.type && this.initLineRect(pen);
             }
           } else {

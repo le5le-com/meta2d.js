@@ -54,6 +54,7 @@ export function getLinePoints(pen: Pen) {
   const pts: Point[] = [];
   let from: Point;
   pen.calculative.worldAnchors.forEach((pt: Point) => {
+    pts.push(pt);
     from && pts.push(...getPoints(from, pt, pen));
     from = pt;
   });
@@ -128,7 +129,7 @@ export function pointInLine(pt: Point, pen: Pen) {
   if (
     pen.close &&
     pen.calculative.worldAnchors.length > 1 &&
-    (point = pointInLineSegment(pt, from, pen.calculative[0], r))
+    (point = pointInLineSegment(pt, from, pen.calculative.worldAnchors[0], r))
   ) {
     return {
       i,

@@ -251,7 +251,7 @@ export interface Pen {
 }
 
 export function getParent(pens: any, pen: Pen) {
-  if (!pen.parentId) {
+  if (!pen || !pen.parentId) {
     return undefined;
   }
 
@@ -280,7 +280,7 @@ export function renderPen(
   }
   // end
 
-  if (pen.calculative.rotate) {
+  if (pen.calculative.rotate && pen.name !== 'line') {
     ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
     ctx.rotate((pen.calculative.rotate * Math.PI) / 180);
     ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
@@ -565,7 +565,7 @@ export function renderAnchor(ctx: CanvasRenderingContext2D | OffscreenCanvasRend
 
   const active = pen.calculative.activeAnchor === pt;
   let r = 3;
-  if (pen.calculative.lineWidth > 1) {
+  if (pen.calculative.lineWidth > 3) {
     r = pen.calculative.lineWidth;
   }
 
@@ -688,7 +688,7 @@ export function calcWorldAnchors(pen: Pen) {
   }
 
   // Default anchors of node
-  if (!anchors.length && !pen.type) {
+  if (!anchors.length && !pen.type && pen.name !== 'combine') {
     anchors.push({
       id: '0',
       penId: pen.id,
@@ -1317,4 +1317,17 @@ export function setChildrenActive(store: TopologyStore, pen: Pen, active = true)
 
     setChildrenActive(store, child);
   });
+}
+
+export function setHover(store: TopologyStore, pen: Pen, hover = true) {
+  if (!pen) {
+    return;
+  }
+
+  pen.calculative.hover = hover;
+  if (pen.children) {
+    pen.children.forEach((id) => {
+      setHover(store, store.pens[id], hover);
+    });
+  }
 }

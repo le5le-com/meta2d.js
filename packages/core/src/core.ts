@@ -2,7 +2,7 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { facePen, Pen } from './pen';
+import { facePen, getParent, LockState, Pen, PenType } from './pen';
 import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
@@ -94,8 +94,8 @@ export class Topology {
     return this.canvas.addPen(pen, edited);
   }
 
-  render() {
-    this.canvas.render();
+  render(now?: number) {
+    this.canvas.render(now);
   }
 
   open(data?: TopologyData) {
@@ -201,9 +201,16 @@ export class Topology {
       return;
     }
 
+    if (pens.length === 1 && pens[0].type) {
+      pens[0].type = PenType.Node;
+      this.canvas.active(pens);
+      this.render();
+      return;
+    }
+
     const rect = getRect(pens);
     const id = s8();
-    const parent = {
+    let parent: Pen = {
       id,
       name: 'combine',
       x: rect.x,
@@ -212,21 +219,59 @@ export class Topology {
       height: rect.height,
       children: [],
     };
-    this.canvas.makePen(parent);
+    const p = pens.find((pen) => {
+      return pen.width === rect.width && pen.height === rect.height;
+    });
+    if (p) {
+      if (!p.children) {
+        p.children = [];
+      }
+      parent = p;
+    } else {
+      this.canvas.makePen(parent);
+    }
+
     pens.forEach((pen) => {
+      if (pen === parent || pen.parentId === parent.id) {
+        return;
+      }
       parent.children.push(pen.id);
-      pen.parentId = id;
+      pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       pen.x = childRect.x;
       pen.y = childRect.y;
       pen.width = childRect.width;
       pen.height = childRect.height;
+      pen.locked = LockState.DisableMove;
     });
     this.canvas.active([parent]);
     this.render();
   }
 
-  uncombine(pen?: Pen) {}
+  uncombine(pen?: Pen) {
+    if (!pen && this.store.active) {
+      pen = this.store.active[0];
+    }
+    if (!pen || !pen.children) {
+      return;
+    }
+
+    pen.children.forEach((id) => {
+      const child: Pen = this.store.pens[id];
+      child.parentId = undefined;
+      child.x = child.calculative.worldRect.x;
+      child.y = child.calculative.worldRect.y;
+      child.width = child.calculative.worldRect.width;
+      child.height = child.calculative.worldRect.height;
+      child.locked = LockState.None;
+      child.calculative.active = undefined;
+    });
+    pen.children = undefined;
+    if (pen.name === 'combine') {
+      this.delete([pen]);
+    }
+    this.inactive();
+  }
 
   active(pens: Pen[]) {
     this.canvas.active(pens);
@@ -234,6 +279,29 @@ export class Topology {
 
   inactive() {
     this.canvas.inactive();
+  }
+
+  delete(pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.active;
+    }
+    if (!pens || !pens.length) {
+      return;
+    }
+
+    pens.forEach((pen) => {
+      const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
+      if (i > -1) {
+        this.store.data.pens.splice(i, 1);
+        this.store.pens[pen.id] = undefined;
+      }
+    });
+
+    this.render(Infinity);
+  }
+
+  getParent(pen: Pen) {
+    return getParent(this.store.pens, pen);
   }
 
   destroy(global?: boolean) {
