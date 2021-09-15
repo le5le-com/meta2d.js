@@ -2,8 +2,8 @@ import { Pen } from '../pen';
 import { Point, rotatePoint, scalePoint } from '../point';
 
 export interface Rect {
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
   ex?: number;
   ey?: number;
   width?: number;
