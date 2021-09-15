@@ -13,8 +13,8 @@ export enum TwoWay {
 }
 
 export interface Point {
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
   radius?: number;
   color?: string;
   background?: string;
