@@ -1714,7 +1714,7 @@ export class Canvas {
 
     this.store.data.pens.forEach((pen: Pen) => {
       if (pen.visible === false || pen.calculative.visible === false) {
-        pen.calculative._visible = false;
+        pen.calculative.inView = false;
         return;
       }
 
@@ -1727,10 +1727,10 @@ export class Canvas {
         ey: y + pen.calculative.worldRect.height,
       };
       if (!rectInRect(penRect, canvasRect)) {
-        pen.calculative._visible = false;
+        pen.calculative.inView = false;
         return;
       }
-      pen.calculative._visible = true;
+      pen.calculative.inView = true;
       renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store);
     });
     if (this.drawingLine) {

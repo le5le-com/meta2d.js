@@ -213,7 +213,7 @@ export interface Pen extends Rect {
     dirty?: boolean;
     visible?: boolean;
     // 仅仅内部专用
-    _visible?: boolean;
+    inView?: boolean;
     // 辅助变量，画线时，动态计算锚点是否时水平方向
     drawlineH?: boolean;
 
@@ -1248,7 +1248,7 @@ export function setLineAnimate(store: TopologyStore, pen: Pen, now: number) {
     }
   }
 
-  if (!pen.calculative._visible || !pen.frames || !pen.frames.length) {
+  if (!pen.calculative.inView || !pen.frames || !pen.frames.length) {
     return true;
   }
 
