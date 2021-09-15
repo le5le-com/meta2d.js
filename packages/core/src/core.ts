@@ -7,7 +7,7 @@ import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
-import { calcRelativeRect, getRect } from '..';
+import { calcCenter, calcRelativeRect, getRect } from '..';
 
 declare const window: any;
 
@@ -243,6 +243,7 @@ export class Topology {
       pen.width = childRect.width;
       pen.height = childRect.height;
       pen.locked = LockState.DisableMove;
+      pen.type = PenType.Node;
     });
     this.canvas.active([parent]);
     this.render();

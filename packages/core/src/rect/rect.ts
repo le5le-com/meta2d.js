@@ -49,7 +49,7 @@ export function pointInSimpleRect(pt: Point, rect: Rect, r = 0) {
 
 export function calcCenter(rect: Rect) {
   if (!rect.center) {
-    rect.center = {} as Rect;
+    rect.center = {} as Point;
   }
   rect.center.x = rect.x + rect.width / 2;
   rect.center.y = rect.y + rect.height / 2;
@@ -149,7 +149,7 @@ export function scaleRect(rect: Rect, scale: number, center: Point) {
   }
   rect.width *= scale;
   rect.height *= scale;
-  scalePoint(rect, scale, center);
+  scalePoint(rect as Point, scale, center);
 
   rect.ex = rect.x + rect.width;
   rect.ey = rect.y + rect.height;

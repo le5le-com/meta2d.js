@@ -1,9 +1,6 @@
 import { Pen } from '.';
 
 export function calcTextRect(pen: Pen) {
-  if (!pen.text) {
-    return;
-  }
   let x = pen.calculative.textLeft || 0;
   let y = pen.calculative.textTop || 0;
   let width = pen.calculative.textWidth || pen.calculative.worldRect.width;
@@ -73,6 +70,10 @@ export function calcTextRect(pen: Pen) {
 }
 
 export function calcTextLines(pen: Pen) {
+  if (!pen.calculative.text) {
+    pen.calculative.textLines = [];
+    return;
+  }
   if (!pen.fontSize) {
     pen.fontSize = 12;
   }

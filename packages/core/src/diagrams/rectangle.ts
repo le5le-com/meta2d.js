@@ -15,30 +15,32 @@ export function rectangle(pen: Pen) {
     r = pen.calculative.worldRect.height / 2;
   }
   const path = new Path2D();
-  path.moveTo(pen.calculative.worldRect.x + r, pen.calculative.worldRect.y);
-  path.arcTo(
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.ey,
-    r
-  );
-  path.arcTo(
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.ey,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.ey,
-    r
-  );
-  path.arcTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey, pen.x, pen.y, r);
-  path.arcTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.y,
-    r
-  );
-  path.closePath();
+  if (r >= 0) {
+    path.moveTo(pen.calculative.worldRect.x + r, pen.calculative.worldRect.y);
+    path.arcTo(
+      pen.calculative.worldRect.ex,
+      pen.calculative.worldRect.y,
+      pen.calculative.worldRect.ex,
+      pen.calculative.worldRect.ey,
+      r
+    );
+    path.arcTo(
+      pen.calculative.worldRect.ex,
+      pen.calculative.worldRect.ey,
+      pen.calculative.worldRect.x,
+      pen.calculative.worldRect.ey,
+      r
+    );
+    path.arcTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey, pen.x, pen.y, r);
+    path.arcTo(
+      pen.calculative.worldRect.x,
+      pen.calculative.worldRect.y,
+      pen.calculative.worldRect.ex,
+      pen.calculative.worldRect.y,
+      r
+    );
+    path.closePath();
+  }
 
   return path;
 }

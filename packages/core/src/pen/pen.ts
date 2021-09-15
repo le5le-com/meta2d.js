@@ -4,6 +4,7 @@ import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } f
 import { calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
+import { deepClone } from '../utils/clone';
 
 export enum PenType {
   Node,
@@ -156,6 +157,9 @@ export interface Pen extends Rect {
     textDrawRect?: Rect;
     svgRect?: Rect;
 
+    // 执行动画前的初始位置
+    initRect?: Rect;
+
     rotate?: number;
     lineWidth?: number;
     globalAlpha?: number;
@@ -249,6 +253,19 @@ export function getParent(store: TopologyStore, pen: Pen) {
   }
 
   return getParent(store, store.pens[pen.parentId]) || store.pens[pen.parentId];
+}
+
+export function getAllChildren(store: TopologyStore, pen: Pen) {
+  if (!pen || !pen.children) {
+    return [];
+  }
+
+  const children: Pen[] = [];
+  pen.children.forEach((id) => {
+    children.push(store.pens[id]);
+    children.push(...getAllChildren(store, store.pens[id]));
+  });
+  return children;
 }
 
 export function renderPen(
@@ -667,10 +684,25 @@ export function calcWorldRects(store: TopologyStore, pen: Pen) {
     };
   }
 
-  store.data.scale != 1 && scaleRect(rect, store.data.scale, store.data.center);
   pen.calculative.worldRect = rect;
 
   return rect;
+}
+
+export function calcPenRect(store: TopologyStore, pen: Pen) {
+  if (!pen.parentId) {
+    pen.x = pen.calculative.worldRect.x;
+    pen.y = pen.calculative.worldRect.y;
+    pen.width = pen.calculative.worldRect.width;
+    pen.height = pen.calculative.worldRect.height;
+    return;
+  }
+
+  const parentRect = store.pens[pen.parentId].calculative.worldRect;
+  pen.x = (pen.calculative.worldRect.x - parentRect.x) / parentRect.width;
+  pen.y = (pen.calculative.worldRect.y - parentRect.y) / parentRect.height;
+  pen.width = pen.calculative.worldRect.width / parentRect.width;
+  pen.height = pen.calculative.worldRect.height / parentRect.height;
 }
 
 export function calcWorldAnchors(pen: Pen) {
@@ -812,6 +844,17 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
   pen.calculative.textLeft = pen.textLeft * scale;
   pen.calculative.textTop = pen.textTop * scale;
   scaleRect(pen.calculative.worldRect, scale, center);
+
+  if (pen.calculative.initRect) {
+    scaleRect(pen.calculative.initRect, scale, center);
+  }
+  if (pen.lastFrame && pen.lastFrame.width) {
+    pen.lastFrame.width *= scale;
+  }
+  if (pen.calculative.x) {
+    scalePoint(pen.calculative as any, scale, center);
+  }
+
   if (pen.type) {
     calcWorldAnchors(pen);
   }
@@ -996,7 +1039,7 @@ export function getToAnchor(pen: Pen) {
   return pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
 }
 
-export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
+export function setNodeAnimate(pen: Pen, now: number) {
   if (pen.calculative.start === 0 || !pen.frames || !pen.frames.length) {
     pen.calculative.start = undefined;
     return 0;
@@ -1033,33 +1076,25 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.lastFrame[k] = pen[k];
       }
-
-      if (pen.parentId) {
-        const parentRect = store.pens[pen.parentId].calculative.worldRect;
-        if (Math.abs(pen.x) <= 1) {
-          pen.lastFrame.x = parentRect.x + parentRect.width * pen.x;
-        }
-        if (Math.abs(pen.y) <= 1) {
-          pen.lastFrame.y = parentRect.x + parentRect.height * pen.y;
-        }
-      }
-
-      pen.lastFrame.rotate = 0;
-      pen.lastFrame.x = 0;
-      pen.lastFrame.y = 0;
-      pen.calculative.x = pen.calculative.worldRect.x;
-      pen.calculative.y = pen.calculative.worldRect.y;
     }
-  } else if (now > pen.calculative.frameEnd) {
-    pen.lastFrame = {
-      scale: pen.frames[pen.calculative.frameIndex].scale || 1,
-      rotate: pen.frames[pen.calculative.frameIndex].rotate || 0,
-      x: pen.frames[pen.calculative.frameIndex].x || 0,
-      y: pen.frames[pen.calculative.frameIndex].y || 0,
-    };
-    pen.calculative._rotate = pen.calculative.rotate || 0;
+    pen.lastFrame.rotate = 0;
+    pen.lastFrame.x = 0;
+    pen.lastFrame.y = 0;
+    pen.lastFrame.width = pen.calculative.worldRect.width;
     pen.calculative.x = pen.calculative.worldRect.x;
     pen.calculative.y = pen.calculative.worldRect.y;
+    pen.calculative.initRect = deepClone(pen.calculative.worldRect);
+  } else if (now > pen.calculative.frameEnd) {
+    pen.lastFrame = {
+      rotate: pen.frames[pen.calculative.frameIndex].rotate || 0,
+      x: pen.frames[pen.calculative.frameIndex].x,
+      y: pen.frames[pen.calculative.frameIndex].y,
+      width: (pen.frames[pen.calculative.frameIndex].scale || 1) * pen.calculative.initRect.width,
+    };
+
+    pen.calculative.x = pen.calculative.worldRect.x;
+    pen.calculative.y = pen.calculative.worldRect.y;
+    pen.calculative._rotate = pen.calculative.rotate || 0;
 
     // 播放到尾了
     if (++pen.calculative.frameIndex >= pen.frames.length) {
@@ -1077,10 +1112,11 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
 
     for (const k in pen) {
       if (
-        k !== 'scale' &&
         k !== 'rotate' &&
         k !== 'x' &&
         k !== 'y' &&
+        k !== 'width' &&
+        k !== 'initRect' &&
         (typeof pen[k] !== 'object' || k === 'lineDash')
       ) {
         pen.lastFrame[k] = pen.calculative[k];
@@ -1097,16 +1133,11 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
       if (k === 'duration') {
         continue;
       } else if (k === 'scale') {
-        let current = 0;
-        if (pen.calculative.frameIndex || pen.calculative.cycleIndex) {
-          current = pen.width * pen.lastFrame[k] + pen.width * (frame[k] - pen.lastFrame[k]) * process;
-        } else if (pen.calculative.cycleIndex) {
-        } else {
-          current = pen.width + pen.width * (frame[k] - pen.lastFrame[k]) * process;
-        }
-        scale = current / pen.calculative.width;
-        pen.calculative.width = current;
+        // 基准值 + 进度值
+        const current =
+          pen.lastFrame.width + (frame.scale * pen.calculative.initRect.width - pen.lastFrame.width) * process;
         rect = pen.calculative.worldRect;
+        scale = current / rect.width;
         rect.width *= scale;
         rect.height *= scale;
         pen.calculative.dirty = true;
@@ -1121,7 +1152,7 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
         translateRect(
           pen.calculative.worldRect,
           0,
-          pen.calculative.x + (frame[k] - pen.lastFrame[k]) * process - pen.calculative.worldRect.y
+          pen.calculative.y + (frame[k] - pen.lastFrame[k]) * process - pen.calculative.worldRect.y
         );
         pen.calculative.dirty = true;
       } else if (k === 'rotate') {
@@ -1129,26 +1160,16 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
           pen.calculative._rotate = pen.rotate || 0;
         }
         if (pen.lastFrame[k] >= 360) {
-          pen.lastFrame[k] = 0;
+          pen.lastFrame[k] %= 360;
         }
         pen.calculative.rotate = (pen.calculative._rotate + (frame[k] - pen.lastFrame[k]) * process) % 360;
         pen.calculative.dirty = true;
       } else if (typeof frame[k] === 'number' && pen.linear !== false) {
-        if (!pen[k]) {
-          pen[k] = 0;
+        if (!pen.lastFrame[k]) {
+          pen.lastFrame[k] = 0;
         }
-        if (!pen.calculative[k]) {
-          pen.calculative[k] = 0;
-        }
-        if (pen.calculative.frameIndex || pen.calculative.cycleIndex) {
-          if (!pen.lastFrame[k]) {
-            pen.lastFrame[k] = 0;
-          }
-          const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
-          pen.calculative[k] = Math.round(current * 100) / 100;
-        } else {
-          pen.calculative[k] = Math.round(pen[k] + frame[k] * process * 100) / 100;
-        }
+        const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
+        pen.calculative[k] = Math.round(current * 100) / 100;
       } else {
         pen.calculative[k] = frame[k];
       }
@@ -1159,7 +1180,7 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
     }
 
     if (rect) {
-      scalePoint(rect, scale, rect.center);
+      scalePoint(rect as Point, scale, rect.center);
       rect.ex = rect.x + rect.width;
       rect.ey = rect.y + rect.height;
       rect.center = {
@@ -1172,7 +1193,7 @@ export function setNodeAnimate(store: TopologyStore, pen: Pen, now: number) {
   return true;
 }
 
-export function setLineAnimate(store: TopologyStore, pen: Pen, now: number) {
+export function setLineAnimate(pen: Pen, now: number) {
   if (pen.calculative.start === 0) {
     pen.calculative.start = undefined;
     pen.calculative.frameStart = undefined;
@@ -1282,22 +1303,6 @@ export function setLineAnimate(store: TopologyStore, pen: Pen, now: number) {
   }
 
   return true;
-}
-
-export function calcPenRelativeRect(store: TopologyStore, pen: Pen) {
-  if (!pen.parentId) {
-    pen.x = pen.calculative.worldRect.x;
-    pen.y = pen.calculative.worldRect.y;
-    pen.width = pen.calculative.worldRect.width;
-    pen.height = pen.calculative.worldRect.height;
-    return;
-  }
-
-  const parentRect = store.pens[pen.parentId].calculative.worldRect;
-  pen.x = (pen.calculative.worldRect.x - parentRect.x) / parentRect.width;
-  pen.y = (pen.calculative.worldRect.y - parentRect.y) / parentRect.height;
-  pen.width = pen.calculative.worldRect.width / parentRect.width;
-  pen.height = pen.calculative.worldRect.height / parentRect.height;
 }
 
 export function setChildrenActive(store: TopologyStore, pen: Pen, active = true) {
