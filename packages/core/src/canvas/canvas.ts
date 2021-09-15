@@ -712,7 +712,7 @@ export class Canvas {
           break;
         case HoverType.Node:
           if (this.store.hover) {
-            const pen = getParent(this.store.pens, this.store.hover) || this.store.hover;
+            const pen = getParent(this.store, this.store.hover) || this.store.hover;
             if (e.ctrlKey) {
               if (pen.calculative.active) {
                 pen.calculative.active = undefined;
@@ -748,7 +748,7 @@ export class Canvas {
           break;
         case HoverType.Line:
           {
-            const pen = getParent(this.store.pens, this.store.hover) || this.store.hover;
+            const pen = getParent(this.store, this.store.hover) || this.store.hover;
             this.active([pen]);
           }
           break;
@@ -867,7 +867,12 @@ export class Canvas {
         this.mouseRight = MouseRight.Translate;
       }
 
-      if (e.buttons !== 2 && !this.store.data.locked && this.hoverType === HoverType.None) {
+      if (
+        e.buttons !== 2 &&
+        !this.store.data.locked &&
+        this.hoverType === HoverType.None &&
+        this.hotkeyType === HotkeyType.None
+      ) {
         this.dragRect = {
           x: Math.min(this.mouseDown.x, e.x),
           y: Math.min(this.mouseDown.y, e.y),
@@ -1192,12 +1197,12 @@ export class Canvas {
     if (this.store.lastHover !== this.store.hover) {
       this.dirty = true;
       if (this.store.lastHover) {
-        setHover(this.store, getParent(this.store.pens, this.store.lastHover) || this.store.lastHover, false);
+        setHover(this.store, getParent(this.store, this.store.lastHover) || this.store.lastHover, false);
         this.store.emitter.emit('leave', this.store.lastHover);
       }
       if (this.store.hover) {
         this.store.hover.calculative.hover = true;
-        setHover(this.store, getParent(this.store.pens, this.store.hover) || this.store.hover);
+        setHover(this.store, getParent(this.store, this.store.hover) || this.store.hover);
         this.store.emitter.emit('enter', this.store.hover);
       }
       this.store.lastHover = this.store.hover;
@@ -1646,7 +1651,7 @@ export class Canvas {
   }
 
   dirtyPenRect(pen: Pen, child?: boolean, worldRectIsReady?: boolean) {
-    !worldRectIsReady && calcWorldRects(this.store.pens, pen);
+    !worldRectIsReady && calcWorldRects(this.store, pen);
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
@@ -2333,17 +2338,14 @@ export class Canvas {
                   pen[k] = pen.calculative[k];
                 }
               }
-              calcPenRelativeRect(this.store.pens, pen);
+              calcPenRelativeRect(this.store, pen);
             } else {
               for (const k in pen) {
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
                   pen.calculative[k] = pen[k];
                 }
               }
-            }
-            if (pen.calculative.dirty) {
               this.dirtyPenRect(pen);
-              pen.type && this.initLineRect(pen);
             }
             if (pen.calculative.text !== pen.text) {
               pen.calculative.text = pen.text;
@@ -2363,7 +2365,7 @@ export class Canvas {
                   pen[k] = pen.calculative[k];
                 }
               }
-              calcPenRelativeRect(this.store.pens, pen);
+              calcPenRelativeRect(this.store, pen);
             } else {
               for (const k in pen) {
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {

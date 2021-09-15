@@ -250,12 +250,12 @@ export interface Pen {
   lastFrame?: Pen;
 }
 
-export function getParent(pens: any, pen: Pen) {
+export function getParent(store: TopologyStore, pen: Pen) {
   if (!pen || !pen.parentId) {
     return undefined;
   }
 
-  return getParent(pens, pens[pen.parentId]) || pens[pen.parentId];
+  return getParent(store, store.pens[pen.parentId]) || store.pens[pen.parentId];
 }
 
 export function renderPen(
@@ -625,7 +625,7 @@ export function renderAnchor(ctx: CanvasRenderingContext2D | OffscreenCanvasRend
   }
 }
 
-export function calcWorldRects(pens: { [key: string]: Pen }, pen: Pen) {
+export function calcWorldRects(store: TopologyStore, pen: Pen) {
   let rect: Rect = {
     x: pen.x,
     y: pen.y,
@@ -642,9 +642,9 @@ export function calcWorldRects(pens: { [key: string]: Pen }, pen: Pen) {
       y: rect.y + rect.height / 2,
     };
   } else {
-    let parentRect = pens[pen.parentId].calculative.worldRect;
+    let parentRect = store.pens[pen.parentId].calculative.worldRect;
     if (!parentRect) {
-      parentRect = calcWorldRects(pens, pens[pen.parentId]);
+      parentRect = calcWorldRects(store, store.pens[pen.parentId]);
     }
 
     rect.x = parentRect.x + parentRect.width * pen.x;
@@ -674,6 +674,7 @@ export function calcWorldRects(pens: { [key: string]: Pen }, pen: Pen) {
     };
   }
 
+  store.data.scale != 1 && scaleRect(rect, store.data.scale, store.data.center);
   pen.calculative.worldRect = rect;
 
   return rect;
@@ -1290,7 +1291,7 @@ export function setLineAnimate(store: TopologyStore, pen: Pen, now: number) {
   return true;
 }
 
-export function calcPenRelativeRect(pens: { [key: string]: Pen }, pen: Pen) {
+export function calcPenRelativeRect(store: TopologyStore, pen: Pen) {
   if (!pen.parentId) {
     pen.x = pen.calculative.worldRect.x;
     pen.y = pen.calculative.worldRect.y;
@@ -1299,7 +1300,7 @@ export function calcPenRelativeRect(pens: { [key: string]: Pen }, pen: Pen) {
     return;
   }
 
-  const parentRect = pens[pen.parentId].calculative.worldRect;
+  const parentRect = store.pens[pen.parentId].calculative.worldRect;
   pen.x = (pen.calculative.worldRect.x - parentRect.x) / parentRect.width;
   pen.y = (pen.calculative.worldRect.y - parentRect.y) / parentRect.height;
   pen.width = pen.calculative.worldRect.width / parentRect.width;

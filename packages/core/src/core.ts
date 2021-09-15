@@ -301,7 +301,7 @@ export class Topology {
   }
 
   getParent(pen: Pen) {
-    return getParent(this.store.pens, pen);
+    return getParent(this.store, pen);
   }
 
   destroy(global?: boolean) {
