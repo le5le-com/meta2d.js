@@ -1,4 +1,4 @@
-import { getSplitAnchor, pentagon } from '../diagrams';
+import { getSplitAnchor } from '../diagrams';
 import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
 import { calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
@@ -24,20 +24,12 @@ export enum AnchorMode {
   Out,
 }
 
-export interface Pen {
+export interface Pen extends Rect {
   id?: string;
   tags?: string[];
   parentId?: string;
   type?: PenType;
   name?: string;
-  x?: number;
-  y?: number;
-  ex?: number;
-  ey?: number;
-  width?: number;
-  height?: number;
-  rotate?: number;
-  center?: Point;
   borderRadius?: number;
   layer?: number;
   // Hidden only visible === false
@@ -222,6 +214,7 @@ export interface Pen {
     visible?: boolean;
     // 仅仅内部专用
     _visible?: boolean;
+    // 辅助变量，画线时，动态计算锚点是否时水平方向
     drawlineH?: boolean;
 
     scale?: number;
