@@ -7,7 +7,7 @@ import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
-import { calcCenter, calcRelativeRect, getRect } from '..';
+import { calcCenter, calcRelativeRect, getRect, Rect } from '..';
 
 declare const window: any;
 
@@ -153,6 +153,19 @@ export class Topology {
 
   registerIndependentDraw(name: string, draw?: Function) {
     globalStore.independentDraws[name] = draw;
+  }
+
+  // customDock return:
+  // {
+  //   xDock: {x, y, step, prev},
+  //   yDock: {x, y, step, prev},
+  // }
+  // xDock，yDock - 水平或垂直方向的参考线
+  // prev - 参考线的起点
+  // x,y - 参考线的终点
+  // step - 自动吸附需要的偏移量
+  registerDock(customeDock?: Function) {
+    this.canvas.customeDock = customeDock;
   }
 
   find(idOrTag: string) {

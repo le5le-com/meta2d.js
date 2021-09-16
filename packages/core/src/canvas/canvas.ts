@@ -111,6 +111,8 @@ export class Canvas {
   beforeRemovePen: (pen: Pen) => boolean;
   beforeRemoveAnchor: (pen: Pen, anchor: Point) => boolean;
 
+  customeDock: Function;
+
   constructor(public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
 
@@ -2036,7 +2038,11 @@ export class Canvas {
     let y = e.y - this.mouseDown.y;
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
-    this.dock = calcRectDock(rect, this.store);
+    if (this.customeDock) {
+      this.dock = calcRectDock(this.store, rect);
+    } else {
+      this.dock = calcRectDock(this.store, rect);
+    }
     if (this.dock.xDock) {
       rect.x += this.dock.xDock.step;
     }

@@ -40,7 +40,7 @@ export function calcAnchorDock(e: Point, anchor: Point, pen: Pen, store: Topolog
   };
 }
 
-export function calcRectDock(rect: Rect, store: TopologyStore) {
+export function calcRectDock(store: TopologyStore, rect: Rect) {
   let xDock: Point;
   let yDock: Point;
   let x = Infinity;

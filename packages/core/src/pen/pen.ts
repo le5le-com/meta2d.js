@@ -1125,7 +1125,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
   }
 
   const frame = pen.frames[pen.calculative.frameIndex];
-  let process = (now - pen.calculative.frameStart) / pen.calculative.frameDuration;
+  let process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
   if (process > 0) {
     let rect: Rect;
     let scale: number;
