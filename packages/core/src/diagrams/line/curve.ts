@@ -1,6 +1,6 @@
 import { Direction } from '../../data';
 import { facePen, Pen } from '../../pen';
-import { Point, PrevNextType, rotatePoint } from '../../point';
+import { distance, Point, PrevNextType, rotatePoint } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
@@ -11,9 +11,13 @@ export function curve(store: TopologyStore, pen: Pen, mousedwon?: Point) {
 
   if (mousedwon) {
     if (pen.calculative.activeAnchor) {
-      pen.calculative.activeAnchor.next = { id: s8(), penId: pen.id, x: mousedwon.x, y: mousedwon.y };
-      pen.calculative.activeAnchor.prev = { ...pen.calculative.activeAnchor.next };
-      rotatePoint(pen.calculative.activeAnchor.prev, 180, pen.calculative.activeAnchor);
+      pen.calculative.activeAnchor.next = { penId: pen.id, x: mousedwon.x, y: mousedwon.y };
+      if (distance(pen.calculative.activeAnchor.next, pen.calculative.activeAnchor) < 5) {
+        pen.calculative.activeAnchor.next = undefined;
+      } else {
+        pen.calculative.activeAnchor.prev = { ...pen.calculative.activeAnchor.next };
+        rotatePoint(pen.calculative.activeAnchor.prev, 180, pen.calculative.activeAnchor);
+      }
     }
   } else {
     const from = pen.calculative.worldAnchors[0];

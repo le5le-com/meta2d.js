@@ -7,8 +7,10 @@ import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
-import { calcCenter, calcRelativeRect, getRect, Rect } from '..';
+import { calcRelativeRect, getRect } from './rect';
 import { deepClone } from './utils/clone';
+
+import pkg from '../package.json';
 
 declare const window: any;
 
@@ -329,7 +331,7 @@ export class Topology {
       pen.calculative = undefined;
       pen.lastFrame = undefined;
     });
-
+    data.version = pkg.version;
     return data;
   }
 

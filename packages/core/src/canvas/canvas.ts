@@ -356,6 +356,50 @@ export class Canvas {
         break;
       case 'c':
       case 'C':
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          if (!this.store.activeAnchor.prev) {
+            if (!this.store.activeAnchor.next) {
+              this.store.activeAnchor.next = {
+                penId: this.store.activeAnchor.penId,
+                x: this.store.activeAnchor.x + 50,
+                y: this.store.activeAnchor.y,
+              };
+            }
+            this.store.activeAnchor.prev = { ...this.store.activeAnchor.next };
+            rotatePoint(this.store.activeAnchor.prev, 180, this.store.activeAnchor);
+            this.initLineRect(this.store.active[0]);
+            this.dirty = true;
+          } else if (!this.store.activeAnchor.next) {
+            this.store.activeAnchor.next = { ...this.store.activeAnchor.prev };
+            rotatePoint(this.store.activeAnchor.next, 180, this.store.activeAnchor);
+            this.initLineRect(this.store.active[0]);
+            this.dirty = true;
+          }
+        }
+        break;
+      case 'd':
+      case 'D':
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          if (this.hoverType === HoverType.LineAnchorPrev) {
+            this.store.activeAnchor.prev = undefined;
+            this.initLineRect(this.store.active[0]);
+            this.dirty = true;
+          } else if (this.hoverType === HoverType.LineAnchorNext) {
+            this.store.activeAnchor.next = undefined;
+            this.initLineRect(this.store.active[0]);
+            this.dirty = true;
+          }
+        }
         break;
       case 'v':
       case 'V':
@@ -364,8 +408,8 @@ export class Canvas {
           this.drawingLineName = this.drawingLineName ? '' : 'curve';
         }
         break;
-      case 'g':
-      case 'G':
+      case 'b':
+      case 'B':
         this.pencil = true;
         this.externalElements.style.cursor = 'crosshair';
         break;
@@ -1018,7 +1062,7 @@ export class Canvas {
     this.store.active = [];
     this.activeRect = undefined;
     this.sizeCPs = undefined;
-
+    this.store.activeAnchor = undefined;
     this.dirty = true;
   }
 
