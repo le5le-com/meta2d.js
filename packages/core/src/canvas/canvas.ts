@@ -85,8 +85,8 @@ export class Canvas {
   drawLineFns: string[] = [...defaultDrawLineFns];
   drawingLine?: Pen;
 
-  graffiti?: boolean;
-  graffitiLine?: Pen;
+  pencil?: boolean;
+  pencilLine?: Pen;
 
   dirtyLines?: Set<Pen> = new Set();
   dock: { xDock: Point; yDock: Point };
@@ -366,7 +366,7 @@ export class Canvas {
         break;
       case 'g':
       case 'G':
-        this.graffiti = true;
+        this.pencil = true;
         this.externalElements.style.cursor = 'crosshair';
         break;
       case 'y':
@@ -394,8 +394,8 @@ export class Canvas {
           this.finishDrawline();
         }
         this.drawingLineName = undefined;
-        this.graffiti = undefined;
-        this.graffitiLine = undefined;
+        this.pencil = undefined;
+        this.pencilLine = undefined;
         this.hotkeyType = HotkeyType.None;
         this.externalElements.style.cursor = 'default';
         break;
@@ -670,18 +670,18 @@ export class Canvas {
           connectLine(this.store.pens[pt.connectTo], this.drawingLine.id, pt.id, pt.anchorId);
         }
       }
-    } else if (this.graffiti) {
+    } else if (this.pencil) {
       this.inactive(true);
       const id = s8();
       const pt: Point = { x: e.x, y: e.y, id: s8(), penId: id };
-      this.graffitiLine = {
+      this.pencilLine = {
         id,
         name: 'line',
         x: pt.x,
         y: pt.y,
         type: PenType.Line,
         calculative: {
-          graffiti: true,
+          pencil: true,
           active: true,
           worldAnchors: [pt],
         },
@@ -832,16 +832,16 @@ export class Canvas {
         }
         this.drawline();
       }
-    } else if (this.graffiti) {
+    } else if (this.pencil) {
       if (!this.mouseDown) {
         return;
       }
 
       const pt: Point = { ...e };
       pt.id = s8();
-      pt.penId = this.graffitiLine.id;
-      this.graffitiLine.calculative.worldAnchors.push(pt);
-      this.store.path2dMap.set(this.graffitiLine, this.store.penPaths[this.graffitiLine.name](this.graffitiLine));
+      pt.penId = this.pencilLine.id;
+      this.pencilLine.calculative.worldAnchors.push(pt);
+      this.store.path2dMap.set(this.pencilLine, this.store.penPaths[this.pencilLine.name](this.pencilLine));
       this.dirty = true;
     } else if (this.mouseDown) {
       if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
@@ -959,7 +959,7 @@ export class Canvas {
 
     this.calibrateMouse(e);
 
-    this.graffiti && this.finishGraffiti();
+    this.pencil && this.finishPencil();
 
     // Add pen
     if (this.addCache) {
@@ -1163,7 +1163,7 @@ export class Canvas {
 
     this.hoverType = hoverType;
     if (hoverType === HoverType.None) {
-      if (this.drawingLineName || this.graffiti) {
+      if (this.drawingLineName || this.pencil) {
         this.externalElements.style.cursor = 'crosshair';
       } else if (!this.mouseDown) {
         this.externalElements.style.cursor = 'default';
@@ -1532,36 +1532,36 @@ export class Canvas {
     this.drawingLineName = undefined;
   }
 
-  finishGraffiti() {
-    if (this.graffitiLine) {
+  finishPencil() {
+    if (this.pencilLine) {
       let anchors: Point[] = simplify(
-        this.graffitiLine.calculative.worldAnchors,
+        this.pencilLine.calculative.worldAnchors,
         10,
         0,
-        this.graffitiLine.calculative.worldAnchors.length - 1
+        this.pencilLine.calculative.worldAnchors.length - 1
       );
-      let p = this.graffitiLine.calculative.worldAnchors[0];
+      let p = this.pencilLine.calculative.worldAnchors[0];
       anchors.unshift({ id: p.id, penId: p.penId, x: p.x, y: p.y });
-      p = this.graffitiLine.calculative.worldAnchors[this.graffitiLine.calculative.worldAnchors.length - 1];
+      p = this.pencilLine.calculative.worldAnchors[this.pencilLine.calculative.worldAnchors.length - 1];
       anchors.push({ id: p.id, penId: p.penId, x: p.x, y: p.y });
-      this.graffitiLine.calculative.worldAnchors = smoothLine(anchors);
-      if (this.graffitiLine.calculative.worldAnchors.length > 1) {
-        this.graffitiLine.calculative.graffiti = undefined;
-        this.store.path2dMap.set(this.graffitiLine, this.store.penPaths[this.graffitiLine.name](this.graffitiLine));
-        if (!this.beforeAddPen || this.beforeAddPen(this.graffitiLine)) {
-          this.initLineRect(this.graffitiLine);
-          this.store.data.pens.push(this.graffitiLine);
-          this.store.pens[this.graffitiLine.id] = this.graffitiLine;
-          this.store.emitter.emit('addPen', this.graffitiLine);
-          this.active([this.graffitiLine]);
+      this.pencilLine.calculative.worldAnchors = smoothLine(anchors);
+      if (this.pencilLine.calculative.worldAnchors.length > 1) {
+        this.pencilLine.calculative.pencil = undefined;
+        this.store.path2dMap.set(this.pencilLine, this.store.penPaths[this.pencilLine.name](this.pencilLine));
+        if (!this.beforeAddPen || this.beforeAddPen(this.pencilLine)) {
+          this.initLineRect(this.pencilLine);
+          this.store.data.pens.push(this.pencilLine);
+          this.store.pens[this.pencilLine.id] = this.pencilLine;
+          this.store.emitter.emit('addPen', this.pencilLine);
+          this.active([this.pencilLine]);
           this.store.histories.push({
             type: EditType.Add,
-            data: this.graffitiLine,
+            data: this.pencilLine,
           });
         }
         this.render(Infinity);
       }
-      this.graffitiLine = undefined;
+      this.pencilLine = undefined;
     }
   }
 
@@ -1726,8 +1726,8 @@ export class Canvas {
     if (this.drawingLine) {
       renderPen(ctx, this.drawingLine, this.store.path2dMap.get(this.drawingLine), this.store);
     }
-    if (this.graffitiLine) {
-      renderPen(ctx, this.graffitiLine, this.store.path2dMap.get(this.graffitiLine), this.store);
+    if (this.pencilLine) {
+      renderPen(ctx, this.pencilLine, this.store.path2dMap.get(this.pencilLine), this.store);
     }
     ctx.restore();
   };

@@ -8,6 +8,7 @@ import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from '
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
 import { calcCenter, calcRelativeRect, getRect, Rect } from '..';
+import { deepClone } from './utils/clone';
 
 declare const window: any;
 
@@ -314,8 +315,22 @@ export class Topology {
     this.render(Infinity);
   }
 
+  scale(scale: number, center = { x: 0, y: 0 }) {
+    this.canvas.scale(scale, center);
+  }
+
   getParent(pen: Pen) {
     return getParent(this.store, pen);
+  }
+
+  data() {
+    const data = deepClone(this.store.data);
+    data.pens.forEach((pen) => {
+      pen.calculative = undefined;
+      pen.lastFrame = undefined;
+    });
+
+    return data;
   }
 
   destroy(global?: boolean) {
