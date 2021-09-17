@@ -8,7 +8,6 @@ import { globalStore } from '.';
 
 export interface TopologyData {
   pens: Pen[];
-  children: { [key: string]: string[] };
   x: number;
   y: number;
   scale: number;
@@ -23,6 +22,9 @@ export interface TopologyData {
     customClientId?: boolean;
   };
   mqttTopics?: string;
+  socketCbJs?: string;
+  socketCbFn?: string;
+  initJs?: string;
 }
 
 export enum EditType {
@@ -64,6 +66,7 @@ export interface TopologyStore {
   emitter: Emitter;
   penPaths: any;
   dpiRatio?: number;
+  clipboard?: Pen[];
 }
 
 export const createStore = () => {
@@ -73,7 +76,6 @@ export const createStore = () => {
       y: 0,
       scale: 1,
       pens: [],
-      children: {},
       center: { x: 0, y: 0 },
     },
     histories: [],
@@ -102,7 +104,6 @@ export const clearStore = (store: TopologyStore) => {
     y: 0,
     scale: 1,
     pens: [],
-    children: {},
     center: { x: 0, y: 0 },
   };
   store.center = { x: 0, y: 0 };

@@ -353,10 +353,15 @@ export class Canvas {
         break;
       case 'x':
       case 'X':
+        if (e.ctrlKey || e.metaKey) {
+          this.cut();
+        }
         break;
       case 'c':
       case 'C':
-        if (
+        if (e.ctrlKey || e.metaKey) {
+          this.copy();
+        } else if (
           this.store.activeAnchor &&
           this.store.active &&
           this.store.active.length === 1 &&
@@ -404,6 +409,7 @@ export class Canvas {
       case 'v':
       case 'V':
         if (e.ctrlKey || e.metaKey) {
+          this.paste();
         } else {
           this.drawingLineName = this.drawingLineName ? '' : 'curve';
         }
@@ -1067,12 +1073,13 @@ export class Canvas {
   }
 
   active(pens: Pen[]) {
-    this.store.active.forEach((pen) => {
-      pen.calculative.active = undefined;
-      setChildrenActive(this.store, pen, false);
-    });
+    if (this.store.active) {
+      for (const pen of this.store.active) {
+        pen.calculative.active = undefined;
+        setChildrenActive(this.store, pen, false);
+      }
+    }
     this.store.active = [];
-
     pens.forEach((pen) => {
       pen.calculative.active = true;
       setChildrenActive(this.store, pen);
@@ -1442,7 +1449,7 @@ export class Canvas {
     this.offscreen.getContext('2d').clearRect(0, 0, this.offscreen.width, this.offscreen.height);
   }
 
-  addPen(pen: Pen, edited?: boolean) {
+  addPen(pen: Pen, history?: boolean) {
     if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
       return;
     }
@@ -1450,9 +1457,9 @@ export class Canvas {
     this.makePen(pen);
 
     this.render();
-    this.store.emitter.emit('addPen', pen);
+    this.store.emitter.emit('add', [pen]);
 
-    if (edited && !this.store.data.locked) {
+    if (history && !this.store.data.locked) {
       this.store.histories.push({
         type: EditType.Add,
         data: pen,
@@ -2436,6 +2443,44 @@ export class Canvas {
 
       this.animate();
     });
+  }
+
+  copy(pens?: Pen[]) {
+    this.store.clipboard = pens || this.store.active;
+  }
+
+  cut(pens?: Pen[]) {
+    this.store.clipboard = pens || this.store.active;
+    for (let i = 0; i < this.store.data.pens.length; i++) {
+      for (const pen of this.store.clipboard) {
+        if (pen.id === this.store.data.pens[i].id) {
+          this.store.data.pens.splice(i, 1);
+          --i;
+        }
+      }
+    }
+    this.render(Infinity);
+
+    this.store.emitter.emit('delete', this.store.clipboard);
+  }
+
+  paste() {
+    if (!this.store.clipboard) {
+      return;
+    }
+
+    const pens: Pen[] = [];
+    for (const pen of this.store.clipboard) {
+      const newPen = deepClone(pen);
+      newPen.id = s8();
+      translateRect(newPen, 10, 10);
+      if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
+        this.makePen(newPen);
+        pens.push(newPen);
+      }
+    }
+    this.store.emitter.emit('add', pens);
+    this.active(pens);
   }
 
   destroy() {

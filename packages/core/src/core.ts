@@ -10,6 +10,8 @@ import { s8 } from './utils';
 import { calcRelativeRect, getRect } from './rect';
 import { deepClone } from './utils/clone';
 
+import * as mqtt from 'mqtt/dist/mqtt.min.js';
+
 import pkg from '../package.json';
 
 declare const window: any;
@@ -19,6 +21,9 @@ export class Topology {
   input = document.createElement('textarea');
   tooltip: Tooltip;
   canvas: Canvas;
+  socket: WebSocket;
+  mqttClient: any;
+  socketFn: Function;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
@@ -93,8 +98,8 @@ export class Topology {
     this.store.emitter.emit('resize', { width, height });
   }
 
-  addPen(pen: Pen, edited?: boolean) {
-    return this.canvas.addPen(pen, edited);
+  addPen(pen: Pen, history?: boolean) {
+    return this.canvas.addPen(pen, history);
   }
 
   render(now?: number) {
@@ -106,8 +111,28 @@ export class Topology {
     if (data && data.mqttOptions && !data.mqttOptions.customClientId) {
       data.mqttOptions.clientId = s8();
     }
-    this.canvas.render();
-    this.store.emitter.emit('open');
+
+    if (data) {
+      this.store.data = Object.assign({}, data);
+      this.store.data.pens = [];
+      for (let pen of data.pens) {
+        this.canvas.makePen(pen);
+      }
+    }
+    this.canvas.render(Infinity);
+    this.listenSocket();
+
+    this.startAnimate();
+    this.doInitJS();
+    this.store.emitter.emit('opened');
+  }
+
+  private doInitJS() {
+    if (this.store.data.initJs && this.store.data.initJs.trim()) {
+      // 字符串类型存在
+      const fn = new Function(this.store.data.initJs);
+      fn();
+    }
   }
 
   drawLine(lineName?: string) {
@@ -181,7 +206,7 @@ export class Topology {
     let pens: Pen[];
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
-        return !pen.type || pen.frames;
+        return (pen.type || pen.frames) && pen.autoPlay;
       });
     }
     if (typeof idOrTagOrPens === 'string') {
@@ -315,6 +340,8 @@ export class Topology {
     });
 
     this.render(Infinity);
+
+    this.store.emitter.emit('delete', pens);
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -327,13 +354,79 @@ export class Topology {
 
   data() {
     const data = deepClone(this.store.data);
-    data.pens.forEach((pen) => {
-      pen.calculative = undefined;
-      pen.lastFrame = undefined;
-    });
     data.version = pkg.version;
     return data;
   }
+
+  copy(pens?: Pen[]) {
+    this.canvas.copy(pens);
+  }
+
+  cut(pens?: Pen[]) {
+    this.canvas.cut(pens);
+  }
+
+  paste() {
+    this.canvas.paste();
+  }
+
+  listenSocket() {
+    if (this.socketFn) {
+      this.off('socket', this.socketFn as any);
+    }
+    this.socketFn = undefined;
+    if (!this.store.data.socketCbFn && this.store.data.socketCbJs) {
+      return false;
+    }
+
+    try {
+      let socketFn: Function;
+      if (this.store.data.socketCbFn) {
+        socketFn = window[this.store.data.socketCbFn];
+      } else {
+        socketFn = new Function('e', this.store.data.socketCbJs);
+      }
+      if (!socketFn) {
+        return false;
+      }
+      this.on('socket', socketFn as any);
+      this.socketFn = socketFn;
+    } catch (e) {
+      console.error('Create the function for socket:', e);
+      return false;
+    }
+
+    return true;
+  }
+
+  connectWebsocket() {
+    this.socket = new WebSocket(this.store.data.websocket);
+    this.socket.onmessage = (e) => {
+      this.doSocket(e.data);
+      this.socketFn && this.store.emitter.emit('socket', e.data);
+    };
+
+    this.socket.onclose = () => {
+      console.info('Canvas websocket closed and reconneting...');
+      this.connectWebsocket();
+    };
+  }
+
+  doSocket(message: any) {
+    try {
+      message = JSON.parse(message);
+      if (!Array.isArray(message)) {
+        message = [message];
+      }
+      message.forEach((item: any) => {
+        this.setValue(item);
+      });
+    } catch (error) {
+      console.warn('Invalid socket data:', error);
+    }
+  }
+
+  setValue(pen: Pen) {}
 
   destroy(global?: boolean) {
     this.canvas.destroy();

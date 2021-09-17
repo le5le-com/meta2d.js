@@ -13,6 +13,9 @@ export function deepClone(o?: any) {
     }
     const _o = {};
     for (let key in o) {
+      if (key === 'calculative' || key === 'lastFrame') {
+        continue;
+      }
       _o[key] = deepClone(o[key]);
     }
     return _o;
