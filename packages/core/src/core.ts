@@ -2,7 +2,7 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { facePen, getParent, LockState, Pen, PenType } from './pen';
+import { calcTextLines, facePen, getParent, LockState, Pen, PenType } from './pen';
 import { Point } from './point';
 import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
@@ -21,7 +21,7 @@ export class Topology {
   input = document.createElement('textarea');
   tooltip: Tooltip;
   canvas: Canvas;
-  socket: WebSocket;
+  websocket: WebSocket;
   mqttClient: any;
   socketFn: Function;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
@@ -121,10 +121,15 @@ export class Topology {
     }
     this.canvas.render(Infinity);
     this.listenSocket();
-
+    this.connectSocket();
     this.startAnimate();
     this.doInitJS();
     this.store.emitter.emit('opened');
+  }
+
+  connectSocket() {
+    this.connectWebsocket();
+    this.connectMqtt();
   }
 
   private doInitJS() {
@@ -198,7 +203,7 @@ export class Topology {
 
   find(idOrTag: string) {
     return this.store.data.pens.filter((pen) => {
-      return pen.id == idOrTag || pen.tags.indexOf(idOrTag) > -1;
+      return pen.id == idOrTag || (pen.tags && pen.tags.indexOf(idOrTag) > -1);
     });
   }
 
@@ -208,14 +213,40 @@ export class Topology {
       pens = this.store.data.pens.filter((pen) => {
         return (pen.type || pen.frames) && pen.autoPlay;
       });
-    }
-    if (typeof idOrTagOrPens === 'string') {
+    } else if (typeof idOrTagOrPens === 'string') {
       pens = this.find(idOrTagOrPens);
+    } else {
+      pens = idOrTagOrPens;
     }
     pens.forEach((pen) => {
-      this.store.animates.add(pen);
+      if (pen.calculative.pause) {
+        const d = Date.now() - pen.calculative.pause;
+        pen.calculative.pause = undefined;
+        pen.calculative.frameStart += d;
+        pen.calculative.frameEnd += d;
+      } else {
+        this.store.animates.add(pen);
+      }
     });
     this.canvas.animate();
+  }
+
+  pauseAnimate(idOrTagOrPens?: string | Pen[]) {
+    let pens: Pen[] = [];
+    if (!idOrTagOrPens) {
+      this.store.animates.forEach((pen) => {
+        pens.push(pen);
+      });
+    } else if (typeof idOrTagOrPens === 'string') {
+      pens = this.find(idOrTagOrPens);
+    } else {
+      pens = idOrTagOrPens;
+    }
+    pens.forEach((pen) => {
+      if (!pen.calculative.pause) {
+        pen.calculative.pause = Date.now();
+      }
+    });
   }
 
   stopAnimate(pens?: Pen[]) {
@@ -223,6 +254,7 @@ export class Topology {
       pens = this.store.data.pens;
     }
     pens.forEach((pen) => {
+      pen.calculative.pause = undefined;
       pen.calculative.start = 0;
     });
   }
@@ -400,16 +432,39 @@ export class Topology {
   }
 
   connectWebsocket() {
-    this.socket = new WebSocket(this.store.data.websocket);
-    this.socket.onmessage = (e) => {
+    this.closeWebsocket();
+    this.websocket = new WebSocket(this.store.data.websocket);
+    this.websocket.onmessage = (e) => {
       this.doSocket(e.data);
-      this.socketFn && this.store.emitter.emit('socket', e.data);
     };
 
-    this.socket.onclose = () => {
+    this.websocket.onclose = () => {
       console.info('Canvas websocket closed and reconneting...');
       this.connectWebsocket();
     };
+  }
+
+  closeWebsocket() {
+    if (this.websocket) {
+      this.websocket.onclose = undefined;
+      this.websocket.close();
+      this.websocket = undefined;
+    }
+  }
+
+  connectMqtt() {
+    this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
+    this.mqttClient.on('message', (topic: string, message: any) => {
+      this.doSocket(message.toString());
+    });
+
+    if (this.store.data.mqttTopics) {
+      this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
+    }
+  }
+
+  closeMqtt() {
+    this.mqttClient && this.mqttClient.close();
   }
 
   doSocket(message: any) {
@@ -424,9 +479,31 @@ export class Topology {
     } catch (error) {
       console.warn('Invalid socket data:', error);
     }
+
+    this.socketFn && this.store.emitter.emit('socket', message);
   }
 
-  setValue(pen: Pen) {}
+  setValue(data: any) {
+    const pens: Pen[] = this.find(data.id || data.tag) || [];
+    pens.forEach((pen) => {
+      Object.assign(pen, data);
+      if (pen.calculative.text !== pen.text) {
+        pen.calculative.text = pen.text;
+        calcTextLines(pen);
+      }
+      for (const k in data) {
+        if (typeof pen[k] !== 'object') {
+          pen.calculative[k] = data[k];
+        }
+      }
+      if (data.x != null || data.y != null || data.width != null || data.height != null) {
+        this.canvas.dirtyPenRect(pen);
+        this.canvas.updateLines(pen, true);
+      }
+    });
+
+    this.render(Infinity);
+  }
 
   destroy(global?: boolean) {
     this.canvas.destroy();

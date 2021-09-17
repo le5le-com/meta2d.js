@@ -41,7 +41,7 @@ import {
   rectToPoints,
   translateRect,
 } from '../rect';
-import { EditType, globalStore, TopologyStore } from '../store';
+import { EditAction, EditType, globalStore, TopologyStore } from '../store';
 import { isMobile, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
@@ -421,9 +421,17 @@ export class Canvas {
         break;
       case 'y':
       case 'Y':
+        if (e.ctrlKey || e.metaKey) {
+          this.redo();
+        }
         break;
       case 'z':
       case 'Z':
+        if (e.ctrlKey || e.metaKey) {
+          this.undo();
+        } else if (e.shiftKey) {
+          this.redo();
+        }
         break;
       case 'Enter':
         if (this.drawingLineName) {
@@ -1459,14 +1467,95 @@ export class Canvas {
     this.render();
     this.store.emitter.emit('add', [pen]);
 
-    if (history && !this.store.data.locked) {
-      this.store.histories.push({
+    if (history) {
+      this.pushHistory({
         type: EditType.Add,
-        data: pen,
+        pens: [pen],
       });
     }
 
     return pen;
+  }
+
+  pushHistory(action: EditAction) {
+    if (this.store.data.locked) {
+      return;
+    }
+
+    if (action.pens) {
+      action.pens.forEach((pen) => {
+        pen.calculative.layer = this.store.data.pens.findIndex((p) => p === pen);
+      });
+    }
+
+    if (this.store.historyIndex < this.store.histories.length - 1) {
+      this.store.histories.splice(
+        this.store.historyIndex + 1,
+        this.store.histories.length - this.store.historyIndex - 1
+      );
+    }
+    this.store.histories.push(action);
+    this.store.historyIndex = this.store.histories.length - 1;
+  }
+
+  undo() {
+    if (this.store.data.locked || this.store.historyIndex == null || this.store.historyIndex < 0) {
+      return;
+    }
+
+    const action = this.store.histories[this.store.historyIndex--];
+    this.setAction(action);
+    this.store.emitter.emit('undo', action);
+  }
+
+  redo() {
+    if (this.store.data.locked || this.store.historyIndex > this.store.histories.length - 2) {
+      return;
+    }
+
+    const action = this.store.histories[++this.store.historyIndex];
+    this.setAction(action);
+    this.store.emitter.emit('redo', action);
+  }
+
+  setAction(action: EditAction) {
+    this.inactive();
+    if (action.data) {
+      Object.assign(this.store.data, action.data);
+    }
+    if (action.pens) {
+      switch (action.type) {
+        case EditType.Add:
+          action.pens.forEach((pen) => {
+            const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
+            if (i > -1) {
+              this.store.data.pens.splice(i, 1);
+            }
+          });
+          action.type = EditType.Delete;
+          break;
+        case EditType.Update:
+          action.pens.forEach((pen) => {
+            const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
+            if (i > -1) {
+              Object.assign(this.store.data.pens[i], pen);
+              pen = this.store.data.pens[i];
+              this.store.pens[pen.id] = pen;
+              this.dirtyPenRect(pen);
+              this.updateLines(pen, true);
+            }
+          });
+          break;
+        case EditType.Delete:
+          action.pens.forEach((pen) => {
+            this.store.data.pens.splice(pen.calculative.layer, 0, pen);
+          });
+          action.type = EditType.Add;
+          break;
+      }
+    }
+
+    this.render(Infinity);
   }
 
   makePen(pen: Pen) {
@@ -1571,9 +1660,9 @@ export class Canvas {
         this.store.pens[this.drawingLine.id] = this.drawingLine;
         this.store.emitter.emit('addPen', this.drawingLine);
         this.active([this.drawingLine]);
-        this.store.histories.push({
+        this.pushHistory({
           type: EditType.Add,
-          data: this.drawingLine,
+          pens: [this.drawingLine],
         });
       }
     }
@@ -1605,9 +1694,9 @@ export class Canvas {
           this.store.pens[this.pencilLine.id] = this.pencilLine;
           this.store.emitter.emit('addPen', this.pencilLine);
           this.active([this.pencilLine]);
-          this.store.histories.push({
+          this.pushHistory({
             type: EditType.Add,
-            data: this.pencilLine,
+            pens: [this.pencilLine],
           });
         }
         this.render(Infinity);
@@ -2346,7 +2435,10 @@ export class Canvas {
   animate() {
     requestAnimationFrame(() => {
       const now = Date.now();
-      if (this.animateRendering || now - this.lastAnimateRender < this.store.options.animateInterval) {
+      if (this.animateRendering) {
+        return;
+      }
+      if (now - this.lastAnimateRender < this.store.options.animateInterval) {
         if (this.store.animates.size > 0) {
           this.animate();
         }
@@ -2358,6 +2450,9 @@ export class Canvas {
       const dels: Pen[] = [];
       let active = false;
       for (let pen of this.store.animates) {
+        if (pen.calculative.pause) {
+          continue;
+        }
         if (pen.calculative.active) {
           active = true;
         }
@@ -2430,6 +2525,8 @@ export class Canvas {
             dels.push(pen);
           }
         }
+
+        this.dirty = true;
       }
       if (active) {
         this.calcActiveRect();
@@ -2438,7 +2535,6 @@ export class Canvas {
         this.store.animates.delete(pen);
       });
       this.animateRendering = false;
-      this.dirty = true;
       this.render();
 
       this.animate();

@@ -238,9 +238,13 @@ export interface Pen extends Rect {
     animatePos?: number;
     // 已经循环次数
     cycleIndex?: number;
+    // 是否暂停动画
+    pause?: number;
 
     // 动画播放中的参考基准
     _rotate?: number;
+
+    layer?: number;
   };
 
   // 最后一个动画帧状态数据

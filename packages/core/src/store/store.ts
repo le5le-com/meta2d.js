@@ -31,12 +31,12 @@ export enum EditType {
   Add,
   Update,
   Delete,
-  Layer,
 }
 
 export interface EditAction {
   type: EditType;
-  data: any;
+  data?: any;
+  pens?: Pen[];
 }
 
 export interface TopologyStore {
@@ -48,11 +48,8 @@ export interface TopologyStore {
   // world offset
   center: Point;
 
-  // Websocket instance.
-  websocket?: any;
-  // mqtt instance.
-  mqtt?: any;
   histories?: EditAction[];
+  historyIndex?: number;
   path2dMap: WeakMap<Pen, Path2D>;
   active?: Pen[];
   hover?: Pen;
