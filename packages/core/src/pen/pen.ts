@@ -1,7 +1,7 @@
 import { getSplitAnchor } from '../diagrams';
 import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
-import { calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
+import { calcCenter, calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
 import { deepClone } from '../utils/clone';
@@ -829,6 +829,7 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
     ey: y + height,
     rotate,
   };
+  calcCenter(pen.calculative.worldIconRect);
 }
 
 export function scalePen(pen: Pen, scale: number, center: Point) {

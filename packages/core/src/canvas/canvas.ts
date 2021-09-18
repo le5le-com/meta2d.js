@@ -103,6 +103,10 @@ export class Canvas {
 
   lastAnimateRender = 0;
   animateRendering = false;
+  renderTimer: any;
+
+  updatingPens?: boolean;
+  initPens?: Pen[];
 
   pointSize = 8;
 
@@ -312,6 +316,7 @@ export class Canvas {
         break;
       case 'Delete':
       case 'Backspace':
+        this.delete();
         break;
       case 'ArrowLeft':
         x = -10;
@@ -321,7 +326,7 @@ export class Canvas {
         if (e.ctrlKey) {
           x = -1;
         }
-        this.translatePens(x, 0);
+        this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowUp':
         y = -10;
@@ -331,7 +336,7 @@ export class Canvas {
         if (e.ctrlKey) {
           y = -1;
         }
-        this.translatePens(0, y);
+        this.translatePens(this.store.active, 0, y);
         break;
       case 'ArrowRight':
         if (e.shiftKey) {
@@ -340,7 +345,7 @@ export class Canvas {
         if (e.ctrlKey) {
           x = 1;
         }
-        this.translatePens(x, 0);
+        this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowDown':
         if (e.shiftKey) {
@@ -349,7 +354,7 @@ export class Canvas {
         if (e.ctrlKey) {
           y = 1;
         }
-        this.translatePens(0, y);
+        this.translatePens(this.store.active, 0, y);
         break;
       case 'x':
       case 'X':
@@ -367,6 +372,8 @@ export class Canvas {
           this.store.active.length === 1 &&
           this.store.active[0].type
         ) {
+          this.initPens = [deepClone(this.store.active[0])];
+
           if (!this.store.activeAnchor.prev) {
             if (!this.store.activeAnchor.next) {
               this.store.activeAnchor.next = {
@@ -385,6 +392,10 @@ export class Canvas {
             this.initLineRect(this.store.active[0]);
             this.dirty = true;
           }
+
+          this.store.emitter.emit('update', [this.store.active[0]]);
+          this.pushHistory({ type: EditType.Update, pens: [deepClone(this.store.active[0])], initPens: this.initPens });
+          this.initPens = undefined;
         }
         break;
       case 'd':
@@ -395,6 +406,8 @@ export class Canvas {
           this.store.active.length === 1 &&
           this.store.active[0].type
         ) {
+          this.initPens = [deepClone(this.store.active[0])];
+
           if (this.hoverType === HoverType.LineAnchorPrev) {
             this.store.activeAnchor.prev = undefined;
             this.initLineRect(this.store.active[0]);
@@ -403,7 +416,16 @@ export class Canvas {
             this.store.activeAnchor.next = undefined;
             this.initLineRect(this.store.active[0]);
             this.dirty = true;
+          } else {
+            this.store.activeAnchor.prev = undefined;
+            this.store.activeAnchor.next = undefined;
+            this.initLineRect(this.store.active[0]);
+            this.dirty = true;
           }
+
+          this.store.emitter.emit('update', [this.store.active[0]]);
+          this.pushHistory({ type: EditType.Update, pens: [deepClone(this.store.active[0])], initPens: this.initPens });
+          this.initPens = undefined;
         }
         break;
       case 'v':
@@ -613,28 +635,7 @@ export class Canvas {
 
     // Set anchor of pen.
     if (this.hotkeyType === HotkeyType.AddAnchor) {
-      if (this.store.hoverAnchor) {
-        removePenAnchor(this.store.hover, this.store.hoverAnchor);
-        if (this.store.hover.type) {
-          this.initLineRect(this.store.hover);
-        }
-        this.store.hoverAnchor = undefined;
-        this.store.activeAnchor = undefined;
-        this.externalElements.style.cursor = 'default';
-      } else if (this.store.hover) {
-        if (this.store.hover.type) {
-          this.store.activeAnchor = addLineAnchor(this.store.hover, this.store.pointAt, this.store.pointAtIndex);
-          this.initLineRect(this.store.hover);
-
-          const pt = { x: e.x, y: e.y };
-          this.getHover(pt);
-        } else {
-          const pt = { x: e.x, y: e.y };
-          this.store.activeAnchor = pushPenAnchor(this.store.hover, pt);
-        }
-      }
-      this.hotkeyType = HotkeyType.None;
-      this.render(Infinity);
+      this.setAnchor(e);
       return;
     }
 
@@ -932,21 +933,7 @@ export class Canvas {
 
       // Rotate
       if (this.hoverType === HoverType.Rotate) {
-        const pt = { x: e.x, y: e.y };
-        this.activeRect.rotate = calcRotate(pt, this.activeRect.center);
-        if (this.store.active.length === 1) {
-          this.lastRotate = this.store.active[0].rotate || 0;
-        }
-        const angle = this.activeRect.rotate - this.lastRotate;
-        this.store.active.forEach((pen) => {
-          if (pen.parentId) {
-            return;
-          }
-          this.rotatePen(pen, angle, this.activeRect);
-        });
-        this.lastRotate = this.activeRect.rotate;
-        this.getSizeCPs();
-        this.render(Infinity);
+        this.rotatePens({ x: e.x, y: e.y });
         return;
       }
 
@@ -1061,6 +1048,7 @@ export class Canvas {
     this.dock = undefined;
     this.dragRect = undefined;
     this.initActiveRect = undefined;
+    this.updatingPens = undefined;
   };
 
   inactive(drawing?: boolean) {
@@ -1468,10 +1456,7 @@ export class Canvas {
     this.store.emitter.emit('add', [pen]);
 
     if (history) {
-      this.pushHistory({
-        type: EditType.Add,
-        pens: [pen],
-      });
+      this.pushHistory({ type: EditType.Add, pens: [pen] });
     }
 
     return pen;
@@ -1482,7 +1467,7 @@ export class Canvas {
       return;
     }
 
-    if (action.pens) {
+    if (action.type !== EditType.Update && action.pens) {
       action.pens.forEach((pen) => {
         pen.calculative.layer = this.store.data.pens.findIndex((p) => p === pen);
       });
@@ -1504,8 +1489,7 @@ export class Canvas {
     }
 
     const action = this.store.histories[this.store.historyIndex--];
-    this.setAction(action);
-    this.store.emitter.emit('undo', action);
+    this.doEditAction(action, true);
   }
 
   redo() {
@@ -1514,48 +1498,53 @@ export class Canvas {
     }
 
     const action = this.store.histories[++this.store.historyIndex];
-    this.setAction(action);
-    this.store.emitter.emit('redo', action);
+    this.doEditAction(action, false);
   }
 
-  setAction(action: EditAction) {
+  doEditAction(action: EditAction, undo: boolean) {
     this.inactive();
-    if (action.data) {
-      Object.assign(this.store.data, action.data);
-    }
-    if (action.pens) {
-      switch (action.type) {
-        case EditType.Add:
-          action.pens.forEach((pen) => {
-            const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
-            if (i > -1) {
-              this.store.data.pens.splice(i, 1);
-            }
-          });
-          action.type = EditType.Delete;
-          break;
-        case EditType.Update:
-          action.pens.forEach((pen) => {
-            const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
-            if (i > -1) {
-              Object.assign(this.store.data.pens[i], pen);
-              pen = this.store.data.pens[i];
-              this.store.pens[pen.id] = pen;
-              this.dirtyPenRect(pen);
-              this.updateLines(pen, true);
-            }
-          });
-          break;
-        case EditType.Delete:
-          action.pens.forEach((pen) => {
-            this.store.data.pens.splice(pen.calculative.layer, 0, pen);
-          });
-          action.type = EditType.Add;
-          break;
-      }
-    }
+    this.store.hoverAnchor = undefined;
+    this.store.hover = undefined;
 
+    switch (action.type) {
+      case EditType.Add:
+        action.pens.forEach((pen) => {
+          const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
+          if (i > -1) {
+            this.store.data.pens.splice(i, 1);
+          }
+        });
+        action.type = EditType.Delete;
+        break;
+      case EditType.Update:
+        const pens = undo ? action.initPens : action.pens;
+        pens.forEach((pen) => {
+          const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
+          if (i > -1) {
+            Object.assign(this.store.data.pens[i], pen);
+            pen = this.store.data.pens[i];
+            this.store.pens[pen.id] = pen;
+            for (const k in pen) {
+              if (typeof pen[k] !== 'object' || k === 'lineDash') {
+                pen.calculative[k] = pen[k];
+              }
+            }
+            pen.calculative.image = undefined;
+            this.dirtyPenRect(pen);
+            this.updateLines(pen, true);
+          }
+        });
+        break;
+      case EditType.Delete:
+        action.pens.forEach((pen) => {
+          this.store.data.pens.splice(pen.calculative.layer, 0, pen);
+        });
+        action.type = EditType.Add;
+        break;
+    }
     this.render(Infinity);
+
+    this.store.emitter.emit(undo ? 'undo' : 'redo', action);
   }
 
   makePen(pen: Pen) {
@@ -1660,10 +1649,7 @@ export class Canvas {
         this.store.pens[this.drawingLine.id] = this.drawingLine;
         this.store.emitter.emit('addPen', this.drawingLine);
         this.active([this.drawingLine]);
-        this.pushHistory({
-          type: EditType.Add,
-          pens: [this.drawingLine],
-        });
+        this.pushHistory({ type: EditType.Add, pens: [this.drawingLine] });
       }
     }
     this.drawline();
@@ -1694,10 +1680,7 @@ export class Canvas {
           this.store.pens[this.pencilLine.id] = this.pencilLine;
           this.store.emitter.emit('addPen', this.pencilLine);
           this.active([this.pencilLine]);
-          this.pushHistory({
-            type: EditType.Add,
-            pens: [this.pencilLine],
-          });
+          this.pushHistory({ type: EditType.Add, pens: [this.pencilLine] });
         }
         this.render(Infinity);
       }
@@ -1809,9 +1792,13 @@ export class Canvas {
     }
 
     if (now - this.lastRender < this.store.options.interval) {
-      requestAnimationFrame(this.render);
+      if (this.renderTimer) {
+        cancelAnimationFrame(this.renderTimer);
+      }
+      this.renderTimer = requestAnimationFrame(this.render);
       return;
     }
+    this.renderTimer = undefined;
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
@@ -2034,7 +2021,14 @@ export class Canvas {
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
-    this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
+    }, 200);
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -2043,6 +2037,7 @@ export class Canvas {
     }
 
     this.calibrateMouse(center);
+
     this.dirty = true;
     const s = scale / this.store.data.scale;
     this.store.data.pens.forEach((pen) => {
@@ -2057,11 +2052,57 @@ export class Canvas {
     this.store.data.center = center;
 
     this.render(Infinity);
-
     this.store.emitter.emit('scale', this.store.data.scale);
   }
 
+  rotatePens(e: Point) {
+    if (!this.initPens) {
+      this.initPens = [];
+      for (let pen of this.store.active) {
+        this.initPens.push(deepClone(pen));
+      }
+    }
+
+    this.activeRect.rotate = calcRotate(e, this.activeRect.center);
+    if (this.store.active.length === 1) {
+      this.lastRotate = this.store.active[0].rotate || 0;
+    }
+    const angle = this.activeRect.rotate - this.lastRotate;
+    for (let pen of this.store.active) {
+      if (pen.parentId) {
+        return;
+      }
+      this.rotatePen(pen, angle, this.activeRect);
+    }
+    this.lastRotate = this.activeRect.rotate;
+    this.getSizeCPs();
+    this.render(Infinity);
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      const pens = this.store.active;
+      this.store.emitter.emit('rotatePens', pens);
+
+      const currentPens = [];
+      for (let pen of pens) {
+        currentPens.push(deepClone(pen));
+      }
+      this.pushHistory({ type: EditType.Update, pens: currentPens, initPens: this.initPens });
+      this.initPens = undefined;
+    }, 200);
+  }
+
   resizePens(e: Point) {
+    if (!this.initPens) {
+      this.initPens = [];
+      for (let pen of this.store.active) {
+        this.initPens.push(deepClone(pen));
+      }
+    }
+
     const p1 = { x: this.mouseDown.x, y: this.mouseDown.y };
     const p2 = { x: e.x, y: e.y };
     rotatePoint(p1, -this.activeRect.rotate, this.activeRect.center);
@@ -2162,6 +2203,22 @@ export class Canvas {
     });
     this.getSizeCPs();
     this.render(Infinity);
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      const pens = this.store.active;
+      this.store.emitter.emit('resizePens', pens);
+
+      const currentPens = [];
+      for (let pen of pens) {
+        currentPens.push(deepClone(pen));
+      }
+      this.pushHistory({ type: EditType.Update, pens: currentPens, initPens: this.initPens });
+      this.initPens = undefined;
+    }, 200);
   }
 
   movePens(e: { x: number; y: number; ctrlKey?: boolean; shiftKey?: boolean }) {
@@ -2198,12 +2255,20 @@ export class Canvas {
     if (e.ctrlKey) {
       y = 0;
     }
-    this.translatePens(x, y, true);
+
+    this.updatingPens = true;
+    this.translatePens(this.store.active, x, y, true);
   }
 
   moveLineAnchor(e: { x: number; y: number }) {
     if (!this.activeRect || this.store.data.locked) {
       return;
+    }
+    if (!this.initPens) {
+      this.initPens = [];
+      for (let pen of this.store.active) {
+        this.initPens.push(deepClone(pen));
+      }
     }
 
     if (this.store.activeAnchor) {
@@ -2260,12 +2325,36 @@ export class Canvas {
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
     this.render(Infinity);
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      const pens = this.store.active;
+      this.store.emitter.emit('update', pens);
+
+      const currentPens = [];
+      for (let pen of pens) {
+        currentPens.push(deepClone(pen));
+      }
+      this.pushHistory({ type: EditType.Update, pens: currentPens, initPens: this.initPens });
+      this.initPens = undefined;
+    }, 200);
   }
 
   moveLineAnchorPrev(e: { x: number; y: number }) {
     if (!this.activeRect || this.store.data.locked) {
       return;
     }
+
+    if (!this.initPens) {
+      this.initPens = [];
+      for (let pen of this.store.active) {
+        this.initPens.push(deepClone(pen));
+      }
+    }
+
     this.store.activeAnchor.prev.x = e.x;
     this.store.activeAnchor.prev.y = e.y;
     if (this.store.activeAnchor.next) {
@@ -2285,12 +2374,35 @@ export class Canvas {
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
     this.render(Infinity);
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      const pens = this.store.active;
+      this.store.emitter.emit('update', pens);
+
+      const currentPens = [];
+      for (let pen of pens) {
+        currentPens.push(deepClone(pen));
+      }
+      this.pushHistory({ type: EditType.Update, pens: currentPens, initPens: this.initPens });
+      this.initPens = undefined;
+    }, 200);
   }
 
   moveLineAnchorNext(e: { x: number; y: number }) {
     if (!this.activeRect || this.store.data.locked) {
       return;
     }
+    if (!this.initPens) {
+      this.initPens = [];
+      for (let pen of this.store.active) {
+        this.initPens.push(deepClone(pen));
+      }
+    }
+
     this.store.activeAnchor.next.x = e.x;
     this.store.activeAnchor.next.y = e.y;
     if (this.store.activeAnchor.prev) {
@@ -2311,14 +2423,69 @@ export class Canvas {
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
     this.render(Infinity);
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      const pens = this.store.active;
+      this.store.emitter.emit('update', pens);
+
+      const currentPens = [];
+      for (let pen of pens) {
+        currentPens.push(deepClone(pen));
+      }
+      this.pushHistory({ type: EditType.Update, pens: currentPens, initPens: this.initPens });
+      this.initPens = undefined;
+    }, 200);
   }
 
-  translatePens(x: number, y: number, doing?: boolean, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.active;
+  setAnchor(e: { x: number; y: number }) {
+    this.initPens = [deepClone(this.store.hover)];
+
+    if (this.store.hoverAnchor) {
+      removePenAnchor(this.store.hover, this.store.hoverAnchor);
+      if (this.store.hover.type) {
+        this.initLineRect(this.store.hover);
+      }
+      this.store.hoverAnchor = undefined;
+      this.store.activeAnchor = undefined;
+      this.externalElements.style.cursor = 'default';
+    } else if (this.store.hover) {
+      if (this.store.hover.type) {
+        this.store.activeAnchor = addLineAnchor(this.store.hover, this.store.pointAt, this.store.pointAtIndex);
+        this.initLineRect(this.store.hover);
+
+        const pt = { x: e.x, y: e.y };
+        this.getHover(pt);
+      } else {
+        const pt = { x: e.x, y: e.y };
+        this.store.activeAnchor = pushPenAnchor(this.store.hover, pt);
+      }
     }
-    if (pens.length === 1 && pens[0].type && pens[0].anchors.findIndex((pt) => pt.connectTo) > -1) {
-      return;
+    this.hotkeyType = HotkeyType.None;
+    this.render(Infinity);
+
+    this.store.emitter.emit('update', [this.store.hover]);
+    this.pushHistory({ type: EditType.Update, pens: [deepClone(this.store.hover)], initPens: this.initPens });
+    this.initPens = undefined;
+  }
+
+  translatePens(pens: Pen[], x: number, y: number, doing?: boolean) {
+    if (
+      !pens ||
+      pens.length < 1 ||
+      (pens.length === 1 && pens[0].type && pens[0].anchors.findIndex((pt) => pt.connectTo) > -1)
+    ) {
+      return false;
+    }
+
+    if (!doing || (this.updatingPens && !this.initPens)) {
+      this.initPens = [];
+      for (let pen of pens) {
+        this.initPens.push(deepClone(pen));
+      }
     }
 
     translateRect(this.activeRect, x, y);
@@ -2356,6 +2523,21 @@ export class Canvas {
     }
 
     this.render(Infinity);
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      this.store.emitter.emit('translatePens', pens);
+
+      const currentPens = [];
+      for (let pen of pens) {
+        currentPens.push(deepClone(pen));
+      }
+      this.pushHistory({ type: EditType.Update, pens: currentPens, initPens: this.initPens });
+      this.initPens = undefined;
+    }, 200);
   }
 
   updateLines(pen: Pen, change?: boolean) {
@@ -2432,12 +2614,43 @@ export class Canvas {
     }
   }
 
+  nextAnimate(pen: Pen) {
+    if (!pen) {
+      return;
+    }
+    this.store.emitter.emit('animateEnd', pen);
+
+    let pens: Pen[];
+    if (pen.nextAnimate) {
+      pens = this.store.data.pens.filter((pen) => {
+        return pen.tags && pen.tags.indexOf(pen.nextAnimate) > -1;
+      });
+    }
+
+    if (!pens) {
+      return;
+    }
+
+    pens.forEach((pen) => {
+      if (pen.calculative.pause) {
+        const d = Date.now() - pen.calculative.pause;
+        pen.calculative.pause = undefined;
+        pen.calculative.frameStart += d;
+        pen.calculative.frameEnd += d;
+      } else {
+        this.store.animates.add(pen);
+      }
+    });
+    this.animate();
+  }
+
   animate() {
+    if (this.animateRendering) {
+      return;
+    }
+
     requestAnimationFrame(() => {
       const now = Date.now();
-      if (this.animateRendering) {
-        return;
-      }
       if (now - this.lastAnimateRender < this.store.options.animateInterval) {
         if (this.store.animates.size > 0) {
           this.animate();
@@ -2461,46 +2674,49 @@ export class Canvas {
             if (pen.calculative.dirty) {
               this.dirtyPenRect(pen, true);
             }
-          } else if (pen.calculative.initRect) {
-            if (pen.keepAnimateState) {
-              for (const k in pen) {
-                if (pen.calculative[k] === undefined) {
-                  continue;
+          } else {
+            if (pen.calculative.initRect) {
+              if (pen.keepAnimateState) {
+                for (const k in pen) {
+                  if (pen.calculative[k] === undefined) {
+                    continue;
+                  }
+                  if (
+                    k !== 'x' &&
+                    k !== 'y' &&
+                    k !== 'width' &&
+                    k !== 'height' &&
+                    k !== 'initRect' &&
+                    (typeof pen[k] !== 'object' || k === 'lineDash')
+                  ) {
+                    pen[k] = pen.calculative[k];
+                  }
                 }
-                if (
-                  k !== 'x' &&
-                  k !== 'y' &&
-                  k !== 'width' &&
-                  k !== 'height' &&
-                  k !== 'initRect' &&
-                  (typeof pen[k] !== 'object' || k === 'lineDash')
-                ) {
-                  pen[k] = pen.calculative[k];
+              } else {
+                for (const k in pen) {
+                  if (
+                    k !== 'rotate' &&
+                    k !== 'x' &&
+                    k !== 'y' &&
+                    k !== 'width' &&
+                    k !== 'height' &&
+                    k !== 'initRect' &&
+                    (typeof pen[k] !== 'object' || k === 'lineDash')
+                  ) {
+                    pen.calculative[k] = pen[k];
+                  }
                 }
+                pen.calculative.worldRect = pen.calculative.initRect;
               }
-            } else {
-              for (const k in pen) {
-                if (
-                  k !== 'rotate' &&
-                  k !== 'x' &&
-                  k !== 'y' &&
-                  k !== 'width' &&
-                  k !== 'height' &&
-                  k !== 'initRect' &&
-                  (typeof pen[k] !== 'object' || k === 'lineDash')
-                ) {
-                  pen.calculative[k] = pen[k];
-                }
+              this.dirtyPenRect(pen, !pen.keepAnimateState);
+              if (pen.calculative.text !== pen.text) {
+                pen.calculative.text = pen.text;
+                calcTextLines(pen);
               }
-              pen.calculative.worldRect = pen.calculative.initRect;
+              dels.push(pen);
+              pen.calculative.initRect = undefined;
             }
-            this.dirtyPenRect(pen, !pen.keepAnimateState);
-            if (pen.calculative.text !== pen.text) {
-              pen.calculative.text = pen.text;
-              calcTextLines(pen);
-            }
-            dels.push(pen);
-            pen.calculative.initRect = undefined;
+            this.nextAnimate(pen);
           }
           this.updateLines(pen, true);
         } else {
@@ -2523,6 +2739,7 @@ export class Canvas {
               }
             }
             dels.push(pen);
+            this.nextAnimate(pen);
           }
         }
 
@@ -2534,9 +2751,8 @@ export class Canvas {
       dels.forEach((pen) => {
         this.store.animates.delete(pen);
       });
-      this.animateRendering = false;
       this.render();
-
+      this.animateRendering = false;
       this.animate();
     });
   }
@@ -2547,17 +2763,7 @@ export class Canvas {
 
   cut(pens?: Pen[]) {
     this.store.clipboard = pens || this.store.active;
-    for (let i = 0; i < this.store.data.pens.length; i++) {
-      for (const pen of this.store.clipboard) {
-        if (pen.id === this.store.data.pens[i].id) {
-          this.store.data.pens.splice(i, 1);
-          --i;
-        }
-      }
-    }
-    this.render(Infinity);
-
-    this.store.emitter.emit('delete', this.store.clipboard);
+    this.delete(this.store.clipboard);
   }
 
   paste() {
@@ -2575,8 +2781,33 @@ export class Canvas {
         pens.push(newPen);
       }
     }
-    this.store.emitter.emit('add', pens);
+
     this.active(pens);
+    this.pushHistory({ type: EditType.Add, pens });
+    this.store.emitter.emit('add', pens);
+  }
+
+  delete(pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.active;
+    }
+    if (!pens || !pens.length) {
+      return;
+    }
+
+    pens.forEach((pen) => {
+      const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
+      if (i > -1) {
+        this.store.data.pens.splice(i, 1);
+        this.store.pens[pen.id] = undefined;
+      }
+    });
+    this.inactive();
+    this.store.hoverAnchor = undefined;
+    this.store.hover = undefined;
+    this.render();
+    this.pushHistory({ type: EditType.Delete, pens });
+    this.store.emitter.emit('delete', pens);
   }
 
   destroy() {

@@ -34,8 +34,8 @@ export enum EditType {
 }
 
 export interface EditAction {
-  type: EditType;
-  data?: any;
+  type?: EditType;
+  initPens?: Pen[];
   pens?: Pen[];
 }
 

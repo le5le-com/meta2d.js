@@ -4,7 +4,7 @@ import { Canvas } from './canvas';
 import { Options } from './options';
 import { calcTextLines, facePen, getParent, LockState, Pen, PenType } from './pen';
 import { Point } from './point';
-import { clearStore, globalStore, TopologyData, TopologyStore, useStore } from './store';
+import { clearStore, EditAction, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
 import { calcRelativeRect, getRect } from './rect';
@@ -356,28 +356,19 @@ export class Topology {
   }
 
   delete(pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.active;
-    }
-    if (!pens || !pens.length) {
-      return;
-    }
-
-    pens.forEach((pen) => {
-      const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
-      if (i > -1) {
-        this.store.data.pens.splice(i, 1);
-        this.store.pens[pen.id] = undefined;
-      }
-    });
-
-    this.render(Infinity);
-
-    this.store.emitter.emit('delete', pens);
+    this.canvas.delete(pens);
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
     this.canvas.scale(scale, center);
+  }
+
+  translate(x: number, y: number) {
+    this.canvas.translate(x, y);
+  }
+
+  translatePens(pens: Pen[], x: number, y: number) {
+    this.canvas.translatePens(pens, x, y);
   }
 
   getParent(pen: Pen) {
@@ -505,7 +496,12 @@ export class Topology {
     this.render(Infinity);
   }
 
+  pushHistory(action: EditAction) {
+    this.canvas.pushHistory(action);
+  }
+
   destroy(global?: boolean) {
+    clearStore(this.store);
     this.canvas.destroy();
     // Clear data.
     globalStore[this.store.topologyId] = undefined;
