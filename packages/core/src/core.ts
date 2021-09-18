@@ -102,6 +102,15 @@ export class Topology {
     return this.canvas.addPen(pen, history);
   }
 
+  addPens(pens: Pen[], history?: boolean) {
+    const list: Pen[] = [];
+    for (let pen of pens) {
+      const p = this.canvas.addPen(pen, history);
+      p && list.push(p);
+    }
+    return list;
+  }
+
   render(now?: number) {
     this.canvas.render(now);
   }
@@ -320,6 +329,8 @@ export class Topology {
     });
     this.canvas.active([parent]);
     this.render();
+
+    this.store.emitter.emit('add', [parent]);
   }
 
   uncombine(pen?: Pen) {

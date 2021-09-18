@@ -633,6 +633,10 @@ export class Canvas {
     this.mouseDown = e;
     this.lastMouseTime = performance.now();
 
+    setTimeout(() => {
+      this.store.emitter.emit('click', e);
+    }, 30);
+
     // Set anchor of pen.
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.setAnchor(e);
@@ -1647,7 +1651,7 @@ export class Canvas {
         this.initLineRect(this.drawingLine);
         this.store.data.pens.push(this.drawingLine);
         this.store.pens[this.drawingLine.id] = this.drawingLine;
-        this.store.emitter.emit('addPen', this.drawingLine);
+        this.store.emitter.emit('add', this.drawingLine);
         this.active([this.drawingLine]);
         this.pushHistory({ type: EditType.Add, pens: [this.drawingLine] });
       }
@@ -1678,7 +1682,7 @@ export class Canvas {
           this.initLineRect(this.pencilLine);
           this.store.data.pens.push(this.pencilLine);
           this.store.pens[this.pencilLine.id] = this.pencilLine;
-          this.store.emitter.emit('addPen', this.pencilLine);
+          this.store.emitter.emit('add', this.pencilLine);
           this.active([this.pencilLine]);
           this.pushHistory({ type: EditType.Add, pens: [this.pencilLine] });
         }
