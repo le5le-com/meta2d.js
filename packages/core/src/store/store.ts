@@ -43,7 +43,7 @@ export interface TopologyStore {
   // An id of topology instance.
   topologyId: string;
   data: TopologyData;
-  pens: any;
+  pens: { [key: string]: Pen };
 
   // world offset
   center: Point;

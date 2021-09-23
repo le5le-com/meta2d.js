@@ -511,6 +511,18 @@ export class Topology {
     this.canvas.pushHistory(action);
   }
 
+  showInput(pen: Pen) {
+    this.canvas.showInput(pen);
+  }
+
+  hideInput() {
+    this.canvas.hideInput();
+  }
+
+  clearDropdownList() {
+    this.canvas.clearDropdownList();
+  }
+
   destroy(global?: boolean) {
     clearStore(this.store);
     this.canvas.destroy();

@@ -144,6 +144,9 @@ export interface Pen extends Rect {
   // 提前预置的不同效果的动画组
   animateList?: Pen[][];
 
+  input?: boolean;
+  dropdownList?: any[];
+
   calculative?: {
     x?: number;
     y?: number;
@@ -245,6 +248,8 @@ export interface Pen extends Rect {
     _rotate?: number;
 
     layer?: number;
+
+    dropdownList?: any[];
   };
 
   // 最后一个动画帧状态数据

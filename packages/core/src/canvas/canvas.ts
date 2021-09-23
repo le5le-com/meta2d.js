@@ -109,6 +109,7 @@ export class Canvas {
   initPens?: Pen[];
 
   pointSize = 8;
+  pasteOffset = 10;
 
   beforeAddPen: (pen: Pen) => boolean;
   beforeAddAnchor: (pen: Pen, anchor: Point) => boolean;
@@ -116,6 +117,12 @@ export class Canvas {
   beforeRemoveAnchor: (pen: Pen, anchor: Point) => boolean;
 
   customeDock: Function;
+
+  inputParent = document.createElement('div');
+  input = document.createElement('textarea');
+  inputRight = document.createElement('div');
+  dropdown = document.createElement('ul');
+  isClickDropdown?: boolean;
 
   constructor(public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
@@ -126,6 +133,7 @@ export class Canvas {
     this.externalElements.style.outline = 'none';
     this.externalElements.style.background = 'transparent';
     parentElement.appendChild(this.externalElements);
+    this.createInput();
 
     this.store.dpiRatio = window ? window.devicePixelRatio : 1;
 
@@ -159,14 +167,15 @@ export class Canvas {
       this.externalElements.ontouchend = this.ontouchend;
     } else {
       this.externalElements.onmousedown = (e) => {
-        this.onMouseDown({
-          x: e.x,
-          y: e.y,
-          ctrlKey: e.ctrlKey || e.metaKey,
-          shiftKey: e.shiftKey,
-          altKey: e.altKey,
-          buttons: e.buttons,
-        });
+        !(e.target as HTMLElement).dataset.l &&
+          this.onMouseDown({
+            x: e.x,
+            y: e.y,
+            ctrlKey: e.ctrlKey || e.metaKey,
+            shiftKey: e.shiftKey,
+            altKey: e.altKey,
+            buttons: e.buttons,
+          });
       };
       this.externalElements.onmousemove = (e) => {
         this.onMouseMove({
@@ -190,7 +199,7 @@ export class Canvas {
       };
     }
 
-    this.externalElements.ondblclick = (e: any) => {};
+    this.externalElements.ondblclick = this.ondblclick;
     this.externalElements.onblur = () => {
       this.mouseDown = undefined;
     };
@@ -525,14 +534,15 @@ export class Canvas {
       return;
     }
 
-    this.onMouseDown({
-      x,
-      y,
-      ctrlKey: e.ctrlKey || e.metaKey,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      buttons: 1,
-    });
+    !(e.target as HTMLElement).dataset.l &&
+      this.onMouseDown({
+        x,
+        y,
+        ctrlKey: e.ctrlKey || e.metaKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        buttons: 1,
+      });
   };
 
   ontouchmove = (event: any) => {
@@ -617,6 +627,7 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    this.hideInput();
     if (this.store.data.locked === LockState.Disable || (e.buttons !== 1 && e.buttons !== 2)) {
       this.hoverType = HoverType.None;
       return;
@@ -634,7 +645,14 @@ export class Canvas {
     this.lastMouseTime = performance.now();
 
     setTimeout(() => {
-      this.store.emitter.emit('click', e);
+      if (this.store.hover && this.store.hover.input) {
+        this.showInput(this.store.hover);
+      }
+      this.store.emitter.emit('click', {
+        x: e.x,
+        y: e.y,
+        pen: this.store.hover,
+      });
     }, 30);
 
     // Set anchor of pen.
@@ -2763,10 +2781,11 @@ export class Canvas {
 
   copy(pens?: Pen[]) {
     this.store.clipboard = pens || this.store.active;
+    this.pasteOffset = 10;
   }
 
   cut(pens?: Pen[]) {
-    this.store.clipboard = pens || this.store.active;
+    this.copy(pens);
     this.delete(this.store.clipboard);
   }
 
@@ -2779,12 +2798,14 @@ export class Canvas {
     for (const pen of this.store.clipboard) {
       const newPen = deepClone(pen);
       newPen.id = s8();
-      translateRect(newPen, 10, 10);
+      translateRect(newPen, this.pasteOffset, this.pasteOffset);
       if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
         this.makePen(newPen);
         pens.push(newPen);
       }
     }
+
+    this.pasteOffset += 10;
 
     this.active(pens);
     this.pushHistory({ type: EditType.Add, pens });
@@ -2813,6 +2834,227 @@ export class Canvas {
     this.pushHistory({ type: EditType.Delete, pens });
     this.store.emitter.emit('delete', pens);
   }
+
+  private ondblclick = (e: any) => {
+    if (this.store.hover) {
+      if (
+        !(
+          this.store.data.locked ||
+          this.store.hover.locked ||
+          this.store.hover.disableInput ||
+          this.store.options.disableInput
+        )
+      ) {
+        this.showInput(this.store.hover);
+      }
+      // this.moveIn.hoverNode.dblclick();
+    }
+
+    this.store.emitter.emit('dblclick', {
+      x: e.x,
+      y: e.y,
+      pen: this.store.hover,
+    });
+  };
+
+  showInput = (pen: Pen) => {
+    if (this.input.dataset.penId === pen.id) {
+      this.input.focus();
+      return;
+    } else if (this.input.dataset.penId) {
+      this.hideInput();
+    }
+
+    const textRect = pen.calculative.worldTextRect;
+    this.input.value = pen.text || '';
+    this.inputParent.style.left = textRect.x + this.store.data.x + 5 + 'px';
+    this.inputParent.style.top = textRect.y + this.store.data.y + 5 + 'px';
+    this.inputParent.style.width = textRect.width - 10 + 'px';
+    this.inputParent.style.height = textRect.height - 10 + 'px';
+    this.inputParent.style.zIndex = '1000';
+    if (pen.rotate % 360) {
+      this.inputParent.style.transform = `rotate(${pen.rotate}deg)`;
+    } else {
+      this.input.style.transform = undefined;
+    }
+    this.inputParent.style.display = 'flex';
+    this.input.dataset.penId = pen.id;
+    this.input.readOnly = pen.disableInput;
+    if (pen.dropdownList && this.dropdown.style.display !== 'block') {
+      this.setDropdownList();
+    } else {
+      this.inputRight.style.display = 'none';
+    }
+    this.input.focus();
+
+    pen.calculative.text = '';
+    this.render(Infinity);
+  };
+
+  hideInput = () => {
+    if (this.inputParent.style.display === 'flex') {
+      this.inputParent.style.display = 'none';
+      const pen = this.store.pens[this.input.dataset.penId];
+      if (!pen) {
+        return;
+      }
+      pen.text = this.input.value;
+      pen.calculative.text = pen.text;
+      this.input.dataset.penId = undefined;
+      calcTextRect(pen);
+      this.dirty = true;
+    }
+  };
+
+  private createInput() {
+    this.inputParent.classList.add('topology-input');
+    this.inputRight.classList.add('right');
+    this.inputParent.appendChild(this.input);
+    this.inputParent.appendChild(this.inputRight);
+    this.inputParent.appendChild(this.dropdown);
+    this.externalElements.appendChild(this.inputParent);
+
+    this.inputParent.dataset.l = '1';
+    this.input.dataset.l = '1';
+    this.inputRight.dataset.l = '1';
+    this.dropdown.dataset.l = '1';
+    this.inputRight.style.transform = 'rotate(135deg)';
+
+    const style = document.createElement('style');
+    document.head.appendChild(style);
+    style.sheet.insertRule('.topology-input{display:none;position:absolute;outline:none;align-items: center;}');
+    style.sheet.insertRule(
+      '.topology-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
+    );
+    style.sheet.insertRule(
+      '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);}'
+    );
+    style.sheet.insertRule(
+      '.topology-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;}'
+    );
+    style.sheet.insertRule(
+      '.topology-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
+    );
+    style.sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
+    this.input.onclick = () => {
+      if (this.dropdown.style.display === 'block') {
+        this.dropdown.style.display = 'none';
+        this.inputRight.style.transform = 'rotate(135deg)';
+      } else {
+        this.dropdown.style.display = 'block';
+        this.inputRight.style.transform = 'rotate(315deg)';
+      }
+      const pen = this.store.pens[this.input.dataset.penId];
+      this.store.emitter.emit('clickInput', pen);
+    };
+    this.input.onkeyup = (e: KeyboardEvent) => {
+      this.setDropdownList(true);
+      const pen = this.store.pens[this.input.dataset.penId];
+      this.store.emitter.emit('inputKey', { pen, text: e.key });
+    };
+    // this.input.onblur = () => {
+    //   setTimeout(() => {
+    //     if (this.isClickDropdown) {
+    //       this.isClickDropdown = false;
+    //       return;
+    //     }
+    //     this.hideInput();
+    //     this.isClickDropdown = false;
+    //   }, 300);
+    // };
+  }
+
+  clearDropdownList() {
+    if (this.dropdown.hasChildNodes()) {
+      for (let i = 0; i < this.dropdown.childNodes.length; i++) {
+        this.dropdown.childNodes[i].remove();
+        --i;
+      }
+    }
+  }
+
+  private setDropdownList = (search?: boolean) => {
+    this.clearDropdownList();
+    this.dropdown.style.display = 'block';
+    this.inputRight.style.display = 'block';
+    setTimeout(() => {
+      this.inputRight.style.transform = 'rotate(315deg)';
+    });
+    const pen = this.store.pens[this.input.dataset.penId];
+    if (!pen || !pen.dropdownList) {
+      this.dropdown.style.display = 'none';
+      this.inputRight.style.display = 'none';
+      this.inputRight.style.transform = 'rotate(135deg)';
+      return;
+    }
+    if (!pen.dropdownList.length) {
+      const none = document.createElement('div');
+      none.innerText = 'None';
+      none.style.padding = '5px 12px';
+      none.style.color = '#ddd';
+      this.dropdown.appendChild(none);
+      return;
+    }
+
+    const text = this.input.value;
+    let i = 0;
+    for (const item of pen.dropdownList) {
+      if (search && text) {
+        const t: string = item.text || item + '';
+        if (t.indexOf(text) > -1) {
+          const li = document.createElement('li');
+          li.innerText = item.text || item;
+          li.dataset.l = '1';
+          li.dataset.i = i + '';
+          li.onclick = this.selectDropdown;
+          this.dropdown.appendChild(li);
+        }
+      } else {
+        const li = document.createElement('li');
+        li.innerText = item.text || item;
+        li.dataset.l = '1';
+        li.dataset.i = i + '';
+        li.onclick = this.selectDropdown;
+        this.dropdown.appendChild(li);
+      }
+      ++i;
+    }
+
+    if (!this.dropdown.hasChildNodes()) {
+      const none = document.createElement('div');
+      none.innerText = 'None';
+      none.style.padding = '5px 12px';
+      none.style.color = '#ddd';
+      this.dropdown.appendChild(none);
+    }
+  };
+
+  private selectDropdown = (e: any) => {
+    this.isClickDropdown = true;
+    const li = e.target;
+    const pen = this.store.pens[this.input.dataset.penId];
+    if (!li || !pen || !pen.dropdownList) {
+      return;
+    }
+
+    const index = +li.dataset.i;
+    if (!pen.dropdownList[index]) {
+      return;
+    }
+
+    this.initPens = [deepClone(pen)];
+
+    if (typeof pen.dropdownList[index] === 'object') {
+      Object.assign(pen, pen.dropdownList[index]);
+    } else {
+      pen.text = pen.dropdownList[index] + '';
+    }
+    this.input.value = pen.text;
+    this.dropdown.style.display = 'none';
+    this.inputRight.style.transform = 'rotate(135deg)';
+    this.pushHistory({ type: EditType.Update, pens: [deepClone(pen)], initPens: this.initPens });
+    this.store.emitter.emit('update', pen);
+  };
 
   destroy() {
     // ios
