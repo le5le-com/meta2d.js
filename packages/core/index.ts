@@ -4,3 +4,4 @@ export * from './src/utils';
 export * from './src/pen';
 export * from './src/rect';
 export * from './src/point';
+export * from './src/event';

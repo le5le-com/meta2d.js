@@ -2,7 +2,7 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { calcTextLines, facePen, getParent, LockState, Pen, PenType } from './pen';
+import { calcTextLines, doEvent, facePen, getParent, LockState, Pen, PenType } from './pen';
 import { Point } from './point';
 import { clearStore, EditAction, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
@@ -502,6 +502,7 @@ export class Topology {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
+      doEvent(pen, 'setValue');
     });
 
     this.render(Infinity);

@@ -28,6 +28,7 @@ import {
   getParent,
   setHover,
   getAllChildren,
+  doEvent,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
@@ -653,6 +654,7 @@ export class Canvas {
         y: e.y,
         pen: this.store.hover,
       });
+      doEvent(this.store.hover, 'click');
     }, 30);
 
     // Set anchor of pen.
@@ -782,10 +784,12 @@ export class Canvas {
                   this.store.active.findIndex((pen) => pen === pen),
                   1
                 );
+                doEvent(pen, 'inactive');
                 this.store.emitter.emit('inactive', [pen]);
               } else {
                 pen.calculative.active = true;
                 this.store.active.push(pen);
+                doEvent(pen, 'active');
                 this.store.emitter.emit('active', [pen]);
               }
               this.dirty = true;
@@ -797,6 +801,7 @@ export class Canvas {
               }
               this.store.active = [this.store.hover];
               this.store.hover.calculative.active = true;
+              doEvent(this.store.hover, 'active');
               this.store.emitter.emit('active', [this.store.hover]);
               this.dirty = true;
             } else {
@@ -1081,6 +1086,7 @@ export class Canvas {
       pen.calculative.active = undefined;
       pen.calculative.activeAnchor = undefined;
       setChildrenActive(this.store, pen, false);
+      !drawing && doEvent(pen, 'inactive');
     });
     !drawing && this.store.emitter.emit('inactive', this.store.active);
     this.store.active = [];
@@ -1101,6 +1107,7 @@ export class Canvas {
     pens.forEach((pen) => {
       pen.calculative.active = true;
       setChildrenActive(this.store, pen);
+      doEvent(pen, 'active');
     });
     this.store.active.push(...pens);
     this.calcActiveRect();
@@ -1244,11 +1251,13 @@ export class Canvas {
       this.dirty = true;
       if (this.store.lastHover) {
         setHover(this.store, getParent(this.store, this.store.lastHover) || this.store.lastHover, false);
+        doEvent(this.store.lastHover, 'leave');
         this.store.emitter.emit('leave', this.store.lastHover);
       }
       if (this.store.hover) {
         this.store.hover.calculative.hover = true;
         setHover(this.store, getParent(this.store, this.store.hover) || this.store.hover);
+        doEvent(this.store.hover, 'enter');
         this.store.emitter.emit('enter', this.store.hover);
       }
       this.store.lastHover = this.store.hover;
@@ -2847,7 +2856,7 @@ export class Canvas {
       ) {
         this.showInput(this.store.hover);
       }
-      // this.moveIn.hoverNode.dblclick();
+      doEvent(this.store.hover, 'dblclick');
     }
 
     this.store.emitter.emit('dblclick', {
@@ -3053,7 +3062,8 @@ export class Canvas {
     this.dropdown.style.display = 'none';
     this.inputRight.style.transform = 'rotate(135deg)';
     this.pushHistory({ type: EditType.Update, pens: [deepClone(pen)], initPens: this.initPens });
-    this.store.emitter.emit('update', pen);
+    doEvent(pen, 'setValue');
+    this.store.emitter.emit('setValue', pen);
   };
 
   destroy() {

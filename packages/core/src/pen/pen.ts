@@ -5,6 +5,7 @@ import { calcCenter, calcRelativePoint, Rect, scaleRect, translateRect } from '.
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
 import { deepClone } from '../utils/clone';
+import { Event } from '../event';
 
 export enum PenType {
   Node,
@@ -147,6 +148,8 @@ export interface Pen extends Rect {
   input?: boolean;
   dropdownList?: any[];
 
+  events?: Event[];
+
   calculative?: {
     x?: number;
     y?: number;
@@ -250,6 +253,8 @@ export interface Pen extends Rect {
     layer?: number;
 
     dropdownList?: any[];
+
+    fns?: any;
   };
 
   // 最后一个动画帧状态数据
@@ -1338,5 +1343,11 @@ export function setHover(store: TopologyStore, pen: Pen, hover = true) {
     pen.children.forEach((id) => {
       setHover(store, store.pens[id], hover);
     });
+  }
+}
+
+export function doEvent(pen: Pen, eventName: string) {
+  if (!pen) {
+    return;
   }
 }
