@@ -40,8 +40,7 @@ export interface EditAction {
 }
 
 export interface TopologyStore {
-  // An id of topology instance.
-  topologyId: string;
+  id: string;
   data: TopologyData;
   pens: { [key: string]: Pen };
 
@@ -61,7 +60,6 @@ export interface TopologyStore {
   animates: Set<Pen>;
   options: Options;
   emitter: Emitter;
-  penPaths: any;
   dpiRatio?: number;
   clipboard?: Pen[];
 }
@@ -89,7 +87,7 @@ export const createStore = () => {
 export const useStore = (id = 'default') => {
   if (!globalStore[id]) {
     globalStore[id] = createStore();
-    globalStore[id].topologyId = id;
+    globalStore[id].id = id;
   }
 
   return globalStore[id];

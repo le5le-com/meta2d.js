@@ -470,7 +470,7 @@ export class Canvas {
           this.store.active.forEach((pen) => {
             if (pen.type) {
               pen.close = !pen.close;
-              this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
+              this.store.path2dMap.set(pen, globalStore.registerPens[pen.name](pen));
               this.dirty = true;
             }
           });
@@ -921,7 +921,7 @@ export class Canvas {
       pt.id = s8();
       pt.penId = this.pencilLine.id;
       this.pencilLine.calculative.worldAnchors.push(pt);
-      this.store.path2dMap.set(this.pencilLine, this.store.penPaths[this.pencilLine.name](this.pencilLine));
+      this.store.path2dMap.set(this.pencilLine, globalStore.registerPens[this.pencilLine.name](this.pencilLine));
       this.dirty = true;
     } else if (this.mouseDown) {
       if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
@@ -1574,7 +1574,6 @@ export class Canvas {
     }
     this.store.data.pens.push(pen);
     this.store.pens[pen.id] = pen;
-
     // 集中存储path，避免数据冗余过大
     if (pen.path) {
       if (!pen.pathId) {
@@ -1589,6 +1588,10 @@ export class Canvas {
     // end
 
     pen.calculative = {};
+    if (pen.externElement) {
+      pen.calculative.rootElement = this.externalElements;
+      pen.calculative.storeId = this.store.id;
+    }
     for (const k in pen) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = pen[k];
@@ -1622,7 +1625,7 @@ export class Canvas {
     if (this[this.drawingLineName]) {
       this[this.drawingLineName](this.store, this.drawingLine, mouse);
     }
-    this.store.path2dMap.set(this.drawingLine, this.store.penPaths[this.drawingLine.name](this.drawingLine));
+    this.store.path2dMap.set(this.drawingLine, globalStore.registerPens[this.drawingLine.name](this.drawingLine));
     this.dirty = true;
   }
 
@@ -1636,7 +1639,7 @@ export class Canvas {
     }
     calcCenter(rect);
     pen.calculative.worldRect = rect;
-    this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
+    this.store.path2dMap.set(pen, globalStore.registerPens[pen.name](pen));
     if (pen.calculative.worldAnchors) {
       pen.anchors = [];
       pen.calculative.worldAnchors.forEach((pt) => {
@@ -1694,7 +1697,7 @@ export class Canvas {
       this.pencilLine.calculative.worldAnchors = smoothLine(anchors);
       if (this.pencilLine.calculative.worldAnchors.length > 1) {
         this.pencilLine.calculative.pencil = undefined;
-        this.store.path2dMap.set(this.pencilLine, this.store.penPaths[this.pencilLine.name](this.pencilLine));
+        this.store.path2dMap.set(this.pencilLine, globalStore.registerPens[this.pencilLine.name](this.pencilLine));
         if (!this.beforeAddPen || this.beforeAddPen(this.pencilLine)) {
           this.initLineRect(this.pencilLine);
           this.store.data.pens.push(this.pencilLine);
@@ -1787,7 +1790,7 @@ export class Canvas {
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
-    this.store.penPaths[pen.name] && this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
+    globalStore.registerPens[pen.name] && this.store.path2dMap.set(pen, globalStore.registerPens[pen.name](pen));
     this.dirty = true;
 
     if (pen.children) {
@@ -2346,7 +2349,7 @@ export class Canvas {
 
     const line = this.store.active[0];
     this.dirtyLines.add(line);
-    this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
+    this.store.path2dMap.set(line, globalStore.registerPens[line.name](line));
     this.render(Infinity);
 
     if (this.timer) {
@@ -2395,7 +2398,7 @@ export class Canvas {
     }
     const line = this.store.active[0];
     this.dirtyLines.add(line);
-    this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
+    this.store.path2dMap.set(line, globalStore.registerPens[line.name](line));
     this.render(Infinity);
 
     if (this.timer) {
@@ -2444,7 +2447,7 @@ export class Canvas {
 
     const line = this.store.active[0];
     this.dirtyLines.add(line);
-    this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
+    this.store.path2dMap.set(line, globalStore.registerPens[line.name](line));
     this.render(Infinity);
 
     if (this.timer) {
@@ -2521,7 +2524,7 @@ export class Canvas {
       if (pen.type) {
         translateLine(pen, x, y);
         this.dirtyLines.add(pen);
-        this.store.path2dMap.set(pen, this.store.penPaths[pen.name](pen));
+        this.store.path2dMap.set(pen, globalStore.registerPens[pen.name](pen));
       } else {
         translateRect(pen.calculative.worldRect, x, y);
         calcPenRect(this.store, pen);
@@ -2583,7 +2586,7 @@ export class Canvas {
         return;
       }
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
-      this.store.path2dMap.set(line, this.store.penPaths[line.name](line));
+      this.store.path2dMap.set(line, globalStore.registerPens[line.name](line));
       this.dirtyLines.add(line);
 
       change && getLineLength(line);

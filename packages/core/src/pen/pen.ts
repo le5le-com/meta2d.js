@@ -5,7 +5,7 @@ import { calcCenter, calcRelativePoint, Rect, scaleRect, translateRect } from '.
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
 import { deepClone } from '../utils/clone';
-import { Event, events } from '../event';
+import { Event } from '../event';
 
 export enum PenType {
   Node,
@@ -150,11 +150,18 @@ export interface Pen extends Rect {
 
   events?: Event[];
 
+  progress?: number;
+  progressColor?: string;
+  verticalProgress?: boolean;
+  externElement?: boolean;
+
   calculative?: {
     x?: number;
     y?: number;
     width?: number;
     height?: number;
+
+    progress?: number;
 
     worldRect?: Rect;
     worldAnchors?: Point[];
@@ -246,15 +253,16 @@ export interface Pen extends Rect {
     cycleIndex?: number;
     // 是否暂停动画
     pause?: number;
-
     // 动画播放中的参考基准
     _rotate?: number;
 
     layer?: number;
-
     dropdownList?: any[];
-
     fns?: any;
+
+    elementLoaded?: boolean;
+    rootElement?: any;
+    storeId?: string;
   };
 
   // 最后一个动画帧状态数据
@@ -262,6 +270,7 @@ export interface Pen extends Rect {
 
   onAdd?: Function;
   onValue?: Function;
+  onDestroy?: Function;
 }
 
 export function getParent(store: TopologyStore, pen: Pen) {
@@ -379,6 +388,34 @@ export function renderPen(
 
   if (path) {
     fill && ctx.fill(path);
+
+    const progress = pen.calculative.progress || pen.progress;
+    if (progress != null) {
+      ctx.save();
+      let grd = ctx.createLinearGradient(
+        pen.calculative.worldRect.x,
+        pen.calculative.worldRect.y,
+        pen.calculative.worldRect.x + pen.calculative.worldRect.width * progress,
+        pen.calculative.worldRect.y
+      );
+      if (pen.verticalProgress) {
+        grd = ctx.createLinearGradient(
+          pen.calculative.worldRect.x,
+          pen.calculative.worldRect.y,
+          pen.calculative.worldRect.x,
+          pen.calculative.worldRect.y + pen.calculative.worldRect.height * progress
+        );
+      }
+      const color = pen.progressColor || pen.color || store.options.activeColor;
+      grd.addColorStop(0, color);
+      grd.addColorStop(1, color);
+      grd.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = grd;
+      ctx.fill(path);
+      ctx.restore();
+    }
+
     ctx.stroke(path);
 
     if (pen.type && pen.calculative.animatePos) {
@@ -438,7 +475,7 @@ export function renderPen(
     }
   }
 
-  if (pen.image && pen.calculative.img) {
+  if (pen.calculative.img) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
@@ -1346,5 +1383,34 @@ export function setHover(store: TopologyStore, pen: Pen, hover = true) {
     pen.children.forEach((id) => {
       setHover(store, store.pens[id], hover);
     });
+  }
+}
+
+export function setElemPosition(pen: Pen, elem: HTMLElement) {
+  if (!elem) {
+    return;
+  }
+  const store = globalStore[pen.calculative.storeId];
+  const worldRect = pen.calculative.worldRect;
+  elem.style.position = 'absolute';
+  elem.style.outline = 'none';
+  elem.style.left = worldRect.x + store.data.x + 'px';
+  elem.style.top = worldRect.y + store.data.y + 'px';
+  elem.style.width = worldRect.width + 'px';
+  elem.style.height = worldRect.height + 'px';
+  elem.style.display = pen.visible !== false ? 'inline' : 'none'; // 是否隐藏元素
+  if (pen.rotate) {
+    elem.style.transform = `rotate(${pen.rotate}deg)`;
+  }
+  // if (elem.video && videos[node.id] && videos[node.id].media) {
+  //   videos[node.id].media.style.width = '100%';
+  //   videos[node.id].media.style.height = '100%';
+  // }
+  if (pen.locked || globalStore[pen.calculative.storeId].data.locked) {
+    elem.style.userSelect = 'initial';
+    elem.style.pointerEvents = 'initial';
+  } else {
+    elem.style.userSelect = 'none';
+    elem.style.pointerEvents = 'none';
   }
 }

@@ -5,3 +5,4 @@ export * from './src/pen';
 export * from './src/rect';
 export * from './src/point';
 export * from './src/event';
+export * from './src/store';

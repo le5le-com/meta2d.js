@@ -234,7 +234,7 @@ export class Topology {
   }
 
   register(penPaths: any) {
-    this.store.penPaths = Object.assign({}, this.store.penPaths, penPaths);
+    Object.assign(globalStore.registerPens, penPaths);
   }
 
   registerDraw(name: string, draw?: Function) {
@@ -670,10 +670,13 @@ export class Topology {
   };
 
   destroy(global?: boolean) {
+    for (const pen of this.store.data.pens) {
+      pen.onDestroy && pen.onDestroy(pen);
+    }
     clearStore(this.store);
     this.canvas.destroy();
     // Clear data.
-    globalStore[this.store.topologyId] = undefined;
+    globalStore[this.store.id] = undefined;
     this.canvas = undefined;
 
     if (global) {
