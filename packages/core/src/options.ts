@@ -60,6 +60,7 @@ export interface Options {
   drawingLineName?: string;
   interval?: number;
   animateInterval?: number;
+  dragAllIn?: boolean;
 }
 
 export const defaultOptions: Options = {

@@ -2,14 +2,14 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { calcTextLines, doEvent, facePen, getParent, LockState, Pen, PenType } from './pen';
+import { calcTextLines, facePen, getParent, LockState, Pen, PenType } from './pen';
 import { Point } from './point';
 import { clearStore, EditAction, globalStore, TopologyData, TopologyStore, useStore } from './store';
 import { Tooltip } from './tooltip';
 import { s8 } from './utils';
 import { calcRelativeRect, getRect } from './rect';
 import { deepClone } from './utils/clone';
-
+import { Event, EventAction } from './event';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
@@ -24,16 +24,16 @@ export class Topology {
   websocket: WebSocket;
   mqttClient: any;
   socketFn: Function;
+  events: any = {};
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
     this.init(parent);
     this.register(commonPens());
-    if (window) {
-      window.topology = this;
-    }
-
+    window && (window.topology = this);
     this['facePen'] = facePen;
+    this.initEventFns();
+    this.store.emitter.on('*', this.onEvent);
   }
 
   get beforeAddPen() {
@@ -90,6 +90,54 @@ export class Topology {
 
     this.resize();
     this.canvas.listen();
+  }
+
+  initEventFns() {
+    this.events[EventAction.Link] = (pen: any, e: Event) => {
+      window.open(e.value, e.params === undefined ? '_blank' : e.params);
+    };
+    this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
+      if (e.value) {
+        this.startAnimate(e.value);
+      } else {
+        this.startAnimate([pen]);
+      }
+    };
+    this.events[EventAction.PauseAnimate] = (pen: any, e: Event) => {
+      if (e.value) {
+        this.pauseAnimate(e.value);
+      } else {
+        this.pauseAnimate([pen]);
+      }
+    };
+    this.events[EventAction.StopAnimate] = (pen: any, e: Event) => {
+      if (e.value) {
+        this.stopAnimate(e.value);
+      } else {
+        this.stopAnimate([pen]);
+      }
+    };
+    this.events[EventAction.Function] = (pen: any, e: Event) => {
+      if (!e.fn) {
+        try {
+          e.fn = new Function('pen', 'params', e.value);
+        } catch (err) {
+          console.error('Error: make function:', err);
+        }
+      }
+      e.fn && e.fn(pen, e.params);
+    };
+    this.events[EventAction.WindowFn] = (pen: any, e: Event) => {
+      if (window && window[e.value]) {
+        window[e.value](pen, e.params);
+      }
+    };
+    this.events[EventAction.Emit] = (pen: any, e: Event) => {
+      this.store.emitter.emit(e.value, {
+        pen,
+        params: e.params,
+      });
+    };
   }
 
   resize(width?: number, height?: number) {
@@ -258,9 +306,16 @@ export class Topology {
     });
   }
 
-  stopAnimate(pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
+  stopAnimate(idOrTagOrPens?: string | Pen[]) {
+    let pens: Pen[] = [];
+    if (!idOrTagOrPens) {
+      this.store.animates.forEach((pen) => {
+        pens.push(pen);
+      });
+    } else if (typeof idOrTagOrPens === 'string') {
+      pens = this.find(idOrTagOrPens);
+    } else {
+      pens = idOrTagOrPens;
     }
     pens.forEach((pen) => {
       pen.calculative.pause = undefined;
@@ -330,7 +385,7 @@ export class Topology {
     this.canvas.active([parent]);
     this.render();
 
-    this.store.emitter.emit('add', [parent]);
+    this.store.emitter.emit('add', { pens: [parent] });
   }
 
   uncombine(pen?: Pen) {
@@ -435,15 +490,17 @@ export class Topology {
 
   connectWebsocket() {
     this.closeWebsocket();
-    this.websocket = new WebSocket(this.store.data.websocket);
-    this.websocket.onmessage = (e) => {
-      this.doSocket(e.data);
-    };
+    if (this.store.data.websocket) {
+      this.websocket = new WebSocket(this.store.data.websocket);
+      this.websocket.onmessage = (e) => {
+        this.doSocket(e.data);
+      };
 
-    this.websocket.onclose = () => {
-      console.info('Canvas websocket closed and reconneting...');
-      this.connectWebsocket();
-    };
+      this.websocket.onclose = () => {
+        console.info('Canvas websocket closed and reconneting...');
+        this.connectWebsocket();
+      };
+    }
   }
 
   closeWebsocket() {
@@ -455,13 +512,16 @@ export class Topology {
   }
 
   connectMqtt() {
-    this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
-    this.mqttClient.on('message', (topic: string, message: any) => {
-      this.doSocket(message.toString());
-    });
+    this.closeMqtt();
+    if (this.store.data.mqtt) {
+      this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
+      this.mqttClient.on('message', (topic: string, message: any) => {
+        this.doSocket(message.toString());
+      });
 
-    if (this.store.data.mqttTopics) {
-      this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
+      if (this.store.data.mqttTopics) {
+        this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
+      }
     }
   }
 
@@ -502,7 +562,9 @@ export class Topology {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
-      doEvent(pen, 'setValue');
+
+      pen.onValue && pen.onValue(pen);
+      this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
 
     this.render(Infinity);
@@ -523,6 +585,89 @@ export class Topology {
   clearDropdownList() {
     this.canvas.clearDropdownList();
   }
+
+  private onEvent = (eventName: string, e: any) => {
+    switch (eventName) {
+      case 'add':
+        {
+          e.forEach((pen: Pen) => {
+            pen.onAdd && pen.onAdd(pen);
+            this.store.data.locked && this.doEvent(pen, eventName);
+          });
+        }
+        break;
+      case 'enter':
+      case 'leave':
+        this.store.data.locked && this.doEvent(e, eventName);
+        break;
+      case 'active':
+      case 'inactive':
+        {
+          this.store.data.locked &&
+            e.forEach((pen: Pen) => {
+              this.doEvent(pen, eventName);
+            });
+        }
+        break;
+      case 'click':
+      case 'dblclick':
+        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        break;
+      case 'valueUpdate':
+        e.onValue && e.onValue(e);
+        this.store.data.locked && this.doEvent(e, eventName);
+        break;
+    }
+  };
+
+  private doEvent = (pen: Pen, eventName: string) => {
+    if (!pen || !pen.events) {
+      return;
+    }
+
+    pen.events.forEach((event) => {
+      if (this.events[event.action] && event.name === eventName) {
+        let can = !event.where;
+        if (event.where) {
+          if (event.where.fn) {
+            can = event.where.fn(pen);
+          } else if (event.where.fnJs) {
+            try {
+              event.where.fn = new Function('pen', 'params', event.where.fnJs);
+            } catch (err) {
+              console.error('Error: make function:', err);
+            }
+            if (event.where.fn) {
+              can = event.where.fn(pen);
+            }
+          } else {
+            switch (event.where.comparison) {
+              case '>':
+                can = pen[event.where.key] > event.where.value;
+                break;
+              case '>=':
+                can = pen[event.where.key] >= event.where.value;
+                break;
+              case '<':
+                can = pen[event.where.key] < event.where.value;
+                break;
+              case '<=':
+                can = pen[event.where.key] <= event.where.value;
+                break;
+              case '=':
+              case '==':
+                can = pen[event.where.key] == event.where.value;
+                break;
+              case '!=':
+                can = pen[event.where.key] != event.where.value;
+                break;
+            }
+          }
+        }
+        can && this.events[event.action](pen, event);
+      }
+    });
+  };
 
   destroy(global?: boolean) {
     clearStore(this.store);

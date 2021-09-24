@@ -127,7 +127,10 @@ export function getRectOfPoints(points: Point[]) {
   return { x, y, ex, ey, width: ex - x, height: ey - y };
 }
 
-export function rectInRect(source: Rect, target: Rect) {
+export function rectInRect(source: Rect, target: Rect, allIn?: boolean) {
+  if (allIn) {
+    return source.x > target.x && source.ex < target.ex && source.y > target.y && source.ey < target.ey;
+  }
   return !(source.x > target.ex || source.ex < target.x || source.ey < target.y || source.y > target.ey);
 }
 

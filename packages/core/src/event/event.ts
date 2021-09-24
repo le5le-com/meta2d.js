@@ -1,9 +1,12 @@
+import { TopologyStore } from '../store';
+
 export interface Event {
-  type: string;
+  name: string;
   action: EventAction;
   where?: Where;
-  value: string | Function;
+  value?: string;
   params?: string;
+  fn?: Function;
 }
 
 export enum EventAction {
@@ -11,7 +14,7 @@ export enum EventAction {
   StartAnimate,
   PauseAnimate,
   StopAnimate,
-  FunctionJs,
+  Function,
   WindowFn,
   Emit,
 }
@@ -20,5 +23,6 @@ export interface Where {
   key?: string;
   comparison?: string;
   value?: any;
-  fn?: string;
+  fn?: Function;
+  fnJs?: string;
 }

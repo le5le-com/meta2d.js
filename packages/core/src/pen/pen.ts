@@ -5,7 +5,7 @@ import { calcCenter, calcRelativePoint, Rect, scaleRect, translateRect } from '.
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
 import { deepClone } from '../utils/clone';
-import { Event } from '../event';
+import { Event, events } from '../event';
 
 export enum PenType {
   Node,
@@ -259,6 +259,9 @@ export interface Pen extends Rect {
 
   // 最后一个动画帧状态数据
   lastFrame?: Pen;
+
+  onAdd?: Function;
+  onValue?: Function;
 }
 
 export function getParent(store: TopologyStore, pen: Pen) {
@@ -455,9 +458,9 @@ export function renderPen(
       let scaleH = rect.height / pen.calculative.imgNaturalHeight;
       let scaleMin = scaleW > scaleH ? scaleH : scaleW;
       if (pen.iconWidth) {
-        h = scaleMin * pen.iconWidth; //(pen.calculative.imgNaturalHeight / pen.calculative.imgNaturalWidth) * w;
+        h = scaleMin * pen.iconWidth;
       } else {
-        w = scaleMin * pen.calculative.imgNaturalWidth; // (pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight) * h;
+        w = scaleMin * pen.calculative.imgNaturalWidth;
       }
       if (pen.iconHeight) {
         h = scaleMin * pen.iconHeight;
@@ -1343,11 +1346,5 @@ export function setHover(store: TopologyStore, pen: Pen, hover = true) {
     pen.children.forEach((id) => {
       setHover(store, store.pens[id], hover);
     });
-  }
-}
-
-export function doEvent(pen: Pen, eventName: string) {
-  if (!pen) {
-    return;
   }
 }

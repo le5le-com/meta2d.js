@@ -28,7 +28,6 @@ import {
   getParent,
   setHover,
   getAllChildren,
-  doEvent,
 } from '../pen';
 import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
@@ -123,7 +122,6 @@ export class Canvas {
   input = document.createElement('textarea');
   inputRight = document.createElement('div');
   dropdown = document.createElement('ul');
-  isClickDropdown?: boolean;
 
   constructor(public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
@@ -654,7 +652,6 @@ export class Canvas {
         y: e.y,
         pen: this.store.hover,
       });
-      doEvent(this.store.hover, 'click');
     }, 30);
 
     // Set anchor of pen.
@@ -784,12 +781,10 @@ export class Canvas {
                   this.store.active.findIndex((pen) => pen === pen),
                   1
                 );
-                doEvent(pen, 'inactive');
                 this.store.emitter.emit('inactive', [pen]);
               } else {
                 pen.calculative.active = true;
                 this.store.active.push(pen);
-                doEvent(pen, 'active');
                 this.store.emitter.emit('active', [pen]);
               }
               this.dirty = true;
@@ -801,7 +796,6 @@ export class Canvas {
               }
               this.store.active = [this.store.hover];
               this.store.hover.calculative.active = true;
-              doEvent(this.store.hover, 'active');
               this.store.emitter.emit('active', [this.store.hover]);
               this.dirty = true;
             } else {
@@ -1063,7 +1057,7 @@ export class Canvas {
           pen.visible !== false &&
           pen.locked !== LockState.Disable &&
           !pen.parentId &&
-          rectInRect(pen.calculative.worldRect, this.dragRect)
+          rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)
         );
       });
       this.active(pens);
@@ -1086,7 +1080,6 @@ export class Canvas {
       pen.calculative.active = undefined;
       pen.calculative.activeAnchor = undefined;
       setChildrenActive(this.store, pen, false);
-      !drawing && doEvent(pen, 'inactive');
     });
     !drawing && this.store.emitter.emit('inactive', this.store.active);
     this.store.active = [];
@@ -1107,7 +1100,6 @@ export class Canvas {
     pens.forEach((pen) => {
       pen.calculative.active = true;
       setChildrenActive(this.store, pen);
-      doEvent(pen, 'active');
     });
     this.store.active.push(...pens);
     this.calcActiveRect();
@@ -1251,13 +1243,11 @@ export class Canvas {
       this.dirty = true;
       if (this.store.lastHover) {
         setHover(this.store, getParent(this.store, this.store.lastHover) || this.store.lastHover, false);
-        doEvent(this.store.lastHover, 'leave');
         this.store.emitter.emit('leave', this.store.lastHover);
       }
       if (this.store.hover) {
         this.store.hover.calculative.hover = true;
         setHover(this.store, getParent(this.store, this.store.hover) || this.store.hover);
-        doEvent(this.store.hover, 'enter');
         this.store.emitter.emit('enter', this.store.hover);
       }
       this.store.lastHover = this.store.hover;
@@ -1678,7 +1668,7 @@ export class Canvas {
         this.initLineRect(this.drawingLine);
         this.store.data.pens.push(this.drawingLine);
         this.store.pens[this.drawingLine.id] = this.drawingLine;
-        this.store.emitter.emit('add', this.drawingLine);
+        this.store.emitter.emit('add', [this.drawingLine]);
         this.active([this.drawingLine]);
         this.pushHistory({ type: EditType.Add, pens: [this.drawingLine] });
       }
@@ -1709,7 +1699,7 @@ export class Canvas {
           this.initLineRect(this.pencilLine);
           this.store.data.pens.push(this.pencilLine);
           this.store.pens[this.pencilLine.id] = this.pencilLine;
-          this.store.emitter.emit('add', this.pencilLine);
+          this.store.emitter.emit('add', [this.pencilLine]);
           this.active([this.pencilLine]);
           this.pushHistory({ type: EditType.Add, pens: [this.pencilLine] });
         }
@@ -2142,13 +2132,15 @@ export class Canvas {
     const x = p2.x - p1.x;
     const y = p2.y - p1.y;
 
+    const w = this.activeRect.width;
+    const h = this.activeRect.height;
     let offsetX = x - this.lastOffsetX;
     let offsetY = y - this.lastOffsetY;
     this.lastOffsetX = x;
     this.lastOffsetY = y;
-
-    const w = this.activeRect.width;
-    const h = this.activeRect.height;
+    if ((e as any).shiftKey || (e as any).ctrlKey) {
+      offsetY = (offsetX * w) / h;
+    }
     switch (this.resizeIndex) {
       case 0:
         if (this.activeRect.width - offsetX < 5 || this.activeRect.height - offsetY < 5) {
@@ -2856,7 +2848,6 @@ export class Canvas {
       ) {
         this.showInput(this.store.hover);
       }
-      doEvent(this.store.hover, 'dblclick');
     }
 
     this.store.emitter.emit('dblclick', {
@@ -2907,11 +2898,17 @@ export class Canvas {
       if (!pen) {
         return;
       }
-      pen.text = this.input.value;
-      pen.calculative.text = pen.text;
-      this.input.dataset.penId = undefined;
-      calcTextRect(pen);
-      this.dirty = true;
+
+      if (pen.calculative.text !== this.input.value) {
+        this.initPens = [deepClone(pen)];
+        pen.text = this.input.value;
+        pen.calculative.text = pen.text;
+        this.input.dataset.penId = undefined;
+        calcTextRect(pen);
+        this.dirty = true;
+        this.pushHistory({ type: EditType.Update, pens: [deepClone(pen)], initPens: this.initPens });
+        this.store.emitter.emit('valueUpdate', pen);
+      }
     }
   };
 
@@ -2929,22 +2926,32 @@ export class Canvas {
     this.dropdown.dataset.l = '1';
     this.inputRight.style.transform = 'rotate(135deg)';
 
-    const style = document.createElement('style');
-    document.head.appendChild(style);
-    style.sheet.insertRule('.topology-input{display:none;position:absolute;outline:none;align-items: center;}');
-    style.sheet.insertRule(
-      '.topology-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
-    );
-    style.sheet.insertRule(
-      '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);}'
-    );
-    style.sheet.insertRule(
-      '.topology-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;}'
-    );
-    style.sheet.insertRule(
-      '.topology-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
-    );
-    style.sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
+    let sheet: any;
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      if (document.styleSheets[i].title === 'le5le.com') {
+        sheet = document.styleSheets[i];
+      }
+    }
+    if (!sheet) {
+      const style = document.createElement('style');
+      style.title = 'le5le.com';
+      document.head.appendChild(style);
+      sheet = style.sheet;
+      sheet.insertRule('.topology-input{display:none;position:absolute;outline:none;align-items: center;}');
+      sheet.insertRule(
+        '.topology-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
+      );
+      sheet.insertRule(
+        '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);}'
+      );
+      sheet.insertRule(
+        '.topology-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;}'
+      );
+      sheet.insertRule(
+        '.topology-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
+      );
+      sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
+    }
     this.input.onclick = () => {
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
@@ -2959,18 +2966,8 @@ export class Canvas {
     this.input.onkeyup = (e: KeyboardEvent) => {
       this.setDropdownList(true);
       const pen = this.store.pens[this.input.dataset.penId];
-      this.store.emitter.emit('inputKey', { pen, text: e.key });
+      this.store.emitter.emit('input', { pen, text: e.key });
     };
-    // this.input.onblur = () => {
-    //   setTimeout(() => {
-    //     if (this.isClickDropdown) {
-    //       this.isClickDropdown = false;
-    //       return;
-    //     }
-    //     this.hideInput();
-    //     this.isClickDropdown = false;
-    //   }, 300);
-    // };
   }
 
   clearDropdownList() {
@@ -3039,7 +3036,6 @@ export class Canvas {
   };
 
   private selectDropdown = (e: any) => {
-    this.isClickDropdown = true;
     const li = e.target;
     const pen = this.store.pens[this.input.dataset.penId];
     if (!li || !pen || !pen.dropdownList) {
@@ -3062,8 +3058,7 @@ export class Canvas {
     this.dropdown.style.display = 'none';
     this.inputRight.style.transform = 'rotate(135deg)';
     this.pushHistory({ type: EditType.Update, pens: [deepClone(pen)], initPens: this.initPens });
-    doEvent(pen, 'setValue');
-    this.store.emitter.emit('setValue', pen);
+    this.store.emitter.emit('valueUpdate', pen);
   };
 
   destroy() {
