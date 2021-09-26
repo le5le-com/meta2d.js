@@ -279,7 +279,7 @@ export interface Pen extends Rect {
   // 最后一个动画帧状态数据
   lastFrame?: Pen;
 
-  onAdd?: (store: TopologyStore, pen: Pen) => void;
+  onAdd?: (topology: any, pen: Pen) => void;
   onValue?: (pen: Pen) => void;
   onDestroy?: (pen: Pen) => void;
   onMove?: (pen: Pen) => void;
