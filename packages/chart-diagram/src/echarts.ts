@@ -1,14 +1,18 @@
 import { Pen, setElemPosition } from '@topology/core';
 
-export const echartsObjs: any = {};
+export const echartsList: any = {};
 
 export function echarts(pen: Pen): Path2D {
+  if (!pen.onDestroy) {
+    pen.onDestroy = destory;
+    pen.onMove = move;
+    pen.onResize = resize;
+    pen.onRotate = move;
+  }
+
   const path = new Path2D();
-
-  pen.onDestroy = destory;
   const worldRect = pen.calculative.worldRect;
-
-  let echarts = echartsObjs.echarts;
+  let echarts = echartsList.echarts;
   if (!echarts && window) {
     echarts = window['echarts'];
   }
@@ -25,7 +29,7 @@ export function echarts(pen: Pen): Path2D {
     return;
   }
 
-  if (!echartsObjs[pen.id] || !echartsObjs[pen.id].div) {
+  if (!echartsList[pen.id] || !echartsList[pen.id].div) {
     // 1. 创建父容器
     const div = document.createElement('div');
     div.style.position = 'absolute';
@@ -37,7 +41,7 @@ export function echarts(pen: Pen): Path2D {
     document.body.appendChild(div);
 
     // 2. 创建echart
-    echartsObjs[pen.id] = {
+    echartsList[pen.id] = {
       div,
       chart: echarts.init(div, (pen as any).echarts.theme),
     };
@@ -45,11 +49,11 @@ export function echarts(pen: Pen): Path2D {
     // 3. 生产预览图
     // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
     setTimeout(() => {
-      echartsObjs[pen.id].chart.setOption((pen as any).echarts.option, true);
-      echartsObjs[pen.id].chart.resize();
+      echartsList[pen.id].chart.setOption((pen as any).echarts.option, true);
+      echartsList[pen.id].chart.resize();
       setTimeout(() => {
         const img = new Image();
-        img.src = echartsObjs[pen.id].chart.getDataURL({
+        img.src = echartsList[pen.id].chart.getDataURL({
           pixelRatio: 2,
         });
         pen.calculative.img = img;
@@ -57,15 +61,39 @@ export function echarts(pen: Pen): Path2D {
     });
 
     // 4. 加载到div layer
-    pen.calculative.rootElement.appendChild(div);
+    pen.calculative.rootElement && pen.calculative.rootElement.appendChild(div);
     setElemPosition(pen, div);
   }
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
+
+  if (pen.calculative.dirty && echartsList[pen.id]) {
+    setElemPosition(pen, echartsList[pen.id].div);
+  }
   return path;
 }
 
 function destory(pen: Pen) {
-  echartsObjs[pen.id].remove();
-  echartsObjs[pen.id] = undefined;
+  echartsList[pen.id].div.remove();
+  let echarts = echartsList.echarts;
+  if (!echarts && window) {
+    echarts = window['echarts'];
+  }
+  echarts && echarts.dispose(echartsList[pen.id].chart);
+  echartsList[pen.id] = undefined;
+}
+
+function move(pen: Pen) {
+  if (!echartsList[pen.id]) {
+    return;
+  }
+  setElemPosition(pen, echartsList[pen.id].div);
+}
+
+function resize(pen: Pen) {
+  if (!echartsList[pen.id]) {
+    return;
+  }
+  setElemPosition(pen, echartsList[pen.id].div);
+  echartsList[pen.id].chart.resize();
 }

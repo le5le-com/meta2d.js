@@ -29,7 +29,7 @@ import {
   setHover,
   getAllChildren,
 } from '../pen';
-import { calcRotate, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
+import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
 import {
   calcCenter,
   calcRelativePoint,
@@ -643,17 +643,6 @@ export class Canvas {
     this.mouseDown = e;
     this.lastMouseTime = performance.now();
 
-    setTimeout(() => {
-      if (this.store.hover && this.store.hover.input) {
-        this.showInput(this.store.hover);
-      }
-      this.store.emitter.emit('click', {
-        x: e.x,
-        y: e.y,
-        pen: this.store.hover,
-      });
-    }, 30);
-
     // Set anchor of pen.
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.setAnchor(e);
@@ -1061,6 +1050,17 @@ export class Canvas {
         );
       });
       this.active(pens);
+    }
+
+    if (this.mouseDown && distance(this.mouseDown, e) < 2) {
+      if (this.store.hover && this.store.hover.input) {
+        this.showInput(this.store.hover);
+      }
+      this.store.emitter.emit('click', {
+        x: e.x,
+        y: e.y,
+        pen: this.store.hover,
+      });
     }
 
     this.mouseDown = undefined;
@@ -1592,6 +1592,11 @@ export class Canvas {
       pen.calculative.rootElement = this.externalElements;
       pen.calculative.storeId = this.store.id;
     }
+    if (pen.video || pen.audio) {
+      pen.calculative.onended = (pen: Pen) => {
+        this.nextAnimate(pen);
+      };
+    }
     for (const k in pen) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = pen[k];
@@ -1791,6 +1796,7 @@ export class Canvas {
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
     globalStore.registerPens[pen.name] && this.store.path2dMap.set(pen, globalStore.registerPens[pen.name](pen));
+    pen.calculative.dirty = true;
     this.dirty = true;
 
     if (pen.children) {
@@ -2097,6 +2103,7 @@ export class Canvas {
         return;
       }
       this.rotatePen(pen, angle, this.activeRect);
+      pen.onRotate && pen.onRotate(pen);
     }
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
@@ -2226,6 +2233,7 @@ export class Canvas {
         y: pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2,
       };
       this.dirtyPenRect(pen, true);
+      pen.onResize && pen.onResize(pen);
     });
     this.getSizeCPs();
     this.render(Infinity);
@@ -2539,6 +2547,8 @@ export class Canvas {
         });
         this.updateLines(pen);
       }
+
+      pen.onMove && pen.onMove(pen);
     });
     this.getSizeCPs();
 
@@ -2830,6 +2840,7 @@ export class Canvas {
         this.store.data.pens.splice(i, 1);
         this.store.pens[pen.id] = undefined;
       }
+      pen.onDestroy && pen.onDestroy(pen);
     });
     this.inactive();
     this.store.hoverAnchor = undefined;
@@ -2840,17 +2851,8 @@ export class Canvas {
   }
 
   private ondblclick = (e: any) => {
-    if (this.store.hover) {
-      if (
-        !(
-          this.store.data.locked ||
-          this.store.hover.locked ||
-          this.store.hover.disableInput ||
-          this.store.options.disableInput
-        )
-      ) {
-        this.showInput(this.store.hover);
-      }
+    if (this.store.hover && !this.store.data.locked && !this.store.options.disableInput) {
+      this.showInput(this.store.hover);
     }
 
     this.store.emitter.emit('dblclick', {
@@ -2861,13 +2863,13 @@ export class Canvas {
   };
 
   showInput = (pen: Pen) => {
+    if (this.store.hover.locked || this.store.hover.externElement || this.store.hover.disableInput) {
+      return;
+    }
     if (this.input.dataset.penId === pen.id) {
       this.input.focus();
       return;
-    } else if (this.input.dataset.penId) {
-      this.hideInput();
     }
-
     const textRect = pen.calculative.worldTextRect;
     this.input.value = pen.text || '';
     this.inputParent.style.left = textRect.x + this.store.data.x + 5 + 'px';
@@ -2913,6 +2915,8 @@ export class Canvas {
         this.store.emitter.emit('valueUpdate', pen);
       }
     }
+    this.input.dataset.penId = undefined;
+    this.dropdown.style.display = 'none';
   };
 
   private createInput() {

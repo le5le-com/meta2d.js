@@ -1,8 +1,8 @@
 {
   "name": "@topology/layout",
   "version": "1.0.0",
-  "description": "A layout tool for topology.",
-  "main": "index.js",
+  "description": "The layout library based on le5le topology.",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
     "copy": "copyfiles  package.json ../../dist/layout/",

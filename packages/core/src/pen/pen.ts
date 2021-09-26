@@ -124,6 +124,7 @@ export interface Pen extends Rect {
   animateCycle?: number;
   nextAnimate?: string;
   autoPlay?: boolean;
+  playLoop?: boolean;
 
   // 动画帧时长
   duration?: number;
@@ -149,6 +150,10 @@ export interface Pen extends Rect {
   dropdownList?: any[];
 
   events?: Event[];
+
+  iframe?: string;
+  video?: string;
+  audio?: string;
 
   progress?: number;
   progressColor?: string;
@@ -263,14 +268,24 @@ export interface Pen extends Rect {
     elementLoaded?: boolean;
     rootElement?: any;
     storeId?: string;
+
+    iframe?: string;
+    video?: string;
+    audio?: string;
+    media?: HTMLMediaElement;
+    onended?: (pen: Pen) => void;
   };
 
   // 最后一个动画帧状态数据
   lastFrame?: Pen;
 
-  onAdd?: Function;
-  onValue?: Function;
-  onDestroy?: Function;
+  onAdd?: (pen: Pen) => void;
+  onValue?: (pen: Pen) => void;
+  onDestroy?: (pen: Pen) => void;
+  onMove?: (pen: Pen) => void;
+  onResize?: (pen: Pen) => void;
+  onRotate?: (pen: Pen) => void;
+  onClick?: (pen: Pen) => void;
 }
 
 export function getParent(store: TopologyStore, pen: Pen) {
@@ -475,7 +490,7 @@ export function renderPen(
     }
   }
 
-  if (pen.calculative.img) {
+  if (pen.image && pen.calculative.img) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;

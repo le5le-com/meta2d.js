@@ -610,6 +610,7 @@ export class Topology {
         }
         break;
       case 'click':
+        e.pen && e.pen.onClick && e.pen.onClick(e.pen);
       case 'dblclick':
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;

@@ -13,6 +13,8 @@ export * from './file';
 export * from './cube';
 export * from './people';
 export * from './line';
+export * from './iframe';
+export * from './video';
 
 import { rectangle } from './rectangle';
 import { circle } from './circle';
@@ -29,6 +31,8 @@ import { file } from './file';
 import { cube } from './cube';
 import { people } from './people';
 import { line } from './line';
+import { iframe } from './iframe';
+import { video } from './video';
 
 export function commonPens() {
   return {
@@ -49,5 +53,7 @@ export function commonPens() {
     cube,
     people,
     line,
+    iframe,
+    video,
   };
 }
