@@ -591,7 +591,7 @@ export class Topology {
       case 'add':
         {
           e.forEach((pen: Pen) => {
-            pen.onAdd && pen.onAdd(pen);
+            pen.onAdd && pen.onAdd(this.store, pen);
             this.store.data.locked && this.doEvent(pen, eventName);
           });
         }
