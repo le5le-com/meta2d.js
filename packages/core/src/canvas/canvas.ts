@@ -2058,13 +2058,7 @@ export class Canvas {
     this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
 
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
-    this.timer = setTimeout(() => {
-      this.timer = undefined;
-      this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
-    }, 200);
+    this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -2114,6 +2108,7 @@ export class Canvas {
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
     this.render(Infinity);
+    this.store.emitter.emit('rotatePens', this.store.active);
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -2121,8 +2116,6 @@ export class Canvas {
     this.timer = setTimeout(() => {
       this.timer = undefined;
       const pens = this.store.active;
-      this.store.emitter.emit('rotatePens', pens);
-
       const currentPens = [];
       for (let pen of pens) {
         currentPens.push(deepClone(pen));
@@ -2243,6 +2236,7 @@ export class Canvas {
     });
     this.getSizeCPs();
     this.render(Infinity);
+    this.store.emitter.emit('resizePens', this.store.active);
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -2250,8 +2244,6 @@ export class Canvas {
     this.timer = setTimeout(() => {
       this.timer = undefined;
       const pens = this.store.active;
-      this.store.emitter.emit('resizePens', pens);
-
       const currentPens = [];
       for (let pen of pens) {
         currentPens.push(deepClone(pen));
@@ -2565,13 +2557,13 @@ export class Canvas {
     }
 
     this.render(Infinity);
+    this.store.emitter.emit('translatePens', pens);
 
     if (this.timer) {
       clearTimeout(this.timer);
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      this.store.emitter.emit('translatePens', pens);
 
       const currentPens = [];
       for (let pen of pens) {
