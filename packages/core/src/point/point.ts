@@ -30,6 +30,7 @@ export interface Point {
   lineLength?: number;
   step?: number;
   curvePoints?: Point[];
+  rotate?: number;
   hidden?: boolean;
 }
 
