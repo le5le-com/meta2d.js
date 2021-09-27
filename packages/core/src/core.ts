@@ -385,7 +385,7 @@ export class Topology {
     this.canvas.active([parent]);
     this.render();
 
-    this.store.emitter.emit('add', { pens: [parent] });
+    this.store.emitter.emit('add', [parent]);
   }
 
   uncombine(pen?: Pen) {
