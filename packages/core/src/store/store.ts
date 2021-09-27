@@ -22,6 +22,7 @@ export interface TopologyData {
     customClientId?: boolean;
   };
   mqttTopics?: string;
+  background?: string;
   socketCbJs?: string;
   socketCbFn?: string;
   initJs?: string;
