@@ -607,7 +607,7 @@ export function renderPen(
     }
     pen.calculative.textLines.forEach((text, i) => {
       let x = 0;
-      if (!pen.textAlign) {
+      if (!pen.textAlign || pen.textAlign === 'center') {
         x = pen.calculative.textDrawRect.width / 2;
       }
       ctx.fillText(
