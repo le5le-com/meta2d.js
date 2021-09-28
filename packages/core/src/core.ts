@@ -2,9 +2,25 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { calcTextLines, facePen, getParent, LockState, Pen, PenType, renderPen, renderPenRaw } from './pen';
+import {
+  calcTextLines,
+  facePen,
+  getParent,
+  LockState,
+  Pen,
+  PenType,
+  renderPen,
+  renderPenRaw,
+} from './pen';
 import { Point } from './point';
-import { clearStore, EditAction, globalStore, TopologyData, TopologyStore, useStore } from './store';
+import {
+  clearStore,
+  EditAction,
+  globalStore,
+  TopologyData,
+  TopologyStore,
+  useStore,
+} from './store';
 import { Tooltip } from './tooltip';
 import { Padding, s8 } from './utils';
 import { calcRelativeRect, getRect, Rect } from './rect';
@@ -521,7 +537,10 @@ export class Topology {
   connectMqtt() {
     this.closeMqtt();
     if (this.store.data.mqtt) {
-      this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
+      this.mqttClient = mqtt.connect(
+        this.store.data.mqtt,
+        this.store.data.mqttOptions
+      );
       this.mqttClient.on('message', (topic: string, message: any) => {
         this.doSocket(message.toString());
       });
@@ -565,7 +584,12 @@ export class Topology {
           pen.calculative[k] = data[k];
         }
       }
-      if (data.x != null || data.y != null || data.width != null || data.height != null) {
+      if (
+        data.x != null ||
+        data.y != null ||
+        data.width != null ||
+        data.height != null
+      ) {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
@@ -691,7 +715,10 @@ export class Topology {
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
-      const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
+      const childRect = calcRelativeRect(
+        pen.calculative.worldRect,
+        parent.calculative.worldRect
+      );
       pen.x = childRect.x;
       pen.y = childRect.y;
       pen.width = childRect.width;

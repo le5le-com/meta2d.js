@@ -2,6 +2,9 @@ import { Pen } from '../core/src/pen';
 
 declare const window: any;
 export function table(pen: any) {
+  if (!pen.onDestroy) {
+    pen.onAdd = add;
+  }
   const path = new Path2D();
 
   let x = pen.calculative.worldRect.x;
@@ -62,7 +65,7 @@ export function table(pen: any) {
       }
     }, 0);
   }
-  console.log('half', halfXObj, colWObj);
+  // console.log('half', halfXObj, colWObj);
   //绘制第一行
   // path.beginPath();
   // if (header.fillColor) {
@@ -275,6 +278,37 @@ export function table(pen: any) {
   return path;
 }
 
+function add(topology: any, pen: Pen) {
+  const childPen: any = {
+    name: 'rectangle',
+    x: 100,
+    y: 100,
+    width: 200,
+    height: 20,
+    progress: 1,
+    text: '数据',
+    calculative: {
+      textDrawRect: {
+        height: 10,
+        width: 10,
+        x: 100,
+        y: 100,
+      },
+      worldTextRect: {
+        height: 10,
+        width: 10,
+        x: 100,
+        y: 100,
+      },
+    },
+    animateCycle: 1000,
+    keepAnimateState: 0,
+    dropdownList: ['aaa', 'bbb', 'ccc'],
+  };
+  topology.canvas.makePen(childPen);
+  console.log(childPen);
+  topology.pushChildren(pen, [childPen]);
+}
 export function tableAnchors(pen: any) {
   pen.anchors.push(
     new window.topologyPoint(pen.rect.x + pen.rect.width / 2, pen.rect.y, 1)
