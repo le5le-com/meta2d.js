@@ -165,6 +165,8 @@ export class Topology {
 
   open(data?: TopologyData) {
     clearStore(this.store);
+    this.canvas.activeRect = undefined;
+    this.canvas.sizeCPs = undefined;
     if (data && data.mqttOptions && !data.mqttOptions.customClientId) {
       data.mqttOptions.clientId = s8();
     }

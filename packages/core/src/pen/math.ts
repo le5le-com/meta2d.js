@@ -1,7 +1,7 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
 import { TopologyStore } from '../store';
-import { Pen } from './pen';
+import { Pen } from './model';
 
 export function calcAnchorDock(e: Point, anchor: Point, pen: Pen, store: TopologyStore) {
   let xDock: Point;
