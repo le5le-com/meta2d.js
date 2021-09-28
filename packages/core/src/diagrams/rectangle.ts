@@ -1,6 +1,9 @@
 import { Pen } from '../pen';
 
-export function rectangle(pen: Pen) {
+export function rectangle(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+  if (!path) {
+    path = new Path2D();
+  }
   let wr = pen.borderRadius || 0;
   let hr = pen.borderRadius || 0;
   if (wr < 1) {
@@ -14,7 +17,7 @@ export function rectangle(pen: Pen) {
   if (pen.calculative.worldRect.height < 2 * r) {
     r = pen.calculative.worldRect.height / 2;
   }
-  const path = new Path2D();
+
   path.moveTo(pen.calculative.worldRect.x + r, pen.calculative.worldRect.y);
   path.arcTo(
     pen.calculative.worldRect.ex,
@@ -38,6 +41,5 @@ export function rectangle(pen: Pen) {
     pen.calculative.worldRect.y,
     r
   );
-  path.closePath();
   return path;
 }

@@ -1,7 +1,9 @@
 import { Pen } from '../pen';
 
-export function cloud(pen: Pen) {
-  const path = new Path2D();
+export function cloud(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+  if (!path) {
+    path = new Path2D();
+  }
 
   path.moveTo(
     pen.calculative.worldRect.x + pen.calculative.worldRect.width / 5,

@@ -3,8 +3,10 @@ import { hitPoint, Point } from '../../point';
 import { getRectOfPoints } from '../../rect';
 import { getBezierPoint, getQuadraticPoint } from './curve';
 
-export function line(pen: Pen) {
-  const path = new Path2D();
+export function line(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+  if (!path) {
+    path = new Path2D();
+  }
   if (pen.calculative.worldAnchors.length > 1) {
     let from: Point;
     pen.calculative.worldAnchors.forEach((pt: Point) => {
@@ -22,7 +24,7 @@ export function line(pen: Pen) {
   return path;
 }
 
-function draw(path: Path2D, from: Point, to: Point) {
+function draw(path: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D, from: Point, to: Point) {
   if (!to || to.hidden) {
     return;
   }
