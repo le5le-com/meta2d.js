@@ -3,7 +3,7 @@ import { calcCenter } from '../rect';
 import { globalStore } from '../store';
 import { getRect, parseSvgPath, pathToString, scalePath, translatePath } from './svg/parse';
 
-export function svgPath(pen: Pen) {
+export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
   const pathText = globalStore.paths[pen.pathId];
   if (!pathText) {
     return new Path2D();
@@ -27,7 +27,13 @@ export function svgPath(pen: Pen) {
     translatePath(path, pen.calculative.worldRect.x - rect.x, pen.calculative.worldRect.y - rect.y);
   }
 
-  const path2D = new Path2D(pathToString(path));
+  const pathStr = pathToString(path);
+  if (ctx) {
+    (ctx as any).svgPath && (ctx as any).svgPath(pathStr);
+    return ctx;
+  }
+
+  const path2D = new Path2D(pathStr);
   path2D.closePath();
 
   return path2D;

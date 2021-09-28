@@ -42,12 +42,11 @@ import {
   translateRect,
 } from '../rect';
 import { EditAction, EditType, globalStore, TopologyStore } from '../store';
-import { isMobile, rgba, s8 } from '../utils';
+import { deepClone, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
 import { curve, curveMind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
 import { ployline } from '../diagrams/line/ployline';
-import { deepClone } from '../utils/clone';
 
 export class Canvas {
   canvas = document.createElement('canvas');
@@ -3078,7 +3077,7 @@ export class Canvas {
 
     const span = this.store.data.scale * 10;
 
-    const ctx: CanvasRenderingContext2D = this.offscreen.getContext('2d');
+    const ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D = this.offscreen.getContext('2d');
     ctx.save();
 
     ctx.strokeStyle = rgba(0.7, this.store.data.ruleColor || this.store.options.ruleColor);
@@ -3160,6 +3159,31 @@ export class Canvas {
     }
     ctx.stroke();
     ctx.restore();
+  }
+
+  toPng(padding: Padding = 0, callback: any = undefined) {
+    const rect = getRect(this.store.data.pens);
+    const p = formatPadding(padding || 2);
+    rect.x -= p[3];
+    rect.y -= p[0];
+    rect.width += p[3] + p[1];
+    rect.height += p[0] + p[2];
+    rect.ex = rect.x + rect.width;
+    rect.ey = rect.y + rect.height;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    const ctx = canvas.getContext('2d');
+    ctx.translate(-rect.x, -rect.y);
+    for (const pen of this.store.data.pens) {
+      renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store);
+    }
+    if (callback) {
+      canvas.toBlob(callback);
+      return;
+    }
+    return canvas.toDataURL('image/png', 1);
   }
 
   destroy() {

@@ -9,6 +9,8 @@ import {
   LockState,
   Pen,
   PenType,
+  renderPen,
+  renderPenRaw,
 } from './pen';
 import { Point } from './point';
 import {
@@ -20,8 +22,8 @@ import {
   useStore,
 } from './store';
 import { Tooltip } from './tooltip';
-import { s8 } from './utils';
-import { calcRelativeRect, getRect } from './rect';
+import { Padding, s8 } from './utils';
+import { calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
@@ -215,6 +217,11 @@ export class Topology {
 
   drawLine(lineName?: string) {
     this.canvas.drawingLineName = lineName;
+  }
+
+  drawingPencil() {
+    this.canvas.pencil = true;
+    this.canvas.externalElements.style.cursor = 'crosshair';
   }
 
   addDrawLineFn(fnName: string, fn: Function) {
@@ -586,7 +593,9 @@ export class Topology {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
-
+      if (data.image) {
+        this.canvas.loadImage(pen);
+      }
       pen.onValue && pen.onValue(pen);
       this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
@@ -717,6 +726,31 @@ export class Topology {
       pen.locked = LockState.DisableMove;
       this.store.pens[pen.id] = pen;
     });
+  }
+
+  renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
+    renderPenRaw(ctx, pen, this.store, rect);
+  }
+
+  toPng(padding: Padding = 0, callback: any = undefined) {
+    return this.canvas.toPng(padding, callback);
+  }
+
+  downloadPng(name?: string, padding: Padding = 0) {
+    const a = document.createElement('a');
+    a.setAttribute('download', name || 'le5le.topology.png');
+    a.setAttribute('href', this.toPng(padding));
+    const evt = document.createEvent('MouseEvents');
+    evt.initEvent('click', true, true);
+    a.dispatchEvent(evt);
+  }
+
+  getRect(pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+
+    return getRect(pens);
   }
 
   destroy(global?: boolean) {

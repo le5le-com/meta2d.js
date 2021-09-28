@@ -1,7 +1,9 @@
 import { Pen } from '../pen';
 
-export function circle(pen: Pen) {
-  const path = new Path2D();
+export function circle(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+  if (!path) {
+    path = new Path2D();
+  }
   path.ellipse(
     pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2,
     pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2,
@@ -11,8 +13,6 @@ export function circle(pen: Pen) {
     0,
     Math.PI * 2
   );
-
-  path.closePath();
 
   return path;
 }

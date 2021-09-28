@@ -49,10 +49,7 @@ export function highcharts(pen: Pen): Path2D {
       chart: highcharts,
     };
     setTimeout(() => {
-      highchartsList[pen.id].chart.chart(
-        pen.id,
-        (pen as any).highcharts.option
-      );
+      highchartsList[pen.id].chart.chart(pen.id, (pen as any).highcharts.option);
     });
 
     // 4. 加载到div layer
@@ -90,9 +87,6 @@ function resize(pen: Pen) {
     return;
   }
   setElemPosition(pen, highchartsList[pen.id].div);
-  var chart = highchartsList[pen.id].chart.chart(
-    pen.id,
-    (pen as any).highcharts.option
-  );
+  const chart = highchartsList[pen.id].chart.chart(pen.id, (pen as any).highcharts.option);
   chart.reflow();
 }

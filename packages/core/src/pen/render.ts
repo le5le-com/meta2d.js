@@ -58,11 +58,6 @@ export function renderPen(
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
-  // for canvas2svg
-  if ((ctx as any).setAttrs) {
-    (ctx as any).setAttrs(pen);
-  }
-  // end
 
   if (pen.calculative.rotate && pen.name !== 'line') {
     ctx.translate(
@@ -344,6 +339,282 @@ export function renderPen(
     ctx.font = `${pen.fontStyle || 'normal'} normal ${
       pen.fontWeight || 'normal'
     } ${pen.fontSize}px/${pen.lineHeight} ${pen.fontFamily}`;
+
+    if (pen.textAlign) {
+      ctx.textAlign = pen.textAlign as any;
+    } else {
+      ctx.textAlign = 'center';
+    }
+
+    if (pen.textBaseline) {
+      ctx.textBaseline = pen.textBaseline as any;
+    }
+
+    let y = 0.5;
+    switch (pen.textBaseline) {
+      case 'top':
+        y = 0;
+        break;
+      case 'bottom':
+        y = 1;
+        break;
+    }
+    pen.calculative.textLines.forEach((text, i) => {
+      let x = 0;
+      if (!pen.textAlign || pen.textAlign === 'center') {
+        x = pen.calculative.textDrawRect.width / 2;
+      }
+      ctx.fillText(
+        text,
+        pen.calculative.textDrawRect.x + x,
+        pen.calculative.textDrawRect.y + (i + y) * pen.fontSize * pen.lineHeight
+      );
+    });
+
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+export function renderPenRaw(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen,
+  store: TopologyStore,
+  rect?: Rect
+) {
+  if (globalStore.independentDraws[pen.name]) {
+    ctx.save();
+    globalStore.independentDraws[pen.name](ctx, pen, store);
+    ctx.restore();
+    return;
+  }
+
+  ctx.save();
+  if (rect) {
+    ctx.translate(-rect.x, -rect.y);
+  }
+
+  ctx.beginPath();
+  // for canvas2svg
+  if ((ctx as any).setAttrs) {
+    (ctx as any).setAttrs(pen);
+  }
+  // end
+
+  if (pen.calculative.rotate && pen.name !== 'line') {
+    ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
+    ctx.rotate((pen.calculative.rotate * Math.PI) / 180);
+    ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
+  }
+
+  if (pen.calculative.lineWidth > 1) {
+    ctx.lineWidth = pen.calculative.lineWidth;
+  }
+
+  let fill: any;
+  if (pen.calculative.hover) {
+    ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
+    ctx.fillStyle = pen.hoverBackground || store.options.hoverBackground;
+    fill = pen.hoverBackground || store.options.hoverBackground;
+  } else if (pen.calculative.active) {
+    ctx.strokeStyle = pen.activeColor || store.options.activeColor;
+    ctx.fillStyle = pen.activeBackground || store.options.activeBackground;
+    fill = pen.activeBackground || store.options.activeBackground;
+  } else {
+    if (pen.strokeImage) {
+      if (pen.calculative.strokeImg) {
+        ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, 'repeat');
+        fill = true;
+      }
+    } else {
+      ctx.strokeStyle = pen.calculative.color || '#000000';
+    }
+
+    if (pen.backgroundImage) {
+      if (pen.calculative.backgroundImg) {
+        ctx.fillStyle = ctx.createPattern(pen.calculative.backgroundImg, 'repeat');
+        fill = true;
+      }
+    } else {
+      ctx.fillStyle = pen.background;
+      fill = !!pen.background;
+    }
+  }
+
+  if (pen.calculative.lineCap) {
+    ctx.lineCap = pen.calculative.lineCap as CanvasLineCap;
+  } else if (pen.type) {
+    ctx.lineCap = 'round';
+  }
+
+  if (pen.calculative.lineJoin) {
+    ctx.lineJoin = pen.calculative.lineJoin as CanvasLineJoin;
+  } else if (pen.type) {
+    ctx.lineJoin = 'round';
+  }
+
+  if (pen.calculative.globalAlpha < 1) {
+    ctx.globalAlpha = pen.calculative.globalAlpha;
+  }
+
+  if (pen.calculative.lineDash) {
+    ctx.setLineDash(pen.calculative.lineDash);
+  }
+  if (pen.calculative.lineDashOffset) {
+    ctx.lineDashOffset = pen.calculative.lineDashOffset;
+  }
+
+  if (pen.calculative.shadowColor) {
+    ctx.shadowColor = pen.calculative.shadowColor;
+    ctx.shadowOffsetX = pen.calculative.shadowOffsetX;
+    ctx.shadowOffsetY = pen.calculative.shadowOffsetY;
+    ctx.shadowBlur = pen.calculative.shadowBlur;
+  }
+
+  if (globalStore.registerPens[pen.name]) {
+    ctx.save();
+    ctx.beginPath();
+    globalStore.registerPens[pen.name](pen, ctx);
+    fill && ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    const progress = pen.calculative.progress || pen.progress;
+    if (progress != null) {
+      ctx.save();
+      let grd = ctx.createLinearGradient(
+        pen.calculative.worldRect.x,
+        pen.calculative.worldRect.y,
+        pen.calculative.worldRect.x + pen.calculative.worldRect.width * progress,
+        pen.calculative.worldRect.y
+      );
+      if (pen.verticalProgress) {
+        grd = ctx.createLinearGradient(
+          pen.calculative.worldRect.x,
+          pen.calculative.worldRect.y,
+          pen.calculative.worldRect.x,
+          pen.calculative.worldRect.y + pen.calculative.worldRect.height * progress
+        );
+      }
+      const color = pen.progressColor || pen.color || store.options.activeColor;
+      grd.addColorStop(0, color);
+      grd.addColorStop(1, color);
+      grd.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      globalStore.registerPens[pen.name](pen, ctx);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  if (globalStore.draws[pen.name]) {
+    ctx.save();
+    const ret = globalStore.draws[pen.name](ctx, pen, store);
+    ctx.restore();
+    // Finished on render.
+    if (ret) {
+      return;
+    }
+  }
+
+  if (pen.image && pen.calculative.img) {
+    ctx.save();
+    ctx.shadowColor = '';
+    ctx.shadowBlur = 0;
+    const rect = pen.calculative.worldIconRect;
+    let x = rect.x;
+    let y = rect.y;
+    let w = rect.width;
+    let h = rect.height;
+    if (pen.calculative.iconWidth) {
+      w = pen.calculative.iconWidth;
+    }
+    if (pen.calculative.iconHeight) {
+      h = pen.calculative.iconHeight;
+    }
+    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight) {
+      let scaleW = rect.width / pen.calculative.imgNaturalWidth;
+      let scaleH = rect.height / pen.calculative.imgNaturalHeight;
+      let scaleMin = scaleW > scaleH ? scaleH : scaleW;
+      if (pen.iconWidth) {
+        h = scaleMin * pen.iconWidth;
+      } else {
+        w = scaleMin * pen.calculative.imgNaturalWidth;
+      }
+      if (pen.iconHeight) {
+        h = scaleMin * pen.iconHeight;
+      } else {
+        h = scaleMin * pen.calculative.imgNaturalHeight;
+      }
+    }
+    x += (rect.width - w) / 2;
+    y += (rect.height - h) / 2;
+
+    if (pen.iconRotate) {
+      ctx.translate(rect.center.x, rect.center.y);
+      ctx.rotate((pen.iconRotate * Math.PI) / 180);
+      ctx.translate(-rect.center.x, -rect.center.y);
+    }
+
+    ctx.drawImage(pen.calculative.img, x, y, w, h);
+    ctx.restore();
+  } else if (pen.icon) {
+    ctx.save();
+    ctx.shadowColor = '';
+    ctx.shadowBlur = 0;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const iconRect = pen.calculative.worldIconRect;
+    let x = iconRect.x + iconRect.width / 2;
+    let y = iconRect.y + iconRect.height / 2;
+
+    if (pen.calculative.iconSize > 0) {
+      ctx.font = `${pen.calculative.iconSize}px ${pen.iconFamily}`;
+    } else if (iconRect.width > iconRect.height) {
+      ctx.font = `${iconRect.height}px ${pen.iconFamily}`;
+    } else {
+      ctx.font = `${iconRect.width}px ${pen.iconFamily}`;
+    }
+    ctx.fillStyle = pen.iconColor || pen.textColor || store.options.textColor;
+
+    if (pen.calculative.worldRect.rotate) {
+      ctx.translate(iconRect.center.x, iconRect.center.y);
+      ctx.rotate((pen.calculative.worldRect.rotate * Math.PI) / 180);
+      ctx.translate(-iconRect.center.x, -iconRect.center.y);
+    }
+
+    ctx.beginPath();
+    ctx.fillText(pen.icon, x, y);
+
+    ctx.restore();
+  }
+
+  if (pen.calculative.text) {
+    ctx.save();
+    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
+    if (pen.calculative.textBackground) {
+      ctx.save();
+      ctx.fillStyle = pen.calculative.textBackground;
+      let x = 0;
+      if (pen.textAlign === 'right') {
+        x = pen.calculative.textDrawRect.width;
+      }
+      ctx.fillRect(
+        pen.calculative.textDrawRect.x - x,
+        pen.calculative.textDrawRect.y,
+        pen.calculative.textDrawRect.width,
+        pen.calculative.textDrawRect.height
+      );
+      ctx.restore();
+    }
+
+    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.fontWeight || 'normal'} ${pen.fontSize}px/${pen.lineHeight} ${
+      pen.fontFamily
+    }`;
 
     if (pen.textAlign) {
       ctx.textAlign = pen.textAlign as any;
