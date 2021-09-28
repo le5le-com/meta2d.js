@@ -726,6 +726,14 @@ export class Topology {
     return getRect(pens);
   }
 
+  fitView(vertical = true) {}
+
+  centerView() {}
+
+  hasView() {
+    return !!this.store.data.pens.length;
+  }
+
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
