@@ -11,6 +11,7 @@ export interface TopologyData {
   x: number;
   y: number;
   scale: number;
+  origin: Point;
   center: Point;
   locked?: LockState;
   websocket?: string;
@@ -26,6 +27,11 @@ export interface TopologyData {
   socketCbJs?: string;
   socketCbFn?: string;
   initJs?: string;
+  grid?: boolean;
+  gridColor?: string;
+  gridSize?: number;
+  rule?: boolean;
+  ruleColor?: string;
 }
 
 export enum EditType {
@@ -72,6 +78,7 @@ export const createStore = () => {
       y: 0,
       scale: 1,
       pens: [],
+      origin: { x: 0, y: 0 },
       center: { x: 0, y: 0 },
     },
     histories: [],
@@ -100,6 +107,7 @@ export const clearStore = (store: TopologyStore) => {
     y: 0,
     scale: 1,
     pens: [],
+    origin: { x: 0, y: 0 },
     center: { x: 0, y: 0 },
   };
   store.center = { x: 0, y: 0 };

@@ -172,7 +172,7 @@ export class Topology {
     }
 
     if (data) {
-      this.store.data = Object.assign({}, data);
+      Object.assign(this.store.data, data);
       this.store.data.pens = [];
       for (let pen of data.pens) {
         this.canvas.makePen(pen);
@@ -556,7 +556,7 @@ export class Topology {
         calcTextLines(pen);
       }
       for (const k in data) {
-        if (typeof pen[k] !== 'object') {
+        if (typeof pen[k] !== 'object' || k === 'lineDash') {
           pen.calculative[k] = data[k];
         }
       }
@@ -671,6 +671,28 @@ export class Topology {
       }
     });
   };
+
+  pushChildren(parent: Pen, children: Pen[]) {
+    if (!parent.children) {
+      parent.children = [];
+    }
+    children.forEach((pen) => {
+      if (pen.parentId) {
+        const p = this.store.pens[pen.parentId];
+        const i = p.children.findIndex((id) => id === pen.id);
+        p.children.splice(i, 1);
+      }
+      parent.children.push(pen.id);
+      pen.parentId = parent.id;
+      const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
+      pen.x = childRect.x;
+      pen.y = childRect.y;
+      pen.width = childRect.width;
+      pen.height = childRect.height;
+      pen.locked = LockState.DisableMove;
+      this.store.pens[pen.id] = pen;
+    });
+  }
 
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {

@@ -1,5 +1,6 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
+import { Event } from '../event';
 
 export enum PenType {
   Node,
