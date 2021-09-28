@@ -29,7 +29,7 @@ import {
   setHover,
   getAllChildren,
 } from '../pen';
-import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, translatePoint } from '../point';
+import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, scalePoint, translatePoint } from '../point';
 import {
   calcCenter,
   calcRelativePoint,
@@ -1832,6 +1832,7 @@ export class Canvas {
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
+    this.renderGrid();
     offscreenCtx.save();
     offscreenCtx.translate(this.store.data.x, this.store.data.y);
     if (this.store.data.background) {
@@ -1845,6 +1846,8 @@ export class Canvas {
     this.renderBorder();
     this.renderHoverPoint();
     offscreenCtx.restore();
+
+    this.renderRule();
 
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -2052,19 +2055,15 @@ export class Canvas {
   renderAnimate = () => {};
 
   translate(x: number, y: number) {
+    this.store.data.origin.x += x;
+    this.store.data.origin.y += y;
     this.store.data.x += x;
     this.store.data.y += y;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
 
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
-    this.timer = setTimeout(() => {
-      this.timer = undefined;
-      this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
-    }, 200);
+    this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -2073,9 +2072,9 @@ export class Canvas {
     }
 
     this.calibrateMouse(center);
-
     this.dirty = true;
     const s = scale / this.store.data.scale;
+    scalePoint(this.store.data.origin, s, center);
     this.store.data.pens.forEach((pen) => {
       if (pen.parentId) {
         return;
@@ -2114,6 +2113,7 @@ export class Canvas {
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
     this.render(Infinity);
+    this.store.emitter.emit('rotatePens', this.store.active);
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -2121,8 +2121,6 @@ export class Canvas {
     this.timer = setTimeout(() => {
       this.timer = undefined;
       const pens = this.store.active;
-      this.store.emitter.emit('rotatePens', pens);
-
       const currentPens = [];
       for (let pen of pens) {
         currentPens.push(deepClone(pen));
@@ -2243,6 +2241,7 @@ export class Canvas {
     });
     this.getSizeCPs();
     this.render(Infinity);
+    this.store.emitter.emit('resizePens', this.store.active);
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -2250,8 +2249,6 @@ export class Canvas {
     this.timer = setTimeout(() => {
       this.timer = undefined;
       const pens = this.store.active;
-      this.store.emitter.emit('resizePens', pens);
-
       const currentPens = [];
       for (let pen of pens) {
         currentPens.push(deepClone(pen));
@@ -2565,13 +2562,13 @@ export class Canvas {
     }
 
     this.render(Infinity);
+    this.store.emitter.emit('translatePens', pens);
 
     if (this.timer) {
       clearTimeout(this.timer);
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      this.store.emitter.emit('translatePens', pens);
 
       const currentPens = [];
       for (let pen of pens) {
@@ -3073,6 +3070,97 @@ export class Canvas {
     this.pushHistory({ type: EditType.Update, pens: [deepClone(pen)], initPens: this.initPens });
     this.store.emitter.emit('valueUpdate', pen);
   };
+
+  renderRule() {
+    if (!this.store.options.rule && !this.store.data.rule) {
+      return;
+    }
+
+    const span = this.store.data.scale * 10;
+
+    const ctx: CanvasRenderingContext2D = this.offscreen.getContext('2d');
+    ctx.save();
+
+    ctx.strokeStyle = rgba(0.7, this.store.data.ruleColor || this.store.options.ruleColor);
+
+    // horizontal rule
+    ctx.beginPath();
+    ctx.lineWidth = 12;
+    ctx.lineDashOffset = -this.store.data.origin.x % span;
+    ctx.setLineDash([1, span - 1]);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(this.width, 0);
+    ctx.stroke();
+
+    // vertical rule
+    ctx.beginPath();
+    ctx.lineDashOffset = -this.store.data.origin.y % span;
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, this.height);
+    ctx.stroke();
+
+    // the big rule
+    ctx.strokeStyle = this.store.data.ruleColor || this.store.options.ruleColor;
+    ctx.beginPath();
+    ctx.lineWidth = 24;
+    ctx.lineDashOffset = -this.store.data.origin.x % (span * 10);
+    ctx.setLineDash([1, span * 10 - 1]);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(this.width, 0);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.lineDashOffset = -this.store.data.origin.y % (span * 10);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, this.height);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.fillStyle = ctx.strokeStyle;
+    let text: number = 0 - Math.floor(this.store.data.origin.x / span / 10) * 100;
+    for (let i = this.store.data.origin.x % (span * 10); i < this.width; i += 10 * span, text += 100) {
+      if (span < 3 && text % 500) {
+        continue;
+      }
+      ctx.fillText(text.toString(), i + 4, 16);
+    }
+
+    text = 0 - Math.floor(this.store.data.origin.y / span / 10) * 100;
+    for (let i = this.store.data.origin.y % (span * 10); i < this.height; i += 10 * span, text += 100) {
+      if (span < 3 && text % 500) {
+        continue;
+      }
+      ctx.save();
+      ctx.beginPath();
+      ctx.translate(16, i - 4);
+      ctx.rotate((270 * Math.PI) / 180);
+      ctx.fillText(text.toString(), 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  renderGrid() {
+    if (!this.store.options.grid && !this.store.data.grid) {
+      return;
+    }
+    const ctx = this.offscreen.getContext('2d');
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = this.store.data.gridColor || this.store.options.gridColor;
+    ctx.beginPath();
+    const size = (this.store.data.gridSize || this.store.options.gridSize) * this.store.data.scale;
+    for (let i = size; i < this.width; i += size) {
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, this.height);
+    }
+    for (let i = size; i < this.height; i += size) {
+      ctx.moveTo(0, i);
+      ctx.lineTo(this.width, i);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
 
   destroy() {
     // ios
