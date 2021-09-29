@@ -16,6 +16,7 @@ import { Point } from './point';
 import {
   clearStore,
   EditAction,
+  EditType,
   globalStore,
   TopologyData,
   TopologyStore,
@@ -818,6 +819,7 @@ export class Topology {
   alignNodes(align: string, pens?: Pen[], rect?: Rect) {
     !pens && (pens = this.store.data.pens);
     !rect && (rect = this.getRect());
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     for (const item of pens) {
       if (item.type === PenType.Line) {
         continue;
@@ -844,6 +846,11 @@ export class Topology {
       }
       this.setValue(item);
     }
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
   }
 
   /**
@@ -864,6 +871,7 @@ export class Topology {
     if (pens.length <= 2) {
       return;
     }
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     // 计算间距
     const allDistance = pens.reduce((distance: number, currentPen: Pen) => {
       return distance + currentPen[direction];
@@ -884,6 +892,11 @@ export class Topology {
       left += item[direction] + space;
       this.setValue(item);
     }
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
   }
 
   spaceBetween(pens?: Pen[], width?: number) {
@@ -901,6 +914,7 @@ export class Topology {
 
     // 1. 拿到全部节点中最大的宽高
     pens = pens.filter((item) => item.type !== PenType.Line);
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     let maxWidth = 0,
       maxHeight = 0;
 
@@ -925,6 +939,11 @@ export class Topology {
       }
 
       this.setValue(pen);
+    });
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
     });
   }
 
