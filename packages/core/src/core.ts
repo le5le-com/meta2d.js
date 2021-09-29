@@ -160,6 +160,7 @@ export class Topology {
 
   open(data?: TopologyData) {
     clearStore(this.store);
+    this.canvas.tooltip.hideTip();
     this.canvas.activeRect = undefined;
     this.canvas.sizeCPs = undefined;
     if (data && data.mqttOptions && !data.mqttOptions.customClientId) {

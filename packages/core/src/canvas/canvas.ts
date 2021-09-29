@@ -2243,8 +2243,8 @@ export class Canvas {
         x: pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2,
         y: pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2,
       };
-      this.dirtyPenRect(pen, true);
       pen.onResize && pen.onResize(pen);
+      this.dirtyPenRect(pen, true);
     });
     this.getSizeCPs();
     this.render(Infinity);
