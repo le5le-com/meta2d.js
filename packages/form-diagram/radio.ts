@@ -11,7 +11,8 @@ export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   let h = pen.calculative.worldRect.height;
   // pen.lineWidth = h / 5;
   // ctx.lineWidth = h / 5;
-  pen.textLeft = h;
+  pen.textLeft = h + h / 5;
+  pen.calculative.textLeft = h + h / 5;
   pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
@@ -37,5 +38,8 @@ function click(pen: any) {
 
 function resize(pen: any) {
   let h = pen.calculative.worldRect.height;
-  pen.textLeft = h;
+  pen.textLeft = h + h / 5;
+  pen.calculative.textLeft = h + h / 5;
+
+  // calcTextRect(pen);
 }

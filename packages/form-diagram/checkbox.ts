@@ -8,6 +8,7 @@ export function checkbox(
 ) {
   if (!pen.onDestroy) {
     pen.onClick = click;
+    pen.onResize = resize;
   }
   if (!path) {
     path = new Path2D();
@@ -16,7 +17,8 @@ export function checkbox(
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
-  pen.textLeft = h;
+  pen.textLeft = h + h / 5;
+  pen.calculative.textLeft = h + h / 5;
   pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
@@ -32,4 +34,9 @@ export function checkbox(
 function click(pen: any) {
   pen.isChecked = !pen.isChecked;
   pen.calculative.canvas.render();
+}
+function resize(pen: any) {
+  let h = pen.calculative.worldRect.height;
+  pen.textLeft = h + h / 5;
+  pen.calculative.textLeft = h + h / 5;
 }
