@@ -1,5 +1,10 @@
-export function lifeline(pen: any) {
-  const path = new Path2D();
+export function lifeline(
+  pen: any,
+  path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
+) {
+  if (!path) {
+    path = new Path2D();
+  }
 
   let height = 0;
   if (!pen.data.headHeight) {
@@ -67,7 +72,8 @@ export function lifelineDashByCtx(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.beginPath();
   ctx.lineWidth = 1;
   ctx.setLineDash([7, 7]);
-  const middle = pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
+  const middle =
+    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
   ctx.moveTo(middle, pen.calculative.worldRect.y + height + 1);
   ctx.lineTo(middle, pen.calculative.worldRect.ey);
   ctx.stroke();
