@@ -33,11 +33,13 @@ export function radio(
 }
 
 function click(pen: any) {
-  let isChecked = pen.isChecked;
-  currentTopology.setValue({
-    id: pen.id,
-    isChecked: !isChecked,
-  });
+  // let isChecked = pen.isChecked;
+  // currentTopology.setValue({
+  //   id: pen.id,
+  //   isChecked: !isChecked,
+  // });
+  pen.isChecked = !pen.isChecked;
+  currentTopology.render();
 }
 
 function add(topology: any, pen: any) {
