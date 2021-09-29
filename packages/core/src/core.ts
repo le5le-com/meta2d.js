@@ -806,6 +806,119 @@ export class Topology {
     };
   }
 
+  alignNodes(align: string, pens?: Pen[], rect?: Rect) {
+    !pens && (pens = this.store.data.pens);
+    !rect && (rect = this.getRect());
+    for (const item of pens) {
+      if (item.type === PenType.Line) {
+        continue;
+      }
+      switch (align) {
+        case 'left':
+          item.x = rect.x;
+          break;
+        case 'right':
+          item.x = rect.ex - item.width;
+          break;
+        case 'top':
+          item.y = rect.y;
+          break;
+        case 'bottom':
+          item.y = rect.ey - item.height;
+          break;
+        case 'center':
+          item.x = rect.center.x - item.width / 2;
+          break;
+        case 'middle':
+          item.y = rect.center.y - item.height / 2;
+          break;
+      }
+      this.setValue(item);
+    }
+  }
+
+  /**
+   * 水平或垂直方向的均分
+   * @param direction 方向，width 说明水平方向间距相同
+   * @param pens 节点们，默认全部的
+   * @param distance 总的宽 or 高
+   */
+  private spaceBetweenByDirection(
+    direction: 'width' | 'height',
+    pens?: Pen[],
+    distance?: number
+  ) {
+    !pens && (pens = this.store.data.pens);
+    !distance && (distance = this.getRect()[direction]);
+    // 过滤出 node 节点 pens
+    pens = pens.filter((item) => item.type !== PenType.Line);
+    if (pens.length <= 2) {
+      return;
+    }
+    // 计算间距
+    const allDistance = pens.reduce((distance: number, currentPen: Pen) => {
+      return distance + currentPen[direction];
+    }, 0);
+    const space = (distance - allDistance) / (pens.length - 1);
+
+    // 按照大小顺序排列画笔
+    pens = pens.sort((a: Pen, b: Pen) => {
+      if (direction === 'width') {
+        return a.x - b.x;
+      }
+      return a.y - b.y;
+    });
+
+    let left = direction === 'width' ? pens[0].x : pens[0].y;
+    for (const item of pens) {
+      direction === 'width' ? (item.x = left) : (item.y = left);
+      left += item[direction] + space;
+      this.setValue(item);
+    }
+  }
+
+  spaceBetween(pens?: Pen[], width?: number) {
+    this.spaceBetweenByDirection('width', pens, width);
+  }
+
+  spaceBetweenColumn(pens: Pen[], height: number) {
+    this.spaceBetweenByDirection('height', pens, height);
+  }
+
+  layout(pens?: Pen[], width?: number, space: number = 30) {
+    !pens && (pens = this.store.data.pens);
+    const rect = getRect(pens);
+    !width && (width = this.getRect().width);
+
+    // 1. 拿到全部节点中最大的宽高
+    pens = pens.filter((item) => item.type !== PenType.Line);
+    let maxWidth = 0,
+      maxHeight = 0;
+
+    pens.forEach((pen: Pen) => {
+      pen.width > maxWidth && (maxWidth = pen.width);
+      pen.height > maxHeight && (maxHeight = pen.height);
+    });
+
+    // 2. 遍历节点调整位置
+    let center = { x: rect.x + maxWidth / 2, y: rect.y + maxHeight / 2 };
+    pens.forEach((pen: Pen) => {
+      pen.x = center.x - pen.width / 2;
+      pen.y = center.y - pen.height / 2;
+      const currentWidth = center.x + maxWidth / 2 - rect.x;
+      if (width - currentWidth >= maxWidth + space)
+        // 当前行
+        center.x = center.x + maxWidth + space;
+      else {
+        // 换行
+        center.x = rect.x + maxWidth / 2;
+        center.y = center.y + maxHeight + space;
+      }
+
+      this.setValue(pen);
+    });
+  }
+
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
