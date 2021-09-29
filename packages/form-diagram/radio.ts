@@ -17,6 +17,8 @@ export function radio(
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
+  // pen.lineWidth = h / 5;
+  // path.lineWidth = h / 5;
   pen.textLeft = h;
   pen.textWidth = w - h;
   pen.textAlign = 'start';
@@ -39,5 +41,19 @@ function click(pen: any) {
 }
 
 function add(topology: any, pen: any) {
+  let x = pen.calculative.worldRect.x;
+  let y = pen.calculative.worldRect.y;
+  let w = pen.calculative.worldRect.width;
+  let h = pen.calculative.worldRect.height;
   currentTopology = topology;
+  const childPen: any = {
+    name: 'circle',
+    x: x + h / 4,
+    y: y + h / 4,
+    width: h / 2,
+    height: h / 2,
+    progress: 1,
+  };
+  currentTopology.canvas.makePen(childPen);
+  currentTopology.pushChildren(pen, [childPen]);
 }
