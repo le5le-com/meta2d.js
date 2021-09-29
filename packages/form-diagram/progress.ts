@@ -1,7 +1,6 @@
 import { Pen } from '../core/src/pen';
 
 declare const window: any;
-var currentTopology: any;
 export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
