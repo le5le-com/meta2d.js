@@ -1250,6 +1250,7 @@ export class Canvas {
       if (this.store.lastHover) {
         setHover(this.store, getParent(this.store, this.store.lastHover) || this.store.lastHover, false);
         this.store.emitter.emit('leave', this.store.lastHover);
+        this.tooltip.hideTip();
       }
       if (this.store.hover) {
         this.store.hover.calculative.hover = true;
@@ -2068,8 +2069,8 @@ export class Canvas {
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
-
     this.store.emitter.emit('translate', { x: this.store.data.x, y: this.store.data.y });
+    this.tooltip.translate(x, y);
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -2568,6 +2569,7 @@ export class Canvas {
     }
 
     this.render(Infinity);
+    this.tooltip.translate(x, y);
     this.store.emitter.emit('translatePens', pens);
 
     if (this.timer) {
