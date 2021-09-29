@@ -7,6 +7,7 @@ import { checkbox } from './checkbox';
 import { radio } from './radio';
 import { leSwitch } from './leSwitch';
 import { progress } from './progress';
+
 export function formPens() {
   return {
     table,
