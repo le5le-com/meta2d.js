@@ -22,7 +22,7 @@ import {
   useStore,
 } from './store';
 import { Tooltip } from './tooltip';
-import { Padding, s8 } from './utils';
+import { formatPadding, Padding, s8 } from './utils';
 import { calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
@@ -753,28 +753,37 @@ export class Topology {
     return getRect(pens);
   }
 
-  fitView(vertical: boolean = true) {
+  /**
+   * 放大到屏幕尺寸，并居中
+   * @param fit true，填满但完整展示；false，填满，但长边可能截取（即显示不完整）
+   */
+  fitView(fit: boolean = true, viewPadding: Padding = 10) {
     // 默认垂直填充，两边留白
     if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
     const { canvas } = this.canvas;
     const { offsetWidth: width, offsetHeight: height } = canvas;
     this.resize(width, height);
+    // 2. 获取设置的留白值
+    const padding = formatPadding(viewPadding);
 
-    // 2. 获取图形尺寸
+    // 3. 获取图形尺寸
     const rect = this.getRect();
 
-    // 3. 计算缩放比例
-    const w = width / rect.width;
-    const h = height / rect.height;
+    // 4. 计算缩放比例
+    const w = (width - padding[1] - padding[3]) / rect.width;
+    const h = (height - padding[0] - padding[2]) / rect.height;
     let ratio = w;
-    if (vertical) {
-      ratio = h;
+    if (fit) {
+      // 完整显示取小的
+      ratio = w > h ? h : w;
+    } else {
+      ratio = w > h ? w : h;
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
     this.scale(ratio * this.store.data.scale);
 
-    // 4. 居中
+    // 5. 居中
     this.centerView();
   }
 
