@@ -2152,7 +2152,7 @@ export class Canvas {
     this.lastOffsetX = x;
     this.lastOffsetY = y;
     if ((e as any).shiftKey || (e as any).ctrlKey) {
-      offsetY = (offsetX * w) / h;
+      offsetY = (offsetX * h) / w;
     }
     switch (this.resizeIndex) {
       case 0:
