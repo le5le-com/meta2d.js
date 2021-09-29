@@ -2,27 +2,19 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import {
-  calcTextLines,
-  facePen,
-  getParent,
-  LockState,
-  Pen,
-  PenType,
-  renderPen,
-  renderPenRaw,
-} from './pen';
+import { calcTextLines, facePen, getParent, LockState, Pen, PenType, renderPenRaw } from './pen';
 import { Point } from './point';
 import {
   clearStore,
   EditAction,
   EditType,
   globalStore,
+  register,
+  registerCanvasDraw,
   TopologyData,
   TopologyStore,
   useStore,
 } from './store';
-import { Tooltip } from './tooltip';
 import { formatPadding, Padding, s8 } from './utils';
 import { calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
@@ -35,8 +27,6 @@ declare const window: any;
 
 export class Topology {
   store: TopologyStore;
-  input = document.createElement('textarea');
-  tooltip: Tooltip;
   canvas: Canvas;
   websocket: WebSocket;
   mqttClient: any;
@@ -92,18 +82,6 @@ export class Topology {
     } else {
       this.canvas = new Canvas(parent, this.store);
     }
-
-    this.tooltip = new Tooltip(this.canvas.parentElement);
-
-    this.input.style.position = 'absolute';
-    this.input.style.zIndex = '-1';
-    this.input.style.left = '-1000px';
-    this.input.style.width = '0';
-    this.input.style.height = '0';
-    this.input.style.outline = 'none';
-    this.input.style.border = '1px solid #cdcdcd';
-    this.input.style.resize = 'none';
-    this.canvas.parentElement.appendChild(this.input);
 
     this.resize();
     this.canvas.listen();
@@ -257,16 +235,12 @@ export class Topology {
     return this;
   }
 
-  register(penPaths: any) {
-    Object.assign(globalStore.registerPens, penPaths);
+  register(path2dFns: { [key: string]: (pen: any) => void }) {
+    register(path2dFns);
   }
 
-  registerDraw(name: string, draw?: Function) {
-    globalStore.draws[name] = draw;
-  }
-
-  registerIndependentDraw(name: string, draw?: Function) {
-    globalStore.independentDraws[name] = draw;
+  registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: any) => void }) {
+    registerCanvasDraw(drawFns);
   }
 
   // customDock return:
@@ -538,10 +512,7 @@ export class Topology {
   connectMqtt() {
     this.closeMqtt();
     if (this.store.data.mqtt) {
-      this.mqttClient = mqtt.connect(
-        this.store.data.mqtt,
-        this.store.data.mqttOptions
-      );
+      this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
       this.mqttClient.on('message', (topic: string, message: any) => {
         this.doSocket(message.toString());
       });
@@ -585,12 +556,7 @@ export class Topology {
           pen.calculative[k] = data[k];
         }
       }
-      if (
-        data.x != null ||
-        data.y != null ||
-        data.width != null ||
-        data.height != null
-      ) {
+      if (data.x != null || data.y != null || data.width != null || data.height != null) {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
@@ -716,10 +682,7 @@ export class Topology {
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
-      const childRect = calcRelativeRect(
-        pen.calculative.worldRect,
-        parent.calculative.worldRect
-      );
+      const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
       pen.x = childRect.x;
       pen.y = childRect.y;
       pen.width = childRect.width;
@@ -794,10 +757,7 @@ export class Topology {
     const viewCenter = this.getViewCenter();
     const { center } = rect;
     // center.x 的相对于画布的 x 所以此处要 - 画布的偏移量
-    this.translate(
-      viewCenter.x - center.x - this.store.data.x,
-      viewCenter.y - center.y - this.store.data.y
-    );
+    this.translate(viewCenter.x - center.x - this.store.data.x, viewCenter.y - center.y - this.store.data.y);
     const { canvas } = this.canvas;
     const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
     const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
@@ -859,11 +819,7 @@ export class Topology {
    * @param pens 节点们，默认全部的
    * @param distance 总的宽 or 高
    */
-  private spaceBetweenByDirection(
-    direction: 'width' | 'height',
-    pens?: Pen[],
-    distance?: number
-  ) {
+  private spaceBetweenByDirection(direction: 'width' | 'height', pens?: Pen[], distance?: number) {
     !pens && (pens = this.store.data.pens);
     !distance && (distance = this.getRect()[direction]);
     // 过滤出 node 节点 pens

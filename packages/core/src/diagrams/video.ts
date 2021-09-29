@@ -34,8 +34,7 @@ export function video(pen: Pen) {
     }
     media.loop = pen.playLoop;
     media.ontimeupdate = () => {
-      progress.style.width =
-        (media.currentTime / media.duration) * worldRect.width + 'px';
+      progress.style.width = (media.currentTime / media.duration) * worldRect.width + 'px';
     };
     media.onended = () => {
       pen.calculative.onended && pen.calculative.onended(pen);
@@ -49,23 +48,14 @@ export function video(pen: Pen) {
     media.style.height = '100%';
     player.appendChild(media);
     videos[pen.id] = player;
-    pen.calculative.rootElement &&
-      pen.calculative.rootElement.appendChild(player);
+    pen.calculative.canvas.externalElements && pen.calculative.canvas.externalElements.appendChild(player);
     setElemPosition(pen, player);
     pen.autoPlay && media.play();
-  } else if (
-    pen.video &&
-    pen.calculative.media &&
-    pen.video !== pen.calculative.video
-  ) {
+  } else if (pen.video && pen.calculative.media && pen.video !== pen.calculative.video) {
     pen.calculative.media.src = pen.video;
     pen.autoPlay && pen.calculative.media.play();
     pen.calculative.video = pen.video;
-  } else if (
-    pen.audio &&
-    pen.calculative.media &&
-    pen.audio !== pen.calculative.audio
-  ) {
+  } else if (pen.audio && pen.calculative.media && pen.audio !== pen.calculative.audio) {
     pen.calculative.media.src = pen.audio;
     pen.autoPlay && pen.calculative.media.play();
     pen.calculative.audio = pen.audio;
