@@ -1255,6 +1255,7 @@ export class Canvas {
         this.store.hover.calculative.hover = true;
         setHover(this.store, getParent(this.store, this.store.hover) || this.store.hover);
         this.store.emitter.emit('enter', this.store.hover);
+        this.tooltip.showTip(this.store.hover, pt);
       }
       this.store.lastHover = this.store.hover;
     }
