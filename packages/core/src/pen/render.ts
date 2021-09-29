@@ -195,11 +195,8 @@ export function renderPen(
 
   if (globalStore.canvasDraws[pen.name]) {
     ctx.save();
-    const ret = globalStore.canvasDraws[pen.name](ctx, pen, store);
+    globalStore.canvasDraws[pen.name](ctx, pen, store);
     ctx.restore();
-    if (ret) {
-      return;
-    }
   }
 
   if (pen.image && pen.calculative.img) {

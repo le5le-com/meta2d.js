@@ -8,13 +8,13 @@ import {
   clearStore,
   EditAction,
   globalStore,
+  register,
   registerCanvasDraw,
-  registerPathDraw,
   TopologyData,
   TopologyStore,
   useStore,
 } from './store';
-import { Padding, s8 } from './utils';
+import { formatPadding, Padding, s8 } from './utils';
 import { calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
@@ -234,11 +234,11 @@ export class Topology {
     return this;
   }
 
-  registerPathDraw(path2dFns: any) {
-    registerPathDraw(path2dFns);
+  register(path2dFns: { [key: string]: (pen: any) => void }) {
+    register(path2dFns);
   }
 
-  registerCanvasDraw(drawFns?: any) {
+  registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: any) => void }) {
     registerCanvasDraw(drawFns);
   }
 
@@ -716,12 +716,172 @@ export class Topology {
     return getRect(pens);
   }
 
-  fitView(vertical = true) {}
+  /**
+   * 放大到屏幕尺寸，并居中
+   * @param fit true，填满但完整展示；false，填满，但长边可能截取（即显示不完整）
+   */
+  fitView(fit: boolean = true, viewPadding: Padding = 10) {
+    // 默认垂直填充，两边留白
+    if (!this.hasView()) return;
+    // 1. 重置画布尺寸为容器尺寸
+    const { canvas } = this.canvas;
+    const { offsetWidth: width, offsetHeight: height } = canvas;
+    this.resize(width, height);
+    // 2. 获取设置的留白值
+    const padding = formatPadding(viewPadding);
 
-  centerView() {}
+    // 3. 获取图形尺寸
+    const rect = this.getRect();
 
-  hasView() {
+    // 4. 计算缩放比例
+    const w = (width - padding[1] - padding[3]) / rect.width;
+    const h = (height - padding[0] - padding[2]) / rect.height;
+    let ratio = w;
+    if (fit) {
+      // 完整显示取小的
+      ratio = w > h ? h : w;
+    } else {
+      ratio = w > h ? w : h;
+    }
+    // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
+    this.scale(ratio * this.store.data.scale);
+
+    // 5. 居中
+    this.centerView();
+  }
+
+  centerView() {
+    if (!this.hasView()) return;
+    const rect = this.getRect();
+    const viewCenter = this.getViewCenter();
+    const { center } = rect;
+    // center.x 的相对于画布的 x 所以此处要 - 画布的偏移量
+    this.translate(viewCenter.x - center.x - this.store.data.x, viewCenter.y - center.y - this.store.data.y);
+    const { canvas } = this.canvas;
+    const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
+    const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
+    canvas.scrollTo(x, y);
+  }
+
+  hasView(): boolean {
     return !!this.store.data.pens.length;
+  }
+
+  private getViewCenter() {
+    const { width, height } = this.canvas;
+    return {
+      x: width / 2,
+      y: height / 2,
+    };
+  }
+
+  alignNodes(align: string, pens?: Pen[], rect?: Rect) {
+    !pens && (pens = this.store.data.pens);
+    !rect && (rect = this.getRect());
+    for (const item of pens) {
+      if (item.type === PenType.Line) {
+        continue;
+      }
+      switch (align) {
+        case 'left':
+          item.x = rect.x;
+          break;
+        case 'right':
+          item.x = rect.ex - item.width;
+          break;
+        case 'top':
+          item.y = rect.y;
+          break;
+        case 'bottom':
+          item.y = rect.ey - item.height;
+          break;
+        case 'center':
+          item.x = rect.center.x - item.width / 2;
+          break;
+        case 'middle':
+          item.y = rect.center.y - item.height / 2;
+          break;
+      }
+      this.setValue(item);
+    }
+  }
+
+  /**
+   * 水平或垂直方向的均分
+   * @param direction 方向，width 说明水平方向间距相同
+   * @param pens 节点们，默认全部的
+   * @param distance 总的宽 or 高
+   */
+  private spaceBetweenByDirection(direction: 'width' | 'height', pens?: Pen[], distance?: number) {
+    !pens && (pens = this.store.data.pens);
+    !distance && (distance = this.getRect()[direction]);
+    // 过滤出 node 节点 pens
+    pens = pens.filter((item) => item.type !== PenType.Line);
+    if (pens.length <= 2) {
+      return;
+    }
+    // 计算间距
+    const allDistance = pens.reduce((distance: number, currentPen: Pen) => {
+      return distance + currentPen[direction];
+    }, 0);
+    const space = (distance - allDistance) / (pens.length - 1);
+
+    // 按照大小顺序排列画笔
+    pens = pens.sort((a: Pen, b: Pen) => {
+      if (direction === 'width') {
+        return a.x - b.x;
+      }
+      return a.y - b.y;
+    });
+
+    let left = direction === 'width' ? pens[0].x : pens[0].y;
+    for (const item of pens) {
+      direction === 'width' ? (item.x = left) : (item.y = left);
+      left += item[direction] + space;
+      this.setValue(item);
+    }
+  }
+
+  spaceBetween(pens?: Pen[], width?: number) {
+    this.spaceBetweenByDirection('width', pens, width);
+  }
+
+  spaceBetweenColumn(pens: Pen[], height: number) {
+    this.spaceBetweenByDirection('height', pens, height);
+  }
+
+  layout(pens?: Pen[], width?: number, space: number = 30) {
+    !pens && (pens = this.store.data.pens);
+    const rect = getRect(pens);
+    !width && (width = this.getRect().width);
+
+    // 1. 拿到全部节点中最大的宽高
+    pens = pens.filter((item) => item.type !== PenType.Line);
+    let maxWidth = 0,
+      maxHeight = 0;
+
+    pens.forEach((pen: Pen) => {
+      pen.width > maxWidth && (maxWidth = pen.width);
+      pen.height > maxHeight && (maxHeight = pen.height);
+    });
+
+    // 2. 遍历节点调整位置
+    let center = { x: rect.x + maxWidth / 2, y: rect.y + maxHeight / 2 };
+    pens.forEach((pen: Pen) => {
+      pen.x = center.x - pen.width / 2;
+      pen.y = center.y - pen.height / 2;
+      const currentWidth = center.x + maxWidth / 2 - rect.x;
+      if (width - currentWidth >= maxWidth + space)
+        // 当前行
+        center.x = center.x + maxWidth + space;
+      else {
+        // 换行
+        center.x = rect.x + maxWidth / 2;
+        center.y = center.y + maxHeight + space;
+      }
+
+      this.setValue(pen);
+    });
   }
 
   destroy(global?: boolean) {

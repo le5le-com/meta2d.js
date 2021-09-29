@@ -268,8 +268,7 @@ export interface Pen extends Rect {
     fns?: any;
 
     elementLoaded?: boolean;
-    rootElement?: any;
-    storeId?: string;
+    canvas?: any;
 
     iframe?: string;
     video?: string;

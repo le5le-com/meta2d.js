@@ -17,7 +17,7 @@ export function iframe(pen: Pen) {
     iframe.src = pen.iframe;
     iframes[pen.id] = iframe;
     pen.calculative.iframe = pen.iframe;
-    pen.calculative.rootElement && pen.calculative.rootElement.appendChild(iframe);
+    pen.calculative.canvas.externalElements && pen.calculative.canvas.externalElements.appendChild(iframe);
     setElemPosition(pen, iframe);
   } else if (pen.iframe !== pen.calculative.iframe) {
     iframes[pen.id].src = pen.iframe;

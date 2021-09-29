@@ -48,7 +48,7 @@ export function video(pen: Pen) {
     media.style.height = '100%';
     player.appendChild(media);
     videos[pen.id] = player;
-    pen.calculative.rootElement && pen.calculative.rootElement.appendChild(player);
+    pen.calculative.canvas.externalElements && pen.calculative.canvas.externalElements.appendChild(player);
     setElemPosition(pen, player);
     pen.autoPlay && media.play();
   } else if (pen.video && pen.calculative.media && pen.video !== pen.calculative.video) {

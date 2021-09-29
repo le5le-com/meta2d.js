@@ -14,10 +14,10 @@ export const globalStore: {
   paths: {},
 };
 
-export function registerPathDraw(path2dFns: any) {
+export function register(path2dFns: { [key: string]: (pen: any) => void }) {
   Object.assign(globalStore.path2dDraws, path2dFns);
 }
 
-export function registerCanvasDraw(drawFns?: any) {
+export function registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: any) => void }) {
   Object.assign(globalStore.canvasDraws, drawFns);
 }

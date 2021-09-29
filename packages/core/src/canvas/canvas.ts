@@ -1593,11 +1593,7 @@ export class Canvas {
     }
     // end
 
-    pen.calculative = {};
-    if (pen.externElement) {
-      pen.calculative.rootElement = this.externalElements;
-      pen.calculative.storeId = this.store.id;
-    }
+    pen.calculative = { canvas: this };
     if (pen.video || pen.audio) {
       pen.calculative.onended = (pen: Pen) => {
         this.nextAnimate(pen);
@@ -2162,7 +2158,7 @@ export class Canvas {
     this.lastOffsetX = x;
     this.lastOffsetY = y;
     if ((e as any).shiftKey || (e as any).ctrlKey) {
-      offsetY = (offsetX * w) / h;
+      offsetY = (offsetX * h) / w;
     }
     switch (this.resizeIndex) {
       case 0:
