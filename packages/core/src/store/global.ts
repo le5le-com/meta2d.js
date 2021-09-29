@@ -2,28 +2,22 @@ import pkg from '../../package.json';
 
 export const globalStore: {
   version: string;
-  registerPens: { [key: string]: any };
+  path2dDraws: { [key: string]: any };
+  canvasDraws: { [key: string]: any };
   htmlElements: { [key: string]: any };
   paths: { [key: string]: string };
-  draws: { [key: string]: any };
-  independentDraws: { [key: string]: any };
 } = {
   version: pkg.version,
-  registerPens: {},
+  path2dDraws: {},
+  canvasDraws: {},
   htmlElements: {},
   paths: {},
-  draws: {},
-  independentDraws: {},
 };
 
-export function register(penPaths: any) {
-  Object.assign(globalStore.registerPens, penPaths);
+export function registerPathDraw(path2dFns: any) {
+  Object.assign(globalStore.path2dDraws, path2dFns);
 }
 
-export function registerDraw(name: string, draw?: Function) {
-  globalStore.draws[name] = draw;
-}
-
-export function registerIndependentDraw(name: string, draw?: Function) {
-  globalStore.independentDraws[name] = draw;
+export function registerCanvasDraw(drawFns?: any) {
+  Object.assign(globalStore.canvasDraws, drawFns);
 }

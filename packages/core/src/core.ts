@@ -2,26 +2,18 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import {
-  calcTextLines,
-  facePen,
-  getParent,
-  LockState,
-  Pen,
-  PenType,
-  renderPen,
-  renderPenRaw,
-} from './pen';
+import { calcTextLines, facePen, getParent, LockState, Pen, PenType, renderPenRaw } from './pen';
 import { Point } from './point';
 import {
   clearStore,
   EditAction,
   globalStore,
+  registerCanvasDraw,
+  registerPathDraw,
   TopologyData,
   TopologyStore,
   useStore,
 } from './store';
-import { Tooltip } from './tooltip';
 import { Padding, s8 } from './utils';
 import { calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
@@ -34,8 +26,6 @@ declare const window: any;
 
 export class Topology {
   store: TopologyStore;
-  input = document.createElement('textarea');
-  tooltip: Tooltip;
   canvas: Canvas;
   websocket: WebSocket;
   mqttClient: any;
@@ -91,18 +81,6 @@ export class Topology {
     } else {
       this.canvas = new Canvas(parent, this.store);
     }
-
-    this.tooltip = new Tooltip(this.canvas.parentElement);
-
-    this.input.style.position = 'absolute';
-    this.input.style.zIndex = '-1';
-    this.input.style.left = '-1000px';
-    this.input.style.width = '0';
-    this.input.style.height = '0';
-    this.input.style.outline = 'none';
-    this.input.style.border = '1px solid #cdcdcd';
-    this.input.style.resize = 'none';
-    this.canvas.parentElement.appendChild(this.input);
 
     this.resize();
     this.canvas.listen();
@@ -256,16 +234,12 @@ export class Topology {
     return this;
   }
 
-  register(penPaths: any) {
-    Object.assign(globalStore.registerPens, penPaths);
+  registerPathDraw(path2dFns: any) {
+    registerPathDraw(path2dFns);
   }
 
-  registerDraw(name: string, draw?: Function) {
-    globalStore.draws[name] = draw;
-  }
-
-  registerIndependentDraw(name: string, draw?: Function) {
-    globalStore.independentDraws[name] = draw;
+  registerCanvasDraw(drawFns?: any) {
+    registerCanvasDraw(drawFns);
   }
 
   // customDock return:
@@ -537,10 +511,7 @@ export class Topology {
   connectMqtt() {
     this.closeMqtt();
     if (this.store.data.mqtt) {
-      this.mqttClient = mqtt.connect(
-        this.store.data.mqtt,
-        this.store.data.mqttOptions
-      );
+      this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
       this.mqttClient.on('message', (topic: string, message: any) => {
         this.doSocket(message.toString());
       });
@@ -584,12 +555,7 @@ export class Topology {
           pen.calculative[k] = data[k];
         }
       }
-      if (
-        data.x != null ||
-        data.y != null ||
-        data.width != null ||
-        data.height != null
-      ) {
+      if (data.x != null || data.y != null || data.width != null || data.height != null) {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
@@ -715,10 +681,7 @@ export class Topology {
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
-      const childRect = calcRelativeRect(
-        pen.calculative.worldRect,
-        parent.calculative.worldRect
-      );
+      const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
       pen.x = childRect.x;
       pen.y = childRect.y;
       pen.width = childRect.width;
