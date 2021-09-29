@@ -74,7 +74,7 @@ export function pointInVertices(point: { x: number; y: number }, vertices: Point
   return isIn;
 }
 
-export function getRect(pens: Pen[]) {
+export function getRect(pens: Pen[]): Rect {
   const points: Point[] = [];
   pens.forEach((pen) => {
     const rect = pen.calculative.worldRect;
