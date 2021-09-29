@@ -753,6 +753,59 @@ export class Topology {
     return getRect(pens);
   }
 
+  fitView(vertical: boolean = true) {
+    // 默认垂直填充，两边留白
+    if (!this.hasView()) return;
+    // 1. 重置画布尺寸为容器尺寸
+    const { canvas } = this.canvas;
+    const { offsetWidth: width, offsetHeight: height } = canvas;
+    this.resize(width, height);
+
+    // 2. 获取图形尺寸
+    const rect = this.getRect();
+
+    // 3. 计算缩放比例
+    const w = width / rect.width;
+    const h = height / rect.height;
+    let ratio = w;
+    if (vertical) {
+      ratio = h;
+    }
+    // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
+    this.scale(ratio * this.store.data.scale);
+
+    // 4. 居中
+    this.centerView();
+  }
+
+  centerView() {
+    if (!this.hasView()) return;
+    const rect = this.getRect();
+    const viewCenter = this.getViewCenter();
+    const { center } = rect;
+    // center.x 的相对于画布的 x 所以此处要 - 画布的偏移量
+    this.translate(
+      viewCenter.x - center.x - this.store.data.x,
+      viewCenter.y - center.y - this.store.data.y
+    );
+    const { canvas } = this.canvas;
+    const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
+    const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
+    canvas.scrollTo(x, y);
+  }
+
+  hasView(): boolean {
+    return !!this.store.data.pens.length;
+  }
+
+  private getViewCenter() {
+    const { width, height } = this.canvas;
+    return {
+      x: width / 2,
+      y: height / 2,
+    };
+  }
+
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
