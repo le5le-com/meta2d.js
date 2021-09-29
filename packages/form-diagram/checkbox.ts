@@ -7,7 +7,6 @@ export function checkbox(
   path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
 ) {
   if (!pen.onDestroy) {
-    pen.onAdd = add;
     pen.onClick = click;
   }
   if (!path) {
@@ -21,8 +20,6 @@ export function checkbox(
   pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
-  //   pen.lineWidth = h / 5;
-  //   path.lineWidth = h / 5;
   path.rect(x, y, h, h);
   if (pen.isChecked) {
     path.moveTo(x, y + h / 2);
@@ -33,13 +30,6 @@ export function checkbox(
 }
 
 function click(pen: any) {
-  let isChecked = pen.isChecked;
-  currentTopology.setValue({
-    id: pen.id,
-    isChecked: !isChecked,
-  });
-}
-
-function add(topology: any, pen: any) {
-  currentTopology = topology;
+  pen.isChecked = !pen.isChecked;
+  pen.calculative.canvas.render();
 }

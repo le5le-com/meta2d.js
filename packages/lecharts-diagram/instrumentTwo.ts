@@ -1,11 +1,6 @@
 import { getValidValue } from './common';
 
-export function instrumentTwo(
-  pen: any,
-  path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
-) {}
-
-export function instrumentTwobyCtx(ctx: CanvasRenderingContext2D, pen: any) {
+export function instrumentTwo(ctx: CanvasRenderingContext2D, pen: any) {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;

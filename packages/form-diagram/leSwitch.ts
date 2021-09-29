@@ -2,61 +2,48 @@ import { Pen } from '../core/src/pen';
 
 declare const window: any;
 var currentTopology: any;
-export function leSwitch(
-  pen: any,
-  path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
-) {
+export function leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
-    pen.onAdd = add;
     pen.onClick = click;
   }
-  if (!path) {
-    path = new Path2D();
-  }
+
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
-  pen.textLeft = h;
-  pen.textWidth = w - h;
-  pen.textAlign = 'start';
-  pen.textBaseline = 'middle';
-  //   pen.lineWidth = h / 5;
-  //   path.lineWidth = h / 5;
-  path.arc(x + h / 2, y + h / 2, h / 2, Math.PI / 2, (Math.PI * 3) / 2);
-  path.lineTo(x + (h * 3) / 2, y);
-  path.arc(x + (h * 3) / 2, y + h / 2, h / 2, -Math.PI / 2, Math.PI / 2);
-  path.lineTo(x + h / 2, y + h);
+  ctx.beginPath();
+  ctx.arc(x + h / 2, y + h / 2, h / 2, Math.PI / 2, (Math.PI * 3) / 2);
+  ctx.lineTo(x + (h * 3) / 2, y);
+  ctx.arc(x + (h * 3) / 2, y + h / 2, h / 2, -Math.PI / 2, Math.PI / 2);
+  ctx.lineTo(x + h / 2, y + h);
   if (pen.isOpen) {
-    path.moveTo(x + h * 2, y + h / 2);
-    path.arc(x + (h * 3) / 2, y + h / 2, h / 2, 0, Math.PI * 2);
+    ctx.fillStyle = pen.onColor;
+    ctx.stroke();
+    ctx.fill();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = '#ffffff';
+    ctx.moveTo(x + h * 2, y + h / 2);
+    ctx.arc(x + (h * 3) / 2, y + h / 2, h / 2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fill();
   } else {
-    path.moveTo(x + h, y + h / 2);
-    path.arc(x + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
+    ctx.fillStyle = pen.offColor;
+    ctx.stroke();
+    ctx.fill();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = '#ffffff';
+    ctx.moveTo(x + h, y + h / 2);
+    ctx.arc(x + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fill();
   }
-  return path;
+  ctx.closePath();
+  return false;
 }
 
 function click(pen: any) {
-  if (pen.calculative.isOpen) {
-    console.log('进入true1');
-
-    window.topology.setValue({
-      id: pen.id,
-      isOpen: false,
-    });
-    // pen.calculative.isOpen = false;
-  } else {
-    console.log('进入false');
-
-    window.topology.setValue({
-      id: pen.id,
-      isOpen: true,
-    });
-    // pen.calculative.isOpen = true;
-  }
-}
-
-function add(topology: any, pen: any) {
-  currentTopology = topology;
+  pen.isOpen = !pen.isOpen;
+  pen.calculative.canvas.render();
 }
