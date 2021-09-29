@@ -38,11 +38,23 @@ export function leSwitch(
 }
 
 function click(pen: any) {
-  let isOpen = pen.isOpen;
-  currentTopology.setValue({
-    id: pen.id,
-    isOpen: !isOpen,
-  });
+  if (pen.calculative.isOpen) {
+    console.log('进入true1');
+
+    window.topology.setValue({
+      id: pen.id,
+      isOpen: false,
+    });
+    // pen.calculative.isOpen = false;
+  } else {
+    console.log('进入false');
+
+    window.topology.setValue({
+      id: pen.id,
+      isOpen: true,
+    });
+    // pen.calculative.isOpen = true;
+  }
 }
 
 function add(topology: any, pen: any) {

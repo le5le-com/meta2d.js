@@ -25,11 +25,10 @@ export function progress(
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
 
-  pen.text = pen.configure.value;
+  //   pen.text = pen.value;
   path.rect(x, y + (h * 2) / 5, sliderW, (h * 1) / 5);
   let currenPosition =
-    (sliderW * (pen.configure.value - pen.configure.min)) /
-    (pen.configure.max - pen.configure.min);
+    (sliderW * (parseInt(pen.text) - pen.min)) / (pen.max - pen.min);
   path.moveTo(x + currenPosition + h / 5, y + h / 2);
   path.arc(x + currenPosition, y + h / 2, h / 5, 0, Math.PI * 2);
   path.rect(x + w - inputW, y, inputW, h);
@@ -42,10 +41,9 @@ function add(topology: any, pen: any) {
 }
 
 function onValue(pen: any) {
-  let configure = pen.configure;
-  configure.value = parseInt(pen.text);
-  currentTopology.setValue({
-    id: pen.id,
-    configure: configure,
-  });
+  //   value = parseInt(pen.text);
+  //   currentTopology.setValue({
+  //     id: pen.id,
+  //     configure: configure,
+  //   });
 }
