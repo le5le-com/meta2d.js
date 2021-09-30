@@ -124,9 +124,9 @@ export function renderPen(
       if (pen.verticalProgress) {
         grd = ctx.createLinearGradient(
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y,
+          pen.calculative.worldRect.ey,
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y + pen.calculative.worldRect.height * progress
+          pen.calculative.worldRect.y + pen.calculative.worldRect.height * (1 - progress)
         );
       }
       const color = pen.progressColor || pen.color || store.options.activeColor;
@@ -440,9 +440,9 @@ export function renderPenRaw(
       if (pen.verticalProgress) {
         grd = ctx.createLinearGradient(
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y,
+          pen.calculative.worldRect.ey,
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y + pen.calculative.worldRect.height * progress
+          pen.calculative.worldRect.y + pen.calculative.worldRect.height * (1 - progress)
         );
       }
       const color = pen.progressColor || pen.color || store.options.activeColor;
