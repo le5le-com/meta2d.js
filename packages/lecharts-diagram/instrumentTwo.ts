@@ -117,4 +117,5 @@ export function instrumentTwo(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.arc(x + w - centerDis, y + h - centerDis, 4, 0, Math.PI * 2);
   ctx.fill();
   ctx.closePath();
+  return false;
 }

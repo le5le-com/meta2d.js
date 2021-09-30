@@ -1,5 +1,4 @@
 import { getValidValue } from './common';
-
 export function instrumentOne(ctx: CanvasRenderingContext2D, pen: any) {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
@@ -116,4 +115,6 @@ export function instrumentOne(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.arc(x + w / 2, y + h / 2, 4, 0, Math.PI * 2);
   ctx.fill();
   ctx.closePath();
+
+  return false;
 }
