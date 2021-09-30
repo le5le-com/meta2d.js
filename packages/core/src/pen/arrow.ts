@@ -35,7 +35,7 @@ export function renderToArrow(
   pen: Pen,
   store: TopologyStore
 ) {
-  if (!arrows[pen.toArrow]) {
+  if (!arrows[pen.toArrow] || pen.calculative.worldAnchors.length < 2) {
     return;
   }
   const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];

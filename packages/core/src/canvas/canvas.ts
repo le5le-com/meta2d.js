@@ -130,6 +130,7 @@ export class Canvas {
 
   constructor(public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
+    this.canvas.style.background = '#f4f4f4';
 
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
@@ -297,10 +298,7 @@ export class Canvas {
           this.drawline();
           this.dirty = true;
         } else if (this.store.active.length === 1 && this.store.active[0].type && this.store.activeAnchor) {
-          if (!this.store.activeAnchor.prevNextType) {
-            this.store.activeAnchor.prevNextType = PrevNextType.Mirror;
-          }
-          this.store.activeAnchor.prevNextType = (this.store.activeAnchor.prevNextType + 1) % 3;
+          this.toggleAnchorHand();
         } else if (!this.hotkeyType) {
           this.dirty = true;
           this.hotkeyType = HotkeyType.Resize;
@@ -312,20 +310,7 @@ export class Canvas {
       case 'A':
         if (e.ctrlKey || e.metaKey) {
         } else {
-          if (!this.hotkeyType) {
-            this.hotkeyType = HotkeyType.AddAnchor;
-            if (this.store.hover) {
-              this.externalElements.style.cursor = 'pointer';
-            }
-          } else if (this.hotkeyType === HotkeyType.AddAnchor) {
-            this.hotkeyType = HotkeyType.None;
-            if (this.store.hoverAnchor) {
-              this.externalElements.style.cursor = 'vertical-text';
-            } else if (this.store.hover) {
-              this.externalElements.style.cursor = 'move';
-            }
-          }
-          this.dirty = true;
+          this.toggleAnchorMode();
         }
         break;
       case 'Delete':
@@ -380,67 +365,15 @@ export class Canvas {
       case 'C':
         if (e.ctrlKey || e.metaKey) {
           this.copy();
-        } else if (
-          this.store.activeAnchor &&
-          this.store.active &&
-          this.store.active.length === 1 &&
-          this.store.active[0].type
-        ) {
-          this.initPens = [deepClone(this.store.active[0])];
-
-          if (!this.store.activeAnchor.prev) {
-            if (!this.store.activeAnchor.next) {
-              this.store.activeAnchor.next = {
-                penId: this.store.activeAnchor.penId,
-                x: this.store.activeAnchor.x + 50,
-                y: this.store.activeAnchor.y,
-              };
-            }
-            this.store.activeAnchor.prev = { ...this.store.activeAnchor.next };
-            rotatePoint(this.store.activeAnchor.prev, 180, this.store.activeAnchor);
-            this.initLineRect(this.store.active[0]);
-            this.dirty = true;
-          } else if (!this.store.activeAnchor.next) {
-            this.store.activeAnchor.next = { ...this.store.activeAnchor.prev };
-            rotatePoint(this.store.activeAnchor.next, 180, this.store.activeAnchor);
-            this.initLineRect(this.store.active[0]);
-            this.dirty = true;
-          }
-
-          this.store.emitter.emit('update', [this.store.active[0]]);
-          this.pushHistory({ type: EditType.Update, pens: [deepClone(this.store.active[0])], initPens: this.initPens });
-          this.initPens = undefined;
         }
         break;
       case 'd':
       case 'D':
-        if (
-          this.store.activeAnchor &&
-          this.store.active &&
-          this.store.active.length === 1 &&
-          this.store.active[0].type
-        ) {
-          this.initPens = [deepClone(this.store.active[0])];
-
-          if (this.hoverType === HoverType.LineAnchorPrev) {
-            this.store.activeAnchor.prev = undefined;
-            this.initLineRect(this.store.active[0]);
-            this.dirty = true;
-          } else if (this.hoverType === HoverType.LineAnchorNext) {
-            this.store.activeAnchor.next = undefined;
-            this.initLineRect(this.store.active[0]);
-            this.dirty = true;
-          } else {
-            this.store.activeAnchor.prev = undefined;
-            this.store.activeAnchor.next = undefined;
-            this.initLineRect(this.store.active[0]);
-            this.dirty = true;
-          }
-
-          this.store.emitter.emit('update', [this.store.active[0]]);
-          this.pushHistory({ type: EditType.Update, pens: [deepClone(this.store.active[0])], initPens: this.initPens });
-          this.initPens = undefined;
-        }
+        this.removeAnchorHand();
+        break;
+      case 'h':
+      case 'H':
+        this.addAnchorHand();
         break;
       case 'v':
       case 'V':
@@ -745,6 +678,8 @@ export class Canvas {
             active: true,
             worldAnchors: [pt],
           },
+          fromArrow: this.store.data.fromArrow,
+          toArrow: this.store.data.toArrow,
         };
         this.drawingLine.calculative.activeAnchor = pt;
         this.drawline();
@@ -3200,6 +3135,93 @@ export class Canvas {
       return;
     }
     return canvas.toDataURL('image/png', 1);
+  }
+
+  toggleAnchorMode() {
+    if (!this.hotkeyType) {
+      this.hotkeyType = HotkeyType.AddAnchor;
+      if (this.store.hover) {
+        this.externalElements.style.cursor = 'pointer';
+      }
+    } else if (this.hotkeyType === HotkeyType.AddAnchor) {
+      this.hotkeyType = HotkeyType.None;
+      if (this.store.hoverAnchor) {
+        this.externalElements.style.cursor = 'vertical-text';
+      } else if (this.store.hover) {
+        this.externalElements.style.cursor = 'move';
+      }
+    }
+    this.dirty = true;
+  }
+
+  addAnchorHand() {
+    if (this.store.activeAnchor && this.store.active && this.store.active.length === 1 && this.store.active[0].type) {
+      this.initPens = [deepClone(this.store.active[0])];
+
+      if (!this.store.activeAnchor.prev) {
+        if (!this.store.activeAnchor.next) {
+          this.store.activeAnchor.next = {
+            penId: this.store.activeAnchor.penId,
+            x: this.store.activeAnchor.x + 50,
+            y: this.store.activeAnchor.y,
+          };
+        }
+        this.store.activeAnchor.prev = { ...this.store.activeAnchor.next };
+        rotatePoint(this.store.activeAnchor.prev, 180, this.store.activeAnchor);
+        this.initLineRect(this.store.active[0]);
+        this.dirty = true;
+      } else if (!this.store.activeAnchor.next) {
+        this.store.activeAnchor.next = { ...this.store.activeAnchor.prev };
+        rotatePoint(this.store.activeAnchor.next, 180, this.store.activeAnchor);
+        this.initLineRect(this.store.active[0]);
+        this.dirty = true;
+      }
+
+      this.store.emitter.emit('update', [this.store.active[0]]);
+      this.pushHistory({ type: EditType.Update, pens: [deepClone(this.store.active[0])], initPens: this.initPens });
+      this.initPens = undefined;
+    }
+  }
+
+  removeAnchorHand() {
+    if (this.store.activeAnchor && this.store.active && this.store.active.length === 1 && this.store.active[0].type) {
+      this.initPens = [deepClone(this.store.active[0])];
+
+      if (this.hoverType === HoverType.LineAnchorPrev) {
+        this.store.activeAnchor.prev = undefined;
+        this.initLineRect(this.store.active[0]);
+        this.dirty = true;
+      } else if (this.hoverType === HoverType.LineAnchorNext) {
+        this.store.activeAnchor.next = undefined;
+        this.initLineRect(this.store.active[0]);
+        this.dirty = true;
+      } else {
+        this.store.activeAnchor.prev = undefined;
+        this.store.activeAnchor.next = undefined;
+        this.initLineRect(this.store.active[0]);
+        this.dirty = true;
+      }
+
+      this.store.emitter.emit('update', [this.store.active[0]]);
+      this.pushHistory({ type: EditType.Update, pens: [deepClone(this.store.active[0])], initPens: this.initPens });
+      this.initPens = undefined;
+    }
+  }
+
+  toggleAnchorHand() {
+    if (this.store.active.length === 1 && this.store.active[0].type && this.store.activeAnchor) {
+      if (!this.store.activeAnchor.prevNextType) {
+        this.store.activeAnchor.prevNextType = PrevNextType.Mirror;
+      }
+      this.store.activeAnchor.prevNextType = (this.store.activeAnchor.prevNextType + 1) % 3;
+    }
+  }
+
+  gotoView(x: number, y: number) {
+    const rect = getRect(this.store.data.pens);
+    this.store.data.x = this.canvas.clientWidth / 2 - x * rect.width - rect.x;
+    this.store.data.y = this.canvas.clientHeight / 2 - y * rect.height - rect.y;
+    this.render(Infinity);
   }
 
   destroy() {
