@@ -34,7 +34,6 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 function click(pen: any) {
-  console.log(pen.calculative.canvas);
   pen.isChecked = !pen.isChecked;
   pen.calculative.canvas.render();
 }
