@@ -1,8 +1,7 @@
-import { Pen } from '../core/src/pen';
-
 export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onClick = click;
+    pen.onResize = resize;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -10,7 +9,8 @@ export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   let h = pen.calculative.worldRect.height;
   // pen.lineWidth = h / 5;
   // ctx.lineWidth = h / 5;
-  pen.textLeft = h;
+  pen.textLeft = h + h / 5;
+  pen.calculative.textLeft = h + h / 5;
   pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
@@ -32,4 +32,10 @@ export function radio(ctx: CanvasRenderingContext2D, pen: any) {
 function click(pen: any) {
   pen.isChecked = !pen.isChecked;
   pen.calculative.canvas.render();
+}
+
+function resize(pen: any) {
+  let h = pen.calculative.worldRect.height;
+  pen.textLeft = h + h / 5;
+  pen.calculative.textLeft = h + h / 5;
 }

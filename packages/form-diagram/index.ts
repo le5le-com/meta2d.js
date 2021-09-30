@@ -11,7 +11,6 @@ import { progress } from './progress';
 export function formPens() {
   return {
     table,
-    checkbox,
   };
 }
 
@@ -20,5 +19,6 @@ export function formPensbyCtx() {
     radio,
     leSwitch,
     progress,
+    checkbox,
   };
 }
