@@ -8,13 +8,10 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
   const h = pen.calculative.worldRect.height;
 
   let series = pen.option.series;
-  console.log('serries', series);
   let collection_data = [];
   for (let i = 0; i < series.length; i++) {
     collection_data = collection_data.concat(series[i].data);
   }
-  console.log('data', collection_data);
-
   let initOption: ScaleOption = {
     max: Math.max.apply(null, collection_data),
     min: Math.min.apply(null, collection_data),
@@ -39,12 +36,11 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.moveTo(x, y + h);
   ctx.lineTo(x + w, y + h);
   ctx.stroke();
-
+  ctx.closePath();
   //y轴绘制
   ctx.beginPath();
   for (let i = 0; i < normalizedOption.splitNumber + 1; i++) {
     let temH = (i * h) / normalizedOption.splitNumber;
-    ctx.beginPath();
     ctx.strokeStyle = '#D3D3D3';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
