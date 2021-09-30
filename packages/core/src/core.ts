@@ -159,6 +159,10 @@ export class Topology {
   }
 
   open(data?: TopologyData) {
+    for (const pen of this.store.data.pens) {
+      pen.onDestroy && pen.onDestroy(pen);
+    }
+
     clearStore(this.store);
     this.canvas.tooltip.hideTip();
     this.canvas.activeRect = undefined;
