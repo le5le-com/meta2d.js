@@ -526,6 +526,9 @@ export class Canvas {
       event.preventDefault();
 
       obj = Array.isArray(obj) ? obj : [obj];
+      for (const pen of obj) {
+        this.addPen(pen, true);
+      }
     } catch {}
   };
 
@@ -1250,13 +1253,13 @@ export class Canvas {
       if (this.store.lastHover) {
         setHover(this.store, getParent(this.store, this.store.lastHover) || this.store.lastHover, false);
         this.store.emitter.emit('leave', this.store.lastHover);
-        this.tooltip.hideTip();
+        this.tooltip.hide();
       }
       if (this.store.hover) {
         this.store.hover.calculative.hover = true;
         setHover(this.store, getParent(this.store, this.store.hover) || this.store.hover);
         this.store.emitter.emit('enter', this.store.hover);
-        this.tooltip.showTip(this.store.hover, pt);
+        this.tooltip.show(this.store.hover, pt);
       }
       this.store.lastHover = this.store.hover;
     }
