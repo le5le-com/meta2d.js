@@ -124,9 +124,9 @@ export function renderPen(
       if (pen.verticalProgress) {
         grd = ctx.createLinearGradient(
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y,
+          pen.calculative.worldRect.ey,
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y + pen.calculative.worldRect.height * progress
+          pen.calculative.worldRect.y + pen.calculative.worldRect.height * (1 - progress)
         );
       }
       const color = pen.progressColor || pen.color || store.options.activeColor;
@@ -440,9 +440,9 @@ export function renderPenRaw(
       if (pen.verticalProgress) {
         grd = ctx.createLinearGradient(
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y,
+          pen.calculative.worldRect.ey,
           pen.calculative.worldRect.x,
-          pen.calculative.worldRect.y + pen.calculative.worldRect.height * progress
+          pen.calculative.worldRect.y + pen.calculative.worldRect.height * (1 - progress)
         );
       }
       const color = pen.progressColor || pen.color || store.options.activeColor;
@@ -1382,7 +1382,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   if (!elem) {
     return;
   }
-  const store = globalStore[pen.calculative.storeId];
+  const store = pen.calculative.canvas.store;
   const worldRect = pen.calculative.worldRect;
   elem.style.position = 'absolute';
   elem.style.outline = 'none';
@@ -1394,7 +1394,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   if (pen.rotate) {
     elem.style.transform = `rotate(${pen.rotate}deg)`;
   }
-  if (pen.locked || globalStore[pen.calculative.storeId].data.locked) {
+  if (pen.locked || store.data.locked) {
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
   } else {

@@ -19,6 +19,7 @@ import { formatPadding, Padding, s8 } from './utils';
 import { calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
+import { Map } from './map';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
@@ -32,6 +33,7 @@ export class Topology {
   mqttClient: any;
   socketFn: Function;
   events: any = {};
+  map: Map;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
@@ -159,6 +161,10 @@ export class Topology {
   }
 
   open(data?: TopologyData) {
+    for (const pen of this.store.data.pens) {
+      pen.onDestroy && pen.onDestroy(pen);
+    }
+
     clearStore(this.store);
     this.canvas.tooltip.hideTip();
     this.canvas.activeRect = undefined;
@@ -902,6 +908,14 @@ export class Topology {
       initPens,
       pens,
     });
+  }
+
+  showMap() {
+    if (!this.map) {
+      this.map = new Map(this.canvas.externalElements);
+    }
+    this.map.img.src = this.canvas.toPng();
+    this.map.show();
   }
 
   destroy(global?: boolean) {

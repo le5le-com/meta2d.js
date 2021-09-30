@@ -28,7 +28,7 @@ export class Tooltip {
 
     let sheet: any;
     for (let i = 0; i < document.styleSheets.length; i++) {
-      if (document.styleSheets[i].title === 'le5le-tooltip') {
+      if (document.styleSheets[i].title === 'le5le.com/tooltip') {
         sheet = document.styleSheets[i];
       }
     }
@@ -54,7 +54,7 @@ export class Tooltip {
     }
   }
 
-  showTip(pen: Pen, pos: Point) {
+  show(pen: Pen, pos: Point) {
     if (!pen.title) {
       return;
     }
@@ -92,9 +92,9 @@ export class Tooltip {
     this.box.style.top = this.y + 'px';
   }
 
-  hideTip() {
-    // this.x = -9999;
-    // this.box.style.left = '-9999px';
+  hide() {
+    this.x = -9999;
+    this.box.style.left = '-9999px';
   }
 
   translate(x: number, y: number) {
