@@ -1,18 +1,11 @@
 import { Pen } from '../core/src/pen';
 
-declare const window: any;
-var currentTopology: any;
-export function checkbox(
-  pen: any,
-  path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
-) {
+export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onClick = click;
     pen.onResize = resize;
   }
-  if (!path) {
-    path = new Path2D();
-  }
+
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
@@ -22,16 +15,26 @@ export function checkbox(
   pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
-  path.rect(x, y, h, h);
+  ctx.beginPath();
+  ctx.rect(x, y, h, h);
+  ctx.stroke();
   if (pen.isChecked) {
-    path.moveTo(x, y + h / 2);
-    path.lineTo(x + h / 2, y + h);
-    path.lineTo(x + h, y);
+    ctx.fillStyle = pen.fillColor;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.lineWidth = h / 10;
+    ctx.strokeStyle = '#ffffff';
+    ctx.moveTo(x + (102 / 506) * h, y + h / 2);
+    ctx.lineTo(x + (220 / 506) * h, y + (346 / 460) * h);
+    ctx.lineTo(x + (404 / 506) * h, y + (142 / 460) * h);
+    ctx.stroke();
   }
-  return path;
+  ctx.closePath();
+  return false;
 }
 
 function click(pen: any) {
+  console.log(pen.calculative.canvas);
   pen.isChecked = !pen.isChecked;
   pen.calculative.canvas.render();
 }

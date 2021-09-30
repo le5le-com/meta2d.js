@@ -2,6 +2,9 @@ import { Pen } from '../core/src/pen';
 
 declare const window: any;
 export function progress(ctx: CanvasRenderingContext2D, pen: any) {
+  if (!pen.onDestroy) {
+    pen.onResize = resize;
+  }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
@@ -9,7 +12,7 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   let sliderW = w * pen.sliderRadio;
   let inputW = w * pen.inputRadio;
 
-  pen.textLeft = w * (1 - pen.inputRadio);
+  pen.textLeft = w * (1 - pen.inputRadio) + 2;
   pen.textWidth = inputW;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
@@ -33,4 +36,9 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.stroke();
   ctx.closePath();
   return ctx;
+}
+function resize(pen: any) {
+  let w = pen.calculative.worldRect.width;
+  pen.textLeft = w * (1 - pen.inputRadio) + 2;
+  pen.calculative.textLeft = w * (1 - pen.inputRadio) + 2;
 }

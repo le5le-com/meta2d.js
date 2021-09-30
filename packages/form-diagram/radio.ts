@@ -1,5 +1,3 @@
-import { Pen, calcTextRect } from '../core/src/pen';
-
 export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onClick = click;
@@ -40,6 +38,4 @@ function resize(pen: any) {
   let h = pen.calculative.worldRect.height;
   pen.textLeft = h + h / 5;
   pen.calculative.textLeft = h + h / 5;
-
-  // calcTextRect(pen);
 }
