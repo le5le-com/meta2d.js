@@ -526,7 +526,11 @@ export class Canvas {
       event.preventDefault();
 
       obj = Array.isArray(obj) ? obj : [obj];
+      const pt = { x: event.offsetX, y: event.offsetY };
+      this.calibrateMouse(pt);
       for (const pen of obj) {
+        pen.x = pt.x;
+        pen.y = pt.y;
         this.addPen(pen, true);
       }
     } catch {}
