@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: 高浩然
  * @Date: 2021-09-30 14:12:46
- * @LastEditTime: 2021-10-08 17:07:31
+ * @LastEditTime: 2021-10-08 17:13:01
  */
 const topology = new Le5le.Topology('topology');
 
@@ -125,16 +125,18 @@ function getIconList () {
         name: 'video',
         width: 100,
         height: 100,
-        video: 'http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4'
+        video: 'http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4',
+        autoPlay: true,
       }
     }, { 
       key: 'audio',
-      title: '视频',
+      title: '音频',
       data: {
         name: 'video',
         width: 100,
         height: 100,
-        audio: 'https://down.ear0.com:3321/preview?soundid=37418&type=mp3'
+        audio: 'https://down.ear0.com:3321/preview?soundid=37418&type=mp3',
+        autoPlay: true,
       }
     }
   ];
