@@ -112,7 +112,7 @@ export function rectToPoints(rect: Rect) {
   return pts;
 }
 
-export function getRectOfPoints(points: Point[]) {
+export function getRectOfPoints(points: Point[]): Rect {
   let x = Infinity;
   let y = Infinity;
   let ex = -Infinity;
