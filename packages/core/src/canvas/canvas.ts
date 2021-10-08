@@ -137,6 +137,7 @@ export class Canvas {
     this.externalElements.style.top = '0';
     this.externalElements.style.outline = 'none';
     this.externalElements.style.background = 'transparent';
+    parentElement.style.position = 'relative';
     parentElement.appendChild(this.externalElements);
     this.createInput();
     this.tooltip = new Tooltip(parentElement);
