@@ -1,7 +1,8 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
 
-declare const marked: any;
+declare const window: any;
+declare const global: any;
 
 export class Tooltip {
   box: HTMLElement;
@@ -59,7 +60,16 @@ export class Tooltip {
       return;
     }
 
+    let marked: any;
+    if (window) {
+      marked = window.marked;
+    } else if (global) {
+      marked = global.marked;
+    }
     if (marked) {
+      if (marked.parse) {
+        marked = marked.parse;
+      }
       this.text.innerHTML = marked(pen.title);
       const a = this.text.getElementsByTagName('A');
       for (let i = 0; i < a.length; ++i) {
