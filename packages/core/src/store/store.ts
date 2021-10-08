@@ -32,6 +32,8 @@ export interface TopologyData {
   gridSize?: number;
   rule?: boolean;
   ruleColor?: string;
+  fromArrow?: string;
+  toArrow?: string;
 }
 
 export enum EditType {

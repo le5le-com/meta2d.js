@@ -166,7 +166,7 @@ export class Topology {
     }
 
     clearStore(this.store);
-    this.canvas.tooltip.hideTip();
+    this.canvas.tooltip.hide();
     this.canvas.activeRect = undefined;
     this.canvas.sizeCPs = undefined;
     if (data && data.mqttOptions && !data.mqttOptions.customClientId) {
@@ -521,7 +521,8 @@ export class Topology {
     if (this.store.data.mqtt) {
       this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
       this.mqttClient.on('message', (topic: string, message: any) => {
-        this.doSocket(message.toString());
+        const index = topic.lastIndexOf('/');
+        this.doSocket(message.toString(), topic.substring(index + 1, topic.length));
       });
 
       if (this.store.data.mqttTopics) {
@@ -534,13 +535,16 @@ export class Topology {
     this.mqttClient && this.mqttClient.close();
   }
 
-  doSocket(message: any) {
+  doSocket(message: any, id?: string) {
     try {
       message = JSON.parse(message);
       if (!Array.isArray(message)) {
         message = [message];
       }
       message.forEach((item: any) => {
+        if (id) {
+          item.id = id;
+        }
         this.setValue(item);
       });
     } catch (error) {
@@ -912,10 +916,26 @@ export class Topology {
 
   showMap() {
     if (!this.map) {
-      this.map = new Map(this.canvas.externalElements);
+      this.map = new Map(this.canvas);
     }
     this.map.img.src = this.canvas.toPng();
     this.map.show();
+  }
+
+  toggleAnchorMode() {
+    this.canvas.toggleAnchorMode();
+  }
+
+  addAnchorHand() {
+    this.canvas.addAnchorHand();
+  }
+
+  removeAnchorHand() {
+    this.canvas.removeAnchorHand();
+  }
+
+  toggleAnchorHand() {
+    this.canvas.toggleAnchorHand();
   }
 
   destroy(global?: boolean) {

@@ -12,7 +12,6 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
   let dash = coordinate.dash;
   let normalizedOption = coordinate.normalizedOption;
   //数据值绘制
-  ctx.beginPath();
 
   for (let j = 0; j < series.length; j++) {
     ctx.beginPath();
