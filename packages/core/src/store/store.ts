@@ -53,9 +53,6 @@ export interface TopologyStore {
   data: TopologyData;
   pens: { [key: string]: Pen };
 
-  // world offset
-  center: Point;
-
   histories?: EditAction[];
   historyIndex?: number;
   path2dMap: WeakMap<Pen, Path2D>;
@@ -112,7 +109,6 @@ export const clearStore = (store: TopologyStore) => {
     origin: { x: 0, y: 0 },
     center: { x: 0, y: 0 },
   };
-  store.center = { x: 0, y: 0 };
   store.pens = {};
   store.histories = [];
   store.path2dMap = new WeakMap();
