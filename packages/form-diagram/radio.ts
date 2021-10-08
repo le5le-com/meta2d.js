@@ -1,41 +1,62 @@
+import { Pen } from '../core/src/pen';
+
 export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
-    pen.onClick = click;
-    pen.onResize = resize;
+    pen.onAdd = onAdd;
   }
+
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
-  // pen.lineWidth = h / 5;
-  // ctx.lineWidth = h / 5;
-  pen.textLeft = h + h / 5;
-  pen.calculative.textLeft = h + h / 5;
-  pen.textWidth = w - h;
-  pen.textAlign = 'start';
-  pen.textBaseline = 'middle';
   ctx.beginPath();
-  ctx.arc(x + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
+  ctx.rect(x, y, w, h);
   ctx.stroke();
   ctx.closePath();
-  if (pen.isChecked) {
-    ctx.beginPath();
-    ctx.fillStyle = pen.fillColor;
-    ctx.arc(x + h / 2, y + h / 2, h / 4, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fill();
-    ctx.closePath();
-  }
+
   return false;
 }
 
-function click(pen: any) {
-  pen.isChecked = !pen.isChecked;
-  pen.calculative.canvas.render();
-}
-
-function resize(pen: any) {
+function onAdd(topology: any, pen: any) {
+  console.log('进入radio');
+  let x = pen.calculative.worldRect.x;
+  let y = pen.calculative.worldRect.y;
+  let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
-  pen.textLeft = h + h / 5;
-  pen.calculative.textLeft = h + h / 5;
+
+  if (pen.direction == 'horizontal') {
+    let length = pen.options.length;
+    for (let i = 0; i < length; i++) {
+      let childPen: any = {
+        name: 'radioItem',
+        x: x + (i * w) / length,
+        y: y,
+        width: w / length,
+        height: h,
+        isChecked: pen.selection === pen.options[i],
+        text: pen.options[i],
+        textLeft: (h * 6) / 5,
+        fillColor: '#1890ff',
+      };
+      topology.canvas.makePen(childPen);
+      topology.pushChildren(pen, [childPen]);
+    }
+  } else if (pen.direction == 'vertical') {
+    let length = pen.options.length;
+    for (let i = 0; i < length; i++) {
+      let childPen: any = {
+        name: 'radioItem',
+        x: x,
+        y: y + ((i * h) / (length * 2 - 1)) * 2,
+        width: w,
+        height: h / (length * 2 - 1),
+        isChecked: pen.selection === pen.options[i],
+        text: pen.options[i],
+        textLeft: ((h / (length * 2 - 1)) * 6) / 5,
+        fillColor: '#1890ff',
+      };
+      topology.canvas.makePen(childPen);
+      topology.pushChildren(pen, [childPen]);
+    }
+  }
 }
