@@ -2,6 +2,10 @@ import { Pen } from '../core/src/pen';
 
 declare const window: any;
 export function table(ctx: CanvasRenderingContext2D, pen: any) {
+  if (!pen.onDestroy) {
+    pen.onClick = onclick;
+    pen.onValue = onValue;
+  }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
@@ -14,7 +18,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   let rowLength = pen.configure.row.length;
 
   let total = Math.ceil(rowLength / rowCount);
-  window.topology.setValue(pen.id, total, 'totalPage');
+  window.topology.setValue({ id: pen.id, totalPage: total });
   var radioArray = col.filter((e) => e.radio != undefined && e.radio != '');
   //如果所有的radio都没设置，则宽度为实际设置宽度
   //如果有某一列的radio有值，未设置的radio默认为1
@@ -121,7 +125,10 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
       pen.currentClickY < y + temY
     ) {
       ctx.fillStyle = pen.configure.selectStyle;
-      window.topology.setValue(pen.id, JSON.stringify(oneCol), 'currentData');
+      window.topology.setValue({
+        id: pen.id,
+        currentData: JSON.stringify(oneCol),
+      });
     }
     ctx.rect(x, y + beforeY, w, temY - beforeY);
     ctx.stroke();
@@ -183,10 +190,13 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
         ctx.fillStyle = operation.btnPressColor;
 
         if (pen.clickBtnY === 0 && pen.clickBtnX == 0) {
-          window.topology.setValue(pen.id, halfXObj['operation'], 'clickBtnY');
-          window.topology.setValue(pen.id, halfY, 'clickBtnY');
-          window.topology.setValue(pen.id, 1, 'isOperation');
-          window.topology.setValue(pen.id, 0, 'isOperation');
+          window.topology.setValue({
+            id: pen.id,
+            clickBtnX: halfXObj['operation'],
+          });
+          window.topology.setValue({ id: pen.id, clickBtnY: halfY });
+          window.topology.setValue({ id: pen.id, isOperation: 1 });
+          window.topology.setValue({ id: pen.id, isOperation: 0 });
         }
       }
       // window.topology.setValue(pen.id, 0, 'isOperation');
@@ -272,6 +282,37 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.closePath();
 }
 
+function onclick(pen: any) {
+  let mycanvas = document.getElementById('topology');
+  mycanvas.onmousedown = () => {
+    var event = event || window.event;
+    window.topology.setValue({
+      id: pen.id,
+      currentClickX: event.offsetX - window.topology.store.data.x,
+    });
+    window.topology.setValue({
+      id: pen.id,
+      currentClickY: event.offsetY - window.topology.store.data.y,
+    });
+    if (pen.clickBtnY === 0 && pen.clickBtnX == 0) {
+      return;
+    }
+    if (
+      pen.clickBtnY - pen.configure.operation.height / 2 > pen.currentClickY ||
+      pen.clickBtnY + pen.configure.operation.height / 2 < pen.currentClickY ||
+      pen.clickBtnX - pen.configure.operation.width / 2 > pen.currentClickX ||
+      pen.clickBtnX + pen.configure.operation.width / 2 < pen.currentClickX
+    ) {
+      window.topology.setValue({ id: pen.id, clickBtnY: 0 });
+      window.topology.setValue({ id: pen.id, clickBtnX: 0 });
+      window.topology.setValue({ id: pen.id, isOperation: 0 });
+    }
+  };
+}
+
+function onValue(pen: any) {
+  // console.log('监听到setValue事件');
+}
 function add(topology: any, pen: Pen) {
   const childPen: any = {
     name: 'rectangle',

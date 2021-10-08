@@ -5,6 +5,7 @@ export * from './leSwitch';
 export * from './progress';
 export * from './radioItem';
 export * from './checkboxItem';
+export * from './button';
 
 import { table } from './table';
 import { checkboxItem } from './checkboxItem';
@@ -13,6 +14,7 @@ import { checkbox } from './checkbox';
 import { radio } from './radio';
 import { leSwitch } from './leSwitch';
 import { progress } from './progress';
+import { button } from './button';
 
 export function formPens() {
   return {
@@ -23,5 +25,6 @@ export function formPens() {
     table,
     radioItem,
     checkboxItem,
+    button,
   };
 }

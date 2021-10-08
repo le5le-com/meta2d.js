@@ -1,8 +1,10 @@
 import { Pen } from '../core/src/pen';
 
 export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
-  if (!pen.onDestroy) {
-    pen.onAdd = onAdd;
+  if (!pen.onAdd) {
+    console.log('pen.onadd begin');
+    pen.onAdd = checkboxAdd;
+    console.log('pen.onadd end');
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -15,8 +17,8 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
   return false;
 }
 
-function onAdd(topology: any, pen: any) {
-  console.log('topology', topology);
+function checkboxAdd(pen: any) {
+  console.log('topology1', pen.canvas);
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
@@ -36,8 +38,8 @@ function onAdd(topology: any, pen: any) {
         textLeft: (h * 6) / 5,
         fillColor: '#1890ff',
       };
-      topology.canvas.makePen(childPen);
-      topology.pushChildren(pen, [childPen]);
+      pen.canvas.makePen(childPen);
+      pen.canvas.parent.pushChildren(pen, [childPen]);
     }
   } else if (pen.direction == 'vertical') {
     let length = pen.options.length;
@@ -53,8 +55,8 @@ function onAdd(topology: any, pen: any) {
         textLeft: ((h / (length * 2 - 1)) * 6) / 5,
         fillColor: '#1890ff',
       };
-      topology.canvas.makePen(childPen);
-      topology.pushChildren(pen, [childPen]);
+      pen.canvas.makePen(childPen);
+      pen.canvas.parent.pushChildren(pen, [childPen]);
     }
   }
 }
