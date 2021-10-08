@@ -16,7 +16,7 @@ export * from './line';
 export * from './iframe';
 export * from './video';
 
-import { rectangle } from './rectangle';
+import { rectangle, square } from './rectangle';
 import { circle } from './circle';
 import { svgPath } from './svgPath';
 import { diamond } from './diamond';
@@ -37,6 +37,7 @@ import { video } from './video';
 export function commonPens() {
   return {
     rectangle,
+    square,
     circle,
     svgPath,
     diamond,

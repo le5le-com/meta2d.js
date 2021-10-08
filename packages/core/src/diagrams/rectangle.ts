@@ -43,3 +43,4 @@ export function rectangle(pen: Pen, path?: CanvasRenderingContext2D | OffscreenC
   );
   return path;
 }
+export const square = rectangle;
