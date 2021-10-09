@@ -1,6 +1,6 @@
 import { Pen } from '../pen';
 
-export function cloud(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+export function cloud(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }

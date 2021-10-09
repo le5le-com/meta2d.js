@@ -1,8 +1,5 @@
 import { Pen } from '../core/src/pen';
-export function flowParallel(
-  pen: Pen,
-  path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
-) {
+export function flowParallel(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }

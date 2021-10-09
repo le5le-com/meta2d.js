@@ -3,7 +3,7 @@ import { hitPoint, Point } from '../../point';
 import { getRectOfPoints } from '../../rect';
 import { getBezierPoint, getQuadraticPoint } from './curve';
 
-export function line(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+export function line(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
@@ -24,7 +24,7 @@ export function line(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvas
   return path;
 }
 
-function draw(path: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D, from: Point, to: Point) {
+function draw(path: CanvasRenderingContext2D | Path2D, from: Point, to: Point) {
   if (!to || to.hidden) {
     return;
   }
