@@ -1,11 +1,13 @@
 export * from './instrumentOne';
 export * from './instrumentTwo';
 export * from './lineChart';
+export * from './pieChart';
 
 import { instrumentOne } from './instrumentOne';
 import { instrumentTwo } from './instrumentTwo';
 import { lineChart } from './lineChart';
 import { histogram } from './histogram';
+import { pieChart } from './pieChart';
 
 export function lechartsPens() {
   return {
@@ -13,5 +15,6 @@ export function lechartsPens() {
     instrumentTwo,
     lineChart,
     histogram,
+    pieChart,
   };
 }
