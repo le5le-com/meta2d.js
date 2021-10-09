@@ -1,6 +1,6 @@
 import { coordinateAxis } from './coordinateAxis';
 
-//折线图
+//柱状图
 export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
@@ -30,7 +30,8 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
       ctx.rect(currentX, currentY, itemWidth, currentH);
       ctx.fill();
     }
-    // ctx.fill();
     ctx.closePath();
   }
+
+  // let;
 }

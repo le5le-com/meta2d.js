@@ -1773,7 +1773,7 @@ export class Canvas {
     if (pen.children) {
       pen.children.forEach((id) => {
         const child: Pen = this.store.pens[id];
-        this.dirtyPenRect(child);
+        child && this.dirtyPenRect(child);
       });
     }
 

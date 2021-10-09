@@ -1,4 +1,5 @@
 import { getValidValue } from './common';
+//仪表全盘
 export function instrumentOne(ctx: CanvasRenderingContext2D, pen: any) {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;

@@ -1,5 +1,6 @@
 import { Pen } from '../core/src/pen';
 
+declare const window: any;
 export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onAdd = onAdd;
@@ -17,7 +18,7 @@ export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   return false;
 }
 
-function onAdd(topology: any, pen: any) {
+function onAdd(pen: any) {
   console.log('进入radio');
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -38,8 +39,8 @@ function onAdd(topology: any, pen: any) {
         textLeft: (h * 6) / 5,
         fillColor: '#1890ff',
       };
-      topology.canvas.makePen(childPen);
-      topology.pushChildren(pen, [childPen]);
+      window.topology.canvas.makePen(childPen);
+      window.topology.pushChildren(pen, [childPen]);
     }
   } else if (pen.direction == 'vertical') {
     let length = pen.options.length;
@@ -55,8 +56,8 @@ function onAdd(topology: any, pen: any) {
         textLeft: ((h / (length * 2 - 1)) * 6) / 5,
         fillColor: '#1890ff',
       };
-      topology.canvas.makePen(childPen);
-      topology.pushChildren(pen, [childPen]);
+      window.topology.canvas.makePen(childPen);
+      window.topology.pushChildren(pen, [childPen]);
     }
   }
 }

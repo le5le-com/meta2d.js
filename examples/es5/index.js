@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: 高浩然
  * @Date: 2021-09-30 14:12:46
- * @LastEditTime: 2021-10-08 17:13:01
+ * @LastEditTime: 2021-10-09 11:57:58
  */
 const topology = new Le5le.Topology('topology');
 
@@ -59,8 +59,9 @@ saveBtn.onclick = () => {
 
 const penBtn = document.querySelector('#pen');
 penBtn.onclick = () => {
-  penBtn.className = 'active';
   pencilBtn.className = '';
+  topology.finishPencil();
+  penBtn.className = 'active';
   topology.drawLine('curve');
 };
 
@@ -69,8 +70,35 @@ pencilBtn.onclick = () => {
   if (penBtn.className === 'active') {
     return;
   }
-  pencilBtn.className = 'active';
-  topology.drawingPencil();
+  if (pencilBtn.className === 'active') {
+    pencilBtn.className = '';
+    topology.finishPencil();
+  } else {
+    pencilBtn.className = 'active';
+    topology.drawingPencil();
+  }
+};
+
+const magnifierBtn = document.querySelector('#magnifier');
+magnifierBtn.onclick = () => {
+  if (magnifierBtn.className === 'active') {
+    magnifierBtn.className = '';
+    topology.hideMagnifier();
+  } else {
+    magnifierBtn.className = 'active';
+    topology.showMagnifier();
+  }
+};
+
+const minimapBtn = document.querySelector('#minimap');
+minimapBtn.onclick = () => {
+  if (minimapBtn.className === 'active') {
+    minimapBtn.className = '';
+    topology.hideMap();
+  } else {
+    minimapBtn.className = 'active';
+    topology.showMap();
+  }
 };
 
 const helpBtn = document.querySelector('#help');
@@ -80,9 +108,38 @@ helpBtn.onclick = () => {
 
 window.addEventListener('keydown', (e) => {
   switch (e.key) {
+    case 'b':
+    case 'B':
+      if (topology.canvas.pencil) {
+        pencilBtn.className = 'active';
+      } else {
+        pencilBtn.className = '';
+      }
+      break;
+    case 'v':
+    case 'V':
+      if (e.ctrlKey || e.metaKey) {
+        return;
+      } else {
+        if (topology.canvas.drawingLineName) {
+          penBtn.className = 'active';
+        } else {
+          penBtn.className = '';
+        }
+      }
+      break;
+    case 'm':
+    case 'M':
+      if (topology.canvas.magnifier) {
+        minimapBtn.className = 'active';
+      } else {
+        minimapBtn.className = '';
+      }
+      break;
     case 'Escape':
       penBtn.className = '';
       pencilBtn.className = '';
+      magnifierBtn.className = '';
       break;
     default:
       break;
@@ -114,9 +171,9 @@ function getIconList () {
       title: '图片',
       data: {
         name: 'image',
-        text: '图片',
         width: 100,
-        height: 100
+        height: 100,
+        image: 'https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F016ba9554b952b000001bf72fa6574.jpg%402o.jpg&refer=http%3A%2F%2Fimg.zcool.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1636344024&t=f977b8ad47acf62ee3579d594f32489a'
       }
     }, { 
       key: 'video',

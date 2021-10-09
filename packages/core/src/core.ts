@@ -184,7 +184,19 @@ export class Topology {
     if (data) {
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
-      for (let pen of data.pens) {
+      // 第一遍赋初值
+      for (const pen of data.pens) {
+        if (!pen.id) {
+          pen.id = s8();
+        }
+        !pen.calculative && (pen.calculative = {canvas: this.canvas})
+        this.store.pens[pen.id] = pen;
+      }
+      // 计算区域
+      for (const pen of data.pens) {
+        this.canvas.dirtyPenRect(pen);
+      }
+      for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
     }
@@ -969,6 +981,77 @@ export class Topology {
 
   toggleAnchorHand() {
     this.canvas.toggleAnchorHand();
+  }
+
+  /**
+   * 将该画笔置顶，即放到数组最后，最后绘制即在顶部
+   * @param pen pen 置顶的画笔
+   * @param pens 画笔们
+   */
+  top(pen: Pen, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if(index > -1){
+      pens.push(pens[index]);
+      pens.splice(index, 1);
+    }
+  }
+
+  /**
+   * 该画笔置底，即放到数组最前，最后绘制即在底部
+   */
+  bottom(pen: Pen, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if(index > -1){
+      pens.unshift(pens[index]);
+      pens.splice(index + 1, 1);
+    }
+  }
+
+  up(pen: Pen, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+
+    if (index > -1 && index !== pens.length - 1) {
+      pens.splice(index + 2, 0, pens[index]);
+      pens.splice(index, 1);
+    }
+  }
+
+  down(pen: Pen, pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if (index > -1 && index !== 0) {
+      pens.splice(index - 1, 0, pens[index]);
+      pens.splice(index + 1, 1);
+    } 
+  } 
+
+  setLayer(pen: Pen, toIndex: number, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if(index > -1){
+      if(index > toIndex){
+        // 原位置在后，新位置在前
+        pens.splice(toIndex, 0, pens[index]);
+        pens.splice(index + 1, 1);
+      } else if(index < toIndex) {
+        // 新位置在后
+        pens.splice(toIndex, 0, pens[index]);
+        pens.splice(index, 1);
+      }
+    }
   }
 
   destroy(global?: boolean) {
