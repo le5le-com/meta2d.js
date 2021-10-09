@@ -184,9 +184,21 @@ export class Topology {
     if (data) {
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
-      // 采用 for 循环 + 递归
-      const outerPens = data.pens.filter((pen: Pen)=> !pen.parentId);
-      this.makePens(outerPens, data.pens);
+      // 第一遍赋初值
+      for (const pen of data.pens) {
+        if (!pen.id) {
+          pen.id = s8();
+        }
+        !pen.calculative && (pen.calculative = {canvas: this.canvas})
+        this.store.pens[pen.id] = pen;
+      }
+      // 计算区域
+      for (const pen of data.pens) {
+        this.canvas.dirtyPenRect(pen);
+      }
+      for (const pen of data.pens) {
+        this.canvas.makePen(pen);
+      }
     }
     this.canvas.render(Infinity);
     this.listenSocket();
@@ -194,16 +206,6 @@ export class Topology {
     this.startAnimate();
     this.doInitJS();
     this.store.emitter.emit('opened');
-  }
-
-  private makePens(pens: Pen[], allPens: Pen[]) {
-    for (const pen of pens) {
-      this.canvas.makePen(pen);
-      if(pen.children && pen.children.length > 0){
-        const inPens = allPens.filter((p: Pen) => pen.children.includes(p.id));
-        this.makePens(inPens, allPens);
-      }
-    }
   }
 
   connectSocket() {
