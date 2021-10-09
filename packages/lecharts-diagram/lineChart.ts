@@ -13,10 +13,12 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
   let normalizedOption = coordinate.normalizedOption;
   //数据值绘制
 
+  let coordinateValue = [];
   for (let j = 0; j < series.length; j++) {
     ctx.beginPath();
     let data = series[j].data;
     ctx.strokeStyle = pen.option.color[j];
+    ctx.fillStyle = pen.option.color[j];
     let currentX = x + (1 + dash / 2);
     let currentY =
       y +
@@ -25,6 +27,8 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
         (normalizedOption.max - normalizedOption.min)) *
         h;
     ctx.moveTo(currentX, currentY);
+    coordinateValue.push({ x: currentX, y: currentY });
+
     if (series[j].smooth) {
       //平滑的曲线
       let cAx: number, cAy: number, cBx: number, cBy: number;
@@ -76,6 +80,7 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
               (normalizedOption.max - normalizedOption.min)) *
               h;
         }
+        coordinateValue.push({ x: currentX, y: currentY });
         cAx = currentX + (last1x - before1x) / 4;
         cAy = currentY + (last1y - before1y) / 4;
         cBx = last1x - (last2x - currentX) / 4;
@@ -93,9 +98,18 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
             (normalizedOption.max - normalizedOption.min)) *
             h;
         ctx.lineTo(currentX, currentY);
+        coordinateValue.push({ x: currentX, y: currentY });
       }
     }
     ctx.stroke();
     ctx.closePath();
+
+    coordinateValue.forEach((item, index) => {
+      ctx.beginPath();
+      ctx.arc(item.x, item.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.closePath();
+    });
+    coordinateValue = [];
   }
 }
