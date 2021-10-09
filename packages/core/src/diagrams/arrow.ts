@@ -1,6 +1,6 @@
 import { Pen } from '../pen';
 
-export function leftArrow(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+export function leftArrow(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
@@ -36,7 +36,7 @@ export function leftArrow(pen: Pen, path?: CanvasRenderingContext2D | OffscreenC
   return path;
 }
 
-export function rightArrow(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+export function rightArrow(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
@@ -69,7 +69,7 @@ export function rightArrow(pen: Pen, path?: CanvasRenderingContext2D | Offscreen
   return path;
 }
 
-export function twowayArrow(pen: Pen, path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+export function twowayArrow(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }

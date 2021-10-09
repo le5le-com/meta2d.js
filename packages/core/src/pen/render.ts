@@ -29,12 +29,7 @@ export function getAllChildren(store: TopologyStore, pen: Pen) {
   return children;
 }
 
-export function renderPen(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  path: Path2D,
-  store: TopologyStore
-) {
+export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D, store: TopologyStore) {
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
@@ -332,12 +327,7 @@ export function renderPen(
   ctx.restore();
 }
 
-export function renderPenRaw(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  rect?: Rect
-) {
+export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, rect?: Rect) {
   ctx.save();
   if (rect) {
     ctx.translate(-rect.x, -rect.y);
@@ -600,11 +590,7 @@ export function renderPenRaw(
   ctx.restore();
 }
 
-export function renderLineAnchors(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore
-) {
+export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
   ctx.save();
   ctx.lineWidth = 1;
   ctx.fillStyle = pen.activeColor || store.options.activeColor;
@@ -614,7 +600,7 @@ export function renderLineAnchors(
   ctx.restore();
 }
 
-export function renderAnchor(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pt: Point, pen: Pen) {
+export function renderAnchor(ctx: CanvasRenderingContext2D, pt: Point, pen: Pen) {
   if (!pt) {
     return;
   }

@@ -1,9 +1,6 @@
 import { Pen } from '../pen';
 
-export function pentagram(
-  pen: Pen,
-  path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
-) {
+export function pentagram(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
@@ -12,10 +9,8 @@ export function pentagram(
     pen.calculative.worldRect.width > pen.calculative.worldRect.height
       ? pen.calculative.worldRect.height
       : pen.calculative.worldRect.width;
-  let centerx =
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2; //旋转中心点
-  let centery =
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2;
+  let centerx = pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2; //旋转中心点
+  let centery = pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2;
   let basex = centerx;
   let basey = centery - r / 2;
   let basexi = centerx;

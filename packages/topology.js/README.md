@@ -2,14 +2,10 @@
 
 The bundle of topology.
 
-# Download
-
-- [→ releases](https://github.com/le5le-com/topology.js/releases)
 
 # Build
 
 ```
-$ cd bundle
 $ yarn
 $ yarn build
 

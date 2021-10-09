@@ -4,11 +4,7 @@ import { Pen } from './model';
 
 const arrows: any = {};
 
-export function renderFromArrow(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore
-) {
+export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
   if (!arrows[pen.fromArrow]) {
     return;
   }
@@ -30,11 +26,7 @@ export function renderFromArrow(
   arrows[pen.fromArrow](ctx, pen, store, pt);
 }
 
-export function renderToArrow(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore
-) {
+export function renderToArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
   if (!arrows[pen.toArrow] || pen.calculative.worldAnchors.length < 2) {
     return;
   }
@@ -56,12 +48,7 @@ export function renderToArrow(
   arrows[pen.toArrow](ctx, pen, store, pt);
 }
 
-arrows.triangleSolid = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.triangleSolid = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);
@@ -77,12 +64,7 @@ arrows.triangleSolid = (
   ctx.restore();
 };
 
-arrows.triangle = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.triangle = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   if (ctx.lineWidth < 2) {
     ctx.lineWidth = 2;
@@ -101,12 +83,7 @@ arrows.triangle = (
   ctx.restore();
 };
 
-arrows.circleSolid = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.circleSolid = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);
@@ -119,12 +96,7 @@ arrows.circleSolid = (
   ctx.restore();
 };
 
-arrows.circle = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.circle = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);
@@ -137,12 +109,7 @@ arrows.circle = (
   ctx.restore();
 };
 
-arrows.diamondSolid = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.diamondSolid = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);
@@ -160,12 +127,7 @@ arrows.diamondSolid = (
   ctx.restore();
 };
 
-arrows.diamond = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.diamond = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);
@@ -183,12 +145,7 @@ arrows.diamond = (
   ctx.restore();
 };
 
-arrows.line = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.line = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);
@@ -201,12 +158,7 @@ arrows.line = (
   ctx.restore();
 };
 
-arrows.lineUp = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.lineUp = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);
@@ -218,12 +170,7 @@ arrows.lineUp = (
   ctx.restore();
 };
 
-arrows.lineDown = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen,
-  store: TopologyStore,
-  point: Point
-) => {
+arrows.lineDown = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate((point.rotate * Math.PI) / 180);

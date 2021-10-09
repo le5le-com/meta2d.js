@@ -1,4 +1,3 @@
-
 export function createOffscreen() {
   try {
     const offscreen = new OffscreenCanvas(0, 0);
@@ -9,8 +8,7 @@ export function createOffscreen() {
     }
 
     return document.createElement('canvas');
-  }
-  catch (e) {
+  } catch (e) {
     return document.createElement('canvas');
   }
 }

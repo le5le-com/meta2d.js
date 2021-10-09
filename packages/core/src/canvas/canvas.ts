@@ -1832,7 +1832,7 @@ export class Canvas {
   };
 
   renderPens = () => {
-    const ctx = this.offscreen.getContext('2d');
+    const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.save();
     ctx.strokeStyle = this.store.options.color;
     const canvasRect = {
@@ -3056,7 +3056,7 @@ export class Canvas {
 
     const span = this.store.data.scale * 10;
 
-    const ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D = this.offscreen.getContext('2d');
+    const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.save();
 
     ctx.strokeStyle = rgba(0.7, this.store.data.ruleColor || this.store.options.ruleColor);
@@ -3148,7 +3148,7 @@ export class Canvas {
     const r = this.magnifierSize / 2;
     const size = this.magnifierSize + 5;
 
-    const ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D = this.magnifierScreen.getContext('2d');
+    const ctx = this.magnifierScreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.clearRect(0, 0, size, size);
     ctx.lineWidth = 5;
 

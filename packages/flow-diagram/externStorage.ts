@@ -1,16 +1,10 @@
 import { Pen } from '../core/src/pen';
-export function flowExternStorage(
-  pen: Pen,
-  path?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D
-) {
+export function flowExternStorage(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
   const offsetX = pen.calculative.worldRect.width / 10;
-  path.moveTo(
-    pen.calculative.worldRect.x + offsetX * 2,
-    pen.calculative.worldRect.y
-  );
+  path.moveTo(pen.calculative.worldRect.x + offsetX * 2, pen.calculative.worldRect.y);
   path.bezierCurveTo(
     pen.calculative.worldRect.x - (offsetX * 2) / 3,
     pen.calculative.worldRect.y,

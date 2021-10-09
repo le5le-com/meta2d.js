@@ -3,7 +3,7 @@ import { calcCenter } from '../rect';
 import { globalStore } from '../store';
 import { getRect, parseSvgPath, pathToString, scalePath, translatePath } from './svg/parse';
 
-export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | Path2D) {
+export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D | Path2D) {
   const pathText = globalStore.paths[pen.pathId];
   if (!pathText) {
     return new Path2D();
