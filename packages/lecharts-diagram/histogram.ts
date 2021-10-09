@@ -30,7 +30,8 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
       ctx.rect(currentX, currentY, itemWidth, currentH);
       ctx.fill();
     }
-    // ctx.fill();
     ctx.closePath();
   }
+
+  // let;
 }
