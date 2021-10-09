@@ -239,6 +239,14 @@ export class Topology {
     }
   }
 
+  showMagnifier() {
+    this.canvas.showMagnifier();
+  }
+
+  hideMagnifier() {
+    this.canvas.hideMagnifier();
+  }
+
   toggleMagnifier() {
     this.canvas.toggleMagnifier();
   }
@@ -941,6 +949,10 @@ export class Topology {
     }
     this.map.img.src = this.canvas.toPng();
     this.map.show();
+  }
+
+  hideMap() {
+    this.map.hide();
   }
 
   toggleAnchorMode() {

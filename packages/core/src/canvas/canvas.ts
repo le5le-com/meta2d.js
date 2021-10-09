@@ -3316,6 +3316,18 @@ export class Canvas {
     this.render(Infinity);
   }
 
+  showMagnifier() {
+    this.magnifier = true;
+    this.externalElements.style.cursor = 'default';
+    this.render(Infinity);
+  }
+
+  hideMagnifier() {
+    this.magnifier = false;
+    this.externalElements.style.cursor = 'default';
+    this.render(Infinity);
+  }
+
   toggleMagnifier() {
     this.magnifier = !this.magnifier;
     if (this.magnifier) {
