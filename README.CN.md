@@ -4,12 +4,12 @@
 
 Topology 是一个集动态交互、丰富展示、数据管理等一体的全功能可视化引擎，为物联网、工业互联网、电力能源、水利工程、智慧农业、智慧医疗、智慧城市等智能可视化场景而生。支持拓扑图、流程图、脑图、折线图、饼图、仪表盘、web组态、SCADA等场景。
 
-<center style="display:flex">
-<img style="height:100px" src="https://cdn.nlark.com/yuque/0/2021/gif/12382170/1623210619545-5fca920c-bb57-4e52-9569-49dd0d9d331f.gif" >
+<center style="display:flex;justify-content:">
+<img style="height:100px;margin: 10px" src="https://cdn.nlark.com/yuque/0/2021/gif/12382170/1623210619545-5fca920c-bb57-4e52-9569-49dd0d9d331f.gif" >
 
-<img style="height:100px" src="https://cdn.nlark.com/yuque/0/2021/png/12382170/1619416821688-2218031d-a698-4917-ac8a-72cbbeb62bc7.png?x-oss-process=image%2Fresize%2Cw_1504%2Climit_0%2Fresize%2Cw_1504%2Climit_0" >
+<img style="height:100px;margin: 10px" src="https://cdn.nlark.com/yuque/0/2021/png/12382170/1619416821688-2218031d-a698-4917-ac8a-72cbbeb62bc7.png?x-oss-process=image%2Fresize%2Cw_1504%2Climit_0%2Fresize%2Cw_1504%2Climit_0" >
 
-<img style="height:100px" src="https://cdn.nlark.com/yuque/0/2021/png/179380/1632972168922-dfeecea5-2304-4a08-a9ee-3da31c9ac914.png?x-oss-process=image%2Fresize%2Cw_713%2Climit_0">  
+<img style="height:100px;margin: 10px" src="https://cdn.nlark.com/yuque/0/2021/png/179380/1632972168922-dfeecea5-2304-4a08-a9ee-3da31c9ac914.png?x-oss-process=image%2Fresize%2Cw_713%2Climit_0">  
 </center>
 
 <br>
@@ -57,10 +57,10 @@ Topology 是一个集动态交互、丰富展示、数据管理等一体的全�
 # 亮点
 
 **功能丰富，更具高性能**  
-  状态、事件、动效、动态监听、自由扩展，可支持1万+以上节点
+ - 状态、事件、动效、动态监听、自由扩展，可支持1万+以上节点
 
 **动态数据实时监听**  
-  支持mqtt、websocket、或http自主请求等多种方式动态监听数据
+ - 支持mqtt、websocket、或http自主请求等多种方式动态监听数据
 
 **钢笔和曲线工具，方便在线定制图形**   
  - AI小图标直接在线制作
@@ -69,14 +69,14 @@ Topology 是一个集动态交互、丰富展示、数据管理等一体的全�
 
 
 **简洁易用的动画**  
-  优异的性能，可高达1000动画同时播放
+ - 优异的性能，可高达1000动画同时播放
 
 **支持SVG path**  
-  不再把svg当作静态图片，直接支持svg path属性，想要给svg变个色，随手就来
+ - 不再把svg当作静态图片，直接支持svg path属性，想要给svg变个色，随手就来
 
 
 **“全民”进度条**  
-  任意封闭图形，都可以当进度条：矩形、圆、svg、封闭连线、或其他任意封闭图形
+ - 任意封闭图形，都可以当进度条：矩形、圆、svg、封闭连线、或其他任意封闭图形
 
 **智能自动算法支持**  
  - 连线自动锚点，自动识别最近锚点
