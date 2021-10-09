@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: 高浩然
  * @Date: 2021-09-30 14:12:46
- * @LastEditTime: 2021-10-09 11:36:23
+ * @LastEditTime: 2021-10-09 11:57:58
  */
 const topology = new Le5le.Topology('topology');
 
@@ -171,9 +171,9 @@ function getIconList () {
       title: '图片',
       data: {
         name: 'image',
-        text: '图片',
         width: 100,
-        height: 100
+        height: 100,
+        image: 'https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F016ba9554b952b000001bf72fa6574.jpg%402o.jpg&refer=http%3A%2F%2Fimg.zcool.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1636344024&t=f977b8ad47acf62ee3579d594f32489a'
       }
     }, { 
       key: 'video',
