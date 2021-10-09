@@ -1,69 +1,143 @@
-new Le5le.Topology('topology');
+/*
+ * @Description: 
+ * @Author: 高浩然
+ * @Date: 2021-09-30 14:12:46
+ * @LastEditTime: 2021-10-08 17:13:01
+ */
+const topology = new Le5le.Topology('topology');
 
-var stats = new Stats();
-stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild(stats.dom);
+const iconListDOM = document.querySelector('.icon-list');
+getIconList().forEach(icon => {
+  const { key, title, data } = icon;
+  const div = document.createElement('div');
+  const i = document.createElement('i');
+  i.className = `iconfont icon-${ key }`;
+  i.draggable = true;
+  i.title = title;
+  i.ondragstart = (e) => {
+    e.dataTransfer.setData('Text', JSON.stringify(data));
+  };
+  div.appendChild(i);
+  iconListDOM.appendChild(div);
+});
 
-function animate() {
-  stats.begin();
+const createBtn = document.querySelector('#create');
+createBtn.onclick = () => {
+  topology.open();
+};
 
-  // monitored code goes here
-
-  stats.end();
-
-  requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-
-function makeNodes() {
-  topology.clear();
-
-  const count = +document.getElementById('count').value || 10000;
-  let x = 100;
-  let y = -50;
-  console.time('makeNodes');
-  for (let i = 0; i < count; i++) {
-    if (i % 10 === 0) {
-      x = 100;
-      y += 150;
-    } else {
-      x += 150;
-    }
-    const pen = {
-      name: i % 2 === 0 ? 'rectangle' : 'circle',
-      x,
-      y,
-      width: 100,
-      height: 100,
-      iconFamily: 't-icon',
-      iconSize: 20,
-      ellipsis: true,
-      text: i + 1 + '',
-      // textBackground: '#eeeeee',
-      // textAlign: 'right',
-      // textBaseline: 'bottom',
-    };
-    if (i % 7 === 1) {
-      pen.text += '\n乐吾乐\nTopology';
-    }
-    if (i % 3) {
-      pen.image = 'btn.svg';
-    }
-    if (i % 5 === 1) {
-      pen.icon = '\ue8e7';
-    }
-
-    if (i % 8 === 1) {
-      pen.name = 'svgPath';
-      pen.path =
-        'M 497 569 H 173 c -39.7 0 -72 -32.3 -72 -72 V 173 C 101 133.3 133.3 101 173 101 h 324 c 39.7 0 72 32.3 72 72 v 324 c 0 39.7 -32.3 72 -72 72 z M 173 149 c -13.2 0 -24 10.8 -24 24 v 324 c 0 13.2 10.8 24 24 24 h 324 c 13.2 0 24 -10.8 24 -24 V 173 c 0 -13.2 -10.8 -24 -24 -24 H 173 z M 889 558 c -6.1 0 -12.3 -2.3 -17 -7 L 673 352 c -9.4 -9.4 -9.4 -24.6 0 -33.9 L 872 119 c 9.4 -9.4 24.6 -9.4 33.9 0 l 199 199 c 9.4 9.4 9.4 24.6 0 33.9 L 906 551 c -4.7 4.7 -10.9 7 -17 7 z M 723.9 335 L 889 500.1 L 1054.1 335 L 889 169.9 L 723.9 335 z M 1051 1123 H 727 c -39.7 0 -72 -32.3 -72 -72 V 727 c 0 -39.7 32.3 -72 72 -72 h 324 c 39.7 0 72 32.3 72 72 v 324 c 0 39.7 -32.3 72 -72 72 z M 727 703 c -13.2 0 -24 10.8 -24 24 v 324 c 0 13.2 10.8 24 24 24 h 324 c 13.2 0 24 -10.8 24 -24 V 727 c 0 -13.2 -10.8 -24 -24 -24 H 727 z M 497 1123 H 173 c -39.7 0 -72 -32.3 -72 -72 V 727 c 0 -39.7 32.3 -72 72 -72 h 324 c 39.7 0 72 32.3 72 72 v 324 c 0 39.7 -32.3 72 -72 72 z M 173 703 c -13.2 0 -24 10.8 -24 24 v 324 c 0 13.2 10.8 24 24 24 h 324 c 13.2 0 24 -10.8 24 -24 V 727 c 0 -13.2 -10.8 -24 -24 -24 H 173 z';
-    }
-    topology.addPen(pen, false);
+const openInput = document.querySelector('#open-input');
+openInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) {
+    return;
   }
-  console.timeEnd('makeNodes');
-}
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const json = JSON.parse(event.target.result);
+      topology.open(json);
+    } catch {
+      console.log('读取文件失败，请检查数据格式');
+    }
+  };
+  reader.readAsText(file);
+};
 
-function drawLine() {
+const saveBtn = document.querySelector('#save');
+saveBtn.onclick = () => {
+  const filename = '测试数据.json';
+  const data = topology.data();
+  const json = JSON.stringify(data, undefined, 4);
+  const blob = new Blob([ json ], { type: 'text/json' });
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = window.URL.createObjectURL(blob);
+  a.dataset.downloadurl = ['text/json', a.download, a.href].join(':');
+  a.click();
+};
+
+const penBtn = document.querySelector('#pen');
+penBtn.onclick = () => {
+  penBtn.className = 'active';
+  pencilBtn.className = '';
   topology.drawLine('curve');
+};
+
+const pencilBtn = document.querySelector('#pencil');
+pencilBtn.onclick = () => {
+  if (penBtn.className === 'active') {
+    return;
+  }
+  pencilBtn.className = 'active';
+  topology.drawingPencil();
+};
+
+const helpBtn = document.querySelector('#help');
+helpBtn.onclick = () => {
+  window.open('https://www.yuque.com/alsmile/topology/cucep0');
+};
+
+window.addEventListener('keydown', (e) => {
+  switch (e.key) {
+    case 'Escape':
+      penBtn.className = '';
+      pencilBtn.className = '';
+      break;
+    default:
+      break;
+  }
+});
+
+function getIconList () {
+  return [
+    { 
+      key: 'rect',
+      title: '矩形',
+      data: {
+        name: 'rectangle',
+        text: '矩形',
+        width: 100,
+        height: 100
+      }
+    }, { 
+      key: 'circle',
+      title: '圆形',
+      data: {
+        name: 'circle',
+        text: '圆形',
+        width: 100,
+        height: 100
+      }
+    }, { 
+      key: 'img',
+      title: '图片',
+      data: {
+        name: 'image',
+        text: '图片',
+        width: 100,
+        height: 100
+      }
+    }, { 
+      key: 'video',
+      title: '视频',
+      data: {
+        name: 'video',
+        width: 100,
+        height: 100,
+        video: 'http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4',
+        autoPlay: true,
+      }
+    }, { 
+      key: 'audio',
+      title: '音频',
+      data: {
+        name: 'video',
+        width: 100,
+        height: 100,
+        audio: 'https://down.ear0.com:3321/preview?soundid=37418&type=mp3',
+        autoPlay: true,
+      }
+    }
+  ];
 }

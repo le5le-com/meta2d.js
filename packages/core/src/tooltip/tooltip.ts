@@ -1,7 +1,8 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
 
-declare const marked: any;
+declare const window: any;
+declare const global: any;
 
 export class Tooltip {
   box: HTMLElement;
@@ -43,7 +44,7 @@ export class Tooltip {
       style.type = 'text/css';
       document.head.appendChild(style);
       sheet = style.sheet;
-      sheet.insertRule('.topology-tooltip{position:absolute;padding:8px 0;z-index:10;left: -9999px}');
+      sheet.insertRule('.topology-tooltip{position:absolute;padding:8px 0;z-index:10;left: -9999px;top: -9999px;}');
       sheet.insertRule(
         '.topology-tooltip .text{max-width:320px;min-height:30px;max-height:400px;outline:none;padding:8px 16px;border-radius:4px;background:#777777;color:#ffffff;line-height:1.8;overflow-y:auto;}'
       );
@@ -59,7 +60,16 @@ export class Tooltip {
       return;
     }
 
+    let marked: any;
+    if (window) {
+      marked = window.marked;
+    } else if (global) {
+      marked = global.marked;
+    }
     if (marked) {
+      if (marked.parse) {
+        marked = marked.parse;
+      }
       this.text.innerHTML = marked(pen.title);
       const a = this.text.getElementsByTagName('A');
       for (let i = 0; i < a.length; ++i) {

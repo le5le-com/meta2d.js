@@ -80,9 +80,9 @@ export class Topology {
 
   private init(parent: string | HTMLElement) {
     if (typeof parent === 'string') {
-      this.canvas = new Canvas(document.getElementById(parent), this.store);
+      this.canvas = new Canvas(this, document.getElementById(parent), this.store);
     } else {
-      this.canvas = new Canvas(parent, this.store);
+      this.canvas = new Canvas(this, parent, this.store);
     }
 
     this.resize();
@@ -150,8 +150,16 @@ export class Topology {
   addPens(pens: Pen[], history?: boolean) {
     const list: Pen[] = [];
     for (let pen of pens) {
-      const p = this.canvas.addPen(pen, history);
-      p && list.push(p);
+      if (this.canvas.beforeAddPen && this.canvas.beforeAddPen(pen) != true) {
+        continue;
+      }
+      this.canvas.makePen(pen);
+      list.push(pen);
+    }
+    this.canvas.render(Infinity);
+    this.store.emitter.emit('add', list);
+    if (history) {
+      this.canvas.pushHistory({ type: EditType.Add, pens: list });
     }
     return list;
   }
@@ -210,6 +218,15 @@ export class Topology {
     this.canvas.externalElements.style.cursor = 'crosshair';
   }
 
+  // end  - 当前鼠标位置，是否作为终点
+  finishDrawLine(end?: boolean) {
+    this.canvas.finishDrawline(end);
+  }
+
+  finishPencil() {
+    this.canvas.finishPencil();
+  }
+
   addDrawLineFn(fnName: string, fn: Function) {
     this.canvas[fnName] = fn;
     this.canvas.drawLineFns.push(fnName);
@@ -220,6 +237,18 @@ export class Topology {
     if (index > -1) {
       this.canvas.drawLineFns.splice(index, 1);
     }
+  }
+
+  showMagnifier() {
+    this.canvas.showMagnifier();
+  }
+
+  hideMagnifier() {
+    this.canvas.hideMagnifier();
+  }
+
+  toggleMagnifier() {
+    this.canvas.toggleMagnifier();
   }
 
   clear() {
@@ -602,7 +631,7 @@ export class Topology {
       case 'add':
         {
           e.forEach((pen: Pen) => {
-            pen.onAdd && pen.onAdd(this, pen);
+            pen.onAdd && pen.onAdd(pen);
             this.store.data.locked && this.doEvent(pen, eventName);
           });
         }
@@ -920,6 +949,10 @@ export class Topology {
     }
     this.map.img.src = this.canvas.toPng();
     this.map.show();
+  }
+
+  hideMap() {
+    this.map.hide();
   }
 
   toggleAnchorMode() {
