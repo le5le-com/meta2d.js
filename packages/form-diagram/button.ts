@@ -3,8 +3,8 @@ declare const window: any;
 
 export function button(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
-    pen.onAdd = onAdd;
-    pen.onClick = click;
+    // pen.onAdd = onAdd;
+    // pen.onClick = click;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -50,7 +50,7 @@ function click(pen: any) {
   //   window.topology.setValue(parent.id, 0, "currentPage");
 }
 
-function onAdd(topology: any, pen: any) {
-  console.log("进入onadd");
-  console.log(topology.canvas);
-}
+// function onAdd(topology: any, pen: any) {
+//   console.log("进入onadd");
+//   console.log(topology.canvas);
+// }
