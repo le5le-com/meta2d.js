@@ -28,6 +28,7 @@ import {
   getParent,
   setHover,
   getAllChildren,
+  setElemPosition,
 } from '../pen';
 import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, scalePoint, translatePoint } from '../point';
 import {
@@ -1697,6 +1698,11 @@ export class Canvas {
           pen.calculative.img = img;
           pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
           pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
+          if (pen.gif) {
+            pen.calculative.gif = true;
+            this.externalElements.appendChild(img);
+            setElemPosition(pen, img);
+          }
         } else {
           const img = new Image();
           img.crossOrigin = 'anonymous';
@@ -1706,6 +1712,11 @@ export class Canvas {
             pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
             pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
             globalStore.htmlElements[pen.image] = img;
+            if (pen.gif) {
+              pen.calculative.gif = true;
+              this.externalElements.appendChild(img);
+              setElemPosition(pen, img);
+            }
             this.dirty = true;
             this.render();
           };
@@ -2526,6 +2537,10 @@ export class Canvas {
           }
         });
         this.updateLines(pen);
+      }
+
+      if (pen.calculative.gif && pen.calculative.img) {
+        setElemPosition(pen, pen.calculative.img);
       }
 
       pen.onMove && pen.onMove(pen);
