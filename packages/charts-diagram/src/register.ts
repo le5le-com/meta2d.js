@@ -3,6 +3,7 @@ import { instrumentTwo } from './instrumentTwo';
 import { lineChart } from './lineChart';
 import { histogram } from './histogram';
 import { pieChart } from './pieChart';
+import { gauge } from './gauge';
 
 export function chartsPens() {
   return {
@@ -11,5 +12,6 @@ export function chartsPens() {
     lineChart,
     histogram,
     pieChart,
+    gauge,
   };
 }
