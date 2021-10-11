@@ -1,4 +1,4 @@
-import { Pen } from "../core/src/pen";
+import { Pen } from '../../core/src/pen';
 declare const window: any;
 
 export function button(ctx: CanvasRenderingContext2D, pen: any) {

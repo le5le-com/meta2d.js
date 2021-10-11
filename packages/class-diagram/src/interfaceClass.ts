@@ -1,4 +1,4 @@
-import { Pen } from '../core/src/pen';
+import { Pen } from '../../core/src/pen';
 export function interfaceClass(pen: Pen) {
   const path = new Path2D();
 
@@ -45,10 +45,19 @@ export function interfaceClass(pen: Pen) {
     r
   );
   const topHeight = 0.2 * pen.calculative.worldRect.height;
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + topHeight);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + topHeight);
+  path.moveTo(
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.y + topHeight
+  );
+  path.lineTo(
+    pen.calculative.worldRect.ex,
+    pen.calculative.worldRect.y + topHeight
+  );
 
-  const height = pen.calculative.worldRect.y + topHeight + (pen.calculative.worldRect.height - topHeight) / 2;
+  const height =
+    pen.calculative.worldRect.y +
+    topHeight +
+    (pen.calculative.worldRect.height - topHeight) / 2;
   path.moveTo(pen.calculative.worldRect.x, height);
   path.lineTo(pen.calculative.worldRect.ex, height);
 
