@@ -1,4 +1,4 @@
-import { Pen } from '../core/src/pen';
+import { Pen } from '../../core/src/pen';
 export function focus(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
