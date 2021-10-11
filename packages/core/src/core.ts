@@ -1054,6 +1054,22 @@ export class Topology {
     }
   }
 
+  changePenId(oldId: string, newId: string):boolean {
+    if(oldId === newId) return false;
+    const pens = this.find(oldId);
+    if(pens.length === 1){
+      // 找到画笔，且唯一
+      if(!this.find(newId).length){
+        // 若新画笔不存在
+        pens[0].id = newId;
+        // 更换 store.pens 上的内容
+        this.store.pens[newId] = this.store.pens[oldId];
+        delete this.store.pens[oldId];
+        return true;
+      }
+    }
+  }
+
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
