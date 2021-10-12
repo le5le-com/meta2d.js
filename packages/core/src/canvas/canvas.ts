@@ -1814,15 +1814,15 @@ export class Canvas {
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
-    this.renderGrid();
-    offscreenCtx.save();
-    offscreenCtx.translate(this.store.data.x, this.store.data.y);
     if (this.store.data.background) {
       offscreenCtx.save();
       offscreenCtx.fillStyle = this.store.data.background;
       offscreenCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       offscreenCtx.restore();
     }
+    this.renderGrid();
+    offscreenCtx.save();
+    offscreenCtx.translate(this.store.data.x, this.store.data.y);
     window && window.debugRender && console.time('renderPens');
     this.renderPens();
     window && window.debugRender && console.timeEnd('renderPens');
