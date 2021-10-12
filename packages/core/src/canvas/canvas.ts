@@ -2485,7 +2485,7 @@ export class Canvas {
         const pt = { x: e.x, y: e.y };
         this.getHover(pt);
       } else {
-        const pt = { x: e.x, y: e.y };
+        const pt = { id: s8(), x: e.x, y: e.y };
         this.store.activeAnchor = pushPenAnchor(this.store.hover, pt);
       }
     }
