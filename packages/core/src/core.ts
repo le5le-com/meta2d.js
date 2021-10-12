@@ -911,7 +911,7 @@ export class Topology {
     this.spaceBetweenByDirection('width', pens, width);
   }
 
-  spaceBetweenColumn(pens: Pen[], height: number) {
+  spaceBetweenColumn(pens?: Pen[], height?: number) {
     this.spaceBetweenByDirection('height', pens, height);
   }
 
