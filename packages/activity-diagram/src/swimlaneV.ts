@@ -1,4 +1,4 @@
-import { Pen } from '../core/src/pen';
+import { Pen } from '../../core/src/pen';
 export function swimlaneV(pen: Pen): Path2D {
   const path = new Path2D();
 
@@ -36,8 +36,20 @@ export function swimlaneV(pen: Pen): Path2D {
     worldRect.y + worldRect.height,
     r
   );
-  path.arcTo(worldRect.x, worldRect.y + worldRect.height, worldRect.x, worldRect.y, r);
-  path.arcTo(worldRect.x, worldRect.y, worldRect.x + worldRect.width, worldRect.y, r);
+  path.arcTo(
+    worldRect.x,
+    worldRect.y + worldRect.height,
+    worldRect.x,
+    worldRect.y,
+    r
+  );
+  path.arcTo(
+    worldRect.x,
+    worldRect.y,
+    worldRect.x + worldRect.width,
+    worldRect.y,
+    r
+  );
   path.closePath();
 
   //   40 肯定是不合理的，TODO: 该处用高度的部分值

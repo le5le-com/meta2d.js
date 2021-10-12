@@ -9,7 +9,7 @@ chart-diagram 在 le5le topology 中使用的第三方 chart 的工具
 ## echarts
 
 1. 节点 name = 'echarts'
-2. 定义自定义数据 data 为 json，其中包含 echarts 属性，为 echarts 提过数据
+2. 定义自定义数据 data 为 json，其中包含 echarts 属性，为 echarts/highcharts 提过数据
 
 ```
 {

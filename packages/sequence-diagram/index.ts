@@ -1,13 +1,3 @@
-export * from './focus';
-export * from './lifeline';
-
-import { focus } from './focus';
-import { lifeline ,lifelineDashByCtx } from './lifeline';
-
-export function sequencePens(){
-    return{
-        focus,
-        lifeline,
-        lifelineDashByCtx
-    }
-}
+export * from './src/focus';
+export * from './src/lifeline';
+export * from './src/register';

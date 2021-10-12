@@ -94,7 +94,7 @@ export function scaleCompute(option: ScaleOption): ScaleResult {
     splitNumber: 4, // splitNumber建议取4或者5等这种容易被整除的数字
     symmetrical: false,
     deviation: false,
-    preferZero: true,
+    preferZero: false,
     ...option,
   };
   const magics: number[] = [

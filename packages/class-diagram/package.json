@@ -1,18 +1,17 @@
 {
-  "name": "@topology/chart-diagram",
+  "name": "@topology/class-diagram",
   "version": "1.0.0",
-  "description": "The charting library based on le5le topology and echarts/highcharts.",
+  "description": "The class library based on le5le topology.",
   "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/chart-diagram/",
+    "copy": "copyfiles  package.json ../../dist/class-diagram/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
     "topology",
-    "echarts",
-    "canvas",
-    "highcharts"
+    "class",
+    "canvas"
   ],
   "author": "alsmile123@qq.com",
   "license": "MIT",
