@@ -830,7 +830,7 @@ export class Topology {
 
   alignNodes(align: string, pens?: Pen[], rect?: Rect) {
     !pens && (pens = this.store.data.pens);
-    !rect && (rect = this.getRect());
+    !rect && (rect = this.getRect(pens));
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     for (const item of pens) {
       if (item.type === PenType.Line) {
@@ -873,7 +873,7 @@ export class Topology {
    */
   private spaceBetweenByDirection(direction: 'width' | 'height', pens?: Pen[], distance?: number) {
     !pens && (pens = this.store.data.pens);
-    !distance && (distance = this.getRect()[direction]);
+    !distance && (distance = this.getRect(pens)[direction]);
     // 过滤出 node 节点 pens
     pens = pens.filter((item) => item.type !== PenType.Line);
     if (pens.length <= 2) {
@@ -918,7 +918,7 @@ export class Topology {
   layout(pens?: Pen[], width?: number, space: number = 30) {
     !pens && (pens = this.store.data.pens);
     const rect = getRect(pens);
-    !width && (width = this.getRect().width);
+    !width && (width = rect.width);
 
     // 1. 拿到全部节点中最大的宽高
     pens = pens.filter((item) => item.type !== PenType.Line);
