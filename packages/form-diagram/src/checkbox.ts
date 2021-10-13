@@ -1,4 +1,3 @@
-import { Pen } from '../core/src/pen';
 
 export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onAdd) {

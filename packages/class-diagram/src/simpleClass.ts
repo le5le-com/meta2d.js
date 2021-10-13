@@ -1,4 +1,4 @@
-import { Pen } from '../core/src/pen';
+import { Pen } from '../../core/src/pen';
 export function simpleClass(pen: Pen) {
   const path = new Path2D();
   if (!pen.borderRadius) {
@@ -51,8 +51,14 @@ export function simpleClass(pen: Pen) {
     r
   );
   const topHeight = 0.2 * pen.calculative.worldRect.height;
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + topHeight);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + topHeight);
+  path.moveTo(
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.y + topHeight
+  );
+  path.lineTo(
+    pen.calculative.worldRect.ex,
+    pen.calculative.worldRect.y + topHeight
+  );
   path.closePath();
   return path;
 }
