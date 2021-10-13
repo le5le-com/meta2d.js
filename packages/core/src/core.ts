@@ -184,7 +184,19 @@ export class Topology {
     if (data) {
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
-      for (let pen of data.pens) {
+      // 第一遍赋初值
+      for (const pen of data.pens) {
+        if (!pen.id) {
+          pen.id = s8();
+        }
+        !pen.calculative && (pen.calculative = {canvas: this.canvas})
+        this.store.pens[pen.id] = pen;
+      }
+      // 计算区域
+      for (const pen of data.pens) {
+        this.canvas.dirtyPenRect(pen);
+      }
+      for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
     }
@@ -818,7 +830,7 @@ export class Topology {
 
   alignNodes(align: string, pens?: Pen[], rect?: Rect) {
     !pens && (pens = this.store.data.pens);
-    !rect && (rect = this.getRect());
+    !rect && (rect = this.getRect(pens));
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     for (const item of pens) {
       if (item.type === PenType.Line) {
@@ -861,7 +873,7 @@ export class Topology {
    */
   private spaceBetweenByDirection(direction: 'width' | 'height', pens?: Pen[], distance?: number) {
     !pens && (pens = this.store.data.pens);
-    !distance && (distance = this.getRect()[direction]);
+    !distance && (distance = this.getRect(pens)[direction]);
     // 过滤出 node 节点 pens
     pens = pens.filter((item) => item.type !== PenType.Line);
     if (pens.length <= 2) {
@@ -899,14 +911,14 @@ export class Topology {
     this.spaceBetweenByDirection('width', pens, width);
   }
 
-  spaceBetweenColumn(pens: Pen[], height: number) {
+  spaceBetweenColumn(pens?: Pen[], height?: number) {
     this.spaceBetweenByDirection('height', pens, height);
   }
 
   layout(pens?: Pen[], width?: number, space: number = 30) {
     !pens && (pens = this.store.data.pens);
     const rect = getRect(pens);
-    !width && (width = this.getRect().width);
+    !width && (width = rect.width);
 
     // 1. 拿到全部节点中最大的宽高
     pens = pens.filter((item) => item.type !== PenType.Line);
@@ -969,6 +981,184 @@ export class Topology {
 
   toggleAnchorHand() {
     this.canvas.toggleAnchorHand();
+  }
+
+  /**
+   * 将该画笔置顶，即放到数组最后，最后绘制即在顶部
+   * @param pen pen 置顶的画笔
+   * @param pens 画笔们
+   */
+  top(pen: Pen, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if(index > -1){
+      pens.push(pens[index]);
+      pens.splice(index, 1);
+    }
+  }
+
+  /**
+   * 该画笔置底，即放到数组最前，最后绘制即在底部
+   */
+  bottom(pen: Pen, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if(index > -1){
+      pens.unshift(pens[index]);
+      pens.splice(index + 1, 1);
+    }
+  }
+
+  up(pen: Pen, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+
+    if (index > -1 && index !== pens.length - 1) {
+      pens.splice(index + 2, 0, pens[index]);
+      pens.splice(index, 1);
+    }
+  }
+
+  down(pen: Pen, pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if (index > -1 && index !== 0) {
+      pens.splice(index - 1, 0, pens[index]);
+      pens.splice(index + 1, 1);
+    } 
+  } 
+
+  setLayer(pen: Pen, toIndex: number, pens?: Pen[]){
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    if(index > -1){
+      if(index > toIndex){
+        // 原位置在后，新位置在前
+        pens.splice(toIndex, 0, pens[index]);
+        pens.splice(index + 1, 1);
+      } else if(index < toIndex) {
+        // 新位置在后
+        pens.splice(toIndex, 0, pens[index]);
+        pens.splice(index, 1);
+      }
+    }
+  }
+
+  changePenId(oldId: string, newId: string):boolean {
+    if(oldId === newId) return false;
+    const pens = this.find(oldId);
+    if(pens.length === 1){
+      // 找到画笔，且唯一
+      if(!this.find(newId).length){
+        // 若新画笔不存在
+        pens[0].id = newId;
+        // 更换 store.pens 上的内容
+        this.store.pens[newId] = this.store.pens[oldId];
+        delete this.store.pens[oldId];
+        return true;
+      }
+    }
+  }
+
+  /**
+   * 得到与当前节点连接的线
+   * @param node 节点，非连线
+   * @param type 类型，全部的连接线/入线/出线
+   */
+  getLines(node: Pen, type: 'all'|'in'|'out' = 'all'): Pen[]{
+    if(node.type){
+      return [];
+    }
+    const lines: Pen[] = [];
+    !node.connectedLines && (node.connectedLines = []);
+
+    node.connectedLines.forEach(line => {
+      const linePen: Pen[] = this.find(line.lineId);
+      if(linePen.length === 1){
+        switch(type){
+          case 'all':
+            lines.push(linePen[0]);
+            break;
+          case 'in':
+            // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
+            linePen[0].anchors[linePen[0].anchors.length-1].connectTo === node.id && lines.push(linePen[0]);
+            break;
+          case 'out':
+            // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
+            linePen[0].anchors[0].connectTo === node.id && lines.push(linePen[0]);
+            break;
+        }
+      }
+    });
+
+    return lines;
+  }
+
+  /**
+   * 得到当前节点的下一个节点，即出口节点数组
+   * 得到当前连线的出口节点
+   * @param pen 节点或连线
+   */
+  nextNode(pen: Pen): Pen[] {
+    if(pen.type){
+      // 连线
+      const nextNodeId = pen.anchors[pen.anchors.length-1].connectTo;
+      return this.find(nextNodeId);
+    } else {
+      // 节点
+      // 1. 得到所有的出线
+      const lines = this.getLines(pen, 'out');
+      const nextNodes = [];
+      // 2. 遍历出线的 nextNode
+      lines.forEach(line => {
+        const lineNextNode = this.nextNode(line);
+        for (const node of lineNextNode) {
+          const have = nextNodes.find(next => next.id === node.id);
+          // 3. 不重复的才加进去
+          !have && nextNodes.push(node);
+          
+        }
+      });
+      return nextNodes;
+    }
+  }
+
+  /**
+   * 得到当前节点的上一个节点，即入口节点数组
+   * 得到当前连线的入口节点
+   * @param pen 节点或连线
+   */
+  previousNode(pen: Pen): Pen[] {
+    if(pen.type){
+      // 连线
+      const preNodeId = pen.anchors[0].connectTo;
+      return this.find(preNodeId);
+    } else {
+      // 节点
+      // 1. 得到所有的入线
+      const lines = this.getLines(pen, 'in');
+      const preNodes:Pen[] = [];
+      // 2. 遍历入线的 preNode
+      lines.forEach(line => {
+        const linePreNode = this.previousNode(line);
+        for (const node of linePreNode) {
+          const have = preNodes.find(pre => pre.id === node.id);
+          // 3. 不重复的才加进去
+          !have && preNodes.push(node);
+        }
+      });
+      return preNodes;
+    }
   }
 
   destroy(global?: boolean) {

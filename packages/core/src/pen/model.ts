@@ -80,6 +80,7 @@ export interface Pen extends Rect {
   ellipsis?: boolean;
 
   image?: string;
+  gif?: boolean;
   icon?: string;
   iconRotate?: number;
   iconWidth?: number;
@@ -223,6 +224,7 @@ export interface Pen extends Rect {
 
     textLines?: string[];
     image?: string;
+    gif?: boolean;
     img?: HTMLImageElement;
     imgNaturalWidth?: number;
     imgNaturalHeight?: number;

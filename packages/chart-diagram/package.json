@@ -1,7 +1,7 @@
 {
   "name": "@topology/chart-diagram",
   "version": "1.0.0",
-  "description": "The charting library based on le5le topology and echarts.",
+  "description": "The charting library based on le5le topology and echarts/highcharts.",
   "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
@@ -11,7 +11,8 @@
   "keywords": [
     "topology",
     "echarts",
-    "canvas"
+    "canvas",
+    "highcharts"
   ],
   "author": "alsmile123@qq.com",
   "license": "MIT",

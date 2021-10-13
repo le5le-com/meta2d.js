@@ -1,12 +1,3 @@
-export * from './interfaceClass';
-export * from './simpleClass';
-
-import { interfaceClass } from './interfaceClass';
-import { simpleClass } from './simpleClass';
-
-export function classPens(){
-    return {
-        interfaceClass,
-        simpleClass
-    }
-}
+export * from './src/interfaceClass';
+export * from './src/simpleClass';
+export * from './src/register';

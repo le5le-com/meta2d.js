@@ -28,6 +28,7 @@ import {
   getParent,
   setHover,
   getAllChildren,
+  setElemPosition,
 } from '../pen';
 import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, scalePoint, translatePoint } from '../point';
 import {
@@ -1697,6 +1698,11 @@ export class Canvas {
           pen.calculative.img = img;
           pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
           pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
+          if (pen.gif) {
+            pen.calculative.gif = true;
+            this.externalElements.appendChild(img);
+            setElemPosition(pen, img);
+          }
         } else {
           const img = new Image();
           img.crossOrigin = 'anonymous';
@@ -1706,6 +1712,11 @@ export class Canvas {
             pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
             pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
             globalStore.htmlElements[pen.image] = img;
+            if (pen.gif) {
+              pen.calculative.gif = true;
+              this.externalElements.appendChild(img);
+              setElemPosition(pen, img);
+            }
             this.dirty = true;
             this.render();
           };
@@ -1773,7 +1784,7 @@ export class Canvas {
     if (pen.children) {
       pen.children.forEach((id) => {
         const child: Pen = this.store.pens[id];
-        this.dirtyPenRect(child);
+        child && this.dirtyPenRect(child);
       });
     }
 
@@ -1803,15 +1814,15 @@ export class Canvas {
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
-    this.renderGrid();
-    offscreenCtx.save();
-    offscreenCtx.translate(this.store.data.x, this.store.data.y);
     if (this.store.data.background) {
       offscreenCtx.save();
       offscreenCtx.fillStyle = this.store.data.background;
       offscreenCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       offscreenCtx.restore();
     }
+    this.renderGrid();
+    offscreenCtx.save();
+    offscreenCtx.translate(this.store.data.x, this.store.data.y);
     window && window.debugRender && console.time('renderPens');
     this.renderPens();
     window && window.debugRender && console.timeEnd('renderPens');
@@ -1832,7 +1843,7 @@ export class Canvas {
   };
 
   renderPens = () => {
-    const ctx = this.offscreen.getContext('2d');
+    const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.save();
     ctx.strokeStyle = this.store.options.color;
     const canvasRect = {
@@ -2474,7 +2485,7 @@ export class Canvas {
         const pt = { x: e.x, y: e.y };
         this.getHover(pt);
       } else {
-        const pt = { x: e.x, y: e.y };
+        const pt = { id: s8(), x: e.x, y: e.y };
         this.store.activeAnchor = pushPenAnchor(this.store.hover, pt);
       }
     }
@@ -2526,6 +2537,10 @@ export class Canvas {
           }
         });
         this.updateLines(pen);
+      }
+
+      if (pen.calculative.gif && pen.calculative.img) {
+        setElemPosition(pen, pen.calculative.img);
       }
 
       pen.onMove && pen.onMove(pen);
@@ -3056,7 +3071,7 @@ export class Canvas {
 
     const span = this.store.data.scale * 10;
 
-    const ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D = this.offscreen.getContext('2d');
+    const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.save();
 
     ctx.strokeStyle = rgba(0.7, this.store.data.ruleColor || this.store.options.ruleColor);
@@ -3148,7 +3163,7 @@ export class Canvas {
     const r = this.magnifierSize / 2;
     const size = this.magnifierSize + 5;
 
-    const ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D = this.magnifierScreen.getContext('2d');
+    const ctx = this.magnifierScreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.clearRect(0, 0, size, size);
     ctx.lineWidth = 5;
 
