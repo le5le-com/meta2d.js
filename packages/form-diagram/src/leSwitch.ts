@@ -1,5 +1,3 @@
-import { Pen } from '../core/src/pen';
-
 declare const window: any;
 var currentTopology: any;
 export function leSwitch(ctx: CanvasRenderingContext2D, pen: any) {

@@ -1,5 +1,3 @@
-import { Topology } from '@topology/core';
-
 declare const window: any;
 export function radioItem(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
