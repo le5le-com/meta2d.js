@@ -1,5 +1,4 @@
 declare const window: any;
-var currentTopology: any;
 export function leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onClick = click;
