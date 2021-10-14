@@ -1,5 +1,3 @@
-import { Pen } from '../core/src/pen';
-
 declare const window: any;
 export function table(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
@@ -9,7 +7,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
-  var col = pen.configure.col;
+  let col = pen.configure.col;
   ctx.strokeStyle = pen.configure.lineStyle;
   ctx.fillStyle = pen.configure.fillStyle;
   let header = pen.configure.header;
@@ -19,7 +17,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
 
   let total = Math.ceil(rowLength / rowCount);
   window.topology.setValue({ id: pen.id, totalPage: total });
-  var radioArray = col.filter((e) => e.radio != undefined && e.radio != '');
+  let radioArray = col.filter((e) => e.radio != undefined && e.radio != '');
   //如果所有的radio都没设置，则宽度为实际设置宽度
   //如果有某一列的radio有值，未设置的radio默认为1
 
@@ -29,7 +27,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   let halfXObj = {};
   let colWObj = {};
   if (radioArray.length > 0) {
-    var sum = col.reduce(function (prev, cur) {
+    let sum = col.reduce(function (prev, cur) {
       //没有设置比例，默认为1
       if (cur.radio == '' || cur.radio == undefined) {
         return prev + 1;
@@ -313,7 +311,7 @@ function onclick(pen: any) {
 function onValue(pen: any) {
   // console.log('监听到setValue事件');
 }
-function add(topology: any, pen: Pen) {
+function add(topology: any, pen: any) {
   const childPen: any = {
     name: 'rectangle',
     x: 100,
