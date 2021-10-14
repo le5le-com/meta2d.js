@@ -2,9 +2,9 @@
  * @Description: 
  * @Author: 高浩然
  * @Date: 2021-09-30 14:12:46
- * @LastEditTime: 2021-10-09 11:57:58
+ * @LastEditTime: 2021-10-12 15:32:55
  */
-const topology = new Le5le.Topology('topology');
+const topology = new Topology('topology');
 
 const iconListDOM = document.querySelector('.icon-list');
 getIconList().forEach(icon => {
