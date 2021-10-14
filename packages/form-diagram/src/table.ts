@@ -26,8 +26,9 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
 
   let halfXObj = {};
   let colWObj = {};
+  let sum = 0;
   if (radioArray.length > 0) {
-    let sum = col.reduce(function (prev, cur) {
+    sum = col.reduce(function (prev, cur) {
       //没有设置比例，默认为1
       if (cur.radio == '' || cur.radio == undefined) {
         return prev + 1;

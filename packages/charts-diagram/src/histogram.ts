@@ -13,10 +13,12 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
   let normalizedOption = coordinate.normalizedOption;
 
   let itemWidth = (dash * 4) / 5 / series.length;
+  // ctx.strokeStyle = '#ffffff';
   for (let j = 0; j < series.length; j++) {
     ctx.beginPath();
     let data = series[j].data;
     ctx.fillStyle = pen.option.color[j];
+    ctx.strokeStyle = '#ffffff';
     let currentX = 0;
     let currentY = 0;
     let currentH = 0;
@@ -27,7 +29,9 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
           (normalizedOption.max - normalizedOption.min)) *
         h;
       currentY = y + h - currentH;
-      ctx.rect(currentX, currentY, itemWidth, currentH);
+      //宽度-1是为了数据之间的间距 高度-1是为了坐标轴不被覆盖
+      ctx.rect(currentX, currentY, itemWidth - 1, currentH - 1);
+      ctx.stroke();
       ctx.fill();
     }
     ctx.closePath();

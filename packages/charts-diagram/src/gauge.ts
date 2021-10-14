@@ -1,6 +1,9 @@
 import { getValidValue } from './common';
 //仪表全盘
 export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
+  if (!pen.onAdd) {
+    // pen.onAdd = onAdd;
+  }
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
@@ -20,7 +23,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   let r = w > h ? (h / 2) * series.radius : (w / 2) * series.radius;
   let centerX = x + w / 2;
   let centerY = y + h / 2;
-  let value = series.data[0].value;
+  let value = pen.value; //series.data[0].value;
   let pointColor: string;
   //背景圆弧
   let lineStyle = series.axisLine.lineStyle;
@@ -194,3 +197,13 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
 
   return false;
 }
+
+// function onAdd(pen: any) {
+//   console.log('before', pen);
+//   // // pen.value = pen.option.series[0].data[0].value;
+//   // pen.canvas.parent.setValue({
+//   //   id: pen.id,
+//   //   value: pen.option.series[0].data[0].value,
+//   // });
+//   console.log('after', pen);
+// }
