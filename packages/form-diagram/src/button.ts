@@ -1,10 +1,9 @@
-import { Pen } from '../../core/src/pen';
 declare const window: any;
 
 export function button(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     // pen.onAdd = onAdd;
-    // pen.onClick = click;
+    pen.onClick = click;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -40,17 +39,12 @@ export function button(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 function click(pen: any) {
-  console.log(pen.calculative.canvas);
   let temStyle = pen.fillColor;
-  window.topology.setValue({ id: pen.id, fillColor: pen.pressColor });
+  pen.calculative.canvas.parent.setValue({
+    id: pen.id,
+    fillColor: pen.pressColor,
+  });
   window.setTimeout(() => {
-    window.topology.setValue({ id: pen.id, fillColor: temStyle });
+    pen.calculative.canvas.parent.setValue({ id: pen.id, fillColor: temStyle });
   }, 100);
-  //   var parent =window.topology.getParent(pen);
-  //   window.topology.setValue(parent.id, 0, "currentPage");
 }
-
-// function onAdd(topology: any, pen: any) {
-//   console.log("进入onadd");
-//   console.log(topology.canvas);
-// }
