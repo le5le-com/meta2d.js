@@ -2144,15 +2144,15 @@ export class Canvas {
     // 得到最准确的 rect 即 resize 后的
     resizeRect(rect, x, y, this.resizeIndex);
     calcCenter(rect);
-    if(this.customeDock){
-      this.dock = calcRectDock(this.store, rect);
+    if (this.customeDock) {
+      this.dock = this.customeDock(this.store, rect);
     } else {
       this.dock = calcRectDock(this.store, rect);
     }
-    if(this.dock.xDock){
+    if (this.dock.xDock) {
       x += this.dock.xDock.step;
     }
-    if(this.dock.yDock){
+    if (this.dock.yDock) {
       y += this.dock.yDock.step;
     }
 
@@ -2218,7 +2218,7 @@ export class Canvas {
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
     if (this.customeDock) {
-      this.dock = calcRectDock(this.store, rect);
+      this.dock = this.customeDock(this.store, rect);
     } else {
       this.dock = calcRectDock(this.store, rect);
     }
