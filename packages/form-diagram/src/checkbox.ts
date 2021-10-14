@@ -1,23 +1,19 @@
-
 export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onAdd) {
-    console.log('pen.onadd begin');
     pen.onAdd = checkboxAdd;
-    console.log('pen.onadd end');
   }
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
-  let w = pen.calculative.worldRect.width;
-  let h = pen.calculative.worldRect.height;
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.stroke();
-  ctx.closePath();
+  // let x = pen.calculative.worldRect.x;
+  // let y = pen.calculative.worldRect.y;
+  // let w = pen.calculative.worldRect.width;
+  // let h = pen.calculative.worldRect.height;
+  // ctx.beginPath();
+  // ctx.rect(x, y, w, h);
+  // ctx.stroke();
+  // ctx.closePath();
   return false;
 }
 
 function checkboxAdd(pen: any) {
-  console.log('topology1', pen.canvas);
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
@@ -37,8 +33,8 @@ function checkboxAdd(pen: any) {
         textLeft: (h * 6) / 5,
         fillColor: '#1890ff',
       };
-      pen.canvas.makePen(childPen);
-      pen.canvas.parent.pushChildren(pen, [childPen]);
+      pen.calculative.canvas.makePen(childPen);
+      pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
     }
   } else if (pen.direction == 'vertical') {
     let length = pen.options.length;
@@ -54,8 +50,8 @@ function checkboxAdd(pen: any) {
         textLeft: ((h / (length * 2 - 1)) * 6) / 5,
         fillColor: '#1890ff',
       };
-      pen.canvas.makePen(childPen);
-      pen.canvas.parent.pushChildren(pen, [childPen]);
+      pen.calculative.canvas.makePen(childPen);
+      pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
     }
   }
 }

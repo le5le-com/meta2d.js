@@ -4,20 +4,19 @@ export function radio(ctx: CanvasRenderingContext2D, pen: any) {
     pen.onAdd = onAdd;
   }
 
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
-  let w = pen.calculative.worldRect.width;
-  let h = pen.calculative.worldRect.height;
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.stroke();
-  ctx.closePath();
+  // let x = pen.calculative.worldRect.x;
+  // let y = pen.calculative.worldRect.y;
+  // let w = pen.calculative.worldRect.width;
+  // let h = pen.calculative.worldRect.height;
+  // ctx.beginPath();
+  // ctx.rect(x, y, w, h);
+  // ctx.stroke();
+  // ctx.closePath();
 
   return false;
 }
 
 function onAdd(pen: any) {
-  console.log('进入radio');
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
@@ -37,8 +36,8 @@ function onAdd(pen: any) {
         textLeft: (h * 6) / 5,
         fillColor: '#1890ff',
       };
-      window.topology.canvas.makePen(childPen);
-      window.topology.pushChildren(pen, [childPen]);
+      pen.calculative.canvas.makePen(childPen);
+      pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
     }
   } else if (pen.direction == 'vertical') {
     let length = pen.options.length;
@@ -54,8 +53,8 @@ function onAdd(pen: any) {
         textLeft: ((h / (length * 2 - 1)) * 6) / 5,
         fillColor: '#1890ff',
       };
-      window.topology.canvas.makePen(childPen);
-      window.topology.pushChildren(pen, [childPen]);
+      pen.calculative.canvas.makePen(childPen);
+      pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
     }
   }
 }

@@ -2,7 +2,7 @@ import { getValidValue } from './common';
 //仪表全盘
 export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onAdd) {
-    // pen.onAdd = onAdd;
+    pen.onAdd = onAdd;
   }
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
@@ -198,12 +198,6 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   return false;
 }
 
-// function onAdd(pen: any) {
-//   console.log('before', pen);
-//   // // pen.value = pen.option.series[0].data[0].value;
-//   // pen.canvas.parent.setValue({
-//   //   id: pen.id,
-//   //   value: pen.option.series[0].data[0].value,
-//   // });
-//   console.log('after', pen);
-// }
+function onAdd(pen: any) {
+  pen.value = pen.option.series[0].data[0].value;
+}
