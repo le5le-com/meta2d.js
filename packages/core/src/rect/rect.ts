@@ -146,6 +146,75 @@ export function translateRect(rect: Rect | Pen, x: number, y: number) {
   }
 }
 
+export function resizeRect(rect: Rect | Pen, offsetX: number, offsetY: number, resizeIndex: number){
+  switch (resizeIndex) {
+    case 0:
+      if (rect.width - offsetX < 5 || rect.height - offsetY < 5) {
+        break;
+      }
+      rect.x += offsetX;
+      rect.y += offsetY;
+      rect.width -= offsetX;
+      rect.height -= offsetY;
+      break;
+    case 1:
+      if (rect.width + offsetX < 5 || rect.height - offsetY < 5) {
+        break;
+      }
+      rect.ex += offsetX;
+      rect.y += offsetY;
+      rect.width += offsetX;
+      rect.height -= offsetY;
+      break;
+    case 2:
+      if (rect.width + offsetX < 5 || rect.height + offsetY < 5) {
+        break;
+      }
+      rect.ex += offsetX;
+      rect.ey += offsetY;
+      rect.width += offsetX;
+      rect.height += offsetY;
+      break;
+    case 3:
+      if (rect.width - offsetX < 5 || rect.height + offsetY < 5) {
+        break;
+      }
+      rect.x += offsetX;
+      rect.ey += offsetY;
+      rect.width -= offsetX;
+      rect.height += offsetY;
+      break;
+    case 4:
+      if (rect.height - offsetY < 5) {
+        break;
+      }
+      rect.y += offsetY;
+      rect.height -= offsetY;
+      break;
+    case 5:
+      if (rect.width + offsetX < 5) {
+        break;
+      }
+      rect.ex += offsetX;
+      rect.width += offsetX;
+      break;
+    case 6:
+      if (rect.height + offsetY < 5) {
+        break;
+      }
+      rect.ey += offsetY;
+      rect.height += offsetY;
+      break;
+    case 7:
+      if (rect.width - offsetX < 5) {
+        break;
+      }
+      rect.x += offsetX;
+      rect.width -= offsetX;
+      break;
+  }
+}
+
 export function scaleRect(rect: Rect, scale: number, center: Point) {
   if (!rect) {
     return;
