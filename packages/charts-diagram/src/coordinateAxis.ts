@@ -20,6 +20,7 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
   let normalizedOption = scaleCompute(initOption);
   let num = pen.option.xAxis.data.length;
   ctx.beginPath();
+  ctx.strokeStyle = '#BFBFBF';
   ctx.lineWidth = 6;
   ctx.lineCap = 'butt';
   let dash = (w - 1 * (num + 1)) / num;
@@ -39,9 +40,11 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.closePath();
   //y轴绘制
   ctx.beginPath();
+  ctx.fillStyle = '#BFBFBF';
+  ctx.strokeStyle = '#E9E9E9';
+  ctx.setLineDash([2, 2]);
   for (let i = 0; i < normalizedOption.splitNumber + 1; i++) {
     let temH = (i * h) / normalizedOption.splitNumber;
-    ctx.strokeStyle = '#D3D3D3';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(
@@ -60,6 +63,7 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
 
   //x轴下标绘制
   ctx.beginPath();
+  ctx.strokeStyle = '#BFBFBF';
   let xData = pen.option.xAxis.data;
   let xdataX = 0;
   for (let i = 0; i < xData.length; i++) {
@@ -71,6 +75,7 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
     ctx.fill();
   }
   ctx.closePath();
+  ctx.setLineDash([]);
 
   return { dash: dash, normalizedOption: normalizedOption };
 }

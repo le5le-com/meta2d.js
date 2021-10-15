@@ -106,7 +106,10 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
 
     coordinateValue.forEach((item, index) => {
       ctx.beginPath();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
       ctx.arc(item.x, item.y, 4, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.fill();
       ctx.closePath();
     });

@@ -40,6 +40,7 @@ import {
   Rect,
   rectInRect,
   rectToPoints,
+  resizeRect,
   translateRect,
 } from '../rect';
 import { EditAction, EditType, globalStore, TopologyStore } from '../store';
@@ -2126,13 +2127,34 @@ export class Canvas {
       }
     }
 
+    if (!this.initActiveRect) {
+      this.initActiveRect = deepClone(this.activeRect);
+      return;
+    }
+
     const p1 = { x: this.mouseDown.x, y: this.mouseDown.y };
     const p2 = { x: e.x, y: e.y };
     rotatePoint(p1, -this.activeRect.rotate, this.activeRect.center);
     rotatePoint(p2, -this.activeRect.rotate, this.activeRect.center);
 
-    const x = p2.x - p1.x;
-    const y = p2.y - p1.y;
+    let x = p2.x - p1.x;
+    let y = p2.y - p1.y;
+
+    const rect = deepClone(this.initActiveRect);
+    // 得到最准确的 rect 即 resize 后的
+    resizeRect(rect, x, y, this.resizeIndex);
+    calcCenter(rect);
+    if (this.customeDock) {
+      this.dock = this.customeDock(this.store, rect);
+    } else {
+      this.dock = calcRectDock(this.store, rect);
+    }
+    if (this.dock.xDock) {
+      x += this.dock.xDock.step;
+    }
+    if (this.dock.yDock) {
+      y += this.dock.yDock.step;
+    }
 
     const w = this.activeRect.width;
     const h = this.activeRect.height;
@@ -2143,72 +2165,7 @@ export class Canvas {
     if ((e as any).shiftKey || (e as any).ctrlKey) {
       offsetY = (offsetX * h) / w;
     }
-    switch (this.resizeIndex) {
-      case 0:
-        if (this.activeRect.width - offsetX < 5 || this.activeRect.height - offsetY < 5) {
-          return;
-        }
-        this.activeRect.x += offsetX;
-        this.activeRect.y += offsetY;
-        this.activeRect.width -= offsetX;
-        this.activeRect.height -= offsetY;
-        break;
-      case 1:
-        if (this.activeRect.width + offsetX < 5 || this.activeRect.height - offsetY < 5) {
-          return;
-        }
-        this.activeRect.ex += offsetX;
-        this.activeRect.y += offsetY;
-        this.activeRect.width += offsetX;
-        this.activeRect.height -= offsetY;
-        break;
-      case 2:
-        if (this.activeRect.width + offsetX < 5 || this.activeRect.height + offsetY < 5) {
-          return;
-        }
-        this.activeRect.ex += offsetX;
-        this.activeRect.ey += offsetY;
-        this.activeRect.width += offsetX;
-        this.activeRect.height += offsetY;
-        break;
-      case 3:
-        if (this.activeRect.width - offsetX < 5 || this.activeRect.height + offsetY < 5) {
-          return;
-        }
-        this.activeRect.x += offsetX;
-        this.activeRect.ey += offsetY;
-        this.activeRect.width -= offsetX;
-        this.activeRect.height += offsetY;
-        break;
-      case 4:
-        if (this.activeRect.height - offsetY < 5) {
-          return;
-        }
-        this.activeRect.y += offsetY;
-        this.activeRect.height -= offsetY;
-        break;
-      case 5:
-        if (this.activeRect.width + offsetX < 5) {
-          return;
-        }
-        this.activeRect.ex += offsetX;
-        this.activeRect.width += offsetX;
-        break;
-      case 6:
-        if (this.activeRect.height + offsetY < 5) {
-          return;
-        }
-        this.activeRect.ey += offsetY;
-        this.activeRect.height += offsetY;
-        break;
-      case 7:
-        if (this.activeRect.width - offsetX < 5) {
-          return;
-        }
-        this.activeRect.x += offsetX;
-        this.activeRect.width -= offsetX;
-        break;
-    }
+    resizeRect(this.activeRect, offsetX, offsetY, this.resizeIndex);
     calcCenter(this.activeRect);
 
     const scaleX = this.activeRect.width / w;
@@ -2261,7 +2218,7 @@ export class Canvas {
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
     if (this.customeDock) {
-      this.dock = calcRectDock(this.store, rect);
+      this.dock = this.customeDock(this.store, rect);
     } else {
       this.dock = calcRectDock(this.store, rect);
     }
