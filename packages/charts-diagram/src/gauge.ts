@@ -3,6 +3,7 @@ import { getValidValue } from './common';
 export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onAdd) {
     pen.onAdd = onAdd;
+    // pen.onBeforeValue = onBeforeValue;
   }
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
@@ -23,7 +24,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   let r = w > h ? (h / 2) * series.radius : (w / 2) * series.radius;
   let centerX = x + w / 2;
   let centerY = y + h / 2;
-  let value = pen.value; //series.data[0].value;
+  let value = pen.calculative.value; //series.data[0].value;
   let pointColor: string;
   //背景圆弧
   let lineStyle = series.axisLine.lineStyle;
@@ -200,4 +201,36 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
 
 function onAdd(pen: any) {
   pen.value = pen.option.series[0].data[0].value;
+  pen.frames = [
+    {
+      duration: 10,
+      value: 0,
+    },
+    {
+      duration: 2000,
+      value: pen.value,
+    },
+  ];
+  setTimeout(() => {
+    pen.historyValue = pen.value;
+  }, 3000);
+  pen.calculative.canvas.parent.startAnimate(pen.id);
+}
+
+//setValue 直接触发，所以数据的过渡可能很难实现。
+function onBeforeValue(pen: any, data: any) {
+  if (data.value) {
+    console.log(pen.value);
+    pen.frames = [
+      {
+        duration: 100,
+        value: pen.value,
+      },
+      {
+        duration: 2000,
+        value: data.value,
+      },
+    ];
+    pen.calculative.canvas.parent.startAnimate(pen.id);
+  }
 }
