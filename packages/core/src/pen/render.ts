@@ -218,23 +218,53 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     if (pen.calculative.iconHeight) {
       h = pen.calculative.iconHeight;
     }
-    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight) {
+    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight && pen.iconRatio) {
       let scaleW = rect.width / pen.calculative.imgNaturalWidth;
       let scaleH = rect.height / pen.calculative.imgNaturalHeight;
       let scaleMin = scaleW > scaleH ? scaleH : scaleW;
+      const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
       if (pen.iconWidth) {
-        h = scaleMin * pen.iconWidth;
+        h = pen.iconWidth / wDivideH;
+      } else if(pen.iconHeight) {
+        w = pen.iconHeight * wDivideH;
       } else {
         w = scaleMin * pen.calculative.imgNaturalWidth;
-      }
-      if (pen.iconHeight) {
-        h = scaleMin * pen.iconHeight;
-      } else {
         h = scaleMin * pen.calculative.imgNaturalHeight;
       }
     }
     x += (rect.width - w) / 2;
     y += (rect.height - h) / 2;
+
+    switch (pen.iconAlign) {
+      case 'top':
+        y = rect.y;
+        break;
+      case 'bottom':
+        y = rect.ey - h;
+        break;
+      case 'left':
+        x = rect.x;
+        break;
+      case 'right':
+        x = rect.ex - w;
+        break;
+      case 'left-top':
+        x = rect.x;
+        y = rect.y;
+        break;
+      case 'right-top':
+        x = rect.ex - w;
+        y = rect.y;
+        break;
+      case 'left-bottom':
+        x = rect.x;
+        y = rect.ey - h;
+        break;
+      case 'right-bottom':
+        x = rect.ex - w;
+        y = rect.ey - h;
+        break;
+    }
 
     if (pen.iconRotate) {
       ctx.translate(rect.center.x, rect.center.y);
