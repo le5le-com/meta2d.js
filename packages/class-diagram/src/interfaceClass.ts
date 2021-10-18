@@ -1,6 +1,7 @@
 import { Pen } from '../../core/src/pen';
 export function interfaceClass(pen: Pen) {
-  if (!pen.onAdd) {
+  if (!pen.onDestroy) {
+    pen.onDestroy = onDestroy;
     pen.onAdd = onAdd;
   }
   const path = new Path2D();
@@ -102,4 +103,17 @@ function onAdd(pen: any) {
   pen.calculative.canvas.makePen(childPen1);
   pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
   pen.calculative.canvas.parent.pushChildren(pen, [childPen1]);
+}
+
+function onDestroy(pen: any) {
+  pen.children.forEach((p) => {
+    const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
+      (item) => item.id === p
+    );
+    if (i > -1) {
+      pen.calculative.canvas.parent.store.data.pens.splice(i, 1);
+      pen.calculative.canvas.parent.store.pens[p] = undefined;
+    }
+  });
+  pen.children = undefined;
 }
