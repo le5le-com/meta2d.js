@@ -1,10 +1,13 @@
 import { focus } from './focus';
-import { lifeline, lifelineDashByCtx } from './lifeline';
+import { lifeline } from './lifeline';
 
 export function sequencePens() {
   return {
-    focus,
+    sequenceFocus: focus,
+  };
+}
+export function sequencePensbyCtx() {
+  return {
     lifeline,
-    lifelineDashByCtx,
   };
 }
