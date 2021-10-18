@@ -30,6 +30,14 @@ export function registerHighcharts(_highcharts?: any) {
     });
     document.body.appendChild(loaderScript);
 
+    // const mloaderScript = document.createElement('script');
+    // mloaderScript.type = 'text/javascript';
+    // mloaderScript.src =
+    //   'https://cdn.highcharts.com.cn/highcharts/highcharts-more.js';
+    // mloaderScript.addEventListener('load', () => {
+    //   topology.render(Infinity);
+    // });
+    // document.body.appendChild(mloaderScript);
     // const loaderScriptexport = document.createElement('script');
     // loaderScriptexport.type = 'text/javascript';
     // loaderScriptexport.src =
