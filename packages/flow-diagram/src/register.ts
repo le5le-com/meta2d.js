@@ -1,8 +1,8 @@
-import { comment } from './comment';
-import { data } from './data';
-import { db } from './db';
-import { display } from './display';
-import { document } from './document';
+import { flowComment } from './comment';
+import { flowData } from './data';
+import { flowDb } from './db';
+import { flowDisplay } from './display';
+import { flowDocument } from './document';
 import { flowExternStorage } from './externStorage';
 import { flowInternalStorage } from './internalStorage';
 import { flowManually } from './manually';
@@ -12,11 +12,11 @@ import { flowSubprocess } from './subprocess';
 
 export function flowPens() {
   return {
-    comment,
-    data,
-    db,
-    display,
-    document,
+    flowComment,
+    flowData,
+    flowDb,
+    flowDisplay,
+    flowDocument,
     flowExternStorage,
     flowInternalStorage,
     flowManually,

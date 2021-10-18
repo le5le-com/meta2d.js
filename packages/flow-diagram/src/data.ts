@@ -1,5 +1,5 @@
 import { Pen } from '../../core/src/pen';
-export function data(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
+export function flowData(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
