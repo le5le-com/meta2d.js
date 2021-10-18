@@ -1,5 +1,8 @@
 import { Pen } from '../../core/src/pen';
 export function simpleClass(pen: Pen) {
+  if (!pen.onAdd) {
+    pen.onAdd = onAdd;
+  }
   const path = new Path2D();
   if (!pen.borderRadius) {
     pen.borderRadius = 0;
@@ -61,4 +64,25 @@ export function simpleClass(pen: Pen) {
   );
   path.closePath();
   return path;
+}
+
+function onAdd(pen: any) {
+  let x = pen.calculative.worldRect.x;
+  let y = pen.calculative.worldRect.y;
+  let w = pen.calculative.worldRect.width;
+  let h = pen.calculative.worldRect.height;
+  let childPen: any = {
+    name: 'text',
+    x: x,
+    y: y + 0.2 * h,
+    width: w,
+    height: 0.8 * h,
+    text: pen.list[0].text,
+    textAlign: 'start',
+    textBaseline: 'top',
+    textLeft: 10,
+    textTop: 10,
+  };
+  pen.calculative.canvas.makePen(childPen);
+  pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
 }
