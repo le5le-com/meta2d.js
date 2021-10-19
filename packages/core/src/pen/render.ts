@@ -223,10 +223,10 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       let scaleH = rect.height / pen.calculative.imgNaturalHeight;
       let scaleMin = scaleW > scaleH ? scaleH : scaleW;
       const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
-      if (pen.iconWidth) {
-        h = pen.iconWidth / wDivideH;
-      } else if(pen.iconHeight) {
-        w = pen.iconHeight * wDivideH;
+      if (pen.calculative.iconWidth) {
+        h = pen.calculative.iconWidth / wDivideH;
+      } else if(pen.calculative.iconHeight) {
+        w = pen.calculative.iconHeight * wDivideH;
       } else {
         w = scaleMin * pen.calculative.imgNaturalWidth;
         h = scaleMin * pen.calculative.imgNaturalHeight;
@@ -285,6 +285,49 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     let x = iconRect.x + iconRect.width / 2;
     let y = iconRect.y + iconRect.height / 2;
 
+    switch (pen.iconAlign) {
+      case 'top':
+        y = iconRect.y;
+        ctx.textBaseline = 'top';
+        break;
+      case 'bottom':
+        y = iconRect.ey;
+        ctx.textBaseline = 'bottom';
+        break;
+      case 'left':
+        x = iconRect.x;
+        ctx.textAlign = 'left';
+        break;
+      case 'right':
+        x = iconRect.ex;
+        ctx.textAlign = 'right';
+        break;
+      case 'left-top':
+        x = iconRect.x;
+        y = iconRect.y;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        break;
+      case 'right-top':
+        x = iconRect.ex;
+        y = iconRect.y;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        break;
+      case 'left-bottom':
+        x = iconRect.x;
+        y = iconRect.ey;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        break;
+      case 'right-bottom':
+        x = iconRect.ex;
+        y = iconRect.ey;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        break;
+    }
+
     if (pen.calculative.iconSize > 0) {
       ctx.font = `${pen.calculative.iconSize}px ${pen.iconFamily}`;
     } else if (iconRect.width > iconRect.height) {
@@ -312,12 +355,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     if (pen.calculative.textBackground) {
       ctx.save();
       ctx.fillStyle = pen.calculative.textBackground;
-      let x = 0;
-      if (pen.textAlign === 'right') {
-        x = pen.calculative.textDrawRect.width;
-      }
       ctx.fillRect(
-        pen.calculative.textDrawRect.x - x,
+        pen.calculative.textDrawRect.x,
         pen.calculative.textDrawRect.y,
         pen.calculative.textDrawRect.width,
         pen.calculative.textDrawRect.height
@@ -352,6 +391,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       let x = 0;
       if (!pen.textAlign || pen.textAlign === 'center') {
         x = pen.calculative.textDrawRect.width / 2;
+      } else if(pen.textAlign === 'right'){
+        x = pen.calculative.textDrawRect.width;
       }
       ctx.fillText(
         text,
@@ -756,8 +797,22 @@ export function calcWorldRects(store: TopologyStore, pen: Pen) {
   }
 
   pen.calculative.worldRect = rect;
+  // 这里的 rect 均是绝对值
+  calcPadding(pen, rect);
 
   return rect;
+}
+
+function calcPadding(pen: Pen, rect: Rect){
+  !pen.paddingTop && (pen.calculative.paddingTop = 0);
+  !pen.paddingBottom && (pen.calculative.paddingBottom = 0);
+  !pen.paddingLeft && (pen.calculative.paddingLeft = 0);
+  !pen.paddingRight && (pen.calculative.paddingRight = 0);
+
+  pen.calculative.paddingTop < 1 && (pen.calculative.paddingTop *= rect.height);
+  pen.calculative.paddingBottom < 1 && (pen.calculative.paddingBottom *= rect.height);
+  pen.calculative.paddingLeft < 1 && (pen.calculative.paddingLeft *= rect.width);
+  pen.calculative.paddingRight < 1 && (pen.calculative.paddingRight *= rect.width);
 }
 
 export function calcPenRect(store: TopologyStore, pen: Pen) {
@@ -857,24 +912,26 @@ export function calcWorldPointOfPen(pen: Pen, pt: Point) {
 }
 
 export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
-  let x = pen.calculative.iconLeft || 0;
-  let y = pen.calculative.iconTop || 0;
-  let width = pen.calculative.iconWidth || pen.calculative.worldRect.width;
-  let height = pen.calculative.iconHeight || pen.calculative.worldRect.height;
-  if (x && Math.abs(x) < 1) {
-    x = pen.calculative.worldRect.width * pen.calculative.iconLeft;
+  const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
+  let x = paddingLeft;
+  let y = paddingTop;
+  let width = pen.calculative.worldRect.width - paddingLeft - paddingRight;
+  let height = pen.calculative.worldRect.height - paddingTop - paddingBottom;
+  let iconLeft = pen.calculative.iconLeft;
+  let iconTop = pen.calculative.iconTop;
+  if (iconLeft && Math.abs(iconLeft) < 1) {
+    iconLeft = pen.calculative.worldRect.width * iconLeft;
   }
 
-  if (y && Math.abs(y) < 1) {
-    y = pen.calculative.worldRect.height * pen.calculative.iconLeft;
+  if (iconTop && Math.abs(iconTop) < 1) {
+    iconTop = pen.calculative.worldRect.height * iconTop;
   }
-  if (width && Math.abs(width) < 1) {
-    width = pen.calculative.worldRect.width * pen.calculative.iconWidth;
-  }
-
-  if (height && Math.abs(height) < 1) {
-    height = pen.calculative.worldRect.height * pen.calculative.iconHeight;
-  }
+  x += iconLeft || 0;
+  y += iconTop || 0;
+  width -= iconLeft || 0;
+  height -= iconTop || 0;
+  // TODO: 边缘情况，若出现再看
+  (width < 1) && console.error('width < 1 的情况');
 
   let rotate = pen.calculative.iconRotate || 0;
   if (pen.parentId) {
