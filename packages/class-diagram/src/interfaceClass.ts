@@ -1,7 +1,13 @@
 import { Pen } from '../../core/src/pen';
 export function interfaceClass(pen: Pen) {
+  if (!pen.onDestroy) {
+    pen.onDestroy = onDestroy;
+    pen.onAdd = onAdd;
+  }
   const path = new Path2D();
-
+  if (!pen.borderRadius) {
+    pen.borderRadius = 0;
+  }
   let wr = pen.borderRadius;
   let hr = pen.borderRadius;
   if (pen.borderRadius < 1) {
@@ -63,4 +69,51 @@ export function interfaceClass(pen: Pen) {
 
   path.closePath();
   return path;
+}
+function onAdd(pen: any) {
+  let x = pen.calculative.worldRect.x;
+  let y = pen.calculative.worldRect.y;
+  let w = pen.calculative.worldRect.width;
+  let h = pen.calculative.worldRect.height;
+  let childPen: any = {
+    name: 'text',
+    x: x,
+    y: y + 0.2 * h,
+    width: w,
+    height: 0.4 * h,
+    text: pen.list[0].text,
+    textAlign: 'start',
+    textBaseline: 'top',
+    textLeft: 10,
+    textTop: 10,
+  };
+  let childPen1: any = {
+    name: 'text',
+    x: x,
+    y: y + 0.6 * h,
+    width: w,
+    height: 0.4 * h,
+    text: pen.list[1].text,
+    textAlign: 'start',
+    textBaseline: 'top',
+    textLeft: 10,
+    textTop: 10,
+  };
+  pen.calculative.canvas.makePen(childPen);
+  pen.calculative.canvas.makePen(childPen1);
+  pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
+  pen.calculative.canvas.parent.pushChildren(pen, [childPen1]);
+}
+
+function onDestroy(pen: any) {
+  pen.children.forEach((p) => {
+    const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
+      (item) => item.id === p
+    );
+    if (i > -1) {
+      pen.calculative.canvas.parent.store.data.pens.splice(i, 1);
+      pen.calculative.canvas.parent.store.pens[p] = undefined;
+    }
+  });
+  pen.children = undefined;
 }

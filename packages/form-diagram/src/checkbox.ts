@@ -1,6 +1,7 @@
 export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
-  if (!pen.onAdd) {
+  if (!pen.onDestroy) {
     pen.onAdd = checkboxAdd;
+    pen.onDestroy = onDestroy;
     // pen.onValue = onValue;
   }
   // let x = pen.calculative.worldRect.x;
@@ -76,3 +77,16 @@ function checkboxAdd(pen: any) {
 //   });
 //   checkboxAdd(pen);
 // }
+
+function onDestroy(pen: any) {
+  pen.children.forEach((p) => {
+    const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
+      (item) => item.id === p
+    );
+    if (i > -1) {
+      pen.calculative.canvas.parent.store.data.pens.splice(i, 1);
+      pen.calculative.canvas.parent.store.pens[p] = undefined;
+    }
+  });
+  pen.children = undefined;
+}
