@@ -355,12 +355,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     if (pen.calculative.textBackground) {
       ctx.save();
       ctx.fillStyle = pen.calculative.textBackground;
-      let x = 0;
-      if (pen.textAlign === 'right') {
-        x = pen.calculative.textDrawRect.width;
-      }
       ctx.fillRect(
-        pen.calculative.textDrawRect.x - x,
+        pen.calculative.textDrawRect.x,
         pen.calculative.textDrawRect.y,
         pen.calculative.textDrawRect.width,
         pen.calculative.textDrawRect.height
@@ -395,6 +391,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       let x = 0;
       if (!pen.textAlign || pen.textAlign === 'center') {
         x = pen.calculative.textDrawRect.width / 2;
+      } else if(pen.textAlign === 'right'){
+        x = pen.calculative.textDrawRect.width;
       }
       ctx.fillText(
         text,
