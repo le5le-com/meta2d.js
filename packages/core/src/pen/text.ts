@@ -1,26 +1,25 @@
 import { Pen } from '.';
 
 export function calcTextRect(pen: Pen) {
-  let x = pen.calculative.textLeft || 0;
-  let y = pen.calculative.textTop || 0;
-  let width = pen.calculative.textWidth || pen.calculative.worldRect.width;
-  let height = pen.calculative.textHeight || pen.calculative.worldRect.height;
-
-  if (pen.calculative.textLeft && Math.abs(x) < 1) {
-    x = pen.calculative.worldRect.width * pen.calculative.textLeft;
+  const { paddingTop, paddingBottom, paddingLeft, paddingRight } =
+    pen.calculative;
+  let x = paddingLeft;
+  let y = paddingTop;
+  let width = pen.calculative.worldRect.width - paddingLeft - paddingRight;
+  let height = pen.calculative.worldRect.height - paddingTop - paddingBottom;
+  let textLeft = pen.calculative.textLeft;
+  let textTop = pen.calculative.textTop;
+  if (textLeft && Math.abs(textLeft) < 1) {
+    textLeft = pen.calculative.worldRect.width * textLeft;
   }
 
-  if (pen.calculative.textTop && Math.abs(y) < 1) {
-    x = pen.calculative.worldRect.height * pen.calculative.textTop;
+  if (textTop && Math.abs(textTop) < 1) {
+    textTop = pen.calculative.worldRect.height * textTop;
   }
-
-  if (Math.abs(width) < 1) {
-    width = pen.calculative.worldRect.width * pen.calculative.textWidth;
-  }
-
-  if (Math.abs(height) < 1) {
-    height = pen.calculative.worldRect.height * pen.calculative.textHeight;
-  }
+  x += textLeft || 0;
+  y += textTop || 0;
+  width -= textLeft || 0;
+  height -= textTop || 0;
 
   x = pen.calculative.worldRect.x + x;
   y = pen.calculative.worldRect.y + y;
@@ -40,19 +39,23 @@ export function calcTextRect(pen: Pen) {
   // By default, the text is center aligned.
   const lineHeight = pen.fontSize * pen.lineHeight;
   const h = pen.calculative.textLines.length * lineHeight;
-  x = rect.x;
+  let textWidth =
+    pen.calculative.textWidth || pen.calculative.worldTextRect.width;
+  textWidth < 1 &&
+    (textWidth = textWidth * pen.calculative.worldTextRect.width);
+  x = rect.x + (pen.calculative.worldTextRect.width - textWidth) / 2;
   y = rect.y + (rect.height - h) / 2;
   switch (pen.textAlign) {
     case 'left':
       x = rect.x;
       break;
     case 'right':
-      x = rect.x + rect.width;
+      x = rect.x + pen.calculative.worldTextRect.width - textWidth;
       break;
   }
   switch (pen.textBaseline) {
     case 'top':
-      y = rect.y + (lineHeight - pen.fontSize) / 2;
+      y = rect.y;
       break;
     case 'bottom':
       y = rect.ey - h;
@@ -62,7 +65,7 @@ export function calcTextRect(pen: Pen) {
   pen.calculative.textDrawRect = {
     x,
     y,
-    width,
+    width: textWidth,
     height: h,
     ex: x + width,
     ey: y + h,
@@ -111,7 +114,13 @@ export function calcTextLines(pen: Pen) {
               return;
             }
             h += pen.fontSize * pen.lineHeight;
-            if (h > pen.calculative.worldTextRect.height) {
+            let textHeight =
+              pen.calculative.textHeight ||
+              pen.calculative.worldTextRect.height;
+            // 认为是百分比
+            textHeight < 1 &&
+              (textHeight = textHeight * pen.calculative.worldTextRect.height);
+            if (h > textHeight) {
               l.slice(0, -3);
               l += '...';
               h = -1;
@@ -163,9 +172,14 @@ export function wrapLines(words: string[], pen: Pen) {
     const text = currentLine + word;
     const chinese = text.match(/[\u4e00-\u9fa5]/g) || '';
     const chineseLen = chinese.length;
+    let textWidth =
+      pen.calculative.textWidth || pen.calculative.worldTextRect.width;
+    textWidth < 1 &&
+      (textWidth = textWidth * pen.calculative.worldTextRect.width);
     if (
-      (text.length - chineseLen) * pen.fontSize * 0.6 + chineseLen * pen.fontSize <
-      pen.calculative.worldTextRect.width
+      (text.length - chineseLen) * pen.fontSize * 0.6 +
+        chineseLen * pen.fontSize <
+      textWidth
     ) {
       currentLine += word;
     } else {
