@@ -1,6 +1,7 @@
 declare const window: any;
 export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
+    pen.onDestroy = onDestroy;
     pen.onAdd = onAdd;
   }
 
@@ -57,4 +58,17 @@ function onAdd(pen: any) {
       pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
     }
   }
+}
+
+function onDestroy(pen: any) {
+  pen.children.forEach((p) => {
+    const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
+      (item) => item.id === p
+    );
+    if (i > -1) {
+      pen.calculative.canvas.parent.store.data.pens.splice(i, 1);
+      pen.calculative.canvas.parent.store.pens[p] = undefined;
+    }
+  });
+  pen.children = undefined;
 }
