@@ -223,10 +223,10 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       let scaleH = rect.height / pen.calculative.imgNaturalHeight;
       let scaleMin = scaleW > scaleH ? scaleH : scaleW;
       const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
-      if (pen.iconWidth) {
-        h = pen.iconWidth / wDivideH;
-      } else if(pen.iconHeight) {
-        w = pen.iconHeight * wDivideH;
+      if (pen.calculative.iconWidth) {
+        h = pen.calculative.iconWidth / wDivideH;
+      } else if(pen.calculative.iconHeight) {
+        w = pen.calculative.iconHeight * wDivideH;
       } else {
         w = scaleMin * pen.calculative.imgNaturalWidth;
         h = scaleMin * pen.calculative.imgNaturalHeight;

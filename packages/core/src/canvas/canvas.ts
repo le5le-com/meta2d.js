@@ -2454,7 +2454,9 @@ export class Canvas {
       pen.calculative.worldRect.y =
         this.activeInitPos[i].y * this.activeRect.height + this.activeRect.y;
       pen.calculative.worldRect.width *= scaleX;
+      pen.calculative.iconWidth && (pen.calculative.iconWidth *= scaleX);
       pen.calculative.worldRect.height *= scaleY;
+      pen.calculative.iconHeight && (pen.calculative.iconHeight *= scaleY);
       pen.calculative.worldRect.ex =
         pen.calculative.worldRect.x + pen.calculative.worldRect.width;
       pen.calculative.worldRect.ey =
