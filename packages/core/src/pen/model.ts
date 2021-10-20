@@ -98,6 +98,7 @@ export interface Pen extends Rect {
   disableSize?: boolean;
   disableAnchor?: boolean;
 
+  // 相对值，若小于 1 认为是相对坐标
   paddingTop?: number;
   paddingBottom?: number;
   paddingLeft?: number;
@@ -222,6 +223,12 @@ export interface Pen extends Rect {
     iconTop?: number;
     iconLeft?: number;
     iconColor?: string;
+
+    // 绝对值，计算后的结果
+    paddingTop?: number;
+    paddingBottom?: number;
+    paddingLeft?: number;
+    paddingRight?: number;
 
     textLines?: string[];
     image?: string;
