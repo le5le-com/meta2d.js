@@ -12,7 +12,7 @@ export function radioItem(ctx: CanvasRenderingContext2D, pen: any) {
   // ctx.lineWidth = h / 5;
   pen.textLeft = h + h / 5;
   pen.calculative.textLeft = h + h / 5;
-  pen.textWidth = w - h;
+  // pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
   ctx.beginPath();
