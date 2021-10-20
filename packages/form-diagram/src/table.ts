@@ -1,19 +1,25 @@
+import { PrevNextType } from '@topology/core';
+
 declare const window: any;
 export function table(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
-    pen.onClick = onclick;
+    pen.onAdd = onAdd;
+    pen.onDestroy = onDestroy;
     pen.onValue = onValue;
   }
+  // pen.calculative.height = getRect(pen).height;
+  // pen.calculative.width = getRect(pen).width;
+  /*
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
-  let col = pen.configure.col;
-  ctx.strokeStyle = pen.configure.lineStyle;
-  ctx.fillStyle = pen.configure.fillStyle;
-  let header = pen.configure.header;
-  let rowCount = pen.configure.rowCount;
+  let col = pen.table.col;
+  ctx.strokeStyle = pen.table.lineStyle;
+  ctx.fillStyle = pen.table.fillStyle;
+  let header = pen.table.header;
+  let rowCount = pen.table.rowCount;
   let currentPage = pen.currentPage;
-  let rowLength = pen.configure.row.length;
+  let rowLength = pen.table.row.length;
 
   let total = Math.ceil(rowLength / rowCount);
   window.topology.setValue({ id: pen.id, totalPage: total });
@@ -75,11 +81,11 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   if (header.height) {
     ctx.rect(x, y, w, header.height);
   } else {
-    ctx.rect(x, y, w, pen.configure.rowHeight);
+    ctx.rect(x, y, w, pen.table.rowHeight);
   }
   ctx.stroke();
   ctx.fill();
-  let operation = pen.configure.operation;
+  let buttons = pen.table.buttons;
   // 绘制数据行
   let temY = header.height;
   let beforeY = 0;
@@ -90,29 +96,29 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   ) {
     let oneCol = null;
     if (i < rowLength) {
-      oneCol = pen.configure.row[i];
+      oneCol = pen.table.row[i];
       beforeY = temY;
 
       if (oneCol.height) {
         temY += oneCol.height;
       } else {
-        temY += pen.configure.rowHeight;
+        temY += pen.table.rowHeight;
       }
       if (oneCol.fillColor) {
         ctx.fillStyle = oneCol.fillColor;
       } else {
-        ctx.fillStyle = pen.configure.fillStyle;
+        ctx.fillStyle = pen.table.fillStyle;
       }
       if (oneCol.transparency) {
         ctx.globalAlpha = oneCol.transparency;
       } else {
-        ctx.globalAlpha = pen.configure.transparency;
+        ctx.globalAlpha = pen.table.transparency;
       }
     } else {
       beforeY = temY;
-      temY += pen.configure.rowHeight;
-      ctx.fillStyle = pen.configure.fillStyle;
-      ctx.globalAlpha = pen.configure.transparency;
+      temY += pen.table.rowHeight;
+      ctx.fillStyle = pen.table.fillStyle;
+      ctx.globalAlpha = pen.table.transparency;
     }
     ctx.beginPath();
     ctx.moveTo(x, y + temY);
@@ -123,7 +129,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
       pen.currentClickY > y + beforeY &&
       pen.currentClickY < y + temY
     ) {
-      ctx.fillStyle = pen.configure.selectStyle;
+      ctx.fillStyle = pen.table.selectStyle;
       window.topology.setValue({
         id: pen.id,
         currentData: JSON.stringify(oneCol),
@@ -132,12 +138,12 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
     ctx.rect(x, y + beforeY, w, temY - beforeY);
     ctx.stroke();
     ctx.fill();
-    pen.fillStyle = pen.configure.fillStyle;
+    pen.fillStyle = pen.table.fillStyle;
     ctx.closePath();
     ctx.beginPath();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = pen.configure.textStyle;
+    ctx.fillStyle = pen.table.textStyle;
     ctx.font = pen.fontSize + 'px Arial';
     let halfY = (beforeY + temY) / 2;
     ctx.globalAlpha = 1;
@@ -145,7 +151,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
       if (oneCol.textColor) {
         ctx.fillStyle = oneCol.textColor;
       } else {
-        ctx.fillStyle = pen.configure.textStyle;
+        ctx.fillStyle = pen.table.textStyle;
       }
       if (oneCol.font) {
         ctx.font = oneCol.font;
@@ -166,7 +172,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
         }
       }
     }
-    let beginIndex = pen.configure.header.beginIndex;
+    let beginIndex = pen.table.header.beginIndex;
     if (halfXObj['index']) {
       ctx.fillText(
         i + (beginIndex === undefined ? 0 : beginIndex) + '',
@@ -176,45 +182,44 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
       ctx.fill();
     }
     ctx.closePath();
-    if (halfXObj['operation'] && oneCol) {
+    if (halfXObj['buttons'] && oneCol) {
       ctx.beginPath();
-      ctx.fillStyle = operation.fillStyle;
+      ctx.fillStyle = buttons.fillStyle;
       if (
-        x + halfXObj['operation'] - operation.width / 2 < pen.currentClickX &&
-        pen.currentClickX <
-          x + halfXObj['operation'] + operation.width / 2 + w &&
-        pen.currentClickY > y + halfY - operation.height / 2 &&
-        pen.currentClickY < y + halfY + operation.height / 2
+        x + halfXObj['buttons'] - buttons.width / 2 < pen.currentClickX &&
+        pen.currentClickX < x + halfXObj['buttons'] + buttons.width / 2 + w &&
+        pen.currentClickY > y + halfY - buttons.height / 2 &&
+        pen.currentClickY < y + halfY + buttons.height / 2
       ) {
-        ctx.fillStyle = operation.btnPressColor;
+        ctx.fillStyle = buttons.btnPressColor;
 
         if (pen.clickBtnY === 0 && pen.clickBtnX == 0) {
           window.topology.setValue({
             id: pen.id,
-            clickBtnX: halfXObj['operation'],
+            clickBtnX: halfXObj['buttons'],
           });
           window.topology.setValue({ id: pen.id, clickBtnY: halfY });
-          window.topology.setValue({ id: pen.id, isOperation: 1 });
-          window.topology.setValue({ id: pen.id, isOperation: 0 });
+          window.topology.setValue({ id: pen.id, isbuttons: 1 });
+          window.topology.setValue({ id: pen.id, isbuttons: 0 });
         }
       }
-      // window.topology.setValue(pen.id, 0, 'isOperation');
+      // window.topology.setValue(pen.id, 0, 'isbuttons');
       ctx.rect(
-        x + halfXObj['operation'] - operation.width / 2,
-        y + halfY - operation.height / 2,
-        operation.width,
-        operation.height
+        x + halfXObj['buttons'] - buttons.width / 2,
+        y + halfY - buttons.height / 2,
+        buttons.width,
+        buttons.height
       );
       ctx.fill();
       ctx.closePath();
       ctx.beginPath();
-      ctx.fillStyle = operation.textColor;
-      ctx.font = operation.font;
-      ctx.fillText(operation.text, x + halfXObj['operation'], y + halfY);
+      ctx.fillStyle = buttons.textColor;
+      ctx.font = buttons.font;
+      ctx.fillText(buttons.text, x + halfXObj['buttons'], y + halfY);
       ctx.fill();
     }
     ctx.closePath();
-    ctx.globalAlpha = pen.configure.transparency;
+    ctx.globalAlpha = pen.table.transparency;
     ctx.font = pen.fontSize + 'px Arial';
   }
   let realH = temY;
@@ -222,9 +227,9 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.beginPath();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = pen.configure.header.textColor;
-  if (pen.configure.header.font) {
-    ctx.font = pen.configure.header.font;
+  ctx.fillStyle = pen.table.header.textColor;
+  if (pen.table.header.font) {
+    ctx.font = pen.table.header.font;
   } else {
     ctx.font = pen.fontSize + 'px Arial';
   }
@@ -232,7 +237,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   temX = 0;
   beforeX = 0;
   for (let i = 0; i < col.length; i++) {
-    let halfY = pen.configure.rowHeight / 2;
+    let halfY = pen.table.rowHeight / 2;
     if (header.height) {
       halfY = header.height / 2;
     }
@@ -274,72 +279,235 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
       );
       ctx.fill();
       ctx.closePath();
-      ctx.fillStyle = pen.configure.header.textColor;
+      ctx.fillStyle = pen.table.header.textColor;
       ctx.globalAlpha = 1;
     }
   }
   ctx.closePath();
+*/
+  // pen.oldHeight = pen.height;
+  // pen.oldWidth = pen.width;
+  return false;
 }
 
-function onclick(pen: any) {
-  let mycanvas = document.getElementById('topology');
-  mycanvas.onmousedown = () => {
-    var event = event || window.event;
-    window.topology.setValue({
-      id: pen.id,
-      currentClickX: event.offsetX - window.topology.store.data.x,
-    });
-    window.topology.setValue({
-      id: pen.id,
-      currentClickY: event.offsetY - window.topology.store.data.y,
-    });
-    if (pen.clickBtnY === 0 && pen.clickBtnX == 0) {
-      return;
+function getRect(pen: any) {
+  if (!pen.table.rowCount) {
+    pen.table.rowCount = 5;
+  }
+  if (!pen.table.colCount) {
+    pen.table.colCount = 5;
+  }
+  if (!pen.table.rowHeight) {
+    pen.table.rowHeight = 30;
+  }
+  if (!pen.table.colWidth) {
+    pen.table.colWidth = 100;
+  }
+  let width = 0;
+  let height = pen.table.header?.height ?? pen.table.rowHeight;
+  // getRow(pen.table.row, pen.table.rowHeight);
+  // getCol(pen.table.col, pen.table.colWidth);
+  for (let i = 0; i < pen.table.colCount; i++) {
+    if (!pen.table.col[i]) {
+      width += pen.table.colWidth;
+      // pen.table.col[i] = {};
+      // pen.table.col[i].width = pen.table.colWidth;
+    } else {
+      width += pen.table.col[i].width ?? pen.table.colWidth;
     }
-    if (
-      pen.clickBtnY - pen.configure.operation.height / 2 > pen.currentClickY ||
-      pen.clickBtnY + pen.configure.operation.height / 2 < pen.currentClickY ||
-      pen.clickBtnX - pen.configure.operation.width / 2 > pen.currentClickX ||
-      pen.clickBtnX + pen.configure.operation.width / 2 < pen.currentClickX
-    ) {
-      window.topology.setValue({ id: pen.id, clickBtnY: 0 });
-      window.topology.setValue({ id: pen.id, clickBtnX: 0 });
-      window.topology.setValue({ id: pen.id, isOperation: 0 });
+  }
+  for (let i = 0; i < pen.table.rowCount; i++) {
+    if (!pen.table.row[i]) {
+      height += pen.table.rowHeight;
+      // pen.table.row[i] = {};
+      // pen.table.row[i].height = pen.table.rowHeight;
+    } else {
+      height += pen.table.row[i].height ?? pen.table.rowHeight;
     }
+  }
+
+  return {
+    width,
+    height,
   };
+}
+
+function getRow(row: any, defaultHight: number) {
+  row.forEach((e) => {
+    if (!e.height) {
+      e.height = defaultHight;
+    }
+  });
+}
+function getCol(col: any, defaultWidth: number) {
+  col.forEach((e) => {
+    if (!e.width) {
+      e.width = defaultWidth;
+    }
+  });
+}
+//主要重新计算worldRect worldAnchors
+function calculativeWord(pen: any) {
+  let rect = getRect(pen);
+  pen.height = rect.height;
+  pen.width = rect.width;
+  pen.calculative.height = rect.height;
+  pen.calculative.width = rect.width;
+  pen.calculative.worldRect = {
+    ex: pen.x + pen.width,
+    ey: pen.y + pen.height,
+    height: pen.height,
+    width: pen.width,
+    x: pen.x,
+    y: pen.y,
+    rotate: undefined,
+  };
+  pen.calculative.worldAnchors.forEach((item) => {
+    let current = pen.anchors.find((i) => i.id == item.id);
+    item.x = pen.x + current.x * pen.width;
+    item.y = pen.y + current.y * pen.height;
+  });
+}
+
+//计算数据行
+function getCellRect(rowIndex: number, colIndex: number, pen: any) {
+  let rect = { x: pen.x, y: pen.y, width: 0, height: 0 };
+  if (rowIndex == 0) {
+    rect.y += 0;
+    rect.height = pen.table.header.height ?? pen.table.rowHeight;
+  }
+  for (let i = 0; i < rowIndex; i++) {
+    if (i == 0) {
+      rect.y += 0;
+      rect.height = pen.table.header.height ?? pen.table.rowHeight;
+    } else {
+      if (i == 1) {
+        rect.y += pen.table.header.height ?? pen.table.rowHeight;
+      } else {
+        rect.y += pen.table.row[i - 2].height ?? pen.table.rowHeight;
+      }
+      if (pen.table.row[i - 1]) {
+        rect.height = pen.table.row[i - 1].height ?? pen.table.rowHeight;
+      } else {
+        rect.height = pen.table.rowHeight;
+      }
+    }
+  }
+  for (let j = 0; j < colIndex; j++) {
+    if (j > 0) {
+      rect.x += pen.table.col[j - 1].width ?? pen.table.colWidth;
+    }
+    rect.width = pen.table.col[j].width ?? pen.table.colWidth;
+  }
+  return rect;
+}
+function onAdd(pen: any) {
+  calculativeWord(pen);
+  let key = '';
+  let text = '';
+  let count = 0;
+  let keyArray = [];
+  for (let k = 0; k < pen.table.col.length; k++) {
+    keyArray.push(pen.table.col[k].key);
+  }
+  //获取除去数据项的所有属性
+  for (let i = 1; i <= pen.table.rowCount + 1; i++) {
+    let temRow = Object.assign({}, pen.table.row[i - 2]); ///获取非数据项
+    let rowData = {}; //获取数据项
+    if (temRow) {
+      for (let item = 0; item < keyArray.length; item++) {
+        if (temRow[keyArray[item]]) {
+          rowData[keyArray[item]] = temRow[keyArray[item]];
+          delete temRow[keyArray[item]];
+        }
+      }
+    }
+    let headerStyle = {};
+    if (i === 1) {
+      headerStyle = Object.assign({}, pen.table.header);
+    }
+    for (let j = 1; j <= pen.table.colCount; j++) {
+      count++;
+      if (i <= 1) {
+        text = pen.table.col[j - 1].name;
+      } else {
+        key = pen.table.col[j - 1].key;
+        if (key == 'index') {
+          text = i - 2 + '';
+        } else {
+          if (pen.table.row[i - 2]) {
+            text = pen.table.row[i - 2][key] ?? '';
+          } else {
+            text = '';
+          }
+        }
+      }
+
+      let childRect = getCellRect(i, j, pen);
+      let childPen: any = {
+        name: 'rectangle',
+        x: childRect.x,
+        y: childRect.y,
+        width: childRect.width,
+        height: childRect.height,
+        text,
+        rowInParent: i - 2,
+        colInParent: key,
+        ...headerStyle,
+        ...temRow,
+      };
+      pen.calculative.canvas.makePen(childPen);
+      if (!childPen.destroy && key !== 'index' && key !== 'operation') {
+        childPen.onValue = childPenOnValue;
+      }
+      pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
+
+      if (key == 'operation' && pen.table.row[i - 2]) {
+        let btn = pen.table.button;
+        let btnChildPen: any = {
+          name: 'button',
+          x: childRect.x + (childRect.width - btn.width) / 2,
+          y: childRect.y + (childRect.height - btn.height) / 2,
+          currentData: rowData,
+          events: [
+            {
+              action: 4,
+              name: 'click',
+              value: 'console.log(pen.currentData)',
+            },
+          ],
+          ...pen.table.button,
+        };
+        pen.calculative.canvas.makePen(btnChildPen);
+        childPen.onDestroy = onDestroy;
+        pen.calculative.canvas.parent.pushChildren(childPen, [btnChildPen]);
+      }
+    }
+  }
 }
 
 function onValue(pen: any) {
-  // console.log('监听到setValue事件');
+  onDestroy(pen);
+  onAdd(pen);
 }
-function add(topology: any, pen: any) {
-  const childPen: any = {
-    name: 'rectangle',
-    x: 100,
-    y: 100,
-    width: 200,
-    height: 20,
-    progress: 1,
-    text: '数据',
-    calculative: {
-      textDrawRect: {
-        height: 10,
-        width: 10,
-        x: 100,
-        y: 100,
-      },
-      worldTextRect: {
-        height: 10,
-        width: 10,
-        x: 100,
-        y: 100,
-      },
-    },
-    animateCycle: 1000,
-    keepAnimateState: 0,
-    dropdownList: ['aaa', 'bbb', 'ccc'],
-  };
-  topology.canvas.makePen(childPen);
-  console.log(childPen);
-  topology.pushChildren(pen, [childPen]);
+function childPenOnValue(pen: any) {
+  let parentPen = pen.calculative.canvas.parent.find(pen.parentId);
+  parentPen[0].table.row[pen.rowInParent][pen.colInParent] = pen.text;
+}
+
+function onDestroy(pen: any) {
+  if (!pen.children) {
+    return;
+  }
+  pen.children.forEach((p) => {
+    const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
+      (item) => item.id === p
+    );
+    if (i > -1) {
+      onDestroy(pen.calculative.canvas.parent.store.data.pens[i]);
+      pen.calculative.canvas.parent.store.data.pens.splice(i, 1);
+      pen.calculative.canvas.parent.store.pens[p] = undefined;
+    }
+  });
+  pen.children = undefined;
 }

@@ -11,7 +11,7 @@ export function checkboxItem(ctx: CanvasRenderingContext2D, pen: any) {
   let h = pen.calculative.worldRect.height;
   pen.textLeft = h + h / 5;
   pen.calculative.textLeft = h + h / 5;
-  pen.textWidth = w - h;
+  // pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
   ctx.beginPath();
