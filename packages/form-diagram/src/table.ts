@@ -428,12 +428,12 @@ function onAdd(pen: any) {
     }
     for (let j = 1; j <= pen.table.colCount; j++) {
       count++;
+      key = pen.table.col[j - 1].key;
       if (i <= 1) {
         text = pen.table.col[j - 1].name;
       } else {
-        key = pen.table.col[j - 1].key;
         if (key == 'index') {
-          text = i - 2 + '';
+          text = pen.table.header.beginIndex + i - 2 + '';
         } else {
           if (pen.table.row[i - 2]) {
             text = pen.table.row[i - 2][key] ?? '';
@@ -460,6 +460,9 @@ function onAdd(pen: any) {
       if (!childPen.destroy && key !== 'index' && key !== 'operation') {
         childPen.onValue = childPenOnValue;
       }
+      if (i == 1) {
+        childPen.onValue = headerChildPenOnValue;
+      }
       pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
 
       if (key == 'operation' && pen.table.row[i - 2]) {
@@ -479,7 +482,7 @@ function onAdd(pen: any) {
           ...pen.table.button,
         };
         pen.calculative.canvas.makePen(btnChildPen);
-        childPen.onDestroy = onDestroy;
+        // childPen.onDestroy = onDestroy;
         pen.calculative.canvas.parent.pushChildren(childPen, [btnChildPen]);
       }
     }
@@ -490,9 +493,21 @@ function onValue(pen: any) {
   onDestroy(pen);
   onAdd(pen);
 }
+
+//数据行数据修改
 function childPenOnValue(pen: any) {
   let parentPen = pen.calculative.canvas.parent.find(pen.parentId);
   parentPen[0].table.row[pen.rowInParent][pen.colInParent] = pen.text;
+}
+
+//表头修改
+function headerChildPenOnValue(pen: any) {
+  let parentPen = pen.calculative.canvas.parent.find(pen.parentId);
+  let i = 0;
+  for (; i < parentPen[0].table.col.length; i++) {
+    if (parentPen[0].table.col[i].key == pen.colInParent) break;
+  }
+  parentPen[0].table.col[i].name = pen.text;
 }
 
 function onDestroy(pen: any) {
