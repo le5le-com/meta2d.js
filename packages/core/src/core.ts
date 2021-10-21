@@ -579,8 +579,8 @@ export class Topology {
       this.mqttClient.on('message', (topic: string, message: any) => {
         const index = topic.lastIndexOf('/');
         this.doSocket(
-          message.toString(),
-          topic.substring(index + 1, topic.length)
+          message.toString()
+          // topic.substring(index + 1, topic.length)
         );
       });
 
