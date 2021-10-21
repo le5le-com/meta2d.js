@@ -2,7 +2,15 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { calcTextLines, facePen, getParent, LockState, Pen, PenType, renderPenRaw } from './pen';
+import {
+  calcTextLines,
+  facePen,
+  getParent,
+  LockState,
+  Pen,
+  PenType,
+  renderPenRaw,
+} from './pen';
 import { Point } from './point';
 import {
   clearStore,
@@ -80,7 +88,11 @@ export class Topology {
 
   private init(parent: string | HTMLElement) {
     if (typeof parent === 'string') {
-      this.canvas = new Canvas(this, document.getElementById(parent), this.store);
+      this.canvas = new Canvas(
+        this,
+        document.getElementById(parent),
+        this.store
+      );
     } else {
       this.canvas = new Canvas(this, parent, this.store);
     }
@@ -189,7 +201,7 @@ export class Topology {
         if (!pen.id) {
           pen.id = s8();
         }
-        !pen.calculative && (pen.calculative = {canvas: this.canvas})
+        !pen.calculative && (pen.calculative = { canvas: this.canvas });
         this.store.pens[pen.id] = pen;
       }
       // 计算区域
@@ -510,7 +522,7 @@ export class Topology {
       this.off('socket', this.socketFn as any);
     }
     this.socketFn = undefined;
-    if (!this.store.data.socketCbFn && this.store.data.socketCbJs) {
+    if (!this.store.data.socketCbFn && !this.store.data.socketCbJs) {
       return false;
     }
 
@@ -560,10 +572,16 @@ export class Topology {
   connectMqtt() {
     this.closeMqtt();
     if (this.store.data.mqtt) {
-      this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
+      this.mqttClient = mqtt.connect(
+        this.store.data.mqtt,
+        this.store.data.mqttOptions
+      );
       this.mqttClient.on('message', (topic: string, message: any) => {
         const index = topic.lastIndexOf('/');
-        this.doSocket(message.toString(), topic.substring(index + 1, topic.length));
+        this.doSocket(
+          message.toString(),
+          topic.substring(index + 1, topic.length)
+        );
       });
 
       if (this.store.data.mqttTopics) {
@@ -573,7 +591,9 @@ export class Topology {
   }
 
   closeMqtt() {
-    this.mqttClient && this.mqttClient.close();
+    if (this.mqttClient && this.mqttClient.close) {
+      this.mqttClient.close();
+    }
   }
 
   doSocket(message: any, id?: string) {
@@ -608,7 +628,12 @@ export class Topology {
           pen.calculative[k] = data[k];
         }
       }
-      if (data.x != null || data.y != null || data.width != null || data.height != null) {
+      if (
+        data.x != null ||
+        data.y != null ||
+        data.width != null ||
+        data.height != null
+      ) {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
@@ -734,7 +759,10 @@ export class Topology {
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
-      const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
+      const childRect = calcRelativeRect(
+        pen.calculative.worldRect,
+        parent.calculative.worldRect
+      );
       pen.x = childRect.x;
       pen.y = childRect.y;
       pen.width = childRect.width;
@@ -809,7 +837,10 @@ export class Topology {
     const viewCenter = this.getViewCenter();
     const { center } = rect;
     // center.x 的相对于画布的 x 所以此处要 - 画布的偏移量
-    this.translate(viewCenter.x - center.x - this.store.data.x, viewCenter.y - center.y - this.store.data.y);
+    this.translate(
+      viewCenter.x - center.x - this.store.data.x,
+      viewCenter.y - center.y - this.store.data.y
+    );
     const { canvas } = this.canvas;
     const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
     const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
@@ -871,7 +902,11 @@ export class Topology {
    * @param pens 节点们，默认全部的
    * @param distance 总的宽 or 高
    */
-  private spaceBetweenByDirection(direction: 'width' | 'height', pens?: Pen[], distance?: number) {
+  private spaceBetweenByDirection(
+    direction: 'width' | 'height',
+    pens?: Pen[],
+    distance?: number
+  ) {
     !pens && (pens = this.store.data.pens);
     !distance && (distance = this.getRect(pens)[direction]);
     // 过滤出 node 节点 pens
@@ -988,12 +1023,12 @@ export class Topology {
    * @param pen pen 置顶的画笔
    * @param pens 画笔们
    */
-  top(pen: Pen, pens?: Pen[]){
+  top(pen: Pen, pens?: Pen[]) {
     if (!pens) {
       pens = this.store.data.pens;
     }
-    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
-    if(index > -1){
+    const index = pens.findIndex((p: Pen) => p.id === pen.id);
+    if (index > -1) {
       pens.push(pens[index]);
       pens.splice(index, 1);
     }
@@ -1002,22 +1037,22 @@ export class Topology {
   /**
    * 该画笔置底，即放到数组最前，最后绘制即在底部
    */
-  bottom(pen: Pen, pens?: Pen[]){
+  bottom(pen: Pen, pens?: Pen[]) {
     if (!pens) {
       pens = this.store.data.pens;
     }
-    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
-    if(index > -1){
+    const index = pens.findIndex((p: Pen) => p.id === pen.id);
+    if (index > -1) {
       pens.unshift(pens[index]);
       pens.splice(index + 1, 1);
     }
   }
 
-  up(pen: Pen, pens?: Pen[]){
+  up(pen: Pen, pens?: Pen[]) {
     if (!pens) {
       pens = this.store.data.pens;
     }
-    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    const index = pens.findIndex((p: Pen) => p.id === pen.id);
 
     if (index > -1 && index !== pens.length - 1) {
       pens.splice(index + 2, 0, pens[index]);
@@ -1029,24 +1064,24 @@ export class Topology {
     if (!pens) {
       pens = this.store.data.pens;
     }
-    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
+    const index = pens.findIndex((p: Pen) => p.id === pen.id);
     if (index > -1 && index !== 0) {
       pens.splice(index - 1, 0, pens[index]);
       pens.splice(index + 1, 1);
-    } 
-  } 
+    }
+  }
 
-  setLayer(pen: Pen, toIndex: number, pens?: Pen[]){
+  setLayer(pen: Pen, toIndex: number, pens?: Pen[]) {
     if (!pens) {
       pens = this.store.data.pens;
     }
-    const index = pens.findIndex((p: Pen)=> p.id === pen.id);
-    if(index > -1){
-      if(index > toIndex){
+    const index = pens.findIndex((p: Pen) => p.id === pen.id);
+    if (index > -1) {
+      if (index > toIndex) {
         // 原位置在后，新位置在前
         pens.splice(toIndex, 0, pens[index]);
         pens.splice(index + 1, 1);
-      } else if(index < toIndex) {
+      } else if (index < toIndex) {
         // 新位置在后
         pens.splice(toIndex, 0, pens[index]);
         pens.splice(index, 1);
@@ -1054,12 +1089,12 @@ export class Topology {
     }
   }
 
-  changePenId(oldId: string, newId: string):boolean {
-    if(oldId === newId) return false;
+  changePenId(oldId: string, newId: string): boolean {
+    if (oldId === newId) return false;
     const pens = this.find(oldId);
-    if(pens.length === 1){
+    if (pens.length === 1) {
       // 找到画笔，且唯一
-      if(!this.find(newId).length){
+      if (!this.find(newId).length) {
         // 若新画笔不存在
         pens[0].id = newId;
         // 更换 store.pens 上的内容
@@ -1075,27 +1110,29 @@ export class Topology {
    * @param node 节点，非连线
    * @param type 类型，全部的连接线/入线/出线
    */
-  getLines(node: Pen, type: 'all'|'in'|'out' = 'all'): Pen[]{
-    if(node.type){
+  getLines(node: Pen, type: 'all' | 'in' | 'out' = 'all'): Pen[] {
+    if (node.type) {
       return [];
     }
     const lines: Pen[] = [];
     !node.connectedLines && (node.connectedLines = []);
 
-    node.connectedLines.forEach(line => {
+    node.connectedLines.forEach((line) => {
       const linePen: Pen[] = this.find(line.lineId);
-      if(linePen.length === 1){
-        switch(type){
+      if (linePen.length === 1) {
+        switch (type) {
           case 'all':
             lines.push(linePen[0]);
             break;
           case 'in':
             // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
-            linePen[0].anchors[linePen[0].anchors.length-1].connectTo === node.id && lines.push(linePen[0]);
+            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo ===
+              node.id && lines.push(linePen[0]);
             break;
           case 'out':
             // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
-            linePen[0].anchors[0].connectTo === node.id && lines.push(linePen[0]);
+            linePen[0].anchors[0].connectTo === node.id &&
+              lines.push(linePen[0]);
             break;
         }
       }
@@ -1110,9 +1147,9 @@ export class Topology {
    * @param pen 节点或连线
    */
   nextNode(pen: Pen): Pen[] {
-    if(pen.type){
+    if (pen.type) {
       // 连线
-      const nextNodeId = pen.anchors[pen.anchors.length-1].connectTo;
+      const nextNodeId = pen.anchors[pen.anchors.length - 1].connectTo;
       return this.find(nextNodeId);
     } else {
       // 节点
@@ -1120,13 +1157,12 @@ export class Topology {
       const lines = this.getLines(pen, 'out');
       const nextNodes = [];
       // 2. 遍历出线的 nextNode
-      lines.forEach(line => {
+      lines.forEach((line) => {
         const lineNextNode = this.nextNode(line);
         for (const node of lineNextNode) {
-          const have = nextNodes.find(next => next.id === node.id);
+          const have = nextNodes.find((next) => next.id === node.id);
           // 3. 不重复的才加进去
           !have && nextNodes.push(node);
-          
         }
       });
       return nextNodes;
@@ -1139,7 +1175,7 @@ export class Topology {
    * @param pen 节点或连线
    */
   previousNode(pen: Pen): Pen[] {
-    if(pen.type){
+    if (pen.type) {
       // 连线
       const preNodeId = pen.anchors[0].connectTo;
       return this.find(preNodeId);
@@ -1147,12 +1183,12 @@ export class Topology {
       // 节点
       // 1. 得到所有的入线
       const lines = this.getLines(pen, 'in');
-      const preNodes:Pen[] = [];
+      const preNodes: Pen[] = [];
       // 2. 遍历入线的 preNode
-      lines.forEach(line => {
+      lines.forEach((line) => {
         const linePreNode = this.previousNode(line);
         for (const node of linePreNode) {
-          const have = preNodes.find(pre => pre.id === node.id);
+          const have = preNodes.find((pre) => pre.id === node.id);
           // 3. 不重复的才加进去
           !have && preNodes.push(node);
         }
