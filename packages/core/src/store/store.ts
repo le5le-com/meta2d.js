@@ -25,7 +25,7 @@ export interface TopologyData {
   mqttTopics?: string;
   background?: string;
   socketCbJs?: string;
-  socketCbFn?: string;
+  socketCbFn?: Function;
   initJs?: string;
   grid?: boolean;
   gridColor?: string;
