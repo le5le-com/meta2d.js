@@ -529,7 +529,7 @@ export class Topology {
     try {
       let socketFn: Function;
       if (this.store.data.socketCbFn) {
-        socketFn = window[this.store.data.socketCbFn];
+        socketFn = this.store.data.socketCbFn;
       } else {
         socketFn = new Function('e', this.store.data.socketCbJs);
       }
