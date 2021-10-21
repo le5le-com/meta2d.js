@@ -529,7 +529,7 @@ export class Topology {
     try {
       let socketFn: Function;
       if (this.store.data.socketCbFn) {
-        socketFn = window[this.store.data.socketCbFn];
+        socketFn = this.store.data.socketCbFn;
       } else {
         socketFn = new Function('e', this.store.data.socketCbJs);
       }
@@ -1126,8 +1126,12 @@ export class Topology {
             break;
           case 'in':
             // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
+<<<<<<< HEAD
             linePen[0].anchors[linePen[0].anchors.length - 1].connectTo ===
               node.id && lines.push(linePen[0]);
+=======
+            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo === node.id && lines.push(linePen[0]);
+>>>>>>> 313ddd3 (socket)
             break;
           case 'out':
             // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
