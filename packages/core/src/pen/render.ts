@@ -376,9 +376,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       ctx.restore();
     }
 
-    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.fontWeight || 'normal'} ${pen.fontSize}px/${pen.lineHeight} ${
-      pen.fontFamily
-    }`;
+    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
+      pen.calculative.fontSize
+    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
 
     if (pen.textAlign) {
       ctx.textAlign = pen.textAlign as any;
@@ -409,7 +409,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       ctx.fillText(
         text,
         pen.calculative.textDrawRect.x + x,
-        pen.calculative.textDrawRect.y + (i + y) * pen.fontSize * pen.lineHeight
+        pen.calculative.textDrawRect.y + (i + y) * pen.calculative.fontSize * pen.calculative.lineHeight
       );
     });
 
@@ -641,9 +641,9 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: Top
       ctx.restore();
     }
 
-    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.fontWeight || 'normal'} ${pen.fontSize}px/${pen.lineHeight} ${
-      pen.fontFamily
-    }`;
+    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
+      pen.calculative.fontSize
+    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
 
     if (pen.textAlign) {
       ctx.textAlign = pen.textAlign as any;
@@ -672,7 +672,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: Top
       ctx.fillText(
         text,
         pen.calculative.textDrawRect.x + x,
-        pen.calculative.textDrawRect.y + (i + y) * pen.fontSize * pen.lineHeight
+        pen.calculative.textDrawRect.y + (i + y) * pen.calculative.fontSize * pen.calculative.lineHeight
       );
     });
 
@@ -969,21 +969,6 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
 }
 
 export function scalePen(pen: Pen, scale: number, center: Point) {
-  if (!pen.lineWidth) {
-    pen.lineWidth = 1;
-  }
-  pen.calculative.lineWidth = pen.lineWidth * scale;
-  pen.calculative.lineHeight = pen.lineHeight * scale;
-  pen.calculative.fontSize = pen.fontSize * scale;
-  pen.calculative.iconSize = pen.iconSize * scale;
-  pen.calculative.iconWidth = pen.iconWidth * scale;
-  pen.calculative.iconHeight = pen.iconHeight * scale;
-  pen.calculative.iconLeft = pen.iconLeft * scale;
-  pen.calculative.iconTop = pen.iconTop * scale;
-  pen.calculative.textWidth = pen.textWidth * scale;
-  pen.calculative.textHeight = pen.textHeight * scale;
-  pen.calculative.textLeft = pen.textLeft * scale;
-  pen.calculative.textTop = pen.textTop * scale;
   scaleRect(pen.calculative.worldRect, scale, center);
 
   if (pen.calculative.initRect) {
