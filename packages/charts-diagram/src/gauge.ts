@@ -19,7 +19,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
     max: 100,
     splitNumber: 10,
   };
-  let series = { ...basicConfigure, ...pen.option.series[0] };
+  let series = { ...basicConfigure, ...pen.lecharts.option.series[0] };
   series.radius = parseFloat(series.radius) / 100;
   let r = w > h ? (h / 2) * series.radius : (w / 2) * series.radius;
   let centerX = x + w / 2;
@@ -200,7 +200,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 function onAdd(pen: any) {
-  pen.value = pen.option.series[0].data[0].value;
+  pen.value = pen.lecharts.option.series[0].data[0].value;
   pen.frames = [
     {
       duration: 10,

@@ -1,4 +1,4 @@
-declare const window: any;
+// declare const window: any;
 export function radioItem(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onClick = click;
@@ -35,20 +35,20 @@ function click(pen: any) {
     return;
   } else {
     pen.isChecked = true;
-    let parent = window.topology.getParent(pen);
+    let parent = pen.calculative.canvas.parent.getParent(pen);
     if (parent) {
       parent.selection = pen.text;
     }
     parent.children.forEach((e: string) => {
       if (e !== pen.id) {
-        window.topology.setValue({
+        pen.calculative.canvas.parent.setValue({
           id: e,
           isChecked: false,
         });
       }
     });
   }
-  pen.calculative.canvas.render();
+  pen.calculative.canvas.parent.render();
 }
 
 function resize(pen: any) {

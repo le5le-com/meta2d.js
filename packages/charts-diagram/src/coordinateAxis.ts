@@ -7,7 +7,7 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
   const w = pen.calculative.worldRect.width;
   const h = pen.calculative.worldRect.height;
 
-  let series = pen.option.series;
+  let series = pen.lecharts.option.series;
   let collection_data = [];
   for (let i = 0; i < series.length; i++) {
     collection_data = collection_data.concat(series[i].data);
@@ -18,7 +18,7 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
     splitNumber: 5,
   };
   let normalizedOption = scaleCompute(initOption);
-  let num = pen.option.xAxis.data.length;
+  let num = pen.lecharts.option.xAxis.data.length;
   ctx.beginPath();
   ctx.strokeStyle = '#BFBFBF';
   ctx.lineWidth = 6;
@@ -64,7 +64,7 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: any) {
   //x轴下标绘制
   ctx.beginPath();
   ctx.strokeStyle = '#BFBFBF';
-  let xData = pen.option.xAxis.data;
+  let xData = pen.lecharts.option.xAxis.data;
   let xdataX = 0;
   for (let i = 0; i < xData.length; i++) {
     xdataX = x + (1 + dash / 2) + (dash + 1) * i;
