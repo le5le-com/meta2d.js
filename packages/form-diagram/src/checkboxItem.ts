@@ -57,7 +57,7 @@ function click(pen: any) {
       }
     });
   }
-  pen.calculative.canvas.parent.render();
+  // pen.calculative.canvas.parent.render();
 }
 function resize(pen: any) {
   let h = pen.calculative.worldRect.height;

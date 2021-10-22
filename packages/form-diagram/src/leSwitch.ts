@@ -46,5 +46,5 @@ function click(pen: any) {
     id: pen.id,
     isOpen: !pen.isOpen,
   });
-  pen.calculative.canvas.render();
+  // pen.calculative.canvas.render();
 }
