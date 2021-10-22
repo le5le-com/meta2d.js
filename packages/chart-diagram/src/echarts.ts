@@ -8,6 +8,7 @@ export function echarts(pen: Pen): Path2D {
     pen.onMove = move;
     pen.onResize = resize;
     pen.onRotate = move;
+    pen.onValue = value;
   }
 
   const path = new Path2D();
@@ -61,7 +62,8 @@ export function echarts(pen: Pen): Path2D {
     });
 
     // 4. 加载到div layer
-    pen.calculative.canvas.externalElements && pen.calculative.canvas.externalElements.appendChild(div);
+    pen.calculative.canvas.externalElements &&
+      pen.calculative.canvas.externalElements.appendChild(div);
     setElemPosition(pen, div);
   }
 
@@ -96,4 +98,11 @@ function resize(pen: Pen) {
   }
   setElemPosition(pen, echartsList[pen.id].div);
   echartsList[pen.id].chart.resize();
+}
+
+function value(pen: Pen) {
+  if (!echartsList[pen.id]) {
+    return;
+  }
+  echartsList[pen.id].chart.setOption((pen as any).echarts.option, true);
 }

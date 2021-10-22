@@ -8,6 +8,7 @@ export function highcharts(pen: Pen): Path2D {
     pen.onMove = move;
     pen.onResize = resize;
     pen.onRotate = move;
+    pen.onValue = value;
   }
 
   const path = new Path2D();
@@ -49,11 +50,15 @@ export function highcharts(pen: Pen): Path2D {
       chart: highcharts,
     };
     setTimeout(() => {
-      highchartsList[pen.id].chart.chart(pen.id, (pen as any).highcharts.option);
+      highchartsList[pen.id].chart.chart(
+        pen.id,
+        (pen as any).highcharts.option
+      );
     });
 
     // 4. 加载到div layer
-    pen.calculative.canvas.externalElements && pen.calculative.canvas.externalElements.appendChild(div);
+    pen.calculative.canvas.externalElements &&
+      pen.calculative.canvas.externalElements.appendChild(div);
     setElemPosition(pen, div);
   }
 
@@ -87,6 +92,21 @@ function resize(pen: Pen) {
     return;
   }
   setElemPosition(pen, highchartsList[pen.id].div);
-  const chart = highchartsList[pen.id].chart.chart(pen.id, (pen as any).highcharts.option);
+  const chart = highchartsList[pen.id].chart.chart(
+    pen.id,
+    (pen as any).highcharts.option
+  );
+  chart.reflow();
+}
+
+function value(pen: Pen) {
+  if (!highchartsList[pen.id]) {
+    return;
+  }
+  // setElemPosition(pen, highchartsList[pen.id].div);
+  const chart = highchartsList[pen.id].chart.chart(
+    pen.id,
+    (pen as any).highcharts.option
+  );
   chart.reflow();
 }
