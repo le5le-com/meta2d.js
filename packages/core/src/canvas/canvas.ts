@@ -1795,6 +1795,20 @@ export class Canvas {
     } else {
       calcWorldRects(this.store, pen);
     }
+    const scale = this.store.data.scale;
+    pen.calculative.lineWidth = pen.lineWidth * scale;
+    pen.calculative.lineHeight = pen.lineHeight * scale;
+    pen.calculative.fontSize = pen.fontSize * scale;
+    pen.calculative.iconSize = pen.iconSize * scale;
+    pen.calculative.iconWidth = pen.iconWidth * scale;
+    pen.calculative.iconHeight = pen.iconHeight * scale;
+    pen.calculative.iconLeft = pen.iconLeft * scale;
+    pen.calculative.iconTop = pen.iconTop * scale;
+    pen.calculative.textWidth = pen.textWidth * scale;
+    pen.calculative.textHeight = pen.textHeight * scale;
+    pen.calculative.textLeft = pen.textLeft * scale;
+    pen.calculative.textTop = pen.textTop * scale;
+
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
@@ -1810,20 +1824,6 @@ export class Canvas {
     }
 
     pen.type && this.initLineRect(pen);
-
-    const scale = this.store.data.scale;
-    pen.calculative.lineWidth = pen.lineWidth * scale;
-    pen.calculative.lineHeight = pen.lineHeight * scale;
-    pen.calculative.fontSize = pen.fontSize * scale;
-    pen.calculative.iconSize = pen.iconSize * scale;
-    pen.calculative.iconWidth = pen.iconWidth * scale;
-    pen.calculative.iconHeight = pen.iconHeight * scale;
-    pen.calculative.iconLeft = pen.iconLeft * scale;
-    pen.calculative.iconTop = pen.iconTop * scale;
-    pen.calculative.textWidth = pen.textWidth * scale;
-    pen.calculative.textHeight = pen.textHeight * scale;
-    pen.calculative.textLeft = pen.textLeft * scale;
-    pen.calculative.textTop = pen.textTop * scale;
   }
 
   render = (now?: number) => {
@@ -2097,6 +2097,9 @@ export class Canvas {
     this.calibrateMouse(center);
     this.dirty = true;
     const s = scale / this.store.data.scale;
+    this.store.data.scale = scale;
+    this.store.data.center = center;
+
     scalePoint(this.store.data.origin, s, center);
     this.store.data.pens.forEach((pen) => {
       if (pen.parentId) {
@@ -2106,8 +2109,6 @@ export class Canvas {
       this.dirtyPenRect(pen, true);
     });
     this.calcActiveRect();
-    this.store.data.scale = scale;
-    this.store.data.center = center;
 
     this.render(Infinity);
     this.store.emitter.emit('scale', this.store.data.scale);
