@@ -43,28 +43,24 @@ export function ployline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     to = a;
   }
 
-  if (to.connectTo) {
-    console.log(111111, pts);
-  } else {
-    switch (fromFace) {
-      case Direction.Up:
-        pts.push(...getNextPointsOfUp(from, to, toFace));
-        break;
-      case Direction.Right:
-        pts.push(...getNextPointsOfRight(from, to, toFace));
-        break;
-      case Direction.Bottom:
-        pts.push(...getNextPointsOfBottom(from, to, toFace));
-        console.log(pen.calculative.worldAnchors.length, pen.calculative.worldAnchors);
-        break;
-      case Direction.Left:
-        pts.push(...getNextPointsOfLeft(from, to, toFace));
-        break;
-      default:
-        pts.push(...getNextPoints(pen, from, to));
-        a = undefined;
-        break;
-    }
+  switch (fromFace) {
+    case Direction.Up:
+      pts.push(...getNextPointsOfUp(from, to, toFace));
+      break;
+    case Direction.Right:
+      pts.push(...getNextPointsOfRight(from, to, toFace));
+      break;
+    case Direction.Bottom:
+      pts.push(...getNextPointsOfBottom(from, to, toFace));
+      console.log(pen.calculative.worldAnchors.length, pen.calculative.worldAnchors);
+      break;
+    case Direction.Left:
+      pts.push(...getNextPointsOfLeft(from, to, toFace));
+      break;
+    default:
+      pts.push(...getNextPoints(pen, from, to));
+      a = undefined;
+      break;
   }
 
   pts.forEach((anchor: Point) => {

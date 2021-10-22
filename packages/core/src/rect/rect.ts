@@ -146,7 +146,7 @@ export function translateRect(rect: Rect | Pen, x: number, y: number) {
   }
 }
 
-export function resizeRect(rect: Rect | Pen, offsetX: number, offsetY: number, resizeIndex: number){
+export function resizeRect(rect: Rect | Pen, offsetX: number, offsetY: number, resizeIndex: number) {
   switch (resizeIndex) {
     case 0:
       if (rect.width - offsetX < 5 || rect.height - offsetY < 5) {
@@ -249,23 +249,23 @@ export function calcRelativePoint(pt: Point, worldRect: Rect) {
     id: pt.id,
     penId: pt.penId,
     connectTo: pt.connectTo,
-    x: (pt.x - worldRect.x) / worldRect.width,
-    y: (pt.y - worldRect.y) / worldRect.height,
+    x: worldRect.width ? (pt.x - worldRect.x) / worldRect.width : 0,
+    y: worldRect.height ? (pt.y - worldRect.y) / worldRect.height : 0,
   };
   if (pt.prev) {
     point.prev = {
       penId: pt.penId,
       connectTo: pt.connectTo,
-      x: (pt.prev.x - worldRect.x) / worldRect.width,
-      y: (pt.prev.y - worldRect.y) / worldRect.height,
+      x: worldRect.width ? (pt.prev.x - worldRect.x) / worldRect.width : 0,
+      y: worldRect.height ? (pt.prev.y - worldRect.y) / worldRect.height : 0,
     };
   }
   if (pt.next) {
     point.next = {
       penId: pt.penId,
       connectTo: pt.connectTo,
-      x: (pt.next.x - worldRect.x) / worldRect.width,
-      y: (pt.next.y - worldRect.y) / worldRect.height,
+      x: worldRect.width ? (pt.next.x - worldRect.x) / worldRect.width : 0,
+      y: worldRect.height ? (pt.next.y - worldRect.y) / worldRect.height : 0,
     };
   }
   return point;

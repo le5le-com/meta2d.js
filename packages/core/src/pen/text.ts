@@ -1,8 +1,7 @@
 import { Pen } from '.';
 
 export function calcTextRect(pen: Pen) {
-  const { paddingTop, paddingBottom, paddingLeft, paddingRight } =
-    pen.calculative;
+  const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;
   let width = pen.calculative.worldRect.width - paddingLeft - paddingRight;
@@ -37,12 +36,10 @@ export function calcTextRect(pen: Pen) {
   calcTextLines(pen);
 
   // By default, the text is center aligned.
-  const lineHeight = pen.fontSize * pen.lineHeight;
+  const lineHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
   const h = pen.calculative.textLines.length * lineHeight;
-  let textWidth =
-    pen.calculative.textWidth || pen.calculative.worldTextRect.width;
-  textWidth < 1 &&
-    (textWidth = textWidth * pen.calculative.worldTextRect.width);
+  let textWidth = pen.calculative.textWidth || pen.calculative.worldTextRect.width;
+  textWidth < 1 && (textWidth = textWidth * pen.calculative.worldTextRect.width);
   x = rect.x + (pen.calculative.worldTextRect.width - textWidth) / 2;
   y = rect.y + (rect.height - h) / 2;
   switch (pen.textAlign) {
@@ -77,12 +74,6 @@ export function calcTextLines(pen: Pen) {
     pen.calculative.textLines = [];
     return;
   }
-  if (!pen.fontSize) {
-    pen.fontSize = 12;
-  }
-  if (!pen.lineHeight) {
-    pen.lineHeight = 1.5;
-  }
   let lines = [];
   switch (pen.whiteSpace) {
     case 'nowrap':
@@ -113,13 +104,10 @@ export function calcTextLines(pen: Pen) {
             if (h < 0) {
               return;
             }
-            h += pen.fontSize * pen.lineHeight;
-            let textHeight =
-              pen.calculative.textHeight ||
-              pen.calculative.worldTextRect.height;
+            h += pen.calculative.fontSize * pen.calculative.lineHeight;
+            let textHeight = pen.calculative.textHeight || pen.calculative.worldTextRect.height;
             // 认为是百分比
-            textHeight < 1 &&
-              (textHeight = textHeight * pen.calculative.worldTextRect.height);
+            textHeight < 1 && (textHeight = textHeight * pen.calculative.worldTextRect.height);
             if (h > textHeight) {
               l.slice(0, -3);
               l += '...';
@@ -172,13 +160,10 @@ export function wrapLines(words: string[], pen: Pen) {
     const text = currentLine + word;
     const chinese = text.match(/[\u4e00-\u9fa5]/g) || '';
     const chineseLen = chinese.length;
-    let textWidth =
-      pen.calculative.textWidth || pen.calculative.worldTextRect.width;
-    textWidth < 1 &&
-      (textWidth = textWidth * pen.calculative.worldTextRect.width);
+    let textWidth = pen.calculative.textWidth || pen.calculative.worldTextRect.width;
+    textWidth < 1 && (textWidth = textWidth * pen.calculative.worldTextRect.width);
     if (
-      (text.length - chineseLen) * pen.fontSize * 0.6 +
-        chineseLen * pen.fontSize <
+      (text.length - chineseLen) * pen.calculative.fontSize * 0.6 + chineseLen * pen.calculative.fontSize <
       textWidth
     ) {
       currentLine += word;
