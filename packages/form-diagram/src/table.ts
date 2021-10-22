@@ -444,17 +444,20 @@ function onAdd(pen: any) {
       }
 
       let childRect = getCellRect(i, j, pen);
+
       let childPen: any = {
         name: 'rectangle',
         x: childRect.x,
         y: childRect.y,
-        width: childRect.width,
-        height: childRect.height,
+        // width: childRect.width,
+        // height: childRect.height,
         text,
         rowInParent: i - 2,
         colInParent: key,
         ...headerStyle,
         ...temRow,
+        width: childRect.width,
+        height: childRect.height,
       };
       pen.calculative.canvas.makePen(childPen);
       if (!childPen.destroy && key !== 'index' && key !== 'operation') {
@@ -489,15 +492,139 @@ function onAdd(pen: any) {
   }
 }
 
+function valueChange(pen: any) {
+  calculativeWord(pen);
+  let key = '';
+  let text = '';
+  let count = 0;
+  let keyArray = [];
+  for (let k = 0; k < pen.table.col.length; k++) {
+    keyArray.push(pen.table.col[k].key);
+  }
+  //获取除去数据项的所有属性
+  for (let i = 1; i <= pen.table.rowCount + 1; i++) {
+    let temRow = Object.assign({}, pen.table.row[i - 2]); ///获取非数据项
+    let rowData = {}; //获取数据项
+    if (temRow) {
+      for (let item = 0; item < keyArray.length; item++) {
+        if (temRow[keyArray[item]]) {
+          rowData[keyArray[item]] = temRow[keyArray[item]];
+          delete temRow[keyArray[item]];
+        }
+      }
+    }
+    let headerStyle = {};
+    if (i === 1) {
+      headerStyle = Object.assign({}, pen.table.header);
+    }
+    for (let j = 1; j <= pen.table.colCount; j++) {
+      count++;
+      key = pen.table.col[j - 1].key;
+      if (i <= 1) {
+        text = pen.table.col[j - 1].name;
+      } else {
+        if (key == 'index') {
+          text = pen.table.header.beginIndex + i - 2 + '';
+        } else {
+          if (pen.table.row[i - 2]) {
+            text = pen.table.row[i - 2][key] ?? '';
+          } else {
+            text = '';
+          }
+        }
+      }
+
+      let childRect = getCellRect(i, j, pen);
+      pen.calculative.canvas.parent.setValue({
+        id: pen.children[(i - 1) * pen.table.colCount + j - 1],
+        x: (childRect.x - pen.x) / pen.width,
+        y: (childRect.y - pen.y) / pen.height,
+        // width: childRect.width / pen.width,
+        // height: childRect.height / pen.height,
+        text,
+        rowInParent: i - 2,
+        colInParent: key,
+        ...headerStyle,
+        ...temRow,
+        width: childRect.width / pen.width,
+        height: childRect.height / pen.height,
+      });
+      // let childPen: any = {
+      //   name: 'rectangle',
+      //   x: childRect.x,
+      //   y: childRect.y,
+      //   width: childRect.width,
+      //   height: childRect.height,
+      //   text,
+      //   rowInParent: i - 2,
+      //   colInParent: key,
+      //   ...headerStyle,
+      //   ...temRow,
+      // };
+      // pen.calculative.canvas.makePen(childPen);
+
+      // if (!childPen.destroy && key !== 'index' && key !== 'operation') {
+      //   childPen.onValue = childPenOnValue;
+      // }
+      // if (i == 1) {
+      //   childPen.onValue = headerChildPenOnValue;
+      // }
+      // pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
+
+      if (key == 'operation' && pen.table.row[i - 2]) {
+        let currentChild = pen.calculative.canvas.parent.find(
+          pen.children[(i - 1) * pen.table.colCount + j - 1]
+        )[0];
+        let btn = pen.table.button;
+        let obj = {
+          id: currentChild.children[0],
+          x: (childRect.width - btn.width) / 2 / childRect.width,
+          y: (childRect.height - btn.height) / 2 / childRect.height,
+          currentData: rowData,
+          events: [
+            {
+              action: 4,
+              name: 'click',
+              value: 'console.log(pen.currentData)',
+            },
+          ],
+          name: 'button',
+          ...pen.table.button,
+        };
+        pen.calculative.canvas.parent.setValue(obj);
+        // let btn = pen.table.button;
+        // let btnChildPen: any = {
+        //   name: 'button',
+        //   x: childRect.x + (childRect.width - btn.width) / 2,
+        //   y: childRect.y + (childRect.height - btn.height) / 2,
+        //   currentData: rowData,
+        //   events: [
+        //     {
+        //       action: 4,
+        //       name: 'click',
+        //       value: 'console.log(pen.currentData)',
+        //     },
+        //   ],
+        //   ...pen.table.button,
+        // };
+        // pen.calculative.canvas.makePen(btnChildPen);
+        // // childPen.onDestroy = onDestroy;
+        // pen.calculative.canvas.parent.pushChildren(childPen, [btnChildPen]);
+      }
+    }
+  }
+}
+
 function onValue(pen: any) {
-  onDestroy(pen);
-  onAdd(pen);
+  valueChange(pen);
 }
 
 //数据行数据修改
 function childPenOnValue(pen: any) {
   let parentPen = pen.calculative.canvas.parent.find(pen.parentId);
-  parentPen[0].table.row[pen.rowInParent][pen.colInParent] = pen.text;
+  if (pen.rowInParent < parentPen[0].table.row.length) {
+    parentPen[0].table.row[pen.rowInParent][pen.colInParent] = pen.text;
+  }
 }
 
 //表头修改
@@ -525,4 +652,9 @@ function onDestroy(pen: any) {
     }
   });
   pen.children = undefined;
+  // pen.calculative.canvas.parent.store.hoverAnchor = undefined;
+  // pen.calculative.canvas.parent.store.hover = undefined;
+  pen.calculative.canvas.parent.render(Infinity);
+  // pen.calculative.canvas.parent.pushHistory({ type: 2, pens: [pen] });
+  // pen.calculative.canvas.parent.store.emitter.emit('delete', [pen]);
 }
