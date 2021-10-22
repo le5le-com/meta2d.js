@@ -56,12 +56,12 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
   let fill: any;
   if (pen.calculative.hover) {
     ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
-    ctx.fillStyle = pen.hoverBackground || store.options.hoverBackground;
-    fill = pen.hoverBackground || store.options.hoverBackground;
+    fill = pen.hoverBackground || store.options.hoverBackground || pen.background;
+    ctx.fillStyle = fill;
   } else if (pen.calculative.active) {
     ctx.strokeStyle = pen.activeColor || store.options.activeColor;
-    ctx.fillStyle = pen.activeBackground || store.options.activeBackground;
-    fill = pen.activeBackground || store.options.activeBackground;
+    fill = pen.activeBackground || store.options.activeBackground || pen.background;
+    ctx.fillStyle = fill;
   } else {
     if (pen.strokeImage) {
       if (pen.calculative.strokeImg) {
@@ -225,7 +225,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
       if (pen.calculative.iconWidth) {
         h = pen.calculative.iconWidth / wDivideH;
-      } else if(pen.calculative.iconHeight) {
+      } else if (pen.calculative.iconHeight) {
         w = pen.calculative.iconHeight * wDivideH;
       } else {
         w = scaleMin * pen.calculative.imgNaturalWidth;
@@ -351,7 +351,19 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
 
   if (pen.calculative.text) {
     ctx.save();
-    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
+    if (pen.calculative.hover) {
+      fill = pen.hoverColor || store.options.hoverColor;
+    } else if (pen.calculative.active) {
+      fill = pen.activeColor || store.options.activeColor;
+    } else {
+      fill = undefined;
+    }
+    if (fill) {
+      ctx.fillStyle = fill;
+    } else {
+      ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.options.color;
+    }
+
     if (pen.calculative.textBackground) {
       ctx.save();
       ctx.fillStyle = pen.calculative.textBackground;
@@ -391,7 +403,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       let x = 0;
       if (!pen.textAlign || pen.textAlign === 'center') {
         x = pen.calculative.textDrawRect.width / 2;
-      } else if(pen.textAlign === 'right'){
+      } else if (pen.textAlign === 'right') {
         x = pen.calculative.textDrawRect.width;
       }
       ctx.fillText(
@@ -803,7 +815,7 @@ export function calcWorldRects(store: TopologyStore, pen: Pen) {
   return rect;
 }
 
-function calcPadding(pen: Pen, rect: Rect){
+function calcPadding(pen: Pen, rect: Rect) {
   !pen.paddingTop && (pen.calculative.paddingTop = 0);
   !pen.paddingBottom && (pen.calculative.paddingBottom = 0);
   !pen.paddingLeft && (pen.calculative.paddingLeft = 0);
@@ -931,7 +943,7 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
   width -= iconLeft || 0;
   height -= iconTop || 0;
   // TODO: 边缘情况，若出现再看
-  (width < 1) && console.error('width < 1 的情况');
+  width < 1 && console.error('width < 1 的情况');
 
   let rotate = pen.calculative.iconRotate || 0;
   if (pen.parentId) {
