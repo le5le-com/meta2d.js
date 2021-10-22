@@ -460,6 +460,7 @@ function onAdd(pen: any) {
         height: childRect.height,
       };
       pen.calculative.canvas.makePen(childPen);
+      childPen.onClick = childPenOnClick;
       if (!childPen.destroy && key !== 'index' && key !== 'operation') {
         childPen.onValue = childPenOnValue;
       }
@@ -491,7 +492,7 @@ function onAdd(pen: any) {
     }
   }
 }
-
+//根据值变化更新视图
 function valueChange(pen: any) {
   calculativeWord(pen);
   let key = '';
@@ -625,6 +626,26 @@ function childPenOnValue(pen: any) {
   if (pen.rowInParent < parentPen[0].table.row.length) {
     parentPen[0].table.row[pen.rowInParent][pen.colInParent] = pen.text;
   }
+}
+
+function childPenOnClick(pen: any) {
+  let parentPen = pen.calculative.canvas.parent.find(pen.parentId)[0];
+  pen.activeColor = parentPen.table.selectStyle;
+  pen.hoverColor = parentPen.table.selectStyle;
+  // pen.locked = 0;//TODO:无效操作
+  pen.calculative.canvas.parent.setValue(pen);
+  parentPen.children.forEach((id) => {
+    if (id !== pen.id) {
+      let child = pen.calculative.canvas.parent.find(id)[0];
+      pen.activeColor = pen.calculative.canvas.parent.store.options.activeColor;
+
+      child.hoverColor =
+        pen.calculative.canvas.parent.store.options.activeColor;
+      // pen.locked = 10;
+      pen.calculative.canvas.parent.setValue(child);
+    }
+  });
+  pen.locked = 0;
 }
 
 //表头修改
