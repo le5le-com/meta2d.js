@@ -99,6 +99,7 @@ export function calcTextLines(pen: Pen) {
           return;
         }
         const items = wrapLines(getWords(item), pen);
+
         if (pen.ellipsis) {
           items.forEach((l) => {
             if (h < 0) {
@@ -163,7 +164,7 @@ export function wrapLines(words: string[], pen: Pen) {
     let textWidth = pen.calculative.textWidth || pen.calculative.worldTextRect.width;
     textWidth < 1 && (textWidth = textWidth * pen.calculative.worldTextRect.width);
     if (
-      (text.length - chineseLen) * pen.calculative.fontSize * 0.6 + chineseLen * pen.calculative.fontSize <
+      (text.length - chineseLen) * pen.calculative.fontSize * 0.6 + chineseLen * pen.calculative.fontSize <=
       textWidth
     ) {
       currentLine += word;
