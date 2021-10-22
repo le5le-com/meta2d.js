@@ -1574,6 +1574,15 @@ export class Canvas {
     }
     // end
 
+    if (!pen.lineWidth) {
+      pen.lineWidth = 1;
+    }
+    if (!pen.fontSize) {
+      pen.fontSize = 12;
+    }
+    if (!pen.lineHeight) {
+      pen.lineHeight = 1.5;
+    }
     pen.calculative = { canvas: this };
     if (pen.video || pen.audio) {
       pen.calculative.onended = (pen: Pen) => {
@@ -1801,6 +1810,20 @@ export class Canvas {
     }
 
     pen.type && this.initLineRect(pen);
+
+    const scale = this.store.data.scale;
+    pen.calculative.lineWidth = pen.lineWidth * scale;
+    pen.calculative.lineHeight = pen.lineHeight * scale;
+    pen.calculative.fontSize = pen.fontSize * scale;
+    pen.calculative.iconSize = pen.iconSize * scale;
+    pen.calculative.iconWidth = pen.iconWidth * scale;
+    pen.calculative.iconHeight = pen.iconHeight * scale;
+    pen.calculative.iconLeft = pen.iconLeft * scale;
+    pen.calculative.iconTop = pen.iconTop * scale;
+    pen.calculative.textWidth = pen.textWidth * scale;
+    pen.calculative.textHeight = pen.textHeight * scale;
+    pen.calculative.textLeft = pen.textLeft * scale;
+    pen.calculative.textTop = pen.textTop * scale;
   }
 
   render = (now?: number) => {
@@ -1838,7 +1861,6 @@ export class Canvas {
     window && window.debugRender && console.time('renderPens');
     this.renderPens();
     window && window.debugRender && console.timeEnd('renderPens');
-    this.renderAnimate();
     this.renderBorder();
     this.renderHoverPoint();
     offscreenCtx.restore();
@@ -2051,8 +2073,6 @@ export class Canvas {
     }
     ctx.restore();
   };
-
-  renderAnimate = () => {};
 
   translate(x: number, y: number) {
     this.store.data.origin.x += x;
