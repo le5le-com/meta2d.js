@@ -1,4 +1,4 @@
-declare const window: any;
+// declare const window: any;
 export function checkboxItem(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onClick = click;
@@ -34,7 +34,7 @@ export function checkboxItem(ctx: CanvasRenderingContext2D, pen: any) {
 
 function click(pen: any) {
   pen.isChecked = !pen.isChecked;
-  let parent = window.topology.getParent(pen);
+  let parent = pen.calculative.canvas.parent.getParent(pen);
   if (parent) {
     if (pen.isChecked) {
       parent.selections.push(pen.text);
@@ -42,8 +42,22 @@ function click(pen: any) {
       let index = parent.selections.indexOf(pen.text);
       parent.selections.splice(index, 1);
     }
+    parent.children.forEach((e: string) => {
+      let child = pen.calculative.canvas.parent.find(e)[0];
+      if (parent.selections.includes(child.text)) {
+        pen.calculative.canvas.parent.setValue({
+          id: e,
+          isChecked: true,
+        });
+      } else {
+        pen.calculative.canvas.parent.setValue({
+          id: e,
+          isChecked: false,
+        });
+      }
+    });
   }
-  pen.calculative.canvas.render();
+  pen.calculative.canvas.parent.render();
 }
 function resize(pen: any) {
   let h = pen.calculative.worldRect.height;

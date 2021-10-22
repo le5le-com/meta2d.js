@@ -41,6 +41,10 @@ export function leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 function click(pen: any) {
-  pen.isOpen = !pen.isOpen;
+  // pen.isOpen = !pen.isOpen;
+  pen.calculative.canvas.parent.setValue({
+    id: pen.id,
+    isOpen: !pen.isOpen,
+  });
   pen.calculative.canvas.render();
 }

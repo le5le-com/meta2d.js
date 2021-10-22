@@ -6,7 +6,7 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
   const h = pen.calculative.worldRect.height;
-  let series = pen.option.series;
+  let series = pen.lecharts.option.series;
 
   let coordinate = coordinateAxis(ctx, pen);
   let dash = coordinate.dash;
@@ -17,7 +17,7 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
   for (let j = 0; j < series.length; j++) {
     ctx.beginPath();
     let data = series[j].data;
-    ctx.fillStyle = pen.option.color[j];
+    ctx.fillStyle = pen.lecharts.option.color[j];
     ctx.strokeStyle = '#ffffff';
     let currentX = 0;
     let currentY = 0;
