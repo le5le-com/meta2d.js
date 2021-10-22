@@ -2,15 +2,7 @@ import { commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import {
-  calcTextLines,
-  facePen,
-  getParent,
-  LockState,
-  Pen,
-  PenType,
-  renderPenRaw,
-} from './pen';
+import { calcTextLines, facePen, getParent, LockState, Pen, PenType, renderPenRaw } from './pen';
 import { Point } from './point';
 import {
   clearStore,
@@ -88,11 +80,7 @@ export class Topology {
 
   private init(parent: string | HTMLElement) {
     if (typeof parent === 'string') {
-      this.canvas = new Canvas(
-        this,
-        document.getElementById(parent),
-        this.store
-      );
+      this.canvas = new Canvas(this, document.getElementById(parent), this.store);
     } else {
       this.canvas = new Canvas(this, parent, this.store);
     }
@@ -572,16 +560,9 @@ export class Topology {
   connectMqtt() {
     this.closeMqtt();
     if (this.store.data.mqtt) {
-      this.mqttClient = mqtt.connect(
-        this.store.data.mqtt,
-        this.store.data.mqttOptions
-      );
+      this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
       this.mqttClient.on('message', (topic: string, message: any) => {
-        const index = topic.lastIndexOf('/');
-        this.doSocket(
-          message.toString()
-          // topic.substring(index + 1, topic.length)
-        );
+        this.doSocket(message.toString());
       });
 
       if (this.store.data.mqttTopics) {
@@ -596,16 +577,13 @@ export class Topology {
     }
   }
 
-  doSocket(message: any, id?: string) {
+  doSocket(message: any) {
     try {
       message = JSON.parse(message);
       if (!Array.isArray(message)) {
         message = [message];
       }
       message.forEach((item: any) => {
-        if (id) {
-          item.id = id;
-        }
         this.setValue(item);
       });
     } catch (error) {
@@ -619,6 +597,9 @@ export class Topology {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       Object.assign(pen, data);
+      if (data.newId) {
+        pen.id = data.newId;
+      }
       if (pen.calculative.text !== pen.text) {
         pen.calculative.text = pen.text;
         calcTextLines(pen);
@@ -628,12 +609,7 @@ export class Topology {
           pen.calculative[k] = data[k];
         }
       }
-      if (
-        data.x != null ||
-        data.y != null ||
-        data.width != null ||
-        data.height != null
-      ) {
+      if (data.x != null || data.y != null || data.width != null || data.height != null) {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
       }
@@ -759,10 +735,7 @@ export class Topology {
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
-      const childRect = calcRelativeRect(
-        pen.calculative.worldRect,
-        parent.calculative.worldRect
-      );
+      const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
       pen.x = childRect.x;
       pen.y = childRect.y;
       pen.width = childRect.width;
@@ -837,10 +810,7 @@ export class Topology {
     const viewCenter = this.getViewCenter();
     const { center } = rect;
     // center.x 的相对于画布的 x 所以此处要 - 画布的偏移量
-    this.translate(
-      viewCenter.x - center.x - this.store.data.x,
-      viewCenter.y - center.y - this.store.data.y
-    );
+    this.translate(viewCenter.x - center.x - this.store.data.x, viewCenter.y - center.y - this.store.data.y);
     const { canvas } = this.canvas;
     const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
     const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
@@ -902,11 +872,7 @@ export class Topology {
    * @param pens 节点们，默认全部的
    * @param distance 总的宽 or 高
    */
-  private spaceBetweenByDirection(
-    direction: 'width' | 'height',
-    pens?: Pen[],
-    distance?: number
-  ) {
+  private spaceBetweenByDirection(direction: 'width' | 'height', pens?: Pen[], distance?: number) {
     !pens && (pens = this.store.data.pens);
     !distance && (distance = this.getRect(pens)[direction]);
     // 过滤出 node 节点 pens
@@ -1126,13 +1092,11 @@ export class Topology {
             break;
           case 'in':
             // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
-            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo ===
-              node.id && lines.push(linePen[0]);
+            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo === node.id && lines.push(linePen[0]);
             break;
           case 'out':
             // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
-            linePen[0].anchors[0].connectTo === node.id &&
-              lines.push(linePen[0]);
+            linePen[0].anchors[0].connectTo === node.id && lines.push(linePen[0]);
             break;
         }
       }

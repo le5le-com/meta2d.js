@@ -90,7 +90,16 @@ export interface Pen extends Rect {
   iconColor?: string;
   iconFamily?: string;
   iconSize?: number;
-  iconAlign?: 'top' | 'bottom' | 'left' | 'right' | 'left-top' | 'right-top' | 'left-bottom' | 'right-bottom' | 'center';
+  iconAlign?:
+    | 'top'
+    | 'bottom'
+    | 'left'
+    | 'right'
+    | 'left-top'
+    | 'right-top'
+    | 'left-bottom'
+    | 'right-bottom'
+    | 'center';
   iconRatio?: boolean;
 
   disableInput?: boolean;
