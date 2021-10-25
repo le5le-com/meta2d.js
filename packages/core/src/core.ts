@@ -609,6 +609,8 @@ export class Topology {
           pen.calculative[k] = data[k];
         }
       }
+      pen.calculative.image = undefined;
+
       if (data.x != null || data.y != null || data.width != null || data.height != null) {
         this.canvas.dirtyPenRect(pen);
         this.canvas.updateLines(pen, true);
