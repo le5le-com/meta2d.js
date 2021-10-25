@@ -21,6 +21,12 @@ export enum AnchorMode {
   Out,
 }
 
+export enum Gradient{
+  None,  // 没有渐变
+  Linear,   // 线性渐变
+  Radial,  // 镜像渐变
+}
+
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -54,7 +60,18 @@ export interface Pen extends Rect {
   hoverBackground?: string;
   activeColor?: string;
   activeBackground?: string;
-  bkType?: number;
+  bkType?: Gradient;
+  gradientFromColor?: string;
+  gradientToColor?: string;
+  gradientAngle?: number;
+  gradientRadius?: number;
+
+  // TODO: stroke 尚无径向渐变
+  strokeType?: Gradient;
+  lineGradientFromColor?: string;
+  lineGradientToColor?: string;
+  lineGradientAngle?: number;
+
   lineCap?: string;
   lineJoin?: string;
   shadowColor?: string;

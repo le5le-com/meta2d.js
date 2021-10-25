@@ -7,6 +7,7 @@ import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
+import { Gradient } from '@topology/core';
 
 export function getParent(store: TopologyStore, pen: Pen) {
   if (!pen || !pen.parentId) {
@@ -28,6 +29,96 @@ export function getAllChildren(store: TopologyStore, pen: Pen) {
   });
   return children;
 }
+
+function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  return linearGradient(ctx, pen.calculative.worldRect, pen.gradientFromColor, pen.gradientToColor, pen.gradientAngle);
+}
+
+/**
+ * 避免副作用，把创建好后的径向渐变对象返回出来
+ * @param ctx 画布绘制对象
+ * @param pen 当前画笔
+ * @returns 径向渐变
+ */
+function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  if (!pen.gradientFromColor || !pen.gradientToColor) {
+    return;
+  }
+
+  const { worldRect } = pen.calculative;
+  let r = worldRect.width;
+  if (r < worldRect.height) {
+    r = worldRect.height;
+  }
+  r *= 0.5;
+  !pen.gradientRadius && (pen.gradientRadius = 0);
+  const grd = ctx.createRadialGradient(
+    worldRect.center.x,
+    worldRect.center.y,
+    r * pen.gradientRadius,
+    worldRect.center.x,
+    worldRect.center.y,
+    r
+  );
+  grd.addColorStop(0, pen.gradientFromColor);
+  grd.addColorStop(1, pen.gradientToColor);
+
+  return grd;
+}
+
+function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  return linearGradient(ctx, pen.calculative.worldRect, pen.lineGradientFromColor, pen.lineGradientToColor, pen.lineGradientAngle);
+}
+
+/**
+ * 避免副作用，把创建好后的线性渐变对象返回出来
+ * @param ctx 画布绘制对象
+ * @param worldRect 世界坐标
+ * @returns 线性渐变
+ */
+function linearGradient(
+  ctx: CanvasRenderingContext2D, 
+  worldRect: Rect, 
+  fromColor: string, 
+  toColor: string, 
+  angle: number)
+{
+  if (!fromColor || !toColor) {
+    return;
+  }
+
+  const from: Point = {
+    x: worldRect.x,
+    y: worldRect.center.y
+  }
+  const to: Point = {
+    x: worldRect.ex,
+    y: worldRect.center.y
+  };
+  if (angle % 90 === 0 && angle % 180) {
+    if (angle % 270) {
+      from.x = worldRect.center.x;
+      from.y = worldRect.y;
+      to.x = worldRect.center.x;
+      to.y = worldRect.ey;
+    } else {
+      from.x = worldRect.center.x;
+      from.y = worldRect.ey;
+      to.x = worldRect.center.x;
+      to.y = worldRect.y;
+    }
+  } else if (angle) {
+    rotatePoint(from, angle, worldRect.center);
+    rotatePoint(to, angle, worldRect.center);
+  }
+
+  // contributor: https://github.com/sunnyguohua/topology
+  const grd = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
+  grd.addColorStop(0, fromColor);
+  grd.addColorStop(1, toColor);
+  return grd;
+}
+
 
 export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D, store: TopologyStore) {
   if (!pen.gif && pen.calculative.gif && pen.calculative.img) {
@@ -69,7 +160,14 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
         fill = true;
       }
     } else {
-      ctx.strokeStyle = pen.calculative.color;
+      let stroke: string | CanvasGradient | CanvasPattern;
+      // TODO: 线只有线性渐变
+      if(pen.strokeType === Gradient.Linear){
+        stroke = strokeLinearGradient(ctx, pen);
+      } else {
+        stroke = pen.calculative.color;
+      }
+      ctx.strokeStyle = stroke;
     }
 
     if (pen.backgroundImage) {
@@ -78,8 +176,16 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
         fill = true;
       }
     } else {
-      ctx.fillStyle = pen.background;
-      fill = !!pen.background;
+      let back: string | CanvasGradient | CanvasPattern;
+      if(pen.bkType === Gradient.Linear){
+        back = drawBkLinearGradient(ctx, pen);
+      } else if (pen.bkType === Gradient.Radial){
+        back = drawBkRadialGradient(ctx, pen);
+      } else {
+        back = pen.background;
+      }
+      ctx.fillStyle = back;
+      fill = !!back;
     }
   }
 
