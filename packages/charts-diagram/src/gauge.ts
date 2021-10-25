@@ -1,3 +1,4 @@
+import { defaultDrawLineFns } from '@topology/core';
 import { getValidValue } from './common';
 //仪表全盘
 export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
@@ -113,6 +114,10 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
     series.axisLabel.fontSize + 'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
   let textR = r + lineStyle.width / 2 - series.axisLabel.distance;
   for (let i = 0; i <= series.splitNumber; i++) {
+    if (Math.abs(series.startAngle) + Math.abs(series.endAngle) === 360) {
+      //形成一个圆形
+      if (i == 0) continue;
+    }
     let angle = series.startAngle - ((interval * i) / valueGap) * gap;
     let width = Math.cos((angle / 180) * Math.PI);
     let height = Math.sin((angle / 180) * Math.PI);
@@ -191,18 +196,19 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.fill();
 
   //文字描述
-  ctx.beginPath();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle =
-    series.detail.color === 'auto' ? pointColor : series.detail.color;
-  ctx.fillText(
-    series.detail.formatter.replace('{value}', value),
-    centerX + (r * parseFloat(series.detail.offsetCenter[0])) / 100,
-    centerY + (r * parseFloat(series.detail.offsetCenter[1])) / 100
-  );
-  ctx.fill();
-
+  if (series.detail.show !== false) {
+    ctx.beginPath();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle =
+      series.detail.color === 'auto' ? pointColor : series.detail.color;
+    ctx.fillText(
+      series.detail.formatter.replace('{value}', value),
+      centerX + (r * parseFloat(series.detail.offsetCenter[0])) / 100,
+      centerY + (r * parseFloat(series.detail.offsetCenter[1])) / 100
+    );
+    ctx.fill();
+  }
   return false;
 }
 
@@ -227,7 +233,6 @@ function onAdd(pen: any) {
 //setValue 直接触发，所以数据的过渡可能很难实现。
 function onBeforeValue(pen: any, data: any) {
   if (data.value) {
-    console.log(pen.value);
     pen.frames = [
       {
         duration: 100,
