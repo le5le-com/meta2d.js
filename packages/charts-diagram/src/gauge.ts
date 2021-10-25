@@ -24,6 +24,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   let r = w > h ? (h / 2) * series.radius : (w / 2) * series.radius;
   let centerX = x + w / 2;
   let centerY = y + h / 2;
+  pen.calculative.value = series.data[0].value;
   let value = pen.calculative.value; //series.data[0].value;
   let pointColor: string;
   //背景圆弧
@@ -110,12 +111,11 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   let interval = valueGap / series.splitNumber;
   ctx.font =
     series.axisLabel.fontSize + 'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
-  ctx.textBaseline = 'top';
   let textR = r + lineStyle.width / 2 - series.axisLabel.distance;
   for (let i = 0; i <= series.splitNumber; i++) {
-    let bili = (series.startAngle - ((interval * i) / valueGap) * gap) / 180;
-    let width = textR * Math.cos(bili * Math.PI);
-    let height = textR * Math.sin(bili * Math.PI);
+    let angle = series.startAngle - ((interval * i) / valueGap) * gap;
+    let width = Math.cos((angle / 180) * Math.PI);
+    let height = Math.sin((angle / 180) * Math.PI);
     let temColor = series.axisLabel.color;
 
     lineStyle.color.reverse().forEach((item: any) => {
@@ -130,17 +130,24 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
     if (temColor != 'auto') {
       ctx.fillStyle = temColor;
     }
-    if (bili > 0.51) {
-      ctx.textAlign = 'start';
-    } else if (bili < 0.49) {
+    if (width > 0.02) {
       ctx.textAlign = 'end';
+    } else if (width < -0.02) {
+      ctx.textAlign = 'start';
     } else {
       ctx.textAlign = 'center';
     }
+    if (height > 0.02) {
+      ctx.textBaseline = 'top';
+    } else if (height < -0.02) {
+      ctx.textBaseline = 'bottom';
+    } else {
+      ctx.textBaseline = 'middle';
+    }
     ctx.fillText(
       getValidValue(interval * i + series.min, 1),
-      centerX + width,
-      centerY - height
+      centerX + textR * width,
+      centerY - textR * height
     );
     ctx.fill();
   }
