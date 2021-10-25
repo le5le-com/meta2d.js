@@ -491,6 +491,8 @@ function onAdd(pen: any) {
               value: 'console.log(pen.currentData)',
             },
           ],
+          activeColor: '#ffffff',
+          hoverColor: '#ffffff',
           ...pen.table.button,
         };
         pen.calculative.canvas.makePen(btnChildPen);
