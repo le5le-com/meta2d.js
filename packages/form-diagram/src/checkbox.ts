@@ -2,7 +2,7 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onAdd = checkboxAdd;
     pen.onDestroy = onDestroy;
-    // pen.onValue = onValue;
+    pen.onValue = onValue;
   }
   // let x = pen.calculative.worldRect.x;
   // let y = pen.calculative.worldRect.y;
@@ -58,25 +58,44 @@ function checkboxAdd(pen: any) {
   }
 }
 
-// function onValue(pen: any) {
-//   let pens = [];
-//   pen.children.forEach((item: string) => {
-//     pens.push(pen.calculative.canvas.parent.find(item)[0]);
-//   });
-//   pen.children = [];
-//   console.log(pens);
-//   pens.forEach((p) => {
-//     const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
-//       (item) => item.id === p.id
-//     );
-//     if (i > -1) {
-//       pen.calculative.canvas.parent.store.data.pens.splice(i, 1);
-//       pen.calculative.canvas.parent.store.pens[p.id] = undefined;
-//     }
-//     p.onDestroy && p.onDestroy(p);
-//   });
-//   checkboxAdd(pen);
-// }
+function onValue(pen: any) {
+  let x = pen.calculative.worldRect.x;
+  let y = pen.calculative.worldRect.y;
+  let w = pen.calculative.worldRect.width;
+  let h = pen.calculative.worldRect.height;
+
+  if (pen.direction == 'horizontal') {
+    let length = pen.options.length;
+    for (let i = 0; i < length; i++) {
+      let childPen: any = {
+        id: pen.children[i],
+        x: (i * w) / length / w,
+        y: 0,
+        width: 1 / length,
+        height: 1,
+        isChecked: pen.selections.includes(pen.options[i]),
+        text: pen.options[i],
+        textLeft: (h * 6) / 5,
+      };
+      pen.calculative.canvas.parent.setValue(childPen);
+    }
+  } else if (pen.direction == 'vertical') {
+    let length = pen.options.length;
+    for (let i = 0; i < length; i++) {
+      let childPen: any = {
+        id: pen.children[i],
+        x: 0,
+        y: (((i * h) / (length * 2 - 1)) * 2) / h,
+        width: 1,
+        height: 1 / (length * 2 - 1),
+        isChecked: pen.selections.includes(pen.options[i]),
+        text: pen.options[i],
+        textLeft: ((h / (length * 2 - 1)) * 6) / 5,
+      };
+      pen.calculative.canvas.parent.setValue(childPen);
+    }
+  }
+}
 
 function onDestroy(pen: any) {
   pen.children.forEach((p) => {
