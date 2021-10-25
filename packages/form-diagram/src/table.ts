@@ -297,6 +297,7 @@ function getRect(pen: any) {
   if (!pen.table.colCount) {
     pen.table.colCount = 5;
   }
+  pen.table.colCount = pen.table.col.length; //强制列数等于列配置长度
   if (!pen.table.rowHeight) {
     pen.table.rowHeight = 30;
   }
@@ -325,7 +326,8 @@ function getRect(pen: any) {
       height += pen.table.row[i].height ?? pen.table.rowHeight;
     }
   }
-
+  height += pen.table.rowCount; //防止相邻的两个单元格覆盖
+  width += pen.table.colCount;
   return {
     width,
     height,
@@ -384,7 +386,11 @@ function getCellRect(rowIndex: number, colIndex: number, pen: any) {
       if (i == 1) {
         rect.y += pen.table.header.height ?? pen.table.rowHeight;
       } else {
-        rect.y += pen.table.row[i - 2].height ?? pen.table.rowHeight;
+        if (pen.table.row[i - 2]) {
+          rect.y += pen.table.row[i - 2].height ?? pen.table.rowHeight;
+        } else {
+          rect.y += pen.table.rowHeight;
+        }
       }
       if (pen.table.row[i - 1]) {
         rect.height = pen.table.row[i - 1].height ?? pen.table.rowHeight;
@@ -399,6 +405,9 @@ function getCellRect(rowIndex: number, colIndex: number, pen: any) {
     }
     rect.width = pen.table.col[j].width ?? pen.table.colWidth;
   }
+
+  rect.y += rowIndex * 1; //添加单元格不覆盖偏差
+  rect.x += colIndex * 1;
   return rect;
 }
 function onAdd(pen: any) {
@@ -429,6 +438,7 @@ function onAdd(pen: any) {
     for (let j = 1; j <= pen.table.colCount; j++) {
       count++;
       key = pen.table.col[j - 1].key;
+
       if (i <= 1) {
         text = pen.table.col[j - 1].name;
       } else {
@@ -442,9 +452,7 @@ function onAdd(pen: any) {
           }
         }
       }
-
       let childRect = getCellRect(i, j, pen);
-
       let childPen: any = {
         name: 'rectangle',
         x: childRect.x,
@@ -483,6 +491,8 @@ function onAdd(pen: any) {
               value: 'console.log(pen.currentData)',
             },
           ],
+          activeColor: '#ffffff',
+          hoverColor: '#ffffff',
           ...pen.table.button,
         };
         pen.calculative.canvas.makePen(btnChildPen);
@@ -622,9 +632,23 @@ function onValue(pen: any) {
 
 //数据行数据修改
 function childPenOnValue(pen: any) {
-  let parentPen = pen.calculative.canvas.parent.find(pen.parentId);
+  let parentPen: any = pen.calculative.canvas.parent.find(pen.parentId);
   if (pen.rowInParent < parentPen[0].table.row.length) {
     parentPen[0].table.row[pen.rowInParent][pen.colInParent] = pen.text;
+    parentPen[0].children.forEach((cid) => {
+      let child: any = pen.calculative.canvas.parent.find(cid)[0];
+      if (
+        child.colInParent === 'operation' &&
+        child.rowInParent === pen.rowInParent
+      ) {
+        let btnChild: any = pen.calculative.canvas.parent.find(
+          child.children[0]
+        )[0];
+        btnChild.currentData[pen.colInParent] = pen.text;
+      }
+    });
+    // valueChange(parentPen[0]);
+    // pen.calculative.canvas.parent.setValue(parentPen[0]);
   }
 }
 
@@ -656,6 +680,8 @@ function headerChildPenOnValue(pen: any) {
     if (parentPen[0].table.col[i].key == pen.colInParent) break;
   }
   parentPen[0].table.col[i].name = pen.text;
+  // valueChange(parentPen[0]);
+  // pen.calculative.canvas.parent.setValue(parentPen[0]);
 }
 
 function onDestroy(pen: any) {
