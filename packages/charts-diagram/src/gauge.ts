@@ -24,6 +24,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   let r = w > h ? (h / 2) * series.radius : (w / 2) * series.radius;
   let centerX = x + w / 2;
   let centerY = y + h / 2;
+  pen.calculative.value = series.data[0].value;
   let value = pen.calculative.value; //series.data[0].value;
   let pointColor: string;
   //背景圆弧
