@@ -136,7 +136,6 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
     } else {
       ctx.textAlign = 'center';
     }
-    console.log(width, height);
     if (height > 0.02) {
       ctx.textBaseline = 'top';
     } else if (height < -0.02) {
