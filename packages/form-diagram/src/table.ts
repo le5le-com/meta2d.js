@@ -632,9 +632,23 @@ function onValue(pen: any) {
 
 //数据行数据修改
 function childPenOnValue(pen: any) {
-  let parentPen = pen.calculative.canvas.parent.find(pen.parentId);
+  let parentPen: any = pen.calculative.canvas.parent.find(pen.parentId);
   if (pen.rowInParent < parentPen[0].table.row.length) {
     parentPen[0].table.row[pen.rowInParent][pen.colInParent] = pen.text;
+    parentPen[0].children.forEach((cid) => {
+      let child: any = pen.calculative.canvas.parent.find(cid)[0];
+      if (
+        child.colInParent === 'operation' &&
+        child.rowInParent === pen.rowInParent
+      ) {
+        let btnChild: any = pen.calculative.canvas.parent.find(
+          child.children[0]
+        )[0];
+        btnChild.currentData[pen.colInParent] = pen.text;
+      }
+    });
+    // valueChange(parentPen[0]);
+    // pen.calculative.canvas.parent.setValue(parentPen[0]);
   }
 }
 
@@ -666,6 +680,8 @@ function headerChildPenOnValue(pen: any) {
     if (parentPen[0].table.col[i].key == pen.colInParent) break;
   }
   parentPen[0].table.col[i].name = pen.text;
+  // valueChange(parentPen[0]);
+  // pen.calculative.canvas.parent.setValue(parentPen[0]);
 }
 
 function onDestroy(pen: any) {
