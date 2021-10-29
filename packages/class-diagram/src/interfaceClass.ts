@@ -5,14 +5,14 @@ export function interfaceClass(pen: Pen) {
     pen.onAdd = onAdd;
   }
   const path = new Path2D();
-  if (!pen.borderRadius) {
-    pen.borderRadius = 0;
+  if (!pen.calculative.borderRadius) {
+    pen.calculative.borderRadius = 0;
   }
-  let wr = pen.borderRadius;
-  let hr = pen.borderRadius;
-  if (pen.borderRadius < 1) {
-    wr = pen.calculative.worldRect.width * pen.borderRadius;
-    hr = pen.calculative.worldRect.height * pen.borderRadius;
+  let wr = pen.calculative.borderRadius;
+  let hr = pen.calculative.borderRadius;
+  if (pen.calculative.borderRadius < 1) {
+    wr = pen.calculative.worldRect.width * pen.calculative.borderRadius;
+    hr = pen.calculative.worldRect.height * pen.calculative.borderRadius;
   }
   let r = wr < hr ? wr : hr;
   if (pen.calculative.worldRect.width < 2 * r) {

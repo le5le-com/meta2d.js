@@ -4,8 +4,8 @@ export function rectangle(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
-  let wr = pen.borderRadius || 0;
-  let hr = pen.borderRadius || 0;
+  let wr = pen.calculative.borderRadius || 0;
+  let hr = pen.calculative.borderRadius || 0;
   if (wr < 1) {
     wr = pen.calculative.worldRect.width * wr;
     hr = pen.calculative.worldRect.height * hr;
@@ -33,7 +33,13 @@ export function rectangle(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
     pen.calculative.worldRect.ey,
     r
   );
-  path.arcTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey, pen.x, pen.y, r);
+  path.arcTo(
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.ey,
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.y,
+    r
+  );
   path.arcTo(
     pen.calculative.worldRect.x,
     pen.calculative.worldRect.y,
