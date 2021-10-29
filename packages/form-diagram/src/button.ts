@@ -13,8 +13,8 @@ export function button(ctx: CanvasRenderingContext2D, pen: any) {
   let h = pen.calculative.worldRect.height;
   ctx.beginPath();
   ctx.fillStyle = pen.fillColor;
-  let wr = pen.borderRadius || 0;
-  let hr = pen.borderRadius || 0;
+  let wr = pen.calculative.borderRadius || 0;
+  let hr = pen.calculative.borderRadius || 0;
   if (wr < 1) {
     wr = w * wr;
     hr = h * hr;

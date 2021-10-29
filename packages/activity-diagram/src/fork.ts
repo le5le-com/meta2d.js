@@ -2,16 +2,16 @@ import { Pen } from '../../core/src/pen';
 export function fork(pen: Pen): Path2D {
   const path = new Path2D();
 
-  if (!pen.borderRadius) {
-    pen.borderRadius = 0;
+  if (!pen.calculative.borderRadius) {
+    pen.calculative.borderRadius = 0;
   }
   const worldRect = pen.calculative.worldRect;
 
-  let wr = pen.borderRadius;
-  let hr = pen.borderRadius;
-  if (pen.borderRadius < 1) {
-    wr = worldRect.width * pen.borderRadius;
-    hr = worldRect.height * pen.borderRadius;
+  let wr = pen.calculative.borderRadius;
+  let hr = pen.calculative.borderRadius;
+  if (pen.calculative.borderRadius < 1) {
+    wr = worldRect.width * pen.calculative.borderRadius;
+    hr = worldRect.height * pen.calculative.borderRadius;
   }
   let r = wr < hr ? wr : hr;
   if (worldRect.width < 2 * r) {

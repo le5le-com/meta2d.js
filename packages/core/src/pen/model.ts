@@ -197,8 +197,10 @@ export interface Pen extends Rect {
     y?: number;
     width?: number;
     height?: number;
+    borderRadius?: number;
 
     progress?: number;
+    progressColor?: string;
 
     worldRect?: Rect;
     worldAnchors?: Point[];
@@ -223,6 +225,16 @@ export interface Pen extends Rect {
     activeColor?: string;
     activeBackground?: string;
     bkType?: number;
+    gradientFromColor?: string;
+    gradientToColor?: string;
+    gradientAngle?: number;
+    gradientRadius?: number;
+    
+    // TODO: stroke 尚无径向渐变
+    strokeType?: Gradient;
+    lineGradientFromColor?: string;
+    lineGradientToColor?: string;
+    lineGradientAngle?: number;
     lineCap?: string;
     lineJoin?: string;
     shadowColor?: string;
