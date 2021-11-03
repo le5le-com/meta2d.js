@@ -25,7 +25,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
   let r = w > h ? (h / 2) * series.radius : (w / 2) * series.radius;
   let centerX = x + w / 2;
   let centerY = y + h / 2;
-  pen.calculative.value = series.data[0].value;
+  // pen.calculative.value = pen.value; //series.data[0].value;
   let value = pen.calculative.value; //series.data[0].value;
   let pointColor: string;
   //背景圆弧
@@ -213,7 +213,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 function onAdd(pen: any) {
-  pen.value = pen.lecharts.option.series[0].data[0].value;
+  pen.value = 0; //pen.lecharts.option.series[0].data[0].value;
   pen.frames = [
     {
       duration: 10,
@@ -221,13 +221,15 @@ function onAdd(pen: any) {
     },
     {
       duration: 2000,
-      value: pen.value,
+      value: pen.lecharts.option.series[0].data[0].value,
     },
   ];
-  setTimeout(() => {
-    pen.historyValue = pen.value;
-  }, 3000);
+  // setTimeout(() => {
+  //   pen.historyValue = pen.value;
+  // }, 3000);
+  // pen.calculative.canvas.parent.setValue(pen);
   pen.calculative.canvas.parent.startAnimate(pen.id);
+  pen.value = pen.lecharts.option.series[0].data[0].value;
 }
 
 //setValue 直接触发，所以数据的过渡可能很难实现。
