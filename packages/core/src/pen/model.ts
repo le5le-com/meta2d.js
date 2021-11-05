@@ -262,6 +262,7 @@ export interface Pen extends Rect {
     iconTop?: number;
     iconLeft?: number;
     iconColor?: string;
+    iconFamily?: string;
 
     // 绝对值，计算后的结果
     paddingTop?: number;
