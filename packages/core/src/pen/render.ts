@@ -435,11 +435,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconSize}px ${pen.iconFamily}`;
+      ctx.font = `${pen.calculative.iconSize}px ${pen.calculative.iconFamily}`;
     } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${iconRect.height}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.height}px ${pen.calculative.iconFamily}`;
     } else {
-      ctx.font = `${iconRect.width}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.width}px ${pen.calculative.iconFamily}`;
     }
     ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
 
@@ -708,11 +708,11 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: Top
     let y = iconRect.y + iconRect.height / 2;
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconSize}px ${pen.iconFamily}`;
+      ctx.font = `${pen.calculative.iconSize}px ${pen.calculative.iconFamily}`;
     } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${iconRect.height}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.height}px ${pen.calculative.iconFamily}`;
     } else {
-      ctx.font = `${iconRect.width}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.width}px ${pen.calculative.iconFamily}`;
     }
     ctx.fillStyle = pen.iconColor || pen.textColor || store.options.textColor;
 
