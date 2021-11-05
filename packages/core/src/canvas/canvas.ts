@@ -2749,7 +2749,7 @@ export class Canvas {
               } else {
                 for (const k in pen) {
                   if (
-                    k !== 'rotate' &&
+                    // k !== 'rotate' &&
                     k !== 'x' &&
                     k !== 'y' &&
                     k !== 'width' &&
@@ -2814,6 +2814,10 @@ export class Canvas {
   copy(pens?: Pen[]) {
     this.store.clipboard = pens || this.store.active;
     this.pasteOffset = 10;
+    const clipboardData = deepClone(this.store.clipboard);
+    navigator.clipboard?.writeText(
+      JSON.stringify({topology: true, data: clipboardData})
+    );
   }
 
   cut(pens?: Pen[]) {
@@ -2821,11 +2825,21 @@ export class Canvas {
     this.delete(this.store.clipboard);
   }
 
-  paste() {
+  async paste() {
     if (!this.store.clipboard) {
-      return;
+      const clipboardText = await navigator.clipboard?.readText();
+      let clipboard;
+      try{ 
+        clipboard = JSON.parse(clipboardText);
+      } catch(e) { 
+        console.warn('剪切板数据不是 json', e.message);
+        return;
+      }
+      if (!clipboard || !clipboard.topology || !clipboard.data) {
+        return;
+      }
+      this.store.clipboard = clipboard.data;
     }
-
     const pens: Pen[] = [];
     for (const pen of this.store.clipboard) {
       const newPen = deepClone(pen);
