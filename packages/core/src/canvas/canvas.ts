@@ -318,6 +318,8 @@ export class Canvas {
       case 'a':
       case 'A':
         if (e.ctrlKey || e.metaKey) {
+          this.active(this.store.data.pens);
+          e.preventDefault();
         } else {
           this.toggleAnchorMode();
         }
