@@ -1503,7 +1503,7 @@ export class Canvas {
   }
 
   redo() {
-    if (this.store.data.locked || this.store.historyIndex > this.store.histories.length - 2) {
+    if (this.store.data.locked || this.store.historyIndex == null || this.store.historyIndex > this.store.histories.length - 2) {
       return;
     }
 
