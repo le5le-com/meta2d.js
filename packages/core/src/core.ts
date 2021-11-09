@@ -505,6 +505,14 @@ export class Topology {
     this.canvas.paste();
   }
 
+  undo() {
+    this.canvas.undo();
+  }
+
+  redo() {
+    this.canvas.redo();
+  }
+
   listenSocket() {
     if (this.socketFn) {
       this.off('socket', this.socketFn as any);
