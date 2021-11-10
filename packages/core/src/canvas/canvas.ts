@@ -711,8 +711,8 @@ export class Canvas {
             active: true,
             worldAnchors: [pt],
           },
-          fromArrow: this.store.data.fromArrow,
-          toArrow: this.store.data.toArrow,
+          fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
+          toArrow: this.store.data.toArrow || this.store.options.toArrow,
         };
         this.drawingLine.calculative.activeAnchor = pt;
         this.drawline();
