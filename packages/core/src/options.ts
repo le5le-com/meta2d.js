@@ -58,6 +58,8 @@ export interface Options {
   rule?: boolean;
   ruleColor?: string;
   drawingLineName?: string;
+  fromArrow?: string;
+  toArrow?: string;
   autoPloyline?: string;
   interval?: number;
   animateInterval?: number;
