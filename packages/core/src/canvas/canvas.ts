@@ -29,6 +29,7 @@ import {
   setHover,
   getAllChildren,
   setElemPosition,
+  randomId,
 } from '../pen';
 import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, scalePoint, translatePoint } from '../point';
 import {
@@ -2864,7 +2865,7 @@ export class Canvas {
     const pens: Pen[] = [];
     for (const pen of this.store.clipboard) {
       const newPen = deepClone(pen);
-      newPen.id = s8();
+      randomId(newPen);
       translateRect(newPen, this.pasteOffset, this.pasteOffset);
       if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
         this.makePen(newPen);
