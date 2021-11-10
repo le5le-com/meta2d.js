@@ -850,7 +850,7 @@ export class Canvas {
       const pt: Point = { ...e };
       pt.id = s8();
       pt.penId = this.drawingLine.id;
-      if (this.mouseDown) {
+      if (this.mouseDown && this.drawingLineName !== 'ployline') {
         this.drawline(pt);
       } else {
         let to: Point;
@@ -1001,6 +1001,22 @@ export class Canvas {
     this.calibrateMouse(e);
 
     this.pencil && this.finishPencil();
+
+    // 在锚点上，完成绘画
+    if (
+      this.hoverType &&
+      this.hoverType < HoverType.Line &&
+      this.drawingLine &&
+      this.drawingLine.calculative.worldAnchors.length > 1 &&
+      this.drawingLineName === 'ployline'
+    ) {
+      const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+      to.connectTo = this.store.hover.id;
+      to.anchorId = this.store.hoverAnchor.id;
+      connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, to.anchorId);
+      this.finishDrawline(true);
+      return;
+    }
 
     // Add pen
     if (this.addCache) {
