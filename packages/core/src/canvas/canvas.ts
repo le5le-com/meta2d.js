@@ -2638,11 +2638,13 @@ export class Canvas {
       if (!penAnchor) {
         return;
       }
+
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
-      if ((this.store.options.autoPloyline || line.autoPloyline) &&  line.lineName === 'ployline') {
+      if ((this.store.options.autoPloyline || line.autoPloyline) && line.lineName === 'ployline') {
         line.calculative.worldAnchors = [line.calculative.worldAnchors[0], lineAnchor];
         line.calculative.activeAnchor = line.calculative.worldAnchors[0];
         this['ployline'](this.store, line, lineAnchor);
+        this.initLineRect(line);
       }
 
       this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));

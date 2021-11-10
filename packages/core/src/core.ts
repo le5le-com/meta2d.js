@@ -240,6 +240,22 @@ export class Topology {
     this.canvas.finishPencil();
   }
 
+  updateLineType(pen: Pen, lineName: string) {
+    if (!pen || pen.name != 'line' || !lineName || !this.canvas[lineName]) {
+      return;
+    }
+
+    pen.lineName = lineName;
+    const from = pen.calculative.worldAnchors[0];
+    const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    pen.calculative.worldAnchors = [from, to];
+    pen.calculative.activeAnchor = from;
+    this.canvas[lineName](this.store, pen, to);
+    pen.calculative.activeAnchor = undefined;
+    this.canvas.initLineRect(pen);
+    this.render(Infinity);
+  }
+
   addDrawLineFn(fnName: string, fn: Function) {
     this.canvas[fnName] = fn;
     this.canvas.drawLineFns.push(fnName);
