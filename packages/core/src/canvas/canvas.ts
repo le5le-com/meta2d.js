@@ -703,6 +703,7 @@ export class Canvas {
         this.drawingLine = {
           id,
           name: 'line',
+          lineName: this.drawingLineName,
           x: pt.x,
           y: pt.y,
           type: PenType.Line,
@@ -2638,6 +2639,12 @@ export class Canvas {
         return;
       }
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
+      if ((this.store.options.autoPloyline || line.autoPloyline) &&  line.lineName === 'ployline') {
+        line.calculative.worldAnchors = [line.calculative.worldAnchors[0], lineAnchor];
+        line.calculative.activeAnchor = line.calculative.worldAnchors[0];
+        this['ployline'](this.store, line, lineAnchor);
+      }
+
       this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
       this.dirtyLines.add(line);
 
