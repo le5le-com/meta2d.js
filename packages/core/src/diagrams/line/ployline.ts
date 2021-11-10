@@ -52,7 +52,6 @@ export function ployline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
       break;
     case Direction.Bottom:
       pts.push(...getNextPointsOfBottom(from, to, toFace));
-      console.log(pen.calculative.worldAnchors.length, pen.calculative.worldAnchors);
       break;
     case Direction.Left:
       pts.push(...getNextPointsOfLeft(from, to, toFace));
