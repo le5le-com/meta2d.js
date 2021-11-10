@@ -2641,10 +2641,24 @@ export class Canvas {
 
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
       if ((this.store.options.autoPloyline || line.autoPloyline) && line.lineName === 'ployline') {
-        line.calculative.worldAnchors = [line.calculative.worldAnchors[0], lineAnchor];
-        line.calculative.activeAnchor = line.calculative.worldAnchors[0];
-        this['ployline'](this.store, line, lineAnchor);
-        this.initLineRect(line);
+        let from = line.calculative.worldAnchors[0];
+        let to = line.calculative.worldAnchors[line.calculative.worldAnchors.length - 1];
+
+        let found = false;
+
+        if (from.id === lineAnchor.id) {
+          from = lineAnchor;
+          found = true;
+        } else if (to.id === lineAnchor.id) {
+          to = lineAnchor;
+          found = true;
+        }
+        if (found) {
+          line.calculative.worldAnchors = [from, to];
+          line.calculative.activeAnchor = from;
+          this['ployline'](this.store, line, to);
+          this.initLineRect(line);
+        }
       }
 
       this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
