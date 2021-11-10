@@ -58,6 +58,7 @@ export interface Options {
   rule?: boolean;
   ruleColor?: string;
   drawingLineName?: string;
+  autoPloyline?: string;
   interval?: number;
   animateInterval?: number;
   dragAllIn?: boolean;
