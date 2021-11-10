@@ -481,6 +481,8 @@ export class Canvas {
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
       for (const pen of obj) {
+        pen.width *= this.store.data.scale;
+        pen.height *= this.store.data.scale;
         pen.x = pt.x - pen.width / 2;
         pen.y = pt.y - pen.height / 2;
         this.addPen(pen, true);
@@ -1503,7 +1505,11 @@ export class Canvas {
   }
 
   redo() {
-    if (this.store.data.locked || this.store.historyIndex == null || this.store.historyIndex > this.store.histories.length - 2) {
+    if (
+      this.store.data.locked ||
+      this.store.historyIndex == null ||
+      this.store.historyIndex > this.store.histories.length - 2
+    ) {
       return;
     }
 
@@ -1967,6 +1973,7 @@ export class Canvas {
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.translate(0.5, 0.5);
+
     if (
       this.store.hover &&
       (this.hotkeyType !== HotkeyType.Resize ||
@@ -2077,10 +2084,8 @@ export class Canvas {
   };
 
   translate(x: number, y: number) {
-    this.store.data.origin.x += x;
-    this.store.data.origin.y += y;
-    this.store.data.x += x;
-    this.store.data.y += y;
+    this.store.data.x += x * this.store.data.scale;
+    this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
     this.render(Infinity);
@@ -2817,9 +2822,7 @@ export class Canvas {
     this.store.clipboard = pens || this.store.active;
     this.pasteOffset = 10;
     const clipboardData = deepClone(this.store.clipboard);
-    navigator.clipboard?.writeText(
-      JSON.stringify({topology: true, data: clipboardData})
-    );
+    navigator.clipboard?.writeText(JSON.stringify({ topology: true, data: clipboardData }));
   }
 
   cut(pens?: Pen[]) {
@@ -2831,9 +2834,9 @@ export class Canvas {
     if (!this.store.clipboard) {
       const clipboardText = await navigator.clipboard?.readText();
       let clipboard;
-      try{ 
+      try {
         clipboard = JSON.parse(clipboardText);
-      } catch(e) { 
+      } catch (e) {
         console.warn('剪切板数据不是 json', e.message);
         return;
       }
@@ -3122,10 +3125,13 @@ export class Canvas {
 
     ctx.strokeStyle = rgba(0.7, this.store.data.ruleColor || this.store.options.ruleColor);
 
+    const x = this.store.data.origin.x + this.store.data.x;
+    const y = this.store.data.origin.y + this.store.data.y;
+
     // horizontal rule
     ctx.beginPath();
     ctx.lineWidth = 12;
-    ctx.lineDashOffset = -this.store.data.origin.x % span;
+    ctx.lineDashOffset = -x % span;
     ctx.setLineDash([1, span - 1]);
     ctx.moveTo(0, 0);
     ctx.lineTo(this.width, 0);
@@ -3133,7 +3139,7 @@ export class Canvas {
 
     // vertical rule
     ctx.beginPath();
-    ctx.lineDashOffset = -this.store.data.origin.y % span;
+    ctx.lineDashOffset = -y % span;
     ctx.moveTo(0, 0);
     ctx.lineTo(0, this.height);
     ctx.stroke();
@@ -3142,30 +3148,36 @@ export class Canvas {
     ctx.strokeStyle = this.store.data.ruleColor || this.store.options.ruleColor;
     ctx.beginPath();
     ctx.lineWidth = 24;
-    ctx.lineDashOffset = -this.store.data.origin.x % (span * 10);
+    ctx.lineDashOffset = -x % (span * 10);
     ctx.setLineDash([1, span * 10 - 1]);
     ctx.moveTo(0, 0);
     ctx.lineTo(this.width, 0);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.lineDashOffset = -this.store.data.origin.y % (span * 10);
+    ctx.lineDashOffset = -y % (span * 10);
     ctx.moveTo(0, 0);
     ctx.lineTo(0, this.height);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.fillStyle = ctx.strokeStyle;
-    let text: number = 0 - Math.floor(this.store.data.origin.x / span / 10) * 100;
-    for (let i = this.store.data.origin.x % (span * 10); i < this.width; i += 10 * span, text += 100) {
+    let text: number = 0 - Math.floor(x / span / 10) * 100;
+    if (x < 0) {
+      text -= 100;
+    }
+    for (let i = x % (span * 10); i < this.width; i += 10 * span, text += 100) {
       if (span < 3 && text % 500) {
         continue;
       }
       ctx.fillText(text.toString(), i + 4, 16);
     }
 
-    text = 0 - Math.floor(this.store.data.origin.y / span / 10) * 100;
-    for (let i = this.store.data.origin.y % (span * 10); i < this.height; i += 10 * span, text += 100) {
+    text = 0 - Math.floor(y / span / 10) * 100;
+    if (y < 0) {
+      text -= 100;
+    }
+    for (let i = y % (span * 10); i < this.height; i += 10 * span, text += 100) {
       if (span < 3 && text % 500) {
         continue;
       }

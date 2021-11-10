@@ -11,6 +11,7 @@ export interface TopologyData {
   x: number;
   y: number;
   scale: number;
+  // 标尺起点
   origin: Point;
   center: Point;
   locked?: LockState;
