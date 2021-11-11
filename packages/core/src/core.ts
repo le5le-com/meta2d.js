@@ -328,6 +328,10 @@ export class Topology {
   }
 
   getPenRect(pen: Pen) {
+    if (!pen) {
+      return;
+    }
+
     return {
       x: (pen.x - this.store.data.origin.x) / this.store.data.scale,
       y: (pen.y - this.store.data.origin.y) / this.store.data.scale,
