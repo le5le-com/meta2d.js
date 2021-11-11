@@ -748,14 +748,14 @@ export class Canvas {
               if (pen.calculative.active) {
                 pen.calculative.active = undefined;
                 this.store.active.splice(
-                  this.store.active.findIndex((pen) => pen === pen),
+                  this.store.active.findIndex((p) => p === pen),
                   1
                 );
                 this.store.emitter.emit('inactive', [pen]);
               } else {
                 pen.calculative.active = true;
                 this.store.active.push(pen);
-                this.store.emitter.emit('active', [pen]);
+                this.store.emitter.emit('active', this.store.active);
               }
               this.dirty = true;
             } else if (e.altKey) {

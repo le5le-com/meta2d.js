@@ -917,6 +917,7 @@ export class Topology {
       }
       this.setValue(item);
     }
+    this.canvas.calcActiveRect();
     this.pushHistory({
       type: EditType.Update,
       initPens,
