@@ -1,3 +1,5 @@
+import { getRect, Rect } from '../rect';
+
 export class Scroll {
   h: HTMLElement;
   v: HTMLElement;
@@ -5,6 +7,14 @@ export class Scroll {
   isDownV: number;
   x: number;
   y: number;
+  hSize: number;
+  vSize: number;
+  scrollX: number;
+  scrollY: number;
+  lastScrollX: number;
+  lastScrollY: number;
+  rect: Rect;
+  isShow: boolean;
   constructor(public parent: any) {
     this.h = document.createElement('div');
     this.v = document.createElement('div');
@@ -45,6 +55,13 @@ export class Scroll {
       sheet.insertRule('.topology-scroll.v{right:0;top:calc(50% - 100px);}');
       sheet.insertRule('.topology-scroll.h{bottom:2px;left:calc(50% - 100px);width:200px;height:8px;}');
     }
+
+    this.init();
+  }
+
+  init() {
+    this.resize();
+    this.initPos();
   }
 
   private onMouseDownH = (e: MouseEvent) => {
@@ -53,6 +70,7 @@ export class Scroll {
 
     this.isDownH = e.x;
     this.x = this.parent.store.data.x || 0;
+    this.lastScrollX = this.scrollX;
   };
 
   private onMouseDownV = (e: MouseEvent) => {
@@ -61,21 +79,23 @@ export class Scroll {
 
     this.isDownV = e.y;
     this.y = this.parent.store.data.y || 0;
+    this.lastScrollY = this.scrollY;
   };
 
   private onMouseMove = (e: MouseEvent) => {
     if (this.isDownH) {
       const x = e.x - this.isDownH;
-      this.h.style.left = `calc(50% - ${100 - x}px)`;
-      this.parent.store.data.x = this.x - x;
+      this.scrollX = this.lastScrollX + x;
+      this.h.style.left = `${this.scrollX}px`;
+      this.parent.store.data.x = this.x - (x * this.rect.width) / this.parent.parentElement.clientWidth;
       this.parent.dirty = true;
     }
 
     if (this.isDownV) {
       const y = e.y - this.isDownV;
-      this.v.style.top = `calc(50% - ${100 - y}px)`;
-      this.parent.store.data.y = this.y - y;
-      console.log(123123, y, this.y);
+      this.scrollY = this.lastScrollY + y;
+      this.v.style.top = `${this.scrollY}px`;
+      this.parent.store.data.y = this.y - (y * this.rect.height) / this.parent.parentElement.clientHeight;
       this.parent.dirty = true;
     }
 
@@ -83,12 +103,113 @@ export class Scroll {
   };
 
   private onMouseUp = (e: MouseEvent) => {
-    this.isDownH = undefined;
-    this.h.style.left = '';
+    if (!this.isDownH && !this.isDownV) {
+      return;
+    }
 
+    this.isDownH = undefined;
     this.isDownV = undefined;
-    this.v.style.top = '';
+
+    if (this.scrollX < 20) {
+      this.scrollX = 20;
+      this.h.style.left = `${this.scrollX}px`;
+    } else if (this.scrollX > this.parent.parentElement.clientWidth - this.hSize - 20) {
+      this.scrollX = this.parent.parentElement.clientWidth - this.hSize - 20;
+      this.h.style.left = `${this.scrollX}px`;
+    }
+
+    if (this.scrollY < 20) {
+      this.scrollY = 20;
+      this.v.style.top = `${this.scrollY}px`;
+    } else if (this.scrollY > this.parent.parentElement.clientHeight - this.vSize - 20) {
+      this.scrollY = this.parent.parentElement.clientHeight - this.vSize - 20;
+      this.v.style.top = `${this.scrollY}px`;
+    }
+
+    this.resize();
   };
+
+  initPos() {
+    this.scrollX = (this.parent.parentElement.clientWidth - this.hSize) / 2;
+    this.scrollY = (this.parent.parentElement.clientHeight - this.vSize) / 2;
+    this.h.style.left = `${this.scrollX}px`;
+    this.v.style.top = `${this.scrollY}px`;
+  }
+
+  resize() {
+    this.rect = getRect(this.parent.store.data.pens);
+    if (this.rect.width < 1400) {
+      this.rect.width = 1400;
+    }
+    if (this.rect.height < 900) {
+      this.rect.height = 900;
+    }
+
+    if (this.parent.store.data.x > 0) {
+      this.rect.width += this.parent.store.data.x + (this.rect.x > 0 ? 0 : this.rect.x);
+    } else {
+      this.rect.width -= this.parent.store.data.x + (this.rect.x > 0 ? 0 : this.rect.x);
+    }
+
+    if (this.parent.store.data.y > 0) {
+      this.rect.height += this.parent.store.data.y + (this.rect.y > 0 ? 0 : this.rect.y);
+    } else {
+      this.rect.height -= this.parent.store.data.y + (this.rect.y > 0 ? 0 : this.rect.y);
+    }
+
+    if (this.rect.width < 1400) {
+      this.rect.width = 1400;
+    }
+    if (this.rect.height < 900) {
+      this.rect.height = 900;
+    }
+
+    this.hSize = (1000 * this.parent.parentElement.clientWidth) / this.rect.width / 3;
+    this.vSize = (1000 * this.parent.parentElement.clientHeight) / this.rect.height / 3;
+    this.h.style.width = this.hSize + 'px';
+    this.v.style.height = this.vSize + 'px';
+  }
+
+  show() {
+    this.isShow = true;
+    this.h.style.display = `block`;
+    this.v.style.display = `block`;
+    document.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mouseup', this.onMouseUp);
+  }
+
+  hide() {
+    this.isShow = false;
+    this.h.style.display = `none`;
+    this.v.style.display = `none`;
+    this.destroy();
+  }
+
+  translate(x: number, y: number) {
+    if (x) {
+      this.scrollX -= (x * this.parent.parentElement.clientWidth) / this.rect.width;
+      this.h.style.left = `${this.scrollX}px`;
+    }
+
+    if (y) {
+      this.scrollY -= (y * this.parent.parentElement.clientHeight) / this.rect.height;
+      this.v.style.top = `${this.scrollY}px`;
+    }
+  }
+
+  wheel(up?: boolean) {
+    let y = 10;
+    if (up) {
+      y = -10;
+    }
+
+    this.scrollY += y;
+    this.v.style.top = `${this.scrollY}px`;
+    this.parent.store.data.y += (y * this.rect.height) / this.parent.parentElement.clientHeight;
+    this.parent.dirty = true;
+
+    this.parent.render();
+  }
 
   destroy() {
     document.removeEventListener('mousemove', this.onMouseMove);

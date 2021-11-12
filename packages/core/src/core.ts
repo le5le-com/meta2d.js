@@ -142,6 +142,10 @@ export class Topology {
     this.canvas.resize(width, height);
     this.canvas.render();
     this.store.emitter.emit('resize', { width, height });
+
+    if (this.canvas.scroll && this.canvas.scroll.isShow) {
+      this.canvas.scroll.init();
+    }
   }
 
   addPen(pen: Pen, history?: boolean) {
@@ -207,6 +211,10 @@ export class Topology {
     this.startAnimate();
     this.doInitJS();
     this.store.emitter.emit('opened');
+
+    if (this.canvas.scroll && this.canvas.scroll.isShow) {
+      this.canvas.scroll.init();
+    }
   }
 
   connectSocket() {
@@ -702,7 +710,7 @@ export class Topology {
             this.store.data.locked && this.doEvent(pen, eventName);
           });
         }
-        this.updateMap();
+        this.onSizeUpdate();
         break;
       case 'enter':
       case 'leave':
@@ -731,7 +739,7 @@ export class Topology {
       case 'translatePens':
       case 'rotatePens':
       case 'resizePens':
-        this.updateMap();
+        this.onSizeUpdate();
         break;
     }
   };
@@ -1030,15 +1038,18 @@ export class Topology {
     this.map.hide();
   }
 
-  updateMap() {
+  onSizeUpdate() {
     if (this.mapTimer) {
       clearTimeout(this.mapTimer);
       this.mapTimer = undefined;
     }
 
-    setTimeout(() => {
+    this.mapTimer = setTimeout(() => {
       if (this.map && this.map.isShow) {
         this.map.show();
+      }
+      if (this.canvas.scroll && this.canvas.scroll.isShow) {
+        this.canvas.scroll.resize();
       }
     }, 500);
   }
