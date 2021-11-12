@@ -155,7 +155,9 @@ export class Canvas {
     this.magnifierScreen.height = this.magnifierSize + 5;
 
     this.tooltip = new Tooltip(parentElement);
-    this.scroll = new Scroll(this);
+    if (this.store.options.scroll) {
+      this.scroll = new Scroll(this);
+    }
 
     this.store.dpiRatio = window ? window.devicePixelRatio : 1;
 
@@ -240,6 +242,11 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
+    if (this.store.options.scroll && !e.ctrlKey && this.scroll) {
+      this.scroll.wheel(e.deltaY < 0);
+      return;
+    }
+
     if (this.store.options.disableScale) {
       return;
     }
@@ -950,7 +957,7 @@ export class Canvas {
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
-        if(e.ctrlKey && !this.alreadyCopy) {
+        if (e.ctrlKey && !this.alreadyCopy) {
           this.alreadyCopy = true;
           this.copy();
           this.paste();
@@ -2126,6 +2133,9 @@ export class Canvas {
       y: this.store.data.y,
     });
     this.tooltip.translate(x, y);
+    if (this.scroll && this.scroll.isShow) {
+      this.scroll.translate(x, y);
+    }
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {

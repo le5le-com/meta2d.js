@@ -64,6 +64,7 @@ export interface Options {
   interval?: number;
   animateInterval?: number;
   dragAllIn?: boolean;
+  scroll?: boolean;
 }
 
 export const defaultOptions: Options = {
@@ -94,4 +95,5 @@ export const defaultOptions: Options = {
   drawingLineName: 'curve',
   interval: 20,
   animateInterval: 30,
+  scroll: true,
 };
