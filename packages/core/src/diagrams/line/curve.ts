@@ -164,7 +164,7 @@ export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
   return anchor;
 }
 
-export function curveMind(store: TopologyStore, pen: Pen, mousedwon?: Point) {
+export function mind(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }
