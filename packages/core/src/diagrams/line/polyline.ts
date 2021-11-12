@@ -4,7 +4,7 @@ import { Point } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
-export function ployline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
+export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }
