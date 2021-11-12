@@ -670,6 +670,10 @@ export class Topology {
       this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
 
+    if (!this.store.data.locked && this.store.active.length) {
+      this.canvas.calcActiveRect();
+    }
+
     this.render(Infinity);
   }
 
