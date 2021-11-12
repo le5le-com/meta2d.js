@@ -134,6 +134,8 @@ export class Canvas {
   magnifier: boolean;
   mousePos: Point = { x: 0, y: 0 };
   magnifierSize = 300;
+  // true 已经复制
+  private alreadyCopy: boolean = false;
 
   scroll: Scroll;
 
@@ -752,14 +754,14 @@ export class Canvas {
               if (pen.calculative.active) {
                 pen.calculative.active = undefined;
                 this.store.active.splice(
-                  this.store.active.findIndex((pen) => pen === pen),
+                  this.store.active.findIndex((p) => p === pen),
                   1
                 );
                 this.store.emitter.emit('inactive', [pen]);
               } else {
                 pen.calculative.active = true;
                 this.store.active.push(pen);
-                this.store.emitter.emit('active', [pen]);
+                this.store.emitter.emit('active', this.store.active);
               }
               this.dirty = true;
             } else if (e.altKey) {
@@ -947,6 +949,13 @@ export class Canvas {
 
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
+        // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
+        if(e.ctrlKey && !this.alreadyCopy) {
+          this.alreadyCopy = true;
+          this.copy();
+          this.paste();
+          return;
+        }
         this.movePens(e);
         return;
       }
@@ -1078,6 +1087,7 @@ export class Canvas {
     this.dragRect = undefined;
     this.initActiveRect = undefined;
     this.updatingPens = undefined;
+    this.alreadyCopy = false;
   };
 
   inactive(drawing?: boolean) {
@@ -2277,7 +2287,7 @@ export class Canvas {
     }, 200);
   }
 
-  movePens(e: { x: number; y: number; ctrlKey?: boolean; shiftKey?: boolean }) {
+  movePens(e: { x: number; y: number; ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean }) {
     if (!this.activeRect || this.store.data.locked) {
       return;
     }
@@ -2308,7 +2318,7 @@ export class Canvas {
     if (e.shiftKey) {
       x = 0;
     }
-    if (e.ctrlKey) {
+    if (e.altKey) {
       y = 0;
     }
 
