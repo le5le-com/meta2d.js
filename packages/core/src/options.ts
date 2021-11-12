@@ -60,7 +60,7 @@ export interface Options {
   drawingLineName?: string;
   fromArrow?: string;
   toArrow?: string;
-  autoPloyline?: string;
+  autoPolyline?: boolean;
   interval?: number;
   animateInterval?: number;
   dragAllIn?: boolean;
@@ -95,4 +95,5 @@ export const defaultOptions: Options = {
   drawingLineName: 'curve',
   interval: 20,
   animateInterval: 30,
+  autoPolyline: true,
 };
