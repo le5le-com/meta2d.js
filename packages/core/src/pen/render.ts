@@ -1600,3 +1600,17 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
     elem.style.pointerEvents = 'none';
   }
 }
+
+/**
+ * 画笔们的 locked >= 1
+ * @param pens 画笔
+ * @returns 
+ */
+export function getPensLock(pens: Pen[]): boolean {
+  for (const pen of pens) {
+    if(!pen.locked){
+       return false;
+    }
+  }
+  return true;
+}

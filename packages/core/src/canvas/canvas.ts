@@ -30,6 +30,7 @@ import {
   getAllChildren,
   setElemPosition,
   randomId,
+  getPensLock,
 } from '../pen';
 import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, scalePoint, translatePoint } from '../point';
 import {
@@ -250,7 +251,8 @@ export class Canvas {
     if (this.store.options.disableScale) {
       return;
     }
-
+    if (this.store.data.locked === LockState.Disable)
+      return;
     const isTouchPad = e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0;
     const now = performance.now();
     if (now - this.touchStart < 50) {
@@ -282,7 +284,7 @@ export class Canvas {
 
   onkeydown = (e: KeyboardEvent) => {
     if (
-      this.store.data.locked ||
+      this.store.data.locked >= LockState.DisableMove ||
       (e.target as HTMLElement).tagName === 'INPUT' ||
       (e.target as HTMLElement).tagName === 'TEXTAREA'
     ) {
@@ -340,7 +342,7 @@ export class Canvas {
         break;
       case 'Delete':
       case 'Backspace':
-        this.delete();
+        !this.store.data.locked && this.delete();
         break;
       case 'ArrowLeft':
         x = -10;
@@ -957,7 +959,7 @@ export class Canvas {
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
-        if (e.ctrlKey && !this.alreadyCopy) {
+        if (!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
           this.alreadyCopy = true;
           this.copy();
           this.paste();
@@ -1194,7 +1196,8 @@ export class Canvas {
     this.store.pointAtIndex = undefined;
     const activeLine = this.store.active.length === 1 && this.store.active[0].type;
     if (!this.drawingLineName && this.activeRect && !activeLine && !this.store.data.locked) {
-      if (!this.store.options.disableRotate) {
+      const activePensLock = getPensLock(this.store.active);
+      if (!this.store.options.disableRotate && !activePensLock) {
         const rotatePt = {
           x: this.activeRect.center.x,
           y: this.activeRect.y - 30,
@@ -1212,6 +1215,8 @@ export class Canvas {
       // 大小控制点
       if (!this.hotkeyType || this.hotkeyType === HotkeyType.Resize) {
         for (let i = 0; i < 4; i++) {
+          if(activePensLock)
+            break;
           if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
             let cursors = defaultCursors;
             let offset = 0;
@@ -1989,6 +1994,10 @@ export class Canvas {
         ctx.strokeRect(this.activeRect.x, this.activeRect.y, this.activeRect.width, this.activeRect.height);
 
         ctx.globalAlpha = 1;
+        if(getPensLock(this.store.active)){
+          ctx.restore();
+          return;
+        }
         // Draw rotate control point.
         ctx.beginPath();
         ctx.moveTo(this.activeRect.center.x, this.activeRect.y);
@@ -2076,24 +2085,26 @@ export class Canvas {
       this.activeRect &&
       !(this.store.active.length === 1 && this.store.active[0].type)
     ) {
-      ctx.strokeStyle = this.store.options.activeColor;
-      ctx.fillStyle = '#ffffff';
-      this.sizeCPs.forEach((pt, i) => {
-        if (this.activeRect.rotate) {
-          ctx.save();
-          ctx.translate(pt.x, pt.y);
-          ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
-          ctx.translate(-pt.x, -pt.y);
-        }
-        if (i < 4 || this.hotkeyType === HotkeyType.Resize) {
-          ctx.beginPath();
-          ctx.fillRect(pt.x - 4.5, pt.y - 4.5, 8, 8);
-          ctx.strokeRect(pt.x - 5.5, pt.y - 5.5, 10, 10);
-        }
-        if (this.activeRect.rotate) {
-          ctx.restore();
-        }
-      });
+      if(!getPensLock(this.store.active)){
+        ctx.strokeStyle = this.store.options.activeColor;
+        ctx.fillStyle = '#ffffff';
+        this.sizeCPs.forEach((pt, i) => {
+          if (this.activeRect.rotate) {
+            ctx.save();
+            ctx.translate(pt.x, pt.y);
+            ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
+            ctx.translate(-pt.x, -pt.y);
+          }
+          if (i < 4 || this.hotkeyType === HotkeyType.Resize) {
+            ctx.beginPath();
+            ctx.fillRect(pt.x - 4.5, pt.y - 4.5, 8, 8);
+            ctx.strokeRect(pt.x - 5.5, pt.y - 5.5, 10, 10);
+          }
+          if (this.activeRect.rotate) {
+            ctx.restore();
+          }
+        });
+      }
     }
 
     if (!this.store.data.locked && this.dragRect) {
@@ -2589,6 +2600,9 @@ export class Canvas {
       if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
         return;
       }
+      if (pen.locked >= LockState.DisableMove) { // 禁止移动
+        return;
+      }
 
       if (pen.type) {
         translateLine(pen, x, y);
@@ -2696,12 +2710,13 @@ export class Canvas {
   }
 
   calcActiveRect() {
-    if (this.store.active.length === 1) {
-      this.activeRect = deepClone(this.store.active[0].calculative.worldRect);
-      this.activeRect.rotate = this.store.active[0].calculative.rotate || 0;
+    const canMovePens = this.store.active.filter((pen: Pen) => !pen.locked || pen.locked < LockState.DisableMove)
+    if (canMovePens.length === 1) {
+      this.activeRect = deepClone(canMovePens[0].calculative.worldRect);
+      this.activeRect.rotate = canMovePens[0].calculative.rotate || 0;
       calcCenter(this.activeRect);
     } else {
-      this.activeRect = getRect(this.store.active);
+      this.activeRect = getRect(canMovePens);
       this.activeRect.rotate = 0;
     }
     this.lastRotate = 0;
@@ -2939,6 +2954,9 @@ export class Canvas {
     }
 
     pens.forEach((pen) => {
+      // TODO: 删除方法无法删除锁住的画笔
+      if (pen.locked)
+        return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
       if (i > -1) {
         this.store.data.pens.splice(i, 1);
