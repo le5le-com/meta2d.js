@@ -48,7 +48,7 @@ import { EditAction, EditType, globalStore, TopologyStore } from '../store';
 import { deepClone, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, curveMind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
+import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
@@ -172,7 +172,7 @@ export class Canvas {
 
     this['curve'] = curve;
     this['polyline'] = polyline;
-    this['curveMind'] = curveMind;
+    this['mind'] = mind;
 
     window && window.addEventListener('resize', this.onResize);
   }
@@ -663,7 +663,7 @@ export class Canvas {
       }
 
       // 右键，完成绘画
-      if (e.buttons === 2) {
+      if (e.buttons === 2 || this.drawingLineName === 'mind') {
         this.finishDrawline(true);
         return;
       }
@@ -1724,8 +1724,8 @@ export class Canvas {
         this.pushHistory({ type: EditType.Add, pens: [this.drawingLine] });
       }
     }
-    this.drawline();
-    this.render();
+    this.store.path2dMap.set(this.drawingLine, globalStore.path2dDraws[this.drawingLine.name](this.drawingLine));
+    this.render(Infinity);
     this.drawingLine = undefined;
     this.drawingLineName = undefined;
   }

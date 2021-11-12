@@ -19,13 +19,12 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     return;
   }
   from.next = undefined;
+  deleteTempAnchor(pen);
 
   if (from.x === to.x || from.y === to.y) {
-    pen.calculative.worldAnchors = [from, to];
+    pen.calculative.worldAnchors.push(to);
     return;
   }
-
-  deleteTempAnchor(pen);
 
   const pts: Point[] = [];
 
