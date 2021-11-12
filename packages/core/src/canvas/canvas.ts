@@ -51,6 +51,7 @@ import { createOffscreen } from './offscreen';
 import { curve, curveMind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
 import { ployline } from '../diagrams/line/ployline';
 import { Tooltip } from '../tooltip';
+import { Scroll } from '../scroll';
 
 declare const window: any;
 
@@ -134,6 +135,8 @@ export class Canvas {
   mousePos: Point = { x: 0, y: 0 };
   magnifierSize = 300;
 
+  scroll: Scroll;
+
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.background = '#f4f4f4';
@@ -150,6 +153,7 @@ export class Canvas {
     this.magnifierScreen.height = this.magnifierSize + 5;
 
     this.tooltip = new Tooltip(parentElement);
+    this.scroll = new Scroll(this);
 
     this.store.dpiRatio = window ? window.devicePixelRatio : 1;
 
@@ -3458,6 +3462,8 @@ export class Canvas {
   }
 
   destroy() {
+    this.scroll.destroy();
+
     // ios
     this.externalElements.removeEventListener('gesturestart', this.onGesturestart);
 
