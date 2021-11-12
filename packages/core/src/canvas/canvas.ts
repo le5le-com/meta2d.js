@@ -52,6 +52,7 @@ import { createOffscreen } from './offscreen';
 import { curve, curveMind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
 import { ployline } from '../diagrams/line/ployline';
 import { Tooltip } from '../tooltip';
+import { Scroll } from '../scroll';
 
 declare const window: any;
 
@@ -137,6 +138,8 @@ export class Canvas {
   // true 已经复制
   private alreadyCopy: boolean = false;
 
+  scroll: Scroll;
+
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.background = '#f4f4f4';
@@ -153,6 +156,9 @@ export class Canvas {
     this.magnifierScreen.height = this.magnifierSize + 5;
 
     this.tooltip = new Tooltip(parentElement);
+    if (this.store.options.scroll) {
+      this.scroll = new Scroll(this);
+    }
 
     this.store.dpiRatio = window ? window.devicePixelRatio : 1;
 
@@ -237,6 +243,11 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
+    if (this.store.options.scroll && !e.ctrlKey && this.scroll) {
+      this.scroll.wheel(e.deltaY < 0);
+      return;
+    }
+
     if (this.store.options.disableScale) {
       return;
     }
@@ -948,7 +959,7 @@ export class Canvas {
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
-        if(!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
+        if (!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
           this.alreadyCopy = true;
           this.copy();
           this.paste();
@@ -2133,6 +2144,9 @@ export class Canvas {
       y: this.store.data.y,
     });
     this.tooltip.translate(x, y);
+    if (this.scroll && this.scroll.isShow) {
+      this.scroll.translate(x, y);
+    }
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
@@ -3486,6 +3500,8 @@ export class Canvas {
   }
 
   destroy() {
+    this.scroll.destroy();
+
     // ios
     this.externalElements.removeEventListener('gesturestart', this.onGesturestart);
 
