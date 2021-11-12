@@ -95,5 +95,4 @@ export const defaultOptions: Options = {
   drawingLineName: 'curve',
   interval: 20,
   animateInterval: 30,
-  scroll: true,
 };
