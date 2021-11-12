@@ -617,7 +617,7 @@ export class Canvas {
       return;
     }
 
-    if (e.buttons === 2) {
+    if (e.buttons === 2 && !this.drawingLine) {
       this.mouseRight = MouseRight.TranslateOrContextMenu;
     }
 
@@ -1011,6 +1011,8 @@ export class Canvas {
 
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
+
+    console.log(this.drawingLine);
 
     if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
       this.store.emitter.emit('contextmenu', {
