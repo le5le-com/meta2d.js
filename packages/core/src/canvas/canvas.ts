@@ -50,7 +50,7 @@ import { deepClone, formatPadding, isMobile, Padding, rgba, s8 } from '../utils'
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
 import { curve, curveMind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
-import { ployline } from '../diagrams/line/ployline';
+import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
 
@@ -172,7 +172,7 @@ export class Canvas {
     this.listen();
 
     this['curve'] = curve;
-    this['ployline'] = ployline;
+    this['polyline'] = polyline;
     this['curveMind'] = curveMind;
 
     window && window.addEventListener('resize', this.onResize);
@@ -867,7 +867,7 @@ export class Canvas {
       const pt: Point = { ...e };
       pt.id = s8();
       pt.penId = this.drawingLine.id;
-      if (this.mouseDown && this.drawingLineName !== 'ployline') {
+      if (this.mouseDown && this.drawingLineName !== 'polyline') {
         this.drawline(pt);
       } else {
         let to: Point;
@@ -1032,7 +1032,7 @@ export class Canvas {
       this.hoverType < HoverType.Line &&
       this.drawingLine &&
       this.drawingLine.calculative.worldAnchors.length > 1 &&
-      this.drawingLineName === 'ployline'
+      this.drawingLineName === 'polyline'
     ) {
       const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
       to.connectTo = this.store.hover.id;
@@ -1671,6 +1671,7 @@ export class Canvas {
     if (!this.drawingLine) {
       return;
     }
+
     if (this[this.drawingLineName]) {
       this[this.drawingLineName](this.store, this.drawingLine, mouse);
     }
@@ -2678,7 +2679,7 @@ export class Canvas {
       }
 
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
-      if ((this.store.options.autoPloyline || line.autoPloyline) && line.lineName === 'ployline') {
+      if ((this.store.options.autoPolyline || line.autoPolyline) && line.lineName === 'polyline') {
         let from = line.calculative.worldAnchors[0];
         let to = line.calculative.worldAnchors[line.calculative.worldAnchors.length - 1];
 
@@ -2694,7 +2695,7 @@ export class Canvas {
         if (found) {
           line.calculative.worldAnchors = [from, to];
           line.calculative.activeAnchor = from;
-          this['ployline'](this.store, line, to);
+          this['polyline'](this.store, line, to);
           this.initLineRect(line);
         }
       }

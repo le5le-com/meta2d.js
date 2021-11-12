@@ -1,4 +1,4 @@
 export * from './line';
 export * from './curve';
-export * from './ployline';
+export * from './polyline';
 export * from './smooth';

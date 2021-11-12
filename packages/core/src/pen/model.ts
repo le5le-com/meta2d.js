@@ -192,7 +192,7 @@ export interface Pen extends Rect {
   verticalProgress?: boolean;
   externElement?: boolean;
 
-  autoPloyline?: boolean;
+  autoPolyline?: boolean;
 
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
