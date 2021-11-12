@@ -8,6 +8,7 @@ export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: 
   if (!arrows[pen.fromArrow]) {
     return;
   }
+  ctx.save();
   const from = pen.calculative.worldAnchors[0];
   const { x, y } = from;
   const pt: Point = { x, y };
@@ -23,13 +24,16 @@ export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: 
     }
   }
   ctx.beginPath();
+  ctx.strokeStyle = pen.fromArrowColor || pen.calculative.color;
   arrows[pen.fromArrow](ctx, pen, store, pt);
+  ctx.restore();
 }
 
 export function renderToArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
   if (!arrows[pen.toArrow] || pen.calculative.worldAnchors.length < 2) {
     return;
   }
+  ctx.save();
   const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
   const { x, y } = to;
   const pt: Point = { x, y };
@@ -45,7 +49,9 @@ export function renderToArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: To
     }
   }
   ctx.beginPath();
+  ctx.strokeStyle = pen.toArrowColor || pen.calculative.color;
   arrows[pen.toArrow](ctx, pen, store, pt);
+  ctx.restore();
 }
 
 arrows.triangleSolid = (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => {

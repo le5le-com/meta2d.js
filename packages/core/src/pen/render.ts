@@ -435,11 +435,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconSize}px ${pen.iconFamily}`;
+      ctx.font = `${pen.calculative.iconSize}px ${pen.calculative.iconFamily}`;
     } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${iconRect.height}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.height}px ${pen.calculative.iconFamily}`;
     } else {
-      ctx.font = `${iconRect.width}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.width}px ${pen.calculative.iconFamily}`;
     }
     ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
 
@@ -708,11 +708,11 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: Top
     let y = iconRect.y + iconRect.height / 2;
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconSize}px ${pen.iconFamily}`;
+      ctx.font = `${pen.calculative.iconSize}px ${pen.calculative.iconFamily}`;
     } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${iconRect.height}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.height}px ${pen.calculative.iconFamily}`;
     } else {
-      ctx.font = `${iconRect.width}px ${pen.iconFamily}`;
+      ctx.font = `${iconRect.width}px ${pen.calculative.iconFamily}`;
     }
     ctx.fillStyle = pen.iconColor || pen.textColor || store.options.textColor;
 
@@ -1396,7 +1396,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
         }
         pen.calculative.rotate = (pen.calculative._rotate + (frame[k] - pen.lastFrame[k]) * process) % 360;
         pen.calculative.dirty = true;
-      } else if (typeof frame[k] === 'number' && pen.linear !== false) {
+      } else if (isLinear(frame[k], k, pen)) {
         if (!pen.lastFrame[k]) {
           pen.lastFrame[k] = 0;
         }
@@ -1423,6 +1423,19 @@ export function setNodeAnimate(pen: Pen, now: number) {
   }
 
   return true;
+}
+
+/**
+ * 值类型为 number , pen.linear 为 false 时，且 key 不属于 noLinear 时，返回 true
+ * @param value 值
+ * @param key 键值
+ * @param pen 画笔
+ * @returns 
+ */
+function isLinear(value: any, key: string, pen: Pen): boolean {
+  // 不线性变化的属性
+  const noLinear = ['strokeType', 'bkType'];
+  return typeof value === 'number' && pen.linear !== false && !noLinear.includes(key);
 }
 
 export function setLineAnimate(pen: Pen, now: number) {

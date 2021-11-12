@@ -1,6 +1,7 @@
 export class Map {
   box: HTMLElement;
   img: HTMLImageElement;
+  isShow: boolean;
   isDown: boolean;
   constructor(public parent: any) {
     this.box = document.createElement('div');
@@ -40,10 +41,19 @@ export class Map {
 
   show() {
     this.box.style.display = 'flex';
+
+    if (this.parent.store.data.pens.length) {
+      this.img.style.display = 'block';
+      this.img.src = this.parent.toPng();
+    } else {
+      this.img.style.display = 'none';
+    }
+    this.isShow = true;
   }
 
   hide() {
     this.box.style.display = 'none';
+    this.isShow = false;
   }
 
   private onMouseDown = (e: MouseEvent) => {

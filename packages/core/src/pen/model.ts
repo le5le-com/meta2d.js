@@ -21,10 +21,10 @@ export enum AnchorMode {
   Out,
 }
 
-export enum Gradient{
-  None,  // 没有渐变
-  Linear,   // 线性渐变
-  Radial,  // 镜像渐变
+export enum Gradient {
+  None, // 没有渐变
+  Linear, // 线性渐变
+  Radial, // 镜像渐变
 }
 
 export interface Pen extends Rect {
@@ -33,6 +33,7 @@ export interface Pen extends Rect {
   parentId?: string;
   type?: PenType;
   name?: string;
+  lineName?: string;
   borderRadius?: number;
   layer?: number;
   // Hidden only visible === false
@@ -191,6 +192,8 @@ export interface Pen extends Rect {
   verticalProgress?: boolean;
   externElement?: boolean;
 
+  autoPloyline?: boolean;
+
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -229,7 +232,7 @@ export interface Pen extends Rect {
     gradientToColor?: string;
     gradientAngle?: number;
     gradientRadius?: number;
-    
+
     // TODO: stroke 尚无径向渐变
     strokeType?: Gradient;
     lineGradientFromColor?: string;
@@ -262,6 +265,7 @@ export interface Pen extends Rect {
     iconTop?: number;
     iconLeft?: number;
     iconColor?: string;
+    iconFamily?: string;
 
     // 绝对值，计算后的结果
     paddingTop?: number;

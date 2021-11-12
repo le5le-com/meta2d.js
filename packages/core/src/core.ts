@@ -34,6 +34,7 @@ export class Topology {
   socketFn: Function;
   events: any = {};
   map: Map;
+  mapTimer: any;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
@@ -239,6 +240,22 @@ export class Topology {
     this.canvas.finishPencil();
   }
 
+  updateLineType(pen: Pen, lineName: string) {
+    if (!pen || pen.name != 'line' || !lineName || !this.canvas[lineName]) {
+      return;
+    }
+
+    pen.lineName = lineName;
+    const from = pen.calculative.worldAnchors[0];
+    const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    pen.calculative.worldAnchors = [from, to];
+    pen.calculative.activeAnchor = from;
+    this.canvas[lineName](this.store, pen, to);
+    pen.calculative.activeAnchor = undefined;
+    this.canvas.initLineRect(pen);
+    this.render(Infinity);
+  }
+
   addDrawLineFn(fnName: string, fn: Function) {
     this.canvas[fnName] = fn;
     this.canvas.drawLineFns.push(fnName);
@@ -308,6 +325,29 @@ export class Topology {
     return this.store.data.pens.filter((pen) => {
       return pen.id == idOrTag || (pen.tags && pen.tags.indexOf(idOrTag) > -1);
     });
+  }
+
+  getPenRect(pen: Pen) {
+    if (!pen) {
+      return;
+    }
+
+    return {
+      x: (pen.x - this.store.data.origin.x) / this.store.data.scale,
+      y: (pen.y - this.store.data.origin.y) / this.store.data.scale,
+      width: pen.width / this.store.data.scale,
+      height: pen.height / this.store.data.scale,
+    };
+  }
+
+  setPenRect(pen: Pen, rect: Rect, render = true) {
+    pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
+    pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
+    pen.width = rect.width * this.store.data.scale;
+    pen.height = rect.height * this.store.data.scale;
+    this.canvas.dirtyPenRect(pen);
+
+    render && this.render();
   }
 
   startAnimate(idOrTagOrPens?: string | Pen[]) {
@@ -505,6 +545,14 @@ export class Topology {
     this.canvas.paste();
   }
 
+  undo() {
+    this.canvas.undo();
+  }
+
+  redo() {
+    this.canvas.redo();
+  }
+
   listenSocket() {
     if (this.socketFn) {
       this.off('socket', this.socketFn as any);
@@ -612,7 +660,7 @@ export class Topology {
       pen.calculative.image = undefined;
 
       if (data.x != null || data.y != null || data.width != null || data.height != null) {
-        this.canvas.dirtyPenRect(pen);
+        this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
         this.canvas.updateLines(pen, true);
       }
       if (data.image) {
@@ -621,6 +669,10 @@ export class Topology {
       pen.onValue && pen.onValue(pen);
       this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
+
+    if (!this.store.data.locked && this.store.active.length) {
+      this.canvas.calcActiveRect();
+    }
 
     this.render(Infinity);
   }
@@ -650,6 +702,7 @@ export class Topology {
             this.store.data.locked && this.doEvent(pen, eventName);
           });
         }
+        this.updateMap();
         break;
       case 'enter':
       case 'leave':
@@ -672,6 +725,13 @@ export class Topology {
       case 'valueUpdate':
         e.onValue && e.onValue(e);
         this.store.data.locked && this.doEvent(e, eventName);
+        break;
+      case 'update':
+      case 'delete':
+      case 'translatePens':
+      case 'rotatePens':
+      case 'resizePens':
+        this.updateMap();
         break;
     }
   };
@@ -861,6 +921,7 @@ export class Topology {
       }
       this.setValue(item);
     }
+    this.canvas.calcActiveRect();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -962,12 +1023,24 @@ export class Topology {
     if (!this.map) {
       this.map = new Map(this.canvas);
     }
-    this.map.img.src = this.canvas.toPng();
     this.map.show();
   }
 
   hideMap() {
     this.map.hide();
+  }
+
+  updateMap() {
+    if (this.mapTimer) {
+      clearTimeout(this.mapTimer);
+      this.mapTimer = undefined;
+    }
+
+    setTimeout(() => {
+      if (this.map && this.map.isShow) {
+        this.map.show();
+      }
+    }, 500);
   }
 
   toggleAnchorMode() {
