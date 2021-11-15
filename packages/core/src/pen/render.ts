@@ -31,7 +31,13 @@ export function getAllChildren(store: TopologyStore, pen: Pen) {
 }
 
 function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  return linearGradient(ctx, pen.calculative.worldRect, pen.calculative.gradientFromColor, pen.calculative.gradientToColor, pen.calculative.gradientAngle);
+  return linearGradient(
+    ctx,
+    pen.calculative.worldRect,
+    pen.calculative.gradientFromColor,
+    pen.calculative.gradientToColor,
+    pen.calculative.gradientAngle
+  );
 }
 
 /**
@@ -67,7 +73,13 @@ function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  return linearGradient(ctx, pen.calculative.worldRect, pen.calculative.lineGradientFromColor, pen.calculative.lineGradientToColor, pen.calculative.lineGradientAngle);
+  return linearGradient(
+    ctx,
+    pen.calculative.worldRect,
+    pen.calculative.lineGradientFromColor,
+    pen.calculative.lineGradientToColor,
+    pen.calculative.lineGradientAngle
+  );
 }
 
 /**
@@ -77,23 +89,23 @@ function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
  * @returns 线性渐变
  */
 function linearGradient(
-  ctx: CanvasRenderingContext2D, 
-  worldRect: Rect, 
-  fromColor: string, 
-  toColor: string, 
-  angle: number)
-{
+  ctx: CanvasRenderingContext2D,
+  worldRect: Rect,
+  fromColor: string,
+  toColor: string,
+  angle: number
+) {
   if (!fromColor || !toColor) {
     return;
   }
 
   const from: Point = {
     x: worldRect.x,
-    y: worldRect.center.y
-  }
+    y: worldRect.center.y,
+  };
   const to: Point = {
     x: worldRect.ex,
-    y: worldRect.center.y
+    y: worldRect.center.y,
   };
   if (angle % 90 === 0 && angle % 180) {
     if (angle % 270) {
@@ -118,7 +130,6 @@ function linearGradient(
   grd.addColorStop(1, toColor);
   return grd;
 }
-
 
 export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D, store: TopologyStore) {
   if (!pen.gif && pen.calculative.gif && pen.calculative.img) {
@@ -162,7 +173,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     } else {
       let stroke: string | CanvasGradient | CanvasPattern;
       // TODO: 线只有线性渐变
-      if(pen.calculative.strokeType === Gradient.Linear){
+      if (pen.calculative.strokeType === Gradient.Linear) {
         stroke = strokeLinearGradient(ctx, pen);
       } else {
         stroke = pen.calculative.color;
@@ -177,9 +188,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       }
     } else {
       let back: string | CanvasGradient | CanvasPattern;
-      if(pen.calculative.bkType === Gradient.Linear){
+      if (pen.calculative.bkType === Gradient.Linear) {
         back = drawBkLinearGradient(ctx, pen);
-      } else if (pen.calculative.bkType === Gradient.Radial){
+      } else if (pen.calculative.bkType === Gradient.Radial) {
         back = drawBkRadialGradient(ctx, pen);
       } else {
         back = pen.calculative.background;
@@ -915,6 +926,7 @@ export function calcWorldRects(store: TopologyStore, pen: Pen) {
   }
 
   pen.calculative.worldRect = rect;
+  console.log(3333, pen);
   // 这里的 rect 均是绝对值
   calcPadding(pen, rect);
 
@@ -1430,7 +1442,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
  * @param value 值
  * @param key 键值
  * @param pen 画笔
- * @returns 
+ * @returns
  */
 function isLinear(value: any, key: string, pen: Pen): boolean {
   // 不线性变化的属性
@@ -1604,12 +1616,12 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
 /**
  * 画笔们的 locked >= 1
  * @param pens 画笔
- * @returns 
+ * @returns
  */
 export function getPensLock(pens: Pen[]): boolean {
   for (const pen of pens) {
-    if(!pen.locked){
-       return false;
+    if (!pen.locked) {
+      return false;
     }
   }
   return true;

@@ -1650,8 +1650,10 @@ export class Canvas {
       }
     }
     pen.calculative.image = undefined;
-
     if (!pen.anchors && globalStore.anchors[pen.name]) {
+      if (!pen.anchors) {
+        pen.anchors = [];
+      }
       globalStore.anchors[pen.name](pen);
     }
 
