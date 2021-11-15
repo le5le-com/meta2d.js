@@ -251,8 +251,7 @@ export class Canvas {
     if (this.store.options.disableScale) {
       return;
     }
-    if (this.store.data.locked === LockState.Disable)
-      return;
+    if (this.store.data.locked === LockState.Disable) return;
     const isTouchPad = e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0;
     const now = performance.now();
     if (now - this.touchStart < 50) {
@@ -1018,8 +1017,6 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
-    console.log(this.drawingLine);
-
     if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
       this.store.emitter.emit('contextmenu', {
         e,
@@ -1219,8 +1216,7 @@ export class Canvas {
       // 大小控制点
       if (!this.hotkeyType || this.hotkeyType === HotkeyType.Resize) {
         for (let i = 0; i < 4; i++) {
-          if(activePensLock)
-            break;
+          if (activePensLock) break;
           if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
             let cursors = defaultCursors;
             let offset = 0;
@@ -1998,7 +1994,7 @@ export class Canvas {
         ctx.strokeRect(this.activeRect.x, this.activeRect.y, this.activeRect.width, this.activeRect.height);
 
         ctx.globalAlpha = 1;
-        if(getPensLock(this.store.active)){
+        if (getPensLock(this.store.active)) {
           ctx.restore();
           return;
         }
@@ -2089,7 +2085,7 @@ export class Canvas {
       this.activeRect &&
       !(this.store.active.length === 1 && this.store.active[0].type)
     ) {
-      if(!getPensLock(this.store.active)){
+      if (!getPensLock(this.store.active)) {
         ctx.strokeStyle = this.store.options.activeColor;
         ctx.fillStyle = '#ffffff';
         this.sizeCPs.forEach((pt, i) => {
@@ -2604,7 +2600,8 @@ export class Canvas {
       if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
         return;
       }
-      if (pen.locked >= LockState.DisableMove) { // 禁止移动
+      if (pen.locked >= LockState.DisableMove) {
+        // 禁止移动
         return;
       }
 
@@ -2714,7 +2711,7 @@ export class Canvas {
   }
 
   calcActiveRect() {
-    const canMovePens = this.store.active.filter((pen: Pen) => !pen.locked || pen.locked < LockState.DisableMove)
+    const canMovePens = this.store.active.filter((pen: Pen) => !pen.locked || pen.locked < LockState.DisableMove);
     if (canMovePens.length === 1) {
       this.activeRect = deepClone(canMovePens[0].calculative.worldRect);
       this.activeRect.rotate = canMovePens[0].calculative.rotate || 0;
@@ -2959,8 +2956,7 @@ export class Canvas {
 
     pens.forEach((pen) => {
       // TODO: 删除方法无法删除锁住的画笔
-      if (pen.locked)
-        return;
+      if (pen.locked) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
       if (i > -1) {
         this.store.data.pens.splice(i, 1);
