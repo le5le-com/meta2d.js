@@ -205,7 +205,7 @@ export class Scroll {
 
     this.scrollY += y;
     this.v.style.top = `${this.scrollY}px`;
-    this.parent.store.data.y += (y * this.rect.height) / this.parent.parentElement.clientHeight;
+    this.parent.store.data.y -= (y * this.rect.height) / this.parent.parentElement.clientHeight;
     this.parent.dirty = true;
 
     this.parent.render();
