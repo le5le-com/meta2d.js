@@ -10,6 +10,7 @@ import {
   EditType,
   globalStore,
   register,
+  registerAnchors,
   registerCanvasDraw,
   TopologyData,
   TopologyStore,
@@ -314,6 +315,10 @@ export class Topology {
 
   registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: any) => void }) {
     registerCanvasDraw(drawFns);
+  }
+
+  registerAnchors(path2dFns: { [key: string]: (pen: any) => void }) {
+    registerAnchors(path2dFns);
   }
 
   // customDock return:
@@ -885,8 +890,10 @@ export class Topology {
     // center 的值，在缩放和拖拽画布过程中不发生变化，是相对值
     // viewCenter 是一个绝对值，需要根据 origin 的值，来计算出相对的值
     // store.data.x 是画布偏移值，在 translate 方法中与 scale 相关，这里也需要计算
-    this.translate((viewCenter.x - origin.x) / scale - center.x - dataX / scale, 
-            (viewCenter.y - origin.y) / scale - center.y - dataY / scale);
+    this.translate(
+      (viewCenter.x - origin.x) / scale - center.x - dataX / scale,
+      (viewCenter.y - origin.y) / scale - center.y - dataY / scale
+    );
     const { canvas } = this.canvas;
     const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
     const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
