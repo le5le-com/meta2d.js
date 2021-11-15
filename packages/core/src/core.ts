@@ -16,7 +16,7 @@ import {
   useStore,
 } from './store';
 import { formatPadding, Padding, s8 } from './utils';
-import { calcRelativeRect, getRect, Rect } from './rect';
+import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
 import { Map } from './map';
@@ -878,9 +878,15 @@ export class Topology {
     if (!this.hasView()) return;
     const rect = this.getRect();
     const viewCenter = this.getViewCenter();
-    const { center } = rect;
-    // center.x 的相对于画布的 x 所以此处要 - 画布的偏移量
-    this.translate(viewCenter.x - center.x - this.store.data.x, viewCenter.y - center.y - this.store.data.y);
+    const pensRect: Rect = this.getPenRect(rect);
+    calcCenter(pensRect);
+    const { center } = pensRect;
+    const { scale, origin, x: dataX, y: dataY } = this.store.data;
+    // center 的值，在缩放和拖拽画布过程中不发生变化，是相对值
+    // viewCenter 是一个绝对值，需要根据 origin 的值，来计算出相对的值
+    // store.data.x 是画布偏移值，在 translate 方法中与 scale 相关，这里也需要计算
+    this.translate((viewCenter.x - origin.x) / scale - center.x - dataX / scale, 
+            (viewCenter.y - origin.y) / scale - center.y - dataY / scale);
     const { canvas } = this.canvas;
     const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
     const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;

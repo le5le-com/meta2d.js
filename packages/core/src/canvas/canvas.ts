@@ -937,8 +937,9 @@ export class Canvas {
           this.translateX &&
           this.translateY &&
           (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)
-        ) {
-          this.translate(e.x - this.translateX, e.y - this.translateY);
+        ) {         
+          const { scale } = this.store.data; 
+          this.translate((e.x - this.translateX) / scale, (e.y - this.translateY) / scale);
           return false;
         }
       }
