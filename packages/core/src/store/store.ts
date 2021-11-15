@@ -35,6 +35,7 @@ export interface TopologyData {
   ruleColor?: string;
   fromArrow?: string;
   toArrow?: string;
+  lineWidth?: number;
 }
 
 export enum EditType {
