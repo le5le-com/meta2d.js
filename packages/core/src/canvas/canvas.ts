@@ -243,6 +243,8 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (this.store.options.scroll && !e.ctrlKey && this.scroll) {
       this.scroll.wheel(e.deltaY < 0);
       return;
@@ -260,8 +262,6 @@ export class Canvas {
     }
 
     this.touchStart = now;
-    e.preventDefault();
-    e.stopPropagation();
 
     let x = e.x - (this.bounding.left || this.bounding.x);
     let y = e.y - (this.bounding.top || this.bounding.y);
@@ -3504,7 +3504,7 @@ export class Canvas {
   }
 
   destroy() {
-    this.scroll.destroy();
+    this.scroll && this.scroll.destroy();
 
     // ios
     this.externalElements.removeEventListener('gesturestart', this.onGesturestart);
