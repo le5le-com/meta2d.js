@@ -725,9 +725,11 @@ export class Canvas {
           calculative: {
             active: true,
             worldAnchors: [pt],
+            lineWidth: this.store.data.lineWidth || 1
           },
           fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
           toArrow: this.store.data.toArrow || this.store.options.toArrow,
+          lineWidth: this.store.data.lineWidth || 1
         };
         this.drawingLine.calculative.activeAnchor = pt;
         this.drawline();
@@ -749,7 +751,9 @@ export class Canvas {
           pencil: true,
           active: true,
           worldAnchors: [pt],
+          lineWidth: this.store.data.lineWidth || 1
         },
+        lineWidth: this.store.data.lineWidth || 1
       };
     } else {
       switch (this.hoverType) {
