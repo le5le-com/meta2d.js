@@ -937,8 +937,8 @@ export class Canvas {
           this.translateX &&
           this.translateY &&
           (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)
-        ) {         
-          const { scale } = this.store.data; 
+        ) {
+          const { scale } = this.store.data;
           this.translate((e.x - this.translateX) / scale, (e.y - this.translateY) / scale);
           return false;
         }
@@ -1647,7 +1647,12 @@ export class Canvas {
     }
     pen.calculative.image = undefined;
 
+    if (!pen.anchors && globalStore.anchors[pen.name]) {
+      globalStore.anchors[pen.name](pen);
+    }
+
     this.dirtyPenRect(pen);
+
     if (pen.type) {
       this.initLineRect(pen);
     } else if (!pen.anchors) {
@@ -1841,25 +1846,27 @@ export class Canvas {
     }
   }
 
-  dirtyPenRect(pen: Pen, worldRectIsReady?: boolean) {
+  dirtyPenRect(pen: Pen, worldRectIsReady?: boolean, playingAnimate?: boolean) {
     if (worldRectIsReady) {
       calcPenRect(this.store, pen);
     } else {
       calcWorldRects(this.store, pen);
     }
     const scale = this.store.data.scale;
-    pen.calculative.lineWidth = pen.lineWidth * scale;
-    pen.calculative.lineHeight = pen.lineHeight * scale;
-    pen.calculative.fontSize = pen.fontSize * scale;
-    pen.calculative.iconSize = pen.iconSize * scale;
-    pen.calculative.iconWidth = pen.iconWidth * scale;
-    pen.calculative.iconHeight = pen.iconHeight * scale;
-    pen.calculative.iconLeft = pen.iconLeft * scale;
-    pen.calculative.iconTop = pen.iconTop * scale;
-    pen.calculative.textWidth = pen.textWidth * scale;
-    pen.calculative.textHeight = pen.textHeight * scale;
-    pen.calculative.textLeft = pen.textLeft * scale;
-    pen.calculative.textTop = pen.textTop * scale;
+    if (!playingAnimate) {
+      pen.calculative.lineWidth = pen.lineWidth * scale;
+      pen.calculative.lineHeight = pen.lineHeight * scale;
+      pen.calculative.fontSize = pen.fontSize * scale;
+      pen.calculative.iconSize = pen.iconSize * scale;
+      pen.calculative.iconWidth = pen.iconWidth * scale;
+      pen.calculative.iconHeight = pen.iconHeight * scale;
+      pen.calculative.iconLeft = pen.iconLeft * scale;
+      pen.calculative.iconTop = pen.iconTop * scale;
+      pen.calculative.textWidth = pen.textWidth * scale;
+      pen.calculative.textHeight = pen.textHeight * scale;
+      pen.calculative.textLeft = pen.textLeft * scale;
+      pen.calculative.textTop = pen.textTop * scale;
+    }
 
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
@@ -2813,7 +2820,7 @@ export class Canvas {
         if (!pen.type) {
           if (setNodeAnimate(pen, now)) {
             if (pen.calculative.dirty) {
-              this.dirtyPenRect(pen, true);
+              this.dirtyPenRect(pen, true, true);
             }
           } else {
             if (pen.calculative.initRect) {
