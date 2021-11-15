@@ -243,6 +243,8 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (this.store.options.scroll && !e.ctrlKey && this.scroll) {
       this.scroll.wheel(e.deltaY < 0);
       return;
@@ -259,8 +261,6 @@ export class Canvas {
     }
 
     this.touchStart = now;
-    e.preventDefault();
-    e.stopPropagation();
 
     let x = e.x - (this.bounding.left || this.bounding.x);
     let y = e.y - (this.bounding.top || this.bounding.y);
@@ -937,8 +937,9 @@ export class Canvas {
           this.translateX &&
           this.translateY &&
           (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)
-        ) {
-          this.translate(e.x - this.translateX, e.y - this.translateY);
+        ) {         
+          const { scale } = this.store.data; 
+          this.translate((e.x - this.translateX) / scale, (e.y - this.translateY) / scale);
           return false;
         }
       }
@@ -3499,7 +3500,7 @@ export class Canvas {
   }
 
   destroy() {
-    this.scroll.destroy();
+    this.scroll && this.scroll.destroy();
 
     // ios
     this.externalElements.removeEventListener('gesturestart', this.onGesturestart);
