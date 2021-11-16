@@ -1666,6 +1666,8 @@ export class Canvas {
       }
     }
     pen.calculative.image = undefined;
+    pen.calculative.backgroundImage = undefined;
+    pen.calculative.strokeImage = undefined;
     if (!pen.anchors && globalStore.anchors[pen.name]) {
       if (!pen.anchors) {
         pen.anchors = [];
