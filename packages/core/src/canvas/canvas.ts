@@ -221,6 +221,7 @@ export class Canvas {
           shiftKey: e.shiftKey,
           altKey: e.altKey,
           buttons: e.buttons,
+          button: e.button
         });
       };
     }
@@ -1023,6 +1024,7 @@ export class Canvas {
     ctrlKey?: boolean;
     shiftKey?: boolean;
     altKey?: boolean;
+    button?: number
   }) => {
     if (this.store.data.locked === LockState.Disable) {
       this.hoverType = HoverType.None;
@@ -1096,7 +1098,7 @@ export class Canvas {
       this.active(pens);
     }
 
-    if (e.buttons !== 2 && this.mouseDown && distance(this.mouseDown, e) < 2) {
+    if (e.button !== 2 && this.mouseDown && distance(this.mouseDown, e) < 2) {
       if (this.store.hover && this.store.hover.input) {
         this.showInput(this.store.hover);
       }
