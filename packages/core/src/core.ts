@@ -712,7 +712,6 @@ export class Topology {
         {
           e.forEach((pen: Pen) => {
             pen.onAdd && pen.onAdd(pen);
-            this.store.data.locked && this.doEvent(pen, eventName);
           });
         }
         this.onSizeUpdate();

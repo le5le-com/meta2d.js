@@ -8,7 +8,6 @@ export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: 
   if (!arrows[pen.fromArrow]) {
     return;
   }
-  ctx.save();
   const from = pen.calculative.worldAnchors[0];
   const { x, y } = from;
   const pt: Point = { x, y };
@@ -17,12 +16,16 @@ export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: 
     pt.rotate = calcRotate(from.next, from) + 90;
   } else {
     const p = pen.calculative.worldAnchors[1];
+    if (!p) {
+      return;
+    }
     if (p.prev) {
       pt.rotate = calcRotate(p.prev, from) + 90;
     } else {
       pt.rotate = calcRotate(p, from) + 90;
     }
   }
+  ctx.save();
   ctx.beginPath();
   ctx.strokeStyle = pen.fromArrowColor || pen.calculative.color;
   arrows[pen.fromArrow](ctx, pen, store, pt);
