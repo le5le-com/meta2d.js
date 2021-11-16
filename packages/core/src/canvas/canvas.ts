@@ -1087,7 +1087,7 @@ export class Canvas {
       this.active(pens);
     }
 
-    if (this.mouseDown && distance(this.mouseDown, e) < 2) {
+    if (e.buttons !== 2 && this.mouseDown && distance(this.mouseDown, e) < 2) {
       if (this.store.hover && this.store.hover.input) {
         this.showInput(this.store.hover);
       }
