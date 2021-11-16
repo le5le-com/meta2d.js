@@ -671,12 +671,14 @@ export class Topology {
         }
       }
       pen.calculative.image = undefined;
+      pen.calculative.backgroundImage = undefined;
+      pen.calculative.strokeImage = undefined;
 
       if (data.x != null || data.y != null || data.width != null || data.height != null) {
         this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
         this.canvas.updateLines(pen, true);
       }
-      if (data.image) {
+      if (data.image || data.backgroundImage || data.strokeImage) {
         this.canvas.loadImage(pen);
       }
       pen.onValue && pen.onValue(pen);
