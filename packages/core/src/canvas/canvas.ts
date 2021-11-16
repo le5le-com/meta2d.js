@@ -936,7 +936,7 @@ export class Canvas {
       }
 
       // Translate
-      if (this.hotkeyType === HotkeyType.Translate || this.mouseRight === MouseRight.Translate) {
+      if (this.store.data.locked === LockState.DisableEdit || this.hotkeyType === HotkeyType.Translate || this.mouseRight === MouseRight.Translate) {
         if (
           this.translateX &&
           this.translateY &&
