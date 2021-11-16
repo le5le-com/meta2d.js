@@ -1,5 +1,3 @@
-import { TopologyStore } from '../store';
-
 export interface Event {
   name: string;
   action: EventAction;

@@ -435,6 +435,7 @@ export class Canvas {
       case 'Enter':
         if (this.drawingLineName) {
           this.finishDrawline();
+          this.drawingLineName = this.store.options.drawingLineName;
         } else if (this.store.active) {
           this.store.active.forEach((pen) => {
             if (pen.type) {
@@ -664,8 +665,12 @@ export class Canvas {
       }
 
       // 右键，完成绘画
-      if (e.buttons === 2 || this.drawingLineName === 'mind') {
+      if (
+        e.buttons === 2 ||
+        (this.drawingLineName === 'mind' && this.drawingLine?.calculative.worldAnchors.length > 1)
+      ) {
         this.finishDrawline(true);
+        this.drawingLineName = this.store.options.drawingLineName;
         return;
       }
 
@@ -724,11 +729,11 @@ export class Canvas {
           calculative: {
             active: true,
             worldAnchors: [pt],
-            lineWidth: this.store.data.lineWidth || 1
+            lineWidth: this.store.data.lineWidth || 1,
           },
           fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
           toArrow: this.store.data.toArrow || this.store.options.toArrow,
-          lineWidth: this.store.data.lineWidth || 1
+          lineWidth: this.store.data.lineWidth || 1,
         };
         this.drawingLine.calculative.activeAnchor = pt;
         this.drawline();
@@ -750,9 +755,9 @@ export class Canvas {
           pencil: true,
           active: true,
           worldAnchors: [pt],
-          lineWidth: this.store.data.lineWidth || 1
+          lineWidth: this.store.data.lineWidth || 1,
         },
-        lineWidth: this.store.data.lineWidth || 1
+        lineWidth: this.store.data.lineWidth || 1,
       };
     } else {
       switch (this.hoverType) {
@@ -870,7 +875,7 @@ export class Canvas {
       const pt: Point = { ...e };
       pt.id = s8();
       pt.penId = this.drawingLine.id;
-      if (this.mouseDown && this.drawingLineName !== 'polyline') {
+      if (this.mouseDown && this.drawingLineName === 'curve') {
         this.drawline(pt);
       } else {
         let to: Point;
@@ -1510,7 +1515,7 @@ export class Canvas {
     }
 
     this.makePen(pen);
-
+    this.active([pen]);
     this.render();
     this.store.emitter.emit('add', [pen]);
 
@@ -1709,34 +1714,37 @@ export class Canvas {
   }
 
   finishDrawline(end?: boolean) {
-    if (this.drawingLine) {
-      let to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
-      !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
-      const rect = getLineRect(this.drawingLine);
-      this.drawingLine.x = rect.x;
-      this.drawingLine.y = rect.y;
-      this.drawingLine.width = rect.width;
-      this.drawingLine.height = rect.height;
-      this.drawingLine.calculative.worldRect = rect;
-      if (!end) {
-        if (this.drawingLine.calculative.worldAnchors[0] === this.drawingLine.calculative.activeAnchor) {
-          this.drawingLine = undefined;
-          this.render(Infinity);
-          return;
-        }
-      }
-      this.drawingLine.calculative.activeAnchor =
-        this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
-      this.store.activeAnchor = this.drawingLine.calculative.activeAnchor;
-      if (!this.beforeAddPen || this.beforeAddPen(this.drawingLine)) {
-        this.initLineRect(this.drawingLine);
-        this.store.data.pens.push(this.drawingLine);
-        this.store.pens[this.drawingLine.id] = this.drawingLine;
-        this.store.emitter.emit('add', [this.drawingLine]);
-        this.active([this.drawingLine]);
-        this.pushHistory({ type: EditType.Add, pens: [this.drawingLine] });
+    if (!this.drawingLine) {
+      return;
+    }
+
+    let to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    !end && !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
+    const rect = getLineRect(this.drawingLine);
+    this.drawingLine.x = rect.x;
+    this.drawingLine.y = rect.y;
+    this.drawingLine.width = rect.width;
+    this.drawingLine.height = rect.height;
+    this.drawingLine.calculative.worldRect = rect;
+    if (!end) {
+      if (this.drawingLine.calculative.worldAnchors[0] === this.drawingLine.calculative.activeAnchor) {
+        this.drawingLine = undefined;
+        this.render(Infinity);
+        return;
       }
     }
+    this.drawingLine.calculative.activeAnchor =
+      this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    this.store.activeAnchor = this.drawingLine.calculative.activeAnchor;
+    if (!this.beforeAddPen || this.beforeAddPen(this.drawingLine)) {
+      this.initLineRect(this.drawingLine);
+      this.store.data.pens.push(this.drawingLine);
+      this.store.pens[this.drawingLine.id] = this.drawingLine;
+      this.store.emitter.emit('add', [this.drawingLine]);
+      this.active([this.drawingLine]);
+      this.pushHistory({ type: EditType.Add, pens: [this.drawingLine] });
+    }
+
     this.store.path2dMap.set(this.drawingLine, globalStore.path2dDraws[this.drawingLine.name](this.drawingLine));
     this.render(Infinity);
     this.drawingLine = undefined;

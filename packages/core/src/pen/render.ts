@@ -926,7 +926,6 @@ export function calcWorldRects(store: TopologyStore, pen: Pen) {
   }
 
   pen.calculative.worldRect = rect;
-  console.log(3333, pen);
   // 这里的 rect 均是绝对值
   calcPadding(pen, rect);
 
