@@ -7,7 +7,6 @@ export enum KeydownType {
 }
 
 export interface Options {
-  extDpiRatio?: number;
   color?: string;
   activeColor?: string;
   activeBackground?: string;
