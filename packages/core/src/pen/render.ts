@@ -1330,8 +1330,8 @@ export function setNodeAnimate(pen: Pen, now: number) {
   } else if (now > pen.calculative.frameEnd) {
     pen.lastFrame = {
       rotate: pen.frames[pen.calculative.frameIndex].rotate || 0,
-      x: pen.frames[pen.calculative.frameIndex].x,
-      y: pen.frames[pen.calculative.frameIndex].y,
+      x: pen.frames[pen.calculative.frameIndex].x || 0,
+      y: pen.frames[pen.calculative.frameIndex].y || 0,
       width: (pen.frames[pen.calculative.frameIndex].scale || 1) * pen.calculative.initRect.width,
     };
 
