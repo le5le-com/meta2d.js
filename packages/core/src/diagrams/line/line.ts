@@ -1,6 +1,7 @@
-import { Pen } from '../../pen';
+import { deleteTempAnchor, Pen } from '../../pen';
 import { hitPoint, Point } from '../../point';
 import { getRectOfPoints } from '../../rect';
+import { TopologyStore } from '../../store';
 import { getBezierPoint, getQuadraticPoint } from './curve';
 
 export function line(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
@@ -22,6 +23,26 @@ export function line(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
     }
   }
   return path;
+}
+
+export function lineSegment(store: TopologyStore, pen: Pen, mousedwon?: Point) {
+  if (!pen.calculative.worldAnchors) {
+    pen.calculative.worldAnchors = [];
+  }
+
+  if (pen.calculative.worldAnchors.length < 2) {
+    return;
+  }
+
+  let from = pen.calculative.activeAnchor;
+  let to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+  if (!from || !to || !to.id || from === to) {
+    return;
+  }
+  from.next = undefined;
+  deleteTempAnchor(pen);
+  to.prev = undefined;
+  pen.calculative.worldAnchors.push(to);
 }
 
 function draw(path: CanvasRenderingContext2D | Path2D, from: Point, to: Point) {

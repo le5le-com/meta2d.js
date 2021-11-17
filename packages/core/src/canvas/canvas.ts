@@ -49,7 +49,7 @@ import { EditAction, EditType, globalStore, TopologyStore } from '../store';
 import { deepClone, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine } from '../diagrams';
+import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine, lineSegment } from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
@@ -174,6 +174,7 @@ export class Canvas {
     this['curve'] = curve;
     this['polyline'] = polyline;
     this['mind'] = mind;
+    this['line'] = lineSegment;
 
     window && window.addEventListener('resize', this.onResize);
   }
@@ -942,7 +943,11 @@ export class Canvas {
       }
 
       // Translate
-      if (this.store.data.locked === LockState.DisableEdit || this.hotkeyType === HotkeyType.Translate || this.mouseRight === MouseRight.Translate) {
+      if (
+        this.store.data.locked === LockState.DisableEdit ||
+        this.hotkeyType === HotkeyType.Translate ||
+        this.mouseRight === MouseRight.Translate
+      ) {
         if (
           this.translateX &&
           this.translateY &&
