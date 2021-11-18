@@ -1727,14 +1727,9 @@ export class Canvas {
       return;
     }
 
-    let to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    const from = this.drawingLine.calculative.worldAnchors[0];
+    const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
     !end && !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
-    const rect = getLineRect(this.drawingLine);
-    this.drawingLine.x = rect.x;
-    this.drawingLine.y = rect.y;
-    this.drawingLine.width = rect.width;
-    this.drawingLine.height = rect.height;
-    this.drawingLine.calculative.worldRect = rect;
     if (!end) {
       if (this.drawingLine.calculative.worldAnchors[0] === this.drawingLine.calculative.activeAnchor) {
         this.drawingLine = undefined;
@@ -1742,6 +1737,18 @@ export class Canvas {
         return;
       }
     }
+    if ((!from.connectTo || !to.connectTo) && this.store.options.disableEmptyLine) {
+      // 两边都没连上锚点，且 禁止创建空线条
+      this.drawingLine = undefined;
+      this.render(Infinity);
+      return;
+    }
+    const rect = getLineRect(this.drawingLine);
+    this.drawingLine.x = rect.x;
+    this.drawingLine.y = rect.y;
+    this.drawingLine.width = rect.width;
+    this.drawingLine.height = rect.height;
+    this.drawingLine.calculative.worldRect = rect;
     this.drawingLine.calculative.activeAnchor =
       this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
     this.store.activeAnchor = this.drawingLine.calculative.activeAnchor;
