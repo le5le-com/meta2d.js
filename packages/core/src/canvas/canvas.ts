@@ -32,7 +32,7 @@ import {
   randomId,
   getPensLock,
 } from '../pen';
-import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, scalePoint, translatePoint } from '../point';
+import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, samePoint, scalePoint, translatePoint } from '../point';
 import {
   calcCenter,
   calcRelativePoint,
@@ -1749,11 +1749,30 @@ export class Canvas {
         return;
       }
     }
-    if ((!from.connectTo || !to.connectTo) && this.store.options.disableEmptyLine) {
-      // 两边都没连上锚点，且 禁止创建空线条
-      this.drawingLine = undefined;
-      this.render(Infinity);
-      return;
+    if ((!from.connectTo || !to.connectTo)) {
+      if (this.store.options.disableEmptyLine) {
+        // 两边都没连上锚点，且 禁止创建空线条
+        this.drawingLine = undefined;
+        this.render(Infinity);
+        return;
+      }
+    } else {
+      if (this.store.options.disableRepeatLine) {
+        // 两边都连上了锚点，且 禁止创建重复连线
+        const line = this.store.data.pens.find(pen => {
+          if (pen.type) {
+            const penFrom = pen.calculative.worldAnchors[0];
+            const penTo = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+            return samePoint(penFrom, from) && samePoint(penTo, to);
+          }
+        });
+        if (line) {
+          // 存在重复连线
+          this.drawingLine = undefined;
+          this.render(Infinity);
+          return;
+        }
+      }
     }
     const rect = getLineRect(this.drawingLine);
     this.drawingLine.x = rect.x;
