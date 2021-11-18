@@ -2203,6 +2203,10 @@ export class Canvas {
     if (this.scroll && this.scroll.isShow) {
       this.scroll.translate(x, y);
     }
+    // 有移动操作的 画笔 需要执行移动
+    for (const pen of this.store.data.pens) {
+      pen.onMove && pen.onMove(pen);
+    }
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {

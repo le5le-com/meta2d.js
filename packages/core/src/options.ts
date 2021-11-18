@@ -89,7 +89,7 @@ export const defaultOptions: Options = {
   keydown: KeydownType.Document,
   viewPadding: 0,
   gridSize: 20,
-  gridColor: '#f3f3f3',
+  gridColor: '#e2e2e2',
   ruleColor: '#888888',
   drawingLineName: 'curve',
   interval: 20,
