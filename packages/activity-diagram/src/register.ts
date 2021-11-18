@@ -6,10 +6,15 @@ import { swimlaneV } from './swimlaneV';
 
 export function activityDiagram() {
   return {
-    activityFinal,
     forkV: fork,
     forkH: fork,
     swimlaneH,
     swimlaneV,
+  };
+}
+
+export function activityDiagramByCtx() {
+  return {
+    activityFinal,
   };
 }
