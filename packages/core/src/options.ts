@@ -7,7 +7,6 @@ export enum KeydownType {
 }
 
 export interface Options {
-  extDpiRatio?: number;
   color?: string;
   activeColor?: string;
   activeBackground?: string;
@@ -17,7 +16,6 @@ export interface Options {
   anchorRadius?: number;
   anchorBackground?: string;
   dockColor?: string;
-  dockBackground?: string;
   dragColor?: string;
   animateColor?: string;
   textColor?: string;
@@ -50,7 +48,6 @@ export interface Options {
   minScale?: number;
   maxScale?: number;
   keydown?: KeydownType;
-  viewPadding?: Padding;
   background?: string;
   grid?: boolean;
   gridColor?: string;
@@ -81,16 +78,14 @@ export const defaultOptions: Options = {
   anchorRadius: 4,
   anchorBackground: '#fff',
   dockColor: '#fa541c',
-  dockBackground: '#fa541c',
   dragColor: '#1890ff',
   rotateCursor: '/assets/img/rotate.cur',
   hoverCursor: 'pointer',
   minScale: 0.1,
   maxScale: 10,
   keydown: KeydownType.Document,
-  viewPadding: 0,
   gridSize: 20,
-  gridColor: '#f3f3f3',
+  gridColor: '#e2e2e2',
   ruleColor: '#888888',
   drawingLineName: 'curve',
   interval: 20,

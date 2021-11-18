@@ -671,12 +671,14 @@ export class Topology {
         }
       }
       pen.calculative.image = undefined;
+      pen.calculative.backgroundImage = undefined;
+      pen.calculative.strokeImage = undefined;
 
       if (data.x != null || data.y != null || data.width != null || data.height != null) {
         this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
         this.canvas.updateLines(pen, true);
       }
-      if (data.image) {
+      if (data.image || data.backgroundImage || data.strokeImage) {
         this.canvas.loadImage(pen);
       }
       pen.onValue && pen.onValue(pen);
@@ -712,7 +714,6 @@ export class Topology {
         {
           e.forEach((pen: Pen) => {
             pen.onAdd && pen.onAdd(pen);
-            this.store.data.locked && this.doEvent(pen, eventName);
           });
         }
         this.onSizeUpdate();
@@ -1038,6 +1039,21 @@ export class Topology {
       initPens,
       pens,
     });
+  }
+
+  gotoView(pen: Pen) {
+    const center = this.getViewCenter();
+    const x = center.x - pen.calculative.worldRect.x - pen.calculative.worldRect.width / 2;
+    const y = center.y - pen.calculative.worldRect.y - pen.calculative.worldRect.height / 2;
+
+    if (this.canvas.scroll && this.canvas.scroll.isShow) {
+      this.canvas.scroll.translate(x - this.store.data.x, y - this.store.data.y);
+    }
+
+    this.store.data.x = x;
+    this.store.data.y = y;
+
+    this.canvas.render(Infinity);
   }
 
   showMap() {
