@@ -503,19 +503,19 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       ctx.textAlign = 'center';
     }
 
-    if (pen.textBaseline) {
-      ctx.textBaseline = pen.textBaseline as any;
-    }
+    // if (pen.textBaseline) {
+    //   ctx.textBaseline = pen.textBaseline as any;
+    // }
 
-    let y = 0.5;
-    switch (pen.textBaseline) {
-      case 'top':
-        y = 0;
-        break;
-      case 'bottom':
-        y = 1;
-        break;
-    }
+    const y = 0.5;
+    // switch (pen.textBaseline) {
+    //   case 'top':
+    //     y = 0;
+    //     break;
+    //   case 'bottom':
+    //     y = 1;
+    //     break;
+    // }
     pen.calculative.textLines.forEach((text, i) => {
       let x = 0;
       if (!pen.textAlign || pen.textAlign === 'center') {
