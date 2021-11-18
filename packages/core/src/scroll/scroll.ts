@@ -60,6 +60,7 @@ export class Scroll {
   }
 
   init() {
+    this.isShow = true;
     this.resize();
     this.initPos();
   }
