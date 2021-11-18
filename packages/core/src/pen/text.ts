@@ -64,7 +64,7 @@ export function calcTextRect(pen: Pen) {
     y,
     width: textWidth,
     height: h,
-    ex: x + width,
+    ex: x + textWidth,
     ey: y + h,
   };
 }
