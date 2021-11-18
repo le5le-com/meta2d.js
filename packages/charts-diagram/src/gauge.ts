@@ -63,6 +63,9 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
         lineStyle.width / 2 -
         series.splitLine.distance -
         series.splitLine.length / 2;
+      if (mainR < 0) {
+        mainR = 0;
+      }
       let arcLength = (gap / 180) * Math.PI * mainR;
 
       let dash =
@@ -90,6 +93,9 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
         lineStyle.width / 2 -
         series.axisTick.distance -
         series.axisTick.length / 2;
+      if (fromR < 0) {
+        fromR = 0;
+      }
       let fromArcLength = (gap / 180) * Math.PI * fromR;
 
       let fromDash =
