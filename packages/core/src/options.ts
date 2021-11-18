@@ -38,7 +38,7 @@ export interface Options {
   disableRepeatLine?: boolean;
   disableScale?: boolean;
   disableTranslate?: boolean;
-  disableMoveOutParent?: boolean;
+  // disableMoveOutParent?: boolean;
   disableDockLine?: boolean;
   playIcon?: string;
   pauseIcon?: string;

@@ -945,6 +945,7 @@ export class Canvas {
       // Translate
       if (
         this.store.data.locked === LockState.DisableEdit ||
+        e.ctrlKey ||
         this.hotkeyType === HotkeyType.Translate ||
         this.mouseRight === MouseRight.Translate
       ) {

@@ -9,6 +9,13 @@ export function calcAnchorDock(e: Point, anchor: Point, pen: Pen, store: Topolog
   let x = Infinity;
   let y = Infinity;
   const size = 8;
+  if (store.options.disableDockLine) {
+    return {
+      // undefined , 不画对齐线了
+      xDock,
+      yDock
+    };
+  }
   pen.calculative.worldAnchors.forEach((pt) => {
     if (pt === anchor) {
       return;
@@ -46,6 +53,13 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
   let x = Infinity;
   let y = Infinity;
   const size = 8;
+  if (store.options.disableDockLine) {
+    return {
+      // undefined , 不画对齐线了
+      xDock,
+      yDock
+    };
+  }
   store.data.pens.forEach((pen) => {
     if (pen.calculative.active || pen.calculative.inView === false) {
       return;
