@@ -129,3 +129,13 @@ export function translatePoint(pt: Point, x: number, y: number) {
     pt.prev.y += y;
   }
 }
+
+/**
+ * 是否是同一个点
+ * @param pt1 点1
+ * @param pt2 点2
+ * @returns true 相同
+ */
+export function samePoint(pt1: Point, pt2: Point): boolean {
+  return pt1.anchorId === pt2.anchorId && pt1.connectTo === pt2.connectTo;
+}
