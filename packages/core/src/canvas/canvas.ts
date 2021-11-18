@@ -82,7 +82,7 @@ export class Canvas {
   mouseRight: MouseRight;
   translateX: number;
   translateY: number;
-  addCache: Pen;
+  addCaches: Pen[];
   touchCenter?: Point;
   touches?: TouchList;
 
@@ -221,7 +221,7 @@ export class Canvas {
           shiftKey: e.shiftKey,
           altKey: e.altKey,
           buttons: e.buttons,
-          button: e.button
+          button: e.button,
         });
       };
     }
@@ -1024,7 +1024,7 @@ export class Canvas {
     ctrlKey?: boolean;
     shiftKey?: boolean;
     altKey?: boolean;
-    button?: number
+    button?: number;
   }) => {
     if (this.store.data.locked === LockState.Disable) {
       this.hoverType = HoverType.None;
@@ -1063,12 +1063,14 @@ export class Canvas {
     }
 
     // Add pen
-    if (this.addCache) {
-      this.addCache.x = e.x - this.addCache.width / 2;
-      this.addCache.y = e.y - this.addCache.height / 2;
+    if (this.addCaches) {
+      for (const pen of this.addCaches) {
+        pen.x = e.x - pen.width / 2;
+        pen.y = e.y - pen.height / 2;
 
-      this.addPen(this.addCache);
-      this.addCache = undefined;
+        this.addPen(pen);
+      }
+      this.addCaches = undefined;
     }
 
     // Rotate

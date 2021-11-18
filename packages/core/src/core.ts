@@ -1041,6 +1041,21 @@ export class Topology {
     });
   }
 
+  gotoView(pen: Pen) {
+    const center = this.getViewCenter();
+    const x = center.x - pen.calculative.worldRect.x - pen.calculative.worldRect.width / 2;
+    const y = center.y - pen.calculative.worldRect.y - pen.calculative.worldRect.height / 2;
+
+    if (this.canvas.scroll && this.canvas.scroll.isShow) {
+      this.canvas.scroll.translate(x - this.store.data.x, y - this.store.data.y);
+    }
+
+    this.store.data.x = x;
+    this.store.data.y = y;
+
+    this.canvas.render(Infinity);
+  }
+
   showMap() {
     if (!this.map) {
       this.map = new Map(this.canvas);
