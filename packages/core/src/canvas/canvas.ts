@@ -831,6 +831,12 @@ export class Canvas {
       }
     }
 
+    this.store.emitter.emit('mousedown', {
+      x: e.x,
+      y: e.y,
+      pen: this.store.hover,
+    });
+
     this.render();
   };
 
