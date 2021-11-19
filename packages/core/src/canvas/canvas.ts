@@ -32,7 +32,7 @@ import {
   randomId,
   getPensLock,
 } from '../pen';
-import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, scalePoint, translatePoint } from '../point';
+import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, samePoint, scalePoint, translatePoint } from '../point';
 import {
   calcCenter,
   calcRelativePoint,
@@ -951,6 +951,7 @@ export class Canvas {
       // Translate
       if (
         this.store.data.locked === LockState.DisableEdit ||
+        e.ctrlKey ||
         this.hotkeyType === HotkeyType.Translate ||
         this.mouseRight === MouseRight.Translate
       ) {
@@ -1735,14 +1736,9 @@ export class Canvas {
       return;
     }
 
-    let to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    const from = this.drawingLine.calculative.worldAnchors[0];
+    const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
     !end && !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
-    const rect = getLineRect(this.drawingLine);
-    this.drawingLine.x = rect.x;
-    this.drawingLine.y = rect.y;
-    this.drawingLine.width = rect.width;
-    this.drawingLine.height = rect.height;
-    this.drawingLine.calculative.worldRect = rect;
     if (!end) {
       if (this.drawingLine.calculative.worldAnchors[0] === this.drawingLine.calculative.activeAnchor) {
         this.drawingLine = undefined;
@@ -1750,6 +1746,37 @@ export class Canvas {
         return;
       }
     }
+    if ((!from.connectTo || !to.connectTo)) {
+      if (this.store.options.disableEmptyLine) {
+        // 两边都没连上锚点，且 禁止创建空线条
+        this.drawingLine = undefined;
+        this.render(Infinity);
+        return;
+      }
+    } else {
+      if (this.store.options.disableRepeatLine) {
+        // 两边都连上了锚点，且 禁止创建重复连线
+        const line = this.store.data.pens.find(pen => {
+          if (pen.type) {
+            const penFrom = pen.calculative.worldAnchors[0];
+            const penTo = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+            return samePoint(penFrom, from) && samePoint(penTo, to);
+          }
+        });
+        if (line) {
+          // 存在重复连线
+          this.drawingLine = undefined;
+          this.render(Infinity);
+          return;
+        }
+      }
+    }
+    const rect = getLineRect(this.drawingLine);
+    this.drawingLine.x = rect.x;
+    this.drawingLine.y = rect.y;
+    this.drawingLine.width = rect.width;
+    this.drawingLine.height = rect.height;
+    this.drawingLine.calculative.worldRect = rect;
     this.drawingLine.calculative.activeAnchor =
       this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
     this.store.activeAnchor = this.drawingLine.calculative.activeAnchor;
@@ -2184,6 +2211,10 @@ export class Canvas {
     this.tooltip.translate(x, y);
     if (this.scroll && this.scroll.isShow) {
       this.scroll.translate(x, y);
+    }
+    // 有移动操作的 画笔 需要执行移动
+    for (const pen of this.store.data.pens) {
+      pen.onMove && pen.onMove(pen);
     }
   }
 

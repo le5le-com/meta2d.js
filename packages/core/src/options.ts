@@ -38,7 +38,7 @@ export interface Options {
   disableRepeatLine?: boolean;
   disableScale?: boolean;
   disableTranslate?: boolean;
-  disableMoveOutParent?: boolean;
+  // disableMoveOutParent?: boolean;
   disableDockLine?: boolean;
   playIcon?: string;
   pauseIcon?: string;
@@ -85,7 +85,7 @@ export const defaultOptions: Options = {
   maxScale: 10,
   keydown: KeydownType.Document,
   gridSize: 20,
-  gridColor: '#f3f3f3',
+  gridColor: '#e2e2e2',
   ruleColor: '#888888',
   drawingLineName: 'curve',
   interval: 20,
