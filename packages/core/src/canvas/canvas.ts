@@ -32,7 +32,17 @@ import {
   randomId,
   getPensLock,
 } from '../pen';
-import { calcRotate, distance, hitPoint, Point, PrevNextType, rotatePoint, samePoint, scalePoint, translatePoint } from '../point';
+import {
+  calcRotate,
+  distance,
+  hitPoint,
+  Point,
+  PrevNextType,
+  rotatePoint,
+  samePoint,
+  scalePoint,
+  translatePoint,
+} from '../point';
 import {
   calcCenter,
   calcRelativePoint,
@@ -729,6 +739,7 @@ export class Canvas {
           y: pt.y,
           type: PenType.Line,
           calculative: {
+            canvas: this,
             active: true,
             worldAnchors: [pt],
             lineWidth: this.store.data.lineWidth || 1,
@@ -768,7 +779,7 @@ export class Canvas {
           break;
         case HoverType.Node:
           if (this.store.hover) {
-            const pen = getParent(this.store, this.store.hover) || this.store.hover;
+            const pen = getParent(this.store.hover, true) || this.store.hover;
             if (e.ctrlKey) {
               if (pen.calculative.active) {
                 pen.calculative.active = undefined;
@@ -804,7 +815,7 @@ export class Canvas {
           break;
         case HoverType.Line:
           {
-            const pen = getParent(this.store, this.store.hover) || this.store.hover;
+            const pen = getParent(this.store.hover, true) || this.store.hover;
             this.active([pen]);
           }
           break;
@@ -1135,7 +1146,7 @@ export class Canvas {
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
       pen.calculative.activeAnchor = undefined;
-      setChildrenActive(this.store, pen, false);
+      setChildrenActive(pen, false);
     });
     !drawing && this.store.emitter.emit('inactive', this.store.active);
     this.store.active = [];
@@ -1149,13 +1160,13 @@ export class Canvas {
     if (this.store.active) {
       for (const pen of this.store.active) {
         pen.calculative.active = undefined;
-        setChildrenActive(this.store, pen, false);
+        setChildrenActive(pen, false);
       }
     }
     this.store.active = [];
     pens.forEach((pen) => {
       pen.calculative.active = true;
-      setChildrenActive(this.store, pen);
+      setChildrenActive(pen);
     });
     this.store.active.push(...pens);
     this.calcActiveRect();
@@ -1303,13 +1314,13 @@ export class Canvas {
     if (this.store.lastHover !== this.store.hover) {
       this.dirty = true;
       if (this.store.lastHover) {
-        setHover(this.store, getParent(this.store, this.store.lastHover) || this.store.lastHover, false);
+        setHover(getParent(this.store.lastHover, true) || this.store.lastHover, false);
         this.store.emitter.emit('leave', this.store.lastHover);
         this.tooltip.hide();
       }
       if (this.store.hover) {
         this.store.hover.calculative.hover = true;
-        setHover(this.store, getParent(this.store, this.store.hover) || this.store.hover);
+        setHover(getParent(this.store.hover, true) || this.store.hover);
         this.store.emitter.emit('enter', this.store.hover);
         this.tooltip.show(this.store.hover, pt);
       }
@@ -1750,7 +1761,7 @@ export class Canvas {
         return;
       }
     }
-    if ((!from.connectTo || !to.connectTo)) {
+    if (!from.connectTo || !to.connectTo) {
       if (this.store.options.disableEmptyLine) {
         // 两边都没连上锚点，且 禁止创建空线条
         this.drawingLine = undefined;
@@ -1760,7 +1771,7 @@ export class Canvas {
     } else {
       if (this.store.options.disableRepeatLine) {
         // 两边都连上了锚点，且 禁止创建重复连线
-        const line = this.store.data.pens.find(pen => {
+        const line = this.store.data.pens.find((pen) => {
           if (pen.type) {
             const penFrom = pen.calculative.worldAnchors[0];
             const penTo = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
@@ -1910,9 +1921,9 @@ export class Canvas {
 
   dirtyPenRect(pen: Pen, worldRectIsReady?: boolean, playingAnimate?: boolean) {
     if (worldRectIsReady) {
-      calcPenRect(this.store, pen);
+      calcPenRect(pen);
     } else {
-      calcWorldRects(this.store, pen);
+      calcWorldRects(pen);
     }
     const scale = this.store.data.scale;
     if (!playingAnimate) {
@@ -2029,14 +2040,14 @@ export class Canvas {
         continue;
       }
       pen.calculative.inView = true;
-      renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store);
+      renderPen(ctx, pen);
     }
 
     if (this.drawingLine) {
-      renderPen(ctx, this.drawingLine, this.store.path2dMap.get(this.drawingLine), this.store);
+      renderPen(ctx, this.drawingLine);
     }
     if (this.pencilLine) {
-      renderPen(ctx, this.pencilLine, this.store.path2dMap.get(this.pencilLine), this.store);
+      renderPen(ctx, this.pencilLine);
     }
     ctx.restore();
   };
@@ -2681,11 +2692,11 @@ export class Canvas {
         this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
       } else {
         translateRect(pen.calculative.worldRect, x, y);
-        calcPenRect(this.store, pen);
+        calcPenRect(pen);
         pen.calculative.x = pen.x;
         pen.calculative.y = pen.y;
         this.dirtyPenRect(pen, true);
-        const children = getAllChildren(this.store, pen);
+        const children = getAllChildren(pen);
         children.forEach((child) => {
           if (!child.type) {
             this.updateLines(child);
@@ -2944,7 +2955,7 @@ export class Canvas {
                   pen[k] = pen.calculative[k];
                 }
               }
-              calcPenRect(this.store, pen);
+              calcPenRect(pen);
             } else {
               for (const k in pen) {
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
@@ -3448,7 +3459,7 @@ export class Canvas {
     const ctx = canvas.getContext('2d');
     ctx.translate(-rect.x, -rect.y);
     for (const pen of this.store.data.pens) {
-      renderPen(ctx, pen, this.store.path2dMap.get(pen), this.store);
+      renderPen(ctx, pen);
     }
     if (callback) {
       canvas.toBlob(callback);

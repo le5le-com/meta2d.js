@@ -536,8 +536,8 @@ export class Topology {
     this.canvas.translatePens(pens, x, y);
   }
 
-  getParent(pen: Pen) {
-    return getParent(this.store, pen);
+  getParent(pen: Pen, root?: boolean) {
+    return getParent(pen, root);
   }
 
   data() {
@@ -822,7 +822,7 @@ export class Topology {
   }
 
   renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
-    renderPenRaw(ctx, pen, this.store, rect);
+    renderPenRaw(ctx, pen, rect);
   }
 
   toPng(padding: Padding = 0, callback: any = undefined) {

@@ -16,4 +16,15 @@ export function randomId(pen: Pen) {
       pt.next.penId = pen.id;
     }
   }
+
+  if (pen.children && pen.calculative) {
+    for (const childId of pen.children) {
+      const child = pen.calculative.canvas.store[childId];
+      if (!child) {
+        continue;
+      }
+      child.parentId = pen.id;
+      randomId(child);
+    }
+  }
 }
