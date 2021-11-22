@@ -9,23 +9,27 @@ import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient } from '@topology/core';
 
-export function getParent(store: TopologyStore, pen: Pen) {
-  if (!pen || !pen.parentId) {
+export function getParent(pen: Pen, root?: boolean) {
+  if (!pen || !pen.parentId || !pen.calculative) {
     return undefined;
   }
 
-  return getParent(store, store.pens[pen.parentId]) || store.pens[pen.parentId];
+  const store = pen.calculative.canvas.store;
+  if (!root) {
+    return store.pens[pen.parentId];
+  }
+  return getParent(store.pens[pen.parentId], root) || store.pens[pen.parentId];
 }
 
-export function getAllChildren(store: TopologyStore, pen: Pen) {
-  if (!pen || !pen.children) {
+export function getAllChildren(pen: Pen) {
+  if (!pen || !pen.children || !pen.calculative) {
     return [];
   }
-
+  const store = pen.calculative.canvas.store;
   const children: Pen[] = [];
   pen.children.forEach((id) => {
     children.push(store.pens[id]);
-    children.push(...getAllChildren(store, store.pens[id]));
+    children.push(...getAllChildren(store.pens[id]));
   });
   return children;
 }
@@ -131,7 +135,7 @@ function linearGradient(
   return grd;
 }
 
-export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D, store: TopologyStore) {
+export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (!pen.gif && pen.calculative.gif && pen.calculative.img) {
     pen.calculative.gif = undefined;
     pen.calculative.canvas.externalElements.removeChild(pen.calculative.img);
@@ -154,6 +158,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
   if (pen.calculative.lineWidth > 1) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
+
+  const store = pen.calculative.canvas.store;
 
   let fill: any;
   if (pen.calculative.hover) {
@@ -230,6 +236,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
     ctx.shadowBlur = pen.calculative.shadowBlur;
   }
 
+  const path = store.path2dMap.get(pen);
   if (path) {
     fill && ctx.fill(path);
 
@@ -309,7 +316,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
       pen.toArrow && renderToArrow(ctx, pen, store);
 
       if (pen.calculative.active && !pen.calculative.pencil) {
-        renderLineAnchors(ctx, pen, store);
+        renderLineAnchors(ctx, pen);
       }
     }
   }
@@ -536,7 +543,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen, path: Path2D,
   ctx.restore();
 }
 
-export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, rect?: Rect) {
+export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
   ctx.save();
   if (rect) {
     ctx.translate(-rect.x, -rect.y);
@@ -558,6 +565,8 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: Top
   if (pen.calculative.lineWidth > 1) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
+
+  const store = pen.calculative.canvas.store;
 
   let fill: any;
   if (pen.calculative.hover) {
@@ -799,7 +808,9 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, store: Top
   ctx.restore();
 }
 
-export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
+export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const store = pen.calculative.canvas.store;
+
   ctx.save();
   ctx.lineWidth = 1;
   ctx.fillStyle = pen.activeColor || store.options.activeColor;
@@ -876,7 +887,9 @@ export function renderAnchor(ctx: CanvasRenderingContext2D, pt: Point, pen: Pen)
   }
 }
 
-export function calcWorldRects(store: TopologyStore, pen: Pen) {
+export function calcWorldRects(pen: Pen) {
+  const store = pen.calculative.canvas.store;
+
   let rect: Rect = {
     x: pen.x,
     y: pen.y,
@@ -895,7 +908,7 @@ export function calcWorldRects(store: TopologyStore, pen: Pen) {
   } else {
     let parentRect = store.pens[pen.parentId].calculative.worldRect;
     if (!parentRect) {
-      parentRect = calcWorldRects(store, store.pens[pen.parentId]);
+      parentRect = calcWorldRects(store.pens[pen.parentId]);
     }
 
     rect.x = parentRect.x + parentRect.width * pen.x;
@@ -944,7 +957,7 @@ function calcPadding(pen: Pen, rect: Rect) {
   pen.calculative.paddingRight < 1 && (pen.calculative.paddingRight *= rect.width);
 }
 
-export function calcPenRect(store: TopologyStore, pen: Pen) {
+export function calcPenRect(pen: Pen) {
   if (!pen.parentId) {
     pen.x = pen.calculative.worldRect.x;
     pen.y = pen.calculative.worldRect.y;
@@ -952,7 +965,7 @@ export function calcPenRect(store: TopologyStore, pen: Pen) {
     pen.height = pen.calculative.worldRect.height;
     return;
   }
-
+  const store = pen.calculative.canvas.store;
   const parentRect = store.pens[pen.parentId].calculative.worldRect;
   pen.x = (pen.calculative.worldRect.x - parentRect.x) / parentRect.width;
   pen.y = (pen.calculative.worldRect.y - parentRect.y) / parentRect.height;
@@ -1561,28 +1574,28 @@ export function setLineAnimate(pen: Pen, now: number) {
   return true;
 }
 
-export function setChildrenActive(store: TopologyStore, pen: Pen, active = true) {
+export function setChildrenActive(pen: Pen, active = true) {
   if (!pen.children) {
     return;
   }
-
+  const store = pen.calculative.canvas.store;
   pen.children.forEach((id) => {
     const child: Pen = store.pens[id];
     child.calculative.active = active;
 
-    setChildrenActive(store, child);
+    setChildrenActive(child);
   });
 }
 
-export function setHover(store: TopologyStore, pen: Pen, hover = true) {
+export function setHover(pen: Pen, hover = true) {
   if (!pen) {
     return;
   }
-
+  const store = pen.calculative.canvas.store;
   pen.calculative.hover = hover;
   if (pen.children) {
     pen.children.forEach((id) => {
-      setHover(store, store.pens[id], hover);
+      setHover(store.pens[id], hover);
     });
   }
 }

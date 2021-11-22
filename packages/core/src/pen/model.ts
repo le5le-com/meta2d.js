@@ -46,9 +46,6 @@ export interface Pen extends Rect {
   length?: number;
 
   title?: string;
-  markdown?: string;
-
-  autoRect?: boolean;
 
   lineWidth?: number;
   globalAlpha?: number;
