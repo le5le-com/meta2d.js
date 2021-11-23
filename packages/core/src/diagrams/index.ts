@@ -20,7 +20,7 @@ import { rectangle, square } from './rectangle';
 import { circle } from './circle';
 import { svgPath } from './svgPath';
 import { diamond } from './diamond';
-import { triangle } from './triangle';
+import { triangle, triangleAnchors } from './triangle';
 import { pentagon } from './pentagon';
 import { pentagram } from './pentagram';
 import { hexagon } from './hexagon';
@@ -56,5 +56,11 @@ export function commonPens() {
     line,
     iframe,
     video,
+  };
+}
+
+export function commonAnchors() {
+  return {
+    triangle: triangleAnchors,
   };
 }

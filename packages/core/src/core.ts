@@ -1,4 +1,4 @@
-import { commonPens } from './diagrams';
+import { commonAnchors, commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
@@ -41,6 +41,7 @@ export class Topology {
     this.setOptions(opts);
     this.init(parent);
     this.register(commonPens());
+    this.registerAnchors(commonAnchors());
     window && (window.topology = this);
     this['facePen'] = facePen;
     this.initEventFns();
