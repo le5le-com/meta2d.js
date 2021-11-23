@@ -1,3 +1,5 @@
+import { setElemPosition } from '@topology/core';
+import { Canvas } from '../canvas';
 import { getRect, Rect } from '../rect';
 
 export class Scroll {
@@ -15,7 +17,7 @@ export class Scroll {
   lastScrollY: number;
   rect: Rect;
   isShow: boolean;
-  constructor(public parent: any) {
+  constructor(public parent: Canvas) {
     this.h = document.createElement('div');
     this.v = document.createElement('div');
 
@@ -100,8 +102,11 @@ export class Scroll {
       this.parent.dirty = true;
     }
 
-    this.parent.render();
-    this.movePens();
+    if (this.isDownH || this.isDownV) {
+      this.parent.render();
+      this.movePens();
+    }
+
   };
 
   private onMouseUp = (e: MouseEvent) => {
@@ -211,7 +216,6 @@ export class Scroll {
     this.parent.dirty = true;
 
     this.parent.render();
-
     this.movePens();
   }
 
@@ -222,6 +226,9 @@ export class Scroll {
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.parent.store.data.pens) {
       pen.onMove && pen.onMove(pen);
+      if (pen.calculative.gif && pen.calculative.img) {
+        setElemPosition(pen, pen.calculative.img);
+      }
     }
   }
 
