@@ -56,7 +56,7 @@ export function pSBC(p, c0, c1?, l?) {
     );
 }
 
-export function rgba(p: number, c: string) {
+export function rgba(c: string, p: number) {
   const f = pSBCr(c) || { r: 0, g: 0, b: 0 };
   if (f.a < 0) {
     return `rgba(${f.r},${f.g},${f.b},${p})`;

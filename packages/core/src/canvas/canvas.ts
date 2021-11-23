@@ -2182,7 +2182,7 @@ export class Canvas {
 
     if (!this.store.data.locked && this.dragRect) {
       ctx.save();
-      ctx.fillStyle = rgba(0.2, this.store.options.dragColor);
+      ctx.fillStyle = rgba(this.store.options.dragColor, 0.2);
       ctx.strokeStyle = this.store.options.dragColor;
       ctx.beginPath();
       ctx.strokeRect(this.dragRect.x, this.dragRect.y, this.dragRect.width, this.dragRect.height);
@@ -3285,7 +3285,7 @@ export class Canvas {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.save();
 
-    ctx.strokeStyle = rgba(0.7, this.store.data.ruleColor || this.store.options.ruleColor);
+    ctx.strokeStyle = rgba(this.store.data.ruleColor || this.store.options.ruleColor, 0.7);
 
     const x = this.store.data.origin.x + this.store.data.x;
     const y = this.store.data.origin.y + this.store.data.y;
