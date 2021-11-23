@@ -2226,6 +2226,9 @@ export class Canvas {
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.store.data.pens) {
       pen.onMove && pen.onMove(pen);
+      if (pen.calculative.gif && pen.calculative.img) {
+        setElemPosition(pen, pen.calculative.img);
+      }
     }
   }
 
@@ -2247,6 +2250,10 @@ export class Canvas {
       }
       scalePen(pen, s, center);
       this.dirtyPenRect(pen, true);
+      pen.onResize && pen.onResize(pen);
+      if (pen.calculative.gif && pen.calculative.img) {
+        setElemPosition(pen, pen.calculative.img);
+      }
     });
     this.calcActiveRect();
 
@@ -2363,6 +2370,9 @@ export class Canvas {
         y: pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2,
       };
       pen.onResize && pen.onResize(pen);
+      if (pen.calculative.gif && pen.calculative.img) {
+        setElemPosition(pen, pen.calculative.img);
+      }
       this.dirtyPenRect(pen, true);
     });
     this.getSizeCPs();
