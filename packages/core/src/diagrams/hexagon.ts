@@ -2,9 +2,6 @@ import { Pen } from '../pen';
 import { Point } from '../point';
 
 export function hexagon(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!pen.onDestroy) {
-    pen.onAdd = onAdd;
-  }
   if (!path) {
     path = new Path2D();
   }
@@ -43,7 +40,7 @@ export function hexagon(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   return path;
 }
 
-function onAdd(pen: Pen) {
+export function hexagonAnchors(pen: Pen) {
   const anchors: Point[] = [];
   anchors.push({
     id: '0',
