@@ -226,9 +226,6 @@ export class Scroll {
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.parent.store.data.pens) {
       pen.onMove && pen.onMove(pen);
-      if (pen.calculative.gif && pen.calculative.img) {
-        setElemPosition(pen, pen.calculative.img);
-      }
     }
   }
 

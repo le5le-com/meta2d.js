@@ -33,6 +33,7 @@ import { people } from './people';
 import { line } from './line';
 import { iframe } from './iframe';
 import { video } from './video';
+import { gif } from './gif';
 
 export function commonPens() {
   return {
@@ -56,6 +57,7 @@ export function commonPens() {
     line,
     iframe,
     video,
+    gif
   };
 }
 
