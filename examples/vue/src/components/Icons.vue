@@ -1,5 +1,5 @@
 <!--
- * @Description: 
+ * @Description:
  * @Author: G
  * @Date: 2021-10-13 11:09:59
  * @LastEditTime: 2021-10-13 14:26:48
@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { icons } from '../utils/data';
 const onDragStart = (e, data) => {
-  e.dataTransfer.setData('Text', JSON.stringify(data));
+  e.dataTransfer.setData('Topology', JSON.stringify(data));
 };
 </script>
 
