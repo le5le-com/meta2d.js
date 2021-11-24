@@ -21,9 +21,9 @@ import { circle } from './circle';
 import { svgPath } from './svgPath';
 import { diamond } from './diamond';
 import { triangle, triangleAnchors } from './triangle';
-import { pentagon } from './pentagon';
-import { pentagram } from './pentagram';
-import { hexagon } from './hexagon';
+import { pentagon, pentagonAnchors } from './pentagon';
+import { pentagram, pentagramAnchors } from './pentagram';
+import { hexagon, hexagonAnchors } from './hexagon';
 import { leftArrow, rightArrow, twowayArrow } from './arrow';
 import { message } from './message';
 import { cloud } from './cloud';
@@ -33,6 +33,7 @@ import { people } from './people';
 import { line } from './line';
 import { iframe } from './iframe';
 import { video } from './video';
+import { gif } from './gif';
 
 export function commonPens() {
   return {
@@ -56,11 +57,15 @@ export function commonPens() {
     line,
     iframe,
     video,
+    gif
   };
 }
 
 export function commonAnchors() {
   return {
     triangle: triangleAnchors,
+    hexagon: hexagonAnchors,
+    pentagon: pentagonAnchors,
+    pentagram: pentagramAnchors
   };
 }

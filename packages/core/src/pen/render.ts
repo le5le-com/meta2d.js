@@ -136,15 +136,6 @@ function linearGradient(
 }
 
 export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
-  if (!pen.gif && pen.calculative.gif && pen.calculative.img) {
-    pen.calculative.gif = undefined;
-    pen.calculative.canvas.externalElements.removeChild(pen.calculative.img);
-  } else if (pen.gif && !pen.calculative.gif && pen.calculative.img) {
-    pen.calculative.canvas.externalElements.appendChild(pen.calculative.img);
-    setElemPosition(pen, pen.calculative.img);
-    pen.calculative.gif = true;
-  }
-
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
