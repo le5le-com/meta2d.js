@@ -765,6 +765,7 @@ export class Canvas {
         y: pt.y,
         type: PenType.Line,
         calculative: {
+          canvas: this,
           pencil: true,
           active: true,
           worldAnchors: [pt],
