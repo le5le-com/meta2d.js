@@ -2843,8 +2843,8 @@ export class Canvas {
 
     let pens: Pen[];
     if (pen.nextAnimate) {
-      pens = this.store.data.pens.filter((pen) => {
-        return pen.tags && pen.tags.indexOf(pen.nextAnimate) > -1;
+      pens = this.store.data.pens.filter((p) => {
+        return p.id === pen.nextAnimate || (p.tags && p.tags.indexOf(pen.nextAnimate) > -1);
       });
     }
 

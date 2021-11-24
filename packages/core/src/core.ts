@@ -184,9 +184,6 @@ export class Topology {
     this.canvas.tooltip.hide();
     this.canvas.activeRect = undefined;
     this.canvas.sizeCPs = undefined;
-    if (data && data.mqttOptions && !data.mqttOptions.customClientId) {
-      data.mqttOptions.clientId = s8();
-    }
 
     if (data) {
       Object.assign(this.store.data, data);
@@ -568,25 +565,14 @@ export class Topology {
   }
 
   listenSocket() {
-    if (this.socketFn) {
-      this.off('socket', this.socketFn as any);
-    }
-    this.socketFn = undefined;
-    if (!this.store.data.socketCbFn && !this.store.data.socketCbJs) {
-      return false;
-    }
-
     try {
       let socketFn: Function;
-      if (this.store.data.socketCbFn) {
-        socketFn = this.store.data.socketCbFn;
-      } else {
+      if (this.store.data.socketCbJs) {
         socketFn = new Function('e', this.store.data.socketCbJs);
       }
       if (!socketFn) {
         return false;
       }
-      this.on('socket', socketFn as any);
       this.socketFn = socketFn;
     } catch (e) {
       console.error('Create the function for socket:', e);
@@ -596,8 +582,11 @@ export class Topology {
     return true;
   }
 
-  connectWebsocket() {
+  connectWebsocket(websocket?: string) {
     this.closeWebsocket();
+    if (websocket) {
+      this.store.data.websocket = websocket;
+    }
     if (this.store.data.websocket) {
       this.websocket = new WebSocket(this.store.data.websocket);
       this.websocket.onmessage = (e) => {
@@ -619,9 +608,27 @@ export class Topology {
     }
   }
 
-  connectMqtt() {
+  connectMqtt(params?: {
+    mqtt: string;
+    mqttTopics: string;
+    mqttOptions?: {
+      clientId?: string;
+      username?: string;
+      password?: string;
+      customClientId?: boolean;
+    };
+  }) {
     this.closeMqtt();
+    if (params) {
+      this.store.data.mqtt = params.mqtt;
+      this.store.data.mqttTopics = params.mqttTopics;
+      this.store.data.mqttOptions = params.mqttOptions;
+    }
     if (this.store.data.mqtt) {
+      if (this.store.data.mqttOptions.clientId && !this.store.data.mqttOptions.customClientId) {
+        this.store.data.mqttOptions.clientId = s8();
+      }
+
       this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
       this.mqttClient.on('message', (topic: string, message: any) => {
         this.doSocket(message.toString());
@@ -640,6 +647,11 @@ export class Topology {
   }
 
   doSocket(message: any) {
+    if (this.socketFn) {
+      this.socketFn(message);
+      return;
+    }
+
     try {
       message = JSON.parse(message);
       if (!Array.isArray(message)) {
@@ -651,8 +663,6 @@ export class Topology {
     } catch (error) {
       console.warn('Invalid socket data:', error);
     }
-
-    this.socketFn && this.store.emitter.emit('socket', message);
   }
 
   setValue(data: any) {
@@ -735,6 +745,7 @@ export class Topology {
       case 'click':
         e.pen && e.pen.onClick && e.pen.onClick(e.pen);
       case 'mousedown':
+        e.pen && e.pen.onMouseDown && e.pen.onMouseDown(e.pen);
       case 'dblclick':
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
