@@ -1,5 +1,5 @@
 /*
- * @Description: 
+ * @Description:
  * @Author: 高浩然
  * @Date: 2021-10-11 16:40:27
  * @LastEditTime: 2021-10-12 16:54:20
@@ -9,7 +9,7 @@ import { icons } from '../utils/data';
 
 const Icons = () => {
   const onDragStart = useCallback((e, data) => {
-    e.dataTransfer.setData('Text', JSON.stringify(data));
+    e.dataTransfer.setData('Topology', JSON.stringify(data));
   }, []);
 
   return (

@@ -4,7 +4,7 @@ import { LockState, Pen } from '../pen';
 import { defaultOptions, Options } from '../options';
 
 import { Point } from '../point';
-import { globalStore } from '.';
+import { globalStore } from './global';
 
 export interface TopologyData {
   pens: Pen[];
@@ -26,7 +26,6 @@ export interface TopologyData {
   mqttTopics?: string;
   background?: string;
   socketCbJs?: string;
-  socketCbFn?: Function;
   initJs?: string;
   grid?: boolean;
   gridColor?: string;
