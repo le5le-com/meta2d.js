@@ -30,15 +30,22 @@ export function triangleAnchors(pen: Pen) {
   anchors.push({
     id: '1',
     penId: pen.id,
-    x: 1,
-    y: 1,
+    x: 0.75,
+    y: 0.5,
   });
 
   anchors.push({
     id: '2',
     penId: pen.id,
-    x: 0,
+    x: 0.5,
     y: 1,
+  });
+
+  anchors.push({
+    id: '3',
+    penId: pen.id,
+    x: 0.25,
+    y: 0.5,
   });
   pen.anchors = anchors;
 }
