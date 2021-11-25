@@ -895,7 +895,11 @@ export class Canvas {
       const pt: Point = { ...e };
       pt.id = s8();
       pt.penId = this.drawingLine.id;
-      if (this.mouseDown && this.drawingLineName === 'curve') {
+      if (
+        this.mouseDown &&
+        this.drawingLineName === 'curve' &&
+        !this.drawingLine.calculative.worldAnchors[0].connectTo
+      ) {
         this.drawline(pt);
       } else {
         let to: Point;
@@ -1066,8 +1070,7 @@ export class Canvas {
       this.hoverType &&
       this.hoverType < HoverType.Line &&
       this.drawingLine &&
-      this.drawingLine.calculative.worldAnchors.length > 1 &&
-      this.drawingLineName === 'polyline'
+      this.drawingLine.calculative.worldAnchors.length > 1
     ) {
       const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
       to.connectTo = this.store.hover.id;
@@ -1643,11 +1646,15 @@ export class Canvas {
     this.store.emitter.emit(undo ? 'undo' : 'redo', action);
   }
 
-  makePen(pen: Pen) {
+  makePen(pen: Pen, unshift?: boolean) {
     if (!pen.id) {
       pen.id = s8();
     }
-    this.store.data.pens.push(pen);
+    if (unshift) {
+      this.store.data.pens.unshift(pen);
+    } else {
+      this.store.data.pens.push(pen);
+    }
     this.store.pens[pen.id] = pen;
     // 集中存储path，避免数据冗余过大
     if (pen.path) {
