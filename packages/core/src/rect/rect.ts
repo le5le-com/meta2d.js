@@ -251,6 +251,7 @@ export function calcRelativePoint(pt: Point, worldRect: Rect) {
     connectTo: pt.connectTo,
     x: worldRect.width ? (pt.x - worldRect.x) / worldRect.width : 0,
     y: worldRect.height ? (pt.y - worldRect.y) / worldRect.height : 0,
+    anchorId: pt.anchorId
   };
   if (pt.prev) {
     point.prev = {
