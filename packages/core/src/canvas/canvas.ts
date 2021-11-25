@@ -2392,6 +2392,8 @@ export class Canvas {
 
     let x = e.x - this.mouseDown.x;
     let y = e.y - this.mouseDown.y;
+    e.shiftKey && (x = 0);
+    e.altKey && (y = 0);
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
     if (this.customeDock) {
@@ -2408,12 +2410,6 @@ export class Canvas {
 
     x = rect.x - this.activeRect.x;
     y = rect.y - this.activeRect.y;
-    if (e.shiftKey) {
-      x = 0;
-    }
-    if (e.altKey) {
-      y = 0;
-    }
 
     this.updatingPens = true;
     this.translatePens(this.store.active, x, y, true);
