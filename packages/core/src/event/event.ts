@@ -2,13 +2,14 @@ export interface Event {
   name: string;
   action: EventAction;
   where?: Where;
-  value?: string;
+  value?: any;
   params?: string;
   fn?: Function;
 }
 
 export enum EventAction {
   Link,
+  SetProps,
   StartAnimate,
   PauseAnimate,
   StopAnimate,

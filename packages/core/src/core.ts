@@ -96,6 +96,9 @@ export class Topology {
     this.events[EventAction.Link] = (pen: any, e: Event) => {
       window.open(e.value, e.params === undefined ? '_blank' : e.params);
     };
+    this.events[EventAction.SetProps] = (pen: any, e: Event) => {
+      this.updateValue(pen, e.value);
+    };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {
         this.startAnimate(e.value);
@@ -668,30 +671,7 @@ export class Topology {
   setValue(data: any) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
-      Object.assign(pen, data);
-      if (data.newId) {
-        pen.id = data.newId;
-      }
-      if (pen.calculative.text !== pen.text) {
-        pen.calculative.text = pen.text;
-        calcTextLines(pen);
-      }
-      for (const k in data) {
-        if (typeof pen[k] !== 'object' || k === 'lineDash') {
-          pen.calculative[k] = data[k];
-        }
-      }
-      pen.calculative.image = undefined;
-      pen.calculative.backgroundImage = undefined;
-      pen.calculative.strokeImage = undefined;
-
-      if (data.x != null || data.y != null || data.width != null || data.height != null) {
-        this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
-        this.canvas.updateLines(pen, true);
-      }
-      if (data.image || data.backgroundImage || data.strokeImage) {
-        this.canvas.loadImage(pen);
-      }
+      this.updateValue(pen, data);
       pen.onValue && pen.onValue(pen);
       this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
@@ -701,6 +681,33 @@ export class Topology {
     }
 
     this.render(Infinity);
+  }
+
+  updateValue(pen: Pen, data: any) {
+    Object.assign(pen, data);
+    if (data.newId) {
+      pen.id = data.newId;
+    }
+    if (pen.calculative.text !== pen.text) {
+      pen.calculative.text = pen.text;
+      calcTextLines(pen);
+    }
+    for (const k in data) {
+      if (typeof pen[k] !== 'object' || k === 'lineDash') {
+        pen.calculative[k] = data[k];
+      }
+    }
+    pen.calculative.image = undefined;
+    pen.calculative.backgroundImage = undefined;
+    pen.calculative.strokeImage = undefined;
+
+    if (data.x != null || data.y != null || data.width != null || data.height != null) {
+      this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
+      this.canvas.updateLines(pen, true);
+    }
+    if (data.image || data.backgroundImage || data.strokeImage) {
+      this.canvas.loadImage(pen);
+    }
   }
 
   pushHistory(action: EditAction) {
@@ -1296,6 +1303,57 @@ export class Topology {
       });
       return preNodes;
     }
+  }
+
+  toComponent(pens?: Pen[]) {
+    if (!pens) {
+      pens = this.store.data.pens;
+    }
+
+    if (pens.length === 1) {
+      pens[0].type = PenType.Node;
+      return deepClone(pens);
+    }
+
+    const rect = getRect(pens);
+    const id = s8();
+    let parent: Pen = {
+      id,
+      name: 'combine',
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      children: [],
+    };
+    const p = pens.find((pen) => {
+      return pen.width === rect.width && pen.height === rect.height;
+    });
+    if (p) {
+      if (!p.children) {
+        p.children = [];
+      }
+      parent = p;
+    } else {
+      this.canvas.makePen(parent, true);
+    }
+
+    pens.forEach((pen) => {
+      if (pen === parent || pen.parentId === parent.id) {
+        return;
+      }
+      parent.children.push(pen.id);
+      pen.parentId = parent.id;
+      const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
+      pen.x = childRect.x;
+      pen.y = childRect.y;
+      pen.width = childRect.width;
+      pen.height = childRect.height;
+      pen.locked = LockState.DisableMove;
+      pen.type = PenType.Node;
+    });
+
+    return deepClone(pens);
   }
 
   destroy(global?: boolean) {
