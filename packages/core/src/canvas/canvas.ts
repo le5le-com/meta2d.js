@@ -1311,7 +1311,9 @@ export class Canvas {
       this.store.hover = undefined;
     }
 
-    if (this.store.lastHover !== this.store.hover) {
+    if (this.store.lastHover === this.store.hover) {
+      this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover);
+    } else {
       this.dirty = true;
       if (this.store.lastHover) {
         setHover(getParent(this.store.lastHover, true) || this.store.lastHover, false);
