@@ -466,6 +466,13 @@ function onAdd(pen: any) {
         ...temRow,
         width: childRect.width,
         height: childRect.height,
+        // activeBackground: '#40a9ff',
+        activeColor: '#000000',
+        // background: '#1890ff',
+        color: '#000000',
+        // hoverBackground: '#40a9ff',
+        hoverColor: '#000000',
+        // textColor: '#000000',
       };
       pen.calculative.canvas.makePen(childPen);
       childPen.onClick = childPenOnClick;
@@ -491,8 +498,13 @@ function onAdd(pen: any) {
               value: 'console.log(pen.currentData)',
             },
           ],
-          activeColor: '#ffffff',
+          activeBackground: '#40a9ff',
+          activeColor: '#fff',
+          background: '#1890ff',
+          color: '#1890ff',
+          hoverBackground: '#40a9ff',
           hoverColor: '#ffffff',
+          textColor: '#ffffff',
           ...pen.table.button,
         };
         pen.calculative.canvas.makePen(btnChildPen);
@@ -661,10 +673,11 @@ function childPenOnClick(pen: any) {
   parentPen.children.forEach((id) => {
     if (id !== pen.id) {
       let child = pen.calculative.canvas.parent.find(id)[0];
-      pen.activeColor = pen.calculative.canvas.parent.store.options.activeColor;
+      child.activeColor = parentPen.hoverColor;
+      //pen.calculative.canvas.parent.store.options.activeColor;
 
-      child.hoverColor =
-        pen.calculative.canvas.parent.store.options.activeColor;
+      child.hoverColor = parentPen.hoverColor;
+      // pen.calculative.canvas.parent.store.options.activeColor;
       // pen.locked = 10;
       pen.calculative.canvas.parent.setValue(child);
     }
