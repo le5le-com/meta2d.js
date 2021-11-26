@@ -1,11 +1,11 @@
 declare const window: any;
-export function progress(ctx: CanvasRenderingContext2D, pen: any) {
+export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onResize = resize;
     pen.onClick = click;
     pen.onMouseMove = mouseMove;
     pen.onMouseDown = mouseDown;
-    // pen.onMouseUp = mouseUp;
+    pen.onMouseUp = mouseUp;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -123,6 +123,7 @@ function mouseMove(pen: any) {
 }
 
 function mouseDown(pen: any, e: any) {
+  console.log('down');
   if (pen.locked !== 2) {
     return;
   }
@@ -146,11 +147,12 @@ function mouseDown(pen: any, e: any) {
 }
 
 function mouseUp(pen: any, e: any) {
+  console.log('up');
   if (pen.locked !== 2) {
     return;
   }
-  // pen.calculative.canvas.parent.setValue({
-  //   id: pen.id,
-  //   slider: false,
-  // });
+  pen.calculative.canvas.parent.setValue({
+    id: pen.id,
+    slider: false,
+  });
 }
