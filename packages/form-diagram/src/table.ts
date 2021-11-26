@@ -7,286 +7,50 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
     pen.onDestroy = onDestroy;
     pen.onValue = onValue;
   }
-  // pen.calculative.height = getRect(pen).height;
-  // pen.calculative.width = getRect(pen).width;
-  /*
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
-  let w = pen.calculative.worldRect.width;
-  let col = pen.table.col;
-  ctx.strokeStyle = pen.table.lineStyle;
-  ctx.fillStyle = pen.table.fillStyle;
-  let header = pen.table.header;
-  let rowCount = pen.table.rowCount;
-  let currentPage = pen.currentPage;
-  let rowLength = pen.table.row.length;
 
-  let total = Math.ceil(rowLength / rowCount);
-  window.topology.setValue({ id: pen.id, totalPage: total });
-  let radioArray = col.filter((e) => e.radio != undefined && e.radio != '');
-  //如果所有的radio都没设置，则宽度为实际设置宽度
-  //如果有某一列的radio有值，未设置的radio默认为1
-
-  let temX = 0;
-  let beforeX = 0;
-
-  let halfXObj = {};
-  let colWObj = {};
-  let sum = 0;
-  if (radioArray.length > 0) {
-    sum = col.reduce(function (prev, cur) {
-      //没有设置比例，默认为1
-      if (cur.radio == '' || cur.radio == undefined) {
-        return prev + 1;
-      } else {
-        return prev + cur.radio;
-      }
-    }, 0);
-    //获取列坐标
-    for (let i = 0; i < col.length; i++) {
-      beforeX = temX;
-      temX +=
-        col[i].radio == '' || col[i].radio == undefined ? 1 : col[i].radio;
-      let halfX = ((temX + beforeX) / 2 / sum) * w;
-      colWObj[col[i].key] = ((temX - beforeX) / sum) * w;
-      halfXObj[col[i].key] = halfX;
+  //绘制表格的横线竖线
+  const rowArray = [];
+  const colArray = [];
+  const x = pen.calculative.worldRect.x;
+  const y = pen.calculative.worldRect.y;
+  const h = pen.calculative.worldRect.height;
+  const w = pen.calculative.worldRect.width;
+  let currentW = 0;
+  let currentH = 0;
+  for (let i = 0; i < pen.table.colCount; i++) {
+    colArray.push(currentW);
+    if (!pen.table.col[i]) {
+      //没有该列
+      currentW += pen.table.colWidth;
+    } else {
+      currentW += pen.table.col[i].width ?? pen.table.colWidth;
     }
-  } else {
-    for (let i = 0; i < col.length; i++) {
-      beforeX = temX;
-      temX +=
-        col[i].width == '' || col[i].width == undefined ? 100 : col[i].width;
-      colWObj[col[i].key] = temX - beforeX;
-
-      halfXObj[col[i].key] = (temX + beforeX) / 2;
+  }
+  colArray.push(currentW);
+  const lastW = currentW;
+  rowArray.push(currentH);
+  currentH += pen.table.header.height ?? pen.table.rowHeight;
+  for (let i = 0; i < pen.table.rowCount; i++) {
+    rowArray.push(currentH);
+    if (!pen.table.row[i]) {
+      currentH += pen.table.rowHeight;
+    } else {
+      currentH += pen.table.row[i].height ?? pen.table.rowHeight;
     }
-    w = col.reduce(function (prev, cur) {
-      //没有设置比例，默认为1
-      if (cur.width == '' || cur.width == undefined) {
-        return prev + 100;
-      } else {
-        return prev + cur.width;
-      }
-    }, 0);
   }
-  // console.log('half', halfXObj, colWObj);
-  //绘制第一行
-  ctx.beginPath();
-  if (header.fillColor) {
-    ctx.fillStyle = header.fillColor;
-  }
-  if (header.transparency) {
-    ctx.globalAlpha = header.transparency;
-  }
-  if (header.height) {
-    ctx.rect(x, y, w, header.height);
-  } else {
-    ctx.rect(x, y, w, pen.table.rowHeight);
-  }
+  rowArray.push(currentH);
+  const lastH = currentH;
+  ctx.strokeStyle = pen.color;
+  rowArray.forEach((rowRy: number) => {
+    ctx.moveTo(x, y + (rowRy / lastH) * h);
+    ctx.lineTo(x + w, y + (rowRy / lastH) * h);
+  });
+
+  colArray.forEach((colRX: number) => {
+    ctx.moveTo(x + (colRX / lastW) * w, y);
+    ctx.lineTo(x + (colRX / lastW) * w, y + h);
+  });
   ctx.stroke();
-  ctx.fill();
-  let buttons = pen.table.buttons;
-  // 绘制数据行
-  let temY = header.height;
-  let beforeY = 0;
-  for (
-    let i = 0 + currentPage * rowCount;
-    i - currentPage * rowCount < rowCount;
-    i++
-  ) {
-    let oneCol = null;
-    if (i < rowLength) {
-      oneCol = pen.table.row[i];
-      beforeY = temY;
-
-      if (oneCol.height) {
-        temY += oneCol.height;
-      } else {
-        temY += pen.table.rowHeight;
-      }
-      if (oneCol.fillColor) {
-        ctx.fillStyle = oneCol.fillColor;
-      } else {
-        ctx.fillStyle = pen.table.fillStyle;
-      }
-      if (oneCol.transparency) {
-        ctx.globalAlpha = oneCol.transparency;
-      } else {
-        ctx.globalAlpha = pen.table.transparency;
-      }
-    } else {
-      beforeY = temY;
-      temY += pen.table.rowHeight;
-      ctx.fillStyle = pen.table.fillStyle;
-      ctx.globalAlpha = pen.table.transparency;
-    }
-    ctx.beginPath();
-    ctx.moveTo(x, y + temY);
-    ctx.lineTo(x + w, y + temY);
-    if (
-      x < pen.currentClickX &&
-      pen.currentClickX < x + w &&
-      pen.currentClickY > y + beforeY &&
-      pen.currentClickY < y + temY
-    ) {
-      ctx.fillStyle = pen.table.selectStyle;
-      window.topology.setValue({
-        id: pen.id,
-        currentData: JSON.stringify(oneCol),
-      });
-    }
-    ctx.rect(x, y + beforeY, w, temY - beforeY);
-    ctx.stroke();
-    ctx.fill();
-    pen.fillStyle = pen.table.fillStyle;
-    ctx.closePath();
-    ctx.beginPath();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = pen.table.textStyle;
-    ctx.font = pen.fontSize + 'px Arial';
-    let halfY = (beforeY + temY) / 2;
-    ctx.globalAlpha = 1;
-    if (oneCol) {
-      if (oneCol.textColor) {
-        ctx.fillStyle = oneCol.textColor;
-      } else {
-        ctx.fillStyle = pen.table.textStyle;
-      }
-      if (oneCol.font) {
-        ctx.font = oneCol.font;
-      }
-      for (let j in oneCol) {
-        if (halfXObj[j]) {
-          let temText = '';
-          if (ctx.measureText(oneCol[j]).width < colWObj[j]) {
-            temText = oneCol[j];
-          } else {
-            let fenmu = ctx.measureText(oneCol[j]).width;
-            let fenzhi = colWObj[j];
-            let to = parseInt((oneCol[j].length * fenzhi) / fenmu + '');
-            temText = oneCol[j].slice(0, to - 3) + '...';
-          }
-          ctx.fillText(temText, x + halfXObj[j], y + halfY);
-          ctx.fill();
-        }
-      }
-    }
-    let beginIndex = pen.table.header.beginIndex;
-    if (halfXObj['index']) {
-      ctx.fillText(
-        i + (beginIndex === undefined ? 0 : beginIndex) + '',
-        x + halfXObj['index'],
-        y + halfY
-      );
-      ctx.fill();
-    }
-    ctx.closePath();
-    if (halfXObj['buttons'] && oneCol) {
-      ctx.beginPath();
-      ctx.fillStyle = buttons.fillStyle;
-      if (
-        x + halfXObj['buttons'] - buttons.width / 2 < pen.currentClickX &&
-        pen.currentClickX < x + halfXObj['buttons'] + buttons.width / 2 + w &&
-        pen.currentClickY > y + halfY - buttons.height / 2 &&
-        pen.currentClickY < y + halfY + buttons.height / 2
-      ) {
-        ctx.fillStyle = buttons.btnPressColor;
-
-        if (pen.clickBtnY === 0 && pen.clickBtnX == 0) {
-          window.topology.setValue({
-            id: pen.id,
-            clickBtnX: halfXObj['buttons'],
-          });
-          window.topology.setValue({ id: pen.id, clickBtnY: halfY });
-          window.topology.setValue({ id: pen.id, isbuttons: 1 });
-          window.topology.setValue({ id: pen.id, isbuttons: 0 });
-        }
-      }
-      // window.topology.setValue(pen.id, 0, 'isbuttons');
-      ctx.rect(
-        x + halfXObj['buttons'] - buttons.width / 2,
-        y + halfY - buttons.height / 2,
-        buttons.width,
-        buttons.height
-      );
-      ctx.fill();
-      ctx.closePath();
-      ctx.beginPath();
-      ctx.fillStyle = buttons.textColor;
-      ctx.font = buttons.font;
-      ctx.fillText(buttons.text, x + halfXObj['buttons'], y + halfY);
-      ctx.fill();
-    }
-    ctx.closePath();
-    ctx.globalAlpha = pen.table.transparency;
-    ctx.font = pen.fontSize + 'px Arial';
-  }
-  let realH = temY;
-  //绘制列
-  ctx.beginPath();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = pen.table.header.textColor;
-  if (pen.table.header.font) {
-    ctx.font = pen.table.header.font;
-  } else {
-    ctx.font = pen.fontSize + 'px Arial';
-  }
-  ctx.globalAlpha = 1;
-  temX = 0;
-  beforeX = 0;
-  for (let i = 0; i < col.length; i++) {
-    let halfY = pen.table.rowHeight / 2;
-    if (header.height) {
-      halfY = header.height / 2;
-    }
-    beforeX = temX;
-    let halfX = 0;
-    let temWidth = 0;
-    let beforeWidth = 0;
-    let gapWidth = 0;
-    //通过比例
-    if (radioArray.length > 0) {
-      temX +=
-        col[i].radio == '' || col[i].radio == undefined ? 1 : col[i].radio;
-      halfX = ((temX + beforeX) / 2 / sum) * w;
-      temWidth = (temX / sum) * w;
-      beforeWidth = (beforeX / sum) * w;
-      gapWidth = ((temX - beforeX) / sum) * w;
-    } else {
-      //通过固定宽度
-      temX +=
-        col[i].width == '' || col[i].width == undefined ? 100 : col[i].width;
-      halfX = (temX + beforeX) / 2;
-      temWidth = temX;
-      beforeWidth = beforeX;
-      gapWidth = temWidth - beforeWidth;
-    }
-    ctx.fillText(col[i].name, x + halfX, y + halfY);
-    ctx.moveTo(x + temWidth, y);
-    ctx.lineTo(x + temWidth, y + realH);
-    ctx.stroke();
-    if (col[i].fillColor) {
-      ctx.beginPath();
-      ctx.fillStyle = col[i].fillColor;
-      ctx.globalAlpha = 0.1;
-      ctx.rect(
-        x + beforeWidth,
-        y + header.height,
-        gapWidth,
-        realH - header.height
-      );
-      ctx.fill();
-      ctx.closePath();
-      ctx.fillStyle = pen.table.header.textColor;
-      ctx.globalAlpha = 1;
-    }
-  }
-  ctx.closePath();
-*/
-  // pen.oldHeight = pen.height;
-  // pen.oldWidth = pen.width;
   return false;
 }
 
@@ -326,8 +90,8 @@ function getRect(pen: any) {
       height += pen.table.row[i].height ?? pen.table.rowHeight;
     }
   }
-  height += pen.table.rowCount; //防止相邻的两个单元格覆盖
-  width += pen.table.colCount;
+  // height += pen.table.rowCount; //防止相邻的两个单元格覆盖
+  // width += pen.table.colCount;
   return {
     width,
     height,
@@ -406,8 +170,8 @@ function getCellRect(rowIndex: number, colIndex: number, pen: any) {
     rect.width = pen.table.col[j].width ?? pen.table.colWidth;
   }
 
-  rect.y += rowIndex * 1; //添加单元格不覆盖偏差
-  rect.x += colIndex * 1;
+  // rect.y += rowIndex * 1; //添加单元格不覆盖偏差
+  // rect.x += colIndex * 1;
   return rect;
 }
 function onAdd(pen: any) {
@@ -462,17 +226,16 @@ function onAdd(pen: any) {
         text,
         rowInParent: i - 2,
         colInParent: key,
+        textColor: '#000000',
         ...headerStyle,
         ...temRow,
         width: childRect.width,
         height: childRect.height,
-        // activeBackground: '#40a9ff',
-        activeColor: '#000000',
-        // background: '#1890ff',
-        color: '#000000',
-        // hoverBackground: '#40a9ff',
-        hoverColor: '#000000',
-        // textColor: '#000000',
+        activeColor: '#00000000',
+        color: '#00000000',
+        hoverColor: '#00000000',
+        hoverTextColor: '#000000',
+        activeTextColor: '#000000',
       };
       pen.calculative.canvas.makePen(childPen);
       childPen.onClick = childPenOnClick;
@@ -666,14 +429,14 @@ function childPenOnValue(pen: any) {
 
 function childPenOnClick(pen: any) {
   let parentPen = pen.calculative.canvas.parent.find(pen.parentId)[0];
-  pen.activeColor = parentPen.table.selectStyle;
+  // pen.activeColor = parentPen.table.selectStyle;
   pen.hoverColor = parentPen.table.selectStyle;
   // pen.locked = 0;//TODO:无效操作
   pen.calculative.canvas.parent.setValue(pen);
   parentPen.children.forEach((id) => {
     if (id !== pen.id) {
       let child = pen.calculative.canvas.parent.find(id)[0];
-      child.activeColor = parentPen.hoverColor;
+      // child.activeColor = parentPen.hoverColor;
       //pen.calculative.canvas.parent.store.options.activeColor;
 
       child.hoverColor = parentPen.hoverColor;
