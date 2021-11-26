@@ -467,9 +467,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.text) {
     ctx.save();
     if (pen.calculative.hover) {
-      fill = pen.hoverColor || store.options.hoverColor;
+      fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
     } else if (pen.calculative.active) {
-      fill = pen.activeColor || store.options.activeColor;
+      fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
     } else {
       fill = undefined;
     }

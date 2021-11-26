@@ -247,6 +247,8 @@ export interface Pen extends Rect {
     textLeft?: number;
     textTop?: number;
     textColor?: string;
+    hoverTextColor?: string;
+    activeTextColor?: string;
     fontFamily?: string;
     fontSize?: number;
     lineHeight?: number;
@@ -338,4 +340,5 @@ export interface Pen extends Rect {
   onRotate?: (pen: Pen) => void;
   onClick?: (pen: Pen) => void;
   onMouseDown?: (pen: Pen) => void;
+  onMouseMove?: (pen: Pen) => void;
 }
