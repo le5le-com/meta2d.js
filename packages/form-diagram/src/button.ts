@@ -1,9 +1,12 @@
 declare const window: any;
 import { Pen } from '../../core/src/pen';
 
+let tem: string;
 export function button(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!pen.onDestroy) {
-    pen.onClick = click;
+    // pen.onClick = click;
+    // pen.onMouseDown = mouseDown;
+    // pen.onMouseUp = mouseUp;
   }
   if (!path) {
     path = new Path2D();
@@ -65,4 +68,23 @@ function click(pen: any) {
     pen.background = temStyle;
     pen.calculative.canvas.parent.setValue(pen);
   }, 100);
+}
+
+function mouseDown(pen: any) {
+  console.log('down');
+  tem = pen.activeBackground;
+  pen.hoverBackground = pen.pressBackground;
+  pen.calculative.hoverBackground = pen.pressBackground;
+
+  // pen.activeBackground = pen.pressBackground;
+  // pen.calculative.activeBackground = pen.pressBackground;
+  pen.calculative.canvas.parent.setValue(pen);
+}
+function mouseUp(pen: Pen) {
+  console.log('up');
+  // pen.activeBackground = tem;
+  pen.hoverBackground = tem;
+  pen.calculative.hoverBackground = tem;
+  // pen.calculative.activeBackground = tem;
+  pen.calculative.canvas.parent.setValue(pen);
 }
