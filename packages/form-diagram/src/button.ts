@@ -56,6 +56,7 @@ export function button(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
 
 function click(pen: any) {
   let temStyle = pen.background;
+  console.log(pen.background);
   pen.background = pen.pressColor;
   pen.calculative.background = pen.pressColor;
   pen.calculative.canvas.parent.setValue(pen);
