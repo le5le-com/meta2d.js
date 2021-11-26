@@ -638,6 +638,8 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
     this.calibrateMouse(e);
+    this.mousePos.x = e.x;
+    this.mousePos.y = e.y;
 
     this.mouseDown = e;
     this.lastMouseTime = performance.now();
@@ -885,7 +887,8 @@ export class Canvas {
     e.y -= this.bounding.top || this.bounding.y;
 
     this.calibrateMouse(e);
-    this.mousePos = { x: e.x, y: e.y };
+    this.mousePos.x = e.x;
+    this.mousePos.y = e.y;
     if (this.magnifier) {
       this.render(Infinity);
       return;
@@ -974,7 +977,9 @@ export class Canvas {
         if (
           this.translateX &&
           this.translateY &&
-          (!this.store.data.locked || this.store.data.locked < LockState.DisableMove)
+          (!this.store.data.locked ||
+            this.mouseRight === MouseRight.Translate ||
+            this.store.data.locked < LockState.DisableMove)
         ) {
           const { scale } = this.store.data;
           this.translate((e.x - this.translateX) / scale, (e.y - this.translateY) / scale);
@@ -1032,8 +1037,9 @@ export class Canvas {
     }
 
     window && window.debug && console.time('hover');
-    this.getHover(e);
+    !this.mouseDown && this.getHover(e);
     window && window.debug && console.timeEnd('hover');
+    this.store.hover && this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.dirty = true;
     }
@@ -1066,7 +1072,8 @@ export class Canvas {
     this.mouseRight = MouseRight.None;
 
     this.calibrateMouse(e);
-
+    this.mousePos.x = e.x;
+    this.mousePos.y = e.y;
     this.pencil && this.finishPencil();
 
     // 在锚点上，完成绘画
@@ -1122,15 +1129,25 @@ export class Canvas {
       this.active(pens);
     }
 
-    if (e.button !== 2 && this.mouseDown && distance(this.mouseDown, e) < 2) {
-      if (this.store.hover && this.store.hover.input) {
-        this.showInput(this.store.hover);
+    if (e.button !== 2 && this.mouseDown) {
+      if (distance(this.mouseDown, e) < 2) {
+        if (this.store.hover && this.store.hover.input) {
+          this.showInput(this.store.hover);
+        }
+        this.store.emitter.emit('click', {
+          x: e.x,
+          y: e.y,
+          pen: this.store.hover,
+        });
       }
-      this.store.emitter.emit('click', {
-        x: e.x,
-        y: e.y,
-        pen: this.store.hover,
-      });
+
+      if (this.store.hover) {
+        this.store.emitter.emit('mouseup', {
+          x: e.x,
+          y: e.y,
+          pen: this.store.hover,
+        });
+      }
     }
 
     this.mouseDown = undefined;
@@ -1230,7 +1247,6 @@ export class Canvas {
     if (this.dragRect) {
       return;
     }
-
     let hoverType = HoverType.None;
     this.store.hover = undefined;
     this.store.hoverAnchor = undefined;
@@ -1315,9 +1331,7 @@ export class Canvas {
       this.store.hover = undefined;
     }
 
-    if (this.store.lastHover === this.store.hover) {
-      this.store.hover && this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover);
-    } else {
+    if (this.store.lastHover !== this.store.hover) {
       this.dirty = true;
       if (this.store.lastHover) {
         setHover(getParent(this.store.lastHover, true) || this.store.lastHover, false);
