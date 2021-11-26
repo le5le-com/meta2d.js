@@ -1312,7 +1312,7 @@ export class Canvas {
     }
 
     if (this.store.lastHover === this.store.hover) {
-      this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover);
+      this.store.hover && this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover);
     } else {
       this.dirty = true;
       if (this.store.lastHover) {
