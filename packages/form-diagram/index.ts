@@ -2,7 +2,7 @@ export * from './src/table';
 export * from './src/checkbox';
 export * from './src/radio';
 export * from './src/leSwitch';
-export * from './src/progress';
+export * from './src/slider';
 export * from './src/radioItem';
 export * from './src/checkboxItem';
 export * from './src/button';
