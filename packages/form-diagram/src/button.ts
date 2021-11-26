@@ -1,50 +1,67 @@
 declare const window: any;
+import { Pen } from '../../core/src/pen';
 
-export function button(ctx: CanvasRenderingContext2D, pen: any) {
+export function button(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!pen.onDestroy) {
-    // pen.onAdd = onAdd;
     pen.onClick = click;
   }
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
-  let ex = pen.calculative.worldRect.ex;
-  let ey = pen.calculative.worldRect.ey;
-  let w = pen.calculative.worldRect.width;
-  let h = pen.calculative.worldRect.height;
-  ctx.beginPath();
-  ctx.fillStyle = pen.fillColor;
+  if (!path) {
+    path = new Path2D();
+  }
   let wr = pen.calculative.borderRadius || 0;
   let hr = pen.calculative.borderRadius || 0;
   if (wr < 1) {
-    wr = w * wr;
-    hr = h * hr;
+    wr = pen.calculative.worldRect.width * wr;
+    hr = pen.calculative.worldRect.height * hr;
   }
   let r = wr < hr ? wr : hr;
-  if (w < 2 * r) {
-    r = w / 2;
+  if (pen.calculative.worldRect.width < 2 * r) {
+    r = pen.calculative.worldRect.width / 2;
   }
-  if (h < 2 * r) {
-    r = h / 2;
+  if (pen.calculative.worldRect.height < 2 * r) {
+    r = pen.calculative.worldRect.height / 2;
   }
 
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(ex, y, ex, ey, r);
-  ctx.arcTo(ex, ey, x, ey, r);
-  ctx.arcTo(x, ey, x, y, r);
-  ctx.arcTo(x, y, ex, y, r);
-  ctx.stroke();
-  ctx.fill();
-  ctx.closePath();
-  return false;
+  path.moveTo(pen.calculative.worldRect.x + r, pen.calculative.worldRect.y);
+  path.arcTo(
+    pen.calculative.worldRect.ex,
+    pen.calculative.worldRect.y,
+    pen.calculative.worldRect.ex,
+    pen.calculative.worldRect.ey,
+    r
+  );
+  path.arcTo(
+    pen.calculative.worldRect.ex,
+    pen.calculative.worldRect.ey,
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.ey,
+    r
+  );
+  path.arcTo(
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.ey,
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.y,
+    r
+  );
+  path.arcTo(
+    pen.calculative.worldRect.x,
+    pen.calculative.worldRect.y,
+    pen.calculative.worldRect.ex,
+    pen.calculative.worldRect.y,
+    r
+  );
+  return path;
 }
 
 function click(pen: any) {
-  let temStyle = pen.fillColor;
-  pen.calculative.canvas.parent.setValue({
-    id: pen.id,
-    fillColor: pen.pressColor,
-  });
+  let temStyle = pen.background;
+  pen.background = pen.pressColor;
+  pen.calculative.background = pen.pressColor;
+  pen.calculative.canvas.parent.setValue(pen);
   window.setTimeout(() => {
-    pen.calculative.canvas.parent.setValue({ id: pen.id, fillColor: temStyle });
+    pen.calculative.background = temStyle;
+    pen.background = temStyle;
+    pen.calculative.canvas.parent.setValue(pen);
   }, 100);
 }

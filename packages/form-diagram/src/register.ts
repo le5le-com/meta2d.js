@@ -16,6 +16,12 @@ export function formPens() {
     table,
     radioItem,
     checkboxItem,
+    // button,
+  };
+}
+
+export function formPensbyNew() {
+  return {
     button,
   };
 }

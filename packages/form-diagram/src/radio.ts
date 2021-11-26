@@ -27,6 +27,7 @@ function onAdd(pen: any) {
   if (pen.direction == 'horizontal') {
     let length = pen.options.length;
     for (let i = 0; i < length; i++) {
+      const forbidden = pen.forbiddens.includes(pen.options[i]);
       let childPen: any = {
         name: 'radioItem',
         x: x + (i * w) / length,
@@ -34,9 +35,14 @@ function onAdd(pen: any) {
         width: w / length,
         height: h,
         isChecked: pen.selection === pen.options[i],
+        isForbidden: forbidden,
         text: pen.options[i],
         textLeft: (h * 6) / 5,
         fillColor: '#1890ff',
+        hoverColor: forbidden ? '#00000040' : '#000000d9',
+        activeColor: forbidden ? '#00000040' : '#000000d9',
+        textColor: forbidden ? '#00000040' : '#000000d9',
+        fontSize: 14,
       };
       pen.calculative.canvas.makePen(childPen);
       pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
@@ -44,6 +50,7 @@ function onAdd(pen: any) {
   } else if (pen.direction == 'vertical') {
     let length = pen.options.length;
     for (let i = 0; i < length; i++) {
+      const forbidden = pen.forbiddens.includes(pen.options[i]);
       let childPen: any = {
         name: 'radioItem',
         x: x,
@@ -51,9 +58,14 @@ function onAdd(pen: any) {
         width: w,
         height: h / (length * 2 - 1),
         isChecked: pen.selection === pen.options[i],
+        isForbidden: forbidden,
         text: pen.options[i],
         textLeft: ((h / (length * 2 - 1)) * 6) / 5,
         fillColor: '#1890ff',
+        hoverColor: forbidden ? '#00000040' : '#000000d9',
+        activeColor: forbidden ? '#00000040' : '#000000d9',
+        textColor: forbidden ? '#00000040' : '#000000d9',
+        fontSize: 14,
       };
       pen.calculative.canvas.makePen(childPen);
       pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
@@ -81,6 +93,7 @@ function onValue(pen: any) {
         };
         pen.calculative.canvas.parent.setValue(childPen);
       } else {
+        const forbidden = pen.forbiddens.includes(pen.options[i]);
         let childPen: any = {
           name: 'radioItem',
           x: x + (i * w) / length,
@@ -88,9 +101,14 @@ function onValue(pen: any) {
           width: w / length,
           height: h,
           isChecked: pen.selection === pen.options[i],
+          isForbidden: forbidden,
           text: pen.options[i],
           textLeft: (h * 6) / 5,
           fillColor: '#1890ff',
+          hoverColor: forbidden ? '#00000040' : '#000000d9',
+          activeColor: forbidden ? '#00000040' : '#000000d9',
+          textColor: forbidden ? '#00000040' : '#000000d9',
+          fontSize: 14,
         };
         pen.calculative.canvas.makePen(childPen);
         pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
@@ -111,6 +129,7 @@ function onValue(pen: any) {
         };
         pen.calculative.canvas.parent.setValue(childPen);
       } else {
+        const forbidden = pen.forbiddens.includes(pen.options[i]);
         let childPen: any = {
           name: 'radioItem',
           x: x,
@@ -118,9 +137,14 @@ function onValue(pen: any) {
           width: w,
           height: h / (length * 2 - 1),
           isChecked: pen.selection === pen.options[i],
+          isForbidden: forbidden,
           text: pen.options[i],
           textLeft: ((h / (length * 2 - 1)) * 6) / 5,
           fillColor: '#1890ff',
+          hoverColor: forbidden ? '#00000040' : '#000000d9',
+          activeColor: forbidden ? '#00000040' : '#000000d9',
+          textColor: forbidden ? '#00000040' : '#000000d9',
+          fontSize: 14,
         };
         pen.calculative.canvas.makePen(childPen);
         pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
