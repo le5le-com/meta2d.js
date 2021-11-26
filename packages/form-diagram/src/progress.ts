@@ -4,6 +4,7 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
     pen.onResize = resize;
     pen.onClick = click;
     pen.onMove = move;
+    pen.onMouseMove = mouseMove;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -17,7 +18,7 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
   ctx.beginPath();
-  ctx.fillStyle = '#F5F5F5';
+  ctx.fillStyle = '#D4D6D9';
   // ctx.rect(x, y + (h * 2) / 5, sliderW, (h * 1) / 5);
   let r = (0.5 * h) / 5;
   ctx.moveTo(x + r, y + (h * 2) / 5);
@@ -34,7 +35,7 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   let currenPosition =
     (sliderW * (parseInt(pen.text) - pen.min)) / (pen.max - pen.min);
   ctx.beginPath();
-  ctx.fillStyle = pen.fillColor;
+  ctx.fillStyle = pen.background; // '#69C0FF'; //pen.fillColor;
   // ctx.rect(x, y + (h * 2) / 5, currenPosition, (h * 1) / 5);
   ctx.moveTo(x + r, y + (h * 2) / 5);
   ctx.arcTo(
@@ -52,10 +53,10 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.closePath();
   ctx.beginPath();
   ctx.fillStyle = '#ffffff';
-  ctx.strokeStyle = pen.fillColor;
-  // ctx.lineWidth = 2;
+  ctx.strokeStyle = pen.color; //'#1890FF'; //pen.fillColor;
+  ctx.lineWidth = h / 10;
   ctx.moveTo(x + currenPosition + h / 5, y + h / 2);
-  ctx.arc(x + currenPosition, y + h / 2, h / 5, 0, Math.PI * 2);
+  ctx.arc(x + currenPosition, y + h / 2, h / 4, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   ctx.closePath();
@@ -90,4 +91,34 @@ function click(pen: any) {
 
 function move(pen: any) {
   console.log('move');
+}
+
+function mouseMove(pen: any) {
+  if (pen.locked !== 2) {
+    return;
+  }
+  let mousePos = pen.calculative.canvas.mousePos;
+  let w = pen.calculative.worldRect.width;
+  let h = pen.calculative.worldRect.height;
+  let sliderW = w * pen.sliderRadio;
+  let currentX =
+    pen.x + ((Number(pen.text) - pen.min) / (pen.max - pen.min)) * sliderW;
+
+  if (!(mousePos.x < currentX + h / 5) || !(mousePos.x > currentX - h / 5)) {
+    return;
+  }
+  if (
+    mousePos.x > pen.x &&
+    mousePos.x < pen.x + sliderW &&
+    mousePos.y > pen.y + (h * 2) / 5 &&
+    mousePos.y < pen.y + (h * 3) / 5
+  ) {
+    let value = Math.round(
+      ((mousePos.x - pen.x) / sliderW) * (pen.max - pen.min)
+    );
+    pen.calculative.canvas.parent.setValue({
+      id: pen.id,
+      text: value + '',
+    });
+  }
 }
