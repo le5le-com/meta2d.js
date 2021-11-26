@@ -854,7 +854,7 @@ export class Topology {
     renderPenRaw(ctx, pen, rect);
   }
 
-  toPng(padding: Padding = 0, callback: any = undefined) {
+  toPng(padding: Padding = 0, callback?: any) {
     return this.canvas.toPng(padding, callback);
   }
 

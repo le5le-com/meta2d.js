@@ -3448,7 +3448,7 @@ export class Canvas {
     );
   }
 
-  toPng(padding: Padding = 0, callback: BlobCallback = undefined) {
+  toPng(padding: Padding = 0, callback?: BlobCallback) {
     const rect = getRect(this.store.data.pens);
     const p = formatPadding(padding || 2);
     rect.x -= p[3];
