@@ -750,9 +750,11 @@ export class Topology {
         }
         break;
       case 'click':
-        e.pen && e.pen.onClick && e.pen.onClick(e.pen);
+        e.pen && e.pen.onClick && e.pen.onClick(e.pen, this.canvas.mousePos);
       case 'mousedown':
-        e.pen && e.pen.onMouseDown && e.pen.onMouseDown(e.pen);
+        e.pen && e.pen.onMouseDown && e.pen.onMouseDown(e.pen, this.canvas.mousePos);
+      case 'mouseup':
+        e.pen && e.pen.onMouseUp && e.pen.onMouseUp(e.pen, this.canvas.mousePos);
       case 'dblclick':
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
