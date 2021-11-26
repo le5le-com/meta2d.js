@@ -9,30 +9,55 @@ export function checkboxItem(ctx: CanvasRenderingContext2D, pen: any) {
   let y = pen.calculative.worldRect.y;
   let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
+
+  let r = 2;
+
   pen.textLeft = h + h / 5;
   pen.calculative.textLeft = h + h / 5;
   // pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
   ctx.beginPath();
-  ctx.rect(x, y, h, h);
+  // ctx.rect(x, y, h, h);
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + h, y, x + h, y + h, r);
+  ctx.arcTo(x + h, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + h, y, r);
+  ctx.strokeStyle = '#d9d9d9';
+  if (pen.isChecked) {
+    ctx.strokeStyle = '#1890ff';
+  }
+  if (pen.isForbidden) {
+    ctx.strokeStyle = '#d9d9d9';
+    ctx.fillStyle = '#F5F5F5';
+    ctx.fill();
+  }
   ctx.stroke();
   if (pen.isChecked) {
     ctx.fillStyle = pen.fillColor;
+    if (pen.isForbidden) {
+      ctx.fillStyle = '#F5F5F5';
+    }
     ctx.fill();
-    ctx.beginPath();
-    ctx.lineWidth = h / 10;
-    ctx.strokeStyle = '#ffffff';
-    ctx.moveTo(x + (102 / 506) * h, y + h / 2);
-    ctx.lineTo(x + (220 / 506) * h, y + (346 / 460) * h);
-    ctx.lineTo(x + (404 / 506) * h, y + (142 / 460) * h);
-    ctx.stroke();
+    if (!pen.isForbidden) {
+      ctx.beginPath();
+      ctx.lineWidth = h / 10;
+      ctx.strokeStyle = '#ffffff';
+      ctx.moveTo(x + (102 / 506) * h, y + h / 2);
+      ctx.lineTo(x + (220 / 506) * h, y + (346 / 460) * h);
+      ctx.lineTo(x + (404 / 506) * h, y + (142 / 460) * h);
+      ctx.stroke();
+    }
   }
   ctx.closePath();
   return false;
 }
 
 function click(pen: any) {
+  if (pen.isForbidden) {
+    return;
+  }
   pen.isChecked = !pen.isChecked;
   let parent = pen.calculative.canvas.parent.getParent(pen);
   if (parent) {

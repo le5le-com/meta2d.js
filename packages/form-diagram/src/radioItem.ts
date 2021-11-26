@@ -15,9 +15,24 @@ export function radioItem(ctx: CanvasRenderingContext2D, pen: any) {
   // pen.textWidth = w - h;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
+  ctx.strokeStyle = '#d9d9d9';
+  if (pen.isChecked) {
+    ctx.strokeStyle = '#1890ff20';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x + h / 2, y + h / 2, h / 2 + 1.5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.closePath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#1890ff';
+  }
   ctx.beginPath();
   ctx.arc(x + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
   ctx.stroke();
+  if (pen.isForbidden) {
+    ctx.fillStyle = '#F5F5F5';
+    ctx.fill();
+  }
   ctx.closePath();
   if (pen.isChecked) {
     ctx.beginPath();
@@ -31,6 +46,9 @@ export function radioItem(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 function click(pen: any) {
+  if (pen.isForbidden) {
+    return;
+  }
   if (pen.isChecked) {
     return;
   } else {

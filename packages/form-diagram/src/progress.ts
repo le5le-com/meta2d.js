@@ -3,6 +3,7 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onResize = resize;
     pen.onClick = click;
+    pen.onMove = move;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -24,10 +25,11 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.arcTo(x + sliderW, y + (h * 3) / 5, x, y + (h * 3) / 5, r);
   ctx.arcTo(x, y + (h * 3) / 5, pen.x, pen.y, r);
   ctx.arcTo(x, y + (h * 2) / 5, x + sliderW, y + (h * 2) / 5, r);
-  ctx.stroke();
+  // ctx.stroke();
   ctx.fill();
-  ctx.rect(x + w - inputW, y, inputW, h);
-  ctx.stroke();
+
+  // ctx.rect(x + w - inputW, y, inputW, h);
+  // ctx.stroke();
   ctx.closePath();
   let currenPosition =
     (sliderW * (parseInt(pen.text) - pen.min)) / (pen.max - pen.min);
@@ -45,12 +47,12 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.arcTo(x + currenPosition, y + (h * 3) / 5, x, y + (h * 3) / 5, r);
   ctx.arcTo(x, y + (h * 3) / 5, pen.x, pen.y, r);
   ctx.arcTo(x, y + (h * 2) / 5, x + currenPosition, y + (h * 2) / 5, r);
-  ctx.stroke();
+  // ctx.stroke();
   ctx.fill();
   ctx.closePath();
   ctx.beginPath();
   ctx.fillStyle = '#ffffff';
-  // ctx.strokeStyle = pen.fillColor;
+  ctx.strokeStyle = pen.fillColor;
   // ctx.lineWidth = 2;
   ctx.moveTo(x + currenPosition + h / 5, y + h / 2);
   ctx.arc(x + currenPosition, y + h / 2, h / 5, 0, Math.PI * 2);
@@ -84,4 +86,8 @@ function click(pen: any) {
       text: value + '',
     });
   }
+}
+
+function move(pen: any) {
+  console.log('move');
 }
