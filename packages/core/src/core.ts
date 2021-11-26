@@ -322,6 +322,7 @@ export class Topology {
     registerAnchors(path2dFns);
   }
 
+  // customeDock = (store, rect) => {xDock, yDock}
   // customDock return:
   // {
   //   xDock: {x, y, step, prev},
@@ -751,10 +752,16 @@ export class Topology {
         break;
       case 'click':
         e.pen && e.pen.onClick && e.pen.onClick(e.pen, this.canvas.mousePos);
+        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        break;
       case 'mousedown':
         e.pen && e.pen.onMouseDown && e.pen.onMouseDown(e.pen, this.canvas.mousePos);
+        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        break;
       case 'mouseup':
         e.pen && e.pen.onMouseUp && e.pen.onMouseUp(e.pen, this.canvas.mousePos);
+        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        break;
       case 'dblclick':
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
