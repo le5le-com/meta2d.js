@@ -3,10 +3,9 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onResize = resize;
     pen.onClick = click;
-    // pen.onMove = move;
     pen.onMouseMove = mouseMove;
     pen.onMouseDown = mouseDown;
-    pen.onMouseUp = mouseUp;
+    // pen.onMouseUp = mouseUp;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -86,76 +85,72 @@ function click(pen: any) {
     );
     pen.calculative.canvas.parent.setValue({
       id: pen.id,
-      text: value + '',
+      text: value + pen.unit,
     });
   }
 }
 
-function move(pen: any) {
-  console.log('move');
-}
-
 function mouseMove(pen: any) {
-  console.log('鼠标移动', pen.calculative.canvas.mousePos);
   if (pen.locked !== 2) {
+    return;
+  }
+  if (!pen.slider) {
     return;
   }
   let mousePos = pen.calculative.canvas.mousePos;
   let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
   let sliderW = w * pen.sliderRadio;
-  let currentX =
-    pen.x + ((Number(pen.text) - pen.min) / (pen.max - pen.min)) * sliderW;
-
-  if (!(mousePos.x < currentX + h / 5) || !(mousePos.x > currentX - h / 5)) {
-    return;
-  }
-  if (
-    mousePos.x > pen.x &&
-    mousePos.x < pen.x + sliderW &&
-    mousePos.y > pen.y + (h * 2) / 5 &&
-    mousePos.y < pen.y + (h * 3) / 5
-  ) {
+  if (mousePos.x >= pen.x && mousePos.x <= pen.x + sliderW) {
     let value = Math.round(
       ((mousePos.x - pen.x) / sliderW) * (pen.max - pen.min)
     );
     pen.calculative.canvas.parent.setValue({
       id: pen.id,
-      text: value + '',
+      text: value + pen.unit,
+    });
+  } else if (mousePos.x < pen.x) {
+    pen.calculative.canvas.parent.setValue({
+      id: pen.id,
+      text: pen.min + pen.unit,
+    });
+  } else if (mousePos.x > pen.x + sliderW) {
+    pen.calculative.canvas.parent.setValue({
+      id: pen.id,
+      text: pen.max + pen.unit,
     });
   }
 }
 
 function mouseDown(pen: any, e: any) {
-  console.log('鼠标按下', e, pen.calculative.canvas.mousePos);
   if (pen.locked !== 2) {
     return;
   }
-  let mousePos = pen.calculative.canvas.mousePos;
   let w = pen.calculative.worldRect.width;
   let h = pen.calculative.worldRect.height;
   let sliderW = w * pen.sliderRadio;
   let currentX =
-    pen.x + ((Number(pen.text) - pen.min) / (pen.max - pen.min)) * sliderW;
+    pen.x + ((parseInt(pen.text) - pen.min) / (pen.max - pen.min)) * sliderW;
 
-  if (!(mousePos.x < currentX + h / 5) || !(mousePos.x > currentX - h / 5)) {
-    return;
-  }
   if (
-    mousePos.x > pen.x &&
-    mousePos.x < pen.x + sliderW &&
-    mousePos.y > pen.y + (h * 2) / 5 &&
-    mousePos.y < pen.y + (h * 3) / 5
+    e.x < currentX + h / 5 &&
+    e.x > currentX - h / 5 &&
+    e.y > pen.y + (h * 1) / 5 &&
+    e.y < pen.y + (h * 4) / 5
   ) {
-    let value = Math.round(
-      ((mousePos.x - pen.x) / sliderW) * (pen.max - pen.min)
-    );
     pen.calculative.canvas.parent.setValue({
       id: pen.id,
-      text: value + '',
+      slider: true,
     });
   }
 }
+
 function mouseUp(pen: any, e: any) {
-  console.log('抬起', e);
+  if (pen.locked !== 2) {
+    return;
+  }
+  // pen.calculative.canvas.parent.setValue({
+  //   id: pen.id,
+  //   slider: false,
+  // });
 }
