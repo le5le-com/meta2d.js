@@ -14,7 +14,8 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   let sliderW = w * pen.sliderRadio;
   let inputW = w * pen.inputRadio;
 
-  pen.textLeft = w * (1 - pen.inputRadio) + 2;
+  pen.textLeft = w * (1 - pen.inputRadio);
+  // pen.calculative.textLeft = w * (1 - pen.inputRadio) + 2;
   pen.textWidth = inputW;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
@@ -77,8 +78,8 @@ function click(pen: any) {
   if (
     mouseDown.x > pen.x &&
     mouseDown.x < pen.x + sliderW &&
-    mouseDown.y > pen.y + (h * 2) / 5 &&
-    mouseDown.y < pen.y + (h * 3) / 5
+    mouseDown.y > pen.y + (h * 1) / 5 &&
+    mouseDown.y < pen.y + (h * 4) / 5
   ) {
     let value = Math.round(
       ((mouseDown.x - pen.x) / sliderW) * (pen.max - pen.min)
@@ -123,7 +124,6 @@ function mouseMove(pen: any) {
 }
 
 function mouseDown(pen: any, e: any) {
-  console.log('down');
   if (pen.locked !== 2) {
     return;
   }
@@ -147,7 +147,6 @@ function mouseDown(pen: any, e: any) {
 }
 
 function mouseUp(pen: any, e: any) {
-  console.log('up');
   if (pen.locked !== 2) {
     return;
   }
