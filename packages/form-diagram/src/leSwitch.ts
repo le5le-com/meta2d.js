@@ -17,7 +17,7 @@ export function leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
     ctx.fillStyle = pen.onColor;
     // ctx.stroke();
     if (pen.isForbidden) {
-      ctx.fillStyle = '#A3D3FF';
+      ctx.fillStyle = pen.forbidOnColor;
     }
     ctx.fill();
     ctx.closePath();
@@ -31,7 +31,7 @@ export function leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
     ctx.fillStyle = pen.offColor;
     // ctx.stroke();
     if (pen.isForbidden) {
-      ctx.fillStyle = '#E5E5E5';
+      ctx.fillStyle = pen.forbidOffColor;
     }
     ctx.fill();
     ctx.closePath();

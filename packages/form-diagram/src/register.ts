@@ -4,14 +4,14 @@ import { radioItem } from './radioItem';
 import { checkbox } from './checkbox';
 import { radio } from './radio';
 import { leSwitch } from './leSwitch';
-import { progress } from './progress';
+import { slider } from './slider';
 import { button } from './button';
 import { commonAnchors } from './commonAnchors';
 export function formPens() {
   return {
     radio,
     leSwitch,
-    progress,
+    slider,
     checkbox,
     table,
     radioItem,
@@ -30,7 +30,7 @@ export function formCommonAnchors() {
   return {
     radio: commonAnchors,
     leSwitch: commonAnchors,
-    progress: commonAnchors,
+    slider: commonAnchors,
     checkbox: commonAnchors,
     table: commonAnchors,
     radioItem: commonAnchors,

@@ -1,11 +1,11 @@
 declare const window: any;
-export function progress(ctx: CanvasRenderingContext2D, pen: any) {
+export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onResize = resize;
     pen.onClick = click;
     pen.onMouseMove = mouseMove;
     pen.onMouseDown = mouseDown;
-    // pen.onMouseUp = mouseUp;
+    pen.onMouseUp = mouseUp;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -14,7 +14,8 @@ export function progress(ctx: CanvasRenderingContext2D, pen: any) {
   let sliderW = w * pen.sliderRadio;
   let inputW = w * pen.inputRadio;
 
-  pen.textLeft = w * (1 - pen.inputRadio) + 2;
+  pen.textLeft = w * (1 - pen.inputRadio);
+  // pen.calculative.textLeft = w * (1 - pen.inputRadio) + 2;
   pen.textWidth = inputW;
   pen.textAlign = 'start';
   pen.textBaseline = 'middle';
@@ -77,8 +78,8 @@ function click(pen: any) {
   if (
     mouseDown.x > pen.x &&
     mouseDown.x < pen.x + sliderW &&
-    mouseDown.y > pen.y + (h * 2) / 5 &&
-    mouseDown.y < pen.y + (h * 3) / 5
+    mouseDown.y > pen.y + (h * 1) / 5 &&
+    mouseDown.y < pen.y + (h * 4) / 5
   ) {
     let value = Math.round(
       ((mouseDown.x - pen.x) / sliderW) * (pen.max - pen.min)
@@ -149,8 +150,8 @@ function mouseUp(pen: any, e: any) {
   if (pen.locked !== 2) {
     return;
   }
-  // pen.calculative.canvas.parent.setValue({
-  //   id: pen.id,
-  //   slider: false,
-  // });
+  pen.calculative.canvas.parent.setValue({
+    id: pen.id,
+    slider: false,
+  });
 }
