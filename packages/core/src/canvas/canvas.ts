@@ -1001,6 +1001,8 @@ export class Canvas {
 
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
+        this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
+
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
         if (!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
           this.alreadyCopy = true;
@@ -1030,12 +1032,13 @@ export class Canvas {
         this.moveLineAnchorNext(e);
         return;
       }
+
+      return;
     }
 
     window && window.debug && console.time('hover');
-    !this.mouseDown && this.getHover(e);
+    this.getHover(e);
     window && window.debug && console.timeEnd('hover');
-    this.store.hover && this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.dirty = true;
     }
