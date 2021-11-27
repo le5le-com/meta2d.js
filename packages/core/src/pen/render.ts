@@ -333,7 +333,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     if (pen.calculative.iconHeight) {
       h = pen.calculative.iconHeight;
     }
-    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight && pen.iconRatio) {
+    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight && pen.imageRatio) {
       let scaleW = rect.width / pen.calculative.imgNaturalWidth;
       let scaleH = rect.height / pen.calculative.imgNaturalHeight;
       let scaleMin = scaleW > scaleH ? scaleH : scaleW;
