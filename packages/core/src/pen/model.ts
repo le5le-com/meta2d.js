@@ -116,7 +116,7 @@ export interface Pen extends Rect {
     | 'left-bottom'
     | 'right-bottom'
     | 'center';
-  iconRatio?: boolean;
+  imageRatio?: boolean;
 
   disableInput?: boolean;
   disableRotate?: boolean;
