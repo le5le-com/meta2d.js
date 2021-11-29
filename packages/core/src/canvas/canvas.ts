@@ -509,10 +509,23 @@ export class Canvas {
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
       for (const pen of obj) {
-        pen.width *= this.store.data.scale;
-        pen.height *= this.store.data.scale;
-        pen.x = pt.x - pen.width / 2;
-        pen.y = pt.y - pen.height / 2;
+        if (!pen.id) {
+          pen.id = s8();
+        }
+        !pen.calculative && (pen.calculative = { canvas: this });
+        this.store.pens[pen.id] = pen;
+      }
+      // 计算区域
+      for (const pen of obj) {
+        this.dirtyPenRect(pen);
+      }
+      for (const pen of obj) {
+        if (!pen.parentId) {
+          pen.width *= this.store.data.scale;
+          pen.height *= this.store.data.scale;
+          pen.x = pt.x - pen.width / 2;
+          pen.y = pt.y - pen.height / 2;
+        }
         this.addPen(pen, true);
       }
     } catch {}
@@ -1665,15 +1678,11 @@ export class Canvas {
     this.store.emitter.emit(undo ? 'undo' : 'redo', action);
   }
 
-  makePen(pen: Pen, unshift?: boolean) {
+  makePen(pen: Pen) {
     if (!pen.id) {
       pen.id = s8();
     }
-    if (unshift) {
-      this.store.data.pens.unshift(pen);
-    } else {
-      this.store.data.pens.push(pen);
-    }
+    this.store.data.pens.push(pen);
     this.store.pens[pen.id] = pen;
     // 集中存储path，避免数据冗余过大
     if (pen.path) {
