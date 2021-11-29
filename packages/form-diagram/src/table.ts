@@ -227,15 +227,15 @@ function onAdd(pen: any) {
         rowInParent: i - 2,
         colInParent: key,
         textColor: '#000000',
-        ...headerStyle,
-        ...temRow,
-        width: childRect.width,
-        height: childRect.height,
         activeColor: '#00000000',
         color: '#00000000',
         hoverColor: '#00000000',
         hoverTextColor: '#000000',
         activeTextColor: '#000000',
+        ...headerStyle,
+        ...temRow,
+        width: childRect.width,
+        height: childRect.height,
       };
       pen.calculative.canvas.makePen(childPen);
       childPen.onClick = childPenOnClick;
@@ -261,13 +261,16 @@ function onAdd(pen: any) {
               value: 'console.log(pen.currentData)',
             },
           ],
+          borderRadius: 0.2,
           activeBackground: '#40a9ff',
-          activeColor: '#fff',
+          activeColor: '#40a9ff',
           background: '#1890ff',
           color: '#1890ff',
           hoverBackground: '#40a9ff',
-          hoverColor: '#ffffff',
+          hoverColor: '#40a9ff',
           textColor: '#ffffff',
+          hoverTextColor: '#ffffff',
+          activeTextColor: '#ffffff',
           ...pen.table.button,
         };
         pen.calculative.canvas.makePen(btnChildPen);
