@@ -166,15 +166,20 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   const store = pen.calculative.canvas.store;
 
   let fill: any;
+  // 该变量控制在 hover active 状态下的节点是否设置填充颜色
+  let setBack = true;
   if (pen.calculative.hover) {
     ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
-    fill = pen.hoverBackground || store.options.hoverBackground || pen.calculative.background;
+    fill = pen.hoverBackground || store.options.hoverBackground;
     ctx.fillStyle = fill;
+    fill && (setBack = false);
   } else if (pen.calculative.active) {
     ctx.strokeStyle = pen.activeColor || store.options.activeColor;
-    fill = pen.activeBackground || store.options.activeBackground || pen.calculative.background;
+    fill = pen.activeBackground || store.options.activeBackground;
     ctx.fillStyle = fill;
-  } else {
+    fill && (setBack = false);
+  } 
+  if (setBack) {
     if (pen.calculative.strokeImage) {
       if (pen.calculative.strokeImg) {
         ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, 'repeat');

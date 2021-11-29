@@ -1344,7 +1344,7 @@ export class Topology {
       }
       parent = p;
     } else {
-      this.canvas.makePen(parent, true);
+      this.canvas.makePen(parent);
     }
 
     pens.forEach((pen) => {
