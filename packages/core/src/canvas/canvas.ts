@@ -1176,7 +1176,7 @@ export class Canvas {
     this.dirty = true;
   }
 
-  active(pens: Pen[]) {
+  active(pens: Pen[], emit = true) {
     if (this.store.active) {
       for (const pen of this.store.active) {
         pen.calculative.active = undefined;
@@ -1191,7 +1191,7 @@ export class Canvas {
     this.store.active.push(...pens);
     this.calcActiveRect();
     this.dirty = true;
-    this.store.emitter.emit('active', this.store.active);
+    emit && this.store.emitter.emit('active', this.store.active);
   }
 
   getSizeCPs() {
