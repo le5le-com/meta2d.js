@@ -17,7 +17,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
     radius: '75%',
     startAngle: 225,
     endAngle: -45,
-    clockwise: true,
+    // clockwise: true,
     min: 0,
     max: 100,
     splitNumber: 10,
@@ -207,7 +207,9 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
       centerX - pointerHalfW * 3 * Math.cos(currentAngle),
       centerY + pointerHalfW * 3 * Math.sin(currentAngle)
     );
-    ctx.fill();
+    if (series.pointer.show) {
+      ctx.fill();
+    }
 
     //文字描述
     if (series.detail.show !== false) {

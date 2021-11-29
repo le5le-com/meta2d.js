@@ -10,7 +10,7 @@ import { commonAnchors } from './commonAnchors';
 export function formPens() {
   return {
     radio,
-    leSwitch,
+    switch: leSwitch,
     slider,
     checkbox,
     table,
