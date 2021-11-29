@@ -23,7 +23,7 @@ import { diamond } from './diamond';
 import { triangle, triangleAnchors } from './triangle';
 import { pentagon, pentagonAnchors } from './pentagon';
 import { pentagram, pentagramAnchors } from './pentagram';
-import { hexagon, hexagonAnchors } from './hexagon';
+import { hexagon } from './hexagon';
 import { leftArrow, rightArrow, twowayArrow } from './arrow';
 import { message } from './message';
 import { cloud } from './cloud';
@@ -64,7 +64,6 @@ export function commonPens() {
 export function commonAnchors() {
   return {
     triangle: triangleAnchors,
-    hexagon: hexagonAnchors,
     pentagon: pentagonAnchors,
     pentagram: pentagramAnchors
   };
