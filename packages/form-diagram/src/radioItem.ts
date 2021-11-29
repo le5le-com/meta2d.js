@@ -36,7 +36,7 @@ export function radioItem(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.closePath();
   if (pen.isChecked) {
     ctx.beginPath();
-    ctx.fillStyle = pen.fillColor;
+    ctx.fillStyle = pen.background;
     ctx.arc(x + h / 2, y + h / 2, h / 4, 0, Math.PI * 2);
     ctx.stroke();
     ctx.fill();

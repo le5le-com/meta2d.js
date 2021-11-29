@@ -256,7 +256,7 @@ function onAdd(pen: any) {
           currentData: rowData,
           events: [
             {
-              action: 4,
+              action: 5,
               name: 'click',
               value: 'console.log(pen.currentData)',
             },
@@ -372,7 +372,7 @@ function valueChange(pen: any) {
           currentData: rowData,
           events: [
             {
-              action: 4,
+              action: 5,
               name: 'click',
               value: 'console.log(pen.currentData)',
             },
