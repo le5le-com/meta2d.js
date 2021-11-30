@@ -30,14 +30,14 @@ export function checkboxItem(ctx: CanvasRenderingContext2D, pen: any) {
   }
   if (pen.isForbidden) {
     ctx.strokeStyle = '#d9d9d9';
-    ctx.fillStyle = '#F5F5F5';
+    ctx.fillStyle = '#ebebeb';
     ctx.fill();
   }
   ctx.stroke();
   if (pen.isChecked) {
     ctx.fillStyle = pen.background;
     if (pen.isForbidden) {
-      ctx.fillStyle = '#F5F5F5';
+      ctx.fillStyle = '#ebebeb';
     }
     ctx.fill();
     if (!pen.isForbidden) {
