@@ -23,8 +23,8 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
     splitNumber: 10,
   };
 
-  for (let ser = 0; ser < pen.lecharts.option.series.length; ser++) {
-    let series = { ...basicConfigure, ...pen.lecharts.option.series[ser] };
+  for (let ser = 0; ser < pen.charts.option.series.length; ser++) {
+    let series = { ...basicConfigure, ...pen.charts.option.series[ser] };
     series.radius = parseFloat(series.radius) / 100;
     let r = w > h ? (h / 2) * series.radius : (w / 2) * series.radius;
     let centerX = x + w / 2;
@@ -225,7 +225,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
       );
       ctx.fill();
     }
-    if (pen.lechartsType === 'clock') {
+    if (pen.chartsType === 'clock') {
       ctx.beginPath();
       ctx.fillStyle = '#FFFFFF';
       ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
@@ -237,7 +237,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 function onAdd(pen: any) {
-  if (pen.lechartsType === 'clock') {
+  if (pen.chartsType === 'clock') {
     clockInterval = setInterval(() => {
       var date = new Date();
       var second = date.getSeconds();
@@ -259,11 +259,11 @@ function onAdd(pen: any) {
       },
       {
         duration: 2000,
-        value: pen.lecharts.option.series[0].data[0].value,
+        value: pen.charts.option.series[0].data[0].value,
       },
     ];
     pen.calculative.canvas.parent.startAnimate(pen.id);
-    pen.value = pen.lecharts.option.series[0].data[0].value;
+    pen.value = pen.charts.option.series[0].data[0].value;
   }
 }
 

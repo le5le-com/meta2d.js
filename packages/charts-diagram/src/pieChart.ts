@@ -5,8 +5,8 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: any) {
   const w = pen.calculative.worldRect.width;
   const h = pen.calculative.worldRect.height;
 
-  for (let ser = 0; ser < pen.lecharts.option.series.length; ser++) {
-    let series = pen.lecharts.option.series[ser];
+  for (let ser = 0; ser < pen.charts.option.series.length; ser++) {
+    let series = pen.charts.option.series[ser];
     let r = w / 2;
     if (h < w) {
       r = h / 2;
@@ -30,7 +30,7 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: any) {
     series.data.forEach((item: any, index: number) => {
       afterAngle += (Math.PI * 2 * item.value) / sum;
       ctx.beginPath();
-      ctx.fillStyle = pen.lecharts.option.color[index];
+      ctx.fillStyle = pen.charts.option.color[index];
       ctx.moveTo(
         centerX + fromR * Math.sin(afterAngle),
         centerY - fromR * Math.cos(afterAngle)
@@ -74,7 +74,7 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: any) {
       }
       if (series.labelLine.show !== false) {
         ctx.beginPath();
-        ctx.strokeStyle = pen.lecharts.option.color[index];
+        ctx.strokeStyle = pen.charts.option.color[index];
         ctx.moveTo(
           centerX + toR * Math.sin(centerAngle),
           centerY - toR * Math.cos(centerAngle)
