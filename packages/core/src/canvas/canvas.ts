@@ -2877,10 +2877,6 @@ export class Canvas {
         }
       }
 
-      if (line.autoFrom || line.autoTo) {
-        return;
-      }
-
       const penAnchor = getAnchor(pen, item.anchor);
       if (!penAnchor) {
         return;
