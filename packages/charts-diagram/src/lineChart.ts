@@ -6,7 +6,7 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
   const h = pen.calculative.worldRect.height;
-  let series = pen.lecharts.option.series;
+  let series = pen.charts.option.series;
 
   let coordinate = coordinateAxis(ctx, pen);
   let dash = coordinate.dash;
@@ -17,8 +17,8 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
   for (let j = 0; j < series.length; j++) {
     ctx.beginPath();
     let data = series[j].data;
-    ctx.strokeStyle = pen.lecharts.option.color[j];
-    ctx.fillStyle = pen.lecharts.option.color[j];
+    ctx.strokeStyle = pen.charts.option.color[j];
+    ctx.fillStyle = pen.charts.option.color[j];
     let currentX = x + (1 + dash / 2);
     let currentY =
       y +
