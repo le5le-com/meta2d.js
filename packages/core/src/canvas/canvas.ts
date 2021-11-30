@@ -3384,7 +3384,9 @@ export class Canvas {
     this.initPens = [deepClone(pen)];
 
     if (typeof pen.dropdownList[index] === 'object') {
-      this.updateValue(pen, pen.dropdownList[index]);
+      const rect = this.getPenRect(pen);
+      this.updateValue(pen, {...rect, ...pen.dropdownList[index]});
+      this.calcActiveRect();
     } else {
       pen.text = pen.dropdownList[index] + '';
     }
@@ -3435,6 +3437,19 @@ export class Canvas {
     this.dirtyPenRect(pen);
 
     render && this.render();
+  }
+
+  getPenRect(pen: Pen) {
+    if (!pen) {
+      return;
+    }
+
+    return {
+      x: (pen.x - this.store.data.origin.x) / this.store.data.scale,
+      y: (pen.y - this.store.data.origin.y) / this.store.data.scale,
+      width: pen.width / this.store.data.scale,
+      height: pen.height / this.store.data.scale,
+    };
   }
 
   renderRule() {

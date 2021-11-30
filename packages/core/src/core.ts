@@ -97,7 +97,8 @@ export class Topology {
       window.open(e.value, e.params === undefined ? '_blank' : e.params);
     };
     this.events[EventAction.SetProps] = (pen: any, e: Event) => {
-      this.updateValue(pen, e.value);
+      const rect = this.getPenRect(pen);
+      this.updateValue(pen, {...rect,...e.value});
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {
@@ -343,16 +344,7 @@ export class Topology {
   }
 
   getPenRect(pen: Pen) {
-    if (!pen) {
-      return;
-    }
-
-    return {
-      x: (pen.x - this.store.data.origin.x) / this.store.data.scale,
-      y: (pen.y - this.store.data.origin.y) / this.store.data.scale,
-      width: pen.width / this.store.data.scale,
-      height: pen.height / this.store.data.scale,
-    };
+    return this.canvas.getPenRect(pen);
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
