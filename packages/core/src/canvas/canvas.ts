@@ -1133,13 +1133,37 @@ export class Canvas {
       }
     }
 
-    if (this.mouseDown && this.hoverType === HoverType.LineAnchor) {
-      const from = getFromAnchor(this.store.active[0]);
-      const to = getToAnchor(this.store.active[0]);
-      if (from === this.store.hoverAnchor && this.store.active[0].autoFrom) {
-        this.calcAutoAnchor(this.store.active[0], from, this.store.hover);
-      } else if (to === this.store.hoverAnchor && this.store.active[0].autoTo) {
-        this.calcAutoAnchor(this.store.active[0], to, this.store.hover);
+    if (this.mouseDown && this.hoverType === HoverType.LineAnchor && this.store.active[0] !== this.store.hover) {
+      const line = this.store.active[0];
+      const from = getFromAnchor(line);
+      const to = getToAnchor(line);
+      if (this.store.hoverAnchor) {
+        if (from === this.store.activeAnchor) {
+          line.autoFrom = undefined;
+        } else {
+          line.autoTo = undefined;
+        }
+        this.store.activeAnchor.x = this.store.hoverAnchor.x;
+        this.store.activeAnchor.y = this.store.hoverAnchor.y;
+        this.store.activeAnchor.prev = undefined;
+        this.store.activeAnchor.next = undefined;
+        this.store.activeAnchor.connectTo = this.store.hover.id;
+        this.store.hover.connectedLines.push({
+          lineId: line.id,
+          lineAnchor: this.store.activeAnchor.id,
+          anchor: this.store.hover.id,
+        });
+        if (this[line.lineName]) {
+          this[line.lineName](this.store, line);
+        }
+        this.store.path2dMap.set(line, globalStore.path2dDraws.line(line));
+        this.initLineRect(line);
+      } else {
+        if (from === this.store.activeAnchor && line.autoFrom) {
+          this.calcAutoAnchor(line, from, this.store.hover);
+        } else if (to === this.store.activeAnchor && line.autoTo) {
+          this.calcAutoAnchor(line, to, this.store.hover);
+        }
       }
     }
 
@@ -2797,22 +2821,31 @@ export class Canvas {
   }
 
   private calcAutoAnchor(line: Pen, lineAnchor: Point, pen: Pen, penConnection?: any) {
-    const newAnchor = nearestAnchor(pen, line.calculative.worldAnchors[0]);
+    const from = getFromAnchor(line);
+    const to = getToAnchor(line);
+    const newAnchor = nearestAnchor(pen, lineAnchor === from ? to : from);
     lineAnchor.x = newAnchor.x;
     lineAnchor.y = newAnchor.y;
     lineAnchor.prev = undefined;
     lineAnchor.next = undefined;
-    if (this[line.lineName]) {
-      this[line.lineName](this.store, line);
-    }
-    this.store.path2dMap.set(line, globalStore.path2dDraws.line(line));
-    this.initLineRect(line);
+    lineAnchor.connectTo = pen.id;
 
     if (penConnection) {
       penConnection.anchor = newAnchor.id;
     } else {
-      connectLine(pen, line.id, lineAnchor.id, newAnchor.id);
+      pen.connectedLines.push({
+        lineId: line.id,
+        lineAnchor: lineAnchor.id,
+        anchor: newAnchor.id,
+      });
     }
+
+    if (this[line.lineName]) {
+      this[line.lineName](this.store, line);
+    }
+
+    this.store.path2dMap.set(line, globalStore.path2dDraws.line(line));
+    this.initLineRect(line);
   }
 
   updateLines(pen: Pen, change?: boolean) {
