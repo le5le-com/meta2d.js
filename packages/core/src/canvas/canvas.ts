@@ -3380,7 +3380,7 @@ export class Canvas {
     this.initPens = [deepClone(pen)];
 
     if (typeof pen.dropdownList[index] === 'object') {
-      Object.assign(pen, pen.dropdownList[index]);
+      this.updateValue(pen, pen.dropdownList[index]);
     } else {
       pen.text = pen.dropdownList[index] + '';
     }
@@ -3392,8 +3392,46 @@ export class Canvas {
       pens: [deepClone(pen)],
       initPens: this.initPens,
     });
+    this.render(Infinity);
     this.store.emitter.emit('valueUpdate', pen);
   };
+
+  updateValue(pen: Pen, data: any) {
+    Object.assign(pen, data);
+    if (data.newId) {
+      pen.id = data.newId;
+    }
+    if (pen.calculative.text !== pen.text) {
+      pen.calculative.text = pen.text;
+      calcTextLines(pen);
+    }
+    for (const k in data) {
+      if (typeof pen[k] !== 'object' || k === 'lineDash') {
+        pen.calculative[k] = data[k];
+      }
+    }
+    pen.calculative.image = undefined;
+    pen.calculative.backgroundImage = undefined;
+    pen.calculative.strokeImage = undefined;
+
+    if (data.x != null || data.y != null || data.width != null || data.height != null) {
+      this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
+      this.updateLines(pen, true);
+    }
+    if (data.image || data.backgroundImage || data.strokeImage) {
+      this.loadImage(pen);
+    }
+  }
+
+  setPenRect(pen: Pen, rect: Rect, render = true) {
+    pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
+    pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
+    pen.width = rect.width * this.store.data.scale;
+    pen.height = rect.height * this.store.data.scale;
+    this.dirtyPenRect(pen);
+
+    render && this.render();
+  }
 
   renderRule() {
     if (!this.store.options.rule && !this.store.data.rule) {

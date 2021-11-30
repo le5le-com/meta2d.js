@@ -356,13 +356,7 @@ export class Topology {
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
-    pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
-    pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
-    pen.width = rect.width * this.store.data.scale;
-    pen.height = rect.height * this.store.data.scale;
-    this.canvas.dirtyPenRect(pen);
-
-    render && this.render();
+    this.setPenRect(pen, rect, render);
   }
 
   startAnimate(idOrTagOrPens?: string | Pen[]) {
@@ -685,30 +679,7 @@ export class Topology {
   }
 
   updateValue(pen: Pen, data: any) {
-    Object.assign(pen, data);
-    if (data.newId) {
-      pen.id = data.newId;
-    }
-    if (pen.calculative.text !== pen.text) {
-      pen.calculative.text = pen.text;
-      calcTextLines(pen);
-    }
-    for (const k in data) {
-      if (typeof pen[k] !== 'object' || k === 'lineDash') {
-        pen.calculative[k] = data[k];
-      }
-    }
-    pen.calculative.image = undefined;
-    pen.calculative.backgroundImage = undefined;
-    pen.calculative.strokeImage = undefined;
-
-    if (data.x != null || data.y != null || data.width != null || data.height != null) {
-      this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
-      this.canvas.updateLines(pen, true);
-    }
-    if (data.image || data.backgroundImage || data.strokeImage) {
-      this.canvas.loadImage(pen);
-    }
+    this.canvas.updateValue(pen, data);
   }
 
   pushHistory(action: EditAction) {
