@@ -30,7 +30,7 @@ export function radioItem(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.arc(x + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
   ctx.stroke();
   if (pen.isForbidden) {
-    ctx.fillStyle = '#F5F5F5';
+    ctx.fillStyle = '#ebebeb';
     ctx.fill();
   }
   ctx.closePath();

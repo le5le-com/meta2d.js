@@ -13,7 +13,7 @@ export function calcAnchorDock(e: Point, anchor: Point, pen: Pen, store: Topolog
     return {
       // undefined , 不画对齐线了
       xDock,
-      yDock
+      yDock,
     };
   }
   pen.calculative.worldAnchors.forEach((pt) => {
@@ -57,12 +57,20 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
     return {
       // undefined , 不画对齐线了
       xDock,
-      yDock
+      yDock,
     };
   }
   store.data.pens.forEach((pen) => {
     if (pen.calculative.active || pen.calculative.inView === false) {
       return;
+    }
+
+    if (store.active[0].connectedLines) {
+      for (const item of store.active[0].connectedLines) {
+        if (item.lineId === pen.id) {
+          return;
+        }
+      }
     }
 
     const r = pen.calculative.worldRect;
