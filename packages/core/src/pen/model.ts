@@ -148,6 +148,9 @@ export interface Pen extends Rect {
   fromArrowColor?: string;
   toArrowColor?: string;
 
+  autoFrom?: boolean;
+  autoTo?: boolean;
+
   connectedLines?: { lineId: string; lineAnchor: string; anchor: string }[];
 
   // Cycle count. Infinite if == 0.

@@ -28,9 +28,10 @@ import {
   getParent,
   setHover,
   getAllChildren,
-  setElemPosition,
   randomId,
   getPensLock,
+  getToAnchor,
+  getFromAnchor,
 } from '../pen';
 import {
   calcRotate,
@@ -690,7 +691,8 @@ export class Canvas {
 
       if (this.hoverType === HoverType.Node) {
         if (this.store.options.autoAnchor) {
-          this.store.hoverAnchor = nearestAnchor(this.store.hover, pt);
+          this.store.hoverAnchor = nearestAnchor(this.store.hover, this.drawingLine.calculative.worldAnchors[0]);
+          this.drawingLine.autoTo = true;
         }
 
         if (this.store.hoverAnchor) {
@@ -1033,7 +1035,9 @@ export class Canvas {
         return;
       }
 
-      return;
+      if (!this.dragRect) {
+        return;
+      }
     }
 
     window && window.debug && console.time('hover');
@@ -1088,6 +1092,38 @@ export class Canvas {
       connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, to.anchorId);
       this.finishDrawline(true);
       return;
+    }
+
+    if (this.drawingLine && this.hoverType === HoverType.Node) {
+      if (this.store.options.autoAnchor) {
+        this.store.hoverAnchor = nearestAnchor(this.store.hover, this.drawingLine.calculative.worldAnchors[0]);
+        this.drawingLine.autoTo = true;
+      }
+
+      if (this.store.hoverAnchor) {
+        if (this.drawingLine) {
+          const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+          to.x = this.store.hoverAnchor.x;
+          to.y = this.store.hoverAnchor.y;
+          to.connectTo = this.store.hover.id;
+          to.anchorId = this.store.hoverAnchor.id;
+
+          connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, this.store.hoverAnchor.id);
+          this.drawline();
+          this.finishDrawline(true);
+          return;
+        }
+      }
+    }
+
+    if (this.mouseDown && this.hoverType === HoverType.LineAnchor) {
+      const from = getFromAnchor(this.store.active[0]);
+      const to = getToAnchor(this.store.active[0]);
+      if (from === this.store.hoverAnchor && this.store.active[0].autoFrom) {
+        this.calcAutoAnchor(this.store.active[0], from, this.store.hover);
+      } else if (to === this.store.hoverAnchor && this.store.active[0].autoTo) {
+        this.calcAutoAnchor(this.store.active[0], to, this.store.hover);
+      }
     }
 
     // Add pen
@@ -1746,7 +1782,7 @@ export class Canvas {
     if (this[this.drawingLineName]) {
       this[this.drawingLineName](this.store, this.drawingLine, mouse);
     }
-    this.store.path2dMap.set(this.drawingLine, globalStore.path2dDraws[this.drawingLine.name](this.drawingLine));
+    this.store.path2dMap.set(this.drawingLine, globalStore.path2dDraws.line(this.drawingLine));
     this.dirty = true;
   }
 
@@ -2747,6 +2783,25 @@ export class Canvas {
     }, 200);
   }
 
+  private calcAutoAnchor(line: Pen, lineAnchor: Point, pen: Pen, penConnection?: any) {
+    const newAnchor = nearestAnchor(pen, line.calculative.worldAnchors[0]);
+    lineAnchor.x = newAnchor.x;
+    lineAnchor.y = newAnchor.y;
+    lineAnchor.prev = undefined;
+    lineAnchor.next = undefined;
+    if (this[line.lineName]) {
+      this[line.lineName](this.store, line);
+    }
+    this.store.path2dMap.set(line, globalStore.path2dDraws.line(line));
+    this.initLineRect(line);
+
+    if (penConnection) {
+      penConnection.anchor = newAnchor.id;
+    } else {
+      connectLine(pen, line.id, lineAnchor.id, newAnchor.id);
+    }
+  }
+
   updateLines(pen: Pen, change?: boolean) {
     if (!pen.connectedLines) {
       return;
@@ -2759,6 +2814,24 @@ export class Canvas {
 
       const lineAnchor = getAnchor(line, item.lineAnchor);
       if (!lineAnchor) {
+        return;
+      }
+
+      if (line.autoFrom) {
+        const from = getFromAnchor(line);
+        if (from.id === lineAnchor.id) {
+          this.calcAutoAnchor(line, from, pen, item);
+        }
+      }
+
+      if (line.autoTo) {
+        const to = getToAnchor(line);
+        if (to.id === lineAnchor.id) {
+          this.calcAutoAnchor(line, to, pen, item);
+        }
+      }
+
+      if (line.autoFrom || line.autoTo) {
         return;
       }
 
