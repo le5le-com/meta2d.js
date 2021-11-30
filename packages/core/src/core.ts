@@ -514,8 +514,8 @@ export class Topology {
     this.inactive();
   }
 
-  active(pens: Pen[]) {
-    this.canvas.active(pens);
+  active(pens: Pen[], emit = true) {
+    this.canvas.active(pens, emit);
   }
 
   inactive() {
@@ -1335,7 +1335,7 @@ export class Topology {
       }
       parent = p;
     } else {
-      this.canvas.makePen(parent, true);
+      this.canvas.makePen(parent);
     }
 
     pens.forEach((pen) => {

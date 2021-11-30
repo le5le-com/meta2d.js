@@ -35,7 +35,7 @@ export function checkboxItem(ctx: CanvasRenderingContext2D, pen: any) {
   }
   ctx.stroke();
   if (pen.isChecked) {
-    ctx.fillStyle = pen.fillColor;
+    ctx.fillStyle = pen.background;
     if (pen.isForbidden) {
       ctx.fillStyle = '#F5F5F5';
     }

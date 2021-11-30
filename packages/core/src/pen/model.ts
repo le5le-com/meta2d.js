@@ -27,6 +27,12 @@ export enum Gradient {
   Radial, // 镜像渐变
 }
 
+export enum Flip {
+  None,  // 正常
+  Horizontal,  // 水平翻转
+  Vertical  // 垂直翻转
+}
+
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -195,6 +201,8 @@ export interface Pen extends Rect {
 
   autoPolyline?: boolean;
 
+  flip?: Flip;
+
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -329,6 +337,8 @@ export interface Pen extends Rect {
     video?: string;
     audio?: string;
     media?: HTMLMediaElement;
+
+    flip?: Flip;
 
     // media element
     onended?: (pen: Pen) => void;

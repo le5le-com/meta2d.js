@@ -7,7 +7,7 @@ import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
-import { Gradient } from '@topology/core';
+import { Flip, Gradient } from '@topology/core';
 
 export function getParent(pen: Pen, root?: boolean) {
   if (!pen || !pen.parentId || !pen.calculative) {
@@ -140,9 +140,22 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
 
+  if (pen.calculative.flip) {
+    if (pen.calculative.flip === Flip.Horizontal) {
+      ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex + 0.5, 0.5);
+      ctx.scale(-1, 1);
+    } else if (pen.calculative.flip === Flip.Vertical) {
+      ctx.translate(0.5, pen.calculative.worldRect.y + pen.calculative.worldRect.ey + 0.5);
+      ctx.scale(1, -1);
+    }
+  }
+
   if (pen.calculative.rotate && pen.name !== 'line') {
     ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
-    ctx.rotate((pen.calculative.rotate * Math.PI) / 180);
+    let rotate = (pen.calculative.rotate * Math.PI) / 180;
+    // 目前只有水平和垂直翻转，都需要 * -1
+    pen.calculative.flip && (rotate *= -1);
+    ctx.rotate(rotate);
     ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
   }
 
@@ -153,15 +166,20 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   const store = pen.calculative.canvas.store;
 
   let fill: any;
+  // 该变量控制在 hover active 状态下的节点是否设置填充颜色
+  let setBack = true;
   if (pen.calculative.hover) {
     ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
-    fill = pen.hoverBackground || store.options.hoverBackground || pen.calculative.background;
+    fill = pen.hoverBackground || store.options.hoverBackground;
     ctx.fillStyle = fill;
+    fill && (setBack = false);
   } else if (pen.calculative.active) {
     ctx.strokeStyle = pen.activeColor || store.options.activeColor;
-    fill = pen.activeBackground || store.options.activeBackground || pen.calculative.background;
+    fill = pen.activeBackground || store.options.activeBackground;
     ctx.fillStyle = fill;
-  } else {
+    fill && (setBack = false);
+  } 
+  if (setBack) {
     if (pen.calculative.strokeImage) {
       if (pen.calculative.strokeImg) {
         ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, 'repeat');
@@ -547,9 +565,30 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   }
   // end
 
+  if (pen.calculative.flip) {
+    if (pen.calculative.flip === Flip.Horizontal) {
+      if (rect) {
+        ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex - rect.x, -rect.y);
+      } else {
+        ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex, 0);
+      }
+      ctx.scale(-1, 1);
+    } else if (pen.calculative.flip === Flip.Vertical) {
+      if (rect) {
+        ctx.translate(-rect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.ey - rect.x);
+      } else {
+        ctx.translate(0, pen.calculative.worldRect.y + pen.calculative.worldRect.ey);
+      }
+      ctx.scale(1, -1);
+    }
+  }
+
   if (pen.calculative.rotate && pen.name !== 'line') {
     ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
-    ctx.rotate((pen.calculative.rotate * Math.PI) / 180);
+    let rotate = (pen.calculative.rotate * Math.PI) / 180;
+    // 目前只有水平和垂直翻转，都需要 * -1
+    pen.calculative.flip && (rotate *= -1);
+    ctx.rotate(rotate);
     ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
   }
 

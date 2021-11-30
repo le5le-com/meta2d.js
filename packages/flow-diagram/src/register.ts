@@ -1,12 +1,12 @@
-import { flowComment } from './comment';
+import { flowComment, flowCommentAnchors } from './comment';
 import { flowData } from './data';
 import { flowDb } from './db';
 import { flowDisplay } from './display';
-import { flowDocument } from './document';
+import { flowDocument, flowDocumentAnchors } from './document';
 import { flowExternStorage } from './externStorage';
 import { flowInternalStorage } from './internalStorage';
-import { flowManually } from './manually';
-import { flowParallel } from './parallel';
+import { flowManually, flowManuallyAnchors } from './manually';
+import { flowParallel, flowParallelAnchors } from './parallel';
 import { flowQueue } from './queue';
 import { flowSubprocess } from './subprocess';
 
@@ -23,5 +23,14 @@ export function flowPens() {
     flowParallel,
     flowQueue,
     flowSubprocess,
+  };
+}
+
+export function flowAnchors() {
+  return {
+    flowDocument: flowDocumentAnchors,
+    flowManually: flowManuallyAnchors,
+    flowParallel: flowParallelAnchors,
+    flowComment: flowCommentAnchors,
   };
 }
