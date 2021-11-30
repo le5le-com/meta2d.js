@@ -183,7 +183,8 @@ export interface Pen extends Rect {
   animateList?: Pen[][];
 
   input?: boolean;
-  dropdownList?: any[];
+  dropdownList?: any[];  // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
+  // string 类型数组，只展示文字
 
   events?: Event[];
 
