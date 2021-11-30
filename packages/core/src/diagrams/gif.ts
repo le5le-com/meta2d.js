@@ -20,11 +20,11 @@ export function gif(pen: Pen): Path2D {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = pen.image;
+    gifsList[pen.id] = img;   // 提前赋值，避免重复创建
     img.onload = () => {
       pen.calculative.img = img;
       pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
       pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
-      gifsList[pen.id] = img;
       pen.calculative.canvas.externalElements &&
         pen.calculative.canvas.externalElements.appendChild(img);
       setElemPosition(pen, img);
