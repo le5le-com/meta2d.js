@@ -1,3 +1,4 @@
+import { Point } from '@topology/core';
 import { Pen } from '../../core/src/pen';
 export function flowParallel(
   pen: Pen,
@@ -13,4 +14,22 @@ export function flowParallel(
   path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.ey);
 
   return path;
+}
+
+export function flowParallelAnchors(pen: Pen) {
+  const anchors: Point[] = [];
+  anchors.push({
+    id: '0',
+    penId: pen.id,
+    x: 0.5,
+    y: 0,
+  });
+
+  anchors.push({
+    id: '1',
+    penId: pen.id,
+    x: 0.5,
+    y: 1,
+  });
+  pen.anchors = anchors;
 }
