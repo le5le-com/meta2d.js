@@ -34,6 +34,8 @@ import { line } from './line';
 import { iframe } from './iframe';
 import { video } from './video';
 import { gif } from './gif';
+import { mindNode, mindNodeAnchors } from './mindNode';
+import { mindLine, mindLineAnchors } from './mindLine';
 
 export function commonPens() {
   return {
@@ -57,7 +59,9 @@ export function commonPens() {
     line,
     iframe,
     video,
-    gif
+    gif,
+    mindNode,
+    mindLine
   };
 }
 
@@ -65,6 +69,8 @@ export function commonAnchors() {
   return {
     triangle: triangleAnchors,
     pentagon: pentagonAnchors,
-    pentagram: pentagramAnchors
+    pentagram: pentagramAnchors,
+    mindNode: mindNodeAnchors,
+    mindLine: mindLineAnchors
   };
 }
