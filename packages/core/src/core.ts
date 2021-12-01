@@ -159,20 +159,7 @@ export class Topology {
   }
 
   addPens(pens: Pen[], history?: boolean) {
-    const list: Pen[] = [];
-    for (let pen of pens) {
-      if (this.canvas.beforeAddPen && this.canvas.beforeAddPen(pen) != true) {
-        continue;
-      }
-      this.canvas.makePen(pen);
-      list.push(pen);
-    }
-    this.canvas.render(Infinity);
-    this.store.emitter.emit('add', list);
-    if (history) {
-      this.canvas.pushHistory({ type: EditType.Add, pens: list });
-    }
-    return list;
+    return this.canvas.addPens(pens, history);
   }
 
   render(now?: number) {

@@ -346,7 +346,7 @@ export class Canvas {
       case 'a':
       case 'A':
         if (e.ctrlKey || e.metaKey) {
-          this.active(this.store.data.pens);
+          this.active(this.store.data.pens.filter(pen => !pen.parentId));
           e.preventDefault();
         } else {
           this.toggleAnchorMode();
@@ -510,6 +510,10 @@ export class Canvas {
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
       for (const pen of obj) {
+        // 组合修改 id 
+        Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, obj);
+      }
+      for (const pen of obj) {
         if (!pen.id) {
           pen.id = s8();
         }
@@ -527,10 +531,42 @@ export class Canvas {
           pen.x = pt.x - pen.width / 2;
           pen.y = pt.y - pen.height / 2;
         }
-        this.addPen(pen, true);
       }
+      this.addPens(obj);
+      this.active(obj.filter(pen => !pen.parentId));
     } catch {}
   };
+
+  randomCombineId(pen: Pen, pens: Pen[], parentId?: string) {
+    randomId(pen);
+    pen.parentId = parentId;
+    const newChildren = [];
+    if (Array.isArray(pen.children)) {
+      for (const childId of pen.children) {
+        const childPen = pens.find(pen => pen.id === childId);
+        childPen && newChildren.push(this.randomCombineId(childPen, pens, pen.id).id);
+      }  
+    }
+    pen.children = newChildren;
+    return pen;
+  }
+
+  addPens(pens: Pen[], history?: boolean) {
+    const list: Pen[] = [];
+    for (let pen of pens) {
+      if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
+        continue;
+      }
+      this.makePen(pen);
+      list.push(pen);
+    }
+    this.render(Infinity);
+    this.store.emitter.emit('add', list);
+    if (history) {
+      this.pushHistory({ type: EditType.Add, pens: list });
+    }
+    return list;
+  }
 
   ontouchstart = (e: any) => {
     this.touchStart = performance.now();
@@ -1016,7 +1052,7 @@ export class Canvas {
 
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
-        this.store.hover.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
+        this.store.hover?.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
 
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
 <<<<<<< HEAD
@@ -3140,13 +3176,8 @@ export class Canvas {
     }
     const pens: Pen[] = [];
     for (const pen of this.store.clipboard) {
-      const newPen = deepClone(pen);
-      randomId(newPen);
-      translateRect(newPen, this.pasteOffset, this.pasteOffset);
-      if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
-        this.makePen(newPen);
-        pens.push(newPen);
-      }
+      const newPen = this.pastePen(pen);
+      newPen && pens.push(newPen);
     }
 
     this.pasteOffset += 10;
@@ -3156,7 +3187,27 @@ export class Canvas {
     this.store.emitter.emit('add', pens);
   }
 
-  delete(pens?: Pen[]) {
+  pastePen(pen: Pen, parentId?: string) {
+    const newPen: Pen = deepClone(pen);
+    randomId(newPen);
+    newPen.parentId = parentId;
+    // 子节点无需偏移
+    !parentId && translateRect(newPen, this.pasteOffset, this.pasteOffset);
+    if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
+      this.makePen(newPen);
+      const newChildren = [];
+      if (Array.isArray(newPen.children)) {
+        for (const childId of newPen.children) {
+          const pen = this.store.pens[childId];
+          pen && newChildren.push(this.pastePen(pen, newPen.id).id);
+        }
+      }
+      newPen.children = newChildren;
+      return newPen;
+    }
+  }
+
+  delete(pens?: Pen[], isSon: boolean = false) {
     if (!pens) {
       pens = this.store.active;
     }
@@ -3165,19 +3216,23 @@ export class Canvas {
     }
 
     pens.forEach((pen) => {
-      // TODO: 删除方法无法删除锁住的画笔
-      if (pen.locked) return;
+      // TODO: 删除方法无法删除锁住的画笔，子节点可删除
+      if (pen.locked && !isSon) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
       if (i > -1) {
         this.store.data.pens.splice(i, 1);
         this.store.pens[pen.id] = undefined;
       }
       pen.onDestroy && pen.onDestroy(pen);
+      if (Array.isArray(pen.children)) {
+        const sonPens = this.store.data.pens.filter(son => pen.children.includes(son.id));
+        this.delete(sonPens, true);  // 递归删除子节点
+      }
     });
     this.inactive();
     this.store.hoverAnchor = undefined;
     this.store.hover = undefined;
-    this.render();
+    this.render(Infinity);
     this.pushHistory({ type: EditType.Delete, pens });
     this.store.emitter.emit('delete', pens);
   }
