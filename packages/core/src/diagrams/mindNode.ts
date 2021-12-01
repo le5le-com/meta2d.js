@@ -23,6 +23,7 @@ function value(pen: Pen) {
 }
  
 export function mindNodeAnchors(pen: Pen) {
+  // TODO: 组合状态下的 width height 成了固定的百分比
   const anchors: Point[] = [];
   const { x: rectX, y: rectY, width, height } = pen;
   const r = borderRadius(pen);
