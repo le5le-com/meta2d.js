@@ -1628,9 +1628,11 @@ export function setChildrenActive(pen: Pen, active = true) {
   const store = pen.calculative.canvas.store;
   pen.children.forEach((id) => {
     const child: Pen = store.pens[id];
-    child.calculative.active = active;
-
-    setChildrenActive(child);
+    if (child) {
+      child.calculative.active = active;
+  
+      setChildrenActive(child);
+    }
   });
 }
 
