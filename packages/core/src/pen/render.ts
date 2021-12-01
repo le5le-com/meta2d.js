@@ -1,5 +1,5 @@
 import { Pen } from './model';
-import { getSplitAnchor } from '../diagrams';
+import { getSplitAnchor, line } from '../diagrams';
 import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
 import { calcCenter, calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
@@ -7,7 +7,7 @@ import { globalStore, TopologyStore } from '../store';
 import { calcTextLines } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
-import { Flip, Gradient } from '@topology/core';
+import { Flip, Gradient, PenType } from '@topology/core';
 
 export function getParent(pen: Pen, root?: boolean) {
   if (!pen || !pen.parentId || !pen.calculative) {
@@ -140,14 +140,12 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
 
-  if (pen.calculative.flip) {
-    if (pen.calculative.flip === Flip.Horizontal) {
-      ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex + 0.5, 0.5);
-      ctx.scale(-1, 1);
-    } else if (pen.calculative.flip === Flip.Vertical) {
-      ctx.translate(0.5, pen.calculative.worldRect.y + pen.calculative.worldRect.ey + 0.5);
-      ctx.scale(1, -1);
-    }
+  if (pen.calculative.flip === Flip.Horizontal) {
+    ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex + 0.5, 0.5);
+    ctx.scale(-1, 1);
+  } else if (pen.calculative.flip === Flip.Vertical) {
+    ctx.translate(0.5, pen.calculative.worldRect.y + pen.calculative.worldRect.ey + 0.5);
+    ctx.scale(1, -1);
   }
 
   if (pen.calculative.rotate && pen.name !== 'line') {
@@ -178,7 +176,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     fill = pen.activeBackground || store.options.activeBackground;
     ctx.fillStyle = fill;
     fill && (setBack = false);
-  } 
+  }
   if (setBack) {
     if (pen.calculative.strokeImage) {
       if (pen.calculative.strokeImg) {
@@ -247,6 +245,15 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   const path = store.path2dMap.get(pen);
   if (path) {
+    if (pen.type === PenType.Line && pen.borderWidth) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
+      ctx.strokeStyle = pen.borderColor;
+      fill && ctx.fill(path);
+      ctx.stroke(path);
+      ctx.restore();
+    }
     fill && ctx.fill(path);
 
     const progress = pen.calculative.progress || pen.progress;
@@ -572,7 +579,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
       } else {
         ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex, 0);
       }
-      ctx.scale(-1, 1);
+      ctx.scale(-1, 1);
     } else if (pen.calculative.flip === Flip.Vertical) {
       if (rect) {
         ctx.translate(-rect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.ey - rect.x);
@@ -659,6 +666,16 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   }
 
   if (globalStore.path2dDraws[pen.name]) {
+    if (pen.type === PenType.Line && pen.borderWidth) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
+      ctx.strokeStyle = pen.borderColor;
+      globalStore.path2dDraws[pen.name](pen, ctx);
+      fill && ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.save();
     ctx.beginPath();
     globalStore.path2dDraws[pen.name](pen, ctx);
