@@ -28,9 +28,9 @@ export enum Gradient {
 }
 
 export enum Flip {
-  None,  // 正常
-  Horizontal,  // 水平翻转
-  Vertical  // 垂直翻转
+  None, // 正常
+  Horizontal, // 水平翻转
+  Vertical, // 垂直翻转
 }
 
 export interface Pen extends Rect {
@@ -54,6 +54,8 @@ export interface Pen extends Rect {
   title?: string;
 
   lineWidth?: number;
+  borderWidth?: number;
+  borderColor?: string;
   globalAlpha?: number;
   lineDash?: number[];
   lineDashOffset?: number;
@@ -186,7 +188,7 @@ export interface Pen extends Rect {
   animateList?: Pen[][];
 
   input?: boolean;
-  dropdownList?: any[];  // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
+  dropdownList?: any[]; // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
   // string 类型数组，只展示文字
 
   events?: Event[];
@@ -227,6 +229,8 @@ export interface Pen extends Rect {
 
     rotate?: number;
     lineWidth?: number;
+    borderWidth?: number;
+    borderColor?: string;
     globalAlpha?: number;
     lineDash?: number[];
     lineDashOffset?: number;
