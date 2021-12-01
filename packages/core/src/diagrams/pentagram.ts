@@ -44,6 +44,7 @@ export function pentagram(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
 }
 
 export function pentagramAnchors(pen: Pen) {
+  // TODO: 组合状态下的 width height 成了固定的百分比
   const { width, height } = pen;
   const r = width > height ? height : width;
   const anchors: Point[] = [];
