@@ -1133,7 +1133,12 @@ export class Canvas {
       }
     }
 
-    if (this.mouseDown && this.hoverType === HoverType.LineAnchor && this.store.active[0] !== this.store.hover) {
+    if (
+      this.mouseDown &&
+      this.hoverType === HoverType.LineAnchor &&
+      this.store.hover &&
+      this.store.active[0] !== this.store.hover
+    ) {
       const line = this.store.active[0];
       const from = getFromAnchor(line);
       const to = getToAnchor(line);
@@ -2025,6 +2030,10 @@ export class Canvas {
       pen.calculative.textHeight = pen.textHeight * scale;
       pen.calculative.textLeft = pen.textLeft * scale;
       pen.calculative.textTop = pen.textTop * scale;
+
+      if (pen.type === PenType.Line && pen.borderWidth) {
+        pen.calculative.borderWidth = pen.borderWidth * scale;
+      }
     }
 
     calcWorldAnchors(pen);
@@ -3385,7 +3394,7 @@ export class Canvas {
 
     if (typeof pen.dropdownList[index] === 'object') {
       const rect = this.getPenRect(pen);
-      this.updateValue(pen, {...rect, ...pen.dropdownList[index]});
+      this.updateValue(pen, { ...rect, ...pen.dropdownList[index] });
       this.calcActiveRect();
     } else {
       pen.text = pen.dropdownList[index] + '';
