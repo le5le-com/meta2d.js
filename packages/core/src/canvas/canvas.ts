@@ -256,6 +256,9 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
+    if (e.target !== this.externalElements) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     if (this.store.options.scroll && !e.ctrlKey && this.scroll) {
@@ -346,7 +349,7 @@ export class Canvas {
       case 'a':
       case 'A':
         if (e.ctrlKey || e.metaKey) {
-          this.active(this.store.data.pens.filter(pen => !pen.parentId));
+          this.active(this.store.data.pens.filter((pen) => !pen.parentId));
           e.preventDefault();
         } else {
           this.toggleAnchorMode();
@@ -510,7 +513,7 @@ export class Canvas {
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
       for (const pen of obj) {
-        // 组合修改 id 
+        // 组合修改 id
         Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, obj);
       }
       for (const pen of obj) {
@@ -533,7 +536,7 @@ export class Canvas {
         }
       }
       this.addPens(obj);
-      this.active(obj.filter(pen => !pen.parentId));
+      this.active(obj.filter((pen) => !pen.parentId));
     } catch {}
   };
 
@@ -543,9 +546,9 @@ export class Canvas {
     const newChildren = [];
     if (Array.isArray(pen.children)) {
       for (const childId of pen.children) {
-        const childPen = pens.find(pen => pen.id === childId);
+        const childPen = pens.find((pen) => pen.id === childId);
         childPen && newChildren.push(this.randomCombineId(childPen, pens, pen.id).id);
-      }  
+      }
     }
     pen.children = newChildren;
     return pen;
@@ -3221,8 +3224,8 @@ export class Canvas {
       }
       pen.onDestroy && pen.onDestroy(pen);
       if (Array.isArray(pen.children)) {
-        const sonPens = this.store.data.pens.filter(son => pen.children.includes(son.id));
-        this.delete(sonPens, true);  // 递归删除子节点
+        const sonPens = this.store.data.pens.filter((son) => pen.children.includes(son.id));
+        this.delete(sonPens, true); // 递归删除子节点
       }
     });
     this.inactive();
