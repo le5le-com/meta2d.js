@@ -510,8 +510,8 @@ export class Canvas {
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
       for (const pen of obj) {
-        // 组合修改 id 
-        Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, obj);
+        // 只修改 树根处的 祖先节点
+        !pen.parentId && Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, obj);
       }
       for (const pen of obj) {
         if (!pen.id) {
@@ -522,7 +522,8 @@ export class Canvas {
       }
       // 计算区域
       for (const pen of obj) {
-        this.dirtyPenRect(pen);
+        // 组合节点才需要提前计算
+        (Array.isArray(pen.children) && pen.children.length > 0) && this.dirtyPenRect(pen);
       }
       for (const pen of obj) {
         if (!pen.parentId) {
@@ -534,6 +535,7 @@ export class Canvas {
       }
       this.addPens(obj);
       this.active(obj.filter(pen => !pen.parentId));
+      this.render();
     } catch {}
   };
 
