@@ -1119,8 +1119,6 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
   y += iconTop || 0;
   width -= iconLeft || 0;
   height -= iconTop || 0;
-  // TODO: 边缘情况，若出现再看
-  width < 1 && console.error('width < 1 的情况');
 
   let rotate = pen.calculative.iconRotate || 0;
   if (pen.parentId) {
@@ -1662,9 +1660,8 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   elem.style.width = worldRect.width + 'px';
   elem.style.height = worldRect.height + 'px';
   elem.style.display = pen.calculative.visible !== false ? 'inline' : 'none'; // 是否隐藏元素
-  if (pen.calculative.rotate) {
-    elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
-  }
+  !pen.calculative.rotate && (pen.calculative.rotate = 0);
+  elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
   if (pen.locked || store.data.locked) {
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
