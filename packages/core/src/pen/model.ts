@@ -206,6 +206,7 @@ export interface Pen extends Rect {
 
   flip?: Flip;
 
+  hideAnchor?: boolean;
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;

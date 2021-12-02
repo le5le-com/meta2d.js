@@ -1,4 +1,4 @@
-import { calcWorldAnchors, Pen } from '../pen';
+import { Pen } from '../pen';
 import { Point } from '../point';
 
 export function pentagram(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
