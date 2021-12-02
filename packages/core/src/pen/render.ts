@@ -1021,6 +1021,10 @@ export function calcPenRect(pen: Pen) {
 }
 
 export function calcWorldAnchors(pen: Pen) {
+  if (pen.hideAnchor && !pen.type) {
+    pen.calculative.worldAnchors = [];
+    return;
+  }
   const anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
