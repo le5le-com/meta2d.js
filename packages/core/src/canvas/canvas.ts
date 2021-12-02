@@ -512,35 +512,39 @@ export class Canvas {
       obj = Array.isArray(obj) ? obj : [obj];
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
-      for (const pen of obj) {
-        // 只修改 树根处的 祖先节点
-        !pen.parentId && Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, obj);
-      }
-      for (const pen of obj) {
-        if (!pen.id) {
-          pen.id = s8();
-        }
-        !pen.calculative && (pen.calculative = { canvas: this });
-        this.store.pens[pen.id] = pen;
-      }
-      // 计算区域
-      for (const pen of obj) {
-        // 组合节点才需要提前计算
-        (Array.isArray(pen.children) && pen.children.length > 0) && this.dirtyPenRect(pen);
-      }
-      for (const pen of obj) {
-        if (!pen.parentId) {
-          pen.width *= this.store.data.scale;
-          pen.height *= this.store.data.scale;
-          pen.x = pt.x - pen.width / 2;
-          pen.y = pt.y - pen.height / 2;
-        }
-      }
-      this.addPens(obj);
-      this.active(obj.filter(pen => !pen.parentId));
-      this.render();
+      this.dropPens(obj, pt);
     } catch {}
   };
+
+  dropPens(pens: Pen[], e: Point) {
+    for (const pen of pens) {
+      // 只修改 树根处的 祖先节点
+      !pen.parentId && Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, pens);
+    }
+    for (const pen of pens) {
+      if (!pen.id) {
+        pen.id = s8();
+      }
+      !pen.calculative && (pen.calculative = { canvas: this });
+      this.store.pens[pen.id] = pen;
+    }
+    // 计算区域
+    for (const pen of pens) {
+      // 组合节点才需要提前计算
+      (Array.isArray(pen.children) && pen.children.length > 0) && this.dirtyPenRect(pen);
+    }
+    for (const pen of pens) {
+      if (!pen.parentId) {
+        pen.width *= this.store.data.scale;
+        pen.height *= this.store.data.scale;
+        pen.x = e.x - pen.width / 2;
+        pen.y = e.y - pen.height / 2;
+      }
+    }
+    this.addPens(pens);
+    this.active(pens.filter(pen => !pen.parentId));
+    this.render();
+  }
 
   randomCombineId(pen: Pen, pens: Pen[], parentId?: string) {
     randomId(pen);
@@ -1211,12 +1215,7 @@ export class Canvas {
 
     // Add pen
     if (this.addCaches) {
-      for (const pen of this.addCaches) {
-        pen.x = e.x - pen.width / 2;
-        pen.y = e.y - pen.height / 2;
-
-        this.addPen(pen);
-      }
+      this.dropPens(this.addCaches, e);
       this.addCaches = undefined;
     }
 
