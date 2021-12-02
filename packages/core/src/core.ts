@@ -1292,6 +1292,9 @@ export class Topology {
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
+      if (pen.parentId) { // 已经是其它节点的子节点，x,y,w,h 已经是百分比了
+        return;
+      }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
