@@ -2098,7 +2098,6 @@ export class Canvas {
     const scale = this.store.data.scale;
     if (!playingAnimate) {
       pen.calculative.lineWidth = pen.lineWidth * scale;
-      pen.calculative.lineHeight = pen.lineHeight * scale;
       pen.calculative.fontSize = pen.fontSize * scale;
       pen.calculative.iconSize = pen.iconSize * scale;
       pen.calculative.iconWidth = pen.iconWidth * scale;
