@@ -100,7 +100,7 @@ export function calcTextLines(pen: Pen) {
         }
         const items = wrapLines(getWords(item), pen);
 
-        if (pen.ellipsis != false) {
+        if (pen.ellipsis != false && items.length > 1) {
           items.forEach((l) => {
             if (h < 0) {
               return;
