@@ -39,6 +39,15 @@ export function video(pen: Pen) {
     media.onended = () => {
       pen.calculative.onended && pen.calculative.onended(pen);
     };
+    // TODO: 调整 muted ，自动播放需要先静音
+    media.onclick= () => {
+      media.muted = false;
+      if (media.paused) {
+        media.play();
+      } else {
+        media.pause();
+      }
+    };
     pen.calculative.media = media;
     media.style.position = 'absolute';
     media.style.outline = 'none';
@@ -50,14 +59,23 @@ export function video(pen: Pen) {
     videos[pen.id] = player;
     pen.calculative.canvas.externalElements && pen.calculative.canvas.externalElements.appendChild(player);
     setElemPosition(pen, player);
-    pen.autoPlay && media.play();
+    if (pen.autoPlay) {
+      media.autoplay = true;
+      media.muted = true; 
+    }
   } else if (pen.video && pen.calculative.media && pen.video !== pen.calculative.video) {
     pen.calculative.media.src = pen.video;
-    pen.autoPlay && pen.calculative.media.play();
+    if (pen.autoPlay) {
+      pen.calculative.media.muted = true; 
+      pen.calculative.media.autoplay = true;
+    }
     pen.calculative.video = pen.video;
   } else if (pen.audio && pen.calculative.media && pen.audio !== pen.calculative.audio) {
     pen.calculative.media.src = pen.audio;
-    pen.autoPlay && pen.calculative.media.play();
+    if (pen.autoPlay) {
+      pen.calculative.media.muted = true; 
+      pen.calculative.media.autoplay = true;
+    }
     pen.calculative.audio = pen.audio;
   }
   if (pen.calculative.dirty) {
@@ -77,6 +95,7 @@ function move(pen: Pen) {
 
 function click(pen: Pen) {
   if (pen.calculative.media) {
+    pen.calculative.media.muted = false;
     if (pen.calculative.media.paused) {
       pen.calculative.media.play();
     } else {

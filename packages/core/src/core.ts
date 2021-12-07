@@ -394,6 +394,7 @@ export class Topology {
     pens.forEach((pen) => {
       pen.calculative.pause = undefined;
       pen.calculative.start = 0;
+      this.store.animates.delete(pen);
     });
   }
 

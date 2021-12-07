@@ -3102,9 +3102,9 @@ export class Canvas {
                 pen.calculative.text = pen.text;
                 calcTextLines(pen);
               }
-              dels.push(pen);
               pen.calculative.initRect = undefined;
             }
+            dels.push(pen);
             this.nextAnimate(pen);
           }
           this.updateLines(pen, true);
