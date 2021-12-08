@@ -1348,8 +1348,8 @@ export class Canvas {
       clearTimeout(this.timer);
     }
     this.timer = setTimeout(() => {
-      this.timer = undefined;
       this.resize();
+      this.timer = undefined;
     }, 100);
   };
 
@@ -1996,7 +1996,7 @@ export class Canvas {
             pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
             globalStore.htmlElements[pen.image] = img;
             this.dirty = true;
-            this.render();
+            this.imageLoaded();
           };
         }
       }
@@ -2017,7 +2017,7 @@ export class Canvas {
             pen.calculative.backgroundImg = img;
             globalStore.htmlElements[pen.backgroundImage] = img;
             this.dirty = true;
-            this.render();
+            this.imageLoaded();
           };
         }
       }
@@ -2038,12 +2038,20 @@ export class Canvas {
             pen.calculative.strokeImg = img;
             globalStore.htmlElements[pen.strokeImage] = img;
             this.dirty = true;
-            this.render();
+            this.imageLoaded();
           };
         }
       }
       pen.calculative.strokeImage = pen.strokeImage;
     }
+  }
+  private imageTimer: any;
+  // 避免初始化图片加载重复调用 render，此处防抖
+  imageLoaded() {
+    this.imageTimer && clearTimeout(this.imageTimer);
+    this.imageTimer = setTimeout(() => {
+      this.render();
+    }, 100);
   }
 
   dirtyPenRect(pen: Pen, worldRectIsReady?: boolean, playingAnimate?: boolean) {
