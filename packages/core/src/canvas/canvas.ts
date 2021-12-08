@@ -1142,13 +1142,22 @@ export class Canvas {
     }
 
     window && window.debug && console.time('hover');
-    this.getHover(e);
+    this.willGetHover(e);
     window && window.debug && console.timeEnd('hover');
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.dirty = true;
     }
     this.render();
   };
+
+  private hoverTimer: any;
+  willGetHover(e) {
+    this.hoverTimer && clearTimeout(this.hoverTimer);
+    this.hoverTimer = setTimeout(() => {
+      this.getHover(e);
+      this.render();
+    }, 10);
+  }
 
   onMouseUp = (e: {
     x: number;
