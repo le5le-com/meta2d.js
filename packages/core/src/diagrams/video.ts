@@ -34,7 +34,8 @@ export function video(pen: Pen) {
     }
     media.loop = pen.playLoop;
     media.ontimeupdate = () => {
-      progress.style.width = (media.currentTime / media.duration) * worldRect.width + 'px';
+      // worldRect 会重新赋值，而 pen 不会变，这里才能取到实时的 worldRect
+      progress.style.width = (media.currentTime / media.duration) * pen.calculative.worldRect.width + 'px';
     };
     media.onended = () => {
       pen.calculative.onended && pen.calculative.onended(pen);
