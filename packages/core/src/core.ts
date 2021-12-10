@@ -98,7 +98,7 @@ export class Topology {
     };
     this.events[EventAction.SetProps] = (pen: any, e: Event) => {
       const rect = this.getPenRect(pen);
-      this.updateValue(pen, {...rect,...e.value});
+      this.updateValue(pen, { ...rect, ...e.value });
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {
@@ -393,9 +393,12 @@ export class Topology {
     }
     pens.forEach((pen) => {
       pen.calculative.pause = undefined;
-      pen.calculative.start = 0;
+      pen.calculative.start = undefined;
       this.store.animates.delete(pen);
+      this.canvas.restoreNodeAnimate(pen);
     });
+    this.canvas.calcActiveRect();
+    this.render(Infinity);
   }
 
   calcAnimateDuration(pen: Pen) {
@@ -1293,7 +1296,8 @@ export class Topology {
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
-      if (pen.parentId) { // 已经是其它节点的子节点，x,y,w,h 已经是百分比了
+      if (pen.parentId) {
+        // 已经是其它节点的子节点，x,y,w,h 已经是百分比了
         return;
       }
       parent.children.push(pen.id);
