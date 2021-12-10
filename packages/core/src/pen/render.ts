@@ -1405,6 +1405,14 @@ export function setNodeAnimate(pen: Pen, now: number) {
     if (++pen.calculative.frameIndex >= pen.frames.length) {
       ++pen.calculative.cycleIndex;
       pen.calculative.frameIndex = 0;
+
+      for (const k in pen) {
+        if (k === 'rotate' || k === 'x' || k === 'y' || k === 'scale') {
+          pen.lastFrame[k] = 0;
+        }
+      }
+      pen.calculative.x = pen.calculative.initRect.x;
+      pen.calculative.y = pen.calculative.initRect.y;
     }
     // 播放结束
     if (pen.calculative.cycleIndex > pen.animateCycle) {
@@ -1420,7 +1428,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
         k !== 'rotate' &&
         k !== 'x' &&
         k !== 'y' &&
-        k !== 'width' &&
+        k !== 'scale' &&
         k !== 'initRect' &&
         (typeof pen[k] !== 'object' || k === 'lineDash')
       ) {
@@ -1632,7 +1640,7 @@ export function setChildrenActive(pen: Pen, active = true) {
     const child: Pen = store.pens[id];
     if (child) {
       child.calculative.active = active;
-  
+
       setChildrenActive(child);
     }
   });

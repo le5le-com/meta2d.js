@@ -570,7 +570,7 @@ export class Canvas {
     // 计算区域
     for (const pen of pens) {
       // 组合节点才需要提前计算
-      (Array.isArray(pen.children) && pen.children.length > 0) && this.dirtyPenRect(pen);
+      Array.isArray(pen.children) && pen.children.length > 0 && this.dirtyPenRect(pen);
     }
     for (const pen of pens) {
       if (!pen.parentId) {
@@ -581,7 +581,7 @@ export class Canvas {
       }
     }
     this.addPens(pens);
-    this.active(pens.filter(pen => !pen.parentId));
+    this.active(pens.filter((pen) => !pen.parentId));
     this.render();
   }
 
@@ -2952,6 +2952,48 @@ export class Canvas {
     this.initLineRect(line);
   }
 
+  restoreNodeAnimate(pen: Pen) {
+    if (pen.calculative.initRect) {
+      if (pen.keepAnimateState) {
+        for (const k in pen) {
+          if (pen.calculative[k] === undefined) {
+            continue;
+          }
+          if (
+            k !== 'x' &&
+            k !== 'y' &&
+            k !== 'width' &&
+            k !== 'height' &&
+            k !== 'initRect' &&
+            (typeof pen[k] !== 'object' || k === 'lineDash')
+          ) {
+            pen[k] = pen.calculative[k];
+          }
+        }
+      } else {
+        for (const k in pen) {
+          if (
+            k !== 'x' &&
+            k !== 'y' &&
+            k !== 'width' &&
+            k !== 'height' &&
+            k !== 'initRect' &&
+            (typeof pen[k] !== 'object' || k === 'lineDash')
+          ) {
+            pen.calculative[k] = pen[k];
+          }
+        }
+        pen.calculative.worldRect = pen.calculative.initRect;
+      }
+      this.dirtyPenRect(pen, !pen.keepAnimateState);
+      if (pen.calculative.text !== pen.text) {
+        pen.calculative.text = pen.text;
+        calcTextLines(pen);
+      }
+      pen.calculative.initRect = undefined;
+    }
+  }
+
   updateLines(pen: Pen, change?: boolean) {
     if (!pen.connectedLines) {
       return;
@@ -3106,7 +3148,6 @@ export class Canvas {
         }
         return;
       }
-
       this.lastAnimateRender = now;
       this.animateRendering = true;
       const dels: Pen[] = [];
@@ -3124,46 +3165,7 @@ export class Canvas {
               this.dirtyPenRect(pen, true, true);
             }
           } else {
-            if (pen.calculative.initRect) {
-              if (pen.keepAnimateState) {
-                for (const k in pen) {
-                  if (pen.calculative[k] === undefined) {
-                    continue;
-                  }
-                  if (
-                    k !== 'x' &&
-                    k !== 'y' &&
-                    k !== 'width' &&
-                    k !== 'height' &&
-                    k !== 'initRect' &&
-                    (typeof pen[k] !== 'object' || k === 'lineDash')
-                  ) {
-                    pen[k] = pen.calculative[k];
-                  }
-                }
-              } else {
-                for (const k in pen) {
-                  if (
-                    // k !== 'rotate' &&
-                    k !== 'x' &&
-                    k !== 'y' &&
-                    k !== 'width' &&
-                    k !== 'height' &&
-                    k !== 'initRect' &&
-                    (typeof pen[k] !== 'object' || k === 'lineDash')
-                  ) {
-                    pen.calculative[k] = pen[k];
-                  }
-                }
-                pen.calculative.worldRect = pen.calculative.initRect;
-              }
-              this.dirtyPenRect(pen, !pen.keepAnimateState);
-              if (pen.calculative.text !== pen.text) {
-                pen.calculative.text = pen.text;
-                calcTextLines(pen);
-              }
-              pen.calculative.initRect = undefined;
-            }
+            this.restoreNodeAnimate(pen);
             dels.push(pen);
             this.nextAnimate(pen);
           }
