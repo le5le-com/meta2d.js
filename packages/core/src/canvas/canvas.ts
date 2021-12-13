@@ -601,7 +601,7 @@ export class Canvas {
   ontouchmove = (event: any) => {
     event.stopPropagation();
 
-    const touches = event.changedTouches;
+    const touches = event.touches;
     const len = touches.length;
     if (!this.touchCenter && len > 1) {
       this.touchCenter = {
@@ -616,8 +616,8 @@ export class Canvas {
     }
     this.touchStart = now;
 
-    const x = event.changedTouches[0].pageX - (window ? window.scrollX : 0);
-    const y = event.changedTouches[0].pageY - (window ? window.scrollY : 0);
+    const x = event.touches[0].pageX - (window ? window.scrollX : 0);
+    const y = event.touches[0].pageY - (window ? window.scrollY : 0);
     if (len > 1) {
       if (len === 2) {
         if (now - this.touchStart < 200) {
@@ -654,6 +654,7 @@ export class Canvas {
 
   ontouchend = (event: any) => {
     this.touches = undefined;
+    this.touchCenter = undefined;
 
     const x = event.changedTouches[0].pageX - (window ? window.scrollX : 0);
     const y = event.changedTouches[0].pageY - (window ? window.scrollY : 0);
