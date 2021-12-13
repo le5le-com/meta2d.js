@@ -1290,7 +1290,7 @@ export class Canvas {
     if (this.dragRect) {
       const pens = this.store.data.pens.filter((pen) => {
         return (
-          pen.visible !== false &&
+          pen.visible != false &&
           pen.locked !== LockState.Disable &&
           !pen.parentId &&
           rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)
@@ -2213,7 +2213,7 @@ export class Canvas {
     };
 
     for (const pen of this.store.data.pens) {
-      if (pen.visible === false || pen.calculative.visible === false) {
+      if (pen.visible == false || pen.calculative.visible == false) {
         pen.calculative.inView = false;
         continue;
       }

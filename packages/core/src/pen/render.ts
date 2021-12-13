@@ -1671,7 +1671,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   elem.style.top = worldRect.y + store.data.y + 'px';
   elem.style.width = worldRect.width + 'px';
   elem.style.height = worldRect.height + 'px';
-  elem.style.display = pen.calculative.visible !== false ? 'inline' : 'none'; // 是否隐藏元素
+  elem.style.display = pen.calculative.visible != false ? 'inline' : 'none'; // 是否隐藏元素
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
   if (pen.locked || store.data.locked) {
