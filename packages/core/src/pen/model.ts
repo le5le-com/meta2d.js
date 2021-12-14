@@ -42,7 +42,7 @@ export interface Pen extends Rect {
   lineName?: string;
   borderRadius?: number;
   layer?: number;
-  // Hidden only visible === false
+  // Hidden only visible == false
   visible?: boolean;
   locked?: LockState;
 
