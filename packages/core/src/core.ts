@@ -244,11 +244,37 @@ export class Topology {
     }
 
     pen.lineName = lineName;
-    const from = pen.calculative.worldAnchors[0];
-    const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    const from: any = pen.calculative.worldAnchors[0];
+    const to: any = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    from.prev = undefined;
+    from.next = undefined;
+    to.prev = undefined;
+    to.next = undefined;
     pen.calculative.worldAnchors = [from, to];
     pen.calculative.activeAnchor = from;
     this.canvas[lineName](this.store, pen, to);
+    if (pen.lineName === 'curve') {
+      from.prev = {
+        penId: from.penId,
+        x: from.x - 50,
+        y: from.y,
+      };
+      from.next = {
+        penId: from.penId,
+        x: from.x + 50,
+        y: from.y,
+      };
+      to.prev = {
+        penId: to.penId,
+        x: to.x - 50,
+        y: to.y,
+      };
+      to.next = {
+        penId: to.penId,
+        x: to.x + 50,
+        y: to.y,
+      };
+    }
     pen.calculative.activeAnchor = undefined;
     this.canvas.initLineRect(pen);
     this.render(Infinity);
@@ -924,7 +950,7 @@ export class Topology {
           penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
           break;
       }
-      this.setValue({...item, ...penRect});
+      this.setValue({ ...item, ...penRect });
     }
     this.canvas.calcActiveRect();
     this.pushHistory({
@@ -940,7 +966,11 @@ export class Topology {
    * @param pens 节点们，默认全部的
    * @param distance 总的宽 or 高
    */
-  private spaceBetweenByDirection(direction: 'width' | 'height', pens: Pen[] = this.store.data.pens, distance?: number) {
+  private spaceBetweenByDirection(
+    direction: 'width' | 'height',
+    pens: Pen[] = this.store.data.pens,
+    distance?: number
+  ) {
     !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
     // 过滤出 node 节点 pens
     pens = pens.filter((item) => !item.type && !item.parentId);
@@ -969,7 +999,7 @@ export class Topology {
       const penRect = this.getPenRect(item);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this.setValue({...item, ...penRect});
+      this.setValue({ ...item, ...penRect });
     }
     this.pushHistory({
       type: EditType.Update,
@@ -1007,14 +1037,14 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
-      
-      this.setValue({...pen, ...penRect});
 
-      if (index === pens.length -1){
+      this.setValue({ ...pen, ...penRect });
+
+      if (index === pens.length - 1) {
         return;
       }
       const currentWidth = currentX + penRect.width - rect.x;
-      const nextPenRect = this.getPenRect(pens[index +1]);
+      const nextPenRect = this.getPenRect(pens[index + 1]);
       if (Math.round(width - currentWidth) >= Math.round(nextPenRect.width + space))
         // 当前行
         currentX += penRect.width + space;
@@ -1023,7 +1053,6 @@ export class Topology {
         currentX = rect.x;
         currentY += maxHeight + space;
       }
-
     });
     this.pushHistory({
       type: EditType.Update,
