@@ -80,10 +80,7 @@ export function getRect(pens: Pen[]): Rect {
     const rect = pen.calculative.worldRect;
     if (rect) {
       const pts = rectToPoints(rect);
-      pts.forEach((pt) => {
-        rotatePoint(pt, pen.rotate, rect.center);
-      });
-
+      // rectToPoints 已经计算过 rotate 无需重复计算
       points.push(...pts);
     }
   });
