@@ -3514,6 +3514,8 @@ export class Canvas {
     if (typeof pen.dropdownList[index] === 'object') {
       const rect = this.getPenRect(pen);
       this.updateValue(pen, { ...rect, ...pen.dropdownList[index] });
+      // 上面会更新 calculative.text 下方置空
+      pen.calculative.text = '';
       this.calcActiveRect();
     } else {
       pen.text = pen.dropdownList[index] + '';
