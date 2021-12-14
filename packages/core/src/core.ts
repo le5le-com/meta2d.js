@@ -896,35 +896,35 @@ export class Topology {
     };
   }
 
-  alignNodes(align: string, pens?: Pen[], rect?: Rect) {
-    !pens && (pens = this.store.data.pens);
-    !rect && (rect = this.getRect(pens));
+  alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect) {
+    !rect && (rect = this.getPenRect(this.getRect(pens)));
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     for (const item of pens) {
       if (item.type === PenType.Line) {
         continue;
       }
+      const penRect = this.getPenRect(item);
       switch (align) {
         case 'left':
-          item.x = rect.x;
+          penRect.x = rect.x;
           break;
         case 'right':
-          item.x = rect.ex - item.width;
+          penRect.x = rect.x + rect.width - penRect.width;
           break;
         case 'top':
-          item.y = rect.y;
+          penRect.y = rect.y;
           break;
         case 'bottom':
-          item.y = rect.ey - item.height;
+          penRect.y = rect.y + rect.height - penRect.height;
           break;
         case 'center':
-          item.x = rect.center.x - item.width / 2;
+          penRect.x = rect.x + rect.width / 2 - penRect.width / 2;
           break;
         case 'middle':
-          item.y = rect.center.y - item.height / 2;
+          penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
           break;
       }
-      this.setValue(item);
+      this.setValue({...item, ...penRect});
     }
     this.canvas.calcActiveRect();
     this.pushHistory({
@@ -940,18 +940,18 @@ export class Topology {
    * @param pens 节点们，默认全部的
    * @param distance 总的宽 or 高
    */
-  private spaceBetweenByDirection(direction: 'width' | 'height', pens?: Pen[], distance?: number) {
-    !pens && (pens = this.store.data.pens);
-    !distance && (distance = this.getRect(pens)[direction]);
+  private spaceBetweenByDirection(direction: 'width' | 'height', pens: Pen[] = this.store.data.pens, distance?: number) {
+    !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
     // 过滤出 node 节点 pens
-    pens = pens.filter((item) => item.type !== PenType.Line);
+    pens = pens.filter((item) => !item.type && !item.parentId);
     if (pens.length <= 2) {
       return;
     }
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     // 计算间距
     const allDistance = pens.reduce((distance: number, currentPen: Pen) => {
-      return distance + currentPen[direction];
+      const currentPenRect = this.getPenRect(currentPen);
+      return distance + currentPenRect[direction];
     }, 0);
     const space = (distance - allDistance) / (pens.length - 1);
 
@@ -963,11 +963,13 @@ export class Topology {
       return a.y - b.y;
     });
 
-    let left = direction === 'width' ? pens[0].x : pens[0].y;
+    const pen0Rect = this.getPenRect(pens[0]);
+    let left = direction === 'width' ? pen0Rect.x : pen0Rect.y;
     for (const item of pens) {
-      direction === 'width' ? (item.x = left) : (item.y = left);
-      left += item[direction] + space;
-      this.setValue(item);
+      const penRect = this.getPenRect(item);
+      direction === 'width' ? (penRect.x = left) : (penRect.y = left);
+      left += penRect[direction] + space;
+      this.setValue({...item, ...penRect});
     }
     this.pushHistory({
       type: EditType.Update,
@@ -984,38 +986,44 @@ export class Topology {
     this.spaceBetweenByDirection('height', pens, height);
   }
 
-  layout(pens?: Pen[], width?: number, space: number = 30) {
-    !pens && (pens = this.store.data.pens);
-    const rect = getRect(pens);
+  layout(pens: Pen[] = this.store.data.pens, width?: number, space: number = 30) {
+    const rect = this.getPenRect(getRect(pens));
     !width && (width = rect.width);
 
-    // 1. 拿到全部节点中最大的宽高
-    pens = pens.filter((item) => item.type !== PenType.Line);
+    // 1. 拿到全部节点中最大的高
+    pens = pens.filter((item) => !item.type && !item.parentId);
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
-    let maxWidth = 0,
-      maxHeight = 0;
+    let maxHeight = 0;
 
     pens.forEach((pen: Pen) => {
-      pen.width > maxWidth && (maxWidth = pen.width);
-      pen.height > maxHeight && (maxHeight = pen.height);
+      const penRect = this.getPenRect(pen);
+      penRect.height > maxHeight && (maxHeight = penRect.height);
     });
 
     // 2. 遍历节点调整位置
-    let center = { x: rect.x + maxWidth / 2, y: rect.y + maxHeight / 2 };
-    pens.forEach((pen: Pen) => {
-      pen.x = center.x - pen.width / 2;
-      pen.y = center.y - pen.height / 2;
-      const currentWidth = center.x + maxWidth / 2 - rect.x;
-      if (width - currentWidth >= maxWidth + space)
+    let currentX = rect.x;
+    let currentY = rect.y;
+    pens.forEach((pen: Pen, index: number) => {
+      const penRect = this.getPenRect(pen);
+      penRect.x = currentX;
+      penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
+      
+      this.setValue({...pen, ...penRect});
+
+      if (index === pens.length -1){
+        return;
+      }
+      const currentWidth = currentX + penRect.width - rect.x;
+      const nextPenRect = this.getPenRect(pens[index +1]);
+      if (Math.round(width - currentWidth) >= Math.round(nextPenRect.width + space))
         // 当前行
-        center.x = center.x + maxWidth + space;
+        currentX += penRect.width + space;
       else {
         // 换行
-        center.x = rect.x + maxWidth / 2;
-        center.y = center.y + maxHeight + space;
+        currentX = rect.x;
+        currentY += maxHeight + space;
       }
 
-      this.setValue(pen);
     });
     this.pushHistory({
       type: EditType.Update,
