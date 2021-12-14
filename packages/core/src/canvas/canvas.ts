@@ -3286,7 +3286,7 @@ export class Canvas {
     if (pen.rotate % 360) {
       this.inputParent.style.transform = `rotate(${pen.rotate}deg)`;
     } else {
-      this.input.style.transform = undefined;
+      this.inputParent.style.transform = null;
     }
     this.inputParent.style.display = 'flex';
     this.input.dataset.penId = pen.id;
@@ -3306,6 +3306,8 @@ export class Canvas {
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
       const pen = this.store.pens[this.input.dataset.penId];
+      // pen.calculative.text 恢复
+      pen.calculative.text = pen.text;
       if (!pen) {
         return;
       }
