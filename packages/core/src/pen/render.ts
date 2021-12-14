@@ -992,7 +992,7 @@ export function calcWorldRects(pen: Pen) {
   return rect;
 }
 
-function calcPadding(pen: Pen, rect: Rect) {
+export function calcPadding(pen: Pen, rect: Rect) {
   !pen.paddingTop && (pen.calculative.paddingTop = 0);
   !pen.paddingBottom && (pen.calculative.paddingBottom = 0);
   !pen.paddingLeft && (pen.calculative.paddingLeft = 0);

@@ -32,6 +32,7 @@ import {
   getPensLock,
   getToAnchor,
   getFromAnchor,
+  calcPadding,
 } from '../pen';
 import {
   calcRotate,
@@ -1882,8 +1883,18 @@ export class Canvas {
       pen.width = rect.width;
       pen.height = rect.height;
     }
+    if (!pen.fontSize) {
+      pen.fontSize = 12;
+      pen.calculative.fontSize = pen.fontSize * this.store.data.scale;
+    }
+    if (!pen.lineHeight) {
+      pen.lineHeight = 1.5;
+      pen.calculative.lineHeight = pen.lineHeight;
+    }
     calcCenter(rect);
     pen.calculative.worldRect = rect;
+    calcPadding(pen, rect);
+    calcTextRect(pen);
     this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     if (pen.calculative.worldAnchors) {
       pen.anchors = [];
