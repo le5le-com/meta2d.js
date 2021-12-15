@@ -260,6 +260,7 @@ export interface Pen extends Rect {
     shadowOffsetX?: number;
     shadowOffsetY?: number;
 
+    tempText?: string;
     text?: string;
     textWidth?: number;
     textHeight?: number;
