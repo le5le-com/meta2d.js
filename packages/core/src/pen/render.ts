@@ -1428,7 +1428,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
         k !== 'rotate' &&
         k !== 'x' &&
         k !== 'y' &&
-        k !== 'scale' &&
+        k !== 'width' &&
         k !== 'initRect' &&
         (typeof pen[k] !== 'object' || k === 'lineDash')
       ) {
