@@ -291,6 +291,7 @@ export interface Pen extends Rect {
     paddingRight?: number;
 
     textLines?: string[];
+    textLineWidths?: number[];  // textLines 每一行 width 组成的数组
     image?: string;
     img?: HTMLImageElement;
     imgNaturalWidth?: number;

@@ -2907,11 +2907,11 @@ export class Canvas {
     });
     this.getSizeCPs();
 
-    if (!doing) {
-      this.dirtyLines.forEach((pen) => {
+    this.dirtyLines.forEach((pen) => {
+      if (!doing || pen.text) {
         pen.type && this.initLineRect(pen);
-      });
-    }
+      }
+    });
 
     this.render(Infinity);
     this.tooltip.translate(x, y);
