@@ -3279,7 +3279,7 @@ export class Canvas {
     });
   };
 
-  showInput = (pen: Pen) => {
+  showInput = (pen: Pen, rect?: Rect) => {
     if (this.store.hover.locked || this.store.hover.externElement || this.store.hover.disableInput) {
       return;
     }
@@ -3287,8 +3287,8 @@ export class Canvas {
       this.input.focus();
       return;
     }
-    const textRect = pen.calculative.worldTextRect;
-    this.input.value = pen.text || '';
+    const textRect = rect || pen.calculative.worldTextRect;
+    this.input.value = pen.calculative.tempText || pen.text || '';
     this.inputParent.style.left = textRect.x + this.store.data.x + 5 + 'px';
     this.inputParent.style.top = textRect.y + this.store.data.y + 5 + 'px';
     this.inputParent.style.width = textRect.width - 10 + 'px';
