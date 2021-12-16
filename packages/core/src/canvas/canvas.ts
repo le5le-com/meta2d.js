@@ -2481,8 +2481,8 @@ export class Canvas {
 
     const p1 = { x: this.mouseDown.x, y: this.mouseDown.y };
     const p2 = { x: e.x, y: e.y };
-    rotatePoint(p1, -this.activeRect.rotate, this.activeRect.center);
-    rotatePoint(p2, -this.activeRect.rotate, this.activeRect.center);
+    // rotatePoint(p1, -this.activeRect.rotate, this.activeRect.center);
+    // rotatePoint(p2, -this.activeRect.rotate, this.activeRect.center);
 
     let x = p2.x - p1.x;
     let y = p2.y - p1.y;
@@ -2509,8 +2509,10 @@ export class Canvas {
     let offsetY = y - this.lastOffsetY;
     this.lastOffsetX = x;
     this.lastOffsetY = y;
-    if ((e as any).shiftKey || (e as any).ctrlKey) {
-      offsetY = (offsetX * h) / w;
+    if ((e as any).ctrlKey) {
+      // 1，3 是右上角和左上角的点，此时的 offsetY 符号与 offsetX 是相反的
+      const sign = [1, 3].includes(this.resizeIndex) ? -1 : 1;
+      offsetY = sign * (offsetX * h) / w;
     }
     resizeRect(this.activeRect, offsetX, offsetY, this.resizeIndex);
     calcCenter(this.activeRect);
