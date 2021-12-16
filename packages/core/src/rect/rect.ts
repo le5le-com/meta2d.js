@@ -125,6 +125,10 @@ export function getRectOfPoints(points: Point[]): Rect {
 }
 
 export function rectInRect(source: Rect, target: Rect, allIn?: boolean) {
+  if (source.rotate) {
+    // 根据 rotate 扩大 rect
+    source = getRectOfPoints(rectToPoints(source)); // 更改 source 引用地址值，不影响原值
+  }
   if (allIn) {
     return source.x > target.x && source.ex < target.ex && source.y > target.y && source.ey < target.ey;
   }

@@ -1488,7 +1488,7 @@ export class Canvas {
       if (pen.lineWidth) {
         r += pen.lineWidth / 2;
       }
-      if (!pen.calculative.active && !pointInSimpleRect(pt, pen.calculative.worldRect, r)) {
+      if (!pen.calculative.active && !pointInSimpleRect(pt, pen.calculative.worldRect, r) && !pointInRect(pt, pen.calculative.worldRect)) {
         continue;
       }
       // 锚点
@@ -2188,11 +2188,13 @@ export class Canvas {
 
       const x = pen.calculative.worldRect.x + this.store.data.x;
       const y = pen.calculative.worldRect.y + this.store.data.y;
-      const penRect = {
+      const penRect: Rect = {
         x,
         y,
         ex: x + pen.calculative.worldRect.width,
         ey: y + pen.calculative.worldRect.height,
+        rotate: pen.calculative.worldRect.rotate,
+        center: pen.calculative.worldRect.center
       };
       if (!rectInRect(penRect, canvasRect)) {
         pen.calculative.inView = false;
