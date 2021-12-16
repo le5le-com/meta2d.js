@@ -88,7 +88,7 @@ export const defaultOptions: Options = {
   gridColor: '#e2e2e2',
   ruleColor: '#888888',
   drawingLineName: 'curve',
-  interval: 20,
+  interval: 30,
   animateInterval: 30,
   autoPolyline: true,
 };

@@ -292,7 +292,7 @@ export interface Pen extends Rect {
     paddingRight?: number;
 
     textLines?: string[];
-    textLineWidths?: number[];  // textLines 每一行 width 组成的数组
+    textLineWidths?: number[]; // textLines 每一行 width 组成的数组
     image?: string;
     img?: HTMLImageElement;
     imgNaturalWidth?: number;
@@ -365,4 +365,5 @@ export interface Pen extends Rect {
   onMouseDown?: (pen: Pen, e: Point) => void;
   onMouseMove?: (pen: Pen, e: Point) => void;
   onMouseUp?: (pen: Pen, e: Point) => void;
+  onInput?: (pen: Pen, text: string) => void;
 }
