@@ -3330,7 +3330,9 @@ export class Canvas {
         return;
       }
 
-      if (pen.text !== this.input.value) {
+      if (pen.onInput) {
+        pen.onInput(pen, this.input.value);
+      } else if (pen.text !== this.input.value) {
         this.initPens = [deepClone(pen)];
         pen.text = this.input.value;
         pen.calculative.text = pen.text;
