@@ -2173,10 +2173,12 @@ export class Canvas {
     }
 
     if (now - this.lastRender < this.store.options.interval) {
+      // console.log(11111111);
       if (this.renderTimer) {
         cancelAnimationFrame(this.renderTimer);
       }
       this.renderTimer = requestAnimationFrame(this.render);
+
       return;
     }
     this.renderTimer = undefined;
@@ -3325,7 +3327,12 @@ export class Canvas {
   };
 
   showInput = (pen: Pen, rect?: Rect) => {
-    if (this.store.hover.locked || this.store.hover.externElement || this.store.hover.disableInput) {
+    if (
+      !this.store.hover ||
+      this.store.hover.locked ||
+      this.store.hover.externElement ||
+      this.store.hover.disableInput
+    ) {
       return;
     }
     if (this.input.dataset.penId === pen.id) {
