@@ -4,7 +4,7 @@ import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
 import { calcCenter, calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
-import { calcTextLines } from './text';
+import { calcTextLines, calcTextDrawRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Flip, Gradient, PenType } from '@topology/core';
@@ -504,6 +504,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.options.color;
     }
 
+    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
+      pen.calculative.fontSize
+    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
+
+    !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
     if (pen.calculative.textBackground) {
       ctx.save();
       ctx.fillStyle = pen.calculative.textBackground;
@@ -516,35 +521,14 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       ctx.restore();
     }
 
-    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
-      pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
-
-    if (pen.textAlign) {
-      ctx.textAlign = pen.textAlign as any;
-    } else {
-      ctx.textAlign = 'center';
-    }
-
-    // if (pen.textBaseline) {
-    //   ctx.textBaseline = pen.textBaseline as any;
-    // }
-
     const y = 0.5;
-    // switch (pen.textBaseline) {
-    //   case 'top':
-    //     y = 0;
-    //     break;
-    //   case 'bottom':
-    //     y = 1;
-    //     break;
-    // }
+    const { width } = pen.calculative.textDrawRect;
     pen.calculative.textLines.forEach((text, i) => {
       let x = 0;
       if (!pen.textAlign || pen.textAlign === 'center') {
-        x = pen.calculative.textDrawRect.width / 2;
+        x = (width - pen.calculative.textLineWidths[i]) / 2;
       } else if (pen.textAlign === 'right') {
-        x = pen.calculative.textDrawRect.width;
+        x = width - pen.calculative.textLineWidths[i];
       }
       ctx.fillText(
         text,
@@ -798,15 +782,16 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   if (pen.calculative.text) {
     ctx.save();
     ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
+    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
+      pen.calculative.fontSize
+    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
+
+    !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
     if (pen.calculative.textBackground) {
       ctx.save();
       ctx.fillStyle = pen.calculative.textBackground;
-      let x = 0;
-      if (pen.textAlign === 'right') {
-        x = pen.calculative.textDrawRect.width;
-      }
       ctx.fillRect(
-        pen.calculative.textDrawRect.x - x,
+        pen.calculative.textDrawRect.x,
         pen.calculative.textDrawRect.y,
         pen.calculative.textDrawRect.width,
         pen.calculative.textDrawRect.height
@@ -814,33 +799,14 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
       ctx.restore();
     }
 
-    ctx.font = `${pen.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
-      pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
-
-    if (pen.textAlign) {
-      ctx.textAlign = pen.textAlign as any;
-    } else {
-      ctx.textAlign = 'center';
-    }
-
-    if (pen.textBaseline) {
-      ctx.textBaseline = pen.textBaseline as any;
-    }
-
-    let y = 0.5;
-    switch (pen.textBaseline) {
-      case 'top':
-        y = 0;
-        break;
-      case 'bottom':
-        y = 1;
-        break;
-    }
+    const y = 0.5;
+    const { width } = pen.calculative.textDrawRect;
     pen.calculative.textLines.forEach((text, i) => {
       let x = 0;
       if (!pen.textAlign || pen.textAlign === 'center') {
-        x = pen.calculative.textDrawRect.width / 2;
+        x = (width - pen.calculative.textLineWidths[i]) / 2;
+      } else if (pen.textAlign === 'right') {
+        x = width - pen.calculative.textLineWidths[i];
       }
       ctx.fillText(
         text,
