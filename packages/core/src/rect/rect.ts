@@ -170,11 +170,23 @@ function getIntersectPoint(line1: {from: Point, to: Point}, line2: {from: Point,
 
 /**
  * 该方法作用同上，不过此方法需要传的是 斜率
- * @param line1 
- * @param line2 
+ * @param line1 线段1
+ * @param line2 线段2
  * @returns 
  */
 function getIntersectPointByK(line1: {k: number, point: Point}, line2: {k: number, point: Point}): Point {
+  if (isZero(line1.k)) {
+    return {
+      x: line2.point.x,
+      y: line1.point.y
+    }
+  } else if (isZero(line2.k)) {
+    return {
+      x: line1.point.x,
+      y: line2.point.y
+    }
+  }
+
   const b1 = line1.point.y - (line1.k) * line1.point.x;
   const b2 = line2.point.y - (line2.k) * line2.point.x;
   const x = (b2 - b1) / (line1.k - line2.k);
@@ -210,21 +222,44 @@ function pointsToRect(pts: Point[], rotate: number): Rect {
   return getRectOfPoints(pts);
 }
 
+/**
+ * js 计算存在误差，认为 num 在该范围内的值就是 0
+ * @param num 数字
+ * @returns 是否接近 0
+ */
+function isZero(num: number) : boolean {
+  return num > -0.000000001 && num < 0.000000001;
+}
+
 export function resizeRect(rect: Rect | Pen, offsetX: number, offsetY: number, resizeIndex: number) {
-  if (rect.rotate) {
+  if (rect.rotate && rect.rotate % 360) {
     // 计算出外边的四个点
     const pts = rectToPoints(rect);
     // 斜率不改变，提前计算
     const k1 = (pts[0].y - pts[1].y) / (pts[0].x - pts[1].x);
     const k2 = (pts[1].y - pts[2].y) / (pts[1].x - pts[2].x);
-    // resize 的点
-    pts[resizeIndex].x += offsetX;
-    pts[resizeIndex].y += offsetY;
-    // 不变的点
-    const noChangePoint = pts[(resizeIndex + 2) % 4];
-    // 由于斜率是不变的，我们只需要根据斜率 和 已知的两点求出相交的 另外两点
-    pts[(resizeIndex + 1) % 4] = getIntersectPointByK({k: resizeIndex % 2 ? k2 : k1, point: pts[resizeIndex]}, {k: resizeIndex % 2 ? k1 : k2, point: noChangePoint});
-    pts[(resizeIndex + 4 - 1) % 4] = getIntersectPointByK({k: resizeIndex % 2 ? k1 : k2, point: pts[resizeIndex]}, {k: resizeIndex % 2 ? k2 : k1, point: noChangePoint});
+    if (resizeIndex < 4) {  // 斜对角的四个点
+      // resize 的点
+      pts[resizeIndex].x += offsetX;
+      pts[resizeIndex].y += offsetY;
+      // 不变的点
+      const noChangePoint = pts[(resizeIndex + 2) % 4];
+      // 由于斜率是不变的，我们只需要根据斜率 和 已知的两点求出相交的 另外两点
+      pts[(resizeIndex + 1) % 4] = getIntersectPointByK({k: resizeIndex % 2 ? k2 : k1, point: pts[resizeIndex]}, {k: resizeIndex % 2 ? k1 : k2, point: noChangePoint});
+      pts[(resizeIndex + 4 - 1) % 4] = getIntersectPointByK({k: resizeIndex % 2 ? k1 : k2, point: pts[resizeIndex]}, {k: resizeIndex % 2 ? k2 : k1, point: noChangePoint});
+    } else { 
+      // 边缘四个点有两个点固定
+      const k = [4, 6].includes(resizeIndex) ? k2 : k1;
+      if (!isZero(k)) {
+        pts[(resizeIndex) % 4].y += offsetY;
+        pts[(resizeIndex) % 4].x += offsetY / k;
+        pts[(resizeIndex + 1) % 4].y += offsetY;
+        pts[(resizeIndex + 1) % 4].x += offsetY / k;
+      } else {
+        pts[(resizeIndex) % 4].x += offsetX;
+        pts[(resizeIndex + 1) % 4].x += offsetX;
+      }
+    }
     if ((pts[0].x - pts[1].x) ** 2 + (pts[0].y - pts[1].y) ** 2 < 25
       || (pts[1].x - pts[2].x) ** 2 + (pts[1].y - pts[2].y) ** 2 < 25) {
         // 距离小于 5 不能继续 resize 了
