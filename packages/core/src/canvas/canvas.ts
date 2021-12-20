@@ -3047,7 +3047,7 @@ export class Canvas {
       }
 
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
-      if ((this.store.options.autoPolyline || line.autoPolyline) && line.lineName === 'polyline') {
+      if (line.autoPolyline !== false && (this.store.options.autoPolyline || line.autoPolyline) && line.lineName === 'polyline') {
         let from = line.calculative.worldAnchors[0];
         let to = line.calculative.worldAnchors[line.calculative.worldAnchors.length - 1];
 
