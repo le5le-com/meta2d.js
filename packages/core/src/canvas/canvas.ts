@@ -859,7 +859,7 @@ export class Canvas {
                 this.store.emitter.emit('active', this.store.active);
               }
               this.dirty = true;
-            } else if (e.altKey) {
+            } else if (this.store.hover.parentId && (!this.store.hover.locked || this.store.hover.locked < LockState.DisableMove)) {
               if (this.store.active.length) {
                 this.store.active.forEach((pen) => {
                   pen.calculative.active = undefined;
