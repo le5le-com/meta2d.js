@@ -65,7 +65,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
       return;
     }
 
-    if (store.active[0].connectedLines) {
+    if (store.active[0]?.connectedLines) {
       for (const item of store.active[0].connectedLines) {
         if (item.lineId === pen.id) {
           return;
