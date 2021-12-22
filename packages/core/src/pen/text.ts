@@ -128,6 +128,15 @@ export function calcTextLines(pen: Pen) {
       break;
   }
 
+  if (pen.calculative.keepDecimal || pen.calculative.keepDecimal === 0) {
+    lines.forEach((text, i)=>{
+      let textNum = Number(text);
+      if (!isNaN(textNum)) {
+        lines[i] = textNum.toFixed(pen.calculative.keepDecimal);
+      }
+    })
+  }
+
   pen.calculative.textLines = lines;
 }
 
