@@ -207,6 +207,7 @@ export interface Pen extends Rect {
   flip?: Flip;
 
   hideAnchor?: boolean;
+  hiddenText?: boolean;    // 隐藏 text
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -348,6 +349,7 @@ export interface Pen extends Rect {
 
     flip?: Flip;
 
+    hiddenText?: boolean;    // 隐藏 text
     // media element
     onended?: (pen: Pen) => void;
   };

@@ -489,7 +489,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 
-  if (pen.calculative.text) {
+  if (pen.calculative.text && !pen.calculative.hiddenText) {
     ctx.save();
     if (pen.calculative.hover) {
       fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
@@ -779,7 +779,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.restore();
   }
 
-  if (pen.calculative.text) {
+  if (pen.calculative.text && !pen.calculative.hiddenText) {
     ctx.save();
     ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
     ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
