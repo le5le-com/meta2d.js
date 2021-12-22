@@ -3256,6 +3256,8 @@ export class Canvas {
       if (pen.locked && !isSon) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
       if (i > -1) {
+        // 删除画笔关联线的 connectTo
+        this.delLineConnectTo(this.store.data.pens[i]);
         this.store.data.pens.splice(i, 1);
         this.store.pens[pen.id] = undefined;
       }
@@ -3271,6 +3273,34 @@ export class Canvas {
     this.render(Infinity);
     this.pushHistory({ type: EditType.Delete, pens });
     this.store.emitter.emit('delete', pens);
+  }
+
+  /**
+   * 删除该画笔关联线的 connectTo 该节点内容
+   * @param pen 画笔
+   */
+  delLineConnectTo(pen: Pen) {
+    pen.connectedLines?.forEach(info => {
+      const line = this.store.pens[info.lineId];
+      if (line) {
+        const from = line.anchors[0];
+        const to = line.anchors[line.anchors.length - 1];
+        if (from.connectTo === pen.id) {
+          from.connectTo = undefined;
+          from.anchorId = undefined;
+          from.prev && (from.prev.connectTo = undefined);
+          from.next && (from.next.connectTo = undefined);
+        }
+        if (to.connectTo === pen.id) {
+          to.connectTo = undefined;
+          to.anchorId = undefined;
+          to.prev && (to.prev.connectTo = undefined);
+          to.next && (to.next.connectTo = undefined);
+        }
+        calcWorldAnchors(line);
+        getLineRect(line);
+      }
+    })
   }
 
   private ondblclick = (e: any) => {
