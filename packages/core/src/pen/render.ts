@@ -1243,6 +1243,7 @@ export function deleteTempAnchor(pen: Pen) {
   }
 }
 
+// 添加line到pen的connectedLines中，并关联相关属性
 export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
   if (!pen || !lineId || !lineAnchor || !anchor) {
     return;

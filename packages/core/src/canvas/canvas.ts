@@ -791,12 +791,36 @@ export class Canvas {
       }
 
       if (this.hoverType === HoverType.Node) {
+        let newline = false;
         if (this.store.options.autoAnchor) {
+          if (!this.drawingLine) {
+            this.drawingLine = {
+              id: s8(),
+              name: 'line',
+              lineName: this.drawingLineName,
+              x: pt.x,
+              y: pt.y,
+              type: PenType.Line,
+              calculative: {
+                canvas: this,
+                active: true,
+                worldAnchors: [pt],
+                lineWidth: this.store.data.lineWidth || 1,
+              },
+              fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
+              toArrow: this.store.data.toArrow || this.store.options.toArrow,
+              lineWidth: this.store.data.lineWidth || 1,
+            };
+            newline = true;
+          }
           this.store.hoverAnchor = nearestAnchor(this.store.hover, this.drawingLine.calculative.worldAnchors[0]);
           this.drawingLine.autoTo = true;
+          pt.connectTo = this.store.hover.id;
+          pt.anchorId = this.store.hoverAnchor.id;
+          connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, pt.id, this.store.hoverAnchor.id);
         }
 
-        if (this.store.hoverAnchor) {
+        if (!newline && this.store.hoverAnchor) {
           if (this.drawingLine) {
             const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
             to.x = this.store.hoverAnchor.x;
@@ -2191,7 +2215,6 @@ export class Canvas {
     }
 
     if (now - this.lastRender < this.store.options.interval) {
-      // console.log(11111111);
       if (this.renderTimer) {
         cancelAnimationFrame(this.renderTimer);
       }
