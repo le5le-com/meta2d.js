@@ -3288,7 +3288,7 @@ export class Canvas {
     }
   }
 
-  delete(pens?: Pen[], isSon: boolean = false) {
+  delete(pens?: Pen[], isSon: boolean = false, delLock = false) {
     if (!pens) {
       pens = this.store.active;
     }
@@ -3297,8 +3297,7 @@ export class Canvas {
     }
 
     pens.forEach((pen) => {
-      // TODO: 删除方法无法删除锁住的画笔，子节点可删除
-      if (pen.locked && !isSon) return;
+      if (!delLock && pen.locked && !isSon) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
       if (i > -1) {
         // 删除画笔关联线的 connectTo
@@ -3309,7 +3308,7 @@ export class Canvas {
       pen.onDestroy && pen.onDestroy(pen);
       if (Array.isArray(pen.children)) {
         const sonPens = this.store.data.pens.filter((son) => pen.children.includes(son.id));
-        this.delete(sonPens, true); // 递归删除子节点
+        this.delete(sonPens, true, delLock); // 递归删除子节点
       }
     });
     this.inactive();
@@ -3471,14 +3470,14 @@ export class Canvas {
       sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
     }
     this.input.onclick = () => {
+      const pen = this.store.pens[this.input.dataset.penId];
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
         this.inputRight.style.transform = 'rotate(135deg)';
-      } else {
+      } else if (pen.dropdownList){
         this.dropdown.style.display = 'block';
         this.inputRight.style.transform = 'rotate(315deg)';
       }
-      const pen = this.store.pens[this.input.dataset.penId];
       this.store.emitter.emit('clickInput', pen);
     };
     this.input.onkeyup = (e: KeyboardEvent) => {
