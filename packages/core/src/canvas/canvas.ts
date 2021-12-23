@@ -114,14 +114,16 @@ export class Canvas {
   prevAnchor: Point;
   nextAnchor: Point;
 
-  lastMouseTime = 0;
+  private lastMouseTime = 0;
+  // 即将取消活动状态的画笔，用于Ctrl选中/取消选中画笔
+  private willInactivePen: Pen;
 
   dirty = false;
   lastRender = 0;
   touchStart = 0;
   timer: any;
 
-  lastAnimateRender = 0;
+  private lastAnimateRender = 0;
   animateRendering = false;
   renderTimer: any;
 
@@ -147,8 +149,8 @@ export class Canvas {
   magnifier: boolean;
   mousePos: Point = { x: 0, y: 0 };
   magnifierSize = 300;
-  // true 已经复制
-  private alreadyCopy: boolean = false;
+
+  private alreadyCopy = false;
 
   scroll: Scroll;
 
@@ -886,19 +888,17 @@ export class Canvas {
             const pen = getParent(this.store.hover, true) || this.store.hover;
             if (e.ctrlKey) {
               if (pen.calculative.active) {
-                pen.calculative.active = undefined;
-                this.store.active.splice(
-                  this.store.active.findIndex((p) => p === pen),
-                  1
-                );
-                this.store.emitter.emit('inactive', [pen]);
+                this.willInactivePen = pen;
               } else {
                 pen.calculative.active = true;
                 this.store.active.push(pen);
                 this.store.emitter.emit('active', this.store.active);
               }
               this.dirty = true;
-            } else if (this.store.hover.parentId && (!this.store.hover.locked || this.store.hover.locked < LockState.DisableMove)) {
+            } else if (
+              this.store.hover.parentId &&
+              (!this.store.hover.locked || this.store.hover.locked < LockState.DisableMove)
+            ) {
               if (this.store.active.length) {
                 this.store.active.forEach((pen) => {
                   pen.calculative.active = undefined;
@@ -1111,6 +1111,7 @@ export class Canvas {
         if(!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
 >>>>>>> f36b9f0 (节点与画布的 locked 控制)
           this.alreadyCopy = true;
+          this.willInactivePen = undefined;
           this.copy();
           this.paste();
           return;
@@ -1153,11 +1154,12 @@ export class Canvas {
   };
 
   private hoverTimer: any;
-  willGetHover(e) {
+  willGetHover(e: any) {
     this.hoverTimer && clearTimeout(this.hoverTimer);
     this.hoverTimer = setTimeout(() => {
       this.getHover(e);
       this.render();
+      this.hoverTimer = undefined;
     }, 10);
   }
 
@@ -1319,6 +1321,18 @@ export class Canvas {
           pen: this.store.hover,
         });
       }
+    }
+
+    if (this.willInactivePen) {
+      this.willInactivePen.calculative.active = undefined;
+      this.store.active.splice(
+        this.store.active.findIndex((p) => p === this.willInactivePen),
+        1
+      );
+      this.calcActiveRect();
+      this.willInactivePen = undefined;
+      this.store.emitter.emit('inactive', [this.willInactivePen]);
+      this.render(Infinity);
     }
 
     this.mouseDown = undefined;
@@ -1531,7 +1545,11 @@ export class Canvas {
       if (pen.lineWidth) {
         r += pen.lineWidth / 2;
       }
-      if (!pen.calculative.active && !pointInSimpleRect(pt, pen.calculative.worldRect, r) && !pointInRect(pt, pen.calculative.worldRect)) {
+      if (
+        !pen.calculative.active &&
+        !pointInSimpleRect(pt, pen.calculative.worldRect, r) &&
+        !pointInRect(pt, pen.calculative.worldRect)
+      ) {
         continue;
       }
       // 锚点
@@ -2239,7 +2257,7 @@ export class Canvas {
         ex: x + pen.calculative.worldRect.width,
         ey: y + pen.calculative.worldRect.height,
         rotate: pen.calculative.worldRect.rotate,
-        center: pen.calculative.worldRect.center
+        center: pen.calculative.worldRect.center,
       };
       if (!rectInRect(penRect, canvasRect)) {
         pen.calculative.inView = false;
@@ -2555,7 +2573,7 @@ export class Canvas {
     if ((e as any).ctrlKey) {
       // 1，3 是右上角和左上角的点，此时的 offsetY 符号与 offsetX 是相反的
       const sign = [1, 3].includes(this.resizeIndex) ? -1 : 1;
-      offsetY = sign * (offsetX * h) / w;
+      offsetY = (sign * (offsetX * h)) / w;
     }
     resizeRect(this.activeRect, offsetX, offsetY, this.resizeIndex);
     calcCenter(this.activeRect);
@@ -3047,7 +3065,11 @@ export class Canvas {
       }
 
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
-      if (line.autoPolyline !== false && (this.store.options.autoPolyline || line.autoPolyline) && line.lineName === 'polyline') {
+      if (
+        line.autoPolyline !== false &&
+        (this.store.options.autoPolyline || line.autoPolyline) &&
+        line.lineName === 'polyline'
+      ) {
         let from = line.calculative.worldAnchors[0];
         let to = line.calculative.worldAnchors[line.calculative.worldAnchors.length - 1];
 
@@ -3323,7 +3345,7 @@ export class Canvas {
    * @param pen 画笔
    */
   delLineConnectTo(pen: Pen) {
-    pen.connectedLines?.forEach(info => {
+    pen.connectedLines?.forEach((info) => {
       const line = this.store.pens[info.lineId];
       if (line) {
         const from = line.anchors[0];
@@ -3343,7 +3365,7 @@ export class Canvas {
         calcWorldAnchors(line);
         getLineRect(line);
       }
-    })
+    });
   }
 
   private ondblclick = (e: any) => {
