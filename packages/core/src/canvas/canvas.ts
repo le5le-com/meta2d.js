@@ -3425,14 +3425,14 @@ export class Canvas {
       sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
     }
     this.input.onclick = () => {
+      const pen = this.store.pens[this.input.dataset.penId];
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
         this.inputRight.style.transform = 'rotate(135deg)';
-      } else {
+      } else if (pen.dropdownList){
         this.dropdown.style.display = 'block';
         this.inputRight.style.transform = 'rotate(315deg)';
       }
-      const pen = this.store.pens[this.input.dataset.penId];
       this.store.emitter.emit('clickInput', pen);
     };
     this.input.onkeyup = (e: KeyboardEvent) => {
