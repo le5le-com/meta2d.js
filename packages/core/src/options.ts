@@ -91,4 +91,5 @@ export const defaultOptions: Options = {
   interval: 30,
   animateInterval: 30,
   autoPolyline: true,
+  autoAnchor: true
 };
