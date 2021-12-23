@@ -1189,7 +1189,11 @@ export class Canvas {
       return;
     }
 
-    if (this.drawingLine && this.hoverType === HoverType.Node) {
+    if (
+      this.drawingLine &&
+      this.hoverType === HoverType.Node &&
+      this.store.hover.id !== this.drawingLine.calculative.worldAnchors[0].connectTo
+    ) {
       if (this.store.options.autoAnchor) {
         this.store.hoverAnchor = nearestAnchor(this.store.hover, this.drawingLine.calculative.worldAnchors[0]);
         this.drawingLine.autoTo = true;
@@ -3474,7 +3478,7 @@ export class Canvas {
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
         this.inputRight.style.transform = 'rotate(135deg)';
-      } else if (pen.dropdownList){
+      } else if (pen.dropdownList) {
         this.dropdown.style.display = 'block';
         this.inputRight.style.transform = 'rotate(315deg)';
       }
