@@ -176,8 +176,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     fill = pen.activeBackground || store.options.activeBackground;
     ctx.fillStyle = fill;
     fill && (setBack = false);
-  }
-  if (setBack) {
+  } else {
     if (pen.calculative.strokeImage) {
       if (pen.calculative.strokeImg) {
         ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, 'repeat');
@@ -193,7 +192,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       }
       ctx.strokeStyle = stroke;
     }
-
+  }
+  if (setBack) {
     if (pen.calculative.backgroundImage) {
       if (pen.calculative.backgroundImg) {
         ctx.fillStyle = ctx.createPattern(pen.calculative.backgroundImg, 'repeat');

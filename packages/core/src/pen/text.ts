@@ -130,7 +130,7 @@ export function calcTextLines(pen: Pen) {
 
   if (pen.calculative.keepDecimal || pen.calculative.keepDecimal === 0) {
     lines.forEach((text, i)=>{
-      let textNum = Number(text);
+      const textNum = Number(text);
       if (!isNaN(textNum)) {
         lines[i] = textNum.toFixed(pen.calculative.keepDecimal);
       }
