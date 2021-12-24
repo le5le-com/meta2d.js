@@ -351,7 +351,7 @@ export interface Pen extends Rect {
     flip?: Flip;
 
     hiddenText?: boolean;    // 隐藏 text
-    keepDecimal?: number;    // undefined 显示原内容；0 显示整数
+    keepDecimal?: number;    // undefined 显示原内容；0 显示整数；保留几位小数
     // media element
     onended?: (pen: Pen) => void;
   };
