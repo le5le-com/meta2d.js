@@ -35,6 +35,7 @@ export interface TopologyData {
   fromArrow?: string;
   toArrow?: string;
   lineWidth?: number;
+  color?: string;   // 画布默认 color 优先级高于 options.color
 }
 
 export enum EditType {

@@ -2213,7 +2213,7 @@ export class Canvas {
   renderPens = () => {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.save();
-    ctx.strokeStyle = this.store.options.color;
+    ctx.strokeStyle = this.store.data.color || this.store.options.color;
     const canvasRect = {
       x: 0,
       y: 0,

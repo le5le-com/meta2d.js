@@ -501,7 +501,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     if (fill) {
       ctx.fillStyle = fill;
     } else {
-      ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.options.color;
+      ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.data.color || store.options.color;
     }
 
     ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
