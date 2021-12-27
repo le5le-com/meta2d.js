@@ -1297,7 +1297,9 @@ export class Canvas {
 
     // Add pen
     if (this.addCaches) {
-      this.dropPens(this.addCaches, e);
+      if (!this.store.data.locked) {
+        this.dropPens(this.addCaches, e);
+      }
       this.addCaches = undefined;
     }
 
