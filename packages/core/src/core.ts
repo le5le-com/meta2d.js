@@ -723,7 +723,11 @@ export class Topology {
         this.onSizeUpdate();
         break;
       case 'enter':
+        e.pen && e.pen.onMouseEnter && e.pen.onMouseEnter(e.pen, this.canvas.mousePos);
+        this.store.data.locked && this.doEvent(e, eventName);
+        break;
       case 'leave':
+        e.pen && e.pen.onMouseLeave && e.pen.onMouseLeave(e.pen, this.canvas.mousePos);
         this.store.data.locked && this.doEvent(e, eventName);
         break;
       case 'active':
