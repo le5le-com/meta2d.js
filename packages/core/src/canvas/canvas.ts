@@ -3259,15 +3259,13 @@ export class Canvas {
       }
       this.store.clipboard = clipboard.data;
     }
-    // 修改 剪切板的数据 会影响画布实际数据
+    // 修改 剪切板的数据 会影响画布实际数据，此处深拷贝不影响画布值
     this.store.clipboard = deepClone(this.store.clipboard);
     // 获取剪切板内全部的 pens ，其中包含子节点
     const realPens = this.getAddPens(this.store.clipboard);
     for (const pen of this.store.clipboard) {
       this.pastePen(pen, undefined, realPens);
     }
-
-    this.pasteOffset += 10;
 
     this.active(this.store.clipboard);
     this.pushHistory({ type: EditType.Add, pens: realPens });
