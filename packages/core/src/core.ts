@@ -484,7 +484,7 @@ export class Topology {
       pen.width = childRect.width;
       pen.height = childRect.height;
       pen.locked = LockState.DisableMove;
-      pen.type = PenType.Node;
+      // pen.type = PenType.Node;
     });
     this.canvas.active([parent]);
     this.render();
@@ -1363,7 +1363,7 @@ export class Topology {
       pen.width = childRect.width;
       pen.height = childRect.height;
       pen.locked = LockState.DisableMove;
-      pen.type = PenType.Node;
+      // pen.type = PenType.Node;
     });
 
     return deepClone(pens);

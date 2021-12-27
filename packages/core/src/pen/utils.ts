@@ -5,15 +5,15 @@ export function randomId(pen: Pen) {
   pen.id = s8();
   if (Array.isArray(pen.anchors)) {
     for (const pt of pen.anchors) {
-      pt.id = s8();
+      pen.type && (pt.id = s8());
       pt.penId = pen.id;
       if (pt.prev) {
-        pt.prev.id = s8();
+        pen.type && (pt.prev.id = s8());
         pt.prev.penId = pen.id;
       }
   
       if (pt.next) {
-        pt.next.id = s8();
+        pen.type && (pt.next.id = s8());
         pt.next.penId = pen.id;
       }
     }
