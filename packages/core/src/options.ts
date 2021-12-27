@@ -73,7 +73,7 @@ export const defaultOptions: Options = {
   textBaseline: 'middle',
   color: '#222222',
   activeColor: '#1890ff',
-  hoverColor: '#1890ff',
+  hoverColor: '#ff7a45',
   anchorColor: '#fa541c',
   anchorRadius: 4,
   anchorBackground: '#fff',
@@ -91,5 +91,5 @@ export const defaultOptions: Options = {
   interval: 30,
   animateInterval: 30,
   autoPolyline: true,
-  autoAnchor: true
+  autoAnchor: true,
 };

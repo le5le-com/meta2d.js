@@ -1087,8 +1087,6 @@ export class Canvas {
 
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
-        this.store.hover?.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
-
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
         if (!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
           this.alreadyCopy = true;
@@ -1516,6 +1514,8 @@ export class Canvas {
       }
       this.store.lastHover = this.store.hover;
     }
+
+    this.store.hover?.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
   };
 
   private inPens = (pt: Point, pens: Pen[]) => {

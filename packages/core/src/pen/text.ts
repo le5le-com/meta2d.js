@@ -1,5 +1,7 @@
 import { Pen } from '.';
 
+declare const window: any;
+
 export function calcTextRect(pen: Pen) {
   const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
   let x = paddingLeft;
@@ -76,29 +78,32 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
   };
 }
 
-export function calcTextLines(pen: Pen) {
-  if (!pen.calculative.text) {
+export function calcTextLines(pen: Pen, text?: string) {
+  if (!pen.calculative.text && !text) {
     pen.calculative.textLines = [];
     return;
+  }
+  if (!text) {
+    text = pen.calculative.text;
   }
   let lines = [];
   switch (pen.whiteSpace) {
     case 'nowrap':
-      lines.push(pen.calculative.text);
+      lines.push(text);
       break;
     case 'pre-line':
-      if (pen.calculative.text.split) {
-        lines = pen.calculative.text.split(/[\n]/g);
+      if (text.split) {
+        lines = text.split(/[\n]/g);
       } else {
-        lines = pen.calculative.text.toString().split(/[\n]/g);
+        lines = text.toString().split(/[\n]/g);
       }
       break;
     default:
       let paragraphs: string[];
-      if (pen.calculative.text.split) {
-        paragraphs = pen.calculative.text.split(/[\n]/g);
+      if (text.split) {
+        paragraphs = text.split(/[\n]/g);
       } else {
-        paragraphs = pen.calculative.text.toString().split(/[\n]/g);
+        paragraphs = text.toString().split(/[\n]/g);
       }
       let h = 0;
       paragraphs.forEach((item) => {
@@ -129,15 +134,17 @@ export function calcTextLines(pen: Pen) {
   }
 
   if (pen.calculative.keepDecimal || pen.calculative.keepDecimal === 0) {
-    lines.forEach((text, i)=>{
+    lines.forEach((text, i) => {
       const textNum = Number(text);
       if (!isNaN(textNum)) {
         lines[i] = textNum.toFixed(pen.calculative.keepDecimal);
       }
-    })
+    });
   }
 
   pen.calculative.textLines = lines;
+
+  return lines;
 }
 
 export function getWords(txt: string) {
@@ -193,10 +200,17 @@ export function wrapLines(words: string[], pen: Pen) {
 export function calcTextAdaptionWidth(ctx: CanvasRenderingContext2D, pen: Pen): number {
   let maxWidth = 0;
   pen.calculative.textLineWidths = [];
-  pen.calculative.textLines.forEach((text: string)=> {
+  pen.calculative.textLines.forEach((text: string) => {
     const width = ctx.measureText(text).width;
     pen.calculative.textLineWidths.push(width);
     maxWidth < width && (maxWidth = width);
   });
   return maxWidth;
+}
+
+if (window) {
+  window.topologyGetWords = getWords;
+  window.topologyWrapLines = wrapLines;
+  window.topologyCalcTextLines = calcTextLines;
+  window.topologyCalcTextDrawRect = calcTextDrawRect;
 }
