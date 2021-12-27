@@ -1254,7 +1254,9 @@ export class Canvas {
 
     // Add pen
     if (this.addCaches) {
-      this.dropPens(this.addCaches, e);
+      if (!this.store.data.locked) {
+        this.dropPens(this.addCaches, e);
+      }
       this.addCaches = undefined;
     }
 
@@ -3259,36 +3261,107 @@ export class Canvas {
       }
       this.store.clipboard = clipboard.data;
     }
-    const pens: Pen[] = [];
+    // 修改 剪切板的数据 会影响画布实际数据，此处深拷贝不影响画布值
+    this.store.clipboard = deepClone(this.store.clipboard);
+    // 获取剪切板内全部的 pens ，其中包含子节点
+    const realPens = this.getAddPens(this.store.clipboard);
     for (const pen of this.store.clipboard) {
-      const newPen = this.pastePen(pen);
-      newPen && pens.push(newPen);
+      this.pastePen(pen, undefined, realPens);
     }
 
-    this.pasteOffset += 10;
-
-    this.active(pens);
-    this.pushHistory({ type: EditType.Add, pens });
-    this.store.emitter.emit('add', pens);
+    this.active(this.store.clipboard);
+    this.pushHistory({ type: EditType.Add, pens: realPens });
+    this.store.emitter.emit('add', realPens);
   }
 
-  pastePen(pen: Pen, parentId?: string) {
-    const newPen: Pen = deepClone(pen);
-    randomId(newPen);
-    newPen.parentId = parentId;
+  /**
+   * 返回本次添加包含 子节点的内容
+   * @param pens 不包含子节点
+   */
+  getAddPens(pens: Pen[]): Pen[] {
+    const retPens: Pen[] = [];
+    for (const pen of pens) {
+      // 存在子节点
+      pen.children?.forEach(childId => {
+        if (!retPens.find(retPen => retPen.id === childId)) {
+          retPens.push(deepClone(this.store.pens[childId]));
+        }
+      })
+    }
+    return retPens.concat(pens);
+  }
+
+  /**
+   * 
+   * @param pen 当前复制的画笔
+   * @param parentId 父节点 id 
+   * @param pastePens 本次复制的全部画笔，包含子节点
+   * @returns 复制后的画笔
+   */
+  pastePen(pen: Pen, parentId?: string, pastePens: Pen[] = []) {
+    const oldId = pen.id;
+    randomId(pen);
+    pen.parentId = parentId;
     // 子节点无需偏移
-    !parentId && translateRect(newPen, this.pasteOffset, this.pasteOffset);
+    !parentId && translateRect(pen, this.pasteOffset, this.pasteOffset);
+    if (pen.type === PenType.Line) {
+      this.changeNodeConnectedLine(oldId, pen, pastePens);
+    } else {
+      this.changeLineAnchors(oldId, pen, pastePens);
+    }
     if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
-      this.makePen(newPen);
+      this.makePen(pen);
       const newChildren = [];
-      if (Array.isArray(newPen.children)) {
-        for (const childId of newPen.children) {
-          const pen = this.store.pens[childId];
-          pen && newChildren.push(this.pastePen(pen, newPen.id).id);
+      if (Array.isArray(pen.children)) {
+        for (const childId of pen.children) {
+          const childPen = pastePens.find(pen => pen.id === childId);
+          childPen && newChildren.push(this.pastePen(childPen, pen.id, pastePens).id);
         }
       }
-      newPen.children = newChildren;
-      return newPen;
+      pen.children = newChildren;
+      return pen;
+    }
+  }
+  /**
+   * 修改对应连线的 anchors
+   * @param oldId 老 id
+   * @param pen 节点
+   * @param pastePens 本次复制的 pens 包含子节点
+   */
+  changeLineAnchors(oldId: string, pen: Pen, pastePens: Pen[]) {
+    pen.connectedLines?.forEach(({lineId}) =>{
+      const line = pastePens.find(pen => pen.id === lineId);
+      if (line) {
+        const from = line.anchors[0];
+        const to = line.anchors[line.anchors.length - 1];
+        (from.connectTo === oldId) && (from.connectTo = pen.id);
+        (to.connectTo === oldId) && (to.connectTo = pen.id);
+      }
+    });
+  }
+
+  /**
+   * 复制连线的过程，修改 与 此线连接 node 的 connectedLines
+   * @param oldId 线原 id
+   * @param line 线
+   * @param pastePens 此处复制的全部 pens (包含子节点)
+   */
+  changeNodeConnectedLine(oldId: string, line: Pen, pastePens: Pen[]) {
+    const from = line.anchors[0];
+    const to = line.anchors[line.anchors.length - 1];
+    // 修改对应节点的 connectedLines
+    const anchors = [from, to];
+    for (const anchor of anchors) {
+      const nodeId = anchor.connectTo;
+      if (nodeId) {
+        const node = pastePens.find(pen => pen.id === nodeId);
+        node?.connectedLines?.forEach((cl)=> {
+          if (cl.lineId === oldId) {
+            cl.lineId = line.id;
+            cl.lineAnchor = anchor.id;
+          }
+        });
+      }
     }
   }
 
