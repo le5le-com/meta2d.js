@@ -2379,7 +2379,7 @@ export class Canvas {
               ctx.fillStyle = ctx.strokeStyle;
             }
             ctx.beginPath();
-            let size = anchor.radius || this.store.options.anchorRadius;
+            let size = anchor.radius || this.store.hover.anchorRadius || this.store.options.anchorRadius;
             if (this.store.hover.type) {
               size = 3;
               if (this.store.hover.calculative.lineWidth > 3) {
