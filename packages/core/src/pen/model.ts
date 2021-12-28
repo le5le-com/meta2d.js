@@ -338,9 +338,7 @@ export interface Pen extends Rect {
 
     layer?: number;
     dropdownList?: any[];
-    fns?: any;
 
-    elementLoaded?: boolean;
     canvas?: any;
 
     iframe?: string;
