@@ -1503,6 +1503,7 @@ export class Canvas {
     if (this.store.lastHover !== this.store.hover) {
       this.dirty = true;
       if (this.store.lastHover) {
+        this.store.lastHover.calculative.hover = false;
         setHover(getParent(this.store.lastHover, true) || this.store.lastHover, false);
         this.store.emitter.emit('leave', this.store.lastHover);
         this.tooltip.hide();
@@ -2132,6 +2133,9 @@ export class Canvas {
     if (!playingAnimate) {
       pen.calculative.lineWidth = pen.lineWidth * scale;
       pen.calculative.fontSize = pen.fontSize * scale;
+      if (pen.fontSize < 1) {
+        pen.calculative.fontSize = pen.fontSize * pen.calculative.worldRect.height;
+      }
       pen.calculative.iconSize = pen.iconSize * scale;
       pen.calculative.iconWidth = pen.iconWidth * scale;
       pen.calculative.iconHeight = pen.iconHeight * scale;
@@ -3281,19 +3285,19 @@ export class Canvas {
     const retPens: Pen[] = [];
     for (const pen of pens) {
       // 存在子节点
-      pen.children?.forEach(childId => {
-        if (!retPens.find(retPen => retPen.id === childId)) {
+      pen.children?.forEach((childId) => {
+        if (!retPens.find((retPen) => retPen.id === childId)) {
           retPens.push(deepClone(this.store.pens[childId]));
         }
-      })
+      });
     }
     return retPens.concat(pens);
   }
 
   /**
-   * 
+   *
    * @param pen 当前复制的画笔
-   * @param parentId 父节点 id 
+   * @param parentId 父节点 id
    * @param pastePens 本次复制的全部画笔，包含子节点
    * @returns 复制后的画笔
    */
@@ -3313,7 +3317,7 @@ export class Canvas {
       const newChildren = [];
       if (Array.isArray(pen.children)) {
         for (const childId of pen.children) {
-          const childPen = pastePens.find(pen => pen.id === childId);
+          const childPen = pastePens.find((pen) => pen.id === childId);
           childPen && newChildren.push(this.pastePen(childPen, pen.id, pastePens).id);
         }
       }
@@ -3328,13 +3332,13 @@ export class Canvas {
    * @param pastePens 本次复制的 pens 包含子节点
    */
   changeLineAnchors(oldId: string, pen: Pen, pastePens: Pen[]) {
-    pen.connectedLines?.forEach(({lineId}) =>{
-      const line = pastePens.find(pen => pen.id === lineId);
+    pen.connectedLines?.forEach(({ lineId }) => {
+      const line = pastePens.find((pen) => pen.id === lineId);
       if (line) {
         const from = line.anchors[0];
         const to = line.anchors[line.anchors.length - 1];
-        (from.connectTo === oldId) && (from.connectTo = pen.id);
-        (to.connectTo === oldId) && (to.connectTo = pen.id);
+        from.connectTo === oldId && (from.connectTo = pen.id);
+        to.connectTo === oldId && (to.connectTo = pen.id);
       }
     });
   }
@@ -3353,8 +3357,8 @@ export class Canvas {
     for (const anchor of anchors) {
       const nodeId = anchor.connectTo;
       if (nodeId) {
-        const node = pastePens.find(pen => pen.id === nodeId);
-        node?.connectedLines?.forEach((cl)=> {
+        const node = pastePens.find((pen) => pen.id === nodeId);
+        node?.connectedLines?.forEach((cl) => {
           if (cl.lineId === oldId) {
             cl.lineId = line.id;
             cl.lineAnchor = anchor.id;
