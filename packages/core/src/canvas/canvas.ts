@@ -1132,14 +1132,13 @@ export class Canvas {
     this.render();
   };
 
-  private hoverTimer: any;
-  willGetHover(e: any) {
-    this.hoverTimer && clearTimeout(this.hoverTimer);
-    this.hoverTimer = setTimeout(() => {
+  private hoverTimer: number = 0;
+  willGetHover(e) {
+    const now = performance.now();
+    if (now - this.hoverTimer > 100) {
+      this.hoverTimer = now;
       this.getHover(e);
-      this.render();
-      this.hoverTimer = undefined;
-    }, 10);
+    }
   }
 
   onMouseUp = (e: {
