@@ -521,7 +521,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       ctx.restore();
     }
 
-    const y = 0.5;
+    const y = 0.55;
     const { width } = pen.calculative.textDrawRect;
     pen.calculative.textLines.forEach((text, i) => {
       let x = 0;
@@ -799,7 +799,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
       ctx.restore();
     }
 
-    const y = 0.5;
+    const y = 0.55;
     const { width } = pen.calculative.textDrawRect;
     pen.calculative.textLines.forEach((text, i) => {
       let x = 0;
@@ -1621,7 +1621,10 @@ export function setHover(pen: Pen, hover = true) {
   pen.calculative.hover = hover;
   if (pen.children) {
     pen.children.forEach((id) => {
-      setHover(store.pens[id], hover);
+      // 子节点没有自己的独立hover，继承父节点hover
+      if (store.pens[id].hoverColor == null && store.pens[id].hoverBackground == null) {
+        setHover(store.pens[id], hover);
+      }
     });
   }
 }

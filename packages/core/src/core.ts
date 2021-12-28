@@ -822,6 +822,9 @@ export class Topology {
       parent.children = [];
     }
     children.forEach((pen) => {
+      if (!pen.calculative) {
+        this.canvas.makePen(pen);
+      }
       if (pen.parentId) {
         const p = this.store.pens[pen.parentId];
         const i = p.children.findIndex((id) => id === pen.id);
