@@ -987,7 +987,8 @@ export function calcPenRect(pen: Pen) {
 }
 
 export function calcWorldAnchors(pen: Pen) {
-  if (pen.hideAnchor && !pen.type) {
+  const store = pen.calculative.canvas.store;
+  if ((pen.disableAnchor || store.options.disableAnchor) && !pen.type) {
     pen.calculative.worldAnchors = [];
     return;
   }
@@ -1661,6 +1662,37 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
 export function getPensLock(pens: Pen[]): boolean {
   for (const pen of pens) {
     if (!pen.locked) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * 画笔们的 disabledRotate = true
+ * 即 全部禁止旋转 返回 true
+ * @param pens 画笔
+ * @returns 
+ */
+export function getPensDisableRotate(pens: Pen[]): boolean {
+  for (const pen of pens) {
+    if (!pen.disableRotate) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+/**
+ * 画笔们的 disableSize = true
+ * 即 全部不允许改变大小 返回 true
+ * @param pens 画笔
+ * @returns 
+ */
+export function getPensDisableResize(pens: Pen[]): boolean {
+  for (const pen of pens) {
+    if (!pen.disableSize) {
       return false;
     }
   }
