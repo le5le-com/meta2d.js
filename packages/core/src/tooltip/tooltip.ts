@@ -92,6 +92,7 @@ export class Tooltip {
       this.arrowUp.style.borderBottomColor = 'transparent';
       this.arrowDown.style.borderTopColor = '#777777';
     } else {
+      y += elemRect.height + rect.height;
       this.arrowUp.style.borderBottomColor = '#777777';
       this.arrowDown.style.borderTopColor = 'transparent';
     }

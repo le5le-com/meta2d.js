@@ -115,6 +115,7 @@ export class Topology {
     this.events[EventAction.SetProps] = (pen: any, e: Event) => {
       const rect = this.getPenRect(pen);
       this.updateValue(pen, { ...rect, ...e.value });
+      this.store.emitter.emit('valueUpdate', pen);
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {

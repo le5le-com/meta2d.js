@@ -206,7 +206,6 @@ export interface Pen extends Rect {
 
   flip?: Flip;
 
-  hideAnchor?: boolean;
   hiddenText?: boolean; // 隐藏 text
   keepDecimal?: number; // undefined 显示原内容；0 显示整数
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
@@ -338,9 +337,7 @@ export interface Pen extends Rect {
 
     layer?: number;
     dropdownList?: any[];
-    fns?: any;
 
-    elementLoaded?: boolean;
     canvas?: any;
 
     iframe?: string;
