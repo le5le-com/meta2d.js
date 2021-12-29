@@ -2,7 +2,18 @@ import { commonAnchors, commonPens } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
-import { calcTextLines, facePen, getParent, LockState, Pen, PenType, renderPenRaw } from './pen';
+import {
+  calcTextDrawRect,
+  calcTextLines,
+  calcTextRect,
+  facePen,
+  getParent,
+  getWords,
+  LockState,
+  Pen,
+  PenType,
+  renderPenRaw,
+} from './pen';
 import { Point } from './point';
 import {
   clearStore,
@@ -46,6 +57,11 @@ export class Topology {
     this['facePen'] = facePen;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
+
+    this['getWords'] = getWords;
+    this['calcTextLines'] = calcTextLines;
+    this['calcTextRect'] = calcTextRect;
+    this['calcTextDrawRect'] = calcTextDrawRect;
   }
 
   get beforeAddPen() {
@@ -700,8 +716,8 @@ export class Topology {
     this.canvas.pushHistory(action);
   }
 
-  showInput(pen: Pen) {
-    this.canvas.showInput(pen);
+  showInput(pen: Pen, rect?: Rect) {
+    this.canvas.showInput(pen, rect);
   }
 
   hideInput() {

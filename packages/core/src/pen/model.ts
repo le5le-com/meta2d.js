@@ -371,5 +371,6 @@ export interface Pen extends Rect {
   onMouseDown?: (pen: Pen, e: Point) => void;
   onMouseMove?: (pen: Pen, e: Point) => void;
   onMouseUp?: (pen: Pen, e: Point) => void;
+  onShowInput?: (pen: Pen, e: Point) => void;
   onInput?: (pen: Pen, text: string) => void;
 }

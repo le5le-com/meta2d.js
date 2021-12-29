@@ -3430,7 +3430,11 @@ export class Canvas {
 
   private ondblclick = (e: any) => {
     if (this.store.hover && !this.store.data.locked && !this.store.options.disableInput) {
-      this.showInput(this.store.hover);
+      if (this.store.hover.onShowInput) {
+        this.store.hover.onShowInput(this.store.hover, e);
+      } else {
+        this.showInput(this.store.hover);
+      }
     }
 
     this.store.emitter.emit('dblclick', {
@@ -3440,7 +3444,7 @@ export class Canvas {
     });
   };
 
-  showInput = (pen: Pen, rect?: Rect) => {
+  showInput = (pen: Pen, rect?: Rect, background = 'transparent') => {
     if (
       !this.store.hover ||
       this.store.hover.locked ||
@@ -3460,6 +3464,7 @@ export class Canvas {
     this.inputParent.style.width = textRect.width - 10 + 'px';
     this.inputParent.style.height = textRect.height - 10 + 'px';
     this.inputParent.style.zIndex = '1000';
+    this.inputParent.style.background = background;
     if (pen.rotate % 360) {
       this.inputParent.style.transform = `rotate(${pen.rotate}deg)`;
     } else {

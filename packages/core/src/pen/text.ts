@@ -1,7 +1,5 @@
 import { Pen } from '.';
 
-declare const window: any;
-
 export function calcTextRect(pen: Pen) {
   const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
   let x = paddingLeft;
@@ -206,11 +204,4 @@ export function calcTextAdaptionWidth(ctx: CanvasRenderingContext2D, pen: Pen): 
     maxWidth < width && (maxWidth = width);
   });
   return maxWidth;
-}
-
-if (window) {
-  window.topologyGetWords = getWords;
-  window.topologyWrapLines = wrapLines;
-  window.topologyCalcTextLines = calcTextLines;
-  window.topologyCalcTextDrawRect = calcTextDrawRect;
 }
