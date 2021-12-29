@@ -506,7 +506,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
 
     ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
       pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
+    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily || store.options.fontFamily}`;
 
     !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
     if (pen.calculative.textBackground) {
@@ -784,7 +784,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
     ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
       pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily}`;
+    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily || store.options.fontFamily}`;
 
     !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
     if (pen.calculative.textBackground) {
