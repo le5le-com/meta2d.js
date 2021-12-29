@@ -1140,6 +1140,14 @@ export class Canvas {
           this.paste();
           return;
         }
+        if (this.store.active.length === 1) {
+          if (
+            this.store.data.locked === LockState.DisableMove ||
+            this.store.active[0].locked === LockState.DisableMove
+          ) {
+            this.store.active[0]?.onMouseMove && this.store.active[0].onMouseMove(this.store.active[0], this.mousePos);
+          }
+        }
         this.movePens(e);
         return;
       }
@@ -2367,50 +2375,50 @@ export class Canvas {
         this.store.active.length !== 1 ||
         this.store.active[0] !== this.store.hover)
     ) {
-        const anchors = [...this.store.hover.calculative.worldAnchors];
+      const anchors = [...this.store.hover.calculative.worldAnchors];
 
-        if (this.store.pointAt && this.hotkeyType === HotkeyType.AddAnchor) {
-          anchors.push(this.store.pointAt);
-        }
-        if (anchors) {
-          ctx.strokeStyle = this.store.hover.anchorColor || this.store.options.anchorColor;
-          ctx.fillStyle = this.store.hover.anchorBackground || this.store.options.anchorBackground;
-          anchors.forEach((anchor) => {
-            if (anchor === this.store.hoverAnchor) {
-              ctx.save();
-              ctx.fillStyle = ctx.strokeStyle;
+      if (this.store.pointAt && this.hotkeyType === HotkeyType.AddAnchor) {
+        anchors.push(this.store.pointAt);
+      }
+      if (anchors) {
+        ctx.strokeStyle = this.store.hover.anchorColor || this.store.options.anchorColor;
+        ctx.fillStyle = this.store.hover.anchorBackground || this.store.options.anchorBackground;
+        anchors.forEach((anchor) => {
+          if (anchor === this.store.hoverAnchor) {
+            ctx.save();
+            ctx.fillStyle = ctx.strokeStyle;
+          }
+          ctx.beginPath();
+          let size = anchor.radius || this.store.hover.anchorRadius || this.store.options.anchorRadius;
+          if (this.store.hover.type) {
+            size = 3;
+            if (this.store.hover.calculative.lineWidth > 3) {
+              size = this.store.hover.calculative.lineWidth;
             }
-            ctx.beginPath();
-            let size = anchor.radius || this.store.hover.anchorRadius || this.store.options.anchorRadius;
-            if (this.store.hover.type) {
-              size = 3;
-              if (this.store.hover.calculative.lineWidth > 3) {
-                size = this.store.hover.calculative.lineWidth;
-              }
-            }
-            ctx.arc(anchor.x, anchor.y, size, 0, Math.PI * 2);
-            if (this.store.hover.type && this.store.hoverAnchor === anchor) {
-              ctx.save();
-              ctx.strokeStyle = this.store.hover.activeColor || this.store.options.activeColor;
-              ctx.fillStyle = ctx.strokeStyle;
-            } else if (anchor.color || anchor.background) {
-              ctx.save();
-              ctx.strokeStyle = anchor.color;
-              ctx.fillStyle = anchor.background;
-            }
-            ctx.fill();
-            ctx.stroke();
-            if (anchor === this.store.hoverAnchor) {
-              ctx.restore();
-            }
+          }
+          ctx.arc(anchor.x, anchor.y, size, 0, Math.PI * 2);
+          if (this.store.hover.type && this.store.hoverAnchor === anchor) {
+            ctx.save();
+            ctx.strokeStyle = this.store.hover.activeColor || this.store.options.activeColor;
+            ctx.fillStyle = ctx.strokeStyle;
+          } else if (anchor.color || anchor.background) {
+            ctx.save();
+            ctx.strokeStyle = anchor.color;
+            ctx.fillStyle = anchor.background;
+          }
+          ctx.fill();
+          ctx.stroke();
+          if (anchor === this.store.hoverAnchor) {
+            ctx.restore();
+          }
 
-            if (this.store.hover.type && this.store.hoverAnchor === anchor) {
-              ctx.restore();
-            } else if (anchor.color || anchor.background) {
-              ctx.restore();
-            }
-          });
-        }
+          if (this.store.hover.type && this.store.hoverAnchor === anchor) {
+            ctx.restore();
+          } else if (anchor.color || anchor.background) {
+            ctx.restore();
+          }
+        });
+      }
     }
 
     // Draw size control points.
