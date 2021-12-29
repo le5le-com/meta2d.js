@@ -33,6 +33,8 @@ import {
   getToAnchor,
   getFromAnchor,
   calcPadding,
+  getPensDisableRotate,
+  getPensDisableResize,
 } from '../pen';
 import {
   calcRotate,
@@ -1467,7 +1469,9 @@ export class Canvas {
     const activeLine = this.store.active.length === 1 && this.store.active[0].type;
     if (!this.drawingLineName && this.activeRect && !activeLine && !this.store.data.locked) {
       const activePensLock = getPensLock(this.store.active);
-      if (!this.store.options.disableRotate && !activePensLock) {
+      const activePensDisableRotate = getPensDisableRotate(this.store.active);
+      const activePensDisableResize = getPensDisableResize(this.store.active);
+      if (!this.store.options.disableRotate && !activePensLock && !activePensDisableRotate) {
         const rotatePt = {
           x: this.activeRect.center.x,
           y: this.activeRect.y - 30,
@@ -1483,9 +1487,8 @@ export class Canvas {
       }
 
       // 大小控制点
-      if (!this.hotkeyType || this.hotkeyType === HotkeyType.Resize) {
+      if ((!this.hotkeyType || this.hotkeyType === HotkeyType.Resize) && !activePensLock && !activePensDisableResize) {
         for (let i = 0; i < 4; i++) {
-          if (activePensLock) break;
           if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
             let cursors = defaultCursors;
             let offset = 0;
@@ -1502,7 +1505,7 @@ export class Canvas {
           }
         }
       }
-      if (this.hotkeyType === HotkeyType.Resize) {
+      if (this.hotkeyType === HotkeyType.Resize && !activePensLock && !activePensDisableResize) {
         for (let i = 4; i < 8; i++) {
           if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
             let cursors = rotatedCursors;
@@ -1583,7 +1586,7 @@ export class Canvas {
         continue;
       }
       // 锚点
-      if (!this.store.data.locked && !this.store.options.disableAnchor && this.hotkeyType !== HotkeyType.Resize) {
+      if (!this.store.data.locked && this.hotkeyType !== HotkeyType.Resize) {
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
@@ -1670,7 +1673,7 @@ export class Canvas {
 
       this.store.hover = pen;
       // 锚点
-      if (!this.store.options.disableAnchor && this.hotkeyType !== HotkeyType.Resize) {
+      if (this.hotkeyType !== HotkeyType.Resize) {
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
@@ -2327,11 +2330,11 @@ export class Canvas {
         ctx.strokeRect(this.activeRect.x, this.activeRect.y, this.activeRect.width, this.activeRect.height);
 
         ctx.globalAlpha = 1;
-        if (getPensLock(this.store.active)) {
+        if (getPensLock(this.store.active) || getPensDisableRotate(this.store.active)) {
           ctx.restore();
           return;
         }
-        // Draw rotate control point.
+        // Draw rotate control line.
         ctx.beginPath();
         ctx.moveTo(this.activeRect.center.x, this.activeRect.y);
         ctx.lineTo(this.activeRect.center.x, this.activeRect.y - 30);
@@ -2364,7 +2367,6 @@ export class Canvas {
         this.store.active.length !== 1 ||
         this.store.active[0] !== this.store.hover)
     ) {
-      if (!this.store.options.disableAnchor && !this.store.hover.disableAnchor) {
         const anchors = [...this.store.hover.calculative.worldAnchors];
 
         if (this.store.pointAt && this.hotkeyType === HotkeyType.AddAnchor) {
@@ -2409,7 +2411,6 @@ export class Canvas {
             }
           });
         }
-      }
     }
 
     // Draw size control points.
@@ -2418,7 +2419,7 @@ export class Canvas {
       this.activeRect &&
       !(this.store.active.length === 1 && this.store.active[0].type)
     ) {
-      if (!getPensLock(this.store.active)) {
+      if (!getPensLock(this.store.active) && !getPensDisableResize(this.store.active)) {
         ctx.strokeStyle = this.store.options.activeColor;
         ctx.fillStyle = '#ffffff';
         this.sizeCPs.forEach((pt, i) => {
