@@ -204,10 +204,10 @@ export class Topology {
         !pen.calculative && (pen.calculative = { canvas: this.canvas });
         this.store.pens[pen.id] = pen;
       }
-      // 计算区域
-      for (const pen of data.pens) {
-        this.canvas.dirtyPenRect(pen);
-      }
+      // // 计算区域
+      // for (const pen of data.pens) {
+      //   this.canvas.dirtyPenRect(pen);
+      // }
       for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
