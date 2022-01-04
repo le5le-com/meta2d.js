@@ -533,11 +533,11 @@ export class Canvas {
       !pen.calculative && (pen.calculative = { canvas: this });
       this.store.pens[pen.id] = pen;
     }
-    // 计算区域
-    for (const pen of pens) {
-      // 组合节点才需要提前计算
-      Array.isArray(pen.children) && pen.children.length > 0 && this.dirtyPenRect(pen);
-    }
+    // // 计算区域
+    // for (const pen of pens) {
+    //   // 组合节点才需要提前计算
+    //   Array.isArray(pen.children) && pen.children.length > 0 && this.dirtyPenRect(pen);
+    // }
     for (const pen of pens) {
       if (!pen.parentId) {
         pen.width *= this.store.data.scale;
@@ -3316,7 +3316,7 @@ export class Canvas {
     pen.parentId = parentId;
     // 子节点无需偏移
     !parentId && translateRect(pen, this.pasteOffset, this.pasteOffset);
-    if (pen.type === PenType.Line) {
+    if (pen.type === PenType.Line) { // TODO: 仍然存在 节点类型的 连线，此处判断需要更改
       this.changeNodeConnectedLine(oldId, pen, pastePens);
     } else {
       this.changeLineAnchors(oldId, pen, pastePens);
