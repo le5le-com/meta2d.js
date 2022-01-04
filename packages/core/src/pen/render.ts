@@ -248,10 +248,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     if (pen.type === PenType.Line && pen.borderWidth) {
       ctx.save();
       ctx.beginPath();
-      ctx.lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
+      const lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
+      ctx.lineWidth = lineWidth;
       ctx.strokeStyle = pen.borderColor;
       fill && ctx.fill(path);
-      ctx.stroke(path);
+      lineWidth && ctx.stroke(path);
       ctx.restore();
     }
     fill && ctx.fill(path);
@@ -283,7 +284,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       ctx.restore();
     }
 
-    ctx.stroke(path);
+    pen.calculative.lineWidth && ctx.stroke(path);
 
     if (pen.type) {
       if (pen.calculative.animatePos) {
@@ -653,18 +654,19 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     if (pen.type === PenType.Line && pen.borderWidth) {
       ctx.save();
       ctx.beginPath();
-      ctx.lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
+      const lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
+      ctx.lineWidth = lineWidth;
       ctx.strokeStyle = pen.borderColor;
       globalStore.path2dDraws[pen.name](pen, ctx);
       fill && ctx.fill();
-      ctx.stroke();
+      lineWidth && ctx.stroke();
       ctx.restore();
     }
     ctx.save();
     ctx.beginPath();
     globalStore.path2dDraws[pen.name](pen, ctx);
     fill && ctx.fill();
-    ctx.stroke();
+    pen.calculative.lineWidth && ctx.stroke();
     ctx.restore();
 
     const progress = pen.calculative.progress || pen.progress;

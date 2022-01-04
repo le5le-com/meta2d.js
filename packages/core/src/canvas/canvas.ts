@@ -1915,7 +1915,7 @@ export class Canvas {
     }
     // end
 
-    if (!pen.lineWidth) {
+    if (!pen.lineWidth && pen.lineWidth !== 0) {
       pen.lineWidth = 1;
     }
     if (!pen.fontSize) {
