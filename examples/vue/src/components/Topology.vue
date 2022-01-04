@@ -5,20 +5,18 @@
  * @LastEditTime: 2021-10-13 14:05:59
 -->
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import '../../../../dist/topology/topology';
+import { onMounted } from "vue";
+import { Topology } from "../../../../packages/core/index";
 
 onMounted(() => {
-  window.topology = new window.Topology('topology');
+  new Topology("topology");
 });
 </script>
 
 <template>
-<div class='main' >
-  <div class="topology" id="topology"></div>
-</div>
+  <div class="main">
+    <div class="topology" id="topology"></div>
+  </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
