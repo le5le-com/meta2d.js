@@ -2,7 +2,7 @@
   "name": "@topology/class-diagram",
   "version": "1.0.0",
   "description": "The class library based on le5le topology.",
-  "main": "index.ts",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "copy": "copyfiles  package.json ../../dist/class-diagram/",

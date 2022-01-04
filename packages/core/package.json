@@ -1,16 +1,17 @@
 {
-  "name": "@topology/activity-diagram",
+  "name": "@topology/core",
   "version": "1.0.0",
-  "description": "The activity library based on le5le topology.",
+  "description": "@topology/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/activity-diagram/",
+    "copy": "copyfiles  package.json ../../dist/core/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
     "topology",
-    "activity",
+    "diagram",
+    "2D",
     "canvas"
   ],
   "author": "alsmile123@qq.com",
@@ -23,8 +24,12 @@
     "url": "https://github.com/le5le-com/topology.js/issues"
   },
   "homepage": "https://github.com/le5le-com/topology.js#readme",
-  "peerDependencies": {
-    "@topology/core": "^1.0.0"
+  "devDependencies": {
+    "@types/offscreencanvas": "latest"
+  },
+  "dependencies": {
+    "mitt": "^2.1.0",
+    "mqtt": "^4.2.6"
   },
   "publishConfig": {
     "access": "public"

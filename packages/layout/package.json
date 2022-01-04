@@ -1,20 +1,20 @@
 {
-  "name": "@topology/activity-diagram",
+  "name": "@topology/layout",
   "version": "1.0.0",
-  "description": "The activity library based on le5le topology.",
+  "description": "The layout library based on le5le topology.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/activity-diagram/",
+    "copy": "copyfiles  package.json ../../dist/layout/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
     "topology",
-    "activity",
+    "chart",
     "canvas"
   ],
   "author": "alsmile123@qq.com",
-  "license": "MIT",
+  "license": "ISC",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/le5le-com/topology.js.git"
