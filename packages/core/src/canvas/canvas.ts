@@ -3246,10 +3246,15 @@ export class Canvas {
     });
   }
 
+  get clipboardName() : string {
+    return 'topology-clipboard';
+  }
+  
   copy(pens?: Pen[]) {
     this.store.clipboard = pens || this.store.active;
     this.pasteOffset = 10;
     const clipboardData = deepClone(this.store.clipboard);
+    localStorage.setItem(this.clipboardName, JSON.stringify({ topology: true, data: clipboardData }));
     navigator.clipboard?.writeText(JSON.stringify({ topology: true, data: clipboardData }));
   }
 
@@ -3260,7 +3265,13 @@ export class Canvas {
 
   async paste() {
     if (!this.store.clipboard) {
-      const clipboardText = await navigator.clipboard?.readText();
+      let clipboardText = localStorage.getItem(this.clipboardName);
+      if (!clipboardText) { 
+        clipboardText = await navigator.clipboard?.readText();
+      }
+      if (!clipboardText) {
+        return;
+      }
       let clipboard;
       try {
         clipboard = JSON.parse(clipboardText);
