@@ -912,7 +912,7 @@ export class Canvas {
         case HoverType.Node:
           if (this.store.hover) {
             const pen = getParent(this.store.hover, true) || this.store.hover;
-            if (e.ctrlKey) {
+            if (e.ctrlKey && !e.shiftKey) {
               if (pen.calculative.active) {
                 this.willInactivePen = pen;
               } else {
@@ -922,8 +922,8 @@ export class Canvas {
               }
               this.dirty = true;
             } else if (
-              this.store.hover.parentId &&
-              (!this.store.hover.locked || this.store.hover.locked < LockState.DisableMove)
+              e.ctrlKey && e.shiftKey && 
+              this.store.hover.parentId
             ) {
               if (this.store.active.length) {
                 this.store.active.forEach((pen) => {
@@ -1130,10 +1130,14 @@ export class Canvas {
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (e.ctrlKey && !this.alreadyCopy) {
 =======
         if(!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
 >>>>>>> f36b9f0 (节点与画布的 locked 控制)
+=======
+        if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy) {
+>>>>>>> e3ae456 (ctrl shift 同时按下时，可以选中子节点)
           this.alreadyCopy = true;
           this.willInactivePen = undefined;
           this.copy();
@@ -2672,7 +2676,7 @@ export class Canvas {
 
     let x = e.x - this.mouseDown.x;
     let y = e.y - this.mouseDown.y;
-    e.shiftKey && (x = 0);
+    e.shiftKey && !e.ctrlKey && (x = 0);
     e.altKey && (y = 0);
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
