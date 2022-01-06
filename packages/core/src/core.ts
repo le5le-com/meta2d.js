@@ -1380,6 +1380,19 @@ export class Topology {
     return deepClone(pens);
   }
 
+  setVisible(pen: Pen, visible: boolean) {
+    this.setValue({
+      id: pen.id,
+      visible
+    });
+    if (pen.children) {
+      for (const childId of pen.children) {
+        const child = this.find(childId)[0];
+        child && this.setVisible(child, visible);
+      }
+    }
+  }
+
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
