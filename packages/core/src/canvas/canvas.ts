@@ -1145,7 +1145,7 @@ export class Canvas {
   private hoverTimer: number = 0;
   willGetHover(e) {
     const now = performance.now();
-    if (now - this.hoverTimer > 100) {
+    if (now - this.hoverTimer > 40) {
       this.hoverTimer = now;
       this.getHover(e);
     }
