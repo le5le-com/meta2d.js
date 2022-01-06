@@ -22,10 +22,11 @@ export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D | Path2D) {
       pen.calculative.worldRect.width / pen.calculative.svgRect.width,
       pen.calculative.worldRect.height / pen.calculative.svgRect.height
     );
-    const rect = getRect(path);
-    calcCenter(rect);
-    translatePath(path, pen.calculative.worldRect.x - rect.x, pen.calculative.worldRect.y - rect.y);
   }
+
+  const rect = getRect(path);
+  calcCenter(rect);
+  translatePath(path, pen.calculative.worldRect.x - rect.x, pen.calculative.worldRect.y - rect.y);
 
   const pathStr = pathToString(path);
   if (ctx) {
