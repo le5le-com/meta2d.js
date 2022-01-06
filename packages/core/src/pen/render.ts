@@ -1611,7 +1611,7 @@ export function setChildrenActive(pen: Pen, active = true) {
     if (child) {
       child.calculative.active = active;
 
-      setChildrenActive(child);
+      setChildrenActive(child, active);
     }
   });
 }
