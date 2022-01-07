@@ -243,6 +243,7 @@ export class Canvas {
     }
 
     this.externalElements.ondblclick = this.ondblclick;
+    this.externalElements.tabIndex = 0;
     this.externalElements.onblur = () => {
       this.mouseDown = undefined;
     };
@@ -300,6 +301,7 @@ export class Canvas {
         this.scale(this.store.data.scale - 0.1, { x, y });
       }
     }
+    this.externalElements.focus({preventScroll: true});  // 聚焦
   };
 
   onkeydown = (e: KeyboardEvent) => {
@@ -549,6 +551,7 @@ export class Canvas {
     this.addPens(pens);
     this.active(pens.filter((pen) => !pen.parentId));
     this.render();
+    this.externalElements.focus({preventScroll: true});  // 聚焦
   }
 
   randomCombineId(pen: Pen, pens: Pen[], parentId?: string) {
@@ -3264,14 +3267,14 @@ export class Canvas {
   }
 
   async paste() {
-    if (!this.store.clipboard) {
-      let clipboardText = localStorage.getItem(this.clipboardName);
-      if (!clipboardText) { 
-        clipboardText = await navigator.clipboard?.readText();
-      }
-      if (!clipboardText) {
-        return;
-      }
+    // 先读剪切板
+    let clipboardText = await navigator.clipboard?.readText();
+    if (!clipboardText) {
+      navigator.clipboard?.writeText('');  // 清空
+      // 再读 localStorage
+      clipboardText = localStorage.getItem(this.clipboardName);
+    }
+    if (clipboardText) {
       let clipboard;
       try {
         clipboard = JSON.parse(clipboardText);
@@ -3294,7 +3297,9 @@ export class Canvas {
 
     this.active(this.store.clipboard);
     this.pushHistory({ type: EditType.Add, pens: realPens });
+    this.render();
     this.store.emitter.emit('add', realPens);
+    localStorage.removeItem(this.clipboardName);  // 清空缓存
   }
 
   /**
