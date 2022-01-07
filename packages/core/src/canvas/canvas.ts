@@ -301,7 +301,7 @@ export class Canvas {
         this.scale(this.store.data.scale - 0.1, { x, y });
       }
     }
-    this.externalElements.focus({preventScroll: true});  // 聚焦
+    this.externalElements.focus();  // 聚焦
   };
 
   onkeydown = (e: KeyboardEvent) => {
@@ -551,7 +551,7 @@ export class Canvas {
     this.addPens(pens);
     this.active(pens.filter((pen) => !pen.parentId));
     this.render();
-    this.externalElements.focus({preventScroll: true});  // 聚焦
+    this.externalElements.focus();  // 聚焦
   }
 
   randomCombineId(pen: Pen, pens: Pen[], parentId?: string) {
