@@ -3244,7 +3244,7 @@ export class Canvas {
         if (pen.calculative.pause) {
           continue;
         }
-        if (pen.calculative.active) {
+        if (pen.calculative.active && !pen.type) {  // 存在节点在活动层
           active = true;
         }
         if (!pen.type) {
