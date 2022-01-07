@@ -378,7 +378,7 @@ export class Topology {
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
-    this.setPenRect(pen, rect, render);
+    this.canvas.setPenRect(pen, rect, render);
   }
 
   startAnimate(idOrTagOrPens?: string | Pen[]) {
