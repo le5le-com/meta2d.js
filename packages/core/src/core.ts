@@ -808,16 +808,16 @@ export class Topology {
           } else {
             switch (event.where.comparison) {
               case '>':
-                can = pen[event.where.key] > event.where.value;
+                can = pen[event.where.key] > +event.where.value;
                 break;
               case '>=':
-                can = pen[event.where.key] >= event.where.value;
+                can = pen[event.where.key] >= +event.where.value;
                 break;
               case '<':
-                can = pen[event.where.key] < event.where.value;
+                can = pen[event.where.key] < +event.where.value;
                 break;
               case '<=':
-                can = pen[event.where.key] <= event.where.value;
+                can = pen[event.where.key] <= +event.where.value;
                 break;
               case '=':
               case '==':
