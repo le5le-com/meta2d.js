@@ -194,6 +194,9 @@ export class Topology {
     this.canvas.sizeCPs = undefined;
 
     if (data) {
+      if (data.paths) {  // 存在 svgPath 存储到 globalStore.paths 中
+        Object.assign(globalStore.paths, data.paths);
+      }
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
       // 第一遍赋初值
@@ -567,9 +570,10 @@ export class Topology {
     return getParent(pen, root);
   }
 
-  data() {
-    const data = deepClone(this.store.data);
-    data.version = pkg.version;
+  data(): TopologyData {
+    const data: TopologyData = deepClone(this.store.data);
+    (data as any).version = pkg.version;
+    data.paths = globalStore.paths;
     return data;
   }
 
