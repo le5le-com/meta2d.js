@@ -1068,6 +1068,7 @@ export class Canvas {
         if (
           this.translateX &&
           this.translateY &&
+          !this.store.options.disableTranslate &&
           (!this.store.data.locked ||
             this.mouseRight === MouseRight.Translate ||
             this.store.data.locked < LockState.DisableMove)
@@ -2420,7 +2421,8 @@ export class Canvas {
     }
 
     if (this.dock) {
-      ctx.strokeStyle = '#eb5ef7';
+      // '#eb5ef7'
+      ctx.strokeStyle = this.store.options.dockColor;
       if (this.dock.xDock) {
         ctx.beginPath();
         ctx.moveTo(this.dock.xDock.x, this.dock.xDock.y);
