@@ -52,7 +52,7 @@ export function pentagramAnchors(pen: Pen) {
   for (let i = 0; i < 5; ++i) {
     anchors.push({
       flag: 1,    // 默认锚点
-      id: '0',
+      id: String(i),
       penId: pen.id,
       x: 0.5 + ((r / 2) * Math.sin((Math.PI / 180) * 72 * i)) / width,
       y: ((-r / 2) * Math.cos((Math.PI / 180) * 72 * i)) / height + 0.5,
