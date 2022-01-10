@@ -92,4 +92,5 @@ export const defaultOptions: Options = {
   animateInterval: 30,
   autoPolyline: true,
   autoAnchor: true,
+  animateColor: '#ff4d4f',
 };

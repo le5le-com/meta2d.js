@@ -1926,11 +1926,12 @@ export class Canvas {
     if (!pen.lineWidth && pen.lineWidth !== 0) {
       pen.lineWidth = 1;
     }
+    const { fontSize, lineHeight } = this.store.options;
     if (!pen.fontSize) {
-      pen.fontSize = 12;
+      pen.fontSize = fontSize;
     }
     if (!pen.lineHeight) {
-      pen.lineHeight = 1.5;
+      pen.lineHeight = lineHeight;
     }
     pen.calculative = { canvas: this };
     if (pen.video || pen.audio) {
@@ -1993,12 +1994,13 @@ export class Canvas {
       pen.width = rect.width;
       pen.height = rect.height;
     }
+    const { fontSize, lineHeight } = this.store.options;
     if (!pen.fontSize) {
-      pen.fontSize = 12;
+      pen.fontSize = fontSize;
       pen.calculative.fontSize = pen.fontSize * this.store.data.scale;
     }
     if (!pen.lineHeight) {
-      pen.lineHeight = 1.5;
+      pen.lineHeight = lineHeight;
       pen.calculative.lineHeight = pen.lineHeight;
     }
     calcCenter(rect);
