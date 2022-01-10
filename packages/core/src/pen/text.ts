@@ -49,7 +49,9 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
   const rect = pen.calculative.worldTextRect;
   let x = rect.x + (rect.width - textWidth) / 2;
   let y = rect.y + (rect.height - h) / 2;
-  switch (pen.textAlign) {
+  const options = pen.calculative.canvas.store.options;
+  const textAlign = pen.textAlign || options.textAlign;
+  switch (textAlign) {
     case 'left':
       x = rect.x;
       break;
@@ -57,7 +59,8 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
       x = rect.x + rect.width - textWidth;
       break;
   }
-  switch (pen.textBaseline) {
+  const textBaseline = pen.textBaseline || options.textBaseline;
+  switch (textBaseline) {
     case 'top':
       y = rect.y;
       break;
