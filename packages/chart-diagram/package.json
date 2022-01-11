@@ -2,7 +2,7 @@
   "name": "@topology/chart-diagram",
   "version": "1.0.0",
   "description": "The charting library based on le5le topology and echarts/highcharts.",
-  "main": "index.ts",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "copy": "copyfiles  package.json ../../dist/chart-diagram/",
