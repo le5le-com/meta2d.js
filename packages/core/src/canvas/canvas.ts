@@ -3410,15 +3410,23 @@ export class Canvas {
    * @param pastePens 本次复制的 pens 包含子节点
    */
   changeLineAnchors(oldId: string, pen: Pen, pastePens: Pen[]) {
-    pen.connectedLines?.forEach(({ lineId }) => {
+    if (!Array.isArray(pen.connectedLines)) {
+      return;
+    }
+    for (let index = 0; index < pen.connectedLines.length; index++) {
+      const { lineId } = pen.connectedLines[index];
       const line = pastePens.find((pen) => pen.id === lineId);
       if (line) {
         const from = line.anchors[0];
         const to = line.anchors[line.anchors.length - 1];
         from.connectTo === oldId && (from.connectTo = pen.id);
         to.connectTo === oldId && (to.connectTo = pen.id);
+      } else {
+        // 说明它的连接线不在本次复制的范围内
+        pen.connectedLines.splice(index, 1);
+        index--;
       }
-    });
+    }
   }
 
   /**
@@ -3436,12 +3444,23 @@ export class Canvas {
       const nodeId = anchor.connectTo;
       if (nodeId) {
         const node = pastePens.find((pen) => pen.id === nodeId);
-        node?.connectedLines?.forEach((cl) => {
-          if (cl.lineId === oldId) {
-            cl.lineId = line.id;
-            cl.lineAnchor = anchor.id;
+        if (node) {
+          node.connectedLines?.forEach((cl) => {
+            if (cl.lineId === oldId) {
+              cl.lineId = line.id;
+              cl.lineAnchor = anchor.id;
+            }
+          });
+        } else {
+          // 节点不在本次复制的范围内
+          anchor.connectTo = undefined;
+          if (anchor.prev) {
+            anchor.prev.connectTo = undefined;
           }
-        });
+          if (anchor.next) {
+            anchor.next.connectTo = undefined;
+          }
+        }
       }
     }
   }
