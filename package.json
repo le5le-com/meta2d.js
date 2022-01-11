@@ -1,0 +1,25 @@
+{
+  "name": "topology",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "",
+    "build": "yarn workspaces run build",
+    "v": "lerna publish --skip-npm",
+    "docs": "typedoc --out ./docs packages"
+  },
+  "devDependencies": {
+    "shx": "latest",
+    "lerna": "latest",
+    "typedoc": "latest",
+    "tslint": "latest",
+    "typescript": "latest",
+    "stats.js": "latest"
+  }
+}
