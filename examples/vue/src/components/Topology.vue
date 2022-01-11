@@ -6,10 +6,10 @@
 -->
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { Topology } from "../../../../packages/core/index";
+import "../../../../dist/topology/topology.js";
 
 onMounted(() => {
-  new Topology("topology");
+  new (window as any).Topology("topology");
 });
 </script>
 
