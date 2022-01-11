@@ -30,9 +30,9 @@ export interface Options {
   disableRotate?: boolean;
   disableSize?: boolean;
   disableAnchor?: boolean;
-  disableWidth?: boolean;
-  disableHeight?: boolean;
-  alwaysAnchor?: boolean;
+  // disableWidth?: boolean;
+  // disableHeight?: boolean;
+  // alwaysAnchor?: boolean;  TODO: 该功能实现待考虑
   autoAnchor?: boolean;
   disableEmptyLine?: boolean;
   disableRepeatLine?: boolean;
@@ -40,11 +40,11 @@ export interface Options {
   disableTranslate?: boolean;
   // disableMoveOutParent?: boolean;
   disableDockLine?: boolean;
-  playIcon?: string;
-  pauseIcon?: string;
-  fullScreenIcon?: string;
-  loopIcon?: string;
-  rightMouseTranslate?: boolean;
+  // playIcon?: string;
+  // pauseIcon?: string;
+  // fullScreenIcon?: string;
+  // loopIcon?: string;
+  // rightMouseTranslate?: boolean;  // TODO: 该功能实现待考虑
   minScale?: number;
   maxScale?: number;
   keydown?: KeydownType;
@@ -79,7 +79,7 @@ export const defaultOptions: Options = {
   anchorBackground: '#fff',
   dockColor: '#fa541c',
   dragColor: '#1890ff',
-  rotateCursor: '/assets/img/rotate.cur',
+  rotateCursor: 'rotate.cur',
   hoverCursor: 'pointer',
   minScale: 0.1,
   maxScale: 10,

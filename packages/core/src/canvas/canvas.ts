@@ -1438,9 +1438,9 @@ export class Canvas {
     const activeLine = this.store.active.length === 1 && this.store.active[0].type;
     if (!this.drawingLineName && this.activeRect && !activeLine && !this.store.data.locked) {
       const activePensLock = getPensLock(this.store.active);
-      const activePensDisableRotate = getPensDisableRotate(this.store.active);
-      const activePensDisableResize = getPensDisableResize(this.store.active);
-      if (!this.store.options.disableRotate && !activePensLock && !activePensDisableRotate) {
+      const activePensDisableRotate = getPensDisableRotate(this.store.active) || this.store.options.disableRotate;
+      const activePensDisableResize = getPensDisableResize(this.store.active) || this.store.options.disableSize;
+      if (!activePensLock && !activePensDisableRotate) {
         const rotatePt = {
           x: this.activeRect.center.x,
           y: this.activeRect.y - 30,
@@ -1451,7 +1451,7 @@ export class Canvas {
         // 旋转控制点
         if (!this.hotkeyType && hitPoint(pt, rotatePt, this.pointSize)) {
           hoverType = HoverType.Rotate;
-          this.externalElements.style.cursor = 'url("rotate.cur"), auto';
+          this.externalElements.style.cursor = `url("${this.store.options.rotateCursor}"), auto`;
         }
       }
 
@@ -2209,9 +2209,10 @@ export class Canvas {
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
-    if (this.store.data.background) {
+    const background = this.store.data.background || this.store.options.background;
+    if (background) {
       offscreenCtx.save();
-      offscreenCtx.fillStyle = this.store.data.background;
+      offscreenCtx.fillStyle = background;
       offscreenCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       offscreenCtx.restore();
     }
@@ -2301,7 +2302,7 @@ export class Canvas {
         ctx.strokeRect(this.activeRect.x, this.activeRect.y, this.activeRect.width, this.activeRect.height);
 
         ctx.globalAlpha = 1;
-        if (getPensLock(this.store.active) || getPensDisableRotate(this.store.active)) {
+        if (getPensLock(this.store.active) || getPensDisableRotate(this.store.active) || this.store.options.disableRotate) {
           ctx.restore();
           return;
         }
@@ -2390,7 +2391,7 @@ export class Canvas {
       this.activeRect &&
       !(this.store.active.length === 1 && this.store.active[0].type)
     ) {
-      if (!getPensLock(this.store.active) && !getPensDisableResize(this.store.active)) {
+      if (!getPensLock(this.store.active) && !getPensDisableResize(this.store.active) && !this.store.options.disableSize) {
         ctx.strokeStyle = this.store.options.activeColor;
         ctx.fillStyle = '#ffffff';
         this.sizeCPs.forEach((pt, i) => {
@@ -2463,7 +2464,8 @@ export class Canvas {
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
-    if (scale < this.store.options.minScale || scale > this.store.options.maxScale) {
+    const { minScale, maxScale } = this.store.options;
+    if (scale < minScale || scale > maxScale) {
       return;
     }
 
