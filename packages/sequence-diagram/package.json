@@ -2,10 +2,10 @@
   "name": "@topology/sequence-diagram",
   "version": "1.0.0",
   "description": "The sequence library based on le5le topology.",
-  "main": "index.js",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/sequence-diagram/",
+    "copy": "shx cp package.build.json ../../dist/sequence-diagram/package.json",
     "build": "tsc && npm run copy"
   },
   "keywords": [

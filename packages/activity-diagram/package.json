@@ -2,10 +2,10 @@
   "name": "@topology/activity-diagram",
   "version": "1.0.0",
   "description": "The activity library based on le5le topology.",
-  "main": "index.js",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/activity-diagram/",
+    "copy": "shx cp package.build.json ../../dist/activity-diagram/package.json",
     "build": "tsc && npm run copy"
   },
   "keywords": [

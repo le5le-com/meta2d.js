@@ -2,10 +2,10 @@
   "name": "@topology/layout",
   "version": "1.0.0",
   "description": "The layout library based on le5le topology.",
-  "main": "index.js",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/layout/",
+    "copy": "shx cp package.build.json ../../dist/layout/package.json",
     "build": "tsc && npm run copy"
   },
   "keywords": [

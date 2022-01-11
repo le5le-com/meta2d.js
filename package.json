@@ -15,7 +15,7 @@
     "docs": "typedoc --out ./docs packages"
   },
   "devDependencies": {
-    "copyfiles": "latest",
+    "shx": "latest",
     "lerna": "latest",
     "typedoc": "latest",
     "tslint": "latest",

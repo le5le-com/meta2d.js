@@ -1,18 +1,18 @@
 {
-  "name": "@topology/core",
-  "version": "1.0.0",
-  "description": "@topology/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
-  "main": "index.ts",
+  "name": "@topology/chart-diagram",
+  "version": "1.0.1",
+  "description": "The charting library based on le5le topology and echarts/highcharts.",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "shx cp package.build.json ../../dist/core/package.json",
+    "copy": "copyfiles  package.json ../../dist/chart-diagram/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
     "topology",
-    "diagram",
-    "2D",
-    "canvas"
+    "echarts",
+    "canvas",
+    "highcharts"
   ],
   "author": "alsmile123@qq.com",
   "license": "MIT",
@@ -24,12 +24,8 @@
     "url": "https://github.com/le5le-com/topology.js/issues"
   },
   "homepage": "https://github.com/le5le-com/topology.js#readme",
-  "devDependencies": {
-    "@types/offscreencanvas": "latest"
-  },
-  "dependencies": {
-    "mitt": "^2.1.0",
-    "mqtt": "^4.2.6"
+  "peerDependencies": {
+    "@topology/core": "^1.0.0"
   },
   "publishConfig": {
     "access": "public"
