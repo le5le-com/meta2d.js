@@ -2308,10 +2308,11 @@ export class Canvas {
       const penRect: Rect = {
         x,
         y,
+        width: pen.calculative.worldRect.width,
+        height: pen.calculative.worldRect.height,
         ex: x + pen.calculative.worldRect.width,
         ey: y + pen.calculative.worldRect.height,
         rotate: pen.calculative.worldRect.rotate,
-        center: pen.calculative.worldRect.center,
       };
       if (!rectInRect(penRect, canvasRect)) {
         pen.calculative.inView = false;
