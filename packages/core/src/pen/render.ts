@@ -348,6 +348,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     const rect = pen.calculative.worldIconRect;
     let x = rect.x;
     let y = rect.y;
@@ -419,6 +421,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -492,6 +496,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
     ctx.save();
+    if (!pen.calculative.textHasShadow) {
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetX = 0;
+    }
     if (pen.calculative.hover) {
       fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
     } else if (pen.calculative.active) {
@@ -827,6 +836,11 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
     ctx.save();
+    if (!pen.calculative.textHasShadow) {
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetX = 0;
+    }
     ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
     ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
       pen.calculative.fontSize

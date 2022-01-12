@@ -84,6 +84,7 @@ export interface Pen extends Rect {
   shadowBlur?: number;
   shadowOffsetX?: number;
   shadowOffsetY?: number;
+  textHasShadow?: boolean;  // 文字是否需要阴影
 
   text?: string;
   textWidth?: number;
@@ -260,6 +261,7 @@ export interface Pen extends Rect {
     shadowBlur?: number;
     shadowOffsetX?: number;
     shadowOffsetY?: number;
+    textHasShadow?: boolean;
 
     tempText?: string;
     text?: string;
