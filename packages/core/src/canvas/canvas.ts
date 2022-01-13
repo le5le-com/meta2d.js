@@ -3951,6 +3951,14 @@ export class Canvas {
     canvas.width = rect.width;
     canvas.height = rect.height;
     const ctx = canvas.getContext('2d');
+    const background = this.store.data.background || this.store.options.background;
+    if (background) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
     ctx.translate(-rect.x, -rect.y);
     for (const pen of this.store.data.pens) {
       renderPen(ctx, pen);
@@ -3959,7 +3967,7 @@ export class Canvas {
       canvas.toBlob(callback);
       return;
     }
-    return canvas.toDataURL('image/png', 1);
+    return canvas.toDataURL();
   }
 
   toggleAnchorMode() {
