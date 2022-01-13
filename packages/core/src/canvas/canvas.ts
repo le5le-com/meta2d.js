@@ -1336,12 +1336,22 @@ export class Canvas {
     this.mouseDown = undefined;
     this.lastOffsetX = 0;
     this.lastOffsetY = 0;
-    this.dock = undefined;
+    this.clearDock();
     this.dragRect = undefined;
     this.initActiveRect = undefined;
     this.updatingPens = undefined;
     this.alreadyCopy = false;
   };
+
+  private clearDock = () => {
+    if (this.dock?.xDock?.penId) {
+      this.store.pens[this.dock.xDock.penId].calculative.isDock = false;
+    }
+    if (this.dock?.yDock?.penId) {
+      this.store.pens[this.dock.yDock.penId].calculative.isDock = false;
+    }
+    this.dock = undefined;
+  }
 
   inactive(drawing?: boolean) {
     if (!this.store.active.length) {
@@ -2425,7 +2435,6 @@ export class Canvas {
     }
 
     if (this.dock) {
-      // '#eb5ef7'
       ctx.strokeStyle = this.store.options.dockColor;
       if (this.dock.xDock) {
         ctx.beginPath();
@@ -2560,6 +2569,7 @@ export class Canvas {
     // 得到最准确的 rect 即 resize 后的
     resizeRect(rect, x, y, this.resizeIndex);
     calcCenter(rect);
+    this.clearDock();
     if (this.customeDock) {
       this.dock = this.customeDock(this.store, rect);
     } else {
@@ -2567,9 +2577,13 @@ export class Canvas {
     }
     if (this.dock.xDock) {
       x += this.dock.xDock.step;
+      const dockPen = this.store.pens[this.dock.xDock.penId];
+      dockPen.calculative.isDock = true;
     }
     if (this.dock.yDock) {
       y += this.dock.yDock.step;
+      const dockPen = this.store.pens[this.dock.yDock.penId];
+      dockPen.calculative.isDock = true;
     }
 
     const w = this.activeRect.width;
@@ -2643,6 +2657,7 @@ export class Canvas {
     e.altKey && (y = 0);
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
+    this.clearDock();
     if (this.customeDock) {
       this.dock = this.customeDock(this.store, rect);
     } else {
@@ -2650,9 +2665,13 @@ export class Canvas {
     }
     if (this.dock.xDock) {
       rect.x += this.dock.xDock.step;
+      const dockPen = this.store.pens[this.dock.xDock.penId];
+      dockPen.calculative.isDock = true;
     }
     if (this.dock.yDock) {
       rect.y += this.dock.yDock.step;
+      const dockPen = this.store.pens[this.dock.yDock.penId];
+      dockPen.calculative.isDock = true;
     }
 
     x = rect.x - this.activeRect.x;
