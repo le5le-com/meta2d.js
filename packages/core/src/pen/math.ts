@@ -82,6 +82,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -94,6 +95,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -113,6 +115,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -125,6 +128,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.center.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -137,6 +141,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.center.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -149,6 +154,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.center.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -161,6 +167,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.ex) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -173,6 +180,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step: r.ex - rect.ex,
         prev: { x: Math.round(rect.ex) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -185,6 +193,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step: r.center.x - rect.ex,
         prev: { x: Math.round(rect.ex) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       x = disX;
     }
@@ -197,6 +206,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -209,6 +219,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.ey) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -221,6 +232,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.center.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.y) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -233,6 +245,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.center.y) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -245,6 +258,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.ey) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.center.y) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -257,6 +271,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.center.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.center.y) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -269,6 +284,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.ey) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -281,6 +297,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.ey) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.ey) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }
@@ -293,6 +310,7 @@ export function calcRectDock(store: TopologyStore, rect: Rect) {
         y: Math.round(r.center.y) + 0.5,
         step,
         prev: { x: Math.round(rect.x) + 0.5, y: Math.round(rect.ey) + 0.5 },
+        penId: pen.id
       };
       y = disY;
     }

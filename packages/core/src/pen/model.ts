@@ -306,6 +306,7 @@ export interface Pen extends Rect {
     strokeImg?: HTMLImageElement;
     active?: boolean;
     hover?: boolean;
+    isDock?: boolean;  // 是否是对齐参考画笔
     pencil?: boolean;
     activeAnchor?: Point;
     dirty?: boolean;

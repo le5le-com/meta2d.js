@@ -8,6 +8,7 @@ import { calcTextLines, calcTextDrawRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Flip, Gradient, PenType } from '@topology/core';
+import { rgba } from '../utils';
 
 export function getParent(pen: Pen, root?: boolean) {
   if (!pen || !pen.parentId || !pen.calculative) {
@@ -176,6 +177,14 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     fill = pen.activeBackground || store.options.activeBackground;
     ctx.fillStyle = fill;
     fill && (setBack = false);
+  } else if (pen.calculative.isDock) {
+    if (pen.type === PenType.Line) {
+      ctx.strokeStyle = store.options.dockColor;
+    } else {
+      fill = rgba(store.options.dockColor, 0.2);
+      ctx.fillStyle = fill;
+      fill && (setBack = false);
+    }
   } else {
     if (pen.calculative.strokeImage) {
       if (pen.calculative.strokeImg) {
