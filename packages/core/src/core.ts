@@ -959,31 +959,7 @@ export class Topology {
     !rect && (rect = this.getPenRect(this.getRect(pens)));
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     for (const item of pens) {
-      if (item.type === PenType.Line) {
-        continue;
-      }
-      const penRect = this.getPenRect(item);
-      switch (align) {
-        case 'left':
-          penRect.x = rect.x;
-          break;
-        case 'right':
-          penRect.x = rect.x + rect.width - penRect.width;
-          break;
-        case 'top':
-          penRect.y = rect.y;
-          break;
-        case 'bottom':
-          penRect.y = rect.y + rect.height - penRect.height;
-          break;
-        case 'center':
-          penRect.x = rect.x + rect.width / 2 - penRect.width / 2;
-          break;
-        case 'middle':
-          penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
-          break;
-      }
-      this.setValue({ ...item, ...penRect });
+      this.alignPen(align, item, rect);
     }
     this.canvas.calcActiveRect();
     this.pushHistory({
@@ -991,6 +967,62 @@ export class Topology {
       initPens,
       pens,
     });
+  }
+
+  /**
+   * 对齐画笔，基于第一个画笔
+   * @param align 左对齐，右对齐，上对齐，下对齐，居中对齐
+   * @param pens 
+   */
+  alignNodesByFirst(align: string, pens: Pen[] = this.store.data.pens) {
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
+    const firstPen = pens[0];
+    const rect = this.getPenRect(firstPen);
+    for (let i = 1; i < pens.length; i++) {
+      const pen = pens[i];
+      this.alignPen(align, pen, rect);
+    }
+    this.canvas.calcActiveRect();
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
+  }
+
+  /**
+   * 将画笔参照 rect 进行 align 对齐
+   * @param align 左对齐，右对齐，上对齐，下对齐，居中对齐
+   * @param pen 当前需要对齐的画笔
+   * @param rect 参照矩形
+   * @returns 
+   */
+  private alignPen(align: string, pen: Pen, rect: Rect) {
+    if (pen.type === PenType.Line) {
+      return;
+    }
+    const penRect = this.getPenRect(pen);
+    switch (align) {
+      case 'left':
+        penRect.x = rect.x;
+        break;
+      case 'right':
+        penRect.x = rect.x + rect.width - penRect.width;
+        break;
+      case 'top':
+        penRect.y = rect.y;
+        break;
+      case 'bottom':
+        penRect.y = rect.y + rect.height - penRect.height;
+        break;
+      case 'center':
+        penRect.x = rect.x + rect.width / 2 - penRect.width / 2;
+        break;
+      case 'middle':
+        penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
+        break;
+    }
+    this.setValue({ id: pen.id, ...penRect });
   }
 
   /**
