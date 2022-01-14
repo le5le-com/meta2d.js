@@ -548,7 +548,7 @@ export class Canvas {
         pen.y = e.y - pen.height / 2;
       }
     }
-    this.addPens(pens);
+    this.addPens(pens, true);
     this.active(pens.filter((pen) => !pen.parentId));
     this.render();
     this.externalElements.focus();  // 聚焦
