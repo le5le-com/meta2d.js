@@ -115,7 +115,6 @@ export class Topology {
     this.events[EventAction.SetProps] = (pen: any, e: Event) => {
       const rect = this.getPenRect(pen);
       this.updateValue(pen, { ...rect, ...e.value });
-      this.store.emitter.emit('valueUpdate', pen);
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {
@@ -674,9 +673,7 @@ export class Topology {
   }
 
   closeMqtt() {
-    if (this.mqttClient && this.mqttClient.close) {
-      this.mqttClient.close();
-    }
+    this.mqttClient?.end();
   }
 
   doSocket(message: any) {
@@ -1433,6 +1430,8 @@ export class Topology {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
     }
+    this.closeWebsocket();
+    this.closeMqtt();
     clearStore(this.store);
     this.canvas.destroy();
     // Clear data.
