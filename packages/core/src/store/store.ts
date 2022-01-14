@@ -114,6 +114,7 @@ export const clearStore = (store: TopologyStore) => {
   };
   store.pens = {};
   store.histories = [];
+  store.historyIndex = null;
   store.path2dMap = new WeakMap();
   store.active = [];
   store.hover = undefined;
