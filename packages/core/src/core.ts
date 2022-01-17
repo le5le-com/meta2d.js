@@ -453,7 +453,12 @@ export class Topology {
     }
   }
 
-  combine(pens?: Pen[]) {
+  /**
+   * 组合
+   * @param pens 组合的画笔们
+   * @param showChild 组合后展示第几个孩子
+   */
+  combine(pens?: Pen[], showChild?: number) {
     if (!pens) {
       pens = this.store.active;
     }
@@ -478,16 +483,18 @@ export class Topology {
       width: rect.width,
       height: rect.height,
       children: [],
+      showChild
     };
     const p = pens.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
-    if (p) {
+    if (p && showChild == undefined) {
       if (!p.children) {
         p.children = [];
       }
       parent = p;
     } else {
+      // 若组合为状态，那么 parent 一定是 combine
       this.canvas.makePen(parent);
     }
 
@@ -950,6 +957,36 @@ export class Topology {
       x: width / 2,
       y: height / 2,
     };
+  }
+
+  /**
+   * 其它图形的大小字体变成第一个的
+   * 目前只更改 width ，height ，fontSize
+   * @param pens 画笔们
+   */
+  beSameByFirst(pens: Pen[] = this.store.data.pens) {
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
+
+    // 1. 得到第一个画笔的 宽高 字体大小
+    const firstPen = pens[0];
+    const { width, height } = this.getPenRect(firstPen);
+    const fontSize = firstPen.fontSize;
+
+    // 2. 修改其它画笔的 宽高 fontSize
+    for (let i = 1; i < pens.length; i++) {
+      const pen = pens[i];
+      const penRect = this.getPenRect(pen);
+      penRect.width = width;
+      penRect.height = height;
+      this.setValue({id: pen.id, fontSize, ...penRect});
+    }
+
+    this.canvas.calcActiveRect();
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
   }
 
   alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect) {

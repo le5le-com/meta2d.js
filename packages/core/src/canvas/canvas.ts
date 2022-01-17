@@ -2309,6 +2309,20 @@ export class Canvas {
     };
 
     for (const pen of this.store.data.pens) {
+      if (pen.parentId) {
+        // 有父节点
+        const parent = this.store.pens[pen.parentId];
+        const showChildIndex = parent?.calculative?.showChild;
+        if (showChildIndex != undefined) {
+          // 判断父节点决定展示第几个元素
+          const showChildId = parent.children[showChildIndex];
+          if (showChildId !== pen.id) {
+            pen.calculative.inView = false;
+            continue;
+          }
+        }
+      }
+
       if (pen.visible == false || pen.calculative.visible == false) {
         pen.calculative.inView = false;
         continue;
