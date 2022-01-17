@@ -227,6 +227,7 @@ export interface Pen extends Rect {
 
   hiddenText?: boolean; // 隐藏 text
   keepDecimal?: number; // undefined 显示原内容；0 显示整数
+  showChild?: number;  // 第几个子元素展示 undefined 即展示全部
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -370,6 +371,7 @@ export interface Pen extends Rect {
 
     hiddenText?: boolean; // 隐藏 text
     keepDecimal?: number; // undefined 显示原内容；0 显示整数；保留几位小数
+    showChild?: number;  // 第几个子元素展示 undefined 即展示全部
     // media element
     onended?: (pen: Pen) => void;
   };
