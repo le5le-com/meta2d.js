@@ -35,6 +35,7 @@ import {
   calcPadding,
   getPensDisableRotate,
   getPensDisableResize,
+  needCalcTextRectProps,
 } from '../pen';
 import {
   calcRotate,
@@ -3794,13 +3795,17 @@ export class Canvas {
     if (data.newId) {
       pen.id = data.newId;
     }
-    if (pen.calculative.text !== pen.text) {
-      pen.calculative.text = pen.text;
-      calcTextLines(pen);
-    }
+    let willUpdatePath = false;
+    let willCalcTextRect = false;
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
+      }
+      if (needCalcTextRectProps.includes(k)) {
+        willCalcTextRect = true;
+      }
+      if (['name', 'borderRadius'].includes(k)) {
+        willUpdatePath = true;
       }
     }
     pen.calculative.image = undefined;
@@ -3810,6 +3815,12 @@ export class Canvas {
     if (data.x != null || data.y != null || data.width != null || data.height != null) {
       this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
       this.updateLines(pen, true);
+      willCalcTextRect = false;
+      willUpdatePath = false;
+    }
+    willCalcTextRect && calcTextRect(pen);
+    if (willUpdatePath) {
+      globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     }
     if (data.image || data.backgroundImage || data.strokeImage) {
       this.loadImage(pen);

@@ -137,6 +137,11 @@ function linearGradient(
 }
 
 export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
+  if (!isFinite(pen.x)) {
+    // 若不合法，即 NaN ，Infinite 
+    console.warn(pen, '画笔的 x 不合法');
+  }
+
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
