@@ -33,6 +33,24 @@ export enum Flip {
   Vertical, // 垂直翻转
 }
 
+// 修改哪些属性需要重现计算 textRect
+export const needCalcTextRectProps = [
+  'text',
+  'textWidth',
+  'textHeight',
+  'textLeft',
+  'textTop',
+  'fontFamily',
+  'fontSize',
+  'lineHeight',
+  'fontStyle',
+  'fontWeight',
+  'textAlign',
+  'textBaseline',
+  'whiteSpace',
+  'ellipsis'
+]
+
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
