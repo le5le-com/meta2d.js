@@ -513,7 +513,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     if (!pen.calculative.textHasShadow) {
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     }
     if (pen.calculative.hover) {
       fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
@@ -853,7 +853,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     if (!pen.calculative.textHasShadow) {
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     }
     ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
     ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
