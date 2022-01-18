@@ -35,7 +35,8 @@ export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D | Path2D) {
   }
 
   const path2D = new Path2D(pathStr);
-  path2D.closePath();
+  // TODO: 为何要闭合曲线
+  // path2D.closePath();
 
   return path2D;
 }
