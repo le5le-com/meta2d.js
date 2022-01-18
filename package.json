@@ -10,16 +10,25 @@
   },
   "scripts": {
     "start": "",
+    "examples:install": "npm-run-all --serial build install:*",
+    "install:react": "cd examples/react && yarn",
+    "start:react": "cd examples/react && yarn start",
+    "install:vue": "cd examples/vue && yarn",
+    "start:vue": "cd examples/vue && yarn dev",
+    "start:es5": "cross-env PORT=7104 http-server . --cors",
     "build": "yarn workspaces run build",
     "v": "lerna publish --skip-npm",
     "docs": "typedoc --out ./docs packages"
   },
   "devDependencies": {
-    "shx": "latest",
     "lerna": "latest",
-    "typedoc": "latest",
+    "npm-run-all": "latest",
+    "cross-env": "latest",
+    "http-server": "latest",
+    "shx": "latest",
+    "stats.js": "latest",
     "tslint": "latest",
-    "typescript": "latest",
-    "stats.js": "latest"
+    "typedoc": "latest",
+    "typescript": "latest"
   }
 }
