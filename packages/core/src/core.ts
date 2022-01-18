@@ -1094,11 +1094,11 @@ export class Topology {
 
     const pen0Rect = this.getPenRect(pens[0]);
     let left = direction === 'width' ? pen0Rect.x : pen0Rect.y;
-    for (const item of pens) {
-      const penRect = this.getPenRect(item);
+    for (const pen of pens) {
+      const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this.setValue({ ...item, ...penRect });
+      this.setValue({ id: pen.id, ...penRect });
     }
     this.pushHistory({
       type: EditType.Update,
@@ -1137,7 +1137,7 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this.setValue({ ...pen, ...penRect });
+      this.setValue({ id: pen.id, ...penRect });
 
       if (index === pens.length - 1) {
         return;
