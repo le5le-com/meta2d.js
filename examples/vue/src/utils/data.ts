@@ -12,7 +12,8 @@ export const icons = [
       name: 'rectangle',
       text: '矩形',
       width: 100,
-      height: 100
+      height: 100,
+      title: '# 矩形'
     }
   }, { 
     key: 'circle',
