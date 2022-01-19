@@ -10,12 +10,12 @@ import { renderFromArrow, renderToArrow } from './arrow';
 import { Flip, Gradient, PenType } from '@topology/core';
 import { rgba } from '../utils';
 
-export function getParent(pen: Pen, root?: boolean) {
+export function getParent(pen: Pen, root?: boolean): Pen {
   if (!pen || !pen.parentId || !pen.calculative) {
     return undefined;
   }
 
-  const store = pen.calculative.canvas.store;
+  const store: TopologyStore = pen.calculative.canvas.store;
   if (!root) {
     return store.pens[pen.parentId];
   }
