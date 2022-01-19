@@ -2506,10 +2506,7 @@ export class Canvas {
 
   rotatePens(e: Point) {
     if (!this.initPens) {
-      this.initPens = [];
-      for (let pen of this.store.active) {
-        this.initPens.push(deepClone(pen));
-      }
+      this.initPens = deepClone(this.store.active);
     }
 
     this.activeRect.rotate = calcRotate(e, this.activeRect.center);
@@ -2550,10 +2547,7 @@ export class Canvas {
 
   resizePens(e: Point) {
     if (!this.initPens) {
-      this.initPens = [];
-      for (let pen of this.store.active) {
-        this.initPens.push(deepClone(pen));
-      }
+      this.initPens = deepClone(this.store.active);
     }
 
     if (!this.initActiveRect) {
@@ -2690,10 +2684,7 @@ export class Canvas {
       return;
     }
     if (!this.initPens) {
-      this.initPens = [];
-      for (let pen of this.store.active) {
-        this.initPens.push(deepClone(pen));
-      }
+      this.initPens = deepClone(this.store.active);
     }
 
     if (this.store.activeAnchor) {
@@ -2778,10 +2769,7 @@ export class Canvas {
     }
 
     if (!this.initPens) {
-      this.initPens = [];
-      for (let pen of this.store.active) {
-        this.initPens.push(deepClone(pen));
-      }
+      this.initPens = deepClone(this.store.active);
     }
 
     this.store.activeAnchor.prev.x = e.x;
@@ -2830,10 +2818,7 @@ export class Canvas {
       return;
     }
     if (!this.initPens) {
-      this.initPens = [];
-      for (let pen of this.store.active) {
-        this.initPens.push(deepClone(pen));
-      }
+      this.initPens = deepClone(this.store.active);
     }
 
     this.store.activeAnchor.next.x = e.x;
@@ -2923,10 +2908,7 @@ export class Canvas {
     }
 
     if (!doing || (this.updatingPens && !this.initPens)) {
-      this.initPens = [];
-      for (let pen of pens) {
-        this.initPens.push(deepClone(pen));
-      }
+      this.initPens = deepClone(this.store.active);
     }
 
     translateRect(this.activeRect, x, y);
