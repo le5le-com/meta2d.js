@@ -914,6 +914,7 @@ export class Canvas {
           this.inactive();
           break;
         case HoverType.Node:
+        case HoverType.Line:
           if (this.store.hover) {
             const pen = getParent(this.store.hover, true) || this.store.hover;
             if (e.ctrlKey && !e.shiftKey) {
@@ -921,6 +922,7 @@ export class Canvas {
                 this.willInactivePen = pen;
               } else {
                 pen.calculative.active = true;
+                setChildrenActive(pen);  // 子节点也设置为active
                 this.store.active.push(pen);
                 this.store.emitter.emit('active', this.store.active);
               }
@@ -929,15 +931,7 @@ export class Canvas {
               e.ctrlKey && e.shiftKey && 
               this.store.hover.parentId
             ) {
-              if (this.store.active.length) {
-                this.store.active.forEach((pen) => {
-                  pen.calculative.active = undefined;
-                });
-              }
-              this.store.active = [this.store.hover];
-              this.store.hover.calculative.active = true;
-              this.store.emitter.emit('active', [this.store.hover]);
-              this.dirty = true;
+              this.active([this.store.hover]);
             } else {
               if (!pen.calculative.active) {
                 this.active([pen]);
@@ -945,12 +939,6 @@ export class Canvas {
             }
 
             this.calcActiveRect();
-          }
-          break;
-        case HoverType.Line:
-          {
-            const pen = getParent(this.store.hover, true) || this.store.hover;
-            this.active([pen]);
           }
           break;
         case HoverType.LineAnchor:
@@ -1371,6 +1359,7 @@ export class Canvas {
 
     if (this.willInactivePen) {
       this.willInactivePen.calculative.active = undefined;
+      setChildrenActive(this.willInactivePen, false); // 子节点取消激活
       this.store.active.splice(
         this.store.active.findIndex((p) => p === this.willInactivePen),
         1
