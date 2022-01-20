@@ -2573,21 +2573,23 @@ export class Canvas {
     // 得到最准确的 rect 即 resize 后的
     resizeRect(rect, x, y, this.resizeIndex);
     calcCenter(rect);
-    this.clearDock();
-    if (this.customeResizeDock) {
-      this.dock = this.customeResizeDock(this.store, rect, this.store.active, this.resizeIndex);
-    } else {
-      this.dock = calcResizeDock(this.store, rect, this.store.active, this.resizeIndex);
-    }
-    if (this.dock.xDock) {
-      x += this.dock.xDock.step;
-      const dockPen = this.store.pens[this.dock.xDock.penId];
-      dockPen.calculative.isDock = true;
-    }
-    if (this.dock.yDock) {
-      y += this.dock.yDock.step;
-      const dockPen = this.store.pens[this.dock.yDock.penId];
-      dockPen.calculative.isDock = true;
+    if (!this.store.options.disableDockLine) {
+      this.clearDock();
+      if (this.customeResizeDock) {
+        this.dock = this.customeResizeDock(this.store, rect, this.store.active, this.resizeIndex);
+      } else {
+        this.dock = calcResizeDock(this.store, rect, this.store.active, this.resizeIndex);
+      }
+      if (this.dock.xDock) {
+        x += this.dock.xDock.step;
+        const dockPen = this.store.pens[this.dock.xDock.penId];
+        dockPen.calculative.isDock = true;
+      }
+      if (this.dock.yDock) {
+        y += this.dock.yDock.step;
+        const dockPen = this.store.pens[this.dock.yDock.penId];
+        dockPen.calculative.isDock = true;
+      }
     }
 
     const w = this.activeRect.width;
@@ -2665,21 +2667,23 @@ export class Canvas {
       x: rect.x - this.activeRect.x,
       y: rect.y - this.activeRect.y,
     }
-    this.clearDock();
-    if (this.customeMoveDock) {
-      this.dock = this.customeMoveDock(this.store, rect, this.store.active, offset);
-    } else {
-      this.dock = calcMoveDock(this.store, rect, this.store.active, offset);
-    }
-    if (this.dock.xDock) {
-      offset.x += this.dock.xDock.step;
-      const dockPen = this.store.pens[this.dock.xDock.penId];
-      dockPen.calculative.isDock = true;
-    }
-    if (this.dock.yDock) {
-      offset.y += this.dock.yDock.step;
-      const dockPen = this.store.pens[this.dock.yDock.penId];
-      dockPen.calculative.isDock = true;
+    if (!this.store.options.disableDockLine) {
+      this.clearDock();
+      if (this.customeMoveDock) {
+        this.dock = this.customeMoveDock(this.store, rect, this.store.active, offset);
+      } else {
+        this.dock = calcMoveDock(this.store, rect, this.store.active, offset);
+      }
+      if (this.dock.xDock) {
+        offset.x += this.dock.xDock.step;
+        const dockPen = this.store.pens[this.dock.xDock.penId];
+        dockPen.calculative.isDock = true;
+      }
+      if (this.dock.yDock) {
+        offset.y += this.dock.yDock.step;
+        const dockPen = this.store.pens[this.dock.yDock.penId];
+        dockPen.calculative.isDock = true;
+      }
     }
 
     this.updatingPens = true;
@@ -2730,17 +2734,19 @@ export class Canvas {
         this.store.activeAnchor.anchorId
       );
     } else {
-      this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store);
-      if (this.dock.xDock || this.dock.yDock) {
-        offsetX = 0;
-        offsetY = 0;
-        if (this.dock.xDock) {
-          offsetX = this.dock.xDock.x - this.store.activeAnchor.x;
+      if (!this.store.options.disableDockLine) {
+        this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store);
+        if (this.dock.xDock || this.dock.yDock) {
+          offsetX = 0;
+          offsetY = 0;
+          if (this.dock.xDock) {
+            offsetX = this.dock.xDock.x - this.store.activeAnchor.x;
+          }
+          if (this.dock.yDock) {
+            offsetY = this.dock.yDock.y - this.store.activeAnchor.y;
+          }
+          translatePoint(this.store.activeAnchor, offsetX, offsetY);
         }
-        if (this.dock.yDock) {
-          offsetY = this.dock.yDock.y - this.store.activeAnchor.y;
-        }
-        translatePoint(this.store.activeAnchor, offsetX, offsetY);
       }
     }
 

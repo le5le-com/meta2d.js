@@ -15,13 +15,6 @@ export function calcAnchorDock(
   let x = Infinity;
   let y = Infinity;
   const size = 8;
-  if (store.options.disableDockLine) {
-    return {
-      // undefined , 不画对齐线了
-      xDock,
-      yDock,
-    };
-  }
   for (const pen of store.data.pens) {
     if (pen.calculative.inView === false) {
       continue;
@@ -415,13 +408,6 @@ function calcDockByPoints(
   let x = Infinity;
   let y = Infinity;
   const size = 8;
-  if (store.options.disableDockLine) {
-    return {
-      // undefined , 不画对齐线了
-      xDock,
-      yDock,
-    };
-  }
   for (const pen of store.data.pens) {
     if (pen.calculative.active || pen.calculative.inView === false) {
       continue;
