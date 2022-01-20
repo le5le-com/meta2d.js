@@ -355,18 +355,26 @@ export class Topology {
     registerAnchors(path2dFns);
   }
 
-  // customeDock = (store, rect) => {xDock, yDock}
+  // customeDock = (store, rect, pens, offset) => {xDock, yDock}
   // customDock return:
   // {
-  //   xDock: {x, y, step, prev},
-  //   yDock: {x, y, step, prev},
+  //   xDock: {x, y, step, prev, penId},
+  //   yDock: {x, y, step, prev, penId},
   // }
   // xDock，yDock - 水平或垂直方向的参考线
   // prev - 参考线的起点
   // x,y - 参考线的终点
   // step - 自动吸附需要的偏移量
-  registerDock(customeDock?: Function) {
-    this.canvas.customeDock = customeDock;
+  // penId - 参考线的笔
+  registerMoveDock(dock: (store: TopologyStore, rect: Rect, pens: Pen[], offset: Point) => { xDock: Point; yDock: Point; }) {
+    this.canvas.customeMoveDock = dock;
+  }
+
+  /**
+   * 参数同方法 registerMoveDock ，最后一个参数由 offset 偏移修改成了当前 resize 的点
+   */
+  registerResizeDock(dock: (store: TopologyStore, rect: Rect, pens: Pen[], resizeIndex: number) => { xDock: Point; yDock: Point; }) {
+    this.canvas.customeResizeDock = dock;
   }
 
   find(idOrTag: string) {
