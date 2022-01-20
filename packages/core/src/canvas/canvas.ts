@@ -19,7 +19,7 @@ import {
   disconnectLine,
   getAnchor,
   calcAnchorDock,
-  calcRectDock,
+  calcMoveDock,
   calcTextLines,
   setNodeAnimate,
   setLineAnimate,
@@ -36,6 +36,7 @@ import {
   getPensDisableRotate,
   getPensDisableResize,
   needCalcTextRectProps,
+  calcResizeDock,
 } from '../pen';
 import {
   calcRotate,
@@ -141,7 +142,8 @@ export class Canvas {
   beforeRemovePen: (pen: Pen) => boolean;
   beforeRemoveAnchor: (pen: Pen, anchor: Point) => boolean;
 
-  customeDock: Function;
+  customeResizeDock: (store: TopologyStore, rect: Rect, pens: Pen[], resizeIndex: number) => { xDock: Point; yDock: Point };
+  customeMoveDock: (store: TopologyStore, rect: Rect, pens: Pen[], offset: Point) => { xDock: Point; yDock: Point };
 
   inputParent = document.createElement('div');
   input = document.createElement('textarea');
@@ -1381,11 +1383,15 @@ export class Canvas {
   };
 
   private clearDock = () => {
-    if (this.dock?.xDock?.penId) {
-      this.store.pens[this.dock.xDock.penId].calculative.isDock = false;
+    const xPenId = this.dock?.xDock?.penId;
+    const yPenId = this.dock?.yDock?.penId;
+    const xPen = this.store.pens[xPenId];
+    if (xPen) {
+      xPen.calculative.isDock = false;
     }
-    if (this.dock?.yDock?.penId) {
-      this.store.pens[this.dock.yDock.penId].calculative.isDock = false;
+    const yPen = this.store.pens[yPenId];
+    if (yPen) {
+      yPen.calculative.isDock = false;
     }
     this.dock = undefined;
   }
@@ -2615,10 +2621,10 @@ export class Canvas {
     resizeRect(rect, x, y, this.resizeIndex);
     calcCenter(rect);
     this.clearDock();
-    if (this.customeDock) {
-      this.dock = this.customeDock(this.store, rect);
+    if (this.customeResizeDock) {
+      this.dock = this.customeResizeDock(this.store, rect, this.store.active, this.resizeIndex);
     } else {
-      this.dock = calcRectDock(this.store, rect);
+      this.dock = calcResizeDock(this.store, rect, this.store.active, this.resizeIndex);
     }
     if (this.dock.xDock) {
       x += this.dock.xDock.step;
@@ -2702,28 +2708,29 @@ export class Canvas {
     e.altKey && (y = 0);
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
+    const offset: Point = {
+      x: rect.x - this.activeRect.x,
+      y: rect.y - this.activeRect.y,
+    }
     this.clearDock();
-    if (this.customeDock) {
-      this.dock = this.customeDock(this.store, rect);
+    if (this.customeMoveDock) {
+      this.dock = this.customeMoveDock(this.store, rect, this.store.active, offset);
     } else {
-      this.dock = calcRectDock(this.store, rect);
+      this.dock = calcMoveDock(this.store, rect, this.store.active, offset);
     }
     if (this.dock.xDock) {
-      rect.x += this.dock.xDock.step;
+      offset.x += this.dock.xDock.step;
       const dockPen = this.store.pens[this.dock.xDock.penId];
       dockPen.calculative.isDock = true;
     }
     if (this.dock.yDock) {
-      rect.y += this.dock.yDock.step;
+      offset.y += this.dock.yDock.step;
       const dockPen = this.store.pens[this.dock.yDock.penId];
       dockPen.calculative.isDock = true;
     }
 
-    x = rect.x - this.activeRect.x;
-    y = rect.y - this.activeRect.y;
-
     this.updatingPens = true;
-    this.translatePens(this.store.active, x, y, true);
+    this.translatePens(this.store.active, offset.x, offset.y, true);
   }
 
   moveLineAnchor(e: { x: number; y: number }) {
@@ -2770,7 +2777,7 @@ export class Canvas {
         this.store.activeAnchor.anchorId
       );
     } else {
-      this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store.active[0], this.store);
+      this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store);
       if (this.dock.xDock || this.dock.yDock) {
         offsetX = 0;
         offsetY = 0;
