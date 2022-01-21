@@ -193,7 +193,8 @@ export class Topology {
     this.canvas.sizeCPs = undefined;
 
     if (data) {
-      if (data.paths) {  // 存在 svgPath 存储到 globalStore.paths 中
+      if (data.paths) {
+        // 存在 svgPath 存储到 globalStore.paths 中
         Object.assign(globalStore.paths, data.paths);
       }
       Object.assign(this.store.data, data);
@@ -366,14 +367,18 @@ export class Topology {
   // x,y - 参考线的终点
   // step - 自动吸附需要的偏移量
   // penId - 参考线的笔
-  registerMoveDock(dock: (store: TopologyStore, rect: Rect, pens: Pen[], offset: Point) => { xDock: Point; yDock: Point; }) {
+  registerMoveDock(
+    dock: (store: TopologyStore, rect: Rect, pens: Pen[], offset: Point) => { xDock: Point; yDock: Point }
+  ) {
     this.canvas.customeMoveDock = dock;
   }
 
   /**
    * 参数同方法 registerMoveDock ，最后一个参数由 offset 偏移修改成了当前 resize 的点
    */
-  registerResizeDock(dock: (store: TopologyStore, rect: Rect, pens: Pen[], resizeIndex: number) => { xDock: Point; yDock: Point; }) {
+  registerResizeDock(
+    dock: (store: TopologyStore, rect: Rect, pens: Pen[], resizeIndex: number) => { xDock: Point; yDock: Point }
+  ) {
     this.canvas.customeResizeDock = dock;
   }
 
@@ -492,7 +497,7 @@ export class Topology {
       width: rect.width,
       height: rect.height,
       children: [],
-      showChild
+      showChild,
     };
     const p = pens.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
@@ -987,7 +992,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       penRect.width = width;
       penRect.height = height;
-      this.setValue({id: pen.id, fontSize, ...penRect});
+      this.setValue({ id: pen.id, fontSize, ...penRect });
     }
 
     this.canvas.calcActiveRect();
@@ -1015,7 +1020,7 @@ export class Topology {
   /**
    * 对齐画笔，基于第一个画笔
    * @param align 左对齐，右对齐，上对齐，下对齐，居中对齐
-   * @param pens 
+   * @param pens
    */
   alignNodesByFirst(align: string, pens: Pen[] = this.store.data.pens) {
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
@@ -1038,7 +1043,7 @@ export class Topology {
    * @param align 左对齐，右对齐，上对齐，下对齐，居中对齐
    * @param pen 当前需要对齐的画笔
    * @param rect 参照矩形
-   * @returns 
+   * @returns
    */
   private alignPen(align: string, pen: Pen, rect: Rect) {
     if (pen.type === PenType.Line) {
@@ -1471,7 +1476,7 @@ export class Topology {
   setVisible(pen: Pen, visible: boolean) {
     this.setValue({
       id: pen.id,
-      visible
+      visible,
     });
     if (pen.children) {
       for (const childId of pen.children) {
@@ -1491,6 +1496,7 @@ export class Topology {
     this.canvas.destroy();
     // Clear data.
     globalStore[this.store.id] = undefined;
+    globalStore.path2dDraws = {};
     this.canvas = undefined;
 
     if (global) {
