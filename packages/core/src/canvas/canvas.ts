@@ -1084,7 +1084,6 @@ export class Canvas {
 
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
-        // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
         if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy) {
           this.alreadyCopy = true;
           this.willInactivePen = undefined;
@@ -2146,32 +2145,37 @@ export class Canvas {
     }, 100);
   }
 
+  setCalculativeByScale(pen: Pen) {
+    const scale = this.store.data.scale;
+    pen.calculative.lineWidth = pen.lineWidth * scale;
+    pen.calculative.fontSize = pen.fontSize * scale;
+    if (pen.fontSize < 1) {
+      pen.calculative.fontSize = pen.fontSize * pen.calculative.worldRect.height;
+    }
+    pen.calculative.iconSize = pen.iconSize * scale;
+    pen.calculative.iconWidth = pen.iconWidth * scale;
+    pen.calculative.iconHeight = pen.iconHeight * scale;
+    pen.calculative.iconLeft = pen.iconLeft * scale;
+    pen.calculative.iconTop = pen.iconTop * scale;
+    pen.calculative.textWidth = pen.textWidth * scale;
+    pen.calculative.textHeight = pen.textHeight * scale;
+    pen.calculative.textLeft = pen.textLeft * scale;
+    pen.calculative.textTop = pen.textTop * scale;
+
+    if (pen.type === PenType.Line && pen.borderWidth) {
+      pen.calculative.borderWidth = pen.borderWidth * scale;
+    }
+  }
+
   dirtyPenRect(pen: Pen, worldRectIsReady?: boolean, playingAnimate?: boolean) {
     if (worldRectIsReady) {
       calcPenRect(pen);
     } else {
       calcWorldRects(pen);
     }
-    const scale = this.store.data.scale;
-    if (!playingAnimate) {
-      pen.calculative.lineWidth = pen.lineWidth * scale;
-      pen.calculative.fontSize = pen.fontSize * scale;
-      if (pen.fontSize < 1) {
-        pen.calculative.fontSize = pen.fontSize * pen.calculative.worldRect.height;
-      }
-      pen.calculative.iconSize = pen.iconSize * scale;
-      pen.calculative.iconWidth = pen.iconWidth * scale;
-      pen.calculative.iconHeight = pen.iconHeight * scale;
-      pen.calculative.iconLeft = pen.iconLeft * scale;
-      pen.calculative.iconTop = pen.iconTop * scale;
-      pen.calculative.textWidth = pen.textWidth * scale;
-      pen.calculative.textHeight = pen.textHeight * scale;
-      pen.calculative.textLeft = pen.textLeft * scale;
-      pen.calculative.textTop = pen.textTop * scale;
 
-      if (pen.type === PenType.Line && pen.borderWidth) {
-        pen.calculative.borderWidth = pen.borderWidth * scale;
-      }
+    if (!playingAnimate) {
+      this.setCalculativeByScale(pen);
     }
 
     calcWorldAnchors(pen);
@@ -3763,6 +3767,7 @@ export class Canvas {
     pen.calculative.backgroundImage = undefined;
     pen.calculative.strokeImage = undefined;
 
+    this.setCalculativeByScale(pen);  // 该方法计算量并不大，所以每次修改都计算一次
     if (data.x != null || data.y != null || data.width != null || data.height != null) {
       this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
       this.updateLines(pen, true);
