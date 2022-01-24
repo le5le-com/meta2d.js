@@ -421,11 +421,15 @@ export class Canvas {
         break;
       case 'd':
       case 'D':
-        this.removeAnchorHand();
+        if (!this.store.active[0]?.locked) {
+          this.removeAnchorHand();
+        }
         break;
       case 'h':
       case 'H':
-        this.addAnchorHand();
+        if (!this.store.active[0]?.locked) {
+          this.addAnchorHand();
+        }
         break;
       case 'm':
       case 'M':
@@ -1154,23 +1158,25 @@ export class Canvas {
         return;
       }
 
-      // Move line anchor
-      if (this.hoverType === HoverType.LineAnchor) {
-        this.getAnchorDock(e);
-        this.moveLineAnchor(e);
-        return;
-      }
+      if (!this.store.active[0]?.locked) {
+        // Move line anchor
+        if (this.hoverType === HoverType.LineAnchor) {
+          this.getAnchorDock(e);
+          this.moveLineAnchor(e);
+          return;
+        }
 
-      // Move line anchor
-      if (this.hoverType === HoverType.LineAnchorPrev) {
-        this.moveLineAnchorPrev(e);
-        return;
-      }
+        // Move line anchor prev
+        if (this.hoverType === HoverType.LineAnchorPrev) {
+          this.moveLineAnchorPrev(e);
+          return;
+        }
 
-      // Move line anchor
-      if (this.hoverType === HoverType.LineAnchorNext) {
-        this.moveLineAnchorNext(e);
-        return;
+        // Move line anchor next
+        if (this.hoverType === HoverType.LineAnchorNext) {
+          this.moveLineAnchorNext(e);
+          return;
+        }
       }
 
       if (!this.dragRect) {
