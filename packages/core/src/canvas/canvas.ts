@@ -1128,6 +1128,7 @@ export class Canvas {
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1140,6 +1141,12 @@ export class Canvas {
 >>>>>>> d5ef910 (设置 fontSize 等属性后，应该重现计算 calculative)
         if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy) {
 >>>>>>> e3ae456 (ctrl shift 同时按下时，可以选中子节点)
+=======
+        const x = e.x - this.mouseDown.x;
+        const y = e.y - this.mouseDown.y;
+        const shake = 20;
+        if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy && (Math.abs(x) >= shake || Math.abs(y) >= shake)) {
+>>>>>>> 48fadae (ctrl + 拖拽复制的操作限制 20防抖，防误操作)
           this.alreadyCopy = true;
           this.willInactivePen = undefined;
           this.copy();
