@@ -1088,7 +1088,10 @@ export class Canvas {
 
       // Move
       if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
-        if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy) {
+        const x = e.x - this.mouseDown.x;
+        const y = e.y - this.mouseDown.y;
+        const shake = 20;
+        if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy && (Math.abs(x) >= shake || Math.abs(y) >= shake)) {
           this.alreadyCopy = true;
           this.willInactivePen = undefined;
           this.copy();
