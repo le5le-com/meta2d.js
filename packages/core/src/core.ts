@@ -1493,6 +1493,7 @@ export class Topology {
     this.closeWebsocket();
     this.closeMqtt();
     clearStore(this.store);
+    this.store.emitter.all.clear();  // 内存释放
     this.canvas.destroy();
     // Clear data.
     globalStore[this.store.id] = undefined;

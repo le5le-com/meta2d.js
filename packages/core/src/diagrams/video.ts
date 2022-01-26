@@ -7,6 +7,7 @@ export function video(pen: Pen) {
   pen.onResize = move;
   pen.onRotate = move;
   pen.onClick = click;
+  pen.onValue = move;
 
   if (!videos[pen.id]) {
     const player = document.createElement('div');
