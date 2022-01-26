@@ -104,5 +104,6 @@ function value(pen: Pen) {
   if (!echartsList[pen.id]) {
     return;
   }
+  setElemPosition(pen, echartsList[pen.id].div);
   echartsList[pen.id].chart.setOption((pen as any).echarts.option, true);
 }

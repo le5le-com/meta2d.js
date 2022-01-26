@@ -103,7 +103,7 @@ function value(pen: Pen) {
   if (!highchartsList[pen.id]) {
     return;
   }
-  // setElemPosition(pen, highchartsList[pen.id].div);
+  setElemPosition(pen, highchartsList[pen.id].div);
   const chart = highchartsList[pen.id].chart.chart(
     pen.id,
     (pen as any).highcharts.option

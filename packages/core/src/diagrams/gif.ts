@@ -60,5 +60,6 @@ function value(pen: Pen) {
   if (!gifsList[pen.id] || gifsList[pen.id].src === pen.image) {
     return;
   }
+  setElemPosition(pen, gifsList[pen.id].div);
   gifsList[pen.id].src = pen.image;
 }
