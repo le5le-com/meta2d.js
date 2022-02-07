@@ -728,6 +728,15 @@ export class Canvas {
     this.translateX = e.x;
     this.translateY = e.y;
 
+    // Translate
+    if (
+      this.store.data.locked === LockState.DisableEdit ||
+      (e.ctrlKey && !this.hoverType) ||
+      this.hotkeyType === HotkeyType.Translate ||
+      this.mouseRight === MouseRight.TranslateOrContextMenu
+    ) {
+      return;
+    }   
     if (this.hoverType === HoverType.NodeAnchor && !this.drawingLineName) {
       // Start to draw a line.
       this.drawingLineName = this.store.options.drawingLineName;
@@ -982,6 +991,33 @@ export class Canvas {
       return;
     }
 
+    if (this.mouseDown) {
+      // 画布平移操作提前
+      if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
+        this.mouseRight = MouseRight.Translate;
+      }
+      // Translate
+      if (
+        this.store.data.locked === LockState.DisableEdit ||
+        (e.ctrlKey && !this.hoverType) ||
+        this.hotkeyType === HotkeyType.Translate ||
+        this.mouseRight === MouseRight.Translate
+      ) {
+        if (
+          this.translateX &&
+          this.translateY &&
+          !this.store.options.disableTranslate &&
+          (!this.store.data.locked ||
+            this.mouseRight === MouseRight.Translate ||
+            this.store.data.locked < LockState.DisableMove)
+        ) {
+          const { scale } = this.store.data;
+          this.translate((e.x - this.translateX) / scale, (e.y - this.translateY) / scale);
+          return false;
+        }
+      }    
+    }
+
     if (this.drawingLine) {
       const pt: Point = { ...e };
       pt.id = s8();
@@ -1039,10 +1075,6 @@ export class Canvas {
       this.store.path2dMap.set(this.pencilLine, globalStore.path2dDraws[this.pencilLine.name](this.pencilLine));
       this.dirty = true;
     } else if (this.mouseDown) {
-      if (this.mouseRight === MouseRight.TranslateOrContextMenu) {
-        this.mouseRight = MouseRight.Translate;
-      }
-
       if (e.buttons !== 2 && !this.store.data.locked && !this.hoverType && !this.hotkeyType) {
         this.dragRect = {
           x: Math.min(this.mouseDown.x, e.x),
@@ -1053,27 +1085,6 @@ export class Canvas {
           height: Math.abs(e.y - this.mouseDown.y),
         };
         this.dirty = true;
-      }
-
-      // Translate
-      if (
-        this.store.data.locked === LockState.DisableEdit ||
-        (e.ctrlKey && !this.hoverType) ||
-        this.hotkeyType === HotkeyType.Translate ||
-        this.mouseRight === MouseRight.Translate
-      ) {
-        if (
-          this.translateX &&
-          this.translateY &&
-          !this.store.options.disableTranslate &&
-          (!this.store.data.locked ||
-            this.mouseRight === MouseRight.Translate ||
-            this.store.data.locked < LockState.DisableMove)
-        ) {
-          const { scale } = this.store.data;
-          this.translate((e.x - this.translateX) / scale, (e.y - this.translateY) / scale);
-          return false;
-        }
       }
 
       // Rotate
