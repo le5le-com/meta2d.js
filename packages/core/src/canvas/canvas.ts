@@ -3988,7 +3988,7 @@ export class Canvas {
     ctx.save();
     ctx.arc(r, r, r, 0, Math.PI * 2, false);
     ctx.clip();
-    ctx.fillStyle = this.store.data.background || this.canvas.style.background;
+    ctx.fillStyle = this.store.data.background || this.canvas.style.backgroundColor;
     ctx.fillRect(0, 0, size, size);
     ctx.translate(-r, -r);
     ctx.scale(2, 2);
