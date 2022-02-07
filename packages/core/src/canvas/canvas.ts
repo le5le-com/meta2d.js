@@ -1242,6 +1242,7 @@ export class Canvas {
       this.mouseDown &&
       this.hoverType === HoverType.LineAnchor &&
       this.store.hover &&
+      this.store.active[0] &&
       this.store.active[0] !== this.store.hover
     ) {
       const line = this.store.active[0];
@@ -1258,11 +1259,12 @@ export class Canvas {
         this.store.activeAnchor.prev = undefined;
         this.store.activeAnchor.next = undefined;
         this.store.activeAnchor.connectTo = this.store.hover.id;
-        this.store.hover.connectedLines.push({
-          lineId: line.id,
-          lineAnchor: this.store.activeAnchor.id,
-          anchor: this.store.hover.id,
-        });
+        connectLine(
+          this.store.pens[this.store.activeAnchor.connectTo],
+          this.store.activeAnchor.penId,
+          this.store.activeAnchor.id,
+          this.store.activeAnchor.anchorId
+        );
         if (this[line.lineName]) {
           this[line.lineName](this.store, line);
         }
@@ -2753,12 +2755,6 @@ export class Canvas {
       offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
       translatePoint(this.store.activeAnchor, offsetX, offsetY);
 
-      connectLine(
-        this.store.pens[this.store.activeAnchor.connectTo],
-        this.store.activeAnchor.penId,
-        this.store.activeAnchor.id,
-        this.store.activeAnchor.anchorId
-      );
     } else {
       if (!this.store.options.disableDockLine) {
         this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store);
