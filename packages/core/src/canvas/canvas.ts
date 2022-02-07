@@ -3004,9 +3004,6 @@ export class Canvas {
     translateRect(this.activeRect, x, y);
 
     pens.forEach((pen) => {
-      if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
-        return;
-      }
       if (pen.locked >= LockState.DisableMove) {
         // 禁止移动
         return;
