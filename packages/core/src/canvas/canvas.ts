@@ -912,6 +912,8 @@ export class Canvas {
           worldAnchors: [pt],
           lineWidth: this.store.data.lineWidth || 1,
         },
+        fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
+        toArrow: this.store.data.toArrow || this.store.options.toArrow,
         lineWidth: this.store.data.lineWidth || 1,
       };
     } else {
