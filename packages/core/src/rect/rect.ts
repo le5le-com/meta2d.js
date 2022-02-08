@@ -1,4 +1,4 @@
-import { Pen } from '../pen';
+import { isEqual, Pen } from '../pen';
 import { Point, rotatePoint, scalePoint } from '../point';
 
 export interface Rect {
@@ -178,12 +178,12 @@ function getIntersectPoint(line1: {from: Point, to: Point}, line2: {from: Point,
  * @returns 
  */
 function getIntersectPointByK(line1: {k: number, point: Point}, line2: {k: number, point: Point}): Point {
-  if (isZero(line1.k)) {
+  if (isEqual(line1.k, 0)) {
     return {
       x: line2.point.x,
       y: line1.point.y
     }
-  } else if (isZero(line2.k)) {
+  } else if (isEqual(line2.k, 0)) {
     return {
       x: line1.point.x,
       y: line2.point.y
@@ -225,15 +225,6 @@ function pointsToRect(pts: Point[], rotate: number): Rect {
   return getRectOfPoints(pts);
 }
 
-/**
- * js 计算存在误差，认为 num 在该范围内的值就是 0
- * @param num 数字
- * @returns 是否接近 0
- */
-function isZero(num: number) : boolean {
-  return num > -0.000000001 && num < 0.000000001;
-}
-
 export function resizeRect(rect: Rect | Pen, offsetX: number, offsetY: number, resizeIndex: number) {
   if (rect.rotate && rect.rotate % 360) {
     // 计算出外边的四个点
@@ -253,7 +244,7 @@ export function resizeRect(rect: Rect | Pen, offsetX: number, offsetY: number, r
     } else { 
       // 边缘四个点有两个点固定
       const k = [4, 6].includes(resizeIndex) ? k2 : k1;
-      if (!isZero(k)) {
+      if (!isEqual(k, 0)) {
         pts[(resizeIndex) % 4].y += offsetY;
         pts[(resizeIndex) % 4].x += offsetY / k;
         pts[(resizeIndex + 1) % 4].y += offsetY;
