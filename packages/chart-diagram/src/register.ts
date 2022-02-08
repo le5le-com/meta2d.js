@@ -2,6 +2,7 @@ import { register as topologyRegister } from '@topology/core';
 
 import { echarts, echartsList } from './echarts';
 import { highcharts, highchartsList } from './highcharts';
+import { lightningCharts, lightningChartsList } from './LightningChart';
 declare const topology: any;
 
 export function register(_echarts?: any) {
@@ -57,4 +58,18 @@ export function registerHighcharts(_highcharts?: any) {
     // document.body.appendChild(loaderScriptoffline);
   }
   topologyRegister({ highcharts });
+}
+
+export function registerLightningChart(_lightningCharts?: any) {
+  lightningChartsList.lightningChart = _lightningCharts;
+  if (!lightningChartsList.lightningChart && !(lightningCharts as any)) {
+    const loaderScript = document.createElement('script');
+    loaderScript.type = 'text/javascript';
+    loaderScript.src = 'lcjs.iife.js';
+    loaderScript.addEventListener('load', () => {
+      topology.render(Infinity);
+    });
+    document.body.appendChild(loaderScript);
+  }
+  topologyRegister({ lightningCharts });
 }
