@@ -464,3 +464,12 @@ function calcDockByPoints(
     yDock,
   };
 }
+
+/**
+ * 是否近似于 num
+ * @param num 
+ */
+export function isEqual(source: number, target: number): boolean {
+  // @ts-ignore
+  return source.toFixed(12) == target;
+}

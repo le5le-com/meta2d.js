@@ -7,7 +7,7 @@ import { globalStore, TopologyStore } from '../store';
 import { calcTextLines, calcTextDrawRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
-import { Flip, Gradient, PenType } from '@topology/core';
+import { Flip, Gradient, isEqual, PenType } from '@topology/core';
 import { rgba } from '../utils';
 
 export function getParent(pen: Pen, root?: boolean): Pen {
@@ -1008,7 +1008,7 @@ export function calcWorldRects(pen: Pen) {
     if (pen.width > 1) {
       rect.width = pen.width;
     }
-    if (pen.height > 1) {
+    if (isEqual(pen.height, 1)) {
       rect.height = pen.height;
     }
     rect.ex = rect.x + rect.width;
