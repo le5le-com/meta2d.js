@@ -18,7 +18,6 @@ export function lightningCharts(pen: Pen): Path2D {
   if (!lightningCharts && window) {
     lightningCharts = window['lcjs'];
   }
-
   if (!(pen as any).lightningCharts || !lightningCharts) {
     return;
   }
@@ -46,245 +45,13 @@ export function lightningCharts(pen: Pen): Path2D {
     // 2. 创建echart
     lightningChartsList[pen.id] = {
       div,
-      chart: '', // lightningCharts.init(div, (pen as any).lightningCharts.theme),
+      chart: '',
     };
 
     // 3. 生产预览图
     // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
     setTimeout(() => {
-      //   lightningChartsList[pen.id].chart.setOption(
-      //     (pen as any).lightningCharts.option,
-      //     true
-      //   );
-      const {
-        lightningChart,
-        PieChartTypes,
-        LegendBoxBuilders,
-        SliceLabelFormatters,
-        Themes,
-        GaugeChartTypes,
-        SolidLine,
-        SolidFill,
-        ColorRGBA,
-        UIOrigins,
-        emptyLine,
-        AutoCursorModes,
-        AxisScrollStrategies,
-        AxisTickStrategies,
-        UIElementBuilders,
-      } = lcjs;
-
-      const data = (pen as any).lightningCharts.option.data;
-      const title = (pen as any).lightningCharts.option.title || 'Title';
-      const theme =
-        Themes[(pen as any).lightningCharts.option.theme || 'lightNew'];
-
-      switch ((pen as any).lightningCharts.option.type) {
-        case 'line':
-          const charts = lightningChart()
-            .ChartXY({
-              container: pen.id,
-            })
-            .setTitle(title);
-          data.forEach((item) => {
-            charts.addLineSeries().setName(item.name).add(item.data);
-          });
-          break;
-        case 'bar':
-          const lc = lightningChart();
-          let barChart;
-          {
-            barChart = (options) => {
-              const figureThickness = 10;
-              const figureGap = figureThickness * 0.25;
-              const groupGap = figureGap * 3.0;
-              const groups = [];
-              const categories = [];
-              const chart = lc
-                .ChartXY(options)
-                .setTitle(title)
-                .setAutoCursorMode(AutoCursorModes.onHover)
-                .setMouseInteractions(false)
-                .setPadding({ bottom: 30 });
-
-              const axisX = chart
-                .getDefaultAxisX()
-                .setMouseInteractions(false)
-                .setScrollStrategy(undefined)
-                .setTickStrategy(AxisTickStrategies.Empty);
-
-              const axisY = chart
-                .getDefaultAxisY()
-                .setMouseInteractions(false)
-                .setTitle((pen as any).lightningCharts.option.yTitle)
-                .setInterval(0, 70)
-                .setScrollStrategy(AxisScrollStrategies.fitting);
-
-              chart.setAutoCursor((cursor) =>
-                cursor
-                  .disposePointMarker()
-                  .disposeTickMarkerX()
-                  .disposeTickMarkerY()
-                  .setGridStrokeXStyle(emptyLine)
-                  .setGridStrokeYStyle(emptyLine)
-                  .setResultTable((table) => {
-                    table.setOrigin(UIOrigins.CenterBottom);
-                  })
-              );
-              const createSeriesForCategory = (category) => {
-                const series = chart.addRectangleSeries();
-                series.setCursorResultTableFormatter(
-                  (builder, series, figure) => {
-                    let entry = {
-                      name: category.name,
-                      value: category.data[category.figures.indexOf(figure)],
-                    };
-                    return builder
-                      .addRow('Department:', entry.name)
-                      .addRow('# of employees:', String(entry.value));
-                  }
-                );
-                return series;
-              };
-
-              const legendBox = chart
-                .addLegendBox(LegendBoxBuilders.VerticalLegendBox)
-                .setAutoDispose({
-                  type: 'max-width',
-                  maxWidth: 0.2,
-                });
-
-              const redraw = () => {
-                let x = 0;
-                for (
-                  let groupIndex = 0;
-                  groupIndex < groups.length;
-                  groupIndex++
-                ) {
-                  const group = groups[groupIndex];
-                  const xStart = x;
-                  for (const category of categories) {
-                    const value = category.data[groupIndex];
-                    if (value !== undefined) {
-                      const figure = category.figures[groupIndex];
-                      figure.setDimensions({
-                        x,
-                        y: 0,
-                        width: figureThickness,
-                        height: value,
-                      });
-                      x += figureThickness + figureGap;
-                    }
-                  }
-                  group.tick.setValue((xStart + x - figureGap) / 2);
-                  x += groupGap;
-                }
-                axisX.setInterval(-(groupGap + figureGap), x);
-              };
-              const addGroups = (names) => {
-                for (const name of names)
-                  groups.push({
-                    name,
-                    tick: axisX
-                      .addCustomTick(UIElementBuilders.AxisTick)
-                      .setGridStrokeLength(0)
-                      .setTextFormatter((_) => name),
-                  });
-              };
-              const addCategory = (entry) => {
-                const series = createSeriesForCategory(entry).setName(
-                  entry.name
-                );
-                entry.figures = entry.data.map((value) =>
-                  series.add({ x: 0, y: 0, width: 0, height: 0 })
-                );
-                legendBox.add(series);
-                categories.push(entry);
-                redraw();
-              };
-              return {
-                addCategory,
-                addGroups,
-              };
-            };
-          }
-
-          const chart = barChart({
-            theme,
-            container: pen.id,
-          });
-          chart.addGroups((pen as any).lightningCharts.option.groups);
-          const categories = (pen as any).lightningCharts.option.categories;
-          data.forEach((data, i) =>
-            chart.addCategory({
-              name: categories[i],
-              data,
-            })
-          );
-          break;
-        case 'pie':
-          const pie = lightningChart()
-            .Pie({
-              theme,
-              container: pen.id,
-            })
-            .setTitle(title)
-            .setAnimationsEnabled(true)
-            .setMultipleSliceExplosion(true);
-          const slices = data.map((item) =>
-            pie.addSlice(item.name, item.value)
-          );
-          pie
-            .setInnerRadius(
-              (pen as any).lightningCharts.option.innerRadius || 0
-            )
-            .setLabelFormatter(SliceLabelFormatters.NamePlusRelativeValue);
-          pie
-            .addLegendBox(LegendBoxBuilders.VerticalLegendBox)
-            .setAutoDispose({
-              type: 'max-width',
-              maxWidth: 0.3,
-            })
-            .add(pie);
-          break;
-        case 'gauge':
-          const gauge = lightningChart()
-            .Gauge({
-              theme,
-              container: pen.id,
-            })
-            .setTitle(title)
-            .setThickness(20)
-            .setAngleInterval(
-              (pen as any).lightningCharts.option.startAngle || 225,
-              (pen as any).lightningCharts.option.endAngle || -45
-            );
-          let colorArry = colorRgb(
-            (pen as any).lightningCharts.option.background
-          );
-          const slice = gauge
-            .getDefaultSlice()
-            .setInterval(
-              (pen as any).lightningCharts.option.min || 0,
-              (pen as any).lightningCharts.option.max || 100
-            )
-            .setValue(data)
-            .setFillStyle(
-              new SolidFill({
-                color: ColorRGBA(colorArry[0], colorArry[1], colorArry[2]),
-              })
-            );
-          break;
-      }
-
-      //   lightningChartsList[pen.id].chart.resize();
-      //   setTimeout(() => {
-      //     const img = new Image();
-      //     img.src = lightningChartsList[pen.id].chart.getDataURL({
-      //       pixelRatio: 2,
-      //     });
-      //     pen.calculative.img = img;
-      //   }, 100);
+      setLightningCharts(pen);
     }, 100);
 
     // 4. 加载到div layer
@@ -331,12 +98,228 @@ function colorRgb(bcolor: String) {
   return color;
 }
 
+function setLightningCharts(pen: Pen) {
+  const {
+    lightningChart,
+    PieChartTypes,
+    LegendBoxBuilders,
+    SliceLabelFormatters,
+    Themes,
+    GaugeChartTypes,
+    SolidLine,
+    SolidFill,
+    ColorRGBA,
+    UIOrigins,
+    emptyLine,
+    AutoCursorModes,
+    AxisScrollStrategies,
+    AxisTickStrategies,
+    UIElementBuilders,
+  } = lcjs;
+  const data = (pen as any).lightningCharts.option.data;
+  const title = (pen as any).lightningCharts.option.title || 'Title';
+  const theme = Themes[(pen as any).lightningCharts.option.theme || 'lightNew'];
+  //   if (lightningChartsList[pen.id].chart) {
+  //     lightningChartsList[pen.id].chart.dispose();
+  //   }
+  lightningChartsList[pen.id].chart = lightningChart();
+  switch ((pen as any).lightningCharts.option.type) {
+    case 'line':
+      const charts = lightningChartsList[pen.id].chart
+        .ChartXY({
+          container: pen.id,
+        })
+        .setTitle(title);
+      data.forEach((item) => {
+        charts.addLineSeries().setName(item.name).add(item.data);
+      });
+      //   lightningChartsList[pen.id].chart = charts;
+      break;
+    case 'bar':
+      const lc = lightningChartsList[pen.id].chart;
+      let barChart;
+      {
+        barChart = (options) => {
+          const figureThickness = 10;
+          const figureGap = figureThickness * 0.25;
+          const groupGap = figureGap * 3.0;
+          const groups = [];
+          const categories = [];
+          const chart = lc
+            .ChartXY(options)
+            .setTitle(title)
+            .setAutoCursorMode(AutoCursorModes.onHover)
+            .setMouseInteractions(false)
+            .setPadding({ bottom: 30 });
+
+          const axisX = chart
+            .getDefaultAxisX()
+            .setMouseInteractions(false)
+            .setScrollStrategy(undefined)
+            .setTickStrategy(AxisTickStrategies.Empty);
+
+          const axisY = chart
+            .getDefaultAxisY()
+            .setMouseInteractions(false)
+            .setTitle((pen as any).lightningCharts.option.yTitle)
+            .setInterval(0, 70)
+            .setScrollStrategy(AxisScrollStrategies.fitting);
+
+          chart.setAutoCursor((cursor) =>
+            cursor
+              .disposePointMarker()
+              .disposeTickMarkerX()
+              .disposeTickMarkerY()
+              .setGridStrokeXStyle(emptyLine)
+              .setGridStrokeYStyle(emptyLine)
+              .setResultTable((table) => {
+                table.setOrigin(UIOrigins.CenterBottom);
+              })
+          );
+          const createSeriesForCategory = (category) => {
+            const series = chart.addRectangleSeries();
+            series.setCursorResultTableFormatter((builder, series, figure) => {
+              let entry = {
+                name: category.name,
+                value: category.data[category.figures.indexOf(figure)],
+              };
+              return builder
+                .addRow('Department:', entry.name)
+                .addRow('# of employees:', String(entry.value));
+            });
+            return series;
+          };
+
+          const legendBox = chart
+            .addLegendBox(LegendBoxBuilders.VerticalLegendBox)
+            .setAutoDispose({
+              type: 'max-width',
+              maxWidth: 0.2,
+            });
+
+          const redraw = () => {
+            let x = 0;
+            for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+              const group = groups[groupIndex];
+              const xStart = x;
+              for (const category of categories) {
+                const value = category.data[groupIndex];
+                if (value !== undefined) {
+                  const figure = category.figures[groupIndex];
+                  figure.setDimensions({
+                    x,
+                    y: 0,
+                    width: figureThickness,
+                    height: value,
+                  });
+                  x += figureThickness + figureGap;
+                }
+              }
+              group.tick.setValue((xStart + x - figureGap) / 2);
+              x += groupGap;
+            }
+            axisX.setInterval(-(groupGap + figureGap), x);
+          };
+          const addGroups = (names) => {
+            for (const name of names)
+              groups.push({
+                name,
+                tick: axisX
+                  .addCustomTick(UIElementBuilders.AxisTick)
+                  .setGridStrokeLength(0)
+                  .setTextFormatter((_) => name),
+              });
+          };
+          const addCategory = (entry) => {
+            const series = createSeriesForCategory(entry).setName(entry.name);
+            entry.figures = entry.data.map((value) =>
+              series.add({ x: 0, y: 0, width: 0, height: 0 })
+            );
+            legendBox.add(series);
+            categories.push(entry);
+            redraw();
+          };
+          return {
+            addCategory,
+            addGroups,
+          };
+        };
+      }
+
+      const chart = barChart({
+        theme,
+        container: pen.id,
+      });
+      chart.addGroups((pen as any).lightningCharts.option.groups);
+      const categories = (pen as any).lightningCharts.option.categories;
+      data.forEach((data, i) =>
+        chart.addCategory({
+          name: categories[i],
+          data,
+        })
+      );
+      //   lightningChartsList[pen.id].chart = chart;
+      break;
+    case 'pie':
+      const pie = lightningChartsList[pen.id].chart
+        .Pie({
+          theme,
+          container: pen.id,
+        })
+        .setTitle(title)
+        .setAnimationsEnabled(true)
+        .setMultipleSliceExplosion(true);
+      const slices = data.map((item) => pie.addSlice(item.name, item.value));
+      pie
+        .setInnerRadius((pen as any).lightningCharts.option.innerRadius || 0)
+        .setLabelFormatter(SliceLabelFormatters.NamePlusRelativeValue);
+      pie
+        .addLegendBox(LegendBoxBuilders.VerticalLegendBox)
+        .setAutoDispose({
+          type: 'max-width',
+          maxWidth: 0.3,
+        })
+        .add(pie);
+      //   lightningChartsList[pen.id].chart = pie;
+
+      break;
+    case 'gauge':
+      const gauge = lightningChartsList[pen.id].chart
+        .Gauge({
+          theme,
+          container: pen.id,
+        })
+        .setTitle(title)
+        .setThickness(20)
+        .setAngleInterval(
+          (pen as any).lightningCharts.option.startAngle || 225,
+          (pen as any).lightningCharts.option.endAngle || -45
+        );
+      let colorArry = colorRgb((pen as any).lightningCharts.option.background);
+      const slice = gauge
+        .getDefaultSlice()
+        .setInterval(
+          (pen as any).lightningCharts.option.min || 0,
+          (pen as any).lightningCharts.option.max || 100
+        )
+        .setValue(data)
+        .setFillStyle(
+          new SolidFill({
+            color: ColorRGBA(colorArry[0], colorArry[1], colorArry[2]),
+          })
+        );
+      //   lightningChartsList[pen.id].chart = gauge;
+      break;
+  }
+}
+
 function destory(pen: Pen) {
   lightningChartsList[pen.id].div.remove();
   let lightningCharts = lightningChartsList.lightningCharts;
   if (!lightningCharts && window) {
     lightningCharts = window['lcjs'];
   }
+  //   lightningChartsList[pen.id].chart.dispose();
   // lightningCharts && lightningCharts.dispose(lightningChartsList[pen.id].chart);
   lightningChartsList[pen.id] = undefined;
 }
@@ -353,15 +336,12 @@ function resize(pen: Pen) {
     return;
   }
   setElemPosition(pen, lightningChartsList[pen.id].div);
-  //   lightningChartsList[pen.id].chart.resize();
 }
 
 function value(pen: Pen) {
   if (!lightningChartsList[pen.id]) {
     return;
   }
-  lightningChartsList[pen.id].chart.setOption(
-    (pen as any).lightningCharts.option,
-    true
-  );
+  setLightningCharts(pen);
+  setElemPosition(pen, lightningChartsList[pen.id].div);
 }
