@@ -51,6 +51,24 @@ export const needCalcTextRectProps = [
   'ellipsis'
 ]
 
+export const needDirtyPenRectProps = [
+  'x',
+  'y',
+  'width',
+  'height',
+  'rotate',
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+];
+
+export const needCalcIconRectProps = [
+  'iconLeft',
+  'iconTop',
+  'iconRotate'
+];
+
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];

@@ -37,6 +37,8 @@ import {
   getPensDisableResize,
   needCalcTextRectProps,
   calcResizeDock,
+  needDirtyPenRectProps,
+  needCalcIconRectProps,
 } from '../pen';
 import {
   calcRotate,
@@ -3826,6 +3828,8 @@ export class Canvas {
     }
     let willUpdatePath = false;
     let willCalcTextRect = false;
+    let willDirtyPenRect = false;   // 是否需要重新计算世界坐标
+    let willCalcIconRect = false;   // 是否需要重现计算 icon 区域
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
@@ -3836,19 +3840,27 @@ export class Canvas {
       if (['name', 'borderRadius'].includes(k)) {
         willUpdatePath = true;
       }
+      if (needDirtyPenRectProps.includes(k)) {
+        willDirtyPenRect = true;
+      }
+      if (needCalcIconRectProps.includes(k)) {
+        willCalcIconRect = true;
+      }
     }
     pen.calculative.image = undefined;
     pen.calculative.backgroundImage = undefined;
     pen.calculative.strokeImage = undefined;
 
     this.setCalculativeByScale(pen);  // 该方法计算量并不大，所以每次修改都计算一次
-    if (data.x != null || data.y != null || data.width != null || data.height != null) {
+    if (willDirtyPenRect) {
       this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
       this.updateLines(pen, true);
       willCalcTextRect = false;
       willUpdatePath = false;
+      willCalcIconRect = false;
     }
     willCalcTextRect && calcTextRect(pen);
+    willCalcIconRect && calcIconRect(this.store.pens, pen);
     if (willUpdatePath) {
       globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     }
