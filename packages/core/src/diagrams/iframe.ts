@@ -8,6 +8,7 @@ export function iframe(pen: Pen) {
     pen.onMove = move;
     pen.onResize = move;
     pen.onRotate = move;
+    pen.onValue = move;
   }
 
   if (!iframes[pen.id]) {
