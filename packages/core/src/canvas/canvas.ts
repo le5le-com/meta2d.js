@@ -2285,6 +2285,10 @@ export class Canvas {
     };
 
     for (const pen of this.store.data.pens) {
+      if (!isFinite(pen.x)) {
+        // 若不合法，即 NaN ，Infinite 
+        console.warn(pen, '画笔的 x 不合法');
+      }
       if (pen.parentId) {
         // 有父节点
         const parent = this.store.pens[pen.parentId];

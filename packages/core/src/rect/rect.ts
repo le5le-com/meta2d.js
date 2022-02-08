@@ -116,6 +116,9 @@ export function getRectOfPoints(points: Point[]): Rect {
   let ey = -Infinity;
 
   points.forEach((item) => {
+    if (!isFinite(item.x) || !isFinite(item.y)) {
+      return;
+    }
     x = Math.min(x, item.x);
     y = Math.min(y, item.y);
     ex = Math.max(ex, item.x);
