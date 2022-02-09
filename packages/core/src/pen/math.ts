@@ -408,7 +408,7 @@ function calcDockByPoints(
   let x = Infinity;
   let y = Infinity;
   const size = 8;
-  for (const pen of store.data.pens) {
+  outer: for (const pen of store.data.pens) {
     if (pen.calculative.active || pen.calculative.inView === false) {
       continue;
     }
@@ -416,7 +416,7 @@ function calcDockByPoints(
     if (store.active[0]?.connectedLines) {
       for (const item of store.active[0].connectedLines) {
         if (item.lineId === pen.id) {
-          continue;
+          continue outer;   // 跳出外层 for 循环
         }
       }
     }
