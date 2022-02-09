@@ -2566,6 +2566,10 @@ export class Canvas {
     if (this.scroll && this.scroll.isShow) {
       this.scroll.translate(x, y);
     }
+    this.onMovePens();
+  }
+
+  onMovePens() {
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.store.data.pens) {
       pen.onMove && pen.onMove(pen);
@@ -4181,6 +4185,7 @@ export class Canvas {
     const rect = getRect(this.store.data.pens);
     this.store.data.x = this.canvas.clientWidth / 2 - x * rect.width - rect.x;
     this.store.data.y = this.canvas.clientHeight / 2 - y * rect.height - rect.y;
+    this.onMovePens();
     this.render(Infinity);
   }
 

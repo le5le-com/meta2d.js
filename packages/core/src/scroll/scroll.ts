@@ -104,7 +104,7 @@ export class Scroll {
 
     if (this.isDownH || this.isDownV) {
       this.parent.render();
-      this.movePens();
+      this.parent.onMovePens();
     }
 
   };
@@ -216,17 +216,7 @@ export class Scroll {
     this.parent.dirty = true;
 
     this.parent.render();
-    this.movePens();
-  }
-
-  /**
-   * translate 后，dom 类型画笔需要随之移动
-   */
-  movePens() {
-    // 有移动操作的 画笔 需要执行移动
-    for (const pen of this.parent.store.data.pens) {
-      pen.onMove && pen.onMove(pen);
-    }
+    this.parent.onMovePens();
   }
 
   destroy() {
