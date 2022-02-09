@@ -1,9 +1,11 @@
+import { Canvas } from "../canvas";
+
 export class Map {
   box: HTMLElement;
   img: HTMLImageElement;
   isShow: boolean;
   isDown: boolean;
-  constructor(public parent: any) {
+  constructor(public parent: Canvas) {
     this.box = document.createElement('div');
     this.img = new Image();
 
