@@ -4,6 +4,7 @@ import { Point } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
 
+const faceSpace = 30;
 export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
@@ -34,12 +35,12 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   const fromFace = facePen(from, fromPen);
   const toFace = facePen(to, toPen);
 
-  let a = getFacePoint(from, fromFace, 30);
+  let a = getFacePoint(from, fromFace, faceSpace);
   if (a) {
     from = a;
     pts.push(a);
   }
-  a = getFacePoint(to, toFace, 30);
+  a = getFacePoint(to, toFace, faceSpace);
   let connectTo: Point;
   if (a) {
     if (to.connectTo) {
@@ -114,7 +115,8 @@ function getNextPointsOfUp(from: Point, to: Point, toFace: Direction) {
         x = from.x + (to.x - from.x) / 2;
         pts.push({ x, y: from.y }, { x, y: to.y });
       } else {
-        pts.push({ x, y });
+        const centerY = (from.y + to.y) / 2;
+        pts.push({ x: from.x, y: centerY }, { x: to.x, y: centerY });
       }
 
       break;
@@ -137,13 +139,13 @@ function getNextPointsOfUp(from: Point, to: Point, toFace: Direction) {
       pts.push({ x, y });
       break;
     default:
-      x = from.x;
-      y = to.y;
-      if (to.y > from.y) {
-        x = to.x;
-        y = from.y;
+      if (to.y > from.y - faceSpace) {
+        x = from.x + (to.x - from.x) / 2;
+        pts.push({ x, y: from.y }, { x, y: to.y });
+      } else {
+        const centerY = (from.y + to.y + faceSpace) / 2;
+        pts.push({ x: from.x, y: centerY }, { x: to.x, y: centerY });
       }
-      pts.push({ x, y });
       break;
   }
 
@@ -184,18 +186,25 @@ function getNextPointsOfRight(from: Point, to: Point, toFace: Direction) {
         y = from.y + (to.y - from.y) / 2;
         pts.push({ x: from.x, y }, { x: to.x, y });
       } else {
-        from.x = x;
-        pts.push({ x, y });
+        const centerX = (from.x + to.x) / 2;
+        pts.push({ x: centerX, y }, { x: centerX, y: to.y});
+      }
+      break;
+    case Direction.Right:
+      if (to.x < from.x) {
+        pts.push({ x: from.x, y: to.y});
+      } else {
+        pts.push({ x: to.x, y: from.y });
       }
       break;
     default:
       x = to.x;
       y = to.y;
-      if (to.x < from.x) {
+      if (to.x < from.x + faceSpace) {
         pts.push({ x: from.x, y });
       } else {
-        from.x = x;
-        pts.push({ x, y });
+        const centerX = (from.x + to.x - faceSpace) / 2;
+        pts.push({ x: centerX, y: from.y }, { x: centerX, y});
       }
       break;
   }
@@ -219,7 +228,8 @@ function getNextPointsOfBottom(from: Point, to: Point, toFace: Direction) {
         x = from.x + (to.x - from.x) / 2;
         pts.push({ x, y: from.y }, { x, y: to.y });
       } else {
-        pts.push({ x, y });
+        const centerY = (from.y + to.y) / 2;
+        pts.push({ x, y: centerY }, { x: to.x, y: centerY});
       }
       break;
     case Direction.Right:
@@ -242,13 +252,13 @@ function getNextPointsOfBottom(from: Point, to: Point, toFace: Direction) {
       break;
     default:
       x = from.x;
-      y = to.y;
-      if (to.y < from.y) {
-        x = to.x;
-        y = from.y;
+      if (to.y < from.y + faceSpace) {
+        x = from.x + (to.x - from.x) / 2;
+        pts.push({ x, y: from.y }, { x, y: to.y });
+      } else {
+        const centerY = (from.y + to.y - faceSpace) / 2;
+        pts.push({ x, y: centerY }, { x: to.x, y: centerY});
       }
-
-      pts.push({ x, y });
       break;
   }
 
@@ -290,17 +300,19 @@ function getNextPointsOfLeft(from: Point, to: Point, toFace: Direction) {
         y = from.y + (to.y - from.y) / 2;
         pts.push({ x: from.x, y }, { x: to.x, y });
       } else {
-        pts.push({ x, y });
+        const centerX = (from.x + to.x) / 2;
+        pts.push({ x: centerX, y: from.y }, { x: centerX, y: to.y});
       }
       break;
     default:
       x = from.x;
       y = to.y;
-      if (to.x < from.x) {
-        x = to.x;
-        y = from.y;
+      if (to.x < from.x - faceSpace) {
+        const centerX = (from.x + to.x + faceSpace) / 2;
+        pts.push({ x: centerX, y: from.y }, { x: centerX, y});
+      } else {
+        pts.push({ x: from.x, y });
       }
-      pts.push({ x, y });
       break;
   }
 
@@ -318,12 +330,12 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
     to.hidden = undefined;
     if (pen.calculative.drawlineH) {
       pts.push({ x: to.x, y: from.y });
-      if (Math.abs(to.y - from.y) < 30) {
+      if (Math.abs(to.y - from.y) < faceSpace) {
         to.hidden = true;
       }
     } else {
       pts.push({ x: from.x, y: to.y });
-      if (Math.abs(to.x - from.x) < 30) {
+      if (Math.abs(to.x - from.x) < faceSpace) {
         to.hidden = true;
       }
     }
