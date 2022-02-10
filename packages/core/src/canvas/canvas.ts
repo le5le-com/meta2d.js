@@ -3925,17 +3925,24 @@ export class Canvas {
     }
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
+    if (this.store.data.gridRotate) {
+      ctx.translate(this.width / 2, this.height / 2);
+      ctx.rotate(this.store.data.gridRotate * Math.PI / 180);
+      ctx.translate(-this.width / 2, -this.height / 2);
+    }
     ctx.lineWidth = 1;
     ctx.strokeStyle = this.store.data.gridColor || this.store.options.gridColor;
     ctx.beginPath();
     const size = (this.store.data.gridSize || this.store.options.gridSize) * this.store.data.scale;
-    for (let i = size; i < this.width; i += size) {
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, this.height);
+    const longSide = Math.max(this.width, this.height);
+    const count = Math.ceil(longSide / size);
+    for (let i = -size * count; i < longSide * 2; i += size) {
+      ctx.moveTo(i, -longSide);
+      ctx.lineTo(i, longSide * 2);
     }
-    for (let i = size; i < this.height; i += size) {
-      ctx.moveTo(0, i);
-      ctx.lineTo(this.width, i);
+    for (let i = -size * count; i < longSide * 2; i += size) {
+      ctx.moveTo(-longSide, i);
+      ctx.lineTo(longSide * 2, i);
     }
     ctx.stroke();
     ctx.restore();
