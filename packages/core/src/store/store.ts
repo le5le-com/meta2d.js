@@ -30,6 +30,7 @@ export interface TopologyData {
   grid?: boolean;
   gridColor?: string;
   gridSize?: number;
+  gridRotate?: number;
   rule?: boolean;
   ruleColor?: string;
   fromArrow?: string;
