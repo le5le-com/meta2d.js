@@ -1690,7 +1690,7 @@ export function setHover(pen: Pen, hover = true) {
   if (pen.children) {
     pen.children.forEach((id) => {
       // 子节点没有自己的独立hover，继承父节点hover
-      if (store.pens[id].hoverColor == null && store.pens[id].hoverBackground == null) {
+      if (store.pens[id]?.hoverColor == null && store.pens[id]?.hoverBackground == null) {
         setHover(store.pens[id], hover);
       }
     });
