@@ -898,7 +898,7 @@ export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.lineWidth = 1;
   ctx.fillStyle = pen.activeColor || store.options.activeColor;
   pen.calculative.worldAnchors.forEach((pt) => {
-    !pt.hidden && renderAnchor(ctx, pt, pen);
+    !pt.hidden && !pt.isTemp && renderAnchor(ctx, pt, pen);
   });
   ctx.restore();
 }

@@ -870,10 +870,10 @@ export class Canvas {
       }
       if (this.drawingLine) {
         const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
-        if (to.hidden) {
+        if (to.isTemp) {
           this.drawingLine.calculative.activeAnchor =
             this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2];
-          to.hidden = undefined;
+          to.isTemp = undefined;
         } else {
           this.drawingLine.calculative.activeAnchor = to;
           this.drawingLine.calculative.worldAnchors.push({
@@ -3036,9 +3036,9 @@ export class Canvas {
         this.dirtyPenRect(pen, true);
         const children = getAllChildren(pen);
         children.forEach((child) => {
-          if (!child.type) {
+          // if (!child.type) {
             this.updateLines(child);
-          }
+          // }
         });
         this.updateLines(pen);
       }
