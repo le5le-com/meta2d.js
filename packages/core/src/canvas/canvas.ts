@@ -470,7 +470,12 @@ export class Canvas {
           this.drawingLineName = this.store.options.drawingLineName;
         } else if (this.store.active) {
           this.store.active.forEach((pen) => {
-            if (pen.type) {
+            if (pen.name === 'line') {
+              if (pen.type && !pen.close) {
+                pen.type = PenType.Node;
+              } else if (!pen.type && pen.close) {
+                pen.type = PenType.Line;
+              }
               pen.close = !pen.close;
               this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
               this.dirty = true;
