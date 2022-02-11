@@ -370,6 +370,7 @@ export function calcRelativePoint(pt: Point, worldRect: Rect) {
     y: worldRect.height ? (pt.y - worldRect.y) / worldRect.height : 0,
     anchorId: pt.anchorId,
     prevNextType: pt.prevNextType,
+    hidden: pt.hidden,
   };
   if (pt.prev) {
     point.prev = {

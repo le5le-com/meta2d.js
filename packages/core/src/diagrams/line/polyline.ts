@@ -327,16 +327,16 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
   }
 
   if (pen.calculative.worldAnchors.length) {
-    to.hidden = undefined;
+    to.isTemp = undefined;
     if (pen.calculative.drawlineH) {
       pts.push({ x: to.x, y: from.y });
       if (Math.abs(to.y - from.y) < faceSpace) {
-        to.hidden = true;
+        to.isTemp = true;
       }
     } else {
       pts.push({ x: from.x, y: to.y });
       if (Math.abs(to.x - from.x) < faceSpace) {
-        to.hidden = true;
+        to.isTemp = true;
       }
     }
   }

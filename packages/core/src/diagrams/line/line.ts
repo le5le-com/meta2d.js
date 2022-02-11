@@ -46,7 +46,7 @@ export function lineSegment(store: TopologyStore, pen: Pen, mousedwon?: Point) {
 }
 
 function draw(path: CanvasRenderingContext2D | Path2D, from: Point, to: Point) {
-  if (!to || to.hidden) {
+  if (!to || to.isTemp) {
     return;
   }
   if (from.next) {

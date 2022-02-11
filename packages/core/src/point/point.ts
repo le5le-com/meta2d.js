@@ -33,6 +33,7 @@ export interface Point {
   rotate?: number;
   hidden?: boolean;
   flag?: number;
+  isTemp?: boolean;  // 临时绘制的点
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
