@@ -6,10 +6,12 @@
 -->
 <script setup lang="ts">
 import { onMounted } from "vue";
-import "../../../../dist/topology/topology.js";
+import { Topology } from "../../../../packages/core";
+import { register as registerEcharts } from "../../../../packages/chart-diagram";
 
 onMounted(() => {
-  new (window as any).Topology("topology");
+  new Topology("topology");
+  registerEcharts();
 });
 </script>
 
