@@ -16,6 +16,7 @@ export interface Options {
   anchorRadius?: number;
   anchorBackground?: string;
   dockColor?: string;
+  dockPenColor?: string;
   dragColor?: string;
   animateColor?: string;
   textColor?: string;
@@ -78,6 +79,7 @@ export const defaultOptions: Options = {
   anchorRadius: 4,
   anchorBackground: '#fff',
   dockColor: '#eb5ef7',
+  dockPenColor: '#1890FF',
   dragColor: '#1890ff',
   rotateCursor: 'rotate.cur',
   hoverCursor: 'pointer',

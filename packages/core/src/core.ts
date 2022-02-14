@@ -182,6 +182,11 @@ export class Topology {
     this.canvas.render(now);
   }
 
+  setBackgroundImage(url: string) {
+    this.store.data.bkImage = url;
+    this.canvas.canvas.style.backgroundImage = `url(${url})`;
+  }
+
   open(data?: TopologyData) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
@@ -196,6 +201,9 @@ export class Topology {
       if (data.paths) {
         // 存在 svgPath 存储到 globalStore.paths 中
         Object.assign(globalStore.paths, data.paths);
+      }
+      if (data.bkImage) {
+        this.setBackgroundImage(data.bkImage);
       }
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
