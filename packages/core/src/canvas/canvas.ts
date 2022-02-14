@@ -163,7 +163,8 @@ export class Canvas {
 
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
-    this.canvas.style.background = '#f4f4f4';
+    this.canvas.style.backgroundRepeat = 'no-repeat';
+    this.canvas.style.backgroundSize = '100% 100%';
 
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
@@ -4026,7 +4027,7 @@ export class Canvas {
     ctx.save();
     ctx.arc(r, r, r, 0, Math.PI * 2, false);
     ctx.clip();
-    ctx.fillStyle = this.store.data.background || this.canvas.style.backgroundColor;
+    ctx.fillStyle = this.store.data.background || this.store.options.background || '#f4f4f4';
     ctx.fillRect(0, 0, size, size);
     ctx.translate(-r, -r);
     ctx.scale(2, 2);

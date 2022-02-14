@@ -162,7 +162,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
 
-  const store = pen.calculative.canvas.store;
+  const store: TopologyStore = pen.calculative.canvas.store;
 
   let fill: any;
   // 该变量控制在 hover active 状态下的节点是否设置填充颜色
@@ -179,9 +179,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     fill && (setBack = false);
   } else if (pen.calculative.isDock) {
     if (pen.type === PenType.Line) {
-      ctx.strokeStyle = store.options.dockColor;
+      ctx.strokeStyle = store.options.dockPenColor;
     } else {
-      fill = rgba(store.options.dockColor, 0.2);
+      fill = rgba(store.options.dockPenColor, 0.2);
       ctx.fillStyle = fill;
       fill && (setBack = false);
     }

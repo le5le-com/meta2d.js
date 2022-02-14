@@ -38,6 +38,7 @@ export interface TopologyData {
   lineWidth?: number;
   color?: string;   // 画布默认 color 优先级高于 options.color
   paths?: { [key: string]: string };  // paths 该图纸使用到的 svgPath 需要保存到 globalStore.paths 中
+  bkImage?: string; // 背景图片
 }
 
 export enum EditType {
