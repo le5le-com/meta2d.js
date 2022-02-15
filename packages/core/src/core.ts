@@ -114,7 +114,7 @@ export class Topology {
     };
     this.events[EventAction.SetProps] = (pen: any, e: Event) => {
       const rect = this.getPenRect(pen);
-      this.updateValue(pen, { ...rect, ...e.value });
+      this.setValue({ id: pen.id, ...rect, ...e.value });
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {
@@ -717,19 +717,19 @@ export class Topology {
         message = [message];
       }
       message.forEach((item: any) => {
-        this.setValue(item);
+        this.setValue(item, true);
       });
     } catch (error) {
       console.warn('Invalid socket data:', error);
     }
   }
 
-  setValue(data: any) {
+  setValue(data: any, emit = false) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       this.updateValue(pen, data);
       pen.onValue && pen.onValue(pen);
-      this.store.data.locked && this.doEvent(pen, 'valueUpdate');
+      emit && this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
 
     if (!this.store.data.locked && this.store.active.length) {
@@ -986,7 +986,7 @@ export class Topology {
    * 目前只更改 width ，height ，fontSize
    * @param pens 画笔们
    */
-  beSameByFirst(pens: Pen[] = this.store.data.pens) {
+  beSameByFirst(pens: Pen[] = this.store.data.pens, emit = false) {
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
 
     // 1. 得到第一个画笔的 宽高 字体大小
@@ -1000,7 +1000,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       penRect.width = width;
       penRect.height = height;
-      this.setValue({ id: pen.id, fontSize, ...penRect });
+      this.setValue({ id: pen.id, fontSize, ...penRect }, emit);
     }
 
     this.canvas.calcActiveRect();
@@ -1011,11 +1011,11 @@ export class Topology {
     });
   }
 
-  alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect) {
+  alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect, emit = false) {
     !rect && (rect = this.getPenRect(this.getRect(pens)));
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     for (const item of pens) {
-      this.alignPen(align, item, rect);
+      this.alignPen(align, item, rect, emit);
     }
     this.canvas.calcActiveRect();
     this.pushHistory({
@@ -1030,13 +1030,13 @@ export class Topology {
    * @param align 左对齐，右对齐，上对齐，下对齐，居中对齐
    * @param pens
    */
-  alignNodesByFirst(align: string, pens: Pen[] = this.store.data.pens) {
+  alignNodesByFirst(align: string, pens: Pen[] = this.store.data.pens, emit = false) {
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     const firstPen = pens[0];
     const rect = this.getPenRect(firstPen);
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      this.alignPen(align, pen, rect);
+      this.alignPen(align, pen, rect, emit);
     }
     this.canvas.calcActiveRect();
     this.pushHistory({
@@ -1053,7 +1053,7 @@ export class Topology {
    * @param rect 参照矩形
    * @returns
    */
-  private alignPen(align: string, pen: Pen, rect: Rect) {
+  private alignPen(align: string, pen: Pen, rect: Rect, emit = false) {
     if (pen.type === PenType.Line) {
       return;
     }
@@ -1078,7 +1078,7 @@ export class Topology {
         penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
         break;
     }
-    this.setValue({ id: pen.id, ...penRect });
+    this.setValue({ id: pen.id, ...penRect }, emit);
   }
 
   /**
@@ -1090,7 +1090,8 @@ export class Topology {
   private spaceBetweenByDirection(
     direction: 'width' | 'height',
     pens: Pen[] = this.store.data.pens,
-    distance?: number
+    distance?: number,
+    emit = false
   ) {
     !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
     // 过滤出 node 节点 pens
@@ -1120,7 +1121,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this.setValue({ id: pen.id, ...penRect });
+      this.setValue({ id: pen.id, ...penRect }, emit);
     }
     this.pushHistory({
       type: EditType.Update,
@@ -1129,15 +1130,15 @@ export class Topology {
     });
   }
 
-  spaceBetween(pens?: Pen[], width?: number) {
-    this.spaceBetweenByDirection('width', pens, width);
+  spaceBetween(pens?: Pen[], width?: number, emit = false) {
+    this.spaceBetweenByDirection('width', pens, width, emit);
   }
 
-  spaceBetweenColumn(pens?: Pen[], height?: number) {
-    this.spaceBetweenByDirection('height', pens, height);
+  spaceBetweenColumn(pens?: Pen[], height?: number, emit = false) {
+    this.spaceBetweenByDirection('height', pens, height, emit);
   }
 
-  layout(pens: Pen[] = this.store.data.pens, width?: number, space: number = 30) {
+  layout(pens: Pen[] = this.store.data.pens, width?: number, space: number = 30, emit = false) {
     const rect = this.getPenRect(getRect(pens));
     !width && (width = rect.width);
 
@@ -1159,7 +1160,7 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this.setValue({ id: pen.id, ...penRect });
+      this.setValue({ id: pen.id, ...penRect }, emit);
 
       if (index === pens.length - 1) {
         return;
@@ -1472,15 +1473,15 @@ export class Topology {
     return deepClone(pens);
   }
 
-  setVisible(pen: Pen, visible: boolean) {
+  setVisible(pen: Pen, visible: boolean, emit = false) {
     this.setValue({
       id: pen.id,
       visible,
-    });
+    }, emit);
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.find(childId)[0];
-        child && this.setVisible(child, visible);
+        child && this.setVisible(child, visible, emit);
       }
     }
   }
