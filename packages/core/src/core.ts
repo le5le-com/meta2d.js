@@ -202,9 +202,7 @@ export class Topology {
         // 存在 svgPath 存储到 globalStore.paths 中
         Object.assign(globalStore.paths, data.paths);
       }
-      if (data.bkImage) {
-        this.setBackgroundImage(data.bkImage);
-      }
+      this.setBackgroundImage(data.bkImage);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
       // 第一遍赋初值
