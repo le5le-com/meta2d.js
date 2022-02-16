@@ -353,7 +353,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 
-  if (pen.image && pen.calculative.img) {
+  if (pen.name !== 'gif' && pen.image && pen.calculative.img) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
