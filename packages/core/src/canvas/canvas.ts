@@ -1887,6 +1887,12 @@ export class Canvas {
 
     const action = this.store.histories[this.store.historyIndex--];
     this.doEditAction(action, true);
+    let step = action.step;
+    while (step > 1) {
+      const action = this.store.histories[this.store.historyIndex--];
+      this.doEditAction(action, true);
+      step--;
+    }
   }
 
   redo() {
@@ -1900,6 +1906,12 @@ export class Canvas {
 
     const action = this.store.histories[++this.store.historyIndex];
     this.doEditAction(action, false);
+    let step = action.step;
+    while (step > 1) {
+      const action = this.store.histories[++this.store.historyIndex];
+      this.doEditAction(action, false);
+      step--;
+    }
   }
 
   doEditAction(action: EditAction, undo: boolean) {
@@ -1913,6 +1925,7 @@ export class Canvas {
           const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
           if (i > -1) {
             this.store.data.pens.splice(i, 1);
+            this.store.pens[pen.id] = undefined;
           }
         });
         action.type = EditType.Delete;
@@ -1922,8 +1935,8 @@ export class Canvas {
         pens.forEach((pen) => {
           const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
           if (i > -1) {
-            Object.assign(this.store.data.pens[i], pen);
-            pen = this.store.data.pens[i];
+            pen.calculative = this.store.data.pens[i].calculative;
+            this.store.data.pens[i] = pen;
             this.store.pens[pen.id] = pen;
             for (const k in pen) {
               if (typeof pen[k] !== 'object' || k === 'lineDash') {
@@ -1939,6 +1952,7 @@ export class Canvas {
       case EditType.Delete:
         action.pens.forEach((pen) => {
           this.store.data.pens.splice(pen.calculative.layer, 0, pen);
+          this.store.pens[pen.id] = pen;
         });
         action.type = EditType.Add;
         break;
