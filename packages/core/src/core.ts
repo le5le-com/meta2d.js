@@ -486,9 +486,15 @@ export class Topology {
       return;
     }
 
+    const initPens = deepClone(pens);
     if (pens.length === 1 && pens[0].type) {
       pens[0].type = PenType.Node;
       this.canvas.active(pens);
+      this.pushHistory({
+        type: EditType.Update,
+        initPens,
+        pens,
+      });
       this.render();
       return;
     }
@@ -533,6 +539,17 @@ export class Topology {
       // pen.type = PenType.Node;
     });
     this.canvas.active([parent]);
+    this.pushHistory({
+      type: EditType.Add,
+      pens: [parent],
+      step: 2
+    });
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+      step: 2
+    });
     this.render();
 
     this.store.emitter.emit('add', [parent]);
@@ -546,8 +563,9 @@ export class Topology {
       return;
     }
 
-    pen.children.forEach((id) => {
-      const child: Pen = this.store.pens[id];
+    const children = this.store.data.pens.filter((child) => pen.children.includes(child.id));
+    let initPens = deepClone(children);
+    children.forEach((child) => {
       child.parentId = undefined;
       child.x = child.calculative.worldRect.x;
       child.y = child.calculative.worldRect.y;
@@ -555,10 +573,28 @@ export class Topology {
       child.height = child.calculative.worldRect.height;
       child.locked = LockState.None;
       child.calculative.active = undefined;
+      child.calculative.hover = false;
     });
+    const step = pen.name === 'combine' ? 3 : 2;
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens: children,
+      step
+    });
+    initPens = [deepClone(pen)];
     pen.children = undefined;
+    // 保存修改 children 的历史记录
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens: [pen],
+      step
+    });
     if (pen.name === 'combine') {
       this.delete([pen]);
+      // delete 会记录 history , 更改 step 即可
+      this.store.histories[this.store.histories.length - 1].step = step;
     }
     this.inactive();
   }

@@ -51,6 +51,7 @@ export interface EditAction {
   type?: EditType;
   initPens?: Pen[];
   pens?: Pen[];
+  step?: number;   // 多次历史记录记为一次， step >= 2
 }
 
 export interface TopologyStore {
