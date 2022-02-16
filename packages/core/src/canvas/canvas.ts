@@ -4109,7 +4109,10 @@ export class Canvas {
       ctx.restore();
     }
     ctx.translate(-rect.x, -rect.y);
-    for (const pen of this.store.data.pens) {
+    for (let pen of this.store.data.pens) {
+      if (pen.name === 'gif') {  // gif 生成图片时，绘制静态图片
+        pen = { ...pen, name: 'image' };
+      }
       renderPen(ctx, pen);
     }
     if (callback) {
