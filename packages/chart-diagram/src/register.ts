@@ -4,10 +4,11 @@ import { echarts, echartsList } from './echarts';
 import { highcharts, highchartsList } from './highcharts';
 import { lightningCharts, lightningChartsList } from './LightningChart';
 declare const topology: any;
+declare const window: Window;
 
 export function register(_echarts?: any) {
   echartsList.echarts = _echarts;
-  if (!echartsList.echarts && !(echarts as any)) {
+  if (!echartsList.echarts && !(window as any).echarts) {
     const loaderScript = document.createElement('script');
     loaderScript.type = 'text/javascript';
     loaderScript.src =
@@ -22,7 +23,7 @@ export function register(_echarts?: any) {
 
 export function registerHighcharts(_highcharts?: any) {
   highchartsList.hightcharts = _highcharts;
-  if (!highchartsList.highcharts && !(highcharts as any)) {
+  if (!highchartsList.highcharts && !(window as any).Highcharts) {
     const loaderScript = document.createElement('script');
     loaderScript.type = 'text/javascript';
     loaderScript.src = 'http://cdn.highcharts.com.cn/highcharts/highcharts.js';
@@ -31,14 +32,14 @@ export function registerHighcharts(_highcharts?: any) {
     });
     document.body.appendChild(loaderScript);
 
-    // const mloaderScript = document.createElement('script');
-    // mloaderScript.type = 'text/javascript';
-    // mloaderScript.src =
-    //   'https://cdn.highcharts.com.cn/highcharts/highcharts-more.js';
-    // mloaderScript.addEventListener('load', () => {
-    //   topology.render(Infinity);
-    // });
-    // document.body.appendChild(mloaderScript);
+    const mloaderScript = document.createElement('script');
+    mloaderScript.type = 'text/javascript';
+    mloaderScript.src =
+      'https://cdn.highcharts.com.cn/highcharts/highcharts-more.js';
+    mloaderScript.addEventListener('load', () => {
+      topology.render(Infinity);
+    });
+    document.body.appendChild(mloaderScript);
     // const loaderScriptexport = document.createElement('script');
     // loaderScriptexport.type = 'text/javascript';
     // loaderScriptexport.src =
@@ -62,10 +63,10 @@ export function registerHighcharts(_highcharts?: any) {
 
 export function registerLightningChart(_lightningCharts?: any) {
   lightningChartsList.lightningChart = _lightningCharts;
-  if (!lightningChartsList.lightningChart && !(lightningCharts as any)) {
+  if (!lightningChartsList.lightningChart && !(window as any).lcjs) {
     const loaderScript = document.createElement('script');
     loaderScript.type = 'text/javascript';
-    loaderScript.src = 'lcjs.iife.js';
+    loaderScript.src = 'js/lcjs.iife.js';  // TODO: 必须放在该路径下的 lcjs 才可以正常使用
     loaderScript.addEventListener('load', () => {
       topology.render(Infinity);
     });
