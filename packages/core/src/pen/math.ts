@@ -20,14 +20,6 @@ export function calcAnchorDock(
       continue;
     }
 
-    if (store.active[0]?.connectedLines) {
-      for (const item of store.active[0].connectedLines) {
-        if (item.lineId === pen.id) {
-          continue;
-        }
-      }
-    }
-
     // 得到图形的全部点
     const points = getPointsByPen(pen);
     points.forEach((pt) => {
@@ -408,17 +400,13 @@ function calcDockByPoints(
   let x = Infinity;
   let y = Infinity;
   const size = 8;
-  outer: for (const pen of store.data.pens) {
+  for (const pen of store.data.pens) {
     if (pen.calculative.active || pen.calculative.inView === false) {
       continue;
     }
 
-    if (store.active[0]?.connectedLines) {
-      for (const item of store.active[0].connectedLines) {
-        if (item.lineId === pen.id) {
-          continue outer;   // 跳出外层 for 循环
-        }
-      }
+    if (isConnectLine(store, store.active, pen.id)) {
+      continue;
     }
 
     // 得到图形的全部点
@@ -463,6 +451,33 @@ function calcDockByPoints(
     xDock,
     yDock,
   };
+}
+
+/**
+ * 判断 lindId 是否是 active 的连接线（并且计算子节点）
+ * @param store 
+ * @param active 本次计算的画笔们
+ * @param lineId 判断是否为该组件的连线 id
+ * @returns 
+ */
+function isConnectLine(store: TopologyStore, active: Pen[], lineId: string) {
+  if (Array.isArray(active)) {
+    for (const pen of active) {
+      if (Array.isArray(pen?.connectedLines)) {
+        for (const line of pen?.connectedLines) {
+          if (line.lineId === lineId) {
+            return true;
+          }
+        }
+      }
+      // 考虑子节点
+      const children = store.data.pens.filter((item) => item.parentId === pen.id);
+      if (isConnectLine(store, children, lineId)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
