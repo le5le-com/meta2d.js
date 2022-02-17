@@ -2080,7 +2080,11 @@ export class Canvas {
     }
 
     const from = this.drawingLine.calculative.worldAnchors[0];
-    const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    let to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    if (to.isTemp) {
+      this.drawingLine.calculative.worldAnchors.pop();
+      to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    }
     !end && !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
     if (!end) {
       if (this.drawingLine.calculative.worldAnchors[0] === this.drawingLine.calculative.activeAnchor) {
