@@ -6,8 +6,8 @@
 -->
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { Topology } from "../../../../packages/core";
-import { register as registerEcharts } from "../../../../packages/chart-diagram";
+import { Topology } from "@topology/core";
+import { register as registerEcharts } from "@topology/chart-diagram";
 
 onMounted(() => {
   new Topology("topology");

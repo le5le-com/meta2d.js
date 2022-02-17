@@ -5,7 +5,7 @@
  * @LastEditTime: 2021-10-12 11:46:58
  */
 import React, { useEffect } from 'react';
-import { Topology } from '../../../../dist/topology/topology';
+import { Topology } from '@topology/core';
 
 const TopologyContainer = () => {
   useEffect(() => {
