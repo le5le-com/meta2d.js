@@ -3923,9 +3923,6 @@ export class Canvas {
         willCalcIconRect = true;
       }
     }
-    pen.calculative.image = undefined;
-    pen.calculative.backgroundImage = undefined;
-    pen.calculative.strokeImage = undefined;
 
     this.setCalculativeByScale(pen);  // 该方法计算量并不大，所以每次修改都计算一次
     if (willDirtyPenRect) {
@@ -3941,6 +3938,9 @@ export class Canvas {
       globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     }
     if (data.image || data.backgroundImage || data.strokeImage) {
+      pen.calculative.image = undefined;
+      pen.calculative.backgroundImage = undefined;
+      pen.calculative.strokeImage = undefined;
       this.loadImage(pen);
     }
   }
