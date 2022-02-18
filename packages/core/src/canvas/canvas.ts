@@ -530,6 +530,7 @@ export class Canvas {
       if (!json) return;
       let obj = JSON.parse(json);
       event.preventDefault();
+      event.stopPropagation();
 
       obj = Array.isArray(obj) ? obj : [obj];
       const pt = { x: event.offsetX, y: event.offsetY };
@@ -2117,6 +2118,49 @@ export class Canvas {
     }
   }
 
+  /**
+   * 火狐浏览器无法绘制 svg 不存在 width height 的问题
+   * 此方法手动添加 width 和 height 解决火狐浏览器绘制 svg
+   * @param pen
+   */
+  private firefoxLoadSvg(pen: Pen) {
+    const img = new Image();
+    // request the XML of your svg file
+    const request = new XMLHttpRequest();
+    request.open('GET', pen.image, true)
+    
+    request.onload = () => {
+      // once the request returns, parse the response and get the SVG
+      const parser = new DOMParser();
+      const result = parser.parseFromString(request.responseText, 'text/xml');
+      const inlineSVG = result.getElementsByTagName("svg")[0];
+      
+      const { width, height } = pen.calculative.worldRect;
+      // add the attributes Firefox needs. These should be absolute values, not relative
+      inlineSVG.setAttribute('width', `${width}px`);
+      inlineSVG.setAttribute('height', `${height}px`);
+      
+      // convert the SVG to a data uri
+      const svg64 = btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(inlineSVG))));
+      const image64 = 'data:image/svg+xml;base64,' + svg64;
+      
+      // set that as your image source
+      img.src = image64;
+    
+      // do your canvas work
+      img.onload = () => {
+        pen.calculative.img = img;
+        pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
+        pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
+        globalStore.htmlElements[pen.image] = img;
+        this.dirty = true;
+        this.imageLoaded();
+      }
+    }
+    // send the request
+    request.send();
+  }
+
   loadImage(pen: Pen) {
     if (pen.image !== pen.calculative.image) {
       pen.calculative.img = undefined;
@@ -2127,17 +2171,22 @@ export class Canvas {
           pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
           pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
         } else {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = pen.image;
-          img.onload = () => {
-            pen.calculative.img = img;
-            pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
-            pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
-            globalStore.htmlElements[pen.image] = img;
-            this.dirty = true;
-            this.imageLoaded();
-          };
+          if (navigator.userAgent.includes('Firefox') && pen.image.endsWith('.svg')) {
+            // 火狐浏览器 svg 图片需要特殊处理
+            this.firefoxLoadSvg(pen);
+          } else {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = pen.image;
+            img.onload = () => {
+              pen.calculative.img = img;
+              pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
+              pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
+              globalStore.htmlElements[pen.image] = img;
+              this.dirty = true;
+              this.imageLoaded();
+            };
+          }
         }
       }
       pen.calculative.image = pen.image;
