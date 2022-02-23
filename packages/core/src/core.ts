@@ -193,6 +193,7 @@ export class Topology {
     }
 
     clearStore(this.store);
+    this.hideInput();
     this.canvas.tooltip.hide();
     this.canvas.activeRect = undefined;
     this.canvas.sizeCPs = undefined;
