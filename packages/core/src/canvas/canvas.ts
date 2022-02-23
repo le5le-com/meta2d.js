@@ -3712,11 +3712,11 @@ export class Canvas {
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
       const pen = this.store.pens[this.input.dataset.penId];
-      // pen.calculative.text 恢复
-      pen.calculative.text = pen.text;
       if (!pen) {
         return;
       }
+      // pen.calculative.text 恢复
+      pen.calculative.text = pen.text;
 
       if (pen.onInput) {
         pen.onInput(pen, this.input.value);
