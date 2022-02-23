@@ -3729,7 +3729,7 @@ export class Canvas {
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
         this.inputRight.style.transform = 'rotate(135deg)';
-      } else if (pen.dropdownList) {
+      } else if (pen?.dropdownList) {
         this.dropdown.style.display = 'block';
         this.inputRight.style.transform = 'rotate(315deg)';
       }
