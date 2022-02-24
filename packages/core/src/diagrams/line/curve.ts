@@ -24,12 +24,14 @@ export function curve(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     if (!from.next) {
       const fromFace = facePen(from, store.pens[from.connectTo]);
       calcCurveCP(from, fromFace, 50);
+      from.prev = undefined;
     }
 
     const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
     if (to && to !== from && !to.prev) {
       const toFace = facePen(to, store.pens[to.connectTo]);
       calcCurveCP(to, toFace, -50);
+      to.next = undefined;
     }
   }
 }

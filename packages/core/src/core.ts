@@ -193,6 +193,7 @@ export class Topology {
     }
 
     clearStore(this.store);
+    this.hideInput();
     this.canvas.tooltip.hide();
     this.canvas.activeRect = undefined;
     this.canvas.sizeCPs = undefined;
@@ -804,11 +805,11 @@ export class Topology {
         this.onSizeUpdate();
         break;
       case 'enter':
-        e.pen && e.pen.onMouseEnter && e.pen.onMouseEnter(e.pen, this.canvas.mousePos);
+        e && e.onMouseEnter && e.onMouseEnter(e, this.canvas.mousePos);
         this.store.data.locked && this.doEvent(e, eventName);
         break;
       case 'leave':
-        e.pen && e.pen.onMouseLeave && e.pen.onMouseLeave(e.pen, this.canvas.mousePos);
+        e && e.onMouseLeave && e.onMouseLeave(e, this.canvas.mousePos);
         this.store.data.locked && this.doEvent(e, eventName);
         break;
       case 'active':
