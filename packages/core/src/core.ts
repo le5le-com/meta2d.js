@@ -252,8 +252,11 @@ export class Topology {
   }
 
   drawingPencil() {
-    this.canvas.pencil = true;
-    this.canvas.externalElements.style.cursor = 'crosshair';
+    this.canvas.drawingPencil();
+  }
+
+  stopPencil() {
+    this.canvas.stopPencil();
   }
 
   // end  - 当前鼠标位置，是否作为终点
