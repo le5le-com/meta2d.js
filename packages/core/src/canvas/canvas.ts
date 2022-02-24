@@ -443,13 +443,12 @@ export class Canvas {
         if (e.ctrlKey || e.metaKey) {
           this.paste();
         } else {
-          this.drawingLineName = this.drawingLineName ? '' : 'curve';
+          this.drawingLineName = this.drawingLineName ? '' : this.store.options.drawingLineName;
         }
         break;
       case 'b':
       case 'B':
-        this.pencil = true;
-        this.externalElements.style.cursor = 'crosshair';
+        this.drawingPencil();
         break;
       case 'y':
       case 'Y':
@@ -490,10 +489,8 @@ export class Canvas {
           this.finishDrawline();
         }
         this.drawingLineName = undefined;
-        this.pencil = undefined;
-        this.pencilLine = undefined;
+        this.stopPencil();
         this.hotkeyType = HotkeyType.None;
-        this.externalElements.style.cursor = 'default';
         if (this.magnifier) {
           this.magnifier = false;
           this.render(Infinity);
@@ -2047,6 +2044,17 @@ export class Canvas {
         pen.anchors.push(calcRelativePoint(pt, pen.calculative.worldRect));
       });
     }
+  }
+
+  drawingPencil() {
+    this.pencil = true;
+    this.externalElements.style.cursor = 'crosshair';
+  }
+
+  stopPencil() {
+    this.pencil = false;
+    this.pencilLine = undefined;
+    this.externalElements.style.cursor = 'default';
   }
 
   finishDrawline(end?: boolean) {
