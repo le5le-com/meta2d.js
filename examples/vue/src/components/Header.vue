@@ -47,6 +47,7 @@ const onTogglePencil = () => {
   }
   if (isPencilActive.value === true) {
     isPencilActive.value = false;
+    // TODO: 新版本发布后，使用 stopPencil()
     window.topology.finishPencil();
   } else {
     isPencilActive.value = true;
