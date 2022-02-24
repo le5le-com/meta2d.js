@@ -1,6 +1,6 @@
 {
   "name": "topology.js",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "The bundle of topology.",
   "main": "topology.js",
   "scripts": {
