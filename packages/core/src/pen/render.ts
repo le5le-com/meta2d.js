@@ -299,7 +299,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       if (pen.calculative.animatePos) {
         ctx.save();
         ctx.strokeStyle = pen.animateColor || store.options.animateColor;
-        let len: number;
+        let len = 0;
         switch (pen.lineAnimateType) {
           case 1:
             if (pen.animateReverse) {
@@ -319,7 +319,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
             } else {
               ctx.lineDashOffset = pen.length - pen.calculative.animatePos;
             }
-            len = pen.calculative.lineWidth * 2 || 6;
+            len = pen.calculative.animateDotSize || pen.calculative.lineWidth * 2 || 6;
             if (len < 6) {
               len = 6;
             }
