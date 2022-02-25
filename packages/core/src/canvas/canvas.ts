@@ -2770,6 +2770,7 @@ export class Canvas {
       };
       pen.onResize && pen.onResize(pen);
       this.dirtyPenRect(pen, true);
+      this.updateLines(pen);
     });
     this.getSizeCPs();
     this.render(Infinity);
