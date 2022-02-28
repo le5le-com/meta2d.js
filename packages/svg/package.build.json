@@ -1,0 +1,34 @@
+{
+  "name": "@topology/svg",
+  "version": "1.0.0",
+  "description": "parse svg string to le5le topology pens.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "copy": "copyfiles  package.json ../../dist/svg/",
+    "build": "tsc && npm run copy"
+  },
+  "keywords": [
+    "topology",
+    "svg",
+    "canvas"
+  ],
+  "author": "alsmile123@qq.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/topology.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/topology.js/issues"
+  },
+  "homepage": "https://github.com/le5le-com/topology.js#readme",
+  "peerDependencies": {
+    "@topology/core": "^1.0.0",
+    "fast-xml-parser": "^4.0.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+}
