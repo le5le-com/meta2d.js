@@ -13,6 +13,7 @@ export interface Options {
   hoverColor?: string;
   hoverBackground?: string;
   anchorColor?: string;
+  hoverAnchorColor?: string;
   anchorRadius?: number;
   anchorBackground?: string;
   dockColor?: string;
@@ -73,12 +74,13 @@ export const defaultOptions: Options = {
   textAlign: 'center',
   textBaseline: 'middle',
   color: '#222222',
-  activeColor: '#1890ff',
-  hoverColor: '#ff7a45',
-  anchorColor: '#fa541c',
+  activeColor: '#278df8',
+  hoverColor: 'rgba(39,141,248,0.50)',
+  anchorColor: '#278DF8',
+  hoverAnchorColor: '#FF4101',
   anchorRadius: 4,
   anchorBackground: '#fff',
-  dockColor: '#eb5ef7',
+  dockColor: 'rgba(39,141,248,0.50)',
   dockPenColor: '#1890FF',
   dragColor: '#1890ff',
   rotateCursor: 'rotate.cur',

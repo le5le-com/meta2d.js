@@ -98,6 +98,7 @@ export interface Pen extends Rect {
   color?: string;
   background?: string;
   anchorColor?: string;
+  hoverAnchorColor?: string;
   hoverColor?: string;
   hoverBackground?: string;
   activeColor?: string;

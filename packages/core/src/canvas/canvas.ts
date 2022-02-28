@@ -2459,7 +2459,9 @@ export class Canvas {
         anchors.forEach((anchor) => {
           if (anchor === this.store.hoverAnchor) {
             ctx.save();
-            ctx.fillStyle = ctx.strokeStyle;
+            const hoverAnchorColor = this.store.hover.hoverAnchorColor || this.store.options.hoverAnchorColor;
+            ctx.strokeStyle = hoverAnchorColor;
+            ctx.fillStyle = hoverAnchorColor;
           }
           ctx.beginPath();
           let size = anchor.radius || this.store.hover.anchorRadius || this.store.options.anchorRadius;
