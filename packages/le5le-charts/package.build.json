@@ -1,16 +1,16 @@
 {
-  "name": "@topology/form-diagram",
+  "name": "@topology/le5le-charts",
   "version": "1.0.0",
-  "description": "The form library based on le5le topology.",
+  "description": "The le5le-charts library based on le5le topology.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/form-diagram/",
+    "copy": "copyfiles  package.json ../../dist/le5le-charts/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
     "topology",
-    "form",
+    "le5le-charts",
     "canvas"
   ],
   "author": "alsmile123@qq.com",
