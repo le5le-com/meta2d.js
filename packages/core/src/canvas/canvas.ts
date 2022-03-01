@@ -2862,7 +2862,7 @@ export class Canvas {
         const value: Pen = {
           globalAlpha: 0.5,
         }
-        if ([...isDomShapes, 'image'].includes(pen.name)) {
+        if ([...isDomShapes, 'image', 'combine'].includes(pen.name)) {
           value.name = 'rectangle';
           value.onMove = undefined;
         }

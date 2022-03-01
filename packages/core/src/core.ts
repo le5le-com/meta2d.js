@@ -497,7 +497,7 @@ export class Topology {
       this.pushHistory({
         type: EditType.Update,
         initPens,
-        pens,
+        pens: deepClone(pens, true),
       });
       this.render();
       return;
