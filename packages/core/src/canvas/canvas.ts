@@ -39,6 +39,7 @@ import {
   calcResizeDock,
   needDirtyPenRectProps,
   needCalcIconRectProps,
+  isDomShapes,
 } from '../pen';
 import {
   calcRotate,
@@ -114,6 +115,8 @@ export class Canvas {
   pencil?: boolean;
   pencilLine?: Pen;
 
+  movingPens: Pen[];
+
   dirtyLines?: Set<Pen> = new Set();
   dock: { xDock: Point; yDock: Point };
 
@@ -133,7 +136,6 @@ export class Canvas {
   animateRendering = false;
   renderTimer: any;
 
-  updatingPens?: boolean;
   initPens?: Pen[];
 
   pointSize = 8;
@@ -1167,9 +1169,6 @@ export class Canvas {
 >>>>>>> 48fadae (ctrl + 拖拽复制的操作限制 20防抖，防误操作)
           this.alreadyCopy = true;
           this.willInactivePen = undefined;
-          this.copy();
-          this.paste();
-          return;
         }
         if (this.store.active.length === 1) {
           if (
@@ -1388,8 +1387,40 @@ export class Canvas {
     this.clearDock();
     this.dragRect = undefined;
     this.initActiveRect = undefined;
-    this.updatingPens = undefined;
-    this.alreadyCopy = false;
+    if (this.movingPens) {
+      if (!this.alreadyCopy) {
+        // 鼠标松手才更新，此处是更新前的值
+        const initPens = deepClone(this.store.active);
+        this.store.active.forEach((pen, i: number) => {
+          const { x, y } = this.movingPens[i];
+          Object.assign(pen, {
+            x,y
+          });
+          pen.onMove && pen.onMove(pen);
+          this.dirtyPenRect(pen);
+        });
+        // 此处是更新后的值
+        this.pushHistory({
+          type: EditType.Update,
+          pens: deepClone(this.store.active),
+          initPens
+        })
+      } else {
+        // 复制行为
+        this.copy(this.store.active.map((pen, i: number) => {
+          const { x, y } = this.movingPens[i];
+          return {
+            ...pen,
+            x,y
+          };
+        }));
+        // 偏移量 0
+        this.pasteOffset = 0;
+        this.paste();
+        this.alreadyCopy = false;
+      }
+      this.movingPens = undefined;
+    }
   };
 
   private clearDock = () => {
@@ -2444,13 +2475,18 @@ export class Canvas {
     if (this.pencilLine) {
       renderPen(ctx, this.pencilLine);
     }
+    if (this.movingPens) {
+      this.movingPens.forEach((pen: Pen) => {
+        renderPen(ctx, pen);
+      });
+    }
     ctx.restore();
   };
 
   renderBorder = () => {
     if (!this.store.data.locked) {
       // Occupied territory.
-      if (this.activeRect && !(this.store.active.length === 1 && this.store.active[0].type)) {
+      if (this.activeRect && !(this.store.active.length === 1 && this.store.active[0].type) && !this.movingPens) {
         const ctx = this.offscreen.getContext('2d');
         ctx.save();
         ctx.translate(0.5, 0.5);
@@ -2554,6 +2590,7 @@ export class Canvas {
     // Draw size control points.
     if (
       this.hotkeyType !== HotkeyType.AddAnchor &&
+      !this.movingPens && // 不在移动中
       this.activeRect &&
       !(this.store.active.length === 1 && this.store.active[0].type)
     ) {
@@ -2807,6 +2844,31 @@ export class Canvas {
       return;
     }
 
+    if (!this.movingPens) {
+      this.movingPens = deepClone(this.store.active);
+      this.movingPens.forEach(pen => {
+        pen.calculative = { canvas: this };
+        pen.globalAlpha = 0.5;
+        if ([...isDomShapes, 'image'].includes(pen.name)) {
+          pen.name = 'rectangle';
+          pen.onMove = undefined;
+        }
+        for (const k in pen) {
+          if (typeof pen[k] !== 'object' || k === 'lineDash') {
+            pen.calculative[k] = pen[k];
+          }
+        }
+        pen.calculative.active = true;
+        pen.calculative.image = undefined;
+        pen.calculative.icon = undefined;
+        this.dirtyPenRect(pen);
+      });
+      this.store.active.forEach(pen => {
+        setHover(pen, false);
+      });
+      this.store.hover = undefined;
+    }
+
     let x = e.x - this.mouseDown.x;
     let y = e.y - this.mouseDown.y;
     e.shiftKey && !e.ctrlKey && (x = 0);
@@ -2820,9 +2882,9 @@ export class Canvas {
     if (!this.store.options.disableDockLine) {
       this.clearDock();
       if (this.customeMoveDock) {
-        this.dock = this.customeMoveDock(this.store, rect, this.store.active, offset);
+        this.dock = this.customeMoveDock(this.store, rect, this.movingPens, offset);
       } else {
-        this.dock = calcMoveDock(this.store, rect, this.store.active, offset);
+        this.dock = calcMoveDock(this.store, rect, this.movingPens, offset);
       }
       if (this.dock.xDock) {
         offset.x += this.dock.xDock.step;
@@ -2836,8 +2898,7 @@ export class Canvas {
       }
     }
 
-    this.updatingPens = true;
-    this.translatePens(this.store.active, offset.x, offset.y, true);
+    this.translatePens(this.movingPens, offset.x, offset.y, true);
   }
 
   moveLineAnchor(e: { x: number; y: number }) {
@@ -3064,8 +3125,8 @@ export class Canvas {
       return false;
     }
 
-    if (!doing || (this.updatingPens && !this.initPens)) {
-      this.initPens = deepClone(this.store.active);
+    if (!doing) {
+      this.initPens = deepClone(pens);
     }
 
     translateRect(this.activeRect, x, y);
@@ -3108,23 +3169,14 @@ export class Canvas {
     this.tooltip.translate(x, y);
     this.store.emitter.emit('translatePens', pens);
 
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
-    this.timer = setTimeout(() => {
-      this.timer = undefined;
-
-      const currentPens = [];
-      for (let pen of pens) {
-        currentPens.push(deepClone(pen));
-      }
+    if (!doing) {   // 单次的移动需要记历史记录
       this.pushHistory({
         type: EditType.Update,
-        pens: currentPens,
+        pens: deepClone(pens),
         initPens: this.initPens,
       });
       this.initPens = undefined;
-    }, 200);
+    }
   }
 
   private calcAutoAnchor(line: Pen, lineAnchor: Point, pen: Pen, penConnection?: any) {

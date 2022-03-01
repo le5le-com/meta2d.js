@@ -415,3 +415,16 @@ export interface Pen extends Rect {
   onShowInput?: (pen: Pen, e: Point) => void;
   onInput?: (pen: Pen, text: string) => void;
 }
+
+/**
+ * dom 类型的 图形
+ */
+export const isDomShapes = [
+  'gif',
+  'div',
+  'iframe',
+  'video',
+  'echarts',
+  'highcharts',
+  'lightningCharts'
+];

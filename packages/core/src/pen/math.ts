@@ -401,7 +401,7 @@ function calcDockByPoints(
   let y = Infinity;
   const size = 8;
   for (const pen of store.data.pens) {
-    if (pen.calculative.active || pen.calculative.inView === false) {
+    if (pen.calculative.inView === false) {
       continue;
     }
 
