@@ -492,6 +492,13 @@ export class Canvas {
         }
         this.drawingLineName = undefined;
         this.stopPencil();
+        if (this.movingPens) {
+          this.movingPens = undefined;
+          this.mouseDown = undefined;
+          this.clearDock();
+          this.calcActiveRect();
+          this.render(Infinity);
+        }
         this.hotkeyType = HotkeyType.None;
         if (this.magnifier) {
           this.magnifier = false;
@@ -634,7 +641,7 @@ export class Canvas {
     this.render(Infinity);
     this.store.emitter.emit('add', list);
     if (history) {
-      this.pushHistory({ type: EditType.Add, pens: list });
+      this.pushHistory({ type: EditType.Add, pens: deepClone(list, true) });
     }
     return list;
   }
@@ -1869,7 +1876,7 @@ export class Canvas {
 
     if (action.type !== EditType.Update && action.pens) {
       action.pens.forEach((pen) => {
-        pen.calculative.layer = this.store.data.pens.findIndex((p) => p === pen);
+        pen.calculative.layer = this.store.data.pens.findIndex((p) => p.id === pen.id);
       });
     }
 
@@ -1956,6 +1963,10 @@ export class Canvas {
         action.pens.forEach((pen) => {
           this.store.data.pens.splice(pen.calculative.layer, 0, pen);
           this.store.pens[pen.id] = pen;
+          if (!pen.calculative.canvas) {
+            pen.calculative.canvas = this;
+            globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+          }
         });
         action.type = EditType.Add;
         break;
@@ -2845,23 +2856,19 @@ export class Canvas {
     }
 
     if (!this.movingPens) {
-      this.movingPens = deepClone(this.store.active);
+      this.movingPens = deepClone(this.store.active, true);
       this.movingPens.forEach(pen => {
-        pen.calculative = { canvas: this };
-        pen.globalAlpha = 0.5;
+        pen.calculative.canvas = this;
+        const value: Pen = {
+          globalAlpha: 0.5,
+        }
         if ([...isDomShapes, 'image'].includes(pen.name)) {
-          pen.name = 'rectangle';
-          pen.onMove = undefined;
+          value.name = 'rectangle';
+          value.onMove = undefined;
         }
-        for (const k in pen) {
-          if (typeof pen[k] !== 'object' || k === 'lineDash') {
-            pen.calculative[k] = pen[k];
-          }
-        }
-        pen.calculative.active = true;
+        this.updateValue(pen, value);
         pen.calculative.image = undefined;
         pen.calculative.icon = undefined;
-        this.dirtyPenRect(pen);
       });
       this.store.active.forEach(pen => {
         setHover(pen, false);
