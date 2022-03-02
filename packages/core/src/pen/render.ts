@@ -215,7 +215,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       } else if (pen.calculative.bkType === Gradient.Radial) {
         back = drawBkRadialGradient(ctx, pen);
       } else {
-        back = pen.calculative.background;
+        back = pen.calculative.background || store.data.penBackground;
       }
       ctx.fillStyle = back;
       fill = !!back;

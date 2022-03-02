@@ -36,7 +36,8 @@ export interface TopologyData {
   fromArrow?: string;
   toArrow?: string;
   lineWidth?: number;
-  color?: string;   // 画布默认 color 优先级高于 options.color
+  color?: string;   // 画笔默认 color 优先级高于 options.color
+  penBackground?: string;   // 画笔默认背景色
   paths?: { [key: string]: string };  // paths 该图纸使用到的 svgPath 需要保存到 globalStore.paths 中
   bkImage?: string; // 背景图片
 }
