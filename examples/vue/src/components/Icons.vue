@@ -5,10 +5,11 @@
  * @LastEditTime: 2021-10-13 14:26:48
 -->
 <script setup lang="ts">
-declare const window: Window;
-
-import { nextTick } from "vue";
+import { nextTick, ref } from "vue";
 import { icons } from "../utils/data";
+import axios from "axios";
+import { parseSvg } from "@topology/svg";
+
 const onDragStart = (e: any, data) => {
   e.dataTransfer.setData("Topology", JSON.stringify(data));
 };
@@ -19,19 +20,36 @@ nextTick(() => {
   (window as any).registerToolsNew();
   (window as any).topologyTools = undefined;
 });
+
+const rIcons = ref(icons);
+axios.get("/T型开关A -C.svg").then((res) => {
+  const data = res.data;
+  const pens = parseSvg(data);
+  rIcons.value.push({
+    svg: "/T型开关A -C.svg",
+    title: "svg",
+    data: pens,
+  });
+});
 </script>
 
 <template>
   <div class="aside">
     <div class="icon-list">
-      <div v-for="icon in icons" :key="icon.key">
-        <i
-          draggable="true"
-          class="iconfont"
-          :class="`icon-${icon.key}`"
-          :title="icon.title"
-          @dragstart="onDragStart($event, icon.data)"
-        ></i>
+      <div
+        v-for="icon in rIcons"
+        draggable="true"
+        @dragstart="onDragStart($event, icon.data)"
+        :title="icon.title"
+      >
+        <i v-if="icon.key" class="iconfont" :class="`icon-${icon.key}`"></i>
+        <img
+          v-else-if="icon.svg"
+          :src="icon.svg"
+          alt=""
+          srcset=""
+          class="img"
+        />
       </div>
     </div>
     <div class="link">
@@ -40,4 +58,9 @@ nextTick(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.img {
+  width: 100%;
+  height: 100%;
+}
+</style>
