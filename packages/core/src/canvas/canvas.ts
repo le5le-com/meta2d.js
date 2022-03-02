@@ -1585,7 +1585,7 @@ export class Canvas {
     let hoverType = HoverType.None;
     for (let i = pens.length - 1; i >= 0; --i) {
       const pen = pens[i];
-      if (pen.visible == false || pen.locked === LockState.Disable) {
+      if (pen.visible == false || pen.calculative.inView == false || pen.locked === LockState.Disable) {
         continue;
       }
 
