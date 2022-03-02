@@ -1465,7 +1465,7 @@ export class Topology {
     }
   }
 
-  toComponent(pens?: Pen[]) {
+  toComponent(pens?: Pen[], showChild?: number) {
     if (!pens) {
       pens = this.store.data.pens;
     }
@@ -1485,11 +1485,12 @@ export class Topology {
       width: rect.width,
       height: rect.height,
       children: [],
+      showChild
     };
     const p = pens.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
-    if (p) {
+    if (p && showChild === undefined) {
       if (!p.children) {
         p.children = [];
       }
