@@ -1092,9 +1092,6 @@ export class Topology {
    * @returns
    */
   private alignPen(align: string, pen: Pen, rect: Rect, emit = false) {
-    if (pen.type === PenType.Line) {
-      return;
-    }
     const penRect = this.getPenRect(pen);
     switch (align) {
       case 'left':
@@ -1132,8 +1129,8 @@ export class Topology {
     emit = false
   ) {
     !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
-    // 过滤出 node 节点 pens
-    pens = pens.filter((item) => !item.type && !item.parentId);
+    // 过滤出非父节点
+    pens = pens.filter((item) => !item.parentId);
     if (pens.length <= 2) {
       return;
     }
