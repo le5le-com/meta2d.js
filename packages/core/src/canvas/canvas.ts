@@ -27,7 +27,6 @@ import {
   setChildrenActive,
   getParent,
   setHover,
-  getAllChildren,
   randomId,
   getPensLock,
   getToAnchor,
@@ -496,6 +495,9 @@ export class Canvas {
           this.movingPens = undefined;
           this.mouseDown = undefined;
           this.clearDock();
+          this.store.active?.forEach((pen) => {
+            this.updateLines(pen);
+          });
           this.calcActiveRect();
           this.render(Infinity);
         }
@@ -1405,6 +1407,7 @@ export class Canvas {
           });
           pen.onMove && pen.onMove(pen);
           this.dirtyPenRect(pen);
+          this.updateLines(pen);
         });
         // 此处是更新后的值
         this.pushHistory({
@@ -3150,16 +3153,9 @@ export class Canvas {
         this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
       } else {
         translateRect(pen.calculative.worldRect, x, y);
-        calcPenRect(pen);
+        this.dirtyPenRect(pen, true);
         pen.calculative.x = pen.x;
         pen.calculative.y = pen.y;
-        this.dirtyPenRect(pen, true);
-        const children = getAllChildren(pen);
-        children.forEach((child) => {
-          // if (!child.type) {
-            this.updateLines(child);
-          // }
-        });
         this.updateLines(pen);
       }
       pen.onMove && pen.onMove(pen);
@@ -3257,6 +3253,13 @@ export class Canvas {
   }
 
   updateLines(pen: Pen, change?: boolean) {
+    pen.children?.forEach((child: string) => {
+      const childPen = this.store.pens[child];
+      if (childPen) {
+        // 每个子节点都会更新 line，包括子节点是 type 1 的情况
+        this.updateLines(childPen, change);
+      }
+    });
     if (!pen.connectedLines) {
       return;
     }
