@@ -7,9 +7,11 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.2.16",
+    "@topology/chart-diagram": "^1.0.2",
     "@topology/core": "^1.0.2",
-    "@topology/chart-diagram": "^1.0.2"
+    "@topology/svg": "^1.0.0",
+    "axios": "^0.26.0",
+    "vue": "^3.2.16"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^1.9.3",
