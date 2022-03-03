@@ -64,7 +64,7 @@ import {
   translateRect,
 } from '../rect';
 import { EditAction, EditType, globalStore, TopologyStore } from '../store';
-import { deepClone, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
+import { deepClone, fileToBase64, uploadFile, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
 import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine, lineSegment } from '../diagrams';
@@ -529,17 +529,49 @@ export class Canvas {
     }
   };
 
-  ondrop = (event: any) => {
+  async fileToPen(file: File): Promise<Pen> {
+    let url = '';
+    if (this.store.options.uploadFn) {
+      url = await this.store.options.uploadFn(file);
+    } else if (this.store.options.uploadUrl) {
+      url = await uploadFile(file, this.store.options.uploadUrl, this.store.options.uploadParams, this.store.options.uploadHeaders);
+    } else {
+      url = await fileToBase64(file);
+    }
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        globalStore.htmlElements[url] = img;
+        resolve({
+          width: img.width,
+          height: img.height,
+          name: 'image',
+          image: url,
+        })
+      };
+      img.onerror = (e) => {
+        reject(e);
+      }
+      img.src = url;
+    });
+  }
+
+  ondrop = async (event: any) => {
     if (this.store.data.locked) {
       return;
     }
     try {
-      const json = event.dataTransfer.getData('Topology') || event.dataTransfer.getData('Text');
-      if (!json) return;
-      let obj = JSON.parse(json);
       event.preventDefault();
       event.stopPropagation();
-
+      const json = event.dataTransfer.getData('Topology') || event.dataTransfer.getData('Text');
+      let obj = null;
+      if (!json) {
+        const files = event.dataTransfer.files;
+        if (files.length) {
+          obj = await this.fileToPen(files[0]);
+        }
+      }
+      !obj && (obj = JSON.parse(json));
       obj = Array.isArray(obj) ? obj : [obj];
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
