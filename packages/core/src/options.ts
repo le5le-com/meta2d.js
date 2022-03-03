@@ -64,6 +64,10 @@ export interface Options {
   animateInterval?: number;
   dragAllIn?: boolean;
   scroll?: boolean;
+  uploadFn?: (file: File) => Promise<string>;  // uploadFn 优先级最高
+  uploadUrl?: string;
+  uploadParams?: object;
+  uploadHeaders?: { [key: string]: string };
 }
 
 export const defaultOptions: Options = {
