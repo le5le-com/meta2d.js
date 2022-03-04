@@ -678,8 +678,8 @@ export class Canvas {
 
   ontouchstart = (e: any) => {
     this.touchStart = performance.now();
-    const x = e.changedTouches[0].pageX - (window ? window.scrollX : 0);
-    const y = e.changedTouches[0].pageY - (window ? window.scrollY : 0);
+    const x = e.changedTouches[0].pageX;
+    const y = e.changedTouches[0].pageY;
 
     if (e.touches.length > 1) {
       this.touches = e.touches;
@@ -715,8 +715,8 @@ export class Canvas {
     }
     this.touchStart = now;
 
-    const x = event.touches[0].pageX - (window ? window.scrollX : 0);
-    const y = event.touches[0].pageY - (window ? window.scrollY : 0);
+    const x = event.touches[0].pageX;
+    const y = event.touches[0].pageY;
     if (len > 1) {
       if (len === 2) {
         if (now - this.touchStart < 200) {
@@ -755,8 +755,8 @@ export class Canvas {
     this.touches = undefined;
     this.touchCenter = undefined;
 
-    const x = event.changedTouches[0].pageX - (window ? window.scrollX : 0);
-    const y = event.changedTouches[0].pageY - (window ? window.scrollY : 0);
+    const x = event.changedTouches[0].pageX;
+    const y = event.changedTouches[0].pageY;
 
     this.onMouseUp({
       x,
