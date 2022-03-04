@@ -48,8 +48,8 @@ export const needCalcTextRectProps = [
   'textAlign',
   'textBaseline',
   'whiteSpace',
-  'ellipsis'
-]
+  'ellipsis',
+];
 
 export const needDirtyPenRectProps = [
   'x',
@@ -63,11 +63,7 @@ export const needDirtyPenRectProps = [
   'paddingLeft',
 ];
 
-export const needCalcIconRectProps = [
-  'iconLeft',
-  'iconTop',
-  'iconRotate'
-];
+export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
 export interface Pen extends Rect {
   id?: string;
@@ -120,7 +116,7 @@ export interface Pen extends Rect {
   shadowBlur?: number;
   shadowOffsetX?: number;
   shadowOffsetY?: number;
-  textHasShadow?: boolean;  // 文字是否需要阴影
+  textHasShadow?: boolean; // 文字是否需要阴影
 
   text?: string;
   textWidth?: number;
@@ -245,7 +241,7 @@ export interface Pen extends Rect {
 
   hiddenText?: boolean; // 隐藏 text
   keepDecimal?: number; // undefined 显示原内容；0 显示整数
-  showChild?: number;  // 第几个子元素展示 undefined 即展示全部
+  showChild?: number; // 第几个子元素展示 undefined 即展示全部
   animateDotSize?: number; // 线条原点动画，原点大小
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
@@ -344,7 +340,7 @@ export interface Pen extends Rect {
     strokeImg?: HTMLImageElement;
     active?: boolean;
     hover?: boolean;
-    isDock?: boolean;  // 是否是对齐参考画笔
+    isDock?: boolean; // 是否是对齐参考画笔
     pencil?: boolean;
     activeAnchor?: Point;
     dirty?: boolean;
@@ -390,8 +386,8 @@ export interface Pen extends Rect {
 
     hiddenText?: boolean; // 隐藏 text
     keepDecimal?: number; // undefined 显示原内容；0 显示整数；保留几位小数
-    showChild?: number;  // 第几个子元素展示 undefined 即展示全部
-    animateDotSize?: number;  // 线条原点动画，原点大小
+    showChild?: number; // 第几个子元素展示 undefined 即展示全部
+    animateDotSize?: number; // 线条原点动画，原点大小
     // media element
     onended?: (pen: Pen) => void;
   };
@@ -425,5 +421,65 @@ export const isDomShapes = [
   'video',
   'echarts',
   'highcharts',
-  'lightningCharts'
+  'lightningCharts',
 ];
+
+// 格式刷同步的属性
+export const formatAttrs: Set<string> = new Set([
+  'borderRadius',
+  'rotate',
+  'paddingLeft',
+  'paddingRight',
+  'paddingTop',
+  'paddingBottom',
+  'progress',
+  'progressColor',
+  'verticalProgress',
+  'flip',
+  'input',
+  'lineDash',
+  'lineCap',
+  'lineJoin',
+  'strokeType',
+  'lineGradientFromColor',
+  'lineGradientToColor',
+  'lineGradientAngle',
+  'color',
+  'hoverColor',
+  'activeColor',
+  'lineWidth',
+  'bkType',
+  'gradientFromColor',
+  'gradientToColor',
+  'gradientAngle',
+  'gradientRadius',
+  'hoverBackground',
+  'activeBackground',
+  'globalAlpha',
+  'anchorColor',
+  'anchorRadius',
+  'shadowColor',
+  'shadowBlur',
+  'shadowOffsetX',
+  'shadowOffsetY',
+  'textHasShadow',
+  'fontFamily',
+  'fontSize',
+  'textColor',
+  'hoverTextColor',
+  'activeTextColor',
+  'textBackground',
+  'fontStyle',
+  'fontWeight',
+  'textAlign',
+  'textBaseline',
+  'lineHeight',
+  'whiteSpace',
+  'textWidth',
+  'textHeight',
+  'textLeft',
+  'textTop',
+  'ellipsis',
+  'hiddenText',
+  'keepDecimal',
+]);
