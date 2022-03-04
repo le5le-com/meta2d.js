@@ -6,8 +6,10 @@
 -->
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { Topology } from "@topology/core";
+// 测试本地使用
+// import { Topology } from "../../../../packages/core";
 import { register as registerEcharts } from "@topology/chart-diagram";
+import { Topology } from "@topology/core";
 
 onMounted(() => {
   new Topology("topology");
