@@ -200,6 +200,7 @@ export class Canvas {
     this['line'] = lineSegment;
 
     window && window.addEventListener('resize', this.onResize);
+    window && window.addEventListener('scroll', this.onScroll);
   }
 
   listen() {
@@ -1554,6 +1555,16 @@ export class Canvas {
       this.timer = undefined;
     }, 100);
   };
+  
+  onScroll = () => {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      this.bounding = this.canvas.getBoundingClientRect()
+      this.timer = undefined;
+    }, 100);
+  }
 
   calibrateMouse = (pt: Point) => {
     pt.x -= this.store.data.x;
@@ -4399,5 +4410,6 @@ export class Canvas {
         break;
     }
     window && window.removeEventListener('resize', this.onResize);
+    window && window.removeEventListener('scroll', this.onScroll);
   }
 }
