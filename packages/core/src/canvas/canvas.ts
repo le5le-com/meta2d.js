@@ -295,11 +295,6 @@ export class Canvas {
     let x = e.x - (this.bounding.left || this.bounding.x);
     let y = e.y - (this.bounding.top || this.bounding.y);
 
-    if (window) {
-      x -= window.scrollX;
-      y -= window.scrollY;
-    }
-
     if (isTouchPad) {
       this.translate(e.wheelDeltaX, e.wheelDeltaY);
     } else {
