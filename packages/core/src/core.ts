@@ -7,6 +7,7 @@ import {
   calcTextLines,
   calcTextRect,
   facePen,
+  formatAttrs,
   getParent,
   getWords,
   LockState,
@@ -1030,7 +1031,11 @@ export class Topology {
     // 1. 得到第一个画笔的 宽高 字体大小
     const firstPen = pens[0];
     const { width, height } = this.getPenRect(firstPen);
-    const fontSize = firstPen.fontSize;
+    // 格式刷修改的属性，除开宽高
+    const attrs = {};
+    formatAttrs.forEach(attr => {
+      attrs[attr] = firstPen[attr];
+    });
 
     // 2. 修改其它画笔的 宽高 fontSize
     for (let i = 1; i < pens.length; i++) {
@@ -1038,7 +1043,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       penRect.width = width;
       penRect.height = height;
-      this.setValue({ id: pen.id, fontSize, ...penRect }, emit);
+      this.setValue({ id: pen.id, ...penRect, ...attrs }, emit);
     }
 
     this.canvas.calcActiveRect();
