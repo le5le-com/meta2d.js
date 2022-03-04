@@ -855,11 +855,11 @@ export class Topology {
   };
 
   private doEvent = (pen: Pen, eventName: string) => {
-    if (!pen || !pen.events) {
+    if (!pen) {
       return;
     }
 
-    pen.events.forEach((event) => {
+    pen.events?.forEach((event) => {
       if (this.events[event.action] && event.name === eventName) {
         let can = !event.where;
         if (event.where) {
@@ -901,6 +901,8 @@ export class Topology {
         can && this.events[event.action](pen, event);
       }
     });
+    // 事件冒泡，子执行完，父执行
+    this.doEvent(this.store.pens[pen.parentId], eventName);
   };
 
   pushChildren(parent: Pen, children: Pen[]) {
