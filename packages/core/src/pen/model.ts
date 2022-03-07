@@ -146,6 +146,7 @@ export interface Pen extends Rect {
   iconLeft?: number;
   iconColor?: string;
   iconFamily?: string;
+  iconWeight?: string;
   iconSize?: number;
   iconAlign?:
     | 'top'
@@ -321,6 +322,7 @@ export interface Pen extends Rect {
     iconLeft?: number;
     iconColor?: string;
     iconFamily?: string;
+    iconWeight?: string;
 
     // 绝对值，计算后的结果
     paddingTop?: number;

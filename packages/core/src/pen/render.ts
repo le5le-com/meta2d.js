@@ -483,11 +483,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconSize}px ${pen.calculative.iconFamily}`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${pen.calculative.iconFamily}'`;
     } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${iconRect.height}px ${pen.calculative.iconFamily}`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
     } else {
-      ctx.font = `${iconRect.width}px ${pen.calculative.iconFamily}`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.width}px '${pen.calculative.iconFamily}'`;
     }
     ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
 
@@ -823,11 +823,11 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconSize}px ${pen.calculative.iconFamily}`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${pen.calculative.iconFamily}'`;
     } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${iconRect.height}px ${pen.calculative.iconFamily}`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
     } else {
-      ctx.font = `${iconRect.width}px ${pen.calculative.iconFamily}`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.width}px '${pen.calculative.iconFamily}'`;
     }
     ctx.fillStyle = pen.iconColor || pen.textColor || store.options.textColor;
 
