@@ -161,6 +161,7 @@ export class Canvas {
   private alreadyCopy = false;
 
   scroll: Scroll;
+  movingAnchor: Point;  // 正在移动中的瞄点
 
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
@@ -370,6 +371,10 @@ export class Canvas {
         !this.store.data.locked && this.delete();
         break;
       case 'ArrowLeft':
+        if (this.movingAnchor) {
+          this.translateMovingAnchor(-1, 0);
+          break;
+        }
         x = -10;
         if (e.shiftKey) {
           x = -5;
@@ -380,6 +385,10 @@ export class Canvas {
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowUp':
+        if (this.movingAnchor) {
+          this.translateMovingAnchor(0, -1);
+          break;
+        }
         y = -10;
         if (e.shiftKey) {
           y = -5;
@@ -390,6 +399,10 @@ export class Canvas {
         this.translatePens(this.store.active, 0, y);
         break;
       case 'ArrowRight':
+        if (this.movingAnchor) {
+          this.translateMovingAnchor(1, 0);
+          break;
+        }
         if (e.shiftKey) {
           x = 5;
         }
@@ -399,6 +412,10 @@ export class Canvas {
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowDown':
+        if (this.movingAnchor) {
+          this.translateMovingAnchor(0, 1);
+          break;
+        }
         if (e.shiftKey) {
           y = 5;
         }
@@ -434,6 +451,14 @@ export class Canvas {
       case 'm':
       case 'M':
         this.toggleMagnifier();
+        break;
+      case 'g':
+      case 'G':
+        // 进入移动瞄点状态
+        if (this.hoverType === HoverType.NodeAnchor) {
+          this.movingAnchor = this.store.hoverAnchor;
+          this.externalElements.style.cursor = 'move';
+        }
         break;
       case 'v':
       case 'V':
@@ -507,6 +532,32 @@ export class Canvas {
 
     this.render();
   };
+
+  private translateMovingAnchor(x: number, y: number) {
+    this.movingAnchor.x += x;
+    this.movingAnchor.y += y;
+    // 点不在范围内，移动到范围内
+    const penId = this.movingAnchor.penId;
+    if (penId) {
+      const pen = this.store.pens[penId];
+      const rect = pen.calculative.worldRect;
+      if (this.movingAnchor.x < rect.x) {
+        this.movingAnchor.x = rect.x;
+      } else if (this.movingAnchor.x > rect.ex) {
+        this.movingAnchor.x = rect.ex;
+      }
+      if (this.movingAnchor.y < rect.y) {
+        this.movingAnchor.y = rect.y;
+      } else if (this.movingAnchor.y > rect.ey) {
+        this.movingAnchor.y = rect.ey;
+      }
+      const anchor = calcRelativePoint(this.movingAnchor, rect);
+      // 更改 pen 的 anchors 属性
+      const index = pen.anchors.findIndex((anchor) => anchor.id === this.movingAnchor.id);
+      pen.anchors[index] = anchor;
+      this.dirty = true;
+    }
+  }
 
   onkeyup = (e: KeyboardEvent) => {
     switch (e.key) {
@@ -781,7 +832,7 @@ export class Canvas {
     ) {
       return;
     }   
-    if (this.hoverType === HoverType.NodeAnchor && !this.drawingLineName) {
+    if (this.hoverType === HoverType.NodeAnchor && !this.drawingLineName && !this.movingAnchor) {
       // Start to draw a line.
       this.drawingLineName = this.store.options.drawingLineName;
     }
@@ -1129,6 +1180,14 @@ export class Canvas {
           height: Math.abs(e.y - this.mouseDown.y),
         };
         this.dirty = true;
+      }
+      // 移动节点瞄点
+      if (this.movingAnchor && !this.store.data.locked) {
+        const x = e.x - this.movingAnchor.x;
+        const y = e.y - this.movingAnchor.y;
+        this.translateMovingAnchor(x, y);
+        this.render();
+        return;
       }
 
       // Rotate
@@ -1747,6 +1806,7 @@ export class Canvas {
 
   inAnchor(pt: Point, pen: Pen, anchor: Point) {
     this.store.hoverAnchor = undefined;
+    this.movingAnchor = undefined;
     if (!anchor) {
       return HoverType.None;
     }
