@@ -115,6 +115,7 @@ export class Topology {
     };
     this.events[EventAction.SetProps] = (pen: any, e: Event) => {
       const rect = this.getPenRect(pen);
+      // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
       this.setValue({ id: pen.id, ...rect, ...e.value });
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
@@ -756,14 +757,15 @@ export class Topology {
         message = [message];
       }
       message.forEach((item: any) => {
-        this.setValue(item, true);
+        this.setValue(item, true, false);
       });
+      this.render(Infinity);
     } catch (error) {
       console.warn('Invalid socket data:', error);
     }
   }
 
-  setValue(data: any, emit = false) {
+  setValue(data: any, emit = false, willRender = true) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       this.updateValue(pen, data);
@@ -775,7 +777,7 @@ export class Topology {
       this.canvas.calcActiveRect();
     }
 
-    this.render(Infinity);
+    willRender && this.render(Infinity);
   }
 
   updateValue(pen: Pen, data: any) {
@@ -1045,10 +1047,10 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       penRect.width = width;
       penRect.height = height;
-      this.setValue({ id: pen.id, ...penRect, ...attrs }, emit);
+      this.setValue({ id: pen.id, ...penRect, ...attrs }, emit, false);
     }
+    this.render(Infinity);
 
-    this.canvas.calcActiveRect();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1062,7 +1064,7 @@ export class Topology {
     for (const item of pens) {
       this.alignPen(align, item, rect, emit);
     }
-    this.canvas.calcActiveRect();
+    this.render(Infinity);
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1083,7 +1085,7 @@ export class Topology {
       const pen = pens[i];
       this.alignPen(align, pen, rect, emit);
     }
-    this.canvas.calcActiveRect();
+    this.render(Infinity);
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1120,7 +1122,7 @@ export class Topology {
         penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
         break;
     }
-    this.setValue({ id: pen.id, ...penRect }, emit);
+    this.setValue({ id: pen.id, ...penRect }, emit, false);
   }
 
   /**
@@ -1163,8 +1165,9 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this.setValue({ id: pen.id, ...penRect }, emit);
+      this.setValue({ id: pen.id, ...penRect }, emit, false);
     }
+    this.render(Infinity);
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1202,7 +1205,7 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this.setValue({ id: pen.id, ...penRect }, emit);
+      this.setValue({ id: pen.id, ...penRect }, emit, false);
 
       if (index === pens.length - 1) {
         return;
@@ -1218,6 +1221,7 @@ export class Topology {
         currentY += maxHeight + space;
       }
     });
+    this.render(Infinity);
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1529,7 +1533,7 @@ export class Topology {
     this.setValue({
       id: pen.id,
       visible,
-    }, emit);
+    }, emit, false);
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.find(childId)[0];
