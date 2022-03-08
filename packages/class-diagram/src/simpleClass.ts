@@ -79,7 +79,7 @@ function onAdd(pen: any) {
     width: w,
     height: 0.8 * h,
     text: pen.list[0].text,
-    textAlign: 'start',
+    textAlign: 'left',
     textBaseline: 'top',
     textLeft: 10,
     textTop: 10,
