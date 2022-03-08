@@ -3633,8 +3633,12 @@ export class Canvas {
   async paste() {
     // 先读剪切板
     let clipboardText = await navigator.clipboard?.readText();
+    navigator.clipboard?.writeText('');  // 清空
     if (!clipboardText) {
+<<<<<<< HEAD
       navigator.clipboard?.writeText(''); // 清空
+=======
+>>>>>>> 73ab2ef (echarts deal)
       // 再读 localStorage
       clipboardText = localStorage.getItem(this.clipboardName);
     }

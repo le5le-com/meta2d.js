@@ -399,6 +399,7 @@ export interface Pen extends Rect {
 
   onAdd?: (pen: Pen) => void;
   onValue?: (pen: Pen) => void;
+  onBeforeValue?: (pen: Pen, value: ChartData) => any;
   onDestroy?: (pen: Pen) => void;
   onMove?: (pen: Pen) => void;
   onResize?: (pen: Pen) => void;
@@ -411,6 +412,15 @@ export interface Pen extends Rect {
   onMouseUp?: (pen: Pen, e: Point) => void;
   onShowInput?: (pen: Pen, e: Point) => void;
   onInput?: (pen: Pen, text: string) => void;
+}
+
+/**
+ * 图表追加或替换数据，只关注数据
+ */
+export interface ChartData {
+  dataX: any | any[],  // x 轴数据变化
+  dataY: any | any[],  // y 轴数据变化
+  overwrite?: boolean,   // 追加 or 替换 ， false 追加
 }
 
 /**
