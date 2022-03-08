@@ -528,6 +528,7 @@ export class Canvas {
           this.render(Infinity);
         }
         this.hotkeyType = HotkeyType.None;
+        this.movingAnchor = undefined;
         if (this.magnifier) {
           this.magnifier = false;
           this.render(Infinity);
