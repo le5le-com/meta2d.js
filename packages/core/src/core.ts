@@ -768,7 +768,11 @@ export class Topology {
   setValue(data: any, emit = false, willRender = true) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
-      this.updateValue(pen, data);
+      let afterData = data;
+      if (pen.onBeforeValue) {
+        afterData = pen.onBeforeValue(pen, data);
+      }
+      this.updateValue(pen, afterData);
       pen.onValue && pen.onValue(pen);
       emit && this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
