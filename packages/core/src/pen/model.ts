@@ -131,8 +131,8 @@ export interface Pen extends Rect {
   lineHeight?: number;
   fontStyle?: string;
   fontWeight?: string;
-  textAlign?: string;
-  textBaseline?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  textBaseline?: 'top' | 'middle' | 'bottom';
   textBackground?: string;
   whiteSpace?: string;
   ellipsis?: boolean;
