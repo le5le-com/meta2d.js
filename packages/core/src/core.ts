@@ -473,10 +473,7 @@ export class Topology {
   }
 
   calcAnimateDuration(pen: Pen) {
-    pen.calculative.duration = 0;
-    for (const f of pen.frames) {
-      pen.calculative.duration += f.duration;
-    }
+    return pen.frames.reduce((prev, frame) => prev + frame.duration, 0);
   }
 
   /**
