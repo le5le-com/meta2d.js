@@ -473,10 +473,7 @@ export class Topology {
   }
 
   calcAnimateDuration(pen: Pen) {
-    pen.calculative.duration = 0;
-    for (const f of pen.frames) {
-      pen.calculative.duration += f.duration;
-    }
+    return pen.frames.reduce((prev, frame) => prev + frame.duration, 0);
   }
 
   /**
@@ -768,7 +765,11 @@ export class Topology {
   setValue(data: any, emit = false, willRender = true) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
-      this.updateValue(pen, data);
+      let afterData = data;
+      if (pen.onBeforeValue) {
+        afterData = pen.onBeforeValue(pen, data);
+      }
+      this.updateValue(pen, afterData);
       pen.onValue && pen.onValue(pen);
       emit && this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });

@@ -1,4 +1,4 @@
-import { Pen, setElemPosition } from '@topology/core';
+import { ChartData, Pen, setElemPosition } from '@topology/core';
 
 export const echartsList: any = {};
 
@@ -9,6 +9,7 @@ export function echarts(pen: Pen): Path2D {
     pen.onResize = resize;
     pen.onRotate = move;
     pen.onValue = value;
+    pen.onBeforeValue = beforeValue;
   }
 
   const path = new Path2D();
@@ -106,4 +107,65 @@ function value(pen: Pen) {
   }
   setElemPosition(pen, echartsList[pen.id].div);
   echartsList[pen.id].chart.setOption((pen as any).echarts.option, true);
+}
+
+function beforeValue(pen: Pen, value: ChartData) {
+  if ((value as any).echarts || (!value.dataX && !value.dataY)) {
+    // 整体传参，不做处理
+    return value;
+  }
+  // 1. 拿到老的 echarts
+  const echarts = (pen as any).echarts;
+  // 2. 特殊处理
+  let x = value.dataX;
+  let y = value.dataY;
+  // 确认有几条线，即多折线的场景
+  const length = echarts.option.series.length;
+  if (!value.overwrite) {
+    // 追加数据
+    if (x) {
+      // x 轴考虑只有一条
+      if (!Array.isArray(x)) {
+        x = [x];
+      }
+      echarts.option.xAxis.data.push(...x);
+    }
+
+    if (y) {
+      if (length === 1) {
+        if (!Array.isArray(y)) {
+          y = [y];
+        }
+        echarts.option.series[0].data.push(...y);
+      } else {
+        // 多条线
+        echarts.option.series.forEach((serie, index: number) => {
+          if (!Array.isArray(y[index])) {
+            y[index] = [y[index]];
+          }
+          serie.data.push(...y[index]);
+        });
+      }
+    }
+  } else {
+    // 替换数据
+    if (x) {
+      echarts.option.xAxis.data = x;
+    }
+    if (y) {
+      if (length === 1) {
+        echarts.option.series[0].data = y;
+      } else {
+        // 多条线
+        echarts.option.series.forEach((serie, index: number) => {
+          serie.data = y[index];
+        });
+      }
+    }
+  }
+  // 设置完后，清空
+  delete value.dataX;
+  delete value.dataY;
+  delete value.overwrite;
+  return Object.assign(value, { echarts });
 }
