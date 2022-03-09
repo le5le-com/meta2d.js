@@ -20,7 +20,7 @@ export enum HotkeyType {
 
 export enum MouseRight {
   None,
-  TranslateOrContextMenu,
+  Down,
   Translate,
 }
 
