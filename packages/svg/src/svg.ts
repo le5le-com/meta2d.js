@@ -252,7 +252,7 @@ function transformNormalShape(
   } else if (finalProperty.fill?.includes('url')) {
     const id: string = finalProperty.fill.replace('url(#', '').replace(')', '');
     let gradientColor = linearGradient.find((item) => item.id === id);
-    if (!gradientColor.color) {
+    if (gradientColor && !gradientColor.color) {
       // 颜色不存在，则查找父级
       gradientColor = linearGradient.find(
         (item) => gradientColor.from === `#${item.id}`
@@ -481,7 +481,7 @@ function setStyle(defs: any[]) {
   });
 }
 
-// TODO: 渐变中目前只存储一个颜色 渐变 
+// TODO: 渐变中目前只存储一个颜色 渐变
 let linearGradient: Gradient[] = [];
 
 interface Gradient {
