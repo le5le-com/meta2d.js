@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/core/",
+    "copy": "copyfiles  package.json ../../dist/flow-diagram/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
