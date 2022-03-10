@@ -2567,21 +2567,21 @@ export class Canvas {
       height: this.height,
     };
 
-    for (const pen of this.store.data.pens) {
+    outer: for (const pen of this.store.data.pens) {
       if (!isFinite(pen.x)) {
         // 若不合法，即 NaN ，Infinite
         console.warn(pen, '画笔的 x 不合法');
       }
-      if (pen.parentId) {
-        // 有父节点
-        const parent = this.store.pens[pen.parentId];
-        const showChildIndex = parent?.calculative?.showChild;
+      let selfPen = pen;
+      while (selfPen.parentId) {
+        const oldPen = selfPen;
+        selfPen = this.store.pens[selfPen.parentId];
+        const showChildIndex = selfPen?.calculative?.showChild;
         if (showChildIndex != undefined) {
-          // 判断父节点决定展示第几个元素
-          const showChildId = parent.children[showChildIndex];
-          if (showChildId !== pen.id) {
+          const showChildId = selfPen.children[showChildIndex];
+          if (showChildId !== oldPen.id) {
             pen.calculative.inView = false;
-            continue;
+            continue outer;
           }
         }
       }
