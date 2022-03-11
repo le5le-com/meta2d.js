@@ -395,9 +395,7 @@ export class Topology {
   }
 
   find(idOrTag: string) {
-    return this.store.data.pens.filter((pen) => {
-      return pen.id == idOrTag || (pen.tags && pen.tags.indexOf(idOrTag) > -1);
-    });
+    return this.canvas.find(idOrTag);
   }
 
   getPenRect(pen: Pen) {
@@ -774,7 +772,7 @@ export class Topology {
       emit && this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
 
-    if (!this.store.data.locked && this.store.active.length) {
+    if (!this.store.data.locked && this.store.active.length && !this.canvas.movingPens) {
       this.canvas.calcActiveRect();
     }
 
@@ -1360,19 +1358,7 @@ export class Topology {
   }
 
   changePenId(oldId: string, newId: string): boolean {
-    if (oldId === newId) return false;
-    const pens = this.find(oldId);
-    if (pens.length === 1) {
-      // 找到画笔，且唯一
-      if (!this.find(newId).length) {
-        // 若新画笔不存在
-        pens[0].id = newId;
-        // 更换 store.pens 上的内容
-        this.store.pens[newId] = this.store.pens[oldId];
-        delete this.store.pens[oldId];
-        return true;
-      }
-    }
+    return this.canvas.changePenId(oldId, newId);
   }
 
   /**
