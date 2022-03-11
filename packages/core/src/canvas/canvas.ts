@@ -67,10 +67,12 @@ import { EditAction, EditType, globalStore, TopologyStore } from '../store';
 import { deepClone, fileToBase64, uploadFile, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine, lineSegment } from '../diagrams';
+import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine, lineSegment, iframes, videos } from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
+import { echartsList, highchartsList, lightningChartsList } from '@topology/chart-diagram';
+import { gifsList } from '../diagrams/gif';
 
 declare const window: any;
 
@@ -4085,10 +4087,73 @@ export class Canvas {
     this.store.emitter.emit('valueUpdate', pen);
   };
 
+  find(idOrTag: string) {
+    return this.store.data.pens.filter((pen) => {
+      return pen.id == idOrTag || (pen.tags && pen.tags.indexOf(idOrTag) > -1);
+    });
+  }
+
+  changePenId(oldId: string, newId: string): boolean {
+    if (oldId === newId) return false;
+    const pens = this.find(oldId);
+    if (pens.length === 1) {
+      // 找到画笔，且唯一
+      if (!this.find(newId).length) {
+        // 若新画笔不存在
+        pens[0].id = newId;
+        // 更换 store.pens 上的内容
+        this.store.pens[newId] = this.store.pens[oldId];
+        // dom 节点，需要更改 id
+        this.changeDomId(oldId, newId);
+        delete this.store.pens[oldId];
+        return true;
+      }
+    }
+  }
+  
+    /**
+   * dom 类型的节点有 id 记录指向 dom ，需要更新
+   * @param oldId 
+   * @param newId 
+   */
+   changeDomId(oldId: string, newId: string) {
+    if (echartsList[oldId]) {
+      echartsList[newId] = echartsList[oldId];
+      delete echartsList[oldId];
+    }
+
+    if (highchartsList[oldId]) {
+      highchartsList[newId] = highchartsList[oldId];
+      delete highchartsList[oldId];
+    }
+
+    if (lightningChartsList[oldId]) {
+      lightningChartsList[newId] = lightningChartsList[oldId];
+      delete lightningChartsList[oldId];
+    }
+
+    if (gifsList[oldId]) {
+      gifsList[newId] = gifsList[oldId];
+      delete gifsList[oldId];
+    }
+
+    if (iframes[oldId]) {
+      iframes[newId] = iframes[oldId];
+      delete iframes[oldId];
+    }
+
+    if (videos[oldId]) {
+      videos[newId] = videos[oldId];
+      delete videos[oldId];
+    }
+  }
+
   updateValue(pen: Pen, data: any) {
     Object.assign(pen, data);
     if (data.newId) {
-      pen.id = data.newId;
+      if (!this.changePenId(pen.id, data.newId)) {
+        console.warn('id change error, maybe not unique');
+      }
     }
     let willUpdatePath = false;
     let willCalcTextRect = false;

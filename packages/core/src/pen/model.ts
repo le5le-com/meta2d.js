@@ -428,7 +428,6 @@ export interface ChartData {
  */
 export const isDomShapes = [
   'gif',
-  'div',
   'iframe',
   'video',
   'echarts',
