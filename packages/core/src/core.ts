@@ -239,6 +239,7 @@ export class Topology {
   connectSocket() {
     this.connectWebsocket();
     this.connectMqtt();
+    this.connectHttp();
   }
 
   private doInitJS() {
@@ -738,6 +739,27 @@ export class Topology {
 
   closeMqtt() {
     this.mqttClient?.end();
+  }
+
+  httpTimer: any;
+  connectHttp() {
+    this.closeHttp();
+    const { http, httpTimeInterval } = this.store.data;
+    if (http) {
+      this.httpTimer = setInterval(async () => {
+        // 默认每一秒请求一次
+        const res: Response = await fetch(http);
+        if (res.ok) {
+          const data = await res.text();
+          this.doSocket(data);
+        }
+      }, httpTimeInterval || 1000);
+    }
+  }
+
+  closeHttp() {
+    clearInterval(this.httpTimer);
+    this.httpTimer = undefined;
   }
 
   doSocket(message: any) {
@@ -1521,12 +1543,17 @@ export class Topology {
     }
   }
 
+  closeSocket() {
+    this.closeWebsocket();
+    this.closeMqtt();
+    this.closeHttp();
+  }
+
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
     }
-    this.closeWebsocket();
-    this.closeMqtt();
+    this.closeSocket();
     clearStore(this.store);
     this.store.emitter.all.clear();  // 内存释放
     this.canvas.destroy();

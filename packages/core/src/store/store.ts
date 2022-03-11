@@ -40,6 +40,8 @@ export interface TopologyData {
   penBackground?: string;   // 画笔默认背景色
   paths?: { [key: string]: string };  // paths 该图纸使用到的 svgPath 需要保存到 globalStore.paths 中
   bkImage?: string; // 背景图片
+  http?: string; // http 请求 Url
+  httpTimeInterval?: number; // http 请求间隔
 }
 
 export enum EditType {
