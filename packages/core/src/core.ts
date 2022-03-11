@@ -773,6 +773,7 @@ export class Topology {
     });
 
     if (!this.store.data.locked && this.store.active.length && !this.canvas.movingPens) {
+      // 移动过程中，不重算 activeRect
       this.canvas.calcActiveRect();
     }
 
