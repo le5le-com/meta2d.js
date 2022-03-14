@@ -84,6 +84,7 @@ import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
 import { echartsList, highchartsList, lightningChartsList } from '@topology/chart-diagram';
 import { gifsList } from '../diagrams/gif';
+import { CanvasImage } from './canvasImage';
 
 declare const window: any;
 
@@ -181,10 +182,14 @@ export class Canvas {
   scroll: Scroll;
   movingAnchor: Point;  // 正在移动中的瞄点
 
+  canvasImage: CanvasImage;
+
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
+
+    this.canvasImage = new CanvasImage(parentElement, store);
 
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
@@ -1116,7 +1121,14 @@ export class Canvas {
     this.render();
   };
 
-  private addRuleLine(e: { x: number; y: number; buttons?: number; ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean; }) {
+  private addRuleLine(e: {
+    x: number;
+    y: number;
+    buttons?: number;
+    ctrlKey?: boolean;
+    shiftKey?: boolean;
+    altKey?: boolean;
+  }) {
     const { x: offsetX, y: offsetY } = this.store.data;
     // 靠近左上角的 x ，y
     const x = e.x + offsetX;
@@ -1154,13 +1166,13 @@ export class Canvas {
       anchors: [
         {
           x: 0,
-          y: 0
+          y: 0,
         },
         {
           x: otherPX,
-          y: otherPY
-        }
-      ]
+          y: otherPY,
+        },
+      ],
     });
   }
 
@@ -2022,6 +2034,8 @@ export class Canvas {
     this.externalElements.style.width = w + 'px';
     this.externalElements.style.height = h + 'px';
 
+    this.canvasImage.resize(w, h);
+
     w = (w * this.store.dpiRatio) | 0;
     h = (h * this.store.dpiRatio) | 0;
 
@@ -2617,6 +2631,7 @@ export class Canvas {
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
 
     this.dirty = false;
+    this.canvasImage.render();
   };
 
   renderPens = () => {
@@ -2926,7 +2941,7 @@ export class Canvas {
       pen.onResize && pen.onResize(pen);
     });
     this.calcActiveRect();
-
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('scale', this.store.data.scale);
   }
