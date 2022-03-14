@@ -224,6 +224,7 @@ export class Topology {
         this.canvas.makePen(pen);
       }
     }
+
     this.canvas.render(Infinity);
     this.listenSocket();
     this.connectSocket();
@@ -544,13 +545,13 @@ export class Topology {
     this.pushHistory({
       type: EditType.Add,
       pens: [parent],
-      step: 2
+      step: 2,
     });
     this.pushHistory({
       type: EditType.Update,
       initPens,
       pens,
-      step: 2
+      step: 2,
     });
     this.render();
 
@@ -582,7 +583,7 @@ export class Topology {
       type: EditType.Update,
       initPens,
       pens: children,
-      step
+      step,
     });
     initPens = [deepClone(pen)];
     pen.children = undefined;
@@ -591,7 +592,7 @@ export class Topology {
       type: EditType.Update,
       initPens,
       pens: [pen],
-      step
+      step,
     });
     if (pen.name === 'combine') {
       this.delete([pen]);
@@ -1059,7 +1060,7 @@ export class Topology {
     const { width, height } = this.getPenRect(firstPen);
     // 格式刷修改的属性，除开宽高
     const attrs = {};
-    formatAttrs.forEach(attr => {
+    formatAttrs.forEach((attr) => {
       attrs[attr] = firstPen[attr];
     });
 
@@ -1494,7 +1495,7 @@ export class Topology {
       width: rect.width,
       height: rect.height,
       children: [],
-      showChild
+      showChild,
     };
     const p = pens.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
@@ -1531,10 +1532,14 @@ export class Topology {
   }
 
   setVisible(pen: Pen, visible: boolean, emit = false) {
-    this.setValue({
-      id: pen.id,
-      visible,
-    }, emit, false);
+    this.setValue(
+      {
+        id: pen.id,
+        visible,
+      },
+      emit,
+      false
+    );
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.find(childId)[0];
@@ -1555,7 +1560,7 @@ export class Topology {
     }
     this.closeSocket();
     clearStore(this.store);
-    this.store.emitter.all.clear();  // 内存释放
+    this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     // Clear data.
     globalStore[this.store.id] = undefined;
