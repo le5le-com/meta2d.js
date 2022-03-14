@@ -4,6 +4,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
     pen.onResize = initRect;
     pen.onMouseMove = mouseMove;
     pen.onMouseDown = mouseDown;
+    pen.onValue = onValue;
   }
 
   if (!pen.calculative.barRect) {
@@ -12,6 +13,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
 
   const data = pen.calculative.canvas.store.data;
   const options = pen.calculative.canvas.store.options;
+  // calcBallRect(pen);
 
   // draw bar
   ctx.fillStyle = pen.background;
@@ -125,6 +127,7 @@ function mouseDown(pen: any, e: any) {
   if (value < pen.min || value > pen.max) {
     return;
   }
+  console.log('move', value);
   pen.value = value;
   calcBallRect(pen);
   pen.calculative.text = pen.value + pen.unit;
@@ -137,4 +140,8 @@ function mouseMove(pen: any, e: any) {
   if (pen.calculative.canvas.mouseDown) {
     mouseDown(pen, e);
   }
+}
+
+function onValue(pen: any) {
+  calcBallRect(pen);
 }
