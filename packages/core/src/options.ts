@@ -68,6 +68,8 @@ export interface Options {
   uploadUrl?: string;
   uploadParams?: object;
   uploadHeaders?: { [key: string]: string };
+  disableRuleLine?: boolean;
+  ruleLineColor?: string;
 }
 
 export const defaultOptions: Options = {
@@ -101,4 +103,5 @@ export const defaultOptions: Options = {
   autoPolyline: true,
   autoAnchor: true,
   animateColor: '#ff4d4f',
+  ruleLineColor: '#FF4101',
 };

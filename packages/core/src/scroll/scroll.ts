@@ -103,8 +103,8 @@ export class Scroll {
     }
 
     if (this.isDownH || this.isDownV) {
-      this.parent.render();
       this.parent.onMovePens();
+      this.parent.render();
     }
 
   };
@@ -215,8 +215,8 @@ export class Scroll {
     this.parent.store.data.y -= (y * this.rect.height) / this.parent.parentElement.clientHeight;
     this.parent.dirty = true;
 
-    this.parent.render();
     this.parent.onMovePens();
+    this.parent.render();
   }
 
   destroy() {
