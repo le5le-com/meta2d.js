@@ -67,7 +67,18 @@ import { EditAction, EditType, globalStore, TopologyStore } from '../store';
 import { deepClone, fileToBase64, uploadFile, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine, lineSegment, iframes, videos } from '../diagrams';
+import {
+  curve,
+  mind,
+  getLineLength,
+  getLineRect,
+  pointInLine,
+  simplify,
+  smoothLine,
+  lineSegment,
+  iframes,
+  videos,
+} from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
@@ -2494,7 +2505,6 @@ export class Canvas {
 
   renderPens = () => {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
-    ctx.save();
     ctx.strokeStyle = this.store.data.color || this.store.options.color;
     const canvasRect = {
       x: 0,
@@ -2559,7 +2569,6 @@ export class Canvas {
         renderPen(ctx, pen);
       });
     }
-    ctx.restore();
   };
 
   renderBorder = () => {
@@ -4042,13 +4051,13 @@ export class Canvas {
       }
     }
   }
-  
-    /**
+
+  /**
    * dom 类型的节点有 id 记录指向 dom ，需要更新
-   * @param oldId 
-   * @param newId 
+   * @param oldId
+   * @param newId
    */
-   changeDomId(oldId: string, newId: string) {
+  changeDomId(oldId: string, newId: string) {
     if (echartsList[oldId]) {
       echartsList[newId] = echartsList[oldId];
       delete echartsList[oldId];

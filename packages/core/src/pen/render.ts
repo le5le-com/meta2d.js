@@ -483,7 +483,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${pen.calculative.iconFamily}'`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
+        pen.calculative.iconFamily
+      }'`;
     } else if (iconRect.width > iconRect.height) {
       ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
     } else {
@@ -823,7 +825,9 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${pen.calculative.iconFamily}'`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
+        pen.calculative.iconFamily
+      }'`;
     } else if (iconRect.width > iconRect.height) {
       ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
     } else {
@@ -1739,7 +1743,7 @@ export function getPensLock(pens: Pen[]): boolean {
  * 画笔们的 disabledRotate = true
  * 即 全部禁止旋转 返回 true
  * @param pens 画笔
- * @returns 
+ * @returns
  */
 export function getPensDisableRotate(pens: Pen[]): boolean {
   for (const pen of pens) {
@@ -1750,12 +1754,11 @@ export function getPensDisableRotate(pens: Pen[]): boolean {
   return true;
 }
 
-
 /**
  * 画笔们的 disableSize = true
  * 即 全部不允许改变大小 返回 true
  * @param pens 画笔
- * @returns 
+ * @returns
  */
 export function getPensDisableResize(pens: Pen[]): boolean {
   for (const pen of pens) {
