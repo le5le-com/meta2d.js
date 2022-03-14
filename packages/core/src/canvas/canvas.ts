@@ -998,6 +998,7 @@ export class Canvas {
     } else {
       switch (this.hoverType) {
         case HoverType.None:
+          this.store.data.rule && !this.store.options.disableRuleLine && this.addRuleLine(e);
           this.inactive();
           break;
         case HoverType.Node:
@@ -1056,6 +1057,54 @@ export class Canvas {
 
     this.render();
   };
+
+  private addRuleLine(e: { x: number; y: number; buttons?: number; ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean; }) {
+    const { x: offsetX, y: offsetY } = this.store.data;
+    // 靠近左上角的 x ，y
+    const x = e.x + offsetX;
+    const y = e.y + offsetY;
+    let lineX = e.x;
+    let lineY = e.y;
+    let width = 0;
+    let height = 0;
+    let otherPX = 0;
+    let otherPY = 0;
+    if (x <= y && x < 20) {
+      // 绘制一条水平线
+      lineX = -offsetX;
+      width = this.width;
+      otherPX = 1;
+    } else if (y < x && y < 20) {
+      // 绘制一条垂直线
+      lineY = -offsetY;
+      height = this.height;
+      otherPY = 1;
+    } else {
+      return;
+    }
+    this.addPen({
+      isRuleLine: true,
+      locked: LockState.DisableMove,
+      type: PenType.Line,
+      name: 'line',
+      lineName: 'line',
+      x: lineX,
+      y: lineY,
+      width,
+      height,
+      color: this.store.options.ruleLineColor,
+      anchors: [
+        {
+          x: 0,
+          y: 0
+        },
+        {
+          x: otherPX,
+          y: otherPY
+        }
+      ]
+    });
+  }
 
   onMouseMove = (e: {
     x: number;
@@ -2753,6 +2802,16 @@ export class Canvas {
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.store.data.pens) {
       pen.onMove && pen.onMove(pen);
+      if (pen.isRuleLine) {
+        if (!pen.width) {
+          // 垂直线，移动 y 即可
+          pen.y = -this.store.data.y;
+        } else if (!pen.height) {
+          // 水平线
+          pen.x = -this.store.data.x;
+        }
+        this.dirtyPenRect(pen);
+      }
     }
   }
 
@@ -2774,6 +2833,19 @@ export class Canvas {
         return;
       }
       scalePen(pen, s, center);
+      if (pen.isRuleLine) {
+        // 扩大线的比例，若是放大，即不缩小，若是缩小，会放大
+        const lineScale = s > 1 ? 1 : 1 / s / s;
+        // 中心点即为线的中心
+        const lineCenter = pen.calculative.worldRect.center;
+        if (!pen.width) {
+          // 垂直线
+          scalePen(pen, lineScale, lineCenter);
+        } else if (!pen.height) {
+          // 水平线
+          scalePen(pen, lineScale, lineCenter);
+        }
+      }
       this.dirtyPenRect(pen, true);
       pen.onResize && pen.onResize(pen);
     });
@@ -3724,7 +3796,7 @@ export class Canvas {
     }
 
     pens.forEach((pen) => {
-      if (!delLock && pen.locked && !isSon) return;
+      if (!delLock && pen.locked && !isSon && !pen.isRuleLine) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
       if (i > -1) {
         // 删除画笔关联线的 connectTo

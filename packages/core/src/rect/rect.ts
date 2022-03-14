@@ -77,6 +77,9 @@ export function pointInVertices(point: { x: number; y: number }, vertices: Point
 export function getRect(pens: Pen[]): Rect {
   const points: Point[] = [];
   pens.forEach((pen) => {
+    if (pen.isRuleLine) {
+      return;
+    }
     const rect = pen.calculative.worldRect;
     if (rect) {
       const pts = rectToPoints(rect);

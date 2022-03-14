@@ -244,6 +244,7 @@ export interface Pen extends Rect {
   keepDecimal?: number; // undefined 显示原内容；0 显示整数
   showChild?: number; // 第几个子元素展示 undefined 即展示全部
   animateDotSize?: number; // 线条原点动画，原点大小
+  isRuleLine?: boolean; // 是否是规则线，规则线不受缩放，平移影响
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
