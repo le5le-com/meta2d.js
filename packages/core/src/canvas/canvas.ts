@@ -39,6 +39,7 @@ import {
   needDirtyPenRectProps,
   needCalcIconRectProps,
   isDomShapes,
+  renderPenRaw,
 } from '../pen';
 import {
   calcRotate,
@@ -1986,6 +1987,7 @@ export class Canvas {
     this.externalElements.style.height = h + 'px';
 
     this.canvasImage.resize(w, h);
+    this.canvasImageBottom.resize(w, h);
 
     w = (w * this.store.dpiRatio) | 0;
     h = (h * this.store.dpiRatio) | 0;
@@ -4211,6 +4213,7 @@ export class Canvas {
     let willCalcTextRect = false;
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
+    let willRenderImage = false;  // 是否重新渲染图片
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
@@ -4226,6 +4229,9 @@ export class Canvas {
       }
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
+      }
+      if (k === 'isBottom') {
+        willRenderImage = true;
       }
     }
 
@@ -4247,6 +4253,10 @@ export class Canvas {
       pen.calculative.backgroundImage = undefined;
       pen.calculative.strokeImage = undefined;
       this.loadImage(pen);
+    }
+    if (willRenderImage) {
+      this.canvasImage.initStatus();
+      this.canvasImageBottom.initStatus();
     }
   }
 
@@ -4458,6 +4468,7 @@ export class Canvas {
     canvas.width = rect.width;
     canvas.height = rect.height;
     const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'middle';   // 默认垂直居中
     const background = this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色
@@ -4468,11 +4479,11 @@ export class Canvas {
     }
     ctx.translate(-rect.x, -rect.y);
     for (let pen of this.store.data.pens) {
-      if (pen.name === 'gif') {
-        // gif 生成图片时，绘制静态图片
-        pen = { ...pen, name: 'image' };
+      if (pen.image) {
+        renderPenRaw(ctx, pen);
+      } else {
+        renderPen(ctx, pen);
       }
-      renderPen(ctx, pen);
     }
     if (callback) {
       canvas.toBlob(callback);

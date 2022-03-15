@@ -660,6 +660,8 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     const rect = pen.calculative.worldIconRect;
     let x = rect.x;
     let y = rect.y;
@@ -671,27 +673,57 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     if (pen.calculative.iconHeight) {
       h = pen.calculative.iconHeight;
     }
-    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight) {
+    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight && pen.imageRatio) {
       let scaleW = rect.width / pen.calculative.imgNaturalWidth;
       let scaleH = rect.height / pen.calculative.imgNaturalHeight;
       let scaleMin = scaleW > scaleH ? scaleH : scaleW;
-      if (pen.iconWidth) {
-        h = scaleMin * pen.iconWidth;
+      const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
+      if (pen.calculative.iconWidth) {
+        h = pen.calculative.iconWidth / wDivideH;
+      } else if (pen.calculative.iconHeight) {
+        w = pen.calculative.iconHeight * wDivideH;
       } else {
         w = scaleMin * pen.calculative.imgNaturalWidth;
-      }
-      if (pen.iconHeight) {
-        h = scaleMin * pen.iconHeight;
-      } else {
         h = scaleMin * pen.calculative.imgNaturalHeight;
       }
     }
     x += (rect.width - w) / 2;
     y += (rect.height - h) / 2;
 
-    if (pen.iconRotate) {
+    switch (pen.iconAlign) {
+      case 'top':
+        y = rect.y;
+        break;
+      case 'bottom':
+        y = rect.ey - h;
+        break;
+      case 'left':
+        x = rect.x;
+        break;
+      case 'right':
+        x = rect.ex - w;
+        break;
+      case 'left-top':
+        x = rect.x;
+        y = rect.y;
+        break;
+      case 'right-top':
+        x = rect.ex - w;
+        y = rect.y;
+        break;
+      case 'left-bottom':
+        x = rect.x;
+        y = rect.ey - h;
+        break;
+      case 'right-bottom':
+        x = rect.ex - w;
+        y = rect.ey - h;
+        break;
+    }
+
+    if (pen.calculative.iconRotate) {
       ctx.translate(rect.center.x, rect.center.y);
-      ctx.rotate((pen.iconRotate * Math.PI) / 180);
+      ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
       ctx.translate(-rect.center.x, -rect.center.y);
     }
 
