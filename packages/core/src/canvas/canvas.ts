@@ -190,6 +190,7 @@ export class Canvas {
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
 
     parentElement.appendChild(this.canvas);
+    this.canvas.style.position = 'absolute';
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
 
@@ -4653,6 +4654,8 @@ export class Canvas {
     this.store.data.x = this.canvas.clientWidth / 2 - x * rect.width - rect.x;
     this.store.data.y = this.canvas.clientHeight / 2 - y * rect.height - rect.y;
     this.onMovePens();
+    this.canvasImage.initStatus();
+    this.canvasImageBottom.initStatus();
     this.render(Infinity);
   }
 
