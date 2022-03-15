@@ -225,6 +225,8 @@ export class Topology {
       }
     }
 
+    this.canvas.canvasImage.clear();
+    this.canvas.canvasImageBottom.clear();
     this.canvas.render(Infinity);
     this.listenSocket();
     this.connectSocket();
@@ -430,6 +432,7 @@ export class Topology {
       }
     });
     this.canvas.canvasImage.initStatus();
+    this.canvas.canvasImageBottom.initStatus();
     this.canvas.animate();
   }
 

@@ -44,13 +44,18 @@ export class CanvasImage {
     this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (const pen of this.store.data.pens) {
-      if (pen.name !== 'gif' && pen.image) {
+      if (this.hasImage(pen)) {   // 只影响本层的
         pen.calculative.imageDrawed = false;
       }
     }
   }
 
+  clear() {
+    this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
   hasImage(pen: Pen) {
+    // TODO: isBottom 的 == 判断可能存在问题
     pen.calculative.hasImage =
       pen.calculative &&
       pen.calculative.inView &&

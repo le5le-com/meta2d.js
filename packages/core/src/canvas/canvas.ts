@@ -1535,10 +1535,10 @@ export class Canvas {
             y,
           });
           pen.onMove && pen.onMove(pen);
-          this.canvasImage.initStatus();
           this.dirtyPenRect(pen);
           this.updateLines(pen);
         });
+        this.needInitStatus(this.store.active);
         // 此处是更新后的值
         this.pushHistory({
           type: EditType.Update,
@@ -1565,6 +1565,15 @@ export class Canvas {
       this.movingPens = undefined;
     }
   };
+
+  /**
+   * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层
+   * @param pens 本次改变的 pens
+   */
+  private needInitStatus(pens: Pen[]) {
+    pens.some(pen => this.canvasImage.hasImage(pen)) && this.canvasImage.initStatus();
+    pens.some(pen => this.canvasImageBottom.hasImage(pen)) && this.canvasImageBottom.initStatus();
+  }
 
   private clearDock = () => {
     const xPenId = this.dock?.xDock?.penId;
@@ -2821,6 +2830,7 @@ export class Canvas {
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
     this.canvasImage.initStatus();
+    this.canvasImageBottom.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
@@ -2886,6 +2896,7 @@ export class Canvas {
     });
     this.calcActiveRect();
     this.canvasImage.initStatus();
+    this.canvasImageBottom.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('scale', this.store.data.scale);
   }
@@ -2909,7 +2920,7 @@ export class Canvas {
     }
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
-    this.canvasImage.initStatus();
+    this.needInitStatus(this.store.active);
     this.render(Infinity);
     this.store.emitter.emit('rotatePens', this.store.active);
 
@@ -3007,7 +3018,7 @@ export class Canvas {
       this.updateLines(pen);
     });
     this.getSizeCPs();
-    this.canvasImage.initStatus();
+    this.needInitStatus(this.store.active);
     this.render(Infinity);
     this.store.emitter.emit('resizePens', this.store.active);
 
@@ -3360,6 +3371,7 @@ export class Canvas {
         initPens: this.initPens,
       });
       this.initPens = undefined;
+      this.needInitStatus(pens);
     }
   }
 
