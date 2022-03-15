@@ -353,6 +353,13 @@ export interface Pen extends Rect {
     // 辅助变量，画线时，动态计算锚点是否时水平方向
     drawlineH?: boolean;
 
+    // 节点是否有图片
+    hasImage?: boolean;
+    // 图片是否已经绘画，避免频繁重绘
+    imageDrawed?: boolean;
+    // 图片是否在底层
+    isBottom?: boolean;
+
     scale?: number;
 
     // 动画开始时间
@@ -419,22 +426,15 @@ export interface Pen extends Rect {
  * 图表追加或替换数据，只关注数据
  */
 export interface ChartData {
-  dataX: any | any[],  // x 轴数据变化
-  dataY: any | any[],  // y 轴数据变化
-  overwrite?: boolean,   // 追加 or 替换 ， false 追加
+  dataX: any | any[]; // x 轴数据变化
+  dataY: any | any[]; // y 轴数据变化
+  overwrite?: boolean; // 追加 or 替换 ， false 追加
 }
 
 /**
  * dom 类型的 图形
  */
-export const isDomShapes = [
-  'gif',
-  'iframe',
-  'video',
-  'echarts',
-  'highcharts',
-  'lightningCharts',
-];
+export const isDomShapes = ['gif', 'iframe', 'video', 'echarts', 'highcharts', 'lightningCharts'];
 
 // 格式刷同步的属性
 export const formatAttrs: Set<string> = new Set([

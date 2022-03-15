@@ -183,8 +183,11 @@ export class Canvas {
   movingAnchor: Point;  // 正在移动中的瞄点
 
   canvasImage: CanvasImage;
+  canvasImageBottom: CanvasImage;
 
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
+    this.canvasImageBottom = new CanvasImage(parentElement, store, true);
+
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
@@ -1596,6 +1599,7 @@ export class Canvas {
             y,
           });
           pen.onMove && pen.onMove(pen);
+          this.canvasImage.initStatus();
           this.dirtyPenRect(pen);
           this.updateLines(pen);
         });
@@ -1980,9 +1984,11 @@ export class Canvas {
       if (pen.type) {
         if (anchor.connectTo && !pen.calculative.active) {
           this.store.hover = this.store.pens[anchor.connectTo];
-          this.store.hoverAnchor = this.store.hover.calculative.worldAnchors.find((a) => a.id === anchor.anchorId);
-          this.externalElements.style.cursor = 'crosshair';
-          return HoverType.NodeAnchor;
+          if (this.store.hover) {
+            this.store.hoverAnchor = this.store.hover.calculative.worldAnchors.find((a) => a.id === anchor.anchorId);
+            this.externalElements.style.cursor = 'crosshair';
+            return HoverType.NodeAnchor;
+          }
         }
         if (this.hotkeyType === HotkeyType.AddAnchor) {
           this.externalElements.style.cursor = 'vertical-text';
@@ -2631,6 +2637,7 @@ export class Canvas {
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
 
     this.dirty = false;
+    this.canvasImageBottom.render();
     this.canvasImage.render();
   };
 
@@ -2877,6 +2884,7 @@ export class Canvas {
     this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
@@ -2965,6 +2973,7 @@ export class Canvas {
     }
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('rotatePens', this.store.active);
 
@@ -3062,6 +3071,7 @@ export class Canvas {
       this.updateLines(pen);
     });
     this.getSizeCPs();
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('resizePens', this.store.active);
 
@@ -3402,7 +3412,6 @@ export class Canvas {
         pen.type && this.initLineRect(pen);
       }
     });
-
     this.render(Infinity);
     this.tooltip.translate(x, y);
     this.store.emitter.emit('translatePens', pens);
