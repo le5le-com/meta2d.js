@@ -353,80 +353,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 
-  if (pen.name !== 'gif' && pen.image && pen.calculative.img) {
-    ctx.save();
-    ctx.shadowColor = '';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    const rect = pen.calculative.worldIconRect;
-    let x = rect.x;
-    let y = rect.y;
-    let w = rect.width;
-    let h = rect.height;
-    if (pen.calculative.iconWidth) {
-      w = pen.calculative.iconWidth;
-    }
-    if (pen.calculative.iconHeight) {
-      h = pen.calculative.iconHeight;
-    }
-    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight && pen.imageRatio) {
-      let scaleW = rect.width / pen.calculative.imgNaturalWidth;
-      let scaleH = rect.height / pen.calculative.imgNaturalHeight;
-      let scaleMin = scaleW > scaleH ? scaleH : scaleW;
-      const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
-      if (pen.calculative.iconWidth) {
-        h = pen.calculative.iconWidth / wDivideH;
-      } else if (pen.calculative.iconHeight) {
-        w = pen.calculative.iconHeight * wDivideH;
-      } else {
-        w = scaleMin * pen.calculative.imgNaturalWidth;
-        h = scaleMin * pen.calculative.imgNaturalHeight;
-      }
-    }
-    x += (rect.width - w) / 2;
-    y += (rect.height - h) / 2;
-
-    switch (pen.iconAlign) {
-      case 'top':
-        y = rect.y;
-        break;
-      case 'bottom':
-        y = rect.ey - h;
-        break;
-      case 'left':
-        x = rect.x;
-        break;
-      case 'right':
-        x = rect.ex - w;
-        break;
-      case 'left-top':
-        x = rect.x;
-        y = rect.y;
-        break;
-      case 'right-top':
-        x = rect.ex - w;
-        y = rect.y;
-        break;
-      case 'left-bottom':
-        x = rect.x;
-        y = rect.ey - h;
-        break;
-      case 'right-bottom':
-        x = rect.ex - w;
-        y = rect.ey - h;
-        break;
-    }
-
-    if (pen.calculative.iconRotate) {
-      ctx.translate(rect.center.x, rect.center.y);
-      ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
-      ctx.translate(-rect.center.x, -rect.center.y);
-    }
-
-    ctx.drawImage(pen.calculative.img, x, y, w, h);
-    ctx.restore();
-  } else if (pen.calculative.icon) {
+  if (pen.calculative.icon) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
@@ -483,7 +410,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${pen.calculative.iconFamily}'`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
+        pen.calculative.iconFamily
+      }'`;
     } else if (iconRect.width > iconRect.height) {
       ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
     } else {
@@ -823,7 +752,9 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     }
 
     if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${pen.calculative.iconFamily}'`;
+      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
+        pen.calculative.iconFamily
+      }'`;
     } else if (iconRect.width > iconRect.height) {
       ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
     } else {
@@ -1739,7 +1670,7 @@ export function getPensLock(pens: Pen[]): boolean {
  * 画笔们的 disabledRotate = true
  * 即 全部禁止旋转 返回 true
  * @param pens 画笔
- * @returns 
+ * @returns
  */
 export function getPensDisableRotate(pens: Pen[]): boolean {
   for (const pen of pens) {
@@ -1750,12 +1681,11 @@ export function getPensDisableRotate(pens: Pen[]): boolean {
   return true;
 }
 
-
 /**
  * 画笔们的 disableSize = true
  * 即 全部不允许改变大小 返回 true
  * @param pens 画笔
- * @returns 
+ * @returns
  */
 export function getPensDisableResize(pens: Pen[]): boolean {
   for (const pen of pens) {

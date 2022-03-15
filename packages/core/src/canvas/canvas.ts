@@ -67,12 +67,24 @@ import { EditAction, EditType, globalStore, TopologyStore } from '../store';
 import { deepClone, fileToBase64, uploadFile, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
-import { curve, mind, getLineLength, getLineRect, pointInLine, simplify, smoothLine, lineSegment, iframes, videos } from '../diagrams';
+import {
+  curve,
+  mind,
+  getLineLength,
+  getLineRect,
+  pointInLine,
+  simplify,
+  smoothLine,
+  lineSegment,
+  iframes,
+  videos,
+} from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
 import { echartsList, highchartsList, lightningChartsList } from '@topology/chart-diagram';
 import { gifsList } from '../diagrams/gif';
+import { CanvasImage } from './canvasImage';
 
 declare const window: any;
 
@@ -170,10 +182,17 @@ export class Canvas {
   scroll: Scroll;
   movingAnchor: Point; // 正在移动中的瞄点
 
+  canvasImage: CanvasImage;
+  canvasImageBottom: CanvasImage;
+
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
+    this.canvasImageBottom = new CanvasImage(parentElement, store, true);
+
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
+
+    this.canvasImage = new CanvasImage(parentElement, store);
 
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
@@ -1061,7 +1080,14 @@ export class Canvas {
     this.render();
   };
 
-  private addRuleLine(e: { x: number; y: number; buttons?: number; ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean; }) {
+  private addRuleLine(e: {
+    x: number;
+    y: number;
+    buttons?: number;
+    ctrlKey?: boolean;
+    shiftKey?: boolean;
+    altKey?: boolean;
+  }) {
     const { x: offsetX, y: offsetY } = this.store.data;
     // 靠近左上角的 x ，y
     const x = e.x + offsetX;
@@ -1099,13 +1125,13 @@ export class Canvas {
       anchors: [
         {
           x: 0,
-          y: 0
+          y: 0,
         },
         {
           x: otherPX,
-          y: otherPY
-        }
-      ]
+          y: otherPY,
+        },
+      ],
     });
   }
 
@@ -1509,6 +1535,7 @@ export class Canvas {
             y,
           });
           pen.onMove && pen.onMove(pen);
+          this.canvasImage.initStatus();
           this.dirtyPenRect(pen);
           this.updateLines(pen);
         });
@@ -1893,9 +1920,11 @@ export class Canvas {
       if (pen.type) {
         if (anchor.connectTo && !pen.calculative.active) {
           this.store.hover = this.store.pens[anchor.connectTo];
-          this.store.hoverAnchor = this.store.hover.calculative.worldAnchors.find((a) => a.id === anchor.anchorId);
-          this.externalElements.style.cursor = 'crosshair';
-          return HoverType.NodeAnchor;
+          if (this.store.hover) {
+            this.store.hoverAnchor = this.store.hover.calculative.worldAnchors.find((a) => a.id === anchor.anchorId);
+            this.externalElements.style.cursor = 'crosshair';
+            return HoverType.NodeAnchor;
+          }
         }
         if (this.hotkeyType === HotkeyType.AddAnchor) {
           this.externalElements.style.cursor = 'vertical-text';
@@ -1946,6 +1975,8 @@ export class Canvas {
 
     this.externalElements.style.width = w + 'px';
     this.externalElements.style.height = h + 'px';
+
+    this.canvasImage.resize(w, h);
 
     w = (w * this.store.dpiRatio) | 0;
     h = (h * this.store.dpiRatio) | 0;
@@ -2542,11 +2573,12 @@ export class Canvas {
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
 
     this.dirty = false;
+    this.canvasImageBottom.render();
+    this.canvasImage.render();
   };
 
   renderPens = () => {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
-    ctx.save();
     ctx.strokeStyle = this.store.data.color || this.store.options.color;
     const canvasRect = {
       x: 0,
@@ -2611,7 +2643,6 @@ export class Canvas {
         renderPen(ctx, pen);
       });
     }
-    ctx.restore();
   };
 
   renderBorder = () => {
@@ -2789,6 +2820,7 @@ export class Canvas {
     this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
@@ -2853,7 +2885,7 @@ export class Canvas {
       pen.onResize && pen.onResize(pen);
     });
     this.calcActiveRect();
-
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('scale', this.store.data.scale);
   }
@@ -2877,6 +2909,7 @@ export class Canvas {
     }
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('rotatePens', this.store.active);
 
@@ -2974,6 +3007,7 @@ export class Canvas {
       this.updateLines(pen);
     });
     this.getSizeCPs();
+    this.canvasImage.initStatus();
     this.render(Infinity);
     this.store.emitter.emit('resizePens', this.store.active);
 
@@ -3314,7 +3348,6 @@ export class Canvas {
         pen.type && this.initLineRect(pen);
       }
     });
-
     this.render(Infinity);
     this.tooltip.translate(x, y);
     this.store.emitter.emit('translatePens', pens);
@@ -4117,13 +4150,13 @@ export class Canvas {
       }
     }
   }
-  
-    /**
+
+  /**
    * dom 类型的节点有 id 记录指向 dom ，需要更新
-   * @param oldId 
-   * @param newId 
+   * @param oldId
+   * @param newId
    */
-   changeDomId(oldId: string, newId: string) {
+  changeDomId(oldId: string, newId: string) {
     if (echartsList[oldId]) {
       echartsList[newId] = echartsList[oldId];
       delete echartsList[oldId];
