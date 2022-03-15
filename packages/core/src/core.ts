@@ -1268,6 +1268,8 @@ export class Topology {
     this.store.data.x = x;
     this.store.data.y = y;
 
+    this.canvas.canvasImage.initStatus();
+    this.canvas.canvasImageBottom.initStatus();
     this.canvas.render(Infinity);
   }
 

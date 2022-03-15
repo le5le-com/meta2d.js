@@ -104,6 +104,8 @@ export class Scroll {
 
     if (this.isDownH || this.isDownV) {
       this.parent.onMovePens();
+      this.parent.canvasImage.initStatus();
+      this.parent.canvasImageBottom.initStatus();
       this.parent.render();
     }
 
