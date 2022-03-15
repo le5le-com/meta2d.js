@@ -429,6 +429,7 @@ export class Topology {
         this.store.animates.add(pen);
       }
     });
+    this.canvas.canvasImage.initStatus();
     this.canvas.animate();
   }
 
