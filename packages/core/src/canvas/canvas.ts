@@ -269,6 +269,9 @@ export class Canvas {
       case KeydownType.Document:
         document.addEventListener('keydown', this.onkeydown);
         document.addEventListener('keyup', this.onkeyup);
+        // TODO: 使用 paste 事件，可以实现 复制桌面图片上画布，但存在两个问题：
+        // 1. http 协议，复制桌面图片后，无法清空剪贴板
+        // 2. 复制桌面图片，拿不到鼠标位置信息
         break;
       case KeydownType.Canvas:
         this.externalElements.addEventListener('keydown', this.onkeydown);
@@ -616,7 +619,7 @@ export class Canvas {
     });
   }
 
-  ondrop = async (event: any) => {
+  ondrop = async (event: DragEvent) => {
     if (this.store.data.locked) {
       return;
     }
@@ -626,8 +629,8 @@ export class Canvas {
       const json = event.dataTransfer.getData('Topology') || event.dataTransfer.getData('Text');
       let obj = null;
       if (!json) {
-        const files = event.dataTransfer.files;
-        if (files.length) {
+        const { files, items } = event.dataTransfer;
+        if (files.length && items[0].type.match('image.*')) {   // 必须是图片类型
           obj = await this.fileToPen(files[0]);
         }
       }
