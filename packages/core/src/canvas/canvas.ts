@@ -40,6 +40,7 @@ import {
   needCalcIconRectProps,
   isDomShapes,
   renderPenRaw,
+  needRenderImageProps,
 } from '../pen';
 import {
   calcRotate,
@@ -2476,6 +2477,7 @@ export class Canvas {
           pen.calculative.img = img;
           pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
           pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
+          this.imageLoaded();  // TODO: 重绘图片层 有延时器，可能卡顿
         } else {
           if (navigator.userAgent.includes('Firefox') && pen.image.endsWith('.svg')) {
             // 火狐浏览器 svg 图片需要特殊处理
@@ -3927,6 +3929,7 @@ export class Canvas {
     this.inactive();
     this.store.hoverAnchor = undefined;
     this.store.hover = undefined;
+    this.needInitStatus(pens);
     this.render(Infinity);
     this.pushHistory({ type: EditType.Delete, pens });
     this.store.emitter.emit('delete', pens);
@@ -4294,7 +4297,7 @@ export class Canvas {
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
       }
-      if (k === 'isBottom') {
+      if ([...needRenderImageProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
         willRenderImage = true;
       }
     }

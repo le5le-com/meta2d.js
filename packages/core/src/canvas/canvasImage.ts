@@ -55,14 +55,21 @@ export class CanvasImage {
   }
 
   initStatus() {
+    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (const pen of this.store.data.pens) {
       if (this.hasImage(pen)) {   // 只影响本层的
         pen.calculative.imageDrawed = false;
       }
     }
+    this.store.dirtyBackground = true;
+    this.store.dirtyTop = true;
   }
 
   clear() {
+    this.otherOffsreen.getContext('2d').clearRect(0, 0, this.otherOffsreen.width, this.otherOffsreen.height);
+    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -115,7 +122,6 @@ export class CanvasImage {
     if (dirty) {
       const ctx = this.offscreen.getContext('2d');
       ctx.save();
-      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.translate(this.store.data.x, this.store.data.y);
       for (const pen of this.store.data.pens) {
         if (!pen.calculative.hasImage || pen.calculative.imageDrawed || this.store.animates.has(pen)) {
