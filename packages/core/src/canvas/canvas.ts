@@ -307,7 +307,7 @@ export class Canvas {
     }
     e.preventDefault();
     e.stopPropagation();
-    if (this.store.options.scroll && !e.ctrlKey && this.scroll) {
+    if (this.store.options.scroll && (!e.ctrlKey && !e.metaKey) && this.scroll) {
       this.scroll.wheel(e.deltaY < 0);
       return;
     }
@@ -410,7 +410,7 @@ export class Canvas {
         if (e.shiftKey) {
           x = -5;
         }
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
           x = -1;
         }
         this.translatePens(this.store.active, x, 0);
@@ -424,7 +424,7 @@ export class Canvas {
         if (e.shiftKey) {
           y = -5;
         }
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
           y = -1;
         }
         this.translatePens(this.store.active, 0, y);
@@ -437,7 +437,7 @@ export class Canvas {
         if (e.shiftKey) {
           x = 5;
         }
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
           x = 1;
         }
         this.translatePens(this.store.active, x, 0);
@@ -450,7 +450,7 @@ export class Canvas {
         if (e.shiftKey) {
           y = 5;
         }
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
           y = 1;
         }
         this.translatePens(this.store.active, 0, y);
