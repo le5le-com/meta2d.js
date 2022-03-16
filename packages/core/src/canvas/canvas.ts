@@ -2545,6 +2545,9 @@ export class Canvas {
   imageLoaded() {
     this.imageTimer && clearTimeout(this.imageTimer);
     this.imageTimer = setTimeout(() => {
+      // 加载完图片，重新渲染一次图片层
+      this.canvasImage.initStatus();
+      this.canvasImageBottom.initStatus();
       this.render();
     }, 100);
   }
@@ -2623,14 +2626,6 @@ export class Canvas {
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
-    const background = this.store.data.background || this.store.options.background;
-    if (background) {
-      offscreenCtx.save();
-      offscreenCtx.fillStyle = background;
-      offscreenCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      offscreenCtx.restore();
-    }
-    this.renderGrid();
     offscreenCtx.save();
     offscreenCtx.translate(this.store.data.x, this.store.data.y);
     window && window.debugRender && console.time('renderPens');
@@ -2640,9 +2635,9 @@ export class Canvas {
     this.renderHoverPoint();
     offscreenCtx.restore();
 
+    // TODO: 放大镜，待移动到放大镜画布
     this.renderMagnifier();
 
-    this.renderRule();
 
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -4350,113 +4345,6 @@ export class Canvas {
       width: pen.width / this.store.data.scale,
       height: pen.height / this.store.data.scale,
     };
-  }
-
-  renderRule() {
-    if (!this.store.options.rule && !this.store.data.rule) {
-      return;
-    }
-
-    const span = this.store.data.scale * 10;
-
-    const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
-    ctx.save();
-
-    ctx.strokeStyle = rgba(this.store.data.ruleColor || this.store.options.ruleColor, 0.7);
-
-    const x = this.store.data.origin.x + this.store.data.x;
-    const y = this.store.data.origin.y + this.store.data.y;
-
-    // horizontal rule
-    ctx.beginPath();
-    ctx.lineWidth = 12;
-    ctx.lineDashOffset = -x % span;
-    ctx.setLineDash([1, span - 1]);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(this.width, 0);
-    ctx.stroke();
-
-    // vertical rule
-    ctx.beginPath();
-    ctx.lineDashOffset = -y % span;
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, this.height);
-    ctx.stroke();
-
-    // the big rule
-    ctx.strokeStyle = this.store.data.ruleColor || this.store.options.ruleColor;
-    ctx.beginPath();
-    ctx.lineWidth = 24;
-    ctx.lineDashOffset = -x % (span * 10);
-    ctx.setLineDash([1, span * 10 - 1]);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(this.width, 0);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.lineDashOffset = -y % (span * 10);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, this.height);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.fillStyle = ctx.strokeStyle;
-    let text: number = 0 - Math.floor(x / span / 10) * 100;
-    if (x < 0) {
-      text -= 100;
-    }
-    for (let i = x % (span * 10); i < this.width; i += 10 * span, text += 100) {
-      if (span < 3 && text % 500) {
-        continue;
-      }
-      ctx.fillText(text.toString(), i + 4, 16);
-    }
-
-    text = 0 - Math.floor(y / span / 10) * 100;
-    if (y < 0) {
-      text -= 100;
-    }
-    for (let i = y % (span * 10); i < this.height; i += 10 * span, text += 100) {
-      if (span < 3 && text % 500) {
-        continue;
-      }
-      ctx.save();
-      ctx.beginPath();
-      ctx.translate(16, i - 4);
-      ctx.rotate((270 * Math.PI) / 180);
-      ctx.fillText(text.toString(), 0, 0);
-      ctx.restore();
-    }
-    ctx.restore();
-  }
-
-  renderGrid() {
-    if (!this.store.options.grid && !this.store.data.grid) {
-      return;
-    }
-    const ctx = this.offscreen.getContext('2d');
-    ctx.save();
-    if (this.store.data.gridRotate) {
-      ctx.translate(this.width / 2, this.height / 2);
-      ctx.rotate((this.store.data.gridRotate * Math.PI) / 180);
-      ctx.translate(-this.width / 2, -this.height / 2);
-    }
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = this.store.data.gridColor || this.store.options.gridColor;
-    ctx.beginPath();
-    const size = (this.store.data.gridSize || this.store.options.gridSize) * this.store.data.scale;
-    const longSide = Math.max(this.width, this.height);
-    const count = Math.ceil(longSide / size);
-    for (let i = -size * count; i < longSide * 2; i += size) {
-      ctx.moveTo(i, -longSide);
-      ctx.lineTo(i, longSide * 2);
-    }
-    for (let i = -size * count; i < longSide * 2; i += size) {
-      ctx.moveTo(-longSide, i);
-      ctx.lineTo(longSide * 2, i);
-    }
-    ctx.stroke();
-    ctx.restore();
   }
 
   renderMagnifier() {

@@ -77,6 +77,8 @@ export interface TopologyStore {
   emitter: Emitter;
   dpiRatio?: number;
   clipboard?: Pen[];
+  dirtyBackground?: boolean; // 是否需要重绘背景，包含网格
+  dirtyTop?: boolean;   // 是否需要重绘标尺
 }
 
 export const createStore = () => {

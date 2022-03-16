@@ -189,6 +189,25 @@ export class Topology {
     this.canvas.canvas.style.backgroundImage = `url(${url})`;
   }
 
+  setBackgroundColor(color: string = this.store.data.background) {
+    this.store.data.background = color;
+    this.store.dirtyBackground = true;
+  }
+
+  setGrid({ grid = this.store.data.grid, gridColor = this.store.data.gridColor, gridSize = this.store.data.gridSize, gridRotate = this.store.data.gridRotate }: { grid: boolean; gridColor: string; gridSize: number; gridRotate: number }) {
+    this.store.data.grid = grid;
+    this.store.data.gridColor = gridColor;
+    this.store.data.gridSize = gridSize;
+    this.store.data.gridRotate = gridRotate;
+    this.store.dirtyBackground = true;
+  }
+
+  setRule({ rule = this.store.data.rule, ruleColor = this.store.data.ruleColor }: { rule: boolean; ruleColor: string; }) {
+    this.store.data.rule = rule;
+    this.store.data.ruleColor = ruleColor;
+    this.store.dirtyTop = true;
+  }
+
   open(data?: TopologyData) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy && pen.onDestroy(pen);
@@ -200,6 +219,8 @@ export class Topology {
     this.canvas.activeRect = undefined;
     this.canvas.sizeCPs = undefined;
 
+    this.store.dirtyBackground = true;
+    this.store.dirtyTop = true;
     if (data) {
       if (data.paths) {
         // 存在 svgPath 存储到 globalStore.paths 中
