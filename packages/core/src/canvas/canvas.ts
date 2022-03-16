@@ -87,13 +87,13 @@ import { Scroll } from '../scroll';
 import { echartsList, highchartsList, lightningChartsList } from '@topology/chart-diagram';
 import { gifsList } from '../diagrams/gif';
 import { CanvasImage } from './canvasImage';
+import { MagnifierCanvas } from './magnifierCanvas';
 
 declare const window: any;
 
 export class Canvas {
   canvas = document.createElement('canvas');
   offscreen = createOffscreen();
-  magnifierScreen = createOffscreen();
 
   width: number;
   height: number;
@@ -175,9 +175,7 @@ export class Canvas {
   dropdown = document.createElement('ul');
 
   tooltip: Tooltip;
-  magnifier: boolean;
   mousePos: Point = { x: 0, y: 0 };
-  magnifierSize = 300;
 
   private alreadyCopy = false;
 
@@ -186,6 +184,7 @@ export class Canvas {
 
   canvasImage: CanvasImage;
   canvasImageBottom: CanvasImage;
+  magnifierCanvas: MagnifierCanvas;
 
   constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
@@ -197,6 +196,8 @@ export class Canvas {
 
     this.canvasImage = new CanvasImage(parentElement, store);
 
+    this.magnifierCanvas = new MagnifierCanvas(this, parentElement, store);
+
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
     this.externalElements.style.top = '0';
@@ -205,8 +206,6 @@ export class Canvas {
     parentElement.style.position = 'relative';
     parentElement.appendChild(this.externalElements);
     this.createInput();
-    this.magnifierScreen.width = this.magnifierSize + 5;
-    this.magnifierScreen.height = this.magnifierSize + 5;
 
     this.tooltip = new Tooltip(parentElement);
     if (this.store.options.scroll) {
@@ -556,8 +555,8 @@ export class Canvas {
         }
         this.hotkeyType = HotkeyType.None;
         this.movingAnchor = undefined;
-        if (this.magnifier) {
-          this.magnifier = false;
+        if (this.magnifierCanvas.magnifier) {
+          this.magnifierCanvas.magnifier = false;
           this.render(Infinity);
         }
         break;
@@ -836,7 +835,7 @@ export class Canvas {
       return;
     }
 
-    if (this.magnifier) {
+    if (this.magnifierCanvas.magnifier) {
       return;
     }
 
@@ -1173,7 +1172,7 @@ export class Canvas {
     this.calibrateMouse(e);
     this.mousePos.x = e.x;
     this.mousePos.y = e.y;
-    if (this.magnifier) {
+    if (this.magnifierCanvas.magnifier) {
       this.render(Infinity);
       return;
     }
@@ -1990,6 +1989,7 @@ export class Canvas {
 
     this.canvasImage.resize(w, h);
     this.canvasImageBottom.resize(w, h);
+    this.magnifierCanvas.resize(w, h);
 
     w = (w * this.store.dpiRatio) | 0;
     h = (h * this.store.dpiRatio) | 0;
@@ -2573,8 +2573,7 @@ export class Canvas {
     this.renderHoverPoint();
     offscreenCtx.restore();
 
-    // TODO: 放大镜，待移动到放大镜画布
-    this.renderMagnifier();
+    this.magnifierCanvas.render();
 
 
     const ctx = this.canvas.getContext('2d');
@@ -4282,70 +4281,6 @@ export class Canvas {
     };
   }
 
-  renderMagnifier() {
-    if (!this.magnifier) {
-      return;
-    }
-
-    const r = this.magnifierSize / 2;
-    const size = this.magnifierSize + 5;
-
-    const ctx = this.magnifierScreen.getContext('2d') as CanvasRenderingContext2D;
-    ctx.clearRect(0, 0, size, size);
-    ctx.lineWidth = 5;
-
-    ctx.save();
-    ctx.translate(2.5, 2.5);
-
-    ctx.save();
-    ctx.arc(r, r, r, 0, Math.PI * 2, false);
-    ctx.clip();
-    ctx.fillStyle = this.store.data.background || this.store.options.background || '#f4f4f4';
-    ctx.fillRect(0, 0, size, size);
-    ctx.translate(-r, -r);
-    ctx.scale(2, 2);
-    const pt = {
-      x: (this.mousePos.x + this.store.data.x) * this.store.dpiRatio,
-      y: (this.mousePos.y + this.store.data.y) * this.store.dpiRatio,
-    };
-    ctx.drawImage(
-      this.offscreen,
-      pt.x - r,
-      pt.y - r,
-      this.magnifierSize,
-      this.magnifierSize,
-      0,
-      0,
-      this.magnifierSize,
-      this.magnifierSize
-    );
-    ctx.restore();
-
-    ctx.beginPath();
-    const gradient = ctx.createRadialGradient(r, r, r - 5, r, r, r);
-    gradient.addColorStop(0, 'rgba(0,0,0,0.2)');
-    gradient.addColorStop(0.8, 'rgb(200,200,200)');
-    gradient.addColorStop(0.9, 'rgb(200,200,200)');
-    gradient.addColorStop(1.0, 'rgba(200,200,200,0.9)');
-    ctx.strokeStyle = gradient;
-    ctx.arc(r, r, r, 0, Math.PI * 2, false);
-    ctx.stroke();
-    ctx.restore();
-
-    const offscreenCtx = this.offscreen.getContext('2d');
-    offscreenCtx.drawImage(
-      this.magnifierScreen,
-      0,
-      0,
-      this.magnifierSize + 5,
-      this.magnifierSize + 5,
-      (pt.x - r - 2.5) / this.store.dpiRatio,
-      (pt.y - r - 2.5) / this.store.dpiRatio,
-      (this.magnifierSize + 5) / this.store.dpiRatio,
-      (this.magnifierSize + 5) / this.store.dpiRatio
-    );
-  }
-
   toPng(padding: Padding = 0, callback?: BlobCallback) {
     const rect = getRect(this.store.data.pens);
     const p = formatPadding(padding || 2);
@@ -4483,20 +4418,20 @@ export class Canvas {
   }
 
   showMagnifier() {
-    this.magnifier = true;
+    this.magnifierCanvas.magnifier = true;
     this.externalElements.style.cursor = 'default';
     this.render(Infinity);
   }
 
   hideMagnifier() {
-    this.magnifier = false;
+    this.magnifierCanvas.magnifier = false;
     this.externalElements.style.cursor = 'default';
     this.render(Infinity);
   }
 
   toggleMagnifier() {
-    this.magnifier = !this.magnifier;
-    if (this.magnifier) {
+    this.magnifierCanvas.magnifier = !this.magnifierCanvas.magnifier;
+    if (this.magnifierCanvas.magnifier) {
       this.externalElements.style.cursor = 'default';
     }
     this.render(Infinity);
