@@ -2135,6 +2135,8 @@ export class Canvas {
         action.type = EditType.Add;
         break;
     }
+    this.canvasImage.initStatus();
+    this.canvasImageBottom.initStatus();
     this.render(Infinity);
 
     this.store.emitter.emit(undo ? 'undo' : 'redo', action);
