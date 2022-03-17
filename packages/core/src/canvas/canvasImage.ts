@@ -77,7 +77,7 @@ export class CanvasImage {
     pen.calculative.hasImage =
       pen.calculative &&
       pen.calculative.inView &&
-      !pen.calculative.isBottom == !this.isBottom &&   // undefined == false 结果 false
+      !pen.isBottom == !this.isBottom &&   // undefined == false 结果 false
       pen.image &&
       pen.calculative.img &&
       pen.name !== 'gif';

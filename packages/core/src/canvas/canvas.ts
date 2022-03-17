@@ -1573,8 +1573,8 @@ export class Canvas {
    * @param pens 本次改变的 pens
    */
   private needInitStatus(pens: Pen[]) {
-    pens.some(pen => this.canvasImage.hasImage(pen)) && this.canvasImage.initStatus();
-    pens.some(pen => this.canvasImageBottom.hasImage(pen)) && this.canvasImageBottom.initStatus();
+    pens.some(pen => pen.image && pen.name !== 'gif' && !pen.isBottom) && this.canvasImage.initStatus();
+    pens.some(pen => pen.image && pen.name !== 'gif' && pen.isBottom) && this.canvasImageBottom.initStatus();
   }
 
   private clearDock = () => {
@@ -2131,9 +2131,18 @@ export class Canvas {
             pen.calculative.canvas = this;
             globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
           }
+          pen.calculative.image = undefined;
+          pen.calculative.backgroundImage = undefined;
+          pen.calculative.strokeImage = undefined;
+          this.loadImage(pen);
         });
         action.type = EditType.Add;
         break;
+    }
+    if (action.type === EditType.Update) {
+      this.needInitStatus([...action.pens, ...action.initPens]);
+    } else {
+      this.needInitStatus(action.pens);
     }
     this.render(Infinity);
 
