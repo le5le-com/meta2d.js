@@ -41,6 +41,7 @@ import {
   isDomShapes,
   renderPenRaw,
   needRenderImageProps,
+  needSetPenProps,
 } from '../pen';
 import {
   calcRotate,
@@ -2116,6 +2117,7 @@ export class Canvas {
     }
     this.store.histories.push(action);
     this.store.historyIndex = this.store.histories.length - 1;
+    this.store.emitter.emit('changeData');
   }
 
   undo() {
@@ -2131,6 +2133,7 @@ export class Canvas {
       this.doEditAction(action, true);
       step--;
     }
+    this.store.emitter.emit('changeData');
   }
 
   redo() {
@@ -2150,6 +2153,7 @@ export class Canvas {
       this.doEditAction(action, false);
       step--;
     }
+    this.store.emitter.emit('changeData');
   }
 
   doEditAction(action: EditAction, undo: boolean) {
@@ -3690,8 +3694,8 @@ export class Canvas {
         if (pen.calculative.pause) {
           continue;
         }
-        if (pen.calculative.active && !pen.type) {
-          // 存在节点在活动层
+        if (pen.calculative.active && !pen.type && !this.movingPens) {
+          // 存在节点在活动层，并且不在移动中
           active = true;
         }
         if (!pen.type) {
@@ -4289,6 +4293,7 @@ export class Canvas {
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
     let willRenderImage = false;  // 是否重新渲染图片
+    let willSetPenRect = false; // 是否重新 setPenRect
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
@@ -4299,21 +4304,31 @@ export class Canvas {
       if (['name', 'borderRadius'].includes(k)) {
         willUpdatePath = true;
       }
+      if (needSetPenProps.includes(k)) {
+        willSetPenRect = true;
+      }
       if (needDirtyPenRectProps.includes(k)) {
         willDirtyPenRect = true;
       }
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
       }
-      if ([...needRenderImageProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
+      if ([...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
         willRenderImage = true;
       }
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
-    if (willDirtyPenRect) {
+    if (willSetPenRect) {
       this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
       this.updateLines(pen, true);
+      willCalcTextRect = false;
+      willUpdatePath = false;
+      willCalcIconRect = false;
+      willDirtyPenRect = false;
+    }
+    if (willDirtyPenRect) {
+      this.dirtyPenRect(pen);
       willCalcTextRect = false;
       willUpdatePath = false;
       willCalcIconRect = false;
