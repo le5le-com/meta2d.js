@@ -968,7 +968,7 @@ export function calcWorldRects(pen: Pen) {
     if (Math.abs(pen.y) > 1) {
       rect.y = parentRect.y + pen.y;
     }
-    if (pen.width > 1 && !isEqual(pen.height, 1)) {
+    if (pen.width > 1 && !isEqual(pen.width, 1)) {
       rect.width = pen.width;
     }
     if (pen.height > 1 && !isEqual(pen.height, 1)) {
