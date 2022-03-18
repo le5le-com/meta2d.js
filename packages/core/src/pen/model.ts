@@ -52,11 +52,14 @@ export const needCalcTextRectProps = [
   'keepDecimal'
 ];
 
-export const needDirtyPenRectProps = [
+export const needSetPenProps = [
   'x',
   'y',
   'width',
-  'height',
+  'height'
+]
+
+export const needDirtyPenRectProps = [
   'rotate',
   'paddingTop',
   'paddingRight',
