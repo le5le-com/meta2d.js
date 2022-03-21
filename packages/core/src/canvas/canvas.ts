@@ -1570,11 +1570,22 @@ export class Canvas {
 
   /**
    * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层
+   * 子节点中包含图片，也需要重绘
    * @param pens 本次改变的 pens
    */
   private needInitStatus(pens: Pen[]) {
-    pens.some((pen) => pen.image && pen.name !== 'gif' && !pen.isBottom) && this.canvasImage.initStatus();
-    pens.some((pen) => pen.image && pen.name !== 'gif' && pen.isBottom) && this.canvasImageBottom.initStatus();
+    pens.some((pen) => this.hasImage(pen, false)) && this.canvasImage.initStatus();
+    pens.some((pen) => this.hasImage(pen, true)) && this.canvasImageBottom.initStatus();
+  }
+
+  private hasImage(pen: Pen, isBottom: boolean): boolean {
+    if (pen.image && pen.name !== 'gif' && !pen.isBottom == !isBottom) {
+      return true;
+    }
+    return pen.children?.some((childId: string) => {
+      const child = this.find(childId)[0];
+      return this.hasImage(child, isBottom);
+    });
   }
 
   private clearDock = () => {
