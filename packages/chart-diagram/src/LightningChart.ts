@@ -10,6 +10,7 @@ export function lightningCharts(pen: Pen): Path2D {
     pen.onResize = resize;
     pen.onRotate = move;
     pen.onValue = value;
+    pen.onChangeId = changeId;
   }
 
   const path = new Path2D();
@@ -344,4 +345,12 @@ function value(pen: Pen) {
   }
   setLightningCharts(pen);
   setElemPosition(pen, lightningChartsList[pen.id].div);
+}
+
+function changeId(pen: Pen, oldId: string, newId: string) {
+  if (!lightningChartsList[oldId]) {
+    return;
+  }
+  lightningChartsList[newId] = lightningChartsList[oldId];
+  delete lightningChartsList[oldId];
 }

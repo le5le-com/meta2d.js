@@ -10,6 +10,7 @@ export function echarts(pen: Pen): Path2D {
     pen.onRotate = move;
     pen.onValue = value;
     pen.onBeforeValue = beforeValue;
+    pen.onChangeId = changeId;
   }
 
   const path = new Path2D();
@@ -181,4 +182,12 @@ function beforeValue(pen: Pen, value: ChartData) {
   delete value.dataY;
   delete value.overwrite;
   return Object.assign(value, { echarts });
+}
+
+function changeId(pen: Pen, oldId: string, newId: string) {
+  if (!echartsList[oldId]) {
+    return;
+  }
+  echartsList[newId] = echartsList[oldId];
+  delete echartsList[oldId];
 }

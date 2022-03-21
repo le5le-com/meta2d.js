@@ -988,6 +988,11 @@ export class Topology {
     return this.canvas.toPng(padding, callback);
   }
 
+  /**
+   * 下载 png
+   * @param name 传入参数自带文件后缀名 例如：'test.png'
+   * @param padding 上右下左的内边距
+   */
   downloadPng(name?: string, padding: Padding = 0) {
     const a = document.createElement('a');
     a.setAttribute('download', name || 'le5le.topology.png');

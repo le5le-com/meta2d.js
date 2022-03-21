@@ -8,6 +8,7 @@ export function video(pen: Pen) {
   pen.onRotate = move;
   pen.onClick = click;
   pen.onValue = move;
+  pen.onChangeId = changeId;
 
   if (!videos[pen.id]) {
     const player = document.createElement('div');
@@ -110,4 +111,12 @@ function click(pen: Pen) {
 function resizeProcessWidth(progress: any, media: HTMLMediaElement, width: number) {
   // worldRect 会重新赋值，而 pen 不会变，这里才能取到实时的 worldRect
   progress.style.width = (media.currentTime / media.duration) * width + 'px';
+}
+
+function changeId(pen: Pen, oldId: string, newId: string) {
+  if (!videos[oldId]) {
+    return;
+  }
+  videos[newId] = videos[oldId];
+  delete videos[oldId];
 }

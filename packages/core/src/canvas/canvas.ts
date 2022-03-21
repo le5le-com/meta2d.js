@@ -41,6 +41,7 @@ import {
   isDomShapes,
   renderPenRaw,
   needRenderImageProps,
+  needSetPenProps,
 } from '../pen';
 import {
   calcRotate,
@@ -84,8 +85,6 @@ import {
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
-import { echartsList, highchartsList, lightningChartsList } from '@topology/chart-diagram';
-import { gifsList } from '../diagrams/gif';
 import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
 
@@ -2053,6 +2052,7 @@ export class Canvas {
     }
     this.store.histories.push(action);
     this.store.historyIndex = this.store.histories.length - 1;
+    this.store.emitter.emit('changeData');
   }
 
   undo() {
@@ -2068,6 +2068,7 @@ export class Canvas {
       this.doEditAction(action, true);
       step--;
     }
+    this.store.emitter.emit('changeData');
   }
 
   redo() {
@@ -2087,6 +2088,7 @@ export class Canvas {
       this.doEditAction(action, false);
       step--;
     }
+    this.store.emitter.emit('changeData');
   }
 
   doEditAction(action: EditAction, undo: boolean) {
@@ -3626,8 +3628,8 @@ export class Canvas {
         if (pen.calculative.pause) {
           continue;
         }
-        if (pen.calculative.active && !pen.type) {
-          // 存在节点在活动层
+        if (pen.calculative.active && !pen.type && !this.movingPens) {
+          // 存在节点在活动层，并且不在移动中
           active = true;
         }
         if (!pen.type) {
@@ -4165,47 +4167,10 @@ export class Canvas {
         // 更换 store.pens 上的内容
         this.store.pens[newId] = this.store.pens[oldId];
         // dom 节点，需要更改 id
-        this.changeDomId(oldId, newId);
+        pens[0].onChangeId && pens[0].onChangeId(pens[0], oldId, newId);
         delete this.store.pens[oldId];
         return true;
       }
-    }
-  }
-
-  /**
-   * dom 类型的节点有 id 记录指向 dom ，需要更新
-   * @param oldId
-   * @param newId
-   */
-  changeDomId(oldId: string, newId: string) {
-    if (echartsList[oldId]) {
-      echartsList[newId] = echartsList[oldId];
-      delete echartsList[oldId];
-    }
-
-    if (highchartsList[oldId]) {
-      highchartsList[newId] = highchartsList[oldId];
-      delete highchartsList[oldId];
-    }
-
-    if (lightningChartsList[oldId]) {
-      lightningChartsList[newId] = lightningChartsList[oldId];
-      delete lightningChartsList[oldId];
-    }
-
-    if (gifsList[oldId]) {
-      gifsList[newId] = gifsList[oldId];
-      delete gifsList[oldId];
-    }
-
-    if (iframes[oldId]) {
-      iframes[newId] = iframes[oldId];
-      delete iframes[oldId];
-    }
-
-    if (videos[oldId]) {
-      videos[newId] = videos[oldId];
-      delete videos[oldId];
     }
   }
 
@@ -4221,6 +4186,7 @@ export class Canvas {
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
     let willRenderImage = false; // 是否重新渲染图片
+    let willSetPenRect = false; // 是否重新 setPenRect
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
@@ -4231,21 +4197,33 @@ export class Canvas {
       if (['name', 'borderRadius'].includes(k)) {
         willUpdatePath = true;
       }
+      if (needSetPenProps.includes(k)) {
+        willSetPenRect = true;
+      }
       if (needDirtyPenRectProps.includes(k)) {
         willDirtyPenRect = true;
       }
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
       }
-      if ([...needRenderImageProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
+      if (
+        [...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)
+      ) {
         willRenderImage = true;
       }
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
-    if (willDirtyPenRect) {
+    if (willSetPenRect) {
       this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
       this.updateLines(pen, true);
+      willCalcTextRect = false;
+      willUpdatePath = false;
+      willCalcIconRect = false;
+      willDirtyPenRect = false;
+    }
+    if (willDirtyPenRect) {
+      this.dirtyPenRect(pen);
       willCalcTextRect = false;
       willUpdatePath = false;
       willCalcIconRect = false;
