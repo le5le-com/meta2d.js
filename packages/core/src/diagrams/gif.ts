@@ -9,6 +9,7 @@ export function gif(pen: Pen): Path2D {
     pen.onResize = resize;
     pen.onRotate = move;
     pen.onValue = value;
+    pen.onChangeId = changeId;
   }
 
   const path = new Path2D();
@@ -62,4 +63,12 @@ function value(pen: Pen) {
   }
   setElemPosition(pen, gifsList[pen.id].div);
   gifsList[pen.id].src = pen.image;
+}
+
+function changeId(pen: Pen, oldId: string, newId: string) {
+  if (!gifsList[oldId]) {
+    return;
+  }
+  gifsList[newId] = gifsList[oldId];
+  delete gifsList[oldId];
 }

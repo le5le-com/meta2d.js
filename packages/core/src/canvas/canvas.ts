@@ -85,8 +85,6 @@ import {
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
-import { echartsList, highchartsList, lightningChartsList } from '@topology/chart-diagram';
-import { gifsList } from '../diagrams/gif';
 import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
 
@@ -4169,47 +4167,10 @@ export class Canvas {
         // 更换 store.pens 上的内容
         this.store.pens[newId] = this.store.pens[oldId];
         // dom 节点，需要更改 id
-        this.changeDomId(oldId, newId);
+        pens[0].onChangeId && pens[0].onChangeId(pens[0], oldId, newId);
         delete this.store.pens[oldId];
         return true;
       }
-    }
-  }
-
-  /**
-   * dom 类型的节点有 id 记录指向 dom ，需要更新
-   * @param oldId
-   * @param newId
-   */
-  changeDomId(oldId: string, newId: string) {
-    if (echartsList[oldId]) {
-      echartsList[newId] = echartsList[oldId];
-      delete echartsList[oldId];
-    }
-
-    if (highchartsList[oldId]) {
-      highchartsList[newId] = highchartsList[oldId];
-      delete highchartsList[oldId];
-    }
-
-    if (lightningChartsList[oldId]) {
-      lightningChartsList[newId] = lightningChartsList[oldId];
-      delete lightningChartsList[oldId];
-    }
-
-    if (gifsList[oldId]) {
-      gifsList[newId] = gifsList[oldId];
-      delete gifsList[oldId];
-    }
-
-    if (iframes[oldId]) {
-      iframes[newId] = iframes[oldId];
-      delete iframes[oldId];
-    }
-
-    if (videos[oldId]) {
-      videos[newId] = videos[oldId];
-      delete videos[oldId];
     }
   }
 

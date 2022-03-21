@@ -9,6 +9,7 @@ export function highcharts(pen: Pen): Path2D {
     pen.onResize = resize;
     pen.onRotate = move;
     pen.onValue = value;
+    pen.onChangeId = changeId;
   }
 
   const path = new Path2D();
@@ -109,4 +110,12 @@ function value(pen: Pen) {
     (pen as any).highcharts.option
   );
   chart.reflow();
+}
+
+function changeId(pen: Pen, oldId: string, newId: string) {
+  if (!highchartsList[oldId]) {
+    return;
+  }
+  highchartsList[newId] = highchartsList[oldId];
+  delete highchartsList[oldId];
 }
