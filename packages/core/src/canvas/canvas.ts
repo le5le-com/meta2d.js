@@ -4182,7 +4182,6 @@ export class Canvas {
     let willCalcTextRect = false;
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
-    let willRenderImage = false; // 是否重新渲染图片
     let willSetPenRect = false; // 是否重新 setPenRect
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
@@ -4202,11 +4201,6 @@ export class Canvas {
       }
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
-      }
-      if (
-        [...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)
-      ) {
-        willRenderImage = true;
       }
     }
 
@@ -4236,10 +4230,7 @@ export class Canvas {
       pen.calculative.strokeImage = undefined;
       this.loadImage(pen);
     }
-    if (willRenderImage) {
-      this.canvasImage.initStatus();
-      this.canvasImageBottom.initStatus();
-    }
+    this.needInitStatus([pen]);
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
