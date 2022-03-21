@@ -1752,10 +1752,7 @@ export class Canvas {
       }
     }
     if (hoverType === HoverType.None) {
-      hoverType = this.inPens(pt, this.store.active);
-      if (hoverType === HoverType.None) {
-        hoverType = this.inPens(pt, this.store.data.pens);
-      }
+      hoverType = this.inPens(pt, this.store.data.pens);
     }
 
     if (!hoverType && !activeLine && pointInRect(pt, this.activeRect)) {
