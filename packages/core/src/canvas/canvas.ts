@@ -4251,7 +4251,10 @@ export class Canvas {
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
 <<<<<<< HEAD
+<<<<<<< HEAD
     let willRenderImage = false;  // 是否重新渲染图片
+=======
+>>>>>>> 6b96b90 (setValue image need render again)
     let willSetPenRect = false; // 是否重新 setPenRect
 =======
     let willRenderImage = false; // 是否重新渲染图片
@@ -4275,9 +4278,12 @@ export class Canvas {
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
       }
+<<<<<<< HEAD
       if ([...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
         willRenderImage = true;
       }
+=======
+>>>>>>> 6b96b90 (setValue image need render again)
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
@@ -4306,10 +4312,7 @@ export class Canvas {
       pen.calculative.strokeImage = undefined;
       this.loadImage(pen);
     }
-    if (willRenderImage) {
-      this.canvasImage.initStatus();
-      this.canvasImageBottom.initStatus();
-    }
+    this.needInitStatus([pen]);
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
