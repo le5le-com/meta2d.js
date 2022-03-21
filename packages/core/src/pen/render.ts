@@ -498,13 +498,13 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.translate(-rect.x, -rect.y);
   }
 
-  ctx.beginPath();
   // for canvas2svg
   if ((ctx as any).setAttrs) {
     (ctx as any).setAttrs(pen);
   }
   // end
 
+  ctx.beginPath();
   if (pen.calculative.flip) {
     if (pen.calculative.flip === Flip.Horizontal) {
       if (rect) {
