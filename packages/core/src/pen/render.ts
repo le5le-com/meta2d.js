@@ -1020,12 +1020,12 @@ export function calcPenRect(pen: Pen) {
 }
 
 export function calcWorldAnchors(pen: Pen) {
-  const store = pen.calculative.canvas.store;
+  const store: TopologyStore = pen.calculative.canvas.store;
   if ((pen.disableAnchor || store.options.disableAnchor) && !pen.type) {
     pen.calculative.worldAnchors = [];
     return;
   }
-  const anchors: Point[] = [];
+  let anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
       anchors.push(calcWorldPointOfPen(pen, anchor));
@@ -1034,32 +1034,14 @@ export function calcWorldAnchors(pen: Pen) {
 
   // Default anchors of node
   if (!anchors.length && !pen.type && pen.name !== 'combine') {
-    anchors.push({
-      id: '0',
-      penId: pen.id,
-      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * 0.5,
-      y: pen.calculative.worldRect.y,
-    });
-
-    anchors.push({
-      id: '1',
-      penId: pen.id,
-      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * 0.5,
-    });
-
-    anchors.push({
-      id: '2',
-      penId: pen.id,
-      x: pen.calculative.worldRect.x + pen.calculative.worldRect.width * 0.5,
-      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height,
-    });
-
-    anchors.push({
-      id: '3',
-      penId: pen.id,
-      x: pen.calculative.worldRect.x,
-      y: pen.calculative.worldRect.y + pen.calculative.worldRect.height * 0.5,
+    const { x, y, width, height } = pen.calculative.worldRect;
+    anchors = store.options.defaultAnchors.map((anchor, index) => {
+      return {
+        id: `${index}`,
+        penId: pen.id,
+        x: x + width * anchor.x,
+        y: y + height * anchor.y,
+      }
     });
   }
 
