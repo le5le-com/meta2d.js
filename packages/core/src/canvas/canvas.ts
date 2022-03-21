@@ -306,7 +306,7 @@ export class Canvas {
     }
     e.preventDefault();
     e.stopPropagation();
-    if (this.store.options.scroll && (!e.ctrlKey && !e.metaKey) && this.scroll) {
+    if (this.store.options.scroll && !e.ctrlKey && !e.metaKey && this.scroll) {
       this.scroll.wheel(e.deltaY < 0);
       return;
     }
@@ -650,7 +650,8 @@ export class Canvas {
       let obj = null;
       if (!json) {
         const { files, items } = event.dataTransfer;
-        if (files.length && items[0].type.match('image.*')) {   // 必须是图片类型
+        if (files.length && items[0].type.match('image.*')) {
+          // 必须是图片类型
           obj = await this.fileToPen(files[0]);
         }
       }
@@ -828,6 +829,10 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    if (e.buttons === 2 && !this.drawingLine) {
+      this.mouseRight = MouseRight.Down;
+    }
+
     this.hideInput();
     if (this.store.data.locked === LockState.Disable || (e.buttons !== 1 && e.buttons !== 2)) {
       this.hoverType = HoverType.None;
@@ -836,10 +841,6 @@ export class Canvas {
 
     if (this.magnifierCanvas.magnifier) {
       return;
-    }
-
-    if (e.buttons === 2 && !this.drawingLine) {
-      this.mouseRight = MouseRight.Down;
     }
 
     e.x -= this.bounding.left || this.bounding.x;
@@ -1572,8 +1573,8 @@ export class Canvas {
    * @param pens 本次改变的 pens
    */
   private needInitStatus(pens: Pen[]) {
-    pens.some(pen => pen.image && pen.name !== 'gif' && !pen.isBottom) && this.canvasImage.initStatus();
-    pens.some(pen => pen.image && pen.name !== 'gif' && pen.isBottom) && this.canvasImageBottom.initStatus();
+    pens.some((pen) => pen.image && pen.name !== 'gif' && !pen.isBottom) && this.canvasImage.initStatus();
+    pens.some((pen) => pen.image && pen.name !== 'gif' && pen.isBottom) && this.canvasImageBottom.initStatus();
   }
 
   private clearDock = () => {
@@ -2424,7 +2425,7 @@ export class Canvas {
           pen.calculative.img = img;
           pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
           pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
-          this.imageLoaded();  // TODO: 重绘图片层 有延时器，可能卡顿
+          this.imageLoaded(); // TODO: 重绘图片层 有延时器，可能卡顿
         } else {
           if (navigator.userAgent.includes('Firefox') && pen.image.endsWith('.svg')) {
             // 火狐浏览器 svg 图片需要特殊处理
@@ -2585,7 +2586,6 @@ export class Canvas {
     offscreenCtx.restore();
 
     this.magnifierCanvas.render();
-
 
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -4185,7 +4185,7 @@ export class Canvas {
     let willCalcTextRect = false;
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
-    let willRenderImage = false;  // 是否重新渲染图片
+    let willRenderImage = false; // 是否重新渲染图片
     let willSetPenRect = false; // 是否重新 setPenRect
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
@@ -4206,7 +4206,9 @@ export class Canvas {
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
       }
-      if ([...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
+      if (
+        [...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)
+      ) {
         willRenderImage = true;
       }
     }
@@ -4280,7 +4282,7 @@ export class Canvas {
     canvas.width = rect.width;
     canvas.height = rect.height;
     const ctx = canvas.getContext('2d');
-    ctx.textBaseline = 'middle';   // 默认垂直居中
+    ctx.textBaseline = 'middle'; // 默认垂直居中
     const background = this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色
