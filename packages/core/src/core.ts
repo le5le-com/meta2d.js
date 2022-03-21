@@ -113,10 +113,14 @@ export class Topology {
     this.events[EventAction.Link] = (pen: any, e: Event) => {
       window.open(e.value, e.params === undefined ? '_blank' : e.params);
     };
-    this.events[EventAction.SetProps] = (pen: any, e: Event) => {
-      const rect = this.getPenRect(pen);
+    this.events[EventAction.SetProps] = (pen: Pen, e: Event) => {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
-      this.setValue({ id: pen.id, ...rect, ...e.value });
+      const pens = e.params ? this.find(e.params) : [pen];
+      pens.forEach((pen: Pen) => {
+        const rect = this.getPenRect(pen);
+        this.setValue({ id: pen.id, ...rect, ...e.value }, false, false);
+      });
+      this.render();
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {
