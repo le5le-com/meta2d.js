@@ -2059,7 +2059,10 @@ export class Canvas {
     }
     this.store.histories.push(action);
     this.store.historyIndex = this.store.histories.length - 1;
-    this.store.emitter.emit('changeData');
+    this.store.emitter.emit('update', {
+      previous: action.initPens,
+      current: action.pens,
+    });
   }
 
   undo() {
@@ -2075,7 +2078,6 @@ export class Canvas {
       this.doEditAction(action, true);
       step--;
     }
-    this.store.emitter.emit('changeData');
   }
 
   redo() {
@@ -2095,7 +2097,6 @@ export class Canvas {
       this.doEditAction(action, false);
       step--;
     }
-    this.store.emitter.emit('changeData');
   }
 
   doEditAction(action: EditAction, undo: boolean) {
@@ -3184,10 +3185,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const pens = this.store.active;
-      this.store.emitter.emit('update', pens);
-
-      const currentPens = deepClone(pens);
+      const currentPens = deepClone(this.store.active);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3231,10 +3229,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const pens = this.store.active;
-      this.store.emitter.emit('update', pens);
-
-      const currentPens = deepClone(pens);
+      const currentPens = deepClone(this.store.active);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3278,10 +3273,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const pens = this.store.active;
-      this.store.emitter.emit('update', pens);
-
-      const currentPens = deepClone(pens);
+      const currentPens = deepClone(this.store.active);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3317,7 +3309,6 @@ export class Canvas {
     this.hotkeyType = HotkeyType.None;
     this.render(Infinity);
 
-    this.store.emitter.emit('update', [this.store.hover]);
     this.pushHistory({
       type: EditType.Update,
       pens: [deepClone(this.store.hover)],
@@ -4335,7 +4326,6 @@ export class Canvas {
         this.dirty = true;
       }
 
-      this.store.emitter.emit('update', [this.store.active[0]]);
       this.pushHistory({
         type: EditType.Update,
         pens: [deepClone(this.store.active[0])],
@@ -4364,7 +4354,6 @@ export class Canvas {
         this.dirty = true;
       }
 
-      this.store.emitter.emit('update', [this.store.active[0]]);
       this.pushHistory({
         type: EditType.Update,
         pens: [deepClone(this.store.active[0])],
