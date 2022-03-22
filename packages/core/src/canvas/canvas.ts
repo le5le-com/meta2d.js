@@ -1584,7 +1584,7 @@ export class Canvas {
     }
     return pen.children?.some((childId: string) => {
       const child = this.find(childId)[0];
-      return this.hasImage(child, isBottom);
+      return child && this.hasImage(child, isBottom);
     });
   }
 
@@ -3861,6 +3861,7 @@ export class Canvas {
       return;
     }
 
+    !isSon && this.needInitStatus(pens);  // needInitStatus 会递归，无需考虑 isSon
     pens.forEach((pen) => {
       if (!delLock && pen.locked && !isSon && !pen.isRuleLine) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
@@ -3879,7 +3880,6 @@ export class Canvas {
     this.inactive();
     this.store.hoverAnchor = undefined;
     this.store.hover = undefined;
-    this.needInitStatus(pens);
     this.render(Infinity);
     this.pushHistory({ type: EditType.Delete, pens });
     this.store.emitter.emit('delete', pens);
