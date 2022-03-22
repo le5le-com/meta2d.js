@@ -40,7 +40,6 @@ import {
   needCalcIconRectProps,
   isDomShapes,
   renderPenRaw,
-  needRenderImageProps,
   needSetPenProps,
 } from '../pen';
 import {
@@ -3252,10 +3251,7 @@ export class Canvas {
       const pens = this.store.active;
       this.store.emitter.emit('update', pens);
 
-      const currentPens = [];
-      for (let pen of pens) {
-        currentPens.push(deepClone(pen));
-      }
+      const currentPens = deepClone(pens);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3302,10 +3298,7 @@ export class Canvas {
       const pens = this.store.active;
       this.store.emitter.emit('update', pens);
 
-      const currentPens = [];
-      for (let pen of pens) {
-        currentPens.push(deepClone(pen));
-      }
+      const currentPens = deepClone(pens);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3352,10 +3345,7 @@ export class Canvas {
       const pens = this.store.active;
       this.store.emitter.emit('update', pens);
 
-      const currentPens = [];
-      for (let pen of pens) {
-        currentPens.push(deepClone(pen));
-      }
+      const currentPens = deepClone(pens);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,

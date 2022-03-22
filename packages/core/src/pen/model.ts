@@ -69,16 +69,6 @@ export const needDirtyPenRectProps = [
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
-export const needRenderImageProps = [
-  'isBottom',
-  'flip',
-  'iconWidth',
-  'iconHeight',
-  'imageRatio',
-  'iconAlign',
-  'iconRotate'
-];
-
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
