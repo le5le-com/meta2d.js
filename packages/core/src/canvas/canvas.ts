@@ -3519,7 +3519,8 @@ export class Canvas {
   }
 
   calcActiveRect() {
-    const canMovePens = this.store.active.filter((pen: Pen) => !pen.locked || pen.locked < LockState.DisableMove);
+    // TODO: visible 不可见， 目前只是不计算 activeRect，考虑它是否进入活动层 store.active
+    const canMovePens = this.store.active.filter((pen: Pen) => (!pen.locked || pen.locked < LockState.DisableMove) && pen.visible != false);
     if (canMovePens.length === 1) {
       this.activeRect = deepClone(canMovePens[0].calculative.worldRect);
       this.activeRect.rotate = canMovePens[0].calculative.rotate || 0;
