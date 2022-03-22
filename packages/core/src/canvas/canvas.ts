@@ -205,7 +205,7 @@ export class Canvas {
     parentElement.appendChild(this.externalElements);
     this.createInput();
 
-    this.tooltip = new Tooltip(parentElement);
+    this.tooltip = new Tooltip(parentElement, store);
     if (this.store.options.scroll) {
       this.scroll = new Scroll(this);
     }
@@ -275,6 +275,12 @@ export class Canvas {
           button: e.button,
         });
       };
+      this.externalElements.onmouseleave = (e) => {
+        if ((e as any).toElement !== this.tooltip.box) {
+          this.tooltip.hide();
+          this.store.lastHover = undefined;
+        }
+      }
     }
 
     this.externalElements.ondblclick = this.ondblclick;
@@ -4405,6 +4411,7 @@ export class Canvas {
 
   destroy() {
     this.scroll && this.scroll.destroy();
+    this.tooltip?.destroy();
 
     // ios
     this.externalElements.removeEventListener('gesturestart', this.onGesturestart);
@@ -4419,6 +4426,7 @@ export class Canvas {
       this.externalElements.onmousedown = undefined;
       this.externalElements.onmousemove = undefined;
       this.externalElements.onmouseup = undefined;
+      this.externalElements.onmouseleave = undefined;
     }
     this.externalElements.ondblclick = undefined;
     switch (this.store.options.keydown) {

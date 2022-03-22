@@ -1,5 +1,6 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
+import { TopologyStore } from '../store';
 
 declare const window: any;
 declare const global: any;
@@ -11,7 +12,7 @@ export class Tooltip {
   arrowDown: HTMLElement;
   x: number;
   y: number;
-  constructor(public parentElement: HTMLElement) {
+  constructor(public parentElement: HTMLElement, private store: TopologyStore) {
     this.box = document.createElement('div');
     this.text = document.createElement('div');
     this.arrowUp = document.createElement('div');
@@ -26,6 +27,11 @@ export class Tooltip {
     this.box.appendChild(this.arrowUp);
     this.box.appendChild(this.arrowDown);
     parentElement.appendChild(this.box);
+
+    this.box.onmouseleave = () => {
+      this.hide();
+      this.store.lastHover = undefined;
+    };
 
     let sheet: any;
     for (let i = 0; i < document.styleSheets.length; i++) {
@@ -116,5 +122,9 @@ export class Tooltip {
     this.y += y;
     this.box.style.left = this.x + 'px';
     this.box.style.top = this.y + 'px';
+  }
+
+  destroy() {
+    this.box.onmouseleave = null; 
   }
 }
