@@ -1664,7 +1664,7 @@ export class Canvas {
       return true;
     }
     return pen.children?.some((childId: string) => {
-      const child = this.find(childId)[0];
+      const child = this.store.pens[childId];
       return child && this.hasImage(child, isBottom);
     });
   }
@@ -4276,9 +4276,13 @@ export class Canvas {
 =======
 >>>>>>> 6b96b90 (setValue image need render again)
     let willSetPenRect = false; // 是否重新 setPenRect
+<<<<<<< HEAD
 =======
     let willRenderImage = false; // 是否重新渲染图片
 >>>>>>> 88a6a57 (mouse right)
+=======
+    let containIsBottom = false; // 是否包含 isBottom 属性修改
+>>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
@@ -4299,11 +4303,17 @@ export class Canvas {
         willCalcIconRect = true;
       }
 <<<<<<< HEAD
+<<<<<<< HEAD
       if ([...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
         willRenderImage = true;
       }
 =======
 >>>>>>> 6b96b90 (setValue image need render again)
+=======
+      if (k === 'isBottom') {
+        containIsBottom = true;
+      }
+>>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
@@ -4332,7 +4342,12 @@ export class Canvas {
       pen.calculative.strokeImage = undefined;
       this.loadImage(pen);
     }
-    this.needInitStatus([pen]);
+    if (containIsBottom) {
+      this.canvasImage.initStatus();
+      this.canvasImageBottom.initStatus();
+    } else {
+      this.needInitStatus([pen]);
+    }
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
