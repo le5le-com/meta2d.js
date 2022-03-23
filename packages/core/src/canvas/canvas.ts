@@ -1620,6 +1620,7 @@ export class Canvas {
             pen.calculative.initRect.ey = pen.calculative.y + pen.calculative.height;
           }
         });
+        this.active(this.store.active);
         this.needInitStatus(this.store.active);
         // 此处是更新后的值
         this.pushHistory({
