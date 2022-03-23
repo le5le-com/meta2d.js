@@ -3158,13 +3158,12 @@ export class Canvas {
         const value: Pen = {
           globalAlpha: 0.5,
         };
-        if ([...isDomShapes, 'image', 'combine'].includes(pen.name)) {
+        if ([...isDomShapes, 'combine'].includes(pen.name) || pen.image) {
           value.name = 'rectangle';
           value.onMove = undefined;
         }
         this.updateValue(pen, value);
         pen.calculative.image = undefined;
-        pen.calculative.icon = undefined;
       });
       this.store.active.forEach((pen) => {
         setHover(pen, false);
