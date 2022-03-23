@@ -1589,7 +1589,7 @@ export class Canvas {
       return true;
     }
     return pen.children?.some((childId: string) => {
-      const child = this.find(childId)[0];
+      const child = this.store.pens[childId];
       return child && this.hasImage(child, isBottom);
     });
   }
@@ -4183,6 +4183,7 @@ export class Canvas {
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
     let willSetPenRect = false; // 是否重新 setPenRect
+    let containIsBottom = false; // 是否包含 isBottom 属性修改
     for (const k in data) {
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
@@ -4201,6 +4202,9 @@ export class Canvas {
       }
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
+      }
+      if (k === 'isBottom') {
+        containIsBottom = true;
       }
     }
 
@@ -4230,7 +4234,12 @@ export class Canvas {
       pen.calculative.strokeImage = undefined;
       this.loadImage(pen);
     }
-    this.needInitStatus([pen]);
+    if (containIsBottom) {
+      this.canvasImage.initStatus();
+      this.canvasImageBottom.initStatus();
+    } else {
+      this.needInitStatus([pen]);
+    }
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
