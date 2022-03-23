@@ -1545,6 +1545,7 @@ export class Canvas {
           this.dirtyPenRect(pen);
           this.updateLines(pen);
         });
+        this.active(this.store.active);
         this.needInitStatus(this.store.active);
         // 此处是更新后的值
         this.pushHistory({
