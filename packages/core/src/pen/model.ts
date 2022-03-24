@@ -49,23 +49,12 @@ export const needCalcTextRectProps = [
   'textBaseline',
   'whiteSpace',
   'ellipsis',
-  'keepDecimal'
+  'keepDecimal',
 ];
 
-export const needSetPenProps = [
-  'x',
-  'y',
-  'width',
-  'height'
-]
+export const needSetPenProps = ['x', 'y', 'width', 'height'];
 
-export const needDirtyPenRectProps = [
-  'rotate',
-  'paddingTop',
-  'paddingRight',
-  'paddingBottom',
-  'paddingLeft',
-];
+export const needDirtyPenRectProps = ['rotate', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'];
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
@@ -384,8 +373,6 @@ export interface Pen extends Rect {
     cycleIndex?: number;
     // 是否暂停动画
     pause?: number;
-    // 动画播放中的参考基准
-    _rotate?: number;
 
     layer?: number;
     dropdownList?: any[];
