@@ -41,6 +41,7 @@ import {
   isDomShapes,
   renderPenRaw,
   needSetPenProps,
+  getAllChildren,
 } from '../pen';
 import {
   calcRotate,
@@ -548,6 +549,9 @@ export class Canvas {
         this.drawingLineName = undefined;
         this.stopPencil();
         if (this.movingPens) {
+          this.getAddPens(this.movingPens).forEach(pen => {
+            this.store.pens[pen.id] = undefined;
+          });
           this.movingPens = undefined;
           this.mouseDown = undefined;
           this.clearDock();
@@ -1570,6 +1574,9 @@ export class Canvas {
         this.paste();
         this.alreadyCopy = false;
       }
+      this.getAddPens(this.movingPens).forEach(pen => {
+        this.store.pens[pen.id] = undefined;
+      });
       this.movingPens = undefined;
     }
   };
@@ -2673,11 +2680,19 @@ export class Canvas {
       renderPen(ctx, this.pencilLine);
     }
     if (this.movingPens) {
-      this.movingPens.forEach((pen: Pen) => {
-        renderPen(ctx, pen);
+      this.movingPens.forEach((pen) => {
+        this.renderPenContainChild(ctx, pen);
       });
     }
   };
+
+  private renderPenContainChild = (ctx: CanvasRenderingContext2D, pen: Pen) => {
+    renderPen(ctx, pen);
+    pen.children?.forEach((id) => {
+      const child = this.store.pens[id];
+      child && this.renderPenContainChild(ctx, child);
+    });
+  }
 
   renderBorder = () => {
     if (!this.store.data.locked) {
@@ -3078,12 +3093,21 @@ export class Canvas {
 
     if (!this.movingPens) {
       this.movingPens = deepClone(this.store.active, true);
-      this.movingPens.forEach((pen) => {
+      const containChildPens = this.getAddPens(this.movingPens);
+      // 只考虑父子关系，修改 id
+      const suffix = '-moving';
+      containChildPens.forEach(pen => {
+        pen.id += suffix;
+        pen.parentId && (pen.parentId += suffix);
+        if (pen.children) {
+          pen.children = pen.children.map(child => child + suffix);
+        }
+        this.store.pens[pen.id] = pen;     // dirtyPenRect 时需要计算
         pen.calculative.canvas = this;
         const value: Pen = {
           globalAlpha: 0.5,
         };
-        if ([...isDomShapes, 'combine'].includes(pen.name) || pen.image) {
+        if ([...isDomShapes].includes(pen.name) || pen.image) {
           value.name = 'rectangle';
           value.onMove = undefined;
         }
@@ -3737,12 +3761,7 @@ export class Canvas {
   getAddPens(pens: Pen[]): Pen[] {
     const retPens: Pen[] = [];
     for (const pen of pens) {
-      // 存在子节点
-      pen.children?.forEach((childId) => {
-        if (!retPens.find((retPen) => retPen.id === childId)) {
-          retPens.push(deepClone(this.store.pens[childId]));
-        }
-      });
+      retPens.push(...deepClone(getAllChildren(pen, this.store), true));
     }
     return retPens.concat(pens);
   }
