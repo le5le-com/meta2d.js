@@ -1056,9 +1056,11 @@ export class Canvas {
           break;
         case HoverType.LineAnchorPrev:
         case HoverType.LineAnchorNext:
-          // 备份，方便移动锚点方向
-          this.prevAnchor = { ...this.store.activeAnchor.prev };
-          this.nextAnchor = { ...this.store.activeAnchor.next };
+          if (this.store.activeAnchor) {
+            // 备份，方便移动锚点方向
+            this.prevAnchor = { ...this.store.activeAnchor.prev };
+            this.nextAnchor = { ...this.store.activeAnchor.next };
+          }
           break;
         case HoverType.Resize:
           this.activeInitPos = [];
@@ -1538,6 +1540,15 @@ export class Canvas {
           pen.onMove && pen.onMove(pen);
           this.dirtyPenRect(pen);
           this.updateLines(pen);
+
+          pen.calculative.x = pen.x;
+          pen.calculative.y = pen.y;
+          if (pen.calculative.initRect) {
+            pen.calculative.initRect.x = pen.calculative.x;
+            pen.calculative.initRect.y = pen.calculative.y;
+            pen.calculative.initRect.ex = pen.calculative.x + pen.calculative.width;
+            pen.calculative.initRect.ey = pen.calculative.y + pen.calculative.height;
+          }
         });
         this.needInitStatus(this.store.active);
         // 此处是更新后的值
@@ -3196,7 +3207,7 @@ export class Canvas {
   }
 
   moveLineAnchorPrev(e: { x: number; y: number }) {
-    if (!this.activeRect || this.store.data.locked) {
+    if (!this.activeRect || this.store.data.locked || !this.store.activeAnchor) {
       return;
     }
 
@@ -3347,6 +3358,12 @@ export class Canvas {
         this.dirtyPenRect(pen, true);
         pen.calculative.x = pen.x;
         pen.calculative.y = pen.y;
+        if (pen.calculative.initRect) {
+          pen.calculative.initRect.x = pen.calculative.x;
+          pen.calculative.initRect.y = pen.calculative.y;
+          pen.calculative.initRect.ex = pen.calculative.x + pen.calculative.width;
+          pen.calculative.initRect.ey = pen.calculative.y + pen.calculative.height;
+        }
         this.updateLines(pen);
       }
       pen.onMove && pen.onMove(pen);
@@ -3520,7 +3537,9 @@ export class Canvas {
 
   calcActiveRect() {
     // TODO: visible 不可见， 目前只是不计算 activeRect，考虑它是否进入活动层 store.active
-    const canMovePens = this.store.active.filter((pen: Pen) => (!pen.locked || pen.locked < LockState.DisableMove) && pen.visible != false);
+    const canMovePens = this.store.active.filter(
+      (pen: Pen) => (!pen.locked || pen.locked < LockState.DisableMove) && pen.visible != false
+    );
     if (canMovePens.length === 1) {
       this.activeRect = deepClone(canMovePens[0].calculative.worldRect);
       this.activeRect.rotate = canMovePens[0].calculative.rotate || 0;
@@ -3604,6 +3623,7 @@ export class Canvas {
 
     requestAnimationFrame(() => {
       const now = Date.now();
+
       if (now - this.lastAnimateRender < this.store.options.animateInterval) {
         if (this.store.animates.size > 0) {
           this.animate();
@@ -3843,7 +3863,7 @@ export class Canvas {
       return;
     }
 
-    !isSon && this.needInitStatus(pens);  // needInitStatus 会递归，无需考虑 isSon
+    !isSon && this.needInitStatus(pens); // needInitStatus 会递归，无需考虑 isSon
     pens.forEach((pen) => {
       if (!delLock && pen.locked && !isSon && !pen.isRuleLine) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);

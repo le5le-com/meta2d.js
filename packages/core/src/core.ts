@@ -513,12 +513,15 @@ export class Topology {
     pens.forEach((pen) => {
       pen.calculative.pause = undefined;
       pen.calculative.start = undefined;
+      pen.calculative.duration = undefined;
       pen.calculative.animatePos = 0;
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
     });
-    this.canvas.calcActiveRect();
-    this.render(Infinity);
+    setTimeout(() => {
+      this.canvas.calcActiveRect();
+      this.render(Infinity);
+    }, 20);
   }
 
   calcAnimateDuration(pen: Pen) {
