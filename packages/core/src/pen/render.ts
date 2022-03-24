@@ -22,15 +22,14 @@ export function getParent(pen: Pen, root?: boolean): Pen {
   return getParent(store.pens[pen.parentId], root) || store.pens[pen.parentId];
 }
 
-export function getAllChildren(pen: Pen) {
-  if (!pen || !pen.children || !pen.calculative) {
+export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
+  if (!pen || !pen.children) {
     return [];
   }
-  const store = pen.calculative.canvas.store;
   const children: Pen[] = [];
   pen.children.forEach((id) => {
     children.push(store.pens[id]);
-    children.push(...getAllChildren(store.pens[id]));
+    children.push(...getAllChildren(store.pens[id], store));
   });
   return children;
 }
