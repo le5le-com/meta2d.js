@@ -22,15 +22,14 @@ export function getParent(pen: Pen, root?: boolean): Pen {
   return getParent(store.pens[pen.parentId], root) || store.pens[pen.parentId];
 }
 
-export function getAllChildren(pen: Pen) {
-  if (!pen || !pen.children || !pen.calculative) {
+export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
+  if (!pen || !pen.children) {
     return [];
   }
-  const store = pen.calculative.canvas.store;
   const children: Pen[] = [];
   pen.children.forEach((id) => {
     children.push(store.pens[id]);
-    children.push(...getAllChildren(store.pens[id]));
+    children.push(...getAllChildren(store.pens[id], store));
   });
   return children;
 }
@@ -934,7 +933,7 @@ export function renderAnchor(ctx: CanvasRenderingContext2D, pt: Point, pen: Pen)
 }
 
 export function calcWorldRects(pen: Pen) {
-  const store = pen.calculative.canvas.store;
+  const store: TopologyStore = pen.calculative.canvas.store;
 
   let rect: Rect = {
     x: pen.x,
@@ -962,26 +961,24 @@ export function calcWorldRects(pen: Pen) {
     rect.width = parentRect.width * pen.width;
     rect.height = parentRect.height * pen.height;
 
-    if (Math.abs(pen.x) > 1) {
-      rect.x = parentRect.x + pen.x;
-    }
-    if (Math.abs(pen.y) > 1) {
-      rect.y = parentRect.y + pen.y;
-    }
-    if (pen.width > 1 && !isEqual(pen.width, 1)) {
-      rect.width = pen.width;
-    }
-    if (pen.height > 1 && !isEqual(pen.height, 1)) {
-      rect.height = pen.height;
-    }
+    // TODO: 子的最外层 x,y,width,height 一定是相对于父的坐标
+    // if (Math.abs(pen.x) > 1) {
+    //   rect.x = parentRect.x + pen.x;
+    // }
+    // if (Math.abs(pen.y) > 1) {
+    //   rect.y = parentRect.y + pen.y;
+    // }
+    // if (pen.width > 1 && !isEqual(pen.width, 1)) {
+    //   rect.width = pen.width;
+    // }
+    // if (pen.height > 1 && !isEqual(pen.height, 1)) {
+    //   rect.height = pen.height;
+    // }
     rect.ex = rect.x + rect.width;
     rect.ey = rect.y + rect.height;
 
     rect.rotate = parentRect.rotate + pen.rotate;
-    rect.center = {
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2,
-    };
+    calcCenter(rect);
   }
 
   pen.calculative.worldRect = rect;

@@ -118,7 +118,9 @@ export class Topology {
       const pens = e.params ? this.find(e.params) : [pen];
       pens.forEach((pen: Pen) => {
         const rect = this.getPenRect(pen);
-        this._setValue({ id: pen.id, ...rect, ...e.value }, false);
+        const visible = e.value.visible;
+        visible && this.setVisible(pen, visible);
+        this._setValue({ id: pen.id, ...rect, ...e.value }, { willRender: false });
       });
       this.render();
     };
@@ -208,11 +210,11 @@ export class Topology {
     gridSize = this.store.data.gridSize,
     gridRotate = this.store.data.gridRotate,
   }: {
-    grid: boolean;
-    gridColor: string;
-    gridSize: number;
-    gridRotate: number;
-  }) {
+    grid?: boolean;
+    gridColor?: string;
+    gridSize?: number;
+    gridRotate?: number;
+  } = {}) {
     this.store.data.grid = grid;
     this.store.data.gridColor = gridColor;
     this.store.data.gridSize = gridSize;
@@ -224,9 +226,9 @@ export class Topology {
     rule = this.store.data.rule,
     ruleColor = this.store.data.ruleColor,
   }: {
-    rule: boolean;
-    ruleColor: string;
-  }) {
+    rule?: boolean;
+    ruleColor?: string;
+  } = {}) {
     this.store.data.rule = rule;
     this.store.data.ruleColor = ruleColor;
     this.store.dirtyTop = true;
@@ -827,7 +829,7 @@ export class Topology {
         message = [message];
       }
       message.forEach((item: any) => {
-        this.setValue(item, false);
+        this.setValue(item, { willRender: false });
       });
       this.render(Infinity);
     } catch (error) {
@@ -835,31 +837,17 @@ export class Topology {
     }
   }
 
-  setValue(data: any, willRender = true) {
-    const pens: Pen[] = this.find(data.id || data.tag) || [];
-    pens.forEach((pen) => {
-      let afterData = data;
-      if (pen.onBeforeValue) {
-        afterData = pen.onBeforeValue(pen, data);
-      }
-      this.updateValue(pen, afterData);
-      pen.onValue && pen.onValue(pen);
+  setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
+    this._setValue(data, { willRender }).forEach(pen => {
       this.store.emitter.emit('valueUpdate', pen);
     });
-
-    if (!this.store.data.locked && this.store.active.length && !this.canvas.movingPens) {
-      // 移动过程中，不重算 activeRect
-      this.canvas.calcActiveRect();
-    }
-
-    willRender && this.render(Infinity);
   }
 
   updateValue(pen: Pen, data: any) {
     this.canvas.updateValue(pen, data);
   }
 
-  _setValue(data: any, willRender = true) {
+  _setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       let afterData = data;
@@ -876,6 +864,7 @@ export class Topology {
     }
 
     willRender && this.render(Infinity);
+    return pens;
   }
 
   pushHistory(action: EditAction) {
@@ -1146,7 +1135,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       penRect.width = width;
       penRect.height = height;
-      this._setValue({ id: pen.id, ...penRect, ...attrs }, false);
+      this._setValue({ id: pen.id, ...penRect, ...attrs }, { willRender: false });
     }
     this.render(Infinity);
 
@@ -1221,7 +1210,7 @@ export class Topology {
         penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
         break;
     }
-    this._setValue({ id: pen.id, ...penRect }, false);
+    this._setValue({ id: pen.id, ...penRect }, { willRender: false });
   }
 
   /**
@@ -1263,7 +1252,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this._setValue({ id: pen.id, ...penRect }, false);
+      this._setValue({ id: pen.id, ...penRect }, { willRender: false });
     }
     this.render(Infinity);
     this.pushHistory({
@@ -1303,7 +1292,7 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this._setValue({ id: pen.id, ...penRect }, false);
+      this._setValue({ id: pen.id, ...penRect }, { willRender: false });
 
       if (index === pens.length - 1) {
         return;
@@ -1475,21 +1464,19 @@ export class Topology {
     !node.connectedLines && (node.connectedLines = []);
 
     node.connectedLines.forEach((line) => {
-      const linePen: Pen[] = this.find(line.lineId);
-      if (linePen.length === 1) {
-        switch (type) {
-          case 'all':
-            lines.push(linePen[0]);
-            break;
-          case 'in':
-            // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
-            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo === node.id && lines.push(linePen[0]);
-            break;
-          case 'out':
-            // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
-            linePen[0].anchors[0].connectTo === node.id && lines.push(linePen[0]);
-            break;
-        }
+      const linePen: Pen = this.store.pens[line.lineId];
+      switch (type) {
+        case 'all':
+          lines.push(linePen);
+          break;
+        case 'in':
+          // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
+          linePen.anchors[linePen.anchors.length - 1].connectTo === node.id && lines.push(linePen);
+          break;
+        case 'out':
+          // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
+          linePen.anchors[0].connectTo === node.id && lines.push(linePen);
+          break;
       }
     });
 
@@ -1614,7 +1601,7 @@ export class Topology {
         id: pen.id,
         visible,
       },
-      false
+      { willRender: false },
     );
     if (pen.children) {
       for (const childId of pen.children) {
