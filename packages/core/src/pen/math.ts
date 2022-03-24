@@ -5,11 +5,7 @@ import { TopologyStore } from '../store';
 import { deepClone } from '../utils';
 import { Pen } from './model';
 
-export function calcAnchorDock(
-  e: Point,
-  anchor: Point,
-  store: TopologyStore
-) {
+export function calcAnchorDock(e: Point, anchor: Point, store: TopologyStore) {
   let xDock: Point;
   let yDock: Point;
   let x = Infinity;
@@ -26,13 +22,16 @@ export function calcAnchorDock(
       if (pt === anchor) {
         return;
       }
-  
+
       const disX = Math.abs(pt.x - e.x);
       if (disX < size && disX < x) {
         xDock = {
           x: Math.round(pt.x) + 0.5,
           y: Math.round(pt.y) + 0.5,
-          prev: { x: Math.round(anchor.x) + 0.5, y: Math.round(anchor.y) + 0.5 },
+          prev: {
+            x: Math.round(anchor.x) + 0.5,
+            y: Math.round(anchor.y) + 0.5,
+          },
         };
         x = disX;
       }
@@ -41,7 +40,10 @@ export function calcAnchorDock(
         yDock = {
           x: Math.round(pt.x) + 0.5,
           y: Math.round(pt.y) + 0.5,
-          prev: { x: Math.round(anchor.x) + 0.5, y: Math.round(anchor.y) + 0.5 },
+          prev: {
+            x: Math.round(anchor.x) + 0.5,
+            y: Math.round(anchor.y) + 0.5,
+          },
         };
         y = disY;
       }
@@ -405,7 +407,7 @@ function calcDockByPoints(
       continue;
     }
 
-    if (isConnectLine(store, store.active, pen.id)) {
+    if (pen.type && store.active.some((active) => isConnectLine(store, active, pen))) {
       continue;
     }
 
@@ -454,25 +456,28 @@ function calcDockByPoints(
 }
 
 /**
- * 判断 lindId 是否是 active 的连接线（并且计算子节点）
- * @param store 
- * @param active 本次计算的画笔们
- * @param lineId 判断是否为该组件的连线 id
- * @returns 
+ * 判断 line 是否是 active 的连接线（并且计算子节点）
+ * @param store
+ * @param active 本次计算的画笔
+ * @param line 连线
+ * @returns
  */
-function isConnectLine(store: TopologyStore, active: Pen[], lineId: string) {
-  if (Array.isArray(active)) {
-    for (const pen of active) {
-      if (Array.isArray(pen?.connectedLines)) {
-        for (const line of pen?.connectedLines) {
-          if (line.lineId === lineId) {
-            return true;
-          }
-        }
+function isConnectLine(store: TopologyStore, active: Pen, line: Pen) {
+  if (!line.type) {
+    return false;
+  }
+  if (Array.isArray(active?.connectedLines)) {
+    for (const cline of active?.connectedLines) {
+      if (cline.lineId === line.id) {
+        return true;
       }
-      // 考虑子节点
-      const children = store.data.pens.filter((item) => item.parentId === pen.id);
-      if (isConnectLine(store, children, lineId)) {
+    }
+  }
+  // 考虑子节点
+  if (Array.isArray(active?.children)) {
+    for (const id of active.children) {
+      const child = store.pens[id];
+      if (isConnectLine(store, child, line)) {
         return true;
       }
     }
@@ -482,7 +487,7 @@ function isConnectLine(store: TopologyStore, active: Pen[], lineId: string) {
 
 /**
  * 是否近似于 num
- * @param num 
+ * @param num
  */
 export function isEqual(source: number, target: number): boolean {
   // @ts-ignore
