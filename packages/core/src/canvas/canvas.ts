@@ -1661,7 +1661,7 @@ export class Canvas {
    * 子节点中包含图片，也需要重绘
    * @param pens 本次改变的 pens
    */
-  private needInitStatus(pens: Pen[]) {
+  needInitStatus(pens: Pen[]) {
     pens.some((pen) => this.hasImage(pen, false)) && this.canvasImage.initStatus();
     pens.some((pen) => this.hasImage(pen, true)) && this.canvasImageBottom.initStatus();
   }

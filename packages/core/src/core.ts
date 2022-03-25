@@ -1389,7 +1389,17 @@ export class Topology {
     if (index > -1) {
       pens.push(pens[index]);
       pens.splice(index, 1);
+      this.needInitStatus([pen]);
     }
+  }
+
+  /**
+  * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层
+  * 子节点中包含图片，也需要重绘
+  * @param pens 本次改变的 pens
+  */
+  needInitStatus(pens: Pen[]) {
+    this.canvas.needInitStatus(pens);
   }
 
   /**
@@ -1403,6 +1413,7 @@ export class Topology {
     if (index > -1) {
       pens.unshift(pens[index]);
       pens.splice(index + 1, 1);
+      this.needInitStatus([pen]);
     }
   }
 
@@ -1415,6 +1426,7 @@ export class Topology {
     if (index > -1 && index !== pens.length - 1) {
       pens.splice(index + 2, 0, pens[index]);
       pens.splice(index, 1);
+      this.needInitStatus([pen]);
     }
   }
 
@@ -1426,6 +1438,7 @@ export class Topology {
     if (index > -1 && index !== 0) {
       pens.splice(index - 1, 0, pens[index]);
       pens.splice(index + 1, 1);
+      this.needInitStatus([pen]);
     }
   }
 
