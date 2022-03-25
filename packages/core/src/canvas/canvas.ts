@@ -549,7 +549,7 @@ export class Canvas {
         this.drawingLineName = undefined;
         this.stopPencil();
         if (this.movingPens) {
-          this.getAddPens(this.movingPens).forEach((pen) => {
+          this.getAllByPens(this.movingPens).forEach((pen) => {
             this.store.pens[pen.id] = undefined;
           });
           this.movingPens = undefined;
@@ -1585,7 +1585,7 @@ export class Canvas {
         this.paste();
         this.alreadyCopy = false;
       }
-      this.getAddPens(this.movingPens).forEach((pen) => {
+      this.getAllByPens(this.movingPens).forEach((pen) => {
         this.store.pens[pen.id] = undefined;
       });
       this.movingPens = undefined;
@@ -3111,7 +3111,7 @@ export class Canvas {
 
     if (!this.movingPens) {
       this.movingPens = deepClone(this.store.active, true);
-      const containChildPens = this.getAddPens(this.movingPens);
+      const containChildPens = this.getAllByPens(this.movingPens);
       // 只考虑父子关系，修改 id
       const suffix = '-moving';
       containChildPens.forEach((pen) => {
@@ -3733,16 +3733,18 @@ export class Canvas {
   }
 
   copy(pens?: Pen[]) {
-    this.store.clipboard = pens || this.store.active;
+    // 得到当前活动层的，包括子节点
+    this.store.clipboard = this.getAllByPens(deepClone(pens || this.store.active));
     this.pasteOffset = 10;
-    const clipboardData = deepClone(this.store.clipboard);
+    // 下面使用到的场景为跨页面 复制粘贴
+    const clipboardData = this.store.clipboard;
     localStorage.setItem(this.clipboardName, JSON.stringify({ topology: true, data: clipboardData }));
     navigator.clipboard?.writeText(JSON.stringify({ topology: true, data: clipboardData }));
   }
 
   cut(pens?: Pen[]) {
     this.copy(pens);
-    this.delete(this.store.clipboard);
+    this.delete(pens);
   }
 
   async paste() {
@@ -3766,26 +3768,26 @@ export class Canvas {
       }
       this.store.clipboard = clipboard.data;
     }
-    // 修改 剪切板的数据 会影响画布实际数据，此处深拷贝不影响画布值
     this.store.clipboard = deepClone(this.store.clipboard);
-    // 获取剪切板内全部的 pens ，其中包含子节点
-    const realPens = this.getAddPens(this.store.clipboard);
-    for (const pen of this.store.clipboard) {
-      this.pastePen(pen, undefined, realPens);
+    // this.store.clipboard 已经包括子节点
+    // pastePen 是一个递归操作，只要遍历 父亲节点即可
+    const rootPens = this.store.clipboard.filter((pen) => !pen.parentId);
+    for (const pen of rootPens) {
+      this.pastePen(pen, undefined, this.store.clipboard);
     }
 
-    this.active(this.store.clipboard);
-    this.pushHistory({ type: EditType.Add, pens: realPens });
+    this.active(rootPens);
+    this.pushHistory({ type: EditType.Add, pens: this.store.clipboard });
     this.render();
-    this.store.emitter.emit('add', realPens);
+    this.store.emitter.emit('add', this.store.clipboard);
     localStorage.removeItem(this.clipboardName); // 清空缓存
   }
 
   /**
-   * 返回本次添加包含 子节点的内容
+   * 获取 pens 列表中的所有节点（包含子节点）
    * @param pens 不包含子节点
    */
-  getAddPens(pens: Pen[]): Pen[] {
+  getAllByPens(pens: Pen[]): Pen[] {
     const retPens: Pen[] = [];
     for (const pen of pens) {
       retPens.push(...deepClone(getAllChildren(pen, this.store), true));
