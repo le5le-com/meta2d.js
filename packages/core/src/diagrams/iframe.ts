@@ -9,6 +9,7 @@ export function iframe(pen: Pen) {
     pen.onResize = move;
     pen.onRotate = move;
     pen.onValue = move;
+    pen.onChangeId = changeId;
   }
 
   if (!iframes[pen.id]) {
@@ -38,4 +39,12 @@ function destory(pen: Pen) {
 
 function move(pen: Pen) {
   setElemPosition(pen, iframes[pen.id]);
+}
+
+function changeId(pen: Pen, oldId: string, newId: string) {
+  if (!iframes[oldId]) {
+    return;
+  }
+  iframes[newId] = iframes[oldId];
+  delete iframes[oldId];
 }

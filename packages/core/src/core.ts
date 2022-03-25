@@ -113,10 +113,16 @@ export class Topology {
     this.events[EventAction.Link] = (pen: any, e: Event) => {
       window.open(e.value, e.params === undefined ? '_blank' : e.params);
     };
-    this.events[EventAction.SetProps] = (pen: any, e: Event) => {
-      const rect = this.getPenRect(pen);
+    this.events[EventAction.SetProps] = (pen: Pen, e: Event) => {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
-      this.setValue({ id: pen.id, ...rect, ...e.value });
+      const pens = e.params ? this.find(e.params) : [pen];
+      pens.forEach((pen: Pen) => {
+        const rect = this.getPenRect(pen);
+        const visible = e.value.visible;
+        visible && this.setVisible(pen, visible);
+        this._setValue({ id: pen.id, ...rect, ...e.value }, { willRender: false });
+      });
+      this.render();
     };
     this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
       if (e.value) {
@@ -140,9 +146,13 @@ export class Topology {
       }
     };
     this.events[EventAction.Function] = (pen: any, e: Event) => {
-      if (!e.fn) {
+      if (e.value && !e.fn) {
         try {
-          e.fn = new Function('pen', 'params', e.value);
+          if (e.value.replaceAll) {
+            e.fn = new Function('pen', 'params', e.value.replaceAll('.setValue(', '._setValue('));
+          } else {
+            e.fn = new Function('pen', 'params', e.value.replace(/.setValue\(/g, '._setValue('));
+          }
         } catch (err) {
           console.error('Error: make function:', err);
         }
@@ -194,7 +204,17 @@ export class Topology {
     this.store.dirtyBackground = true;
   }
 
-  setGrid({ grid = this.store.data.grid, gridColor = this.store.data.gridColor, gridSize = this.store.data.gridSize, gridRotate = this.store.data.gridRotate }: { grid: boolean; gridColor: string; gridSize: number; gridRotate: number }) {
+  setGrid({
+    grid = this.store.data.grid,
+    gridColor = this.store.data.gridColor,
+    gridSize = this.store.data.gridSize,
+    gridRotate = this.store.data.gridRotate,
+  }: {
+    grid?: boolean;
+    gridColor?: string;
+    gridSize?: number;
+    gridRotate?: number;
+  } = {}) {
     this.store.data.grid = grid;
     this.store.data.gridColor = gridColor;
     this.store.data.gridSize = gridSize;
@@ -202,7 +222,13 @@ export class Topology {
     this.store.dirtyBackground = true;
   }
 
-  setRule({ rule = this.store.data.rule, ruleColor = this.store.data.ruleColor }: { rule: boolean; ruleColor: string; }) {
+  setRule({
+    rule = this.store.data.rule,
+    ruleColor = this.store.data.ruleColor,
+  }: {
+    rule?: boolean;
+    ruleColor?: string;
+  } = {}) {
     this.store.data.rule = rule;
     this.store.data.ruleColor = ruleColor;
     this.store.dirtyTop = true;
@@ -489,12 +515,15 @@ export class Topology {
     pens.forEach((pen) => {
       pen.calculative.pause = undefined;
       pen.calculative.start = undefined;
+      pen.calculative.duration = undefined;
       pen.calculative.animatePos = 0;
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
     });
-    this.canvas.calcActiveRect();
-    this.render(Infinity);
+    setTimeout(() => {
+      this.canvas.calcActiveRect();
+      this.render(Infinity);
+    }, 20);
   }
 
   calcAnimateDuration(pen: Pen) {
@@ -800,7 +829,7 @@ export class Topology {
         message = [message];
       }
       message.forEach((item: any) => {
-        this.setValue(item, true, false);
+        this.setValue(item, { willRender: false });
       });
       this.render(Infinity);
     } catch (error) {
@@ -808,7 +837,17 @@ export class Topology {
     }
   }
 
-  setValue(data: any, emit = false, willRender = true) {
+  setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
+    this._setValue(data, { willRender }).forEach(pen => {
+      this.store.emitter.emit('valueUpdate', pen);
+    });
+  }
+
+  updateValue(pen: Pen, data: any) {
+    this.canvas.updateValue(pen, data);
+  }
+
+  _setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       let afterData = data;
@@ -817,7 +856,6 @@ export class Topology {
       }
       this.updateValue(pen, afterData);
       pen.onValue && pen.onValue(pen);
-      emit && this.store.data.locked && this.doEvent(pen, 'valueUpdate');
     });
 
     if (!this.store.data.locked && this.store.active.length && !this.canvas.movingPens) {
@@ -826,10 +864,7 @@ export class Topology {
     }
 
     willRender && this.render(Infinity);
-  }
-
-  updateValue(pen: Pen, data: any) {
-    this.canvas.updateValue(pen, data);
+    return pens;
   }
 
   pushHistory(action: EditAction) {
@@ -988,6 +1023,11 @@ export class Topology {
     return this.canvas.toPng(padding, callback);
   }
 
+  /**
+   * 下载 png
+   * @param name 传入参数自带文件后缀名 例如：'test.png'
+   * @param padding 上右下左的内边距
+   */
   downloadPng(name?: string, padding: Padding = 0) {
     const a = document.createElement('a');
     a.setAttribute('download', name || 'le5le.topology.png');
@@ -1077,7 +1117,7 @@ export class Topology {
    * 目前只更改 width ，height ，fontSize
    * @param pens 画笔们
    */
-  beSameByFirst(pens: Pen[] = this.store.data.pens, emit = false) {
+  beSameByFirst(pens: Pen[] = this.store.data.pens) {
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
 
     // 1. 得到第一个画笔的 宽高 字体大小
@@ -1095,7 +1135,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       penRect.width = width;
       penRect.height = height;
-      this.setValue({ id: pen.id, ...penRect, ...attrs }, emit, false);
+      this._setValue({ id: pen.id, ...penRect, ...attrs }, { willRender: false });
     }
     this.render(Infinity);
 
@@ -1106,11 +1146,11 @@ export class Topology {
     });
   }
 
-  alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect, emit = false) {
+  alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect) {
     !rect && (rect = this.getPenRect(this.getRect(pens)));
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     for (const item of pens) {
-      this.alignPen(align, item, rect, emit);
+      this.alignPen(align, item, rect);
     }
     this.render(Infinity);
     this.pushHistory({
@@ -1125,13 +1165,13 @@ export class Topology {
    * @param align 左对齐，右对齐，上对齐，下对齐，居中对齐
    * @param pens
    */
-  alignNodesByFirst(align: string, pens: Pen[] = this.store.data.pens, emit = false) {
+  alignNodesByFirst(align: string, pens: Pen[] = this.store.data.pens) {
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
     const firstPen = pens[0];
     const rect = this.getPenRect(firstPen);
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      this.alignPen(align, pen, rect, emit);
+      this.alignPen(align, pen, rect);
     }
     this.render(Infinity);
     this.pushHistory({
@@ -1148,7 +1188,7 @@ export class Topology {
    * @param rect 参照矩形
    * @returns
    */
-  private alignPen(align: string, pen: Pen, rect: Rect, emit = false) {
+  private alignPen(align: string, pen: Pen, rect: Rect) {
     const penRect = this.getPenRect(pen);
     switch (align) {
       case 'left':
@@ -1170,7 +1210,7 @@ export class Topology {
         penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
         break;
     }
-    this.setValue({ id: pen.id, ...penRect }, emit, false);
+    this._setValue({ id: pen.id, ...penRect }, { willRender: false });
   }
 
   /**
@@ -1182,8 +1222,7 @@ export class Topology {
   private spaceBetweenByDirection(
     direction: 'width' | 'height',
     pens: Pen[] = this.store.data.pens,
-    distance?: number,
-    emit = false
+    distance?: number
   ) {
     !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
     // 过滤出非父节点
@@ -1213,7 +1252,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this.setValue({ id: pen.id, ...penRect }, emit, false);
+      this._setValue({ id: pen.id, ...penRect }, { willRender: false });
     }
     this.render(Infinity);
     this.pushHistory({
@@ -1223,15 +1262,15 @@ export class Topology {
     });
   }
 
-  spaceBetween(pens?: Pen[], width?: number, emit = false) {
-    this.spaceBetweenByDirection('width', pens, width, emit);
+  spaceBetween(pens?: Pen[], width?: number) {
+    this.spaceBetweenByDirection('width', pens, width);
   }
 
-  spaceBetweenColumn(pens?: Pen[], height?: number, emit = false) {
-    this.spaceBetweenByDirection('height', pens, height, emit);
+  spaceBetweenColumn(pens?: Pen[], height?: number) {
+    this.spaceBetweenByDirection('height', pens, height);
   }
 
-  layout(pens: Pen[] = this.store.data.pens, width?: number, space: number = 30, emit = false) {
+  layout(pens: Pen[] = this.store.data.pens, width?: number, space: number = 30) {
     const rect = this.getPenRect(getRect(pens));
     !width && (width = rect.width);
 
@@ -1253,7 +1292,7 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this.setValue({ id: pen.id, ...penRect }, emit, false);
+      this._setValue({ id: pen.id, ...penRect }, { willRender: false });
 
       if (index === pens.length - 1) {
         return;
@@ -1425,21 +1464,19 @@ export class Topology {
     !node.connectedLines && (node.connectedLines = []);
 
     node.connectedLines.forEach((line) => {
-      const linePen: Pen[] = this.find(line.lineId);
-      if (linePen.length === 1) {
-        switch (type) {
-          case 'all':
-            lines.push(linePen[0]);
-            break;
-          case 'in':
-            // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
-            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo === node.id && lines.push(linePen[0]);
-            break;
-          case 'out':
-            // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
-            linePen[0].anchors[0].connectTo === node.id && lines.push(linePen[0]);
-            break;
-        }
+      const linePen: Pen = this.store.pens[line.lineId];
+      switch (type) {
+        case 'all':
+          lines.push(linePen);
+          break;
+        case 'in':
+          // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
+          linePen.anchors[linePen.anchors.length - 1].connectTo === node.id && lines.push(linePen);
+          break;
+        case 'out':
+          // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
+          linePen.anchors[0].connectTo === node.id && lines.push(linePen);
+          break;
       }
     });
 
@@ -1558,19 +1595,18 @@ export class Topology {
     return deepClone(pens);
   }
 
-  setVisible(pen: Pen, visible: boolean, emit = false) {
-    this.setValue(
+  setVisible(pen: Pen, visible: boolean) {
+    this._setValue(
       {
         id: pen.id,
         visible,
       },
-      emit,
-      false
+      { willRender: false },
     );
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.find(childId)[0];
-        child && this.setVisible(child, visible, emit);
+        child && this.setVisible(child, visible);
       }
     }
   }

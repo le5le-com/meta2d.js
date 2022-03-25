@@ -114,14 +114,14 @@ export function calcTextLines(pen: Pen, text?: string) {
         const items = wrapLines(getWords(item), pen);
 
         if (pen.ellipsis != false && items.length > 1) {
-          items.forEach((l) => {
+          items.forEach((l: string) => {
             if (h < 0) {
               return;
             }
             h += pen.calculative.fontSize * pen.calculative.lineHeight;
             const textHeight = pen.calculative.worldTextRect.height;
             if (h > textHeight) {
-              l.slice(0, -3);
+              l = l.slice(0, -3);
               l += '...';
               h = -1;
             }

@@ -1,4 +1,4 @@
-import { Padding } from './utils/padding';
+import { Point } from './point';
 
 export enum KeydownType {
   None = -1,
@@ -64,17 +64,19 @@ export interface Options {
   animateInterval?: number;
   dragAllIn?: boolean;
   scroll?: boolean;
-  uploadFn?: (file: File) => Promise<string>;  // uploadFn 优先级最高
+  uploadFn?: (file: File) => Promise<string>; // uploadFn 优先级最高
   uploadUrl?: string;
   uploadParams?: object;
   uploadHeaders?: { [key: string]: string };
   disableRuleLine?: boolean;
   ruleLineColor?: string;
+  defaultAnchors?: Point[]; // 图形的默认瞄点
 }
 
 export const defaultOptions: Options = {
   textColor: '#222222',
-  fontFamily: '"Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial',
+  fontFamily:
+    '"Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial',
   fontSize: 12,
   lineHeight: 1.5,
   textAlign: 'center',
@@ -104,4 +106,22 @@ export const defaultOptions: Options = {
   autoAnchor: true,
   animateColor: '#ff4d4f',
   ruleLineColor: '#FF4101',
+  defaultAnchors: [
+    {
+      x: 0.5,
+      y: 0,
+    },
+    {
+      x: 1,
+      y: 0.5,
+    },
+    {
+      x: 0.5,
+      y: 1,
+    },
+    {
+      x: 0,
+      y: 0.5,
+    },
+  ],
 };
