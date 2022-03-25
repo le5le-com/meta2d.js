@@ -2200,13 +2200,15 @@ export class Canvas {
           if (i > -1) {
             this.store.data.pens.splice(i, 1);
             this.store.pens[pen.id] = undefined;
+            pen.onDestroy && pen.onDestroy(pen);
           }
         });
         action.type = EditType.Delete;
         break;
       case EditType.Update:
         const pens = undo ? action.initPens : action.pens;
-        pens.forEach((pen) => {
+        pens.forEach((aPen) => {
+          const pen = deepClone(aPen, true);
           const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
           if (i > -1) {
             pen.calculative = this.store.data.pens[i].calculative;
@@ -2224,13 +2226,12 @@ export class Canvas {
         });
         break;
       case EditType.Delete:
-        action.pens.forEach((pen) => {
+        action.pens.forEach((aPen) => {
+          const pen = deepClone(aPen, true);
           this.store.data.pens.splice(pen.calculative.layer, 0, pen);
           this.store.pens[pen.id] = pen;
-          if (!pen.calculative.canvas) {
-            pen.calculative.canvas = this;
-            globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
-          }
+          pen.calculative.canvas = this;
+          globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
           pen.calculative.image = undefined;
           pen.calculative.backgroundImage = undefined;
           pen.calculative.strokeImage = undefined;
