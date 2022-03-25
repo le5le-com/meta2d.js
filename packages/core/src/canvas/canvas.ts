@@ -2627,7 +2627,6 @@ export class Canvas {
     {
       worldRectIsReady,
       playingAnimate,
-      noChildren,
     }: { worldRectIsReady?: boolean; playingAnimate?: boolean; noChildren?: boolean } = {}
   ) {
     if (worldRectIsReady) {
@@ -2647,10 +2646,10 @@ export class Canvas {
     pen.calculative.dirty = true;
     this.dirty = true;
 
-    if (!noChildren && pen.children) {
+    if (pen.children) {
       pen.children.forEach((id) => {
         const child: Pen = this.store.pens[id];
-        child && this.dirtyPenRect(child);
+        child && this.dirtyPenRect(child, { worldRectIsReady: false });
       });
     }
 
@@ -3660,6 +3659,7 @@ export class Canvas {
         rotatePoint(anchor, angle, rect.center);
       });
       this.initLineRect(pen);
+      calcPenRect(pen);
     } else {
       if (pen.calculative.rotate) {
         pen.calculative.rotate += angle;
@@ -3677,7 +3677,7 @@ export class Canvas {
         pen.y = pen.calculative.worldRect.center.y - pen.height / 2;
       }
       pen.rotate = pen.calculative.rotate;
-      this.dirtyPenRect(pen, { noChildren: true });
+      this.dirtyPenRect(pen);
 
       if (pen.children) {
         pen.children.forEach((id) => {
