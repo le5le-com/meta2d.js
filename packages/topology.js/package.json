@@ -29,8 +29,8 @@
     "tsickle": "^0.35.0",
     "tslint": "~5.15.0",
     "typescript": "~3.8.3",
-    "webpack": "^5.1.0",
-    "webpack-cli": "^4.0.0"
+    "webpack": "latest",
+    "webpack-cli": "latest"
   },
   "publishConfig": {
     "access": "public"
