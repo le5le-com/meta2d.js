@@ -135,11 +135,76 @@ function linearGradient(
   return grd;
 }
 
-export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
-  ctx.save();
-  ctx.translate(0.5, 0.5);
-  ctx.beginPath();
+export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+  const rect = pen.calculative.worldIconRect;
+  let x = rect.x;
+  let y = rect.y;
+  let w = rect.width;
+  let h = rect.height;
+  if (pen.calculative.iconWidth) {
+    w = pen.calculative.iconWidth;
+  }
+  if (pen.calculative.iconHeight) {
+    h = pen.calculative.iconHeight;
+  }
+  if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight && pen.imageRatio) {
+    let scaleW = rect.width / pen.calculative.imgNaturalWidth;
+    let scaleH = rect.height / pen.calculative.imgNaturalHeight;
+    let scaleMin = scaleW > scaleH ? scaleH : scaleW;
+    const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
+    if (pen.calculative.iconWidth) {
+      h = pen.calculative.iconWidth / wDivideH;
+    } else if (pen.calculative.iconHeight) {
+      w = pen.calculative.iconHeight * wDivideH;
+    } else {
+      w = scaleMin * pen.calculative.imgNaturalWidth;
+      h = scaleMin * pen.calculative.imgNaturalHeight;
+    }
+  }
+  x += (rect.width - w) / 2;
+  y += (rect.height - h) / 2;
 
+  switch (pen.iconAlign) {
+    case 'top':
+      y = rect.y;
+      break;
+    case 'bottom':
+      y = rect.ey - h;
+      break;
+    case 'left':
+      x = rect.x;
+      break;
+    case 'right':
+      x = rect.ex - w;
+      break;
+    case 'left-top':
+      x = rect.x;
+      y = rect.y;
+      break;
+    case 'right-top':
+      x = rect.ex - w;
+      y = rect.y;
+      break;
+    case 'left-bottom':
+      x = rect.x;
+      y = rect.ey - h;
+      break;
+    case 'right-bottom':
+      x = rect.ex - w;
+      y = rect.ey - h;
+      break;
+  }
+
+  if (pen.calculative.iconRotate) {
+    ctx.translate(rect.center.x, rect.center.y);
+    ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
+    ctx.translate(-rect.center.x, -rect.center.y);
+  }
+  ctx.drawImage(pen.calculative.img, x, y, w, h);
+}
+
+// TODO: 0.5 偏移量在 图片中可能存在问题
+export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.flip === Flip.Horizontal) {
     ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex + 0.5, 0.5);
     ctx.scale(-1, 1);
@@ -147,14 +212,26 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.translate(0.5, pen.calculative.worldRect.y + pen.calculative.worldRect.ey + 0.5);
     ctx.scale(1, -1);
   }
+}
+
+export function ctxRotate(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+  ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
+  let rotate = (pen.calculative.rotate * Math.PI) / 180;
+  // 目前只有水平和垂直翻转，都需要 * -1
+  pen.calculative.flip && (rotate *= -1);
+  ctx.rotate(rotate);
+  ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
+}
+
+export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
+  ctx.save();
+  ctx.translate(0.5, 0.5);
+  ctx.beginPath();
+
+  ctxFlip(ctx, pen);
 
   if (pen.calculative.rotate && pen.name !== 'line') {
-    ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
-    let rotate = (pen.calculative.rotate * Math.PI) / 180;
-    // 目前只有水平和垂直翻转，都需要 * -1
-    pen.calculative.flip && (rotate *= -1);
-    ctx.rotate(rotate);
-    ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
+    ctxRotate(ctx, pen);
   }
 
   if (pen.calculative.lineWidth > 1) {
@@ -523,12 +600,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   }
 
   if (pen.calculative.rotate && pen.name !== 'line') {
-    ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
-    let rotate = (pen.calculative.rotate * Math.PI) / 180;
-    // 目前只有水平和垂直翻转，都需要 * -1
-    pen.calculative.flip && (rotate *= -1);
-    ctx.rotate(rotate);
-    ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
+    ctxRotate(ctx, pen);
   }
 
   if (pen.calculative.lineWidth > 1) {
@@ -661,72 +733,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
-    const rect = pen.calculative.worldIconRect;
-    let x = rect.x;
-    let y = rect.y;
-    let w = rect.width;
-    let h = rect.height;
-    if (pen.calculative.iconWidth) {
-      w = pen.calculative.iconWidth;
-    }
-    if (pen.calculative.iconHeight) {
-      h = pen.calculative.iconHeight;
-    }
-    if (pen.calculative.imgNaturalWidth && pen.calculative.imgNaturalHeight && pen.imageRatio) {
-      let scaleW = rect.width / pen.calculative.imgNaturalWidth;
-      let scaleH = rect.height / pen.calculative.imgNaturalHeight;
-      let scaleMin = scaleW > scaleH ? scaleH : scaleW;
-      const wDivideH = pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
-      if (pen.calculative.iconWidth) {
-        h = pen.calculative.iconWidth / wDivideH;
-      } else if (pen.calculative.iconHeight) {
-        w = pen.calculative.iconHeight * wDivideH;
-      } else {
-        w = scaleMin * pen.calculative.imgNaturalWidth;
-        h = scaleMin * pen.calculative.imgNaturalHeight;
-      }
-    }
-    x += (rect.width - w) / 2;
-    y += (rect.height - h) / 2;
-
-    switch (pen.iconAlign) {
-      case 'top':
-        y = rect.y;
-        break;
-      case 'bottom':
-        y = rect.ey - h;
-        break;
-      case 'left':
-        x = rect.x;
-        break;
-      case 'right':
-        x = rect.ex - w;
-        break;
-      case 'left-top':
-        x = rect.x;
-        y = rect.y;
-        break;
-      case 'right-top':
-        x = rect.ex - w;
-        y = rect.y;
-        break;
-      case 'left-bottom':
-        x = rect.x;
-        y = rect.ey - h;
-        break;
-      case 'right-bottom':
-        x = rect.ex - w;
-        y = rect.ey - h;
-        break;
-    }
-
-    if (pen.calculative.iconRotate) {
-      ctx.translate(rect.center.x, rect.center.y);
-      ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
-      ctx.translate(-rect.center.x, -rect.center.y);
-    }
-
-    ctx.drawImage(pen.calculative.img, x, y, w, h);
+    drawImage(ctx, pen);
     ctx.restore();
   } else if (pen.icon) {
     ctx.save();
