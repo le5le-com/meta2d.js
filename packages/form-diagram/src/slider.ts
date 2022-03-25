@@ -8,7 +8,8 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   }
 
   if (!pen.calculative.barRect) {
-    return;
+    initRect(pen)
+    // return;
   }
 
   const data = pen.calculative.canvas.store.data;
