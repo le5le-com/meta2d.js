@@ -2961,7 +2961,7 @@ export class Canvas {
 
   rotatePens(e: Point) {
     if (!this.initPens) {
-      this.initPens = deepClone(this.store.active);
+      this.initPens = deepClone(this.getAllByPens(this.store.active));
     }
 
     this.activeRect.rotate = calcRotate(e, this.activeRect.center);
@@ -2969,7 +2969,7 @@ export class Canvas {
       this.lastRotate = this.store.active[0].rotate || 0;
     }
     const angle = this.activeRect.rotate - this.lastRotate;
-    for (let pen of this.store.active) {
+    for (const pen of this.store.active) {
       if (pen.parentId) {
         return;
       }
@@ -2987,11 +2987,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const pens = this.store.active;
-      const currentPens = [];
-      for (let pen of pens) {
-        currentPens.push(deepClone(pen));
-      }
+      const currentPens = deepClone(this.getAllByPens(this.store.active));
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3589,6 +3585,11 @@ export class Canvas {
     this.getSizeCPs();
   }
 
+  /**
+   * 旋转当前画笔包括子节点
+   * @param pen 旋转的画笔
+   * @param angle 本次的旋转值，加到 pen.calculative.rotate 上
+   */
   rotatePen(pen: Pen, angle: number, rect: Rect) {
     if (pen.type) {
       pen.calculative.worldAnchors.forEach((anchor) => {
@@ -4232,7 +4233,11 @@ export class Canvas {
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
     let willSetPenRect = false; // 是否重新 setPenRect
     let containIsBottom = false; // 是否包含 isBottom 属性修改
+    let oldRotate: number = undefined;
     for (const k in data) {
+      if (k === 'rotate') {
+        oldRotate = pen.calculative.rotate || 0;
+      }
       if (typeof pen[k] !== 'object' || k === 'lineDash') {
         pen.calculative[k] = data[k];
       }
@@ -4257,6 +4262,12 @@ export class Canvas {
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
+    if (oldRotate !== undefined) {
+      const currentRotate = pen.calculative.rotate;
+      pen.calculative.rotate = oldRotate;
+      this.rotatePen(pen, currentRotate - oldRotate, pen.calculative.worldRect);
+      willDirtyPenRect = false;
+    }
     if (willSetPenRect) {
       this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
       this.updateLines(pen, true);
