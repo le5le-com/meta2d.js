@@ -7,7 +7,7 @@ import { globalStore, TopologyStore } from '../store';
 import { calcTextLines, calcTextDrawRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
-import { Flip, Gradient, isEqual, PenType } from '@topology/core';
+import { Gradient, isEqual, PenType } from '@topology/core';
 import { rgba } from '../utils';
 
 export function getParent(pen: Pen, root?: boolean): Pen {
@@ -205,10 +205,11 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
 
 // TODO: 0.5 偏移量在 图片中可能存在问题
 export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
-  if (pen.calculative.flip === Flip.Horizontal) {
+  if (pen.calculative.flipX) {
     ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex + 0.5, 0.5);
     ctx.scale(-1, 1);
-  } else if (pen.calculative.flip === Flip.Vertical) {
+  }
+  if (pen.calculative.flipY) {
     ctx.translate(0.5, pen.calculative.worldRect.y + pen.calculative.worldRect.ey + 0.5);
     ctx.scale(1, -1);
   }
@@ -218,7 +219,11 @@ export function ctxRotate(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
   ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
   // 目前只有水平和垂直翻转，都需要 * -1
-  pen.calculative.flip && (rotate *= -1);
+  if (pen.calculative.flipX) {
+    rotate *= -1;
+  } else if (pen.calculative.flipY) {
+    rotate *= -1;
+  }
   ctx.rotate(rotate);
   ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
 }
@@ -581,22 +586,21 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   // end
 
   ctx.beginPath();
-  if (pen.calculative.flip) {
-    if (pen.calculative.flip === Flip.Horizontal) {
-      if (rect) {
-        ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex - rect.x, -rect.y);
-      } else {
-        ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex, 0);
-      }
-      ctx.scale(-1, 1);
-    } else if (pen.calculative.flip === Flip.Vertical) {
-      if (rect) {
-        ctx.translate(-rect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.ey - rect.x);
-      } else {
-        ctx.translate(0, pen.calculative.worldRect.y + pen.calculative.worldRect.ey);
-      }
-      ctx.scale(1, -1);
+  if (pen.calculative.flipX) {
+    if (rect) {
+      ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex - rect.x, -rect.y);
+    } else {
+      ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex, 0);
     }
+    ctx.scale(-1, 1);
+  }
+  if (pen.calculative.flipY) {
+    if (rect) {
+      ctx.translate(-rect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.ey - rect.x);
+    } else {
+      ctx.translate(0, pen.calculative.worldRect.y + pen.calculative.worldRect.ey);
+    }
+    ctx.scale(1, -1);
   }
 
   if (pen.calculative.rotate && pen.name !== 'line') {
@@ -953,20 +957,24 @@ export function calcWorldRects(pen: Pen) {
     rect.width = pen.width;
     rect.height = pen.height;
     rect.rotate = pen.rotate;
-    rect.center = {
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2,
-    };
+    calcCenter(rect);
   } else {
-    let parentRect = store.pens[pen.parentId].calculative.worldRect;
+    const parent = store.pens[pen.parentId];
+    let parentRect = parent.calculative.worldRect;
     if (!parentRect) {
-      parentRect = calcWorldRects(store.pens[pen.parentId]);
+      parentRect = calcWorldRects(parent);
     }
 
     rect.x = parentRect.x + parentRect.width * pen.x;
     rect.y = parentRect.y + parentRect.height * pen.y;
     rect.width = parentRect.width * pen.width;
     rect.height = parentRect.height * pen.height;
+    if (parent.flipX) {
+      rect.x = parentRect.width - ((rect.x - parentRect.x) + rect.width) + parentRect.x;
+    }
+    if (parent.flipY) {
+      rect.y = parentRect.height - ((rect.y - parentRect.y) + rect.height) + parentRect.y;
+    }
 
     rect.ex = rect.x + rect.width;
     rect.ey = rect.y + rect.height;

@@ -27,11 +27,12 @@ export enum Gradient {
   Radial, // 镜像渐变
 }
 
-export enum Flip {
-  None, // 正常
-  Horizontal, // 水平翻转
-  Vertical, // 垂直翻转
-}
+// export enum Flip {
+//   None, // 正常
+//   Horizontal, // 水平翻转
+//   Vertical, // 垂直翻转
+//   Both, // 全翻转
+// }
 
 // 修改哪些属性需要重现计算 textRect
 export const needCalcTextRectProps = [
@@ -54,7 +55,7 @@ export const needCalcTextRectProps = [
 
 export const needSetPenProps = ['x', 'y', 'width', 'height'];
 
-export const needDirtyPenRectProps = ['rotate', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'];
+export const needDirtyPenRectProps = ['rotate', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'flipX', 'flipY'];
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
@@ -231,7 +232,9 @@ export interface Pen extends Rect {
 
   autoPolyline?: boolean;
 
-  flip?: Flip;
+  // flip?: Flip;
+  flipX?: boolean;
+  flipY?: boolean;
 
   hiddenText?: boolean; // 隐藏 text
   keepDecimal?: number; // undefined 显示原内容；0 显示整数
@@ -384,7 +387,9 @@ export interface Pen extends Rect {
     audio?: string;
     media?: HTMLMediaElement;
 
-    flip?: Flip;
+    // flip?: Flip;
+    flipX?: boolean;
+    flipY?: boolean;
 
     hiddenText?: boolean; // 隐藏 text
     keepDecimal?: number; // undefined 显示原内容；0 显示整数；保留几位小数
@@ -440,7 +445,9 @@ export const formatAttrs: Set<string> = new Set([
   'progress',
   'progressColor',
   'verticalProgress',
-  'flip',
+  // 'flip',
+  "flipX",
+  "flipY",
   'input',
   'lineDash',
   'lineCap',
