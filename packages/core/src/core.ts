@@ -118,8 +118,9 @@ export class Topology {
       const pens = e.params ? this.find(e.params) : [pen];
       pens.forEach((pen: Pen) => {
         const rect = this.getPenRect(pen);
-        const visible = e.value.visible;
-        visible && this.setVisible(pen, visible);
+        if (e.value.hasOwnProperty('visible')) {
+          this.setVisible(pen, e.value.visible);
+        }
         this._setValue({ id: pen.id, ...rect, ...e.value }, { willRender: false });
       });
       this.render();
