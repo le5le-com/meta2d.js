@@ -2,13 +2,14 @@ import { Pen } from './model';
 import { getSplitAnchor, line } from '../diagrams';
 import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
-import { calcCenter, calcRelativePoint, Rect, scaleRect, translateRect } from '../rect';
+import { calcCenter, calcRelativePoint, Rect, rectInRect, scaleRect, translateRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines, calcTextDrawRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '@topology/core';
 import { rgba } from '../utils';
+import { Canvas } from '../canvas';
 
 export function getParent(pen: Pen, root?: boolean): Pen {
   if (!pen || !pen.parentId || !pen.calculative) {
@@ -1569,7 +1570,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   elem.style.top = worldRect.y + store.data.y + 'px';
   elem.style.width = worldRect.width + 'px';
   elem.style.height = worldRect.height + 'px';
-  elem.style.display = pen.calculative.visible != false ? 'inline' : 'none'; // 是否隐藏元素
+  elem.style.display = pen.calculative.inView != false ? 'inline' : 'none'; // 是否隐藏元素
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
   if (pen.locked || store.data.locked) {
@@ -1638,4 +1639,58 @@ export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {
   }
 
   return v;
+}
+
+function isShowChild(pen: Pen, store: TopologyStore) {
+  let selfPen = pen;
+  while (selfPen.parentId) {
+    const oldPen = selfPen;
+    selfPen = store.pens[selfPen.parentId];
+    const showChildIndex = selfPen?.calculative?.showChild;
+    if (showChildIndex != undefined) {
+      const showChildId = selfPen.children[showChildIndex];
+      if (showChildId !== oldPen.id) {
+        pen.calculative.inView = false;
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function calcInView(pen: Pen) {
+  pen.calculative.inView = true;
+  const canvas: Canvas = pen.calculative.canvas;
+  const store = canvas.store;
+  if (!isShowChild(pen, store)){
+    return;
+  }
+
+  if (pen.visible == false || pen.calculative.visible == false) {
+    pen.calculative.inView = false;
+    return;
+  }
+
+  const canvasRect = {
+    x: 0,
+    y: 0,
+    ex: canvas.width,
+    ey: canvas.height,
+    width: canvas.width,
+    height: canvas.height,
+  };
+  const x = pen.calculative.worldRect.x + store.data.x;
+  const y = pen.calculative.worldRect.y + store.data.y;
+  const penRect: Rect = {
+    x,
+    y,
+    width: pen.calculative.worldRect.width,
+    height: pen.calculative.worldRect.height,
+    ex: x + pen.calculative.worldRect.width,
+    ey: y + pen.calculative.worldRect.height,
+    rotate: pen.calculative.worldRect.rotate,
+  };
+  if (!rectInRect(penRect, canvasRect)) {
+    pen.calculative.inView = false;
+  }
 }

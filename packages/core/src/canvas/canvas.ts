@@ -42,6 +42,7 @@ import {
   renderPenRaw,
   needSetPenProps,
   getAllChildren,
+  calcInView,
 } from '../pen';
 import {
   calcRotate,
@@ -2649,6 +2650,7 @@ export class Canvas {
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
     calcTextRect(pen);
+    calcInView(pen);
     globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     pen.calculative.dirty = true;
     this.dirty = true;
@@ -2710,56 +2712,16 @@ export class Canvas {
   renderPens = () => {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.strokeStyle = this.store.data.color || this.store.options.color;
-    const canvasRect = {
-      x: 0,
-      y: 0,
-      ex: this.width,
-      ey: this.height,
-      width: this.width,
-      height: this.height,
-    };
 
-    outer: for (const pen of this.store.data.pens) {
+    for (const pen of this.store.data.pens) {
       if (!isFinite(pen.x)) {
         // 若不合法，即 NaN ，Infinite
         console.warn(pen, '画笔的 x 不合法');
       }
-      let selfPen = pen;
-      while (selfPen.parentId) {
-        const oldPen = selfPen;
-        selfPen = this.store.pens[selfPen.parentId];
-        const showChildIndex = selfPen?.calculative?.showChild;
-        if (showChildIndex != undefined) {
-          const showChildId = selfPen.children[showChildIndex];
-          if (showChildId !== oldPen.id) {
-            pen.calculative.inView = false;
-            continue outer;
-          }
-        }
-      }
 
-      if (pen.visible == false || pen.calculative.visible == false) {
-        pen.calculative.inView = false;
-        continue;
+      if (pen.calculative.inView) {
+        renderPen(ctx, pen);
       }
-
-      const x = pen.calculative.worldRect.x + this.store.data.x;
-      const y = pen.calculative.worldRect.y + this.store.data.y;
-      const penRect: Rect = {
-        x,
-        y,
-        width: pen.calculative.worldRect.width,
-        height: pen.calculative.worldRect.height,
-        ex: x + pen.calculative.worldRect.width,
-        ey: y + pen.calculative.worldRect.height,
-        rotate: pen.calculative.worldRect.rotate,
-      };
-      if (!rectInRect(penRect, canvasRect)) {
-        pen.calculative.inView = false;
-        continue;
-      }
-      pen.calculative.inView = true;
-      renderPen(ctx, pen);
     }
 
     if (this.drawingLine) {
@@ -2975,6 +2937,7 @@ export class Canvas {
   onMovePens() {
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.store.data.pens) {
+      calcInView(pen);
       pen.onMove && pen.onMove(pen);
       if (pen.isRuleLine) {
         if (!pen.width) {
