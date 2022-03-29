@@ -1606,6 +1606,9 @@ export class Canvas {
         // 鼠标松手才更新，此处是更新前的值
         const initPens = deepClone(this.store.active);
         this.store.active.forEach((pen, i: number) => {
+          if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
+            return;
+          }    
           const { x, y } = this.movingPens[i];
           Object.assign(pen, {
             x,
@@ -1624,7 +1627,8 @@ export class Canvas {
             pen.calculative.initRect.ey = pen.calculative.y + pen.calculative.height;
           }
         });
-        this.active(this.store.active);
+        // active 消息表示拖拽结束
+        this.store.emitter.emit('active', this.store.active);
         this.needInitStatus(this.store.active);
         // 此处是更新后的值
         this.pushHistory({
@@ -1636,11 +1640,14 @@ export class Canvas {
         // 复制行为
         this.copy(
           this.store.active.map((pen, i: number) => {
-            const { x, y } = this.movingPens[i];
+            const { x, y, width, height, anchors } = this.movingPens[i];
             return {
               ...pen,
               x,
               y,
+              width,
+              height,
+              anchors
             };
           })
         );
@@ -3180,6 +3187,19 @@ export class Canvas {
         if (pen.children) {
           pen.children = pen.children.map((child) => child + suffix);
         }
+        // 连接关系也需要变，用在 updateLines 中
+        if (pen.connectedLines) {
+          pen.connectedLines = pen.connectedLines.map((line) => {
+            line.lineId += suffix;
+            return line;
+          });
+        }
+        if (pen.type && pen.calculative.worldAnchors) {
+          pen.calculative.worldAnchors = pen.calculative.worldAnchors.map((anchor) => {
+            anchor.connectTo && (anchor.connectTo += suffix);
+            return anchor;
+          });
+        }
         this.store.pens[pen.id] = pen; // dirtyPenRect 时需要计算
         pen.calculative.canvas = this;
         const value: Pen = {
@@ -3441,6 +3461,11 @@ export class Canvas {
     translateRect(this.activeRect, x, y);
 
     pens.forEach((pen) => {
+      // TODO: 之前版本代码，不确定何种原因移除
+      if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
+        return;
+      }
+
       if (pen.locked >= LockState.DisableMove) {
         // 禁止移动
         return;
