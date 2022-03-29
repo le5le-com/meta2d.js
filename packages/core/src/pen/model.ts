@@ -55,7 +55,7 @@ export const needCalcTextRectProps = [
 
 export const needSetPenProps = ['x', 'y', 'width', 'height'];
 
-export const needDirtyPenRectProps = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'flipX', 'flipY'];
+export const needDirtyPenRectProps = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'flipX', 'flipY', 'visible', 'showChild'];
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 

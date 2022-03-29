@@ -3,6 +3,7 @@ import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
 import {
+  calcInView,
   calcTextDrawRect,
   calcTextLines,
   calcTextRect,
@@ -608,6 +609,12 @@ export class Topology {
       pens,
       step: 2,
     });
+    if (showChild != undefined) {
+      pens.forEach(pen => {
+        calcInView(pen);
+      });
+      this.needInitStatus([parent]);
+    }
     this.render();
 
     this.store.emitter.emit('add', [parent]);
