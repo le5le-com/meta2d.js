@@ -338,11 +338,17 @@ export function calcMoveDock(
   offset: Point
 ) {
   // 找到 points ，深拷贝一下，不影响原值
-  const activePoints = deepClone(getActivePoints(pens));
-  activePoints.forEach((point) => {
-    point.x += offset.x;
-    point.y += offset.y;
-  });
+  let activePoints: Point[] = [];
+  if (pens.length === 1) {
+    activePoints = deepClone(getPointsByPen(pens[0]));
+    activePoints.forEach((point) => {
+      point.x += offset.x;
+      point.y += offset.y;
+    });
+  } else {
+    calcCenter(rect);
+    activePoints = [rect.center, ...rectToPoints(rect)];
+  }
   return calcDockByPoints(store, activePoints);
 }
 
@@ -364,23 +370,6 @@ export function getPointsByPen(pen: Pen): Point[] {
   } else if (pen.type === PenType.Line) {
     return pen.calculative.worldAnchors;
   }
-}
-
-function getActivePoints(pens: Pen[]) {
-  if (pens.length === 1) {
-    return getPointsByPen(pens[0]);
-  }
-  // 多节点
-  const rect = getRect(pens);
-  // 为了复用方法，采用下面的写法
-  return getPointsByPen({
-    type: PenType.Node,
-    calculative: {
-      worldRect: rect,
-      // 即多节点情况下，认为其没有 瞄点
-      worldAnchors: [],
-    },
-  });
 }
 
 export function calcResizeDock(
@@ -407,7 +396,10 @@ function calcDockByPoints(
       continue;
     }
 
-    if (pen.type && store.active.some((active) => isConnectLine(store, active, pen))) {
+    if (
+      pen.type &&
+      store.active.some((active) => isConnectLine(store, active, pen))
+    ) {
       continue;
     }
 
