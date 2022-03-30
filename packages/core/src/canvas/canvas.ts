@@ -2361,6 +2361,7 @@ export class Canvas {
     pen.calculative.worldRect = rect;
     calcPadding(pen, rect);
     calcTextRect(pen);
+    calcInView(pen);
     this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     if (pen.calculative.worldAnchors) {
       pen.anchors = [];
