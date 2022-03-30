@@ -612,6 +612,8 @@ export class Topology {
     if (showChild != undefined) {
       pens.forEach(pen => {
         calcInView(pen);
+        // 更改 view 后，修改 dom 节点的显示隐藏
+        pen.onValue && pen.onValue(pen);
       });
       this.needInitStatus([parent]);
     }
