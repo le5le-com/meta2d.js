@@ -2142,6 +2142,10 @@ export class Canvas {
       return;
     }
 
+    const { origin, scale } = this.store.data;
+    action.origin = deepClone(origin);
+    action.scale = scale;
+
     if (action.type !== EditType.Update && action.pens) {
       action.pens.forEach((pen) => {
         pen.calculative.layer = this.store.data.pens.findIndex((p) => p.id === pen.id);
@@ -2228,7 +2232,8 @@ export class Canvas {
               }
             }
             pen.calculative.image = undefined;
-            this.dirtyPenRect(pen);
+            const rect = this.getPenRect(pen, action.origin, action.scale);
+            this.setPenRect(pen, rect, false);
             this.updateLines(pen, true);
           }
         });
@@ -2239,7 +2244,8 @@ export class Canvas {
           this.store.data.pens.splice(pen.calculative.layer, 0, pen);
           this.store.pens[pen.id] = pen;
           pen.calculative.canvas = this;
-          globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+          const rect = this.getPenRect(pen, action.origin, action.scale);
+          this.setPenRect(pen, rect, false);
           pen.calculative.image = undefined;
           pen.calculative.backgroundImage = undefined;
           pen.calculative.strokeImage = undefined;
@@ -4391,16 +4397,16 @@ export class Canvas {
     render && this.render();
   }
 
-  getPenRect(pen: Pen) {
+  getPenRect(pen: Pen, origin = this.store.data.origin, scale = this.store.data.scale) {
     if (!pen) {
       return;
     }
 
     return {
-      x: (pen.x - this.store.data.origin.x) / this.store.data.scale,
-      y: (pen.y - this.store.data.origin.y) / this.store.data.scale,
-      width: pen.width / this.store.data.scale,
-      height: pen.height / this.store.data.scale,
+      x: (pen.x - origin.x) / scale,
+      y: (pen.y - origin.y) / scale,
+      width: pen.width / scale,
+      height: pen.height / scale,
     };
   }
 
