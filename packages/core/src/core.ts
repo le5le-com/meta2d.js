@@ -537,10 +537,7 @@ export class Topology {
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
    */
-  combine(pens?: Pen[], showChild?: number) {
-    if (!pens) {
-      pens = this.store.active;
-    }
+  combine(pens: Pen[] = this.store.active, showChild?: number) {
     if (!pens || !pens.length) {
       return;
     }
@@ -559,21 +556,19 @@ export class Topology {
     }
 
     const rect = getRect(pens);
-    const id = s8();
     let parent: Pen = {
-      id,
+      id: s8(),
       name: 'combine',
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
+      ...rect,
       children: [],
       showChild,
     };
     const p = pens.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
-    if (p && showChild == undefined) {
+    // 其中一个认为是父节点
+    const oneIsParent = p && showChild == undefined;
+    if (oneIsParent) {
       if (!p.children) {
         p.children = [];
       }
@@ -598,16 +593,21 @@ export class Topology {
       // pen.type = PenType.Node;
     });
     this.canvas.active([parent]);
-    this.pushHistory({
-      type: EditType.Add,
-      pens: [parent],
-      step: 2,
-    });
+    let step = 1;
+    if (!oneIsParent) {
+      step = 2;
+      this.pushHistory({
+        type: EditType.Add,
+        pens: [parent],
+        step,
+      });
+      this.store.emitter.emit('add', [parent]);
+    }
     this.pushHistory({
       type: EditType.Update,
       initPens,
       pens,
-      step: 2,
+      step,
     });
     if (showChild != undefined) {
       pens.forEach(pen => {
@@ -616,8 +616,6 @@ export class Topology {
       this.needInitStatus([parent]);
     }
     this.render();
-
-    this.store.emitter.emit('add', [parent]);
   }
 
   uncombine(pen?: Pen) {
