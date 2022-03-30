@@ -3906,7 +3906,7 @@ export class Canvas {
       }
       pen.onDestroy && pen.onDestroy(pen);
       if (Array.isArray(pen.children)) {
-        const sonPens = this.store.data.pens.filter((son) => pen.children.includes(son.id));
+        const sonPens = pen.children.map((id) => this.store.pens[id]);
         this.delete(sonPens, true, delLock); // 递归删除子节点
       }
     });
@@ -4199,20 +4199,20 @@ export class Canvas {
 
   changePenId(oldId: string, newId: string): boolean {
     if (oldId === newId) return false;
-    const pens = this.find(oldId);
-    if (pens.length === 1) {
-      // 找到画笔，且唯一
-      if (!this.find(newId).length) {
-        // 若新画笔不存在
-        pens[0].id = newId;
-        // 更换 store.pens 上的内容
-        this.store.pens[newId] = this.store.pens[oldId];
-        // dom 节点，需要更改 id
-        pens[0].onChangeId && pens[0].onChangeId(pens[0], oldId, newId);
-        delete this.store.pens[oldId];
-        return true;
-      }
+    const pen = this.store.pens[oldId];
+    if (!pen) {
+      return false;
     }
+    if (this.store.pens[newId]) {
+      return false;
+    }
+    // 若新画笔不存在
+    pen.id = newId;
+    this.store.pens[newId] = this.store.pens[oldId];
+    // dom 节点，需要更改 id
+    pen.onChangeId && pen.onChangeId(pen, oldId, newId);
+    delete this.store.pens[oldId];
+    return true;
   }
 
   updateValue(pen: Pen, data: any) {

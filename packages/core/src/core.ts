@@ -628,7 +628,7 @@ export class Topology {
       return;
     }
 
-    const children = this.store.data.pens.filter((child) => pen.children.includes(child.id));
+    const children = pen.children.map(childId => this.store.pens[childId]);
     let initPens = deepClone(children);
     children.forEach((child) => {
       child.parentId = undefined;
@@ -1513,12 +1513,12 @@ export class Topology {
     if (pen.type) {
       // 连线
       const nextNodeId = pen.anchors[pen.anchors.length - 1].connectTo;
-      return this.find(nextNodeId);
+      return [this.store.pens[nextNodeId]];
     } else {
       // 节点
       // 1. 得到所有的出线
       const lines = this.getLines(pen, 'out');
-      const nextNodes = [];
+      const nextNodes: Pen[] = [];
       // 2. 遍历出线的 nextNode
       lines.forEach((line) => {
         const lineNextNode = this.nextNode(line);
@@ -1541,7 +1541,7 @@ export class Topology {
     if (pen.type) {
       // 连线
       const preNodeId = pen.anchors[0].connectTo;
-      return this.find(preNodeId);
+      return [this.store.pens[preNodeId]];
     } else {
       // 节点
       // 1. 得到所有的入线
@@ -1626,7 +1626,7 @@ export class Topology {
     );
     if (pen.children) {
       for (const childId of pen.children) {
-        const child = this.find(childId)[0];
+        const child = this.store.pens[childId];
         child && this.setVisible(child, visible);
       }
     }
