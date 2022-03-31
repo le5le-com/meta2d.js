@@ -1,3 +1,5 @@
+import { calcExy } from "@topology/core";
+
 export function getTextLength(text: string, pen: any) {
   const textScale = (pen.calculative.worldRect.height * 14) / 16;
   const chinese = text.match(/[\u4e00-\u9fa5]/g) || '';
@@ -25,11 +27,10 @@ export function initOptions(pen: any) {
     pen.calculative.worldRect = {
       x: pen.x,
       y: pen.y,
-      ex: pen.x + pen.width,
-      ey: pen.y + pen.height,
       height: pen.height,
       width: pen.width,
     };
+    calcExy(pen.calculative.worldRect);
   } else if (pen.direction == 'vertical') {
     if (!pen.optionInterval) {
       pen.optionInterval = 20;
@@ -50,11 +51,10 @@ export function initOptions(pen: any) {
       pen.calculative.worldRect = {
         x: pen.x,
         y: pen.y,
-        ex: pen.x + pen.width,
-        ey: pen.y + pen.height,
         height: pen.height,
         width: pen.width,
       };
+      calcExy(pen.calculative.worldRect);
     }
   }
 }

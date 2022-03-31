@@ -2,7 +2,7 @@ import { Pen } from './model';
 import { getSplitAnchor, line } from '../diagrams';
 import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
-import { calcCenter, calcRelativePoint, Rect, rectInRect, scaleRect, translateRect } from '../rect';
+import { calcCenter, calcExy, calcRelativePoint, Rect, rectInRect, scaleRect, translateRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines, calcTextDrawRect } from './text';
 import { deepClone } from '../utils/clone';
@@ -953,11 +953,10 @@ export function calcWorldRects(pen: Pen) {
   };
 
   if (!pen.parentId) {
-    rect.ex = pen.x + pen.width;
-    rect.ey = pen.y + pen.height;
     rect.width = pen.width;
     rect.height = pen.height;
     rect.rotate = pen.rotate;
+    calcExy(rect);
     calcCenter(rect);
   } else {
     const parent = store.pens[pen.parentId];
@@ -977,8 +976,7 @@ export function calcWorldRects(pen: Pen) {
       rect.y = parentRect.height - ((rect.y - parentRect.y) + rect.height) + parentRect.y;
     }
 
-    rect.ex = rect.x + rect.width;
-    rect.ey = rect.y + rect.height;
+    calcExy(rect);
 
     rect.rotate = parentRect.rotate + pen.rotate;
     calcCenter(rect);
@@ -1118,10 +1116,9 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
     y,
     width,
     height,
-    ex: x + width,
-    ey: y + height,
     rotate,
   };
+  calcExy(pen.calculative.worldIconRect);
   calcCenter(pen.calculative.worldIconRect);
 }
 
@@ -1656,8 +1653,7 @@ function isShowChild(pen: Pen, store: TopologyStore) {
 
 export function calcInView(pen: Pen) {
   pen.calculative.inView = true;
-  const canvas: Canvas = pen.calculative.canvas;
-  const store = canvas.store;
+  const { store, canvasRect } = pen.calculative.canvas as Canvas;
   if (!isShowChild(pen, store)){
     return;
   }
@@ -1667,26 +1663,15 @@ export function calcInView(pen: Pen) {
     return;
   }
 
-  // TODO: 该变量通常是不变的，可以缓存起来
-  const canvasRect = {
-    x: 0,
-    y: 0,
-    ex: canvas.width,
-    ey: canvas.height,
-    width: canvas.width,
-    height: canvas.height,
-  };
-  const x = pen.calculative.worldRect.x + store.data.x;
-  const y = pen.calculative.worldRect.y + store.data.y;
+  const { x, y, width, height, rotate } = pen.calculative.worldRect;
   const penRect: Rect = {
-    x,
-    y,
-    width: pen.calculative.worldRect.width,
-    height: pen.calculative.worldRect.height,
-    ex: x + pen.calculative.worldRect.width,
-    ey: y + pen.calculative.worldRect.height,
-    rotate: pen.calculative.worldRect.rotate,
+    x: x + store.data.x,
+    y: y + store.data.y,
+    width,
+    height,
+    rotate,
   };
+  calcExy(penRect);
   if (!rectInRect(penRect, canvasRect)) {
     pen.calculative.inView = false;
   }

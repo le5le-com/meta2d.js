@@ -1,3 +1,5 @@
+import { calcExy } from "@topology/core";
+
 export function table(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onDestroy) {
     pen.onAdd = onAdd;
@@ -70,11 +72,10 @@ function initRect(pen: any) {
     pen.calculative.worldRect = {
       x: pen.x,
       y: pen.y,
-      ex: pen.x + pen.width,
-      ey: pen.y + pen.height,
       height: pen.height,
       width: pen.width,
     };
+    calcExy(pen.calculative.worldRect);
   }
 }
 
