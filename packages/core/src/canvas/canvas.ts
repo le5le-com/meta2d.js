@@ -2155,11 +2155,13 @@ export class Canvas {
 
     switch (action.type) {
       case EditType.Add:
-        action.pens.forEach((pen) => {
+        action.pens.forEach((aPen) => {
+          const pen: Pen = deepClone(aPen, true);
           const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
           if (i > -1) {
             this.store.data.pens.splice(i, 1);
             this.store.pens[pen.id] = undefined;
+            pen.calculative.canvas = this;
             pen.onDestroy && pen.onDestroy(pen);
           }
         });
@@ -2168,7 +2170,7 @@ export class Canvas {
       case EditType.Update:
         const pens = undo ? action.initPens : action.pens;
         pens.forEach((aPen) => {
-          const pen = deepClone(aPen, true);
+          const pen: Pen = deepClone(aPen, true);
           const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
           if (i > -1) {
             pen.calculative = this.store.data.pens[i].calculative;
@@ -2180,20 +2182,32 @@ export class Canvas {
               }
             }
             pen.calculative.image = undefined;
-            const rect = this.getPenRect(pen, action.origin, action.scale);
-            this.setPenRect(pen, rect, false);
+            if (pen.parentId) {
+              this.dirtyPenRect(pen);
+            } else {
+              const rect = this.getPenRect(pen, action.origin, action.scale);
+              this.setPenRect(pen, rect, false);
+            }
             this.updateLines(pen, true);
           }
         });
         break;
       case EditType.Delete:
         action.pens.forEach((aPen) => {
-          const pen = deepClone(aPen, true);
+          const pen: Pen = deepClone(aPen, true);
           this.store.data.pens.splice(pen.calculative.layer, 0, pen);
+          // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
           pen.calculative.canvas = this;
-          const rect = this.getPenRect(pen, action.origin, action.scale);
-          this.setPenRect(pen, rect, false);
+        });
+        action.pens.forEach((aPen) => {
+          const pen = this.store.pens[aPen.id];
+          if (pen.parentId) {
+            this.dirtyPenRect(pen);
+          } else {
+            const rect = this.getPenRect(pen, action.origin, action.scale);
+            this.setPenRect(pen, rect, false);
+          }
           pen.calculative.image = undefined;
           pen.calculative.backgroundImage = undefined;
           pen.calculative.strokeImage = undefined;
@@ -3828,8 +3842,10 @@ export class Canvas {
     }
     if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
       this.makePen(pen);
-      const rect = this.getPenRect(pen, clipboard.origin, clipboard.scale);
-      this.setPenRect(pen, rect, false);
+      if (!pen.parentId) {
+        const rect = this.getPenRect(pen, clipboard.origin, clipboard.scale);
+        this.setPenRect(pen, rect, false);
+      }
       const newChildren = [];
       if (Array.isArray(pen.children)) {
         for (const childId of pen.children) {
@@ -4324,6 +4340,10 @@ export class Canvas {
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
+    if (pen.parentId) {
+      console.warn('can not set pen rect, because it is child pen');
+      return;
+    }
     pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
     pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
     pen.width = rect.width * this.store.data.scale;
