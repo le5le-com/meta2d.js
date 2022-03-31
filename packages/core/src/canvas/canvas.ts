@@ -4234,6 +4234,7 @@ export class Canvas {
     let willSetPenRect = false; // 是否重新 setPenRect
     let containIsBottom = false; // 是否包含 isBottom 属性修改
     let oldRotate: number = undefined;
+    let willRenderImage = false; // 是否需要重新渲染图片
     for (const k in data) {
       if (k === 'rotate') {
         oldRotate = pen.calculative.rotate || 0;
@@ -4258,6 +4259,9 @@ export class Canvas {
       }
       if (k === 'isBottom') {
         containIsBottom = true;
+      }
+      if (k === 'image') {
+        willRenderImage = true;
       }
     }
 
@@ -4296,6 +4300,12 @@ export class Canvas {
     if (containIsBottom) {
       this.canvasImage.initStatus();
       this.canvasImageBottom.initStatus();
+    } else if (willRenderImage) {   // 存在先有 image 后无 image 的情况
+      if (pen.isBottom) {
+        this.canvasImageBottom.initStatus();
+      } else {
+        this.canvasImage.initStatus();
+      }
     } else {
       this.needInitStatus([pen]);
     }
