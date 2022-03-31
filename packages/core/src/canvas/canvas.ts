@@ -4315,7 +4315,11 @@ export class Canvas {
 >>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
 =======
     let oldRotate: number = undefined;
+<<<<<<< HEAD
 >>>>>>> 9ada8b1 (updateValue rotate use rotatePen; rotatePens cancel)
+=======
+    let willRenderImage = false; // 是否需要重新渲染图片
+>>>>>>> c91ea01 (pen set image, next set image null, will render image canvas)
     for (const k in data) {
       if (k === 'rotate') {
         oldRotate = pen.calculative.rotate || 0;
@@ -4349,7 +4353,13 @@ export class Canvas {
       if (k === 'isBottom') {
         containIsBottom = true;
       }
+<<<<<<< HEAD
 >>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
+=======
+      if (k === 'image') {
+        willRenderImage = true;
+      }
+>>>>>>> c91ea01 (pen set image, next set image null, will render image canvas)
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
@@ -4387,6 +4397,12 @@ export class Canvas {
     if (containIsBottom) {
       this.canvasImage.initStatus();
       this.canvasImageBottom.initStatus();
+    } else if (willRenderImage) {   // 存在先有 image 后无 image 的情况
+      if (pen.isBottom) {
+        this.canvasImageBottom.initStatus();
+      } else {
+        this.canvasImage.initStatus();
+      }
     } else {
       this.needInitStatus([pen]);
     }
