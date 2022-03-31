@@ -67,7 +67,7 @@ import {
   resizeRect,
   translateRect,
 } from '../rect';
-import { EditAction, EditType, globalStore, TopologyStore } from '../store';
+import { EditAction, EditType, globalStore, TopologyClipboard, TopologyStore } from '../store';
 import { deepClone, fileToBase64, uploadFile, formatPadding, isMobile, Padding, rgba, s8 } from '../utils';
 import { defaultCursors, defaultDrawLineFns, HotkeyType, HoverType, MouseRight, rotatedCursors } from '../data';
 import { createOffscreen } from './offscreen';
@@ -3736,7 +3736,12 @@ export class Canvas {
 
   copy(pens?: Pen[]) {
     // 得到当前活动层的，包括子节点
-    this.store.clipboard = this.getAllByPens(deepClone(pens || this.store.active));
+    const { origin, scale } = this.store.data;
+    this.store.clipboard = {
+      pens: this.getAllByPens(deepClone(pens || this.store.active, true)),
+      origin: deepClone(origin),
+      scale,
+    }
     this.pasteOffset = 10;
     // 下面使用到的场景为跨页面 复制粘贴
     const clipboardData = this.store.clipboard;
@@ -3758,7 +3763,7 @@ export class Canvas {
       clipboardText = localStorage.getItem(this.clipboardName);
     }
     if (clipboardText) {
-      let clipboard;
+      let clipboard: { topology: boolean, data: TopologyClipboard };
       try {
         clipboard = JSON.parse(clipboardText);
       } catch (e) {
@@ -3770,18 +3775,18 @@ export class Canvas {
       }
       this.store.clipboard = clipboard.data;
     }
-    this.store.clipboard = deepClone(this.store.clipboard);
+    this.store.clipboard = deepClone(this.store.clipboard, true);
     // this.store.clipboard 已经包括子节点
     // pastePen 是一个递归操作，只要遍历 父亲节点即可
-    const rootPens = this.store.clipboard.filter((pen) => !pen.parentId);
+    const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
     for (const pen of rootPens) {
       this.pastePen(pen, undefined, this.store.clipboard);
     }
 
     this.active(rootPens);
-    this.pushHistory({ type: EditType.Add, pens: this.store.clipboard });
+    this.pushHistory({ type: EditType.Add, pens: this.store.clipboard.pens });
     this.render();
-    this.store.emitter.emit('add', this.store.clipboard);
+    this.store.emitter.emit('add', this.store.clipboard.pens);
     localStorage.removeItem(this.clipboardName); // 清空缓存
   }
 
@@ -3801,10 +3806,10 @@ export class Canvas {
    *
    * @param pen 当前复制的画笔
    * @param parentId 父节点 id
-   * @param pastePens 本次复制的全部画笔，包含子节点
+   * @param clipboard 本次复制的全部画笔，包含子节点, 以及 origin 和 scale
    * @returns 复制后的画笔
    */
-  pastePen(pen: Pen, parentId?: string, pastePens: Pen[] = []) {
+  private pastePen(pen: Pen, parentId: string, clipboard: TopologyClipboard) {
     const oldId = pen.id;
     randomId(pen);
     pen.parentId = parentId;
@@ -3812,17 +3817,19 @@ export class Canvas {
     !parentId && translateRect(pen, this.pasteOffset, this.pasteOffset);
     if (pen.type === PenType.Line) {
       // TODO: 仍然存在 节点类型的 连线，此处判断需要更改
-      this.changeNodeConnectedLine(oldId, pen, pastePens);
+      this.changeNodeConnectedLine(oldId, pen, clipboard.pens);
     } else {
-      this.changeLineAnchors(oldId, pen, pastePens);
+      this.changeLineAnchors(oldId, pen, clipboard.pens);
     }
     if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
       this.makePen(pen);
+      const rect = this.getPenRect(pen, clipboard.origin, clipboard.scale);
+      this.setPenRect(pen, rect, false);
       const newChildren = [];
       if (Array.isArray(pen.children)) {
         for (const childId of pen.children) {
-          const childPen = pastePens.find((pen) => pen.id === childId);
-          childPen && newChildren.push(this.pastePen(childPen, pen.id, pastePens).id);
+          const childPen = clipboard.pens.find((pen) => pen.id === childId);
+          childPen && newChildren.push(this.pastePen(childPen, pen.id, clipboard).id);
         }
       }
       pen.children = newChildren;

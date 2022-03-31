@@ -78,9 +78,15 @@ export interface TopologyStore {
   options: Options;
   emitter: Emitter;
   dpiRatio?: number;
-  clipboard?: Pen[];
+  clipboard?: TopologyClipboard;
   dirtyBackground?: boolean; // 是否需要重绘背景，包含网格
   dirtyTop?: boolean;   // 是否需要重绘标尺
+}
+
+export interface TopologyClipboard {
+  pens: Pen[];
+  origin: Point;
+  scale: number;
 }
 
 export const createStore = () => {
