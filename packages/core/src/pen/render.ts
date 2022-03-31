@@ -204,6 +204,112 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
   ctx.drawImage(pen.calculative.img, x, y, w, h);
 }
 
+export function drawIcon(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+  const store: TopologyStore = pen.calculative.canvas.store;
+  ctx.save();
+  ctx.shadowColor = '';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const iconRect = pen.calculative.worldIconRect;
+  let x = iconRect.x + iconRect.width / 2;
+  let y = iconRect.y + iconRect.height / 2;
+
+  switch (pen.iconAlign) {
+    case 'top':
+      y = iconRect.y;
+      ctx.textBaseline = 'top';
+      break;
+    case 'bottom':
+      y = iconRect.ey;
+      ctx.textBaseline = 'bottom';
+      break;
+    case 'left':
+      x = iconRect.x;
+      ctx.textAlign = 'left';
+      break;
+    case 'right':
+      x = iconRect.ex;
+      ctx.textAlign = 'right';
+      break;
+    case 'left-top':
+      x = iconRect.x;
+      y = iconRect.y;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      break;
+    case 'right-top':
+      x = iconRect.ex;
+      y = iconRect.y;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      break;
+    case 'left-bottom':
+      x = iconRect.x;
+      y = iconRect.ey;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      break;
+    case 'right-bottom':
+      x = iconRect.ex;
+      y = iconRect.ey;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      break;
+  }
+
+  const fontWeight = pen.calculative.iconWeight;
+  let fontSize: number = undefined;
+  const fontFamily = pen.calculative.iconFamily;
+  if (pen.calculative.iconSize > 0) {
+    fontSize = pen.calculative.iconSize;
+  } else if (iconRect.width > iconRect.height) {
+    fontSize = iconRect.height;
+  } else {
+    fontSize = iconRect.width;
+  }
+  ctx.font = getFont({
+    fontSize,
+    fontWeight,
+    fontFamily
+  });
+  ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
+
+  if (pen.calculative.iconRotate) {
+    ctx.translate(iconRect.center.x, iconRect.center.y);
+    ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
+    ctx.translate(-iconRect.center.x, -iconRect.center.y);
+  }
+
+  ctx.beginPath();
+  ctx.fillText(pen.calculative.icon, x, y);
+  ctx.restore();
+}
+
+/**
+ * canvas2svg 中对 font 的解析规则比 canvas 中简单，能识别的类型很少
+ * @returns ctx.font
+ */
+export function getFont({
+  fontStyle = 'normal',
+  textDecoration = 'normal',
+  fontWeight = 'normal',
+  fontSize = 12,
+  fontFamily = 'Arial',
+  lineHeight = 1  // TODO: lineHeight 默认值待测试
+}: {
+  fontStyle?: string;
+  textDecoration?: string;
+  fontWeight?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  lineHeight?: number;
+} = {}) {
+  return `${fontStyle} ${textDecoration} ${fontWeight} ${fontSize}px/${lineHeight} ${fontFamily}`;
+}
+
 // TODO: 0.5 偏移量在 图片中可能存在问题
 export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.flipX) {
@@ -436,82 +542,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
 
   if (pen.calculative.icon) {
-    ctx.save();
-    ctx.shadowColor = '';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const iconRect = pen.calculative.worldIconRect;
-    let x = iconRect.x + iconRect.width / 2;
-    let y = iconRect.y + iconRect.height / 2;
-
-    switch (pen.iconAlign) {
-      case 'top':
-        y = iconRect.y;
-        ctx.textBaseline = 'top';
-        break;
-      case 'bottom':
-        y = iconRect.ey;
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'left':
-        x = iconRect.x;
-        ctx.textAlign = 'left';
-        break;
-      case 'right':
-        x = iconRect.ex;
-        ctx.textAlign = 'right';
-        break;
-      case 'left-top':
-        x = iconRect.x;
-        y = iconRect.y;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        break;
-      case 'right-top':
-        x = iconRect.ex;
-        y = iconRect.y;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        break;
-      case 'left-bottom':
-        x = iconRect.x;
-        y = iconRect.ey;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'right-bottom':
-        x = iconRect.ex;
-        y = iconRect.ey;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'bottom';
-        break;
-    }
-
-    if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
-        pen.calculative.iconFamily
-      }'`;
-    } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
-    } else {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.width}px '${pen.calculative.iconFamily}'`;
-    }
-    ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
-
-    if (pen.calculative.iconRotate) {
-      ctx.translate(iconRect.center.x, iconRect.center.y);
-      ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
-      ctx.translate(-iconRect.center.x, -iconRect.center.y);
-    }
-
-    ctx.beginPath();
-    ctx.fillText(pen.calculative.icon, x, y);
-
-    ctx.restore();
+    drawIcon(ctx, pen);
   }
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
@@ -534,9 +565,14 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.data.color || store.options.color;
     }
 
-    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
-      pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily || store.options.fontFamily}`;
+    const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
+    ctx.font = getFont({
+      fontStyle,
+      fontWeight,
+      fontFamily: fontFamily || store.options.fontFamily,
+      fontSize,
+      lineHeight,
+    });
 
     !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
     if (pen.calculative.textBackground) {
@@ -741,80 +777,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     drawImage(ctx, pen);
     ctx.restore();
   } else if (pen.icon) {
-    ctx.save();
-    ctx.shadowColor = '';
-    ctx.shadowBlur = 0;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const iconRect = pen.calculative.worldIconRect;
-    let x = iconRect.x + iconRect.width / 2;
-    let y = iconRect.y + iconRect.height / 2;
-
-    switch (pen.iconAlign) {
-      case 'top':
-        y = iconRect.y;
-        ctx.textBaseline = 'top';
-        break;
-      case 'bottom':
-        y = iconRect.ey;
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'left':
-        x = iconRect.x;
-        ctx.textAlign = 'left';
-        break;
-      case 'right':
-        x = iconRect.ex;
-        ctx.textAlign = 'right';
-        break;
-      case 'left-top':
-        x = iconRect.x;
-        y = iconRect.y;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        break;
-      case 'right-top':
-        x = iconRect.ex;
-        y = iconRect.y;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        break;
-      case 'left-bottom':
-        x = iconRect.x;
-        y = iconRect.ey;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'right-bottom':
-        x = iconRect.ex;
-        y = iconRect.ey;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'bottom';
-        break;
-    }
-
-    if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
-        pen.calculative.iconFamily
-      }'`;
-    } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
-    } else {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.width}px '${pen.calculative.iconFamily}'`;
-    }
-    ctx.fillStyle = pen.iconColor || pen.textColor || store.options.textColor;
-
-    if (pen.calculative.worldRect.rotate) {
-      ctx.translate(iconRect.center.x, iconRect.center.y);
-      ctx.rotate((pen.calculative.worldRect.rotate * Math.PI) / 180);
-      ctx.translate(-iconRect.center.x, -iconRect.center.y);
-    }
-
-    ctx.beginPath();
-    ctx.fillText(pen.icon, x, y);
-
-    ctx.restore();
+    drawIcon(ctx, pen);
   }
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
