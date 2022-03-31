@@ -1,4 +1,5 @@
 import { Pen } from '.';
+import { calcExy } from '../rect';
 
 export function calcTextRect(pen: Pen) {
   const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
@@ -32,9 +33,8 @@ export function calcTextRect(pen: Pen) {
     y,
     width,
     height,
-    ex: x + width,
-    ey: y + height,
   };
+  calcExy(rect);
   pen.calculative.worldTextRect = rect;
 
   calcTextLines(pen);
@@ -74,9 +74,8 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
     y,
     width: textWidth,
     height: h,
-    ex: x + textWidth,
-    ey: y + h,
   };
+  calcExy(pen.calculative.textDrawRect);
 }
 
 export function calcTextLines(pen: Pen, text?: string) {

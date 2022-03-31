@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
 
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
+=======
+import { calcExy } from "@topology/core";
+
+export function table(ctx: CanvasRenderingContext2D, pen: any) {
+>>>>>>> 99df05d (canvasRect not calc again; use calcExy method)
   if (!pen.onDestroy) {
     pen.onAdd = onAdd;
     pen.onMouseMove = onMouseMove;
@@ -74,11 +80,10 @@ function initRect(pen: formPen) {
     pen.calculative.worldRect = {
       x: pen.x,
       y: pen.y,
-      ex: pen.x + pen.width,
-      ey: pen.y + pen.height,
       height: pen.height,
       width: pen.width,
     };
+    calcExy(pen.calculative.worldRect);
   }
 }
 

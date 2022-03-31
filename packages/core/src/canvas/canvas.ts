@@ -57,6 +57,7 @@ import {
 } from '../point';
 import {
   calcCenter,
+  calcExy,
   calcRelativePoint,
   getRect,
   pointInRect,
@@ -2088,6 +2089,14 @@ export class Canvas {
     this.width = w;
     this.height = h;
 
+    this.canvasRect = {
+      x: 0,
+      y: 0,
+      width: w,
+      height: h,
+    };
+    calcExy(this.canvasRect);
+
     this.canvas.style.width = w + 'px';
     this.canvas.style.height = h + 'px';
 
@@ -3107,12 +3116,8 @@ export class Canvas {
       pen.calculative.iconWidth && (pen.calculative.iconWidth *= scaleX);
       pen.calculative.worldRect.height *= scaleY;
       pen.calculative.iconHeight && (pen.calculative.iconHeight *= scaleY);
-      pen.calculative.worldRect.ex = pen.calculative.worldRect.x + pen.calculative.worldRect.width;
-      pen.calculative.worldRect.ey = pen.calculative.worldRect.y + pen.calculative.worldRect.height;
-      pen.calculative.worldRect.center = {
-        x: pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2,
-        y: pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2,
-      };
+      calcExy(pen.calculative.worldRect);
+      calcCenter(pen.calculative.worldRect);
       pen.onResize && pen.onResize(pen);
       this.dirtyPenRect(pen, { worldRectIsReady: true });
       this.updateLines(pen);
@@ -4445,8 +4450,7 @@ export class Canvas {
     rect.y -= p[0];
     rect.width += p[3] + p[1];
     rect.height += p[0] + p[2];
-    rect.ex = rect.x + rect.width;
-    rect.ey = rect.y + rect.height;
+    calcExy(rect);
 
     const canvas = document.createElement('canvas');
     canvas.width = rect.width;
