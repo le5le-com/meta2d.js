@@ -2026,6 +2026,9 @@ export class Canvas {
     if (!anchor) {
       return HoverType.None;
     }
+    if (this.store.options.disableAnchor || pen.disableAnchor) {
+      return HoverType.None;
+    }
     if (hitPoint(pt, anchor, this.pointSize)) {
       if (anchor !== this.store.hoverAnchor) {
         this.dirty = true;
@@ -2807,7 +2810,9 @@ export class Canvas {
     ctx.translate(0.5, 0.5);
 
     if (
+      !this.store.options.disableAnchor &&
       this.store.hover &&
+      !this.store.hover.disableAnchor &&
       (this.hotkeyType !== HotkeyType.Resize ||
         this.store.active.length !== 1 ||
         this.store.active[0] !== this.store.hover)

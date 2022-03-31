@@ -1021,10 +1021,6 @@ export function calcPenRect(pen: Pen) {
 
 export function calcWorldAnchors(pen: Pen) {
   const store: TopologyStore = pen.calculative.canvas.store;
-  if ((pen.disableAnchor || store.options.disableAnchor) && !pen.type) {
-    pen.calculative.worldAnchors = [];
-    return;
-  }
   let anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
@@ -1671,6 +1667,7 @@ export function calcInView(pen: Pen) {
     return;
   }
 
+  // TODO: 该变量通常是不变的，可以缓存起来
   const canvasRect = {
     x: 0,
     y: 0,
