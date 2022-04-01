@@ -4465,6 +4465,9 @@ export class Canvas {
 
   toPng(padding: Padding = 0, callback?: BlobCallback) {
     const rect = getRect(this.store.data.pens);
+    if (!isFinite(rect.width)) {
+      throw new Error('can not to png, because width is not finite');
+    }
     const p = formatPadding(padding || 2);
     rect.x -= p[3];
     rect.y -= p[0];
