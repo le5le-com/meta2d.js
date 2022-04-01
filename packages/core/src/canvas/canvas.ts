@@ -4489,12 +4489,16 @@ export class Canvas {
       ctx.restore();
     }
     ctx.translate(-rect.x, -rect.y);
-    for (let pen of this.store.data.pens) {
+    for (const pen of this.store.data.pens) {
+      // TODO: hover 待考虑，若出现再补上
+      const { active } = pen.calculative;
+      pen.calculative.active = false;
       if (pen.image) {
         renderPenRaw(ctx, pen);
       } else {
         renderPen(ctx, pen);
       }
+      pen.calculative.active = active;
     }
     if (callback) {
       canvas.toBlob(callback);
