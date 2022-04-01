@@ -4493,7 +4493,7 @@ export class Canvas {
       // TODO: hover 待考虑，若出现再补上
       const { active } = pen.calculative;
       pen.calculative.active = false;
-      if (pen.image) {
+      if (pen.calculative.img) {
         renderPenRaw(ctx, pen);
       } else {
         renderPen(ctx, pen);

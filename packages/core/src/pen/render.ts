@@ -768,7 +768,8 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     }
   }
 
-  if (pen.image && pen.calculative.img) {
+  // renderPenRaw 用在 downloadPng svg , echarts 等图形需要
+  if (pen.calculative.img) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
