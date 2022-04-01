@@ -541,7 +541,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 
-  if (pen.calculative.icon) {
+  if (!(pen.image && pen.calculative.img) && pen.calculative.icon) {
     drawIcon(ctx, pen);
   }
 
@@ -776,7 +776,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.shadowOffsetY = 0;
     drawImage(ctx, pen);
     ctx.restore();
-  } else if (pen.icon) {
+  } else if (pen.calculative.icon) {
     drawIcon(ctx, pen);
   }
 
