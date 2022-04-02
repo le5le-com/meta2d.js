@@ -89,6 +89,7 @@ import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
 import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
+import { lockedError } from '../utils/error';
 
 declare const window: any;
 
@@ -1503,6 +1504,7 @@ export class Canvas {
         const isHoverTo = getToAnchor(hover) === this.store.hoverAnchor;
         const isActiveFrom = from === this.store.activeAnchor;
         const isActiveTo = to === this.store.activeAnchor;
+        // TODO: 按下某个快捷键才触发连线
         if (hover.type === PenType.Line &&
           (isHoverFrom || isHoverTo) && 
           (isActiveFrom || isActiveTo)
@@ -2431,6 +2433,7 @@ export class Canvas {
   }
 
   drawingPencil() {
+    lockedError(this.store);
     this.pencil = true;
     this.externalElements.style.cursor = 'crosshair';
   }
