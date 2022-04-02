@@ -1,3 +1,5 @@
+import { EventAction } from "@topology/core";
+
 /*
  * @Description:
  * @Author: G
@@ -21,9 +23,16 @@ export const icons = [
     title: '圆形',
     data: {
       name: 'circle',
-      text: '圆形',
+      text: 'le5le',
       width: 100,
       height: 100,
+      events: [
+        {
+          name: 'click',
+          action: EventAction.Emit, // 执行动作
+          value: 'showDialog',
+        },
+      ]
     },
   },
   {
