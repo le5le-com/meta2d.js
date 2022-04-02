@@ -321,8 +321,6 @@ export class Topology {
     this.finishDrawLine(true);
     this.canvas.drawingLineName = '';
     this.stopPencil();
-
-    this.store.emitter.emit('locked', lock);
   }
 
   // end  - 当前鼠标位置，是否作为终点
