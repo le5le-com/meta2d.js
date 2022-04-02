@@ -1498,22 +1498,56 @@ export class Canvas {
       const from = getFromAnchor(line);
       const to = getToAnchor(line);
       if (this.store.hoverAnchor) {
-        if (from === this.store.activeAnchor) {
-          line.autoFrom = undefined;
+        const hover = this.store.hover;
+        const isHoverFrom = getFromAnchor(hover) === this.store.hoverAnchor;
+        const isHoverTo = getToAnchor(hover) === this.store.hoverAnchor;
+        const isActiveFrom = from === this.store.activeAnchor;
+        const isActiveTo = to === this.store.activeAnchor;
+        if (hover.type === PenType.Line &&
+          (isHoverFrom || isHoverTo) && 
+          (isActiveFrom || isActiveTo)
+          ) {
+          // 连线合并
+          const hoverAnchors: Point[] = hover.calculative.worldAnchors.map(anchor => {
+            return {
+              ...anchor,
+              penId: line.id,
+            };
+          });
+          if (isHoverFrom) {
+            hoverAnchors.shift();
+          } else if (isHoverTo) {
+            hoverAnchors.pop();
+          }
+          if ((isHoverFrom && isActiveFrom) || (isHoverTo && isActiveTo)) {
+            hoverAnchors.reverse();
+          }
+          if (isActiveFrom) {
+            line.calculative.worldAnchors.unshift(...hoverAnchors);
+          } else if (isActiveTo) {
+            line.calculative.worldAnchors.push(...hoverAnchors);
+          }
+          this.delete([hover]);
+          // TODO: 历史记录
         } else {
-          line.autoTo = undefined;
+          if (from === this.store.activeAnchor) {
+            line.autoFrom = undefined;
+          } else {
+            line.autoTo = undefined;
+          }
+          this.store.activeAnchor.x = this.store.hoverAnchor.x;
+          this.store.activeAnchor.y = this.store.hoverAnchor.y;
+          this.store.activeAnchor.prev = undefined;
+          this.store.activeAnchor.next = undefined;
+          this.store.activeAnchor.connectTo = this.store.hover.id;
+          this.store.activeAnchor.anchorId = this.store.hoverAnchor.id;
+          connectLine(
+            this.store.pens[this.store.activeAnchor.connectTo],
+            this.store.activeAnchor.penId,
+            this.store.activeAnchor.id,
+            this.store.activeAnchor.anchorId
+          );
         }
-        this.store.activeAnchor.x = this.store.hoverAnchor.x;
-        this.store.activeAnchor.y = this.store.hoverAnchor.y;
-        this.store.activeAnchor.prev = undefined;
-        this.store.activeAnchor.next = undefined;
-        this.store.activeAnchor.connectTo = this.store.hover.id;
-        connectLine(
-          this.store.pens[this.store.activeAnchor.connectTo],
-          this.store.activeAnchor.penId,
-          this.store.activeAnchor.id,
-          this.store.activeAnchor.anchorId
-        );
         if (this[line.lineName]) {
           this[line.lineName](this.store, line);
         }
@@ -1988,17 +2022,14 @@ export class Canvas {
   private getAnchorDock = (pt: Point) => {
     this.store.hover = undefined;
 
-    let hoverType = HoverType.None;
+    outer: 
     for (let i = this.store.data.pens.length - 1; i >= 0; --i) {
       const pen = this.store.data.pens[i];
       if (pen.visible == false || pen.locked === LockState.Disable || pen === this.store.active[0]) {
         continue;
       }
 
-      let r = 4;
-      if (pen.lineWidth) {
-        r += pen.lineWidth / 2;
-      }
+      const r = pen.lineWidth ? pen.lineWidth / 2 + 4 : 4;
       if (!pointInSimpleRect(pt, pen.calculative.worldRect, r)) {
         continue;
       }
@@ -2008,14 +2039,10 @@ export class Canvas {
       if (this.hotkeyType !== HotkeyType.Resize) {
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
-            hoverType = this.inAnchor(pt, pen, anchor);
-            if (hoverType) {
-              break;
+            if (this.inAnchor(pt, pen, anchor)) {
+              break outer;
             }
           }
-        }
-        if (hoverType) {
-          break;
         }
       }
     }
@@ -3264,8 +3291,8 @@ export class Canvas {
       this.store.activeAnchor.connectTo = undefined;
     }
 
-    let x = e.x - this.mouseDown.x;
-    let y = e.y - this.mouseDown.y;
+    const x = e.x - this.mouseDown.x;
+    const y = e.y - this.mouseDown.y;
 
     let offsetX = x - this.lastOffsetX;
     let offsetY = y - this.lastOffsetY;
@@ -3275,25 +3302,24 @@ export class Canvas {
     translatePoint(this.store.activeAnchor, offsetX, offsetY);
 
     if (this.store.hover && this.store.hoverAnchor && this.store.hoverAnchor.penId !== this.store.activeAnchor.penId) {
-      this.store.activeAnchor.connectTo = this.store.hover.id;
-      this.store.activeAnchor.anchorId = this.store.hoverAnchor.id;
+      // TODO: 移动 lineAnchor , 不改变 connectTo
+      // this.store.activeAnchor.connectTo = this.store.hover.id;
+      // this.store.activeAnchor.anchorId = this.store.hoverAnchor.id;
       offsetX = this.store.hoverAnchor.x - this.store.activeAnchor.x;
       offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
       translatePoint(this.store.activeAnchor, offsetX, offsetY);
-    } else {
-      if (!this.store.options.disableDockLine) {
-        this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store);
-        if (this.dock.xDock || this.dock.yDock) {
-          offsetX = 0;
-          offsetY = 0;
-          if (this.dock.xDock) {
-            offsetX = this.dock.xDock.x - this.store.activeAnchor.x;
-          }
-          if (this.dock.yDock) {
-            offsetY = this.dock.yDock.y - this.store.activeAnchor.y;
-          }
-          translatePoint(this.store.activeAnchor, offsetX, offsetY);
+    } else if (!this.store.options.disableDockLine) {
+      this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store);
+      if (this.dock.xDock || this.dock.yDock) {
+        offsetX = 0;
+        offsetY = 0;
+        if (this.dock.xDock) {
+          offsetX = this.dock.xDock.x - this.store.activeAnchor.x;
         }
+        if (this.dock.yDock) {
+          offsetY = this.dock.yDock.y - this.store.activeAnchor.y;
+        }
+        translatePoint(this.store.activeAnchor, offsetX, offsetY);
       }
     }
 
