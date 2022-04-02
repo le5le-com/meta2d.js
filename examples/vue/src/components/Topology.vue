@@ -15,26 +15,12 @@ onMounted(() => {
   const topology = new Topology("topology");
   registerEcharts();
 
-  const dialog = `
-  <div>
-    <span>Le5le</span>
-  </div>
-`;
-  const div = document.createElement("div");
-  div.className = 'test-dialog';
-  div.innerHTML = dialog;
-  document.body.appendChild(div);
-
   // 监听消息
   topology.on("showDialog", ({ pen }: { pen: Pen }) => {
     currentPen.value = pen;
 
-    // 1. vue 打开弹窗
+    // vue 打开弹窗
     visible.value = true;
-
-    // 2. 原生 js 展示弹窗
-    // const div = document.getElementsByClassName('test-dialog')[0];
-    // div.style.display = 'block';
   });
 });
 
@@ -54,14 +40,3 @@ const currentPen = ref<Pen>({});
 </template>
 
 <style scoped></style>
-<style>
-.test-dialog {
-  position: absolute;
-  top: 100px;
-  left: 100px;
-  width: 100px;
-  height: 100px;
-  background: red;
-  display: none;
-}
-</style>
