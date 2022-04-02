@@ -37,6 +37,7 @@ import { Map } from './map';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
+import { lockedError } from './utils/error';
 
 declare const window: any;
 
@@ -303,6 +304,7 @@ export class Topology {
   }
 
   drawLine(lineName?: string) {
+    lineName && lockedError(this.store);
     this.canvas.drawingLineName = lineName;
   }
 
@@ -312,6 +314,15 @@ export class Topology {
 
   stopPencil() {
     this.canvas.stopPencil();
+  }
+
+  lock(lock: LockState) {
+    this.store.data.locked = lock;
+    this.finishDrawLine(true);
+    this.canvas.drawingLineName = '';
+    this.stopPencil();
+
+    this.store.emitter.emit('locked', lock);
   }
 
   // end  - 当前鼠标位置，是否作为终点
