@@ -310,7 +310,9 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
-    if (e.target !== this.externalElements) {
+    const target: any = e.target;
+    // TODO: 若遇到其它 dom 的滚动影响了画布缩放，需要设置 noWheel 属性
+    if (target?.dataset.noWheel) {
       return;
     }
     e.preventDefault();
@@ -4105,6 +4107,7 @@ export class Canvas {
 
     this.inputParent.dataset.l = '1';
     this.input.dataset.l = '1';
+    this.input.dataset.noWheel = '1';
     this.inputRight.dataset.l = '1';
     this.dropdown.dataset.l = '1';
     this.inputRight.style.transform = 'rotate(135deg)';
@@ -4192,6 +4195,7 @@ export class Canvas {
         const t: string = item.text || item + '';
         if (t.indexOf(text) > -1) {
           const li = document.createElement('li');
+          li.dataset.noWheel = '1';
           li.innerText = item.text || item;
           li.dataset.l = '1';
           li.dataset.i = i + '';
@@ -4200,6 +4204,7 @@ export class Canvas {
         }
       } else {
         const li = document.createElement('li');
+        li.dataset.noWheel = '1';
         li.innerText = item.text || item;
         li.dataset.l = '1';
         li.dataset.i = i + '';
