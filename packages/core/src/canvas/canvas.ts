@@ -1441,12 +1441,9 @@ export class Canvas {
         const isActiveFrom = from === this.store.activeAnchor;
         const isActiveTo = to === this.store.activeAnchor;
         // TODO: 按下某个快捷键才触发连线
-        if (hover.type === PenType.Line &&
-          (isHoverFrom || isHoverTo) && 
-          (isActiveFrom || isActiveTo)
-          ) {
+        if (hover.type === PenType.Line && (isHoverFrom || isHoverTo) && (isActiveFrom || isActiveTo)) {
           // 连线合并
-          const hoverAnchors: Point[] = hover.calculative.worldAnchors.map(anchor => {
+          const hoverAnchors: Point[] = hover.calculative.worldAnchors.map((anchor) => {
             return {
               ...anchor,
               penId: line.id,
@@ -1582,7 +1579,7 @@ export class Canvas {
         this.store.active.forEach((pen, i: number) => {
           if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
             return;
-          }    
+          }
           const { x, y } = this.movingPens[i];
           Object.assign(pen, {
             x,
@@ -1621,7 +1618,7 @@ export class Canvas {
               y,
               width,
               height,
-              anchors
+              anchors,
             };
           })
         );
@@ -1935,7 +1932,14 @@ export class Canvas {
             break;
           }
         }
-        if (pointInRect(pt, pen.calculative.worldRect)) {
+
+        let isIn = false;
+        if (pen.name === 'line') {
+          isIn = pointInSimpleRect(pt, pen.calculative.worldRect, pen.lineWidth);
+        } else {
+          isIn = pointInRect(pt, pen.calculative.worldRect);
+        }
+        if (isIn) {
           if (!this.store.data.locked && !pen.locked) {
             if (this.hotkeyType === HotkeyType.AddAnchor) {
               this.externalElements.style.cursor = 'pointer';
@@ -1960,8 +1964,7 @@ export class Canvas {
   private getAnchorDock = (pt: Point) => {
     this.store.hover = undefined;
 
-    outer: 
-    for (let i = this.store.data.pens.length - 1; i >= 0; --i) {
+    outer: for (let i = this.store.data.pens.length - 1; i >= 0; --i) {
       const pen = this.store.data.pens[i];
       if (pen.visible == false || pen.locked === LockState.Disable || pen === this.store.active[0]) {
         continue;
@@ -3789,7 +3792,7 @@ export class Canvas {
       pens: this.getAllByPens(deepClone(pens || this.store.active, true)),
       origin: deepClone(origin),
       scale,
-    }
+    };
     this.pasteOffset = 10;
     // 下面使用到的场景为跨页面 复制粘贴
     const clipboardData = this.store.clipboard;
@@ -3811,7 +3814,7 @@ export class Canvas {
       clipboardText = localStorage.getItem(this.clipboardName);
     }
     if (clipboardText) {
-      let clipboard: { topology: boolean, data: TopologyClipboard };
+      let clipboard: { topology: boolean; data: TopologyClipboard };
       try {
         clipboard = JSON.parse(clipboardText);
       } catch (e) {
@@ -4357,7 +4360,8 @@ export class Canvas {
     if (containIsBottom) {
       this.canvasImage.initStatus();
       this.canvasImageBottom.initStatus();
-    } else if (willRenderImage) {   // 存在先有 image 后无 image 的情况
+    } else if (willRenderImage) {
+      // 存在先有 image 后无 image 的情况
       if (pen.isBottom) {
         this.canvasImageBottom.initStatus();
       } else {
