@@ -105,11 +105,10 @@ function value(pen: Pen) {
     return;
   }
   setElemPosition(pen, highchartsList[pen.id].div);
-  const chart = highchartsList[pen.id].chart.chart(
+  highchartsList[pen.id].chart.chart(
     pen.id,
     (pen as any).highcharts.option
   );
-  chart.reflow();
 }
 
 function changeId(pen: Pen, oldId: string, newId: string) {

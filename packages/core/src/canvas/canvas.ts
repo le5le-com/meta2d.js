@@ -4467,14 +4467,14 @@ export class Canvas {
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
     if (pen.parentId) {
-      console.warn('can not set pen rect, because it is child pen');
-      return;
+      throw new Error('can not set pen rect, because it is child pen');
     }
     pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
     pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
     pen.width = rect.width * this.store.data.scale;
     pen.height = rect.height * this.store.data.scale;
     this.dirtyPenRect(pen);
+    pen.onResize?.(pen);
 
     render && this.render();
   }
