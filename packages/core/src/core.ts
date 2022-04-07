@@ -1054,11 +1054,7 @@ export class Topology {
     a.dispatchEvent(evt);
   }
 
-  getRect(pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-
+  getRect(pens: Pen[] = this.store.data.pens) {
     return getRect(pens);
   }
 
