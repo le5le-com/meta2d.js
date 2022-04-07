@@ -20,7 +20,6 @@
     "typedoc": "latest",
     "tslint": "latest",
     "typescript": "latest",
-    "stats.js": "latest",
-    "fast-xml-parser": "^4.0.1"
+    "stats.js": "latest"
   }
 }
