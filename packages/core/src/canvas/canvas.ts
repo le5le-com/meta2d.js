@@ -90,6 +90,7 @@ import { Scroll } from '../scroll';
 import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
 import { lockedError } from '../utils/error';
+import { Topology } from '../core';
 
 declare const window: any;
 
@@ -188,7 +189,7 @@ export class Canvas {
   canvasImageBottom: CanvasImage;
   magnifierCanvas: MagnifierCanvas;
 
-  constructor(public parent: any, public parentElement: HTMLElement, public store: TopologyStore) {
+  constructor(public parent: Topology, public parentElement: HTMLElement, public store: TopologyStore) {
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
 
     parentElement.appendChild(this.canvas);
@@ -3005,6 +3006,10 @@ export class Canvas {
   }
 
   onMovePens() {
+    const map = this.parent.map;
+    if (map && map.isShow) {
+      map.setView();
+    }
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.store.data.pens) {
       calcInView(pen);
@@ -3059,6 +3064,10 @@ export class Canvas {
     this.calcActiveRect();
     this.canvasImage.initStatus();
     this.canvasImageBottom.initStatus();
+    const map = this.parent.map;
+    if (map && map.isShow) {
+      map.setView();
+    }
     this.render(Infinity);
     this.store.emitter.emit('scale', this.store.data.scale);
   }
