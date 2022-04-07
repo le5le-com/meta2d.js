@@ -199,7 +199,7 @@ export class Topology {
 
   setBackgroundImage(url: string) {
     this.store.data.bkImage = url;
-    this.canvas.canvasImageBottom.canvas.style.backgroundImage = `url(${url})`;
+    this.canvas.canvasImageBottom.canvas.style.backgroundImage = url ? `url(${url})` : '';
   }
 
   setBackgroundColor(color: string = this.store.data.background) {
@@ -250,12 +250,12 @@ export class Topology {
 
     this.store.dirtyBackground = true;
     this.store.dirtyTop = true;
+    this.setBackgroundImage(data?.bkImage);
     if (data) {
       if (data.paths) {
         // 存在 svgPath 存储到 globalStore.paths 中
         Object.assign(globalStore.paths, data.paths);
       }
-      data.bkImage && this.setBackgroundImage(data.bkImage);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
       // 第一遍赋初值
