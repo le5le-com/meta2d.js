@@ -199,7 +199,7 @@ export class Topology {
 
   setBackgroundImage(url: string) {
     this.store.data.bkImage = url;
-    this.canvas.canvas.style.backgroundImage = `url(${url})`;
+    this.canvas.canvasImageBottom.canvas.style.backgroundImage = `url(${url})`;
   }
 
   setBackgroundColor(color: string = this.store.data.background) {
