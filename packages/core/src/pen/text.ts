@@ -86,50 +86,39 @@ export function calcTextLines(pen: Pen, text?: string) {
   if (!text) {
     text = pen.calculative.text;
   }
-  let lines = [];
+  text = text.toString();
+  let lines: string[] = [];
   switch (pen.whiteSpace) {
     case 'nowrap':
       lines.push(text);
       break;
     case 'pre-line':
-      if (text.split) {
-        lines = text.split(/[\n]/g);
-      } else {
-        lines = text.toString().split(/[\n]/g);
-      }
+      lines = text.split(/[\n]/g);
       break;
     default:
-      let paragraphs: string[];
-      if (text.split) {
-        paragraphs = text.split(/[\n]/g);
-      } else {
-        paragraphs = text.toString().split(/[\n]/g);
-      }
-      let h = 0;
-      paragraphs.forEach((item) => {
-        if (h < 0) {
-          return;
-        }
-        const items = wrapLines(getWords(item), pen);
-
+      const paragraphs: string[] = text.split(/[\n]/g);
+      const oneRowHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
+      const textHeight = pen.calculative.worldTextRect.height;
+      const maxRows = Math.floor(textHeight / oneRowHeight);
+      let currentRow = 0;
+      outer: for (const paragraph of paragraphs) {
+        const items = wrapLines(getWords(paragraph), pen);
         if (pen.ellipsis != false && items.length > 1) {
-          items.forEach((l: string) => {
-            if (h < 0) {
-              return;
+          for (const l of items) {
+            currentRow++;
+            if (currentRow > maxRows) {
+              // 该行不要，把上一行最后变成 ...
+              // TODO: 中文的三个字符宽度比 . 大，显示起来像是删多了
+              lines[lines.length - 1] = lines[lines.length - 1].slice(0, -3) + '...';
+              break outer;
+            } else {
+              lines.push(l);
             }
-            h += pen.calculative.fontSize * pen.calculative.lineHeight;
-            const textHeight = pen.calculative.worldTextRect.height;
-            if (h > textHeight) {
-              l = l.slice(0, -3);
-              l += '...';
-              h = -1;
-            }
-            lines.push(l);
-          });
+          }
         } else {
           lines.push(...items);
         }
-      });
+      }
       break;
   }
 
@@ -180,7 +169,7 @@ export function wrapLines(words: string[], pen: Pen) {
   for (let i = 1; i < words.length; ++i) {
     const word = words[i] || '';
     const text = currentLine + word;
-    const chinese = text.match(/[\u4e00-\u9fa5]/g) || '';
+    const chinese = text.match(/[^\x00-\xff]/g) || '';
     const chineseLen = chinese.length;
     const textWidth = pen.calculative.worldTextRect.width;
     if (
