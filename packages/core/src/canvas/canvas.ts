@@ -2333,13 +2333,10 @@ export class Canvas {
     this.store.pens[pen.id] = pen;
     // 集中存储path，避免数据冗余过大
     if (pen.path) {
-      if (!pen.pathId) {
-        pen.pathId = s8();
-      }
-      if (!globalStore.paths[pen.pathId]) {
-        globalStore.paths[pen.pathId] = pen.path;
-      }
-
+      !pen.pathId && (pen.pathId = s8());
+      const paths = this.store.data.paths;
+      !paths[pen.pathId] && (paths[pen.pathId] = pen.path);
+      
       pen.path = undefined;
     }
     // end
