@@ -252,10 +252,6 @@ export class Topology {
     this.store.dirtyTop = true;
     this.setBackgroundImage(data?.bkImage);
     if (data) {
-      if (data.paths) {
-        // 存在 svgPath 存储到 globalStore.paths 中
-        Object.assign(globalStore.paths, data.paths);
-      }
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
       // 第一遍赋初值
@@ -708,8 +704,18 @@ export class Topology {
 
   data(): TopologyData {
     const data: TopologyData = deepClone(this.store.data);
+    const { pens, paths } = this.store.data;
     (data as any).version = pkg.version;
-    data.paths = globalStore.paths;
+    // TODO: 未在 delete 时清除，避免撤销等操作。
+    // 清除一些未使用到的 paths
+    data.paths = {};
+    for (const pathId in paths) {
+      if (Object.prototype.hasOwnProperty.call(paths, pathId)) {
+        if (pens.find(pen => pen.pathId === pathId)) {
+          data.paths[pathId] = paths[pathId];
+        }
+      }
+    }
     return data;
   }
 

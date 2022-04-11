@@ -6,14 +6,12 @@ export const globalStore: {
   canvasDraws: { [key: string]: any };
   anchors: { [key: string]: any };
   htmlElements: { [key: string]: any };
-  paths: { [key: string]: string };
 } = {
   version: pkg.version,
   path2dDraws: {},
   canvasDraws: {},
   anchors: {},
   htmlElements: {},
-  paths: {},
 };
 
 export function register(path2dFns: { [key: string]: (pen: any) => void }) {

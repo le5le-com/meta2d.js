@@ -38,7 +38,7 @@ export interface TopologyData {
   lineWidth?: number;
   color?: string;   // 画笔默认 color 优先级高于 options.color
   penBackground?: string;   // 画笔默认背景色
-  paths?: { [key: string]: string };  // paths 该图纸使用到的 svgPath 需要保存到 globalStore.paths 中
+  paths?: { [key: string]: string };  // paths 该图纸使用到的 svgPath ，打开后需要保存到 globalStore.paths
   bkImage?: string; // 背景图片
   http?: string; // http 请求 Url
   httpTimeInterval?: number; // http 请求间隔
@@ -127,6 +127,7 @@ export const clearStore = (store: TopologyStore) => {
     pens: [],
     origin: { x: 0, y: 0 },
     center: { x: 0, y: 0 },
+    paths: {}
   };
   store.pens = {};
   store.histories = [];
