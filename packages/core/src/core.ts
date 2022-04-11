@@ -1480,8 +1480,8 @@ export class Topology {
     }
   }
 
-  changePenId(oldId: string, newId: string): boolean {
-    return this.canvas.changePenId(oldId, newId);
+  changePenId(oldId: string, newId: string): void {
+    this.canvas.changePenId(oldId, newId);
   }
 
   /**
