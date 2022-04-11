@@ -618,7 +618,7 @@ export class Topology {
       pens.forEach(pen => {
         calcInView(pen);
         // 更改 view 后，修改 dom 节点的显示隐藏
-        pen.onValue && pen.onValue(pen);
+        pen.onValue?.(pen);
       });
       this.needInitStatus([parent]);
     }
@@ -878,7 +878,7 @@ export class Topology {
         afterData = pen.onBeforeValue(pen, data);
       }
       this.updateValue(pen, afterData);
-      pen.onValue && pen.onValue(pen);
+      pen.onValue?.(pen);
     });
 
     if (!this.store.data.locked && this.store.active.length && !this.canvas.movingPens) {
@@ -949,7 +949,8 @@ export class Topology {
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
       case 'valueUpdate':
-        e.onValue && e.onValue(e);
+        // TODO: setValue 触发 valueUpdate 消息，导致执行两次 onValue 事件
+        e.onValue?.(e);
         this.store.data.locked && this.doEvent(e, eventName);
         break;
       case 'update':
