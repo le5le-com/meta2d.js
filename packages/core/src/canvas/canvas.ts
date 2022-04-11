@@ -1654,6 +1654,7 @@ export class Canvas {
           });
           pen.onMove && pen.onMove(pen);
           this.dirtyPenRect(pen);
+          // TODO: mouseup updateLines, 存在 dirtyLines 未 initLineRect, 随后 scale 得不到想要的
           this.updateLines(pen);
 
           pen.calculative.x = pen.x;
@@ -4341,31 +4342,49 @@ export class Canvas {
     });
   }
 
-  changePenId(oldId: string, newId: string): boolean {
-    if (oldId === newId) return false;
+  changePenId(oldId: string, newId: string): void {
+    if (oldId === newId) {
+      throw new Error('oldId is same as newId');
+    }
     const pen = this.store.pens[oldId];
     if (!pen) {
-      return false;
+      throw new Error("old pen isn't exist");
     }
     if (this.store.pens[newId]) {
-      return false;
+      throw new Error('new pen already exists');
     }
     // 若新画笔不存在
     pen.id = newId;
     this.store.pens[newId] = this.store.pens[oldId];
     // dom 节点，需要更改 id
-    pen.onChangeId && pen.onChangeId(pen, oldId, newId);
+    pen.onChangeId?.(pen, oldId, newId);
     delete this.store.pens[oldId];
-    return true;
+    // 父子
+    if (pen.parentId) {
+      const parent = this.store.pens[pen.parentId];
+      const index = parent.children?.findIndex(id => id === oldId);
+      index !== -1 && parent.children?.splice(index, 1, newId);
+    }
+    pen.children?.forEach(childId => {
+      const child = this.store.pens[childId];
+      child.parentId = newId;
+    });
+    // 连接关系
+    if (pen.type === PenType.Line) {
+      // TODO: 仍然存在 节点类型的 连线，此处判断需要更改
+      this.changeNodeConnectedLine(oldId, pen, this.store.data.pens);
+    } else {
+      this.changeLineAnchors(oldId, pen, this.store.data.pens);
+      pen.connectedLines?.forEach(({lineId})=>{
+        const line = this.store.pens[lineId];
+        calcWorldAnchors(line);
+      })
+    }
   }
 
   updateValue(pen: Pen, data: any) {
     Object.assign(pen, data);
-    if (data.newId) {
-      if (!this.changePenId(pen.id, data.newId)) {
-        console.warn('id change error, maybe not unique');
-      }
-    }
+    data.newId && this.changePenId(pen.id, data.newId);
     let willUpdatePath = false;
     let willCalcTextRect = false;
     let willDirtyPenRect = false; // 是否需要重新计算世界坐标
