@@ -1462,8 +1462,8 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
+    console.warn('mouseRight', this.mouseRight);
     if (this.mouseRight === MouseRight.Down) {
-      console.log('contextmenu on core');
       this.store.emitter.emit('contextmenu', {
         e,
         bounding: this.bounding,
