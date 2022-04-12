@@ -1,4 +1,4 @@
-import { commonAnchors, commonPens } from './diagrams';
+import { commonAnchors, commonPens, cube } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
@@ -55,6 +55,7 @@ export class Topology {
     this.setOptions(opts);
     this.init(parent);
     this.register(commonPens());
+    this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
     window && (window.topology = this);
     this['facePen'] = facePen;
@@ -615,7 +616,7 @@ export class Topology {
       step,
     });
     if (showChild != undefined) {
-      pens.forEach(pen => {
+      pens.forEach((pen) => {
         calcInView(pen);
         // 更改 view 后，修改 dom 节点的显示隐藏
         pen.onValue?.(pen);
@@ -633,7 +634,7 @@ export class Topology {
       return;
     }
 
-    const children = pen.children.map(childId => this.store.pens[childId]);
+    const children = pen.children.map((childId) => this.store.pens[childId]);
     let initPens = deepClone(children);
     children.forEach((child) => {
       child.parentId = undefined;
@@ -711,7 +712,7 @@ export class Topology {
     data.paths = {};
     for (const pathId in paths) {
       if (Object.prototype.hasOwnProperty.call(paths, pathId)) {
-        if (pens.find(pen => pen.pathId === pathId)) {
+        if (pens.find((pen) => pen.pathId === pathId)) {
           data.paths[pathId] = paths[pathId];
         }
       }
@@ -861,7 +862,7 @@ export class Topology {
   }
 
   setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
-    this._setValue(data, { willRender }).forEach(pen => {
+    this._setValue(data, { willRender }).forEach((pen) => {
       this.store.emitter.emit('valueUpdate', pen);
     });
   }
@@ -1414,10 +1415,10 @@ export class Topology {
   }
 
   /**
-  * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层
-  * 子节点中包含图片，也需要重绘
-  * @param pens 本次改变的 pens
-  */
+   * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层
+   * 子节点中包含图片，也需要重绘
+   * @param pens 本次改变的 pens
+   */
   needInitStatus(pens: Pen[]) {
     this.canvas.needInitStatus(pens);
   }
@@ -1661,7 +1662,7 @@ export class Topology {
         id: pen.id,
         visible,
       },
-      { willRender: false },
+      { willRender: false }
     );
     if (pen.children) {
       for (const childId of pen.children) {

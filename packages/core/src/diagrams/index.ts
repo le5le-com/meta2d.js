@@ -54,14 +54,13 @@ export function commonPens() {
     message,
     cloud,
     file,
-    cube,
     people,
     line,
     iframe,
     video,
     gif,
     mindNode,
-    mindLine
+    mindLine,
   };
 }
 
@@ -71,6 +70,6 @@ export function commonAnchors() {
     pentagon: pentagonAnchors,
     pentagram: pentagramAnchors,
     mindNode: mindNodeAnchors,
-    mindLine: mindLineAnchors
+    mindLine: mindLineAnchors,
   };
 }
