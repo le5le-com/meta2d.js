@@ -60,11 +60,13 @@ function resize(pen: Pen) {
 }
 
 function value(pen: Pen) {
-  if (!gifsList[pen.id] || gifsList[pen.id].getAttribute('src') === pen.image) {
+  if (!gifsList[pen.id]) {
     return;
   }
   setElemPosition(pen, gifsList[pen.id]);
-  gifsList[pen.id].src = pen.image;
+  if (gifsList[pen.id].getAttribute('src') !== pen.image) {
+    gifsList[pen.id].src = pen.image;
+  }
 }
 
 function changeId(pen: Pen, oldId: string, newId: string) {

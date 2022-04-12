@@ -1531,6 +1531,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
   if (pen.locked || store.data.locked) {
+    // TODO: gif 组合后成子节点 locked = 2 导致可选择 dom 无法拖拽 
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
   } else {
