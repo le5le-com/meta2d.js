@@ -126,10 +126,12 @@
     mitt "^2.1.0"
     mqtt "^4.2.6"
 
-"@topology/svg@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.npmmirror.com/@topology/svg/-/svg-1.0.0.tgz#32248b6334f7d8c65619203eb24833c8c8e94e75"
-  integrity sha512-2PaRQG3hAT8HVpHtjGGvVh9qCSTPMtALGRceEK80DH/vC376PPHLnLfUZiUIERezuBBKrsbQYabXt6Ih4dthxA==
+"@topology/svg@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.npmmirror.com/@topology/svg/-/svg-1.0.1.tgz#327b24bf71ee9c7947fffe9e0c7f4cc424f0104c"
+  integrity sha512-j5CWRFaLMwxCS3UvhvU54x3kWrxR5cEIuaoLK/SJwxWpQp/7ISXpxY+Wh7IDNVoQIIgdnyKf/X7gbGg/haDc5g==
+  dependencies:
+    fast-xml-parser "^4.0.1"
 
 "@vitejs/plugin-vue@^1.9.3":
   version "1.9.3"
@@ -696,6 +698,13 @@ fast-glob@^3.2.11:
     glob-parent "^5.1.2"
     merge2 "^1.3.0"
     micromatch "^4.0.4"
+
+fast-xml-parser@^4.0.1:
+  version "4.0.7"
+  resolved "https://registry.npmmirror.com/fast-xml-parser/-/fast-xml-parser-4.0.7.tgz#570a0f3754f259a8e5e7a85e7c667401e15e4872"
+  integrity sha512-dMtibyus3kC7nbxj1CpVtysLzO13UOAZEFAb5vpQg3T4O6qvetmSePpXKFx5KPNCHKoGwjtgjfF5DOyn7s1ylQ==
+  dependencies:
+    strnum "^1.0.5"
 
 fastq@^1.6.0:
   version "1.13.0"
@@ -1359,6 +1368,11 @@ string_decoder@^1.1.1:
   integrity sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA==
   dependencies:
     safe-buffer "~5.2.0"
+
+strnum@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.npmmirror.com/strnum/-/strnum-1.0.5.tgz#5c4e829fe15ad4ff0d20c3db5ac97b73c9b072db"
+  integrity sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==
 
 supports-preserve-symlinks-flag@^1.0.0:
   version "1.0.0"
