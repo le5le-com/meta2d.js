@@ -98,6 +98,7 @@ export const createStore = () => {
       pens: [],
       origin: { x: 0, y: 0 },
       center: { x: 0, y: 0 },
+      paths: {}
     },
     histories: [],
     pens: {},
@@ -110,7 +111,7 @@ export const createStore = () => {
 };
 
 // Return a data store, if not exists will create a store.
-export const useStore = (id = 'default') => {
+export const useStore = (id = 'default'): TopologyStore => {
   if (!globalStore[id]) {
     globalStore[id] = createStore();
     globalStore[id].id = id;
