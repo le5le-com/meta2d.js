@@ -883,6 +883,7 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    console.warn('e.buttons', e.buttons, 'this.drawingLine', this.drawingLine);
     if (e.buttons === 2 && !this.drawingLine) {
       this.mouseRight = MouseRight.Down;
     }
@@ -1242,6 +1243,7 @@ export class Canvas {
       // 画布平移操作提前
       if (this.mouseRight === MouseRight.Down) {
         this.mouseRight = MouseRight.Translate;
+        console.warn('mousemove', this.mouseRight);
       }
       // Translate
       if (

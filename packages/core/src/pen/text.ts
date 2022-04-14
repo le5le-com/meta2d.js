@@ -99,7 +99,7 @@ export function calcTextLines(pen: Pen, text?: string) {
       const paragraphs: string[] = text.split(/[\n]/g);
       const oneRowHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
       const textHeight = pen.calculative.worldTextRect.height;
-      const maxRows = Math.floor(textHeight / oneRowHeight);
+      const maxRows = Math.floor(textHeight / oneRowHeight) || 1;
       let currentRow = 0;
       outer: for (const paragraph of paragraphs) {
         const items = wrapLines(getWords(paragraph), pen);
