@@ -2275,7 +2275,7 @@ export class Canvas {
       !pen.pathId && (pen.pathId = s8());
       const paths = this.store.data.paths;
       !paths[pen.pathId] && (paths[pen.pathId] = pen.path);
-      
+
       pen.path = undefined;
     }
     // end
@@ -3967,6 +3967,9 @@ export class Canvas {
       pens = this.store.active;
     }
     if (!pens || !pens.length) {
+      return;
+    }
+    if (this.beforeRemovePen && this.beforeRemovePen(pens) !== true) {
       return;
     }
 

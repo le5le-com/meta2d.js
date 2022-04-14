@@ -1,5 +1,5 @@
 /*
- * @Description: 
+ * @Description:
  * @Author: 高浩然
  * @Date: 2021-10-11 16:56:45
  * @LastEditTime: 2021-10-12 11:46:58
@@ -10,6 +10,10 @@ import { Topology } from '@topology/core';
 const TopologyContainer = () => {
   useEffect(() => {
     window.topology = new Topology('topology');
+    topology.beforeRemovePen = (pen) => {
+      console.log(pen);
+      return true;
+    };
   }, []);
 
   return (
