@@ -1,6 +1,14 @@
 import { Pen, setElemPosition } from '@topology/core';
 
-export const highchartsList: any = {};
+export const highchartsList: {
+  highcharts: any,
+  [id: string]: {
+    div: HTMLDivElement;
+    chart: any;
+  }
+} = {
+  highcharts: undefined
+};
 
 export function highcharts(pen: Pen): Path2D {
   if (!pen.onDestroy) {
@@ -58,8 +66,7 @@ export function highcharts(pen: Pen): Path2D {
     });
 
     // 4. 加载到div layer
-    pen.calculative.canvas.externalElements &&
-      pen.calculative.canvas.externalElements.appendChild(div);
+    pen.calculative.canvas.externalElements?.appendChild(div);
     setElemPosition(pen, div);
   }
 
@@ -115,6 +122,7 @@ function changeId(pen: Pen, oldId: string, newId: string) {
   if (!highchartsList[oldId]) {
     return;
   }
+  highchartsList[oldId].div.id = newId;
   highchartsList[newId] = highchartsList[oldId];
   delete highchartsList[oldId];
 }

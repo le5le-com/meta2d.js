@@ -22,7 +22,7 @@ export function register(_echarts?: any) {
 }
 
 export function registerHighcharts(_highcharts?: any) {
-  highchartsList.hightcharts = _highcharts;
+  highchartsList.highcharts = _highcharts;
   if (!highchartsList.highcharts && !(window as any).Highcharts) {
     const loaderScript = document.createElement('script');
     loaderScript.type = 'text/javascript';

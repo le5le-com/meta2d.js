@@ -1,7 +1,15 @@
 import { Pen, setElemPosition, Topology } from '@topology/core';
 
 declare const lcjs: any;
-export const lightningChartsList: any = {};
+export const lightningChartsList: {
+  lightningChart: any;
+  [key: string]: {
+    div: HTMLElement;
+    chart: any;
+  };
+} = {
+  lightningChart: undefined
+};
 
 export function lightningCharts(pen: Pen): Path2D {
   if (!pen.onDestroy) {
@@ -15,11 +23,11 @@ export function lightningCharts(pen: Pen): Path2D {
 
   const path = new Path2D();
   const worldRect = pen.calculative.worldRect;
-  let lightningCharts = lightningChartsList.lightningCharts;
-  if (!lightningCharts && window) {
-    lightningCharts = window['lcjs'];
+  let lightningChart = lightningChartsList.lightningChart;
+  if (!lightningChart && window) {
+    lightningChart = window['lcjs'];
   }
-  if (!(pen as any).lightningCharts || !lightningCharts) {
+  if (!(pen as any).lightningCharts || !lightningChart) {
     return;
   }
 
@@ -316,9 +324,9 @@ function setLightningCharts(pen: Pen) {
 
 function destory(pen: Pen) {
   lightningChartsList[pen.id].div.remove();
-  let lightningCharts = lightningChartsList.lightningCharts;
-  if (!lightningCharts && window) {
-    lightningCharts = window['lcjs'];
+  let lightningChart = lightningChartsList.lightningChart;
+  if (!lightningChart && window) {
+    lightningChart = window['lcjs'];
   }
   //   lightningChartsList[pen.id].chart.dispose();
   // lightningCharts && lightningCharts.dispose(lightningChartsList[pen.id].chart);
@@ -351,6 +359,7 @@ function changeId(pen: Pen, oldId: string, newId: string) {
   if (!lightningChartsList[oldId]) {
     return;
   }
+  lightningChartsList[oldId].div.id = newId;
   lightningChartsList[newId] = lightningChartsList[oldId];
   delete lightningChartsList[oldId];
 }
