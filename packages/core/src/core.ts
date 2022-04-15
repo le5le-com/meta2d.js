@@ -9,6 +9,7 @@ import {
   calcTextRect,
   facePen,
   formatAttrs,
+  getAllChildren,
   getParent,
   getWords,
   LockState,
@@ -1401,16 +1402,18 @@ export class Topology {
    * @param pen pen 置顶的画笔
    * @param pens 画笔们
    */
-  top(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-    const index = pens.findIndex((p: Pen) => p.id === pen.id);
-    if (index > -1) {
-      pens.push(pens[index]);
-      pens.splice(index, 1);
-      this.needInitStatus([pen]);
-    }
+  top(pen: Pen, pens: Pen[] = this.store.data.pens) {
+    // 获取它包含它的子节点
+    const allIds = [...getAllChildren(pen, this.store), pen].map(p => p.id);
+    const allPens = pens.filter(p => allIds.includes(p.id));
+    allPens.forEach(pen => {
+      const index = pens.findIndex((p: Pen) => p.id === pen.id);
+      if (index > -1) {
+        pens.push(pens[index]);
+        pens.splice(index, 1);
+        this.needInitStatus([pen]);
+      }
+    })
   }
 
   /**
@@ -1425,22 +1428,22 @@ export class Topology {
   /**
    * 该画笔置底，即放到数组最前，最后绘制即在底部
    */
-  bottom(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-    const index = pens.findIndex((p: Pen) => p.id === pen.id);
-    if (index > -1) {
-      pens.unshift(pens[index]);
-      pens.splice(index + 1, 1);
-      this.needInitStatus([pen]);
+  bottom(pen: Pen, pens: Pen[] = this.store.data.pens) {
+    const allIds = [...getAllChildren(pen, this.store), pen].map(p => p.id);
+    const allPens = pens.filter(p => allIds.includes(p.id));
+    // 从后往前，保证 allPens 顺序不变
+    for (let i = allPens.length - 1; i >= 0; i--) {
+      const pen = allPens[i];
+      const index = pens.findIndex((p: Pen) => p.id === pen.id);
+      if (index > -1) {
+        pens.unshift(pens[index]);
+        pens.splice(index + 1, 1);
+        this.needInitStatus([pen]);
+      }
     }
   }
 
-  up(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
+  up(pen: Pen, pens: Pen[] = this.store.data.pens) {
     const index = pens.findIndex((p: Pen) => p.id === pen.id);
 
     if (index > -1 && index !== pens.length - 1) {
@@ -1450,10 +1453,7 @@ export class Topology {
     }
   }
 
-  down(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
+  down(pen: Pen, pens: Pen[] = this.store.data.pens) {
     const index = pens.findIndex((p: Pen) => p.id === pen.id);
     if (index > -1 && index !== 0) {
       pens.splice(index - 1, 0, pens[index]);
