@@ -121,8 +121,10 @@ export class Map {
         top = (-rect.y + space) / rect.height;
       }
 
-      const width = canvasRect.width > rect.width ? 1 : canvasRect.width / rect.width;
-      const height = canvasRect.height > rect.height ? 1 : canvasRect.height / rect.height;
+      const width =
+        canvasRect.width > rect.width ? 1 : canvasRect.width / rect.width;
+      const height =
+        canvasRect.height > rect.height ? 1 : canvasRect.height / rect.height;
       this.view.style.left = this.padding + left * this.boxWidth + 'px';
       this.view.style.width = width * this.boxWidth + 'px';
       this.view.style.top = this.padding + top * this.boxHeight + 'px';
@@ -140,20 +142,31 @@ export class Map {
     e.preventDefault();
     e.stopPropagation();
 
-    this.isDown &&
-      this.parent.gotoView(
-        e.offsetX / this.box.clientWidth,
-        e.offsetY / this.box.clientHeight
-      );
+    if (this.isDown) {
+      try {
+        this.parent.gotoView(
+          e.offsetX / this.box.clientWidth,
+          e.offsetY / this.box.clientHeight
+        );
+      } catch (e) {
+        console.warn(e.message);
+        this.isDown = false;
+      }
+    }
   };
 
   private onMouseUp = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    this.parent.gotoView(
-      e.offsetX / this.box.clientWidth,
-      e.offsetY / this.box.clientHeight
-    );
-    this.isDown = false;
+    try {
+      this.parent.gotoView(
+        e.offsetX / this.box.clientWidth,
+        e.offsetY / this.box.clientHeight
+      );
+    } catch (e) {
+      console.warn(e.message);
+    } finally {
+      this.isDown = false;
+    }
   };
 }

@@ -1608,7 +1608,10 @@ function isShowChild(pen: Pen, store: TopologyStore) {
     if (showChildIndex != undefined) {
       const showChildId = selfPen.children[showChildIndex];
       if (showChildId !== oldPen.id) {
-        pen.calculative.inView = false;
+        // TODO: toPng 不展示它 若 visible 的改变影响到其它，待修复
+        pen.visible = false;
+        pen.calculative.visible = false;
+        // pen.calculative.inView = false;
         return false;
       }
     }
@@ -1616,28 +1619,40 @@ function isShowChild(pen: Pen, store: TopologyStore) {
   return true;
 }
 
-export function calcInView(pen: Pen) {
+/**
+ * 计算画笔的 inView
+ * @param pen 画笔
+ * @param calcChild 是否计算子画笔
+ */
+export function calcInView(pen: Pen, calcChild = false) {
+  if (calcChild) {
+    pen.children?.forEach(id => {
+      const store: TopologyStore = pen.calculative.canvas.store;
+      const child = store.pens[id];
+      child && calcInView(child, true);
+    })
+  }
+
   pen.calculative.inView = true;
   const { store, canvasRect } = pen.calculative.canvas as Canvas;
-  if (!isShowChild(pen, store)){
-    return;
-  }
+  isShowChild(pen, store)
 
   if (pen.visible == false || pen.calculative.visible == false) {
     pen.calculative.inView = false;
-    return;
+  } else {
+    const { x, y, width, height, rotate } = pen.calculative.worldRect;
+    const penRect: Rect = {
+      x: x + store.data.x,
+      y: y + store.data.y,
+      width,
+      height,
+      rotate,
+    };
+    calcExy(penRect);
+    if (!rectInRect(penRect, canvasRect)) {
+      pen.calculative.inView = false;
+    }
   }
-
-  const { x, y, width, height, rotate } = pen.calculative.worldRect;
-  const penRect: Rect = {
-    x: x + store.data.x,
-    y: y + store.data.y,
-    width,
-    height,
-    rotate,
-  };
-  calcExy(penRect);
-  if (!rectInRect(penRect, canvasRect)) {
-    pen.calculative.inView = false;
-  }
+  // 更改 view 后，修改 dom 节点的显示隐藏
+  pen.onValue?.(pen);
 }
