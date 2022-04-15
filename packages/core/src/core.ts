@@ -617,9 +617,7 @@ export class Topology {
     });
     if (showChild != undefined) {
       pens.forEach((pen) => {
-        calcInView(pen);
-        // 更改 view 后，修改 dom 节点的显示隐藏
-        pen.onValue?.(pen);
+        calcInView(pen, true);
       });
       this.needInitStatus([parent]);
     }
@@ -645,6 +643,7 @@ export class Topology {
       child.locked = LockState.None;
       child.calculative.active = undefined;
       child.calculative.hover = false;
+      this.setVisible(child, true);   // 子节点的 visible 属性已经改变，需要恢复
     });
     const step = pen.name === 'combine' ? 3 : 2;
     this.pushHistory({
@@ -1657,6 +1656,7 @@ export class Topology {
   }
 
   setVisible(pen: Pen, visible: boolean) {
+    this.onSizeUpdate();
     this._setValue(
       {
         id: pen.id,

@@ -402,6 +402,7 @@ export class Canvas {
       case 'a':
       case 'A':
         if (e.ctrlKey || e.metaKey) {
+          // TODO: ctrl + A 会选中 visible == false 的元素
           this.active(this.store.data.pens.filter((pen) => !pen.parentId));
           e.preventDefault();
         } else {
@@ -2807,7 +2808,7 @@ export class Canvas {
   };
 
   private renderPenContainChild = (ctx: CanvasRenderingContext2D, pen: Pen) => {
-    renderPen(ctx, pen);
+    pen.calculative.inView && renderPen(ctx, pen);  // 可见才绘制，组合为状态只显示其中一个
     pen.children?.forEach((id) => {
       const child = this.store.pens[id];
       child && this.renderPenContainChild(ctx, child);
@@ -2986,7 +2987,7 @@ export class Canvas {
     ctx.restore();
   };
 
-  translate(x: number, y: number) {
+  translate(x: number = 0, y: number = 0) {
     this.store.data.x += x * this.store.data.scale;
     this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
@@ -3013,7 +3014,7 @@ export class Canvas {
     // 有移动操作的 画笔 需要执行移动
     for (const pen of this.store.data.pens) {
       calcInView(pen);
-      pen.onMove && pen.onMove(pen);
+      pen.onMove?.(pen);
       if (pen.isRuleLine) {
         if (!pen.width) {
           // 垂直线，移动 y 即可
@@ -4555,6 +4556,10 @@ export class Canvas {
     }
     ctx.translate(-rect.x, -rect.y);
     for (const pen of this.store.data.pens) {
+      // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
+      if (pen.visible == false) {
+        continue;
+      }
       // TODO: hover 待考虑，若出现再补上
       const { active } = pen.calculative;
       pen.calculative.active = false;
@@ -4660,6 +4665,9 @@ export class Canvas {
 
   gotoView(x: number, y: number) {
     const rect = getRect(this.store.data.pens);
+    if (!isFinite(rect.width)) {
+      throw new Error('can not move view, because width is not finite');
+    }
     this.store.data.x = this.canvas.clientWidth / 2 - x * rect.width - rect.x;
     this.store.data.y = this.canvas.clientHeight / 2 - y * rect.height - rect.y;
     this.onMovePens();
