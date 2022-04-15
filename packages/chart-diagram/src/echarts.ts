@@ -1,6 +1,14 @@
 import { ChartData, Pen, setElemPosition } from '@topology/core';
 
-export const echartsList: any = {};
+export const echartsList: {
+  echarts: any;
+  [id: string]: {
+    div: HTMLDivElement;
+    chart: any;
+  };
+} = {
+  echarts: undefined
+};
 
 export function echarts(pen: Pen): Path2D {
   if (!pen.onDestroy) {
@@ -64,8 +72,7 @@ export function echarts(pen: Pen): Path2D {
     });
 
     // 4. 加载到div layer
-    pen.calculative.canvas.externalElements &&
-      pen.calculative.canvas.externalElements.appendChild(div);
+    pen.calculative.canvas.externalElements?.appendChild(div);
     setElemPosition(pen, div);
   }
 
