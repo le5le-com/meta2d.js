@@ -129,28 +129,16 @@ export class Topology {
       });
       this.render();
     };
-    this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
-      if (e.value) {
-        this.startAnimate(e.value);
-      } else {
-        this.startAnimate([pen]);
-      }
+    this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
+      this.startAnimate(e.value || [pen]);
     };
-    this.events[EventAction.PauseAnimate] = (pen: any, e: Event) => {
-      if (e.value) {
-        this.pauseAnimate(e.value);
-      } else {
-        this.pauseAnimate([pen]);
-      }
+    this.events[EventAction.PauseAnimate] = (pen: Pen, e: Event) => {
+      this.pauseAnimate(e.value || [pen]);
     };
-    this.events[EventAction.StopAnimate] = (pen: any, e: Event) => {
-      if (e.value) {
-        this.stopAnimate(e.value);
-      } else {
-        this.stopAnimate([pen]);
-      }
+    this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
+      this.stopAnimate(e.value || [pen]);
     };
-    this.events[EventAction.Function] = (pen: any, e: Event) => {
+    this.events[EventAction.Function] = (pen: Pen, e: Event) => {
       if (e.value && !e.fn) {
         try {
           if (e.value.replaceAll) {
@@ -162,7 +150,7 @@ export class Topology {
           console.error('Error: make function:', err);
         }
       }
-      e.fn && e.fn(pen, e.params);
+      e.fn?.(pen, e.params);
     };
     this.events[EventAction.WindowFn] = (pen: any, e: Event) => {
       if (window && window[e.value]) {
