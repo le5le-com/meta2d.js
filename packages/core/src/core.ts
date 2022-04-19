@@ -81,11 +81,11 @@ export class Topology {
   set beforeAddAnchor(fn: (pen: Pen, anchor: Point) => boolean) {
     this.canvas.beforeAddAnchor = fn;
   }
-  get beforeRemovePen() {
-    return this.canvas.beforeRemovePen;
+  get beforeRemovePens() {
+    return this.canvas.beforeRemovePens;
   }
-  set beforeRemovePen(fn: (pen: Pen) => boolean) {
-    this.canvas.beforeRemovePen = fn;
+  set beforeRemovePens(fn: (pens: Pen[]) => Promise<boolean>) {
+    this.canvas.beforeRemovePens = fn;
   }
   get beforeRemoveAnchor() {
     return this.canvas.beforeAddAnchor;

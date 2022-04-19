@@ -161,7 +161,7 @@ export class Canvas {
 
   beforeAddPen: (pen: Pen) => boolean;
   beforeAddAnchor: (pen: Pen, anchor: Point) => boolean;
-  beforeRemovePen: (pen: Pen) => boolean;
+  beforeRemovePens: (pens: Pen[]) => Promise<boolean>;
   beforeRemoveAnchor: (pen: Pen, anchor: Point) => boolean;
 
   customeResizeDock: (
@@ -3963,11 +3963,12 @@ export class Canvas {
     }
   }
 
-  delete(pens?: Pen[], isSon: boolean = false, delLock = false) {
-    if (!pens) {
-      pens = this.store.active;
-    }
+  async delete(pens: Pen[] = this.store.active, isSon: boolean = false, delLock = false) {
     if (!pens || !pens.length) {
+      return;
+    }
+
+    if (this.beforeRemovePens && await this.beforeRemovePens(pens) != true) {
       return;
     }
 
