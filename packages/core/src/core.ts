@@ -1016,28 +1016,53 @@ export class Topology {
   };
 
   pushChildren(parent: Pen, children: Pen[]) {
+    const initUpdatePens: Pen[] = [deepClone(parent, true)];
+    const addPens: Pen[] = [];
     if (!parent.children) {
       parent.children = [];
     }
+    const updatePens: Pen[] = [];
     children.forEach((pen) => {
-      if (!pen.calculative) {
+      let oldPen: Pen = deepClone(pen, true);
+      if (!pen.id || !this.store.pens[pen.id]) {  // 不存在于 store 中
         this.canvas.makePen(pen);
+        oldPen = null;  // 添加操作
       }
       if (pen.parentId) {
-        const p = this.store.pens[pen.parentId];
-        const i = p.children.findIndex((id) => id === pen.id);
-        p.children.splice(i, 1);
+        const oldParent = this.store.pens[pen.parentId];
+        const i = oldParent.children.findIndex((id) => id === pen.id);
+        initUpdatePens.push(deepClone(oldParent, true));
+        oldParent.children.splice(i, 1);
+        updatePens.push(deepClone(oldParent, true));
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
-      pen.x = childRect.x;
-      pen.y = childRect.y;
-      pen.width = childRect.width;
-      pen.height = childRect.height;
+      Object.assign(pen, childRect);
       pen.locked = LockState.DisableMove;
-      this.store.pens[pen.id] = pen;
+      if (!oldPen) {
+        addPens.push(deepClone(pen, true));
+      } else {
+        initUpdatePens.push(oldPen);
+        updatePens.push(deepClone(pen, true));
+      }
     });
+    updatePens.push(deepClone(parent, true));
+    let step = 1;
+    if (addPens.length) {
+      step = 2;
+      this.pushHistory({
+        type: EditType.Add,
+        pens: addPens,
+        step,
+      });
+    }
+    this.pushHistory({
+      type: EditType.Update,
+      initPens: initUpdatePens,
+      pens: updatePens,
+      step,
+    })
   }
 
   renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
