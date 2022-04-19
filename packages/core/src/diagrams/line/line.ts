@@ -8,7 +8,7 @@ export function line(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   if (!path) {
     path = new Path2D();
   }
-  if (pen.calculative.worldAnchors.length > 1) {
+  if (pen.calculative.worldAnchor &&pen.calculative.worldAnchors.length > 1) {
     let from: Point;
     pen.calculative.worldAnchors.forEach((pt: Point) => {
       if (from) {
