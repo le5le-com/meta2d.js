@@ -69,11 +69,23 @@ export class Topology {
     this['calcTextDrawRect'] = calcTextDrawRect;
   }
 
+  /**
+   * @deprecated 改用 beforeAddPens
+   */
   get beforeAddPen() {
     return this.canvas.beforeAddPen;
   }
+  /**
+   * @deprecated 改用 beforeAddPens
+   */
   set beforeAddPen(fn: (pen: Pen) => boolean) {
     this.canvas.beforeAddPen = fn;
+  }
+  get beforeAddPens() {
+    return this.canvas.beforeAddPens;
+  }
+  set beforeAddPens(fn: (pens: Pen[]) => Promise<boolean>) {
+    this.canvas.beforeAddPens = fn;
   }
   get beforeAddAnchor() {
     return this.canvas.beforeAddAnchor;
@@ -175,12 +187,12 @@ export class Topology {
     }
   }
 
-  addPen(pen: Pen, history?: boolean) {
-    return this.canvas.addPen(pen, history);
+  async addPen(pen: Pen, history?: boolean) {
+    return await this.canvas.addPen(pen, history);
   }
 
-  addPens(pens: Pen[], history?: boolean) {
-    return this.canvas.addPens(pens, history);
+  async addPens(pens: Pen[], history?: boolean) {
+    return await this.canvas.addPens(pens, history);
   }
 
   render(now?: number) {
@@ -310,12 +322,12 @@ export class Topology {
   }
 
   // end  - 当前鼠标位置，是否作为终点
-  finishDrawLine(end?: boolean) {
-    this.canvas.finishDrawline(end);
+  async finishDrawLine(end?: boolean) {
+    await this.canvas.finishDrawline(end);
   }
 
-  finishPencil() {
-    this.canvas.finishPencil();
+  async finishPencil() {
+    await this.canvas.finishPencil();
   }
 
   updateLineType(pen: Pen, lineName: string) {

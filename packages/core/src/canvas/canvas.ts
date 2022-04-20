@@ -159,7 +159,11 @@ export class Canvas {
   pointSize = 8;
   pasteOffset = 10;
 
+  /**
+   * @deprecated 改用 beforeAddPens
+   */
   beforeAddPen: (pen: Pen) => boolean;
+  beforeAddPens: (pens: Pen[]) => Promise<boolean>;
   beforeAddAnchor: (pen: Pen, anchor: Point) => boolean;
   beforeRemovePens: (pens: Pen[]) => Promise<boolean>;
   beforeRemoveAnchor: (pen: Pen, anchor: Point) => boolean;
@@ -718,7 +722,7 @@ export class Canvas {
     } catch {}
   };
 
-  dropPens(pens: Pen[], e: Point) {
+  async dropPens(pens: Pen[], e: Point) {
     for (const pen of pens) {
       // 只修改 树根处的 祖先节点
       !pen.parentId && Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, pens);
@@ -743,7 +747,7 @@ export class Canvas {
         pen.y = e.y - pen.height / 2;
       }
     }
-    this.addPens(pens, true);
+    await this.addPens(pens, true);
     this.active(pens.filter((pen) => !pen.parentId));
     this.render();
     this.externalElements.focus(); // 聚焦
@@ -763,9 +767,12 @@ export class Canvas {
     return pen;
   }
 
-  addPens(pens: Pen[], history?: boolean) {
+  async addPens(pens: Pen[], history?: boolean): Promise<Pen[]> {
+    if (this.beforeAddPens && await this.beforeAddPens(pens) != true) {
+      return [];
+    }
     const list: Pen[] = [];
-    for (let pen of pens) {
+    for (const pen of pens) {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;
       }
@@ -2171,7 +2178,11 @@ export class Canvas {
     this.offscreen.getContext('2d').clearRect(0, 0, this.offscreen.width, this.offscreen.height);
   }
 
-  addPen(pen: Pen, history?: boolean) {
+  async addPen(pen: Pen, history?: boolean): Promise<Pen> {
+    if (this.beforeAddPens && await this.beforeAddPens([pen]) != true) {
+      return;
+    }
+
     if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
       return;
     }
@@ -2451,16 +2462,16 @@ export class Canvas {
     this.externalElements.style.cursor = 'default';
   }
 
-  finishDrawline(end?: boolean) {
+  async finishDrawline(end?: boolean) {
     if (!this.drawingLine) {
       return;
     }
 
-    const from = this.drawingLine.calculative.worldAnchors[0];
-    let to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    const from = getFromAnchor(this.drawingLine);
+    let to = getToAnchor(this.drawingLine);
     if (to.isTemp) {
       this.drawingLine.calculative.worldAnchors.pop();
-      to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+      to = getToAnchor(this.drawingLine);
     }
     !end && !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
     if (!end) {
@@ -2472,7 +2483,7 @@ export class Canvas {
     }
     if (!from.connectTo || !to.connectTo) {
       if (this.store.options.disableEmptyLine) {
-        // 两边都没连上锚点，且 禁止创建空线条
+        // 有一端未连线，且 禁止创建空线条
         this.drawingLine = undefined;
         this.render(Infinity);
         return;
@@ -2482,8 +2493,8 @@ export class Canvas {
         // 两边都连上了锚点，且 禁止创建重复连线
         const line = this.store.data.pens.find((pen) => {
           if (pen.type) {
-            const penFrom = pen.calculative.worldAnchors[0];
-            const penTo = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+            const penFrom = getFromAnchor(pen);
+            const penTo = getToAnchor(pen);
             return samePoint(penFrom, from) && samePoint(penTo, to);
           }
         });
@@ -2496,56 +2507,56 @@ export class Canvas {
       }
     }
     const rect = getLineRect(this.drawingLine);
-    this.drawingLine.x = rect.x;
-    this.drawingLine.y = rect.y;
-    this.drawingLine.width = rect.width;
-    this.drawingLine.height = rect.height;
+    Object.assign(this.drawingLine, rect);
     this.drawingLine.calculative.worldRect = rect;
-    this.drawingLine.calculative.activeAnchor =
-      this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+    this.drawingLine.calculative.activeAnchor = getToAnchor(this.drawingLine);
     this.store.activeAnchor = this.drawingLine.calculative.activeAnchor;
-    if (!this.beforeAddPen || this.beforeAddPen(this.drawingLine)) {
+    const allowAdd = (!this.beforeAddPens || await this.beforeAddPens([this.drawingLine]))
+      && (!this.beforeAddPen || this.beforeAddPen(this.drawingLine));
+    if (allowAdd) {
       this.initLineRect(this.drawingLine);
       this.store.data.pens.push(this.drawingLine);
       this.store.pens[this.drawingLine.id] = this.drawingLine;
       this.store.emitter.emit('add', [this.drawingLine]);
       this.active([this.drawingLine]);
-      this.pushHistory({ type: EditType.Add, pens: [this.drawingLine] });
+      this.pushHistory({ type: EditType.Add, pens: deepClone([this.drawingLine], true) });
     }
 
     this.store.path2dMap.set(this.drawingLine, globalStore.path2dDraws[this.drawingLine.name](this.drawingLine));
-    this.render(Infinity);
     this.drawingLine = undefined;
     this.drawingLineName = undefined;
+    this.render(Infinity);
   }
 
-  finishPencil() {
+  async finishPencil() {
     if (this.pencilLine) {
-      let anchors: Point[] = simplify(
+      const anchors: Point[] = simplify(
         this.pencilLine.calculative.worldAnchors,
         10,
         0,
         this.pencilLine.calculative.worldAnchors.length - 1
       );
-      let p = this.pencilLine.calculative.worldAnchors[0];
+      let p = getFromAnchor(this.pencilLine);
       anchors.unshift({ id: p.id, penId: p.penId, x: p.x, y: p.y });
-      p = this.pencilLine.calculative.worldAnchors[this.pencilLine.calculative.worldAnchors.length - 1];
+      p = getToAnchor(this.pencilLine);
       anchors.push({ id: p.id, penId: p.penId, x: p.x, y: p.y });
       this.pencilLine.calculative.worldAnchors = smoothLine(anchors);
       if (this.pencilLine.calculative.worldAnchors.length > 1) {
-        this.pencilLine.calculative.pencil = undefined;
+        this.pencilLine.calculative.pencil = false;
         this.store.path2dMap.set(this.pencilLine, globalStore.path2dDraws[this.pencilLine.name](this.pencilLine));
-        if (!this.beforeAddPen || this.beforeAddPen(this.pencilLine)) {
+        const allowAdd = (!this.beforeAddPens || await this.beforeAddPens([this.pencilLine]))
+          && (!this.beforeAddPen || this.beforeAddPen(this.pencilLine));
+        if (allowAdd) {
           this.initLineRect(this.pencilLine);
           this.store.data.pens.push(this.pencilLine);
           this.store.pens[this.pencilLine.id] = this.pencilLine;
           this.store.emitter.emit('add', [this.pencilLine]);
           this.active([this.pencilLine]);
-          this.pushHistory({ type: EditType.Add, pens: [this.pencilLine] });
+          this.pushHistory({ type: EditType.Add, pens: deepClone([this.pencilLine], true) });
         }
-        this.render(Infinity);
       }
       this.pencilLine = undefined;
+      this.render(Infinity);
     }
   }
 
@@ -3906,6 +3917,9 @@ export class Canvas {
       }
       this.store.clipboard = clipboard.data;
     }
+    if (this.beforeAddPens && await this.beforeAddPens(this.store.clipboard.pens) != true) {
+      return;
+    }
     this.store.clipboard = deepClone(this.store.clipboard, true);
     // this.store.clipboard 已经包括子节点
     // pastePen 是一个递归操作，只要遍历 父亲节点即可
@@ -3940,7 +3954,7 @@ export class Canvas {
    * @param clipboard 本次复制的全部画笔，包含子节点, 以及 origin 和 scale
    * @returns 复制后的画笔
    */
-  private pastePen(pen: Pen, parentId: string, clipboard: TopologyClipboard) {
+  private pastePen(pen: Pen, parentId: string, clipboard: TopologyClipboard): Pen {
     const oldId = pen.id;
     randomId(pen);
     pen.parentId = parentId;
@@ -3968,6 +3982,7 @@ export class Canvas {
       pen.children = newChildren;
       return pen;
     }
+    return {};
   }
   /**
    * 修改对应连线的 anchors
