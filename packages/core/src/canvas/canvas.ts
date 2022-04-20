@@ -164,9 +164,9 @@ export class Canvas {
    */
   beforeAddPen: (pen: Pen) => boolean;
   beforeAddPens: (pens: Pen[]) => Promise<boolean>;
-  beforeAddAnchor: (pen: Pen, anchor: Point) => boolean;
+  beforeAddAnchor: (pen: Pen, anchor: Point) => Promise<boolean>;
   beforeRemovePens: (pens: Pen[]) => Promise<boolean>;
-  beforeRemoveAnchor: (pen: Pen, anchor: Point) => boolean;
+  beforeRemoveAnchor: (pen: Pen, anchor: Point) => Promise<boolean>;
 
   customeResizeDock: (
     store: TopologyStore,
@@ -3460,10 +3460,13 @@ export class Canvas {
     }, 200);
   }
 
-  setAnchor(e: { x: number; y: number }) {
-    this.initPens = [deepClone(this.store.hover)];
+  async setAnchor(e: { x: number; y: number }) {
+    const initPens = [deepClone(this.store.hover, true)];
 
     if (this.store.hoverAnchor) {
+      if (this.beforeRemoveAnchor && !(await this.beforeRemoveAnchor(this.store.hover, this.store.hoverAnchor))) {
+        return;
+      }
       removePenAnchor(this.store.hover, this.store.hoverAnchor);
       if (this.store.hover.type) {
         this.initLineRect(this.store.hover);
@@ -3472,6 +3475,9 @@ export class Canvas {
       this.store.activeAnchor = undefined;
       this.externalElements.style.cursor = 'default';
     } else if (this.store.hover) {
+      if (this.beforeAddAnchor && !(await this.beforeAddAnchor(this.store.hover, this.store.pointAt))) {
+        return;
+      }
       if (this.store.hover.type) {
         this.store.activeAnchor = addLineAnchor(this.store.hover, this.store.pointAt, this.store.pointAtIndex);
         this.initLineRect(this.store.hover);
@@ -3488,10 +3494,9 @@ export class Canvas {
 
     this.pushHistory({
       type: EditType.Update,
-      pens: [deepClone(this.store.hover)],
-      initPens: this.initPens,
+      pens: [deepClone(this.store.hover, true)],
+      initPens,
     });
-    this.initPens = undefined;
   }
 
   translatePens(pens: Pen[], x: number, y: number, doing?: boolean) {
@@ -4176,7 +4181,7 @@ export class Canvas {
       if (pen.onInput) {
         pen.onInput(pen, this.input.value);
       } else if (pen.text !== this.input.value) {
-        this.initPens = [deepClone(pen)];
+        const initPens = [deepClone(pen, true)];
         pen.text = this.input.value;
         pen.calculative.text = pen.text;
         this.input.dataset.penId = undefined;
@@ -4184,8 +4189,8 @@ export class Canvas {
         this.dirty = true;
         this.pushHistory({
           type: EditType.Update,
-          pens: [deepClone(pen)],
-          initPens: this.initPens,
+          pens: [deepClone(pen, true)],
+          initPens,
         });
         this.store.emitter.emit('valueUpdate', pen);
       }
@@ -4332,7 +4337,7 @@ export class Canvas {
       return;
     }
 
-    this.initPens = [deepClone(pen)];
+    const initPens = [deepClone(pen, true)];
 
     if (typeof pen.dropdownList[index] === 'object') {
       const rect = this.getPenRect(pen);
@@ -4348,8 +4353,8 @@ export class Canvas {
     this.inputRight.style.transform = 'rotate(135deg)';
     this.pushHistory({
       type: EditType.Update,
-      pens: [deepClone(pen)],
-      initPens: this.initPens,
+      pens: [deepClone(pen, true)],
+      initPens,
     });
     this.render(Infinity);
     this.store.emitter.emit('valueUpdate', pen);
@@ -4612,7 +4617,7 @@ export class Canvas {
 
   addAnchorHand() {
     if (this.store.activeAnchor && this.store.active && this.store.active.length === 1 && this.store.active[0].type) {
-      this.initPens = [deepClone(this.store.active[0])];
+      const initPens = [deepClone(this.store.active[0], true)];
 
       if (!this.store.activeAnchor.prev) {
         if (!this.store.activeAnchor.next) {
@@ -4635,16 +4640,15 @@ export class Canvas {
 
       this.pushHistory({
         type: EditType.Update,
-        pens: [deepClone(this.store.active[0])],
-        initPens: this.initPens,
+        pens: [deepClone(this.store.active[0], true)],
+        initPens,
       });
-      this.initPens = undefined;
     }
   }
 
   removeAnchorHand() {
     if (this.store.activeAnchor && this.store.active && this.store.active.length === 1 && this.store.active[0].type) {
-      this.initPens = [deepClone(this.store.active[0])];
+      const initPens = [deepClone(this.store.active[0], true)];
 
       if (this.hoverType === HoverType.LineAnchorPrev) {
         this.store.activeAnchor.prev = undefined;
@@ -4664,9 +4668,8 @@ export class Canvas {
       this.pushHistory({
         type: EditType.Update,
         pens: [deepClone(this.store.active[0])],
-        initPens: this.initPens,
+        initPens,
       });
-      this.initPens = undefined;
     }
   }
 

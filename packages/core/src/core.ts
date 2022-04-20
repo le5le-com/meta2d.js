@@ -10,7 +10,9 @@ import {
   facePen,
   formatAttrs,
   getAllChildren,
+  getFromAnchor,
   getParent,
+  getToAnchor,
   getWords,
   LockState,
   Pen,
@@ -90,7 +92,7 @@ export class Topology {
   get beforeAddAnchor() {
     return this.canvas.beforeAddAnchor;
   }
-  set beforeAddAnchor(fn: (pen: Pen, anchor: Point) => boolean) {
+  set beforeAddAnchor(fn: (pen: Pen, anchor: Point) => Promise<boolean>) {
     this.canvas.beforeAddAnchor = fn;
   }
   get beforeRemovePens() {
@@ -100,10 +102,10 @@ export class Topology {
     this.canvas.beforeRemovePens = fn;
   }
   get beforeRemoveAnchor() {
-    return this.canvas.beforeAddAnchor;
+    return this.canvas.beforeRemoveAnchor;
   }
-  set beforeRemoveAnchor(fn: (pen: Pen, anchor: Point) => boolean) {
-    this.canvas.beforeAddAnchor = fn;
+  set beforeRemoveAnchor(fn: (pen: Pen, anchor: Point) => Promise<boolean>) {
+    this.canvas.beforeRemoveAnchor = fn;
   }
 
   setOptions(opts: Options = {}) {
@@ -336,8 +338,8 @@ export class Topology {
     }
 
     pen.lineName = lineName;
-    const from: any = pen.calculative.worldAnchors[0];
-    const to: any = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    const from = getFromAnchor(pen);
+    const to = getToAnchor(pen);
     from.prev = undefined;
     from.next = undefined;
     to.prev = undefined;
