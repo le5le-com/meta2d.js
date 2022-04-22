@@ -591,13 +591,11 @@ export class Topology {
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
+      // pen 来自于 store.active ，不存在有 parentId 的情况
       parent.children.push(pen.id);
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
-      pen.x = childRect.x;
-      pen.y = childRect.y;
-      pen.width = childRect.width;
-      pen.height = childRect.height;
+      Object.assign(pen, childRect);
       pen.locked = LockState.DisableMove;
       // pen.type = PenType.Node;
     });
@@ -1599,25 +1597,19 @@ export class Topology {
     }
   }
 
-  toComponent(pens?: Pen[], showChild?: number) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-
+  toComponent(pens: Pen[] = this.store.data.pens, showChild?: number): Pen[] {
     if (pens.length === 1) {
-      pens[0].type = PenType.Node;
-      return deepClone(pens);
+      const pen: Pen = deepClone(pens[0]);
+      pen.type = PenType.Node;
+      pen.id = undefined;
+      return [pen];
     }
 
     const rect = getRect(pens);
-    const id = s8();
     let parent: Pen = {
-      id,
+      id: s8(),
       name: 'combine',
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
+      ...rect,
       children: [],
       showChild,
     };
@@ -1644,10 +1636,7 @@ export class Topology {
       parent.children.push(pen.id);
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
-      pen.x = childRect.x;
-      pen.y = childRect.y;
-      pen.width = childRect.width;
-      pen.height = childRect.height;
+      Object.assign(pen, childRect);
       pen.locked = LockState.DisableMove;
       // pen.type = PenType.Node;
     });

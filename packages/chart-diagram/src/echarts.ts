@@ -7,7 +7,7 @@ export const echartsList: {
     chart: any;
   };
 } = {
-  echarts: undefined
+  echarts: undefined,
 };
 
 export function echarts(pen: Pen): Path2D {
@@ -124,7 +124,7 @@ function beforeValue(pen: Pen, value: ChartData) {
   }
   // 1. 拿到老的 echarts
   const echarts = (pen as any).echarts;
-  const max: number = echarts.max;  // 特殊处理，值不超过 max
+  const max: number = echarts.max; // 特殊处理，值不超过 max
   // 2. 特殊处理
   let x = value.dataX;
   let y = value.dataY;
@@ -148,7 +148,7 @@ function beforeValue(pen: Pen, value: ChartData) {
         if (!Array.isArray(y)) {
           y = [y];
         }
-        const yData: any[] = echarts.option.series[0].data; 
+        const yData: any[] = echarts.option.series[0].data;
         yData.push(...y);
         // 删除开头的多余数据
         yData.splice(0, yData.length - max);
@@ -169,12 +169,18 @@ function beforeValue(pen: Pen, value: ChartData) {
     // 替换数据
     if (x) {
       echarts.option.xAxis.data = x;
-      echarts.option.xAxis.data.splice(0, echarts.option.xAxis.data.length - max);
+      echarts.option.xAxis.data.splice(
+        0,
+        echarts.option.xAxis.data.length - max
+      );
     }
     if (y) {
       if (length === 1) {
         echarts.option.series[0].data = y;
-        echarts.option.series[0].data.splice(0, echarts.option.series[0].data.length - max);
+        echarts.option.series[0].data.splice(
+          0,
+          echarts.option.series[0].data.length - max
+        );
       } else {
         // 多条线
         echarts.option.series.forEach((serie, index: number) => {
