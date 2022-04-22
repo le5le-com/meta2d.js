@@ -724,10 +724,11 @@ export class Canvas {
 
   async dropPens(pens: Pen[], e: Point) {
     for (const pen of pens) {
-      // 只修改 树根处的 祖先节点
-      !pen.parentId && Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, pens);
+      // 只修改 树根处的 祖先节点, randomCombineId 会递归更改子节点
+      !pen.parentId && this.randomCombineId(pen, pens);
     }
     for (const pen of pens) {
+      // TODO: randomCombineId 会更改 id， 此处应该不存在空 id 
       if (!pen.id) {
         pen.id = s8();
       }
@@ -761,6 +762,7 @@ export class Canvas {
       for (const childId of pen.children) {
         const childPen = pens.find((pen) => pen.id === childId);
         childPen && newChildren.push(this.randomCombineId(childPen, pens, pen.id).id);
+        // TODO: 既已成为 组合节点，连接关系是否仍需要考虑呢？
       }
     }
     pen.children = newChildren;
@@ -3680,8 +3682,7 @@ export class Canvas {
 
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
       if (
-        line.autoPolyline !== false &&
-        (this.store.options.autoPolyline || line.autoPolyline) &&
+        (line.autoPolyline ?? this.store.options.autoPolyline) &&
         line.lineName === 'polyline'
       ) {
         let from = line.calculative.worldAnchors[0];

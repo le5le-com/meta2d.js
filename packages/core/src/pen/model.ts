@@ -201,6 +201,7 @@ export interface Pen extends Rect {
   // Cycle count. Infinite if == 0.
   animateCycle?: number;
   nextAnimate?: string;
+  // TODO: video 与 动画公用该属性，可能是个问题
   autoPlay?: boolean;
   playLoop?: boolean;
 
