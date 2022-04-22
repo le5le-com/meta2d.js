@@ -422,8 +422,7 @@ function transformPolyline(childProperty: any, pen: any) {
 
 function transformText(childProperty, textContent, pen: any) {
   // 文字
-  const text = textContent[0][contentProp];
-
+  const text = textContent[0]?.[contentProp];
   const width = measureText(text, pen);
   const height = pen.fontSize / shapeScale;
 
