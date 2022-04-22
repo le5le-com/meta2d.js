@@ -1,6 +1,6 @@
 {
   "name": "@topology/flow-diagram",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "The flow library based on le5le topology.",
   "main": "index.js",
   "types": "index.d.ts",
