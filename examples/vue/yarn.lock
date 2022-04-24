@@ -118,10 +118,10 @@
   resolved "https://registry.npmmirror.com/@topology/chart-diagram/-/chart-diagram-1.0.2.tgz#974c127062aa3c01ff24be752f6161cce1561739"
   integrity sha512-zwuz7TJGiTlDrKXdIuMfYLxTpOLl9CquRlX8INTp2nK4w970GnbcET0ununS1XZaZYdCRZks4K7ZDX0SqC2cLg==
 
-"@topology/core@1.1.3":
-  version "1.1.3"
-  resolved "https://registry.npmmirror.com/@topology/core/-/core-1.1.3.tgz#c77d25900efdd03d0a3d7713760eb2917e8d0f84"
-  integrity sha512-4WFxcG5oZFcwJgCCdLFNu9CCbC9VCA50S87cjgdmggdoUw/Q7jSQ0wODrKXjac8gUSLNJUO1Kxm0qrI+zqhhqw==
+"@topology/core@1.1.6":
+  version "1.1.6"
+  resolved "https://registry.npmmirror.com/@topology/core/-/core-1.1.6.tgz#5fea1869bd46079b447de6bb6e8d05feb73dcf67"
+  integrity sha512-2kjjbImpKNpYgf0+JwFCgJ+7gnYEuxxdfoZYGiB8Qr5Yk4eHIZuVOuRcfp2VIbZNL1Sb5yFMZvKTKxO4208Ysg==
   dependencies:
     mitt "^2.1.0"
     mqtt "^4.2.6"
