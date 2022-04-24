@@ -1581,74 +1581,98 @@ export class Canvas {
       this.render(Infinity);
     }
 
-    this.mouseDown = undefined;
-    this.lastOffsetX = 0;
-    this.lastOffsetY = 0;
-    this.clearDock();
-    this.dragRect = undefined;
-    this.initActiveRect = undefined;
     if (this.movingPens) {
       if (!this.alreadyCopy) {
-        // 鼠标松手才更新，此处是更新前的值
-        const initPens = deepClone(this.store.active);
-        this.store.active.forEach((pen, i: number) => {
-          if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
-            return;
-          }
-          const { x, y } = this.movingPens[i];
-          Object.assign(pen, {
-            x,
-            y,
-          });
-          pen.onMove && pen.onMove(pen);
-          this.dirtyPenRect(pen);
-          // TODO: mouseup updateLines, 存在 dirtyLines 未 initLineRect, 随后 scale 得不到想要的
-          this.updateLines(pen);
-
-          pen.calculative.x = pen.x;
-          pen.calculative.y = pen.y;
-          if (pen.calculative.initRect) {
-            pen.calculative.initRect.x = pen.calculative.x;
-            pen.calculative.initRect.y = pen.calculative.y;
-            pen.calculative.initRect.ex = pen.calculative.x + pen.calculative.width;
-            pen.calculative.initRect.ey = pen.calculative.y + pen.calculative.height;
-          }
-        });
-        // active 消息表示拖拽结束
-        this.store.emitter.emit('active', this.store.active);
-        this.needInitStatus(this.store.active);
-        // 此处是更新后的值
-        this.pushHistory({
-          type: EditType.Update,
-          pens: deepClone(this.store.active),
-          initPens,
-        });
+        this.movedActivePens();
       } else {
-        // 复制行为
-        this.copy(
-          this.store.active.map((pen, i: number) => {
-            const { x, y, width, height, anchors } = this.movingPens[i];
-            return {
-              ...pen,
-              x,
-              y,
-              width,
-              height,
-              anchors,
-            };
-          })
-        );
-        // 偏移量 0
-        this.pasteOffset = 0;
-        this.paste();
-        this.alreadyCopy = false;
+        this.copyMovedPens();
       }
       this.getAllByPens(this.movingPens).forEach((pen) => {
         this.store.pens[pen.id] = undefined;
       });
       this.movingPens = undefined;
     }
+
+    this.mouseDown = undefined;
+    this.lastOffsetX = 0;
+    this.lastOffsetY = 0;
+    this.clearDock();
+    this.dragRect = undefined;
+    this.initActiveRect = undefined;
   };
+
+  /**
+   * 拖拽结束，数据更新到 active.pens
+   */
+  private movedActivePens() {
+    // 鼠标松手才更新，此处是更新前的值
+    const initPens = deepClone(this.store.active, true);
+    this.store.active.forEach((pen, i: number) => {
+      if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
+        return;
+      }
+      const { x, y } = this.movingPens[i];
+      Object.assign(pen, {
+        x,
+        y,
+      });
+      pen.onMove?.(pen);
+      this.dirtyPenRect(pen);
+      this.updateLines(pen);
+      // TODO: mouseup 中重复执行 dirtyLines
+      this.dirtyLines.forEach((pen) => {
+        if (pen.type) {
+          this.initLineRect(pen);
+        }
+      });
+      this.dirtyLines.clear();
+      pen.calculative.x = pen.x;
+      pen.calculative.y = pen.y;
+      if (pen.calculative.initRect) {
+        pen.calculative.initRect.x = pen.calculative.x;
+        pen.calculative.initRect.y = pen.calculative.y;
+        pen.calculative.initRect.ex = pen.calculative.x + pen.calculative.width;
+        pen.calculative.initRect.ey = pen.calculative.y + pen.calculative.height;
+      }
+    });
+    // active 消息表示拖拽结束
+    this.store.emitter.emit('active', this.store.active);
+    this.needInitStatus(this.store.active);
+    // 此处是更新后的值
+    this.pushHistory({
+      type: EditType.Update,
+      pens: deepClone(this.store.active, true),
+      initPens,
+    });
+  }
+
+  /**
+   * 复制移动后的笔
+   */
+  private copyMovedPens() {
+    // 复制行为
+    this.copy(
+      this.store.active.map((pen, i: number) => {
+        // TODO: 移动只更改 x,y 值，不更新其他属性
+        // 若需要更改 anchors ，注意 anchors connectTo 问题
+        // const { x, y, width, height, anchors } = this.movingPens[i];
+        /**
+         * TODO: line 类型无法取到移动后的 x，y 值
+         * 所以 dirtyLines 需要放到 copyMovedPens 前
+         * */
+        const { x, y } = this.movingPens[i];
+        return {
+          ...pen,
+          x,
+          y,
+        };
+      })
+    );
+    // 偏移量 0
+    this.pasteOffset = 0;
+    this.paste();
+    this.alreadyCopy = false;
+  }
 
   /**
    * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层

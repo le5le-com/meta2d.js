@@ -438,7 +438,7 @@ export const isDomShapes = ['gif', 'iframe', 'video', 'echarts', 'highcharts', '
 // 格式刷同步的属性
 export const formatAttrs: Set<string> = new Set([
   'borderRadius',
-  'rotate',
+  // 'rotate',       // TODO: beSameByFirst 暂不支持 rotate，setValue 中存在问题
   'paddingLeft',
   'paddingRight',
   'paddingTop',
