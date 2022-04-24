@@ -1,10 +1,12 @@
 import { ChartData, Pen, setElemPosition } from '@topology/core';
+// TODO: 只引入 Chart 作为类型，不影响最终打包包体积
+import { Chart } from 'highcharts';
 
 export const highchartsList: {
   Highcharts: any;
   [id: string]: {
     div: HTMLDivElement;
-    chart: any;
+    chart: Chart;
   };
 } = {
   Highcharts: undefined,
@@ -137,23 +139,28 @@ function beforeValue(pen: Pen, value: ChartData): any {
   const length = highcharts.option.series.length;
   if (!value.overwrite) {
     // 追加数据
-    // TODO: xs ys 适用与 addPoint
-    // let xs: number[] = null;
+    // xs ys 适用与 addPoint
+    let xs: number[] = [];
     // // [0] 是第一条线； [1] 是第二条线
-    // let ys: number[][] = null;
+    let ys: number[][] = null;
+    let isCategory = false;
     if (x) {
       // x 轴考虑只有一条
       if (!Array.isArray(x)) {
         x = [x];
       }
       const xData: any[] = highcharts.option.xAxis.categories;
-      // 只更改数据，不更新视图
-      xData.push(...x);
-      // 删除开头的多余数据
-      xData.splice(0, xData.length - max);
+      if (xData) {
+        // categories 存在，手动添加 category
+        // 只更改数据，不更新视图
+        xData.push(...x);
+        // 删除开头的多余数据
+        xData.splice(0, xData.length - max);
+        isCategory = true;
+      }
 
       // 记录 x ，后续用来更新视图
-      // xs = [...x];
+      xs = [...x];
     }
 
     if (y) {
@@ -161,38 +168,32 @@ function beforeValue(pen: Pen, value: ChartData): any {
         if (!Array.isArray(y)) {
           y = [y];
         }
-        const yData: any[] = highcharts.option.series[0].data;
-        yData.push(...y);
-        // 删除开头的多余数据
-        yData.splice(0, yData.length - max);
-
-        // ys = [y];
+        ys = [y];
       } else {
         // 多条线
-        // ys = [];
+        ys = [];
         highcharts.option.series.forEach((serie, index: number) => {
           if (!Array.isArray(y[index])) {
             y[index] = [y[index]];
           }
-          const yData: any[] = serie.data;
-          yData.push(...y[index]);
-          // 删除开头的多余数据
-          yData.splice(0, yData.length - max);
-
-          // ys.push(y[index]);
+          ys.push(y[index]);
         });
       }
     }
-    // TODO: 效果更好， 数据会乱
-    // if (ys) {
-    //   const chart = highchartsList[pen.id].chart;
-    //   chart.series.forEach((serie, index: number) => {
-    //     ys[index].forEach((y, index2: number) => {
-    //       const point: number[] | number = xs[index2] ? [xs[index2], y] : y;
-    //       serie.addPoint(point, true, false);
-    //     });
-    //   });
-    // }
+    if (ys) {
+      const chart = highchartsList[pen.id].chart;
+      chart.series.forEach((serie, index: number) => {
+        ys[index].forEach((y, index2: number) => {
+          let shift = false; // 是否扔掉第一个
+          if (max && serie.data.length >= max) {
+            shift = true;
+          }
+          const point: number[] | number =
+            isCategory || xs[index2] == undefined ? y : [xs[index2], y];
+          serie.addPoint(point, true, shift);
+        });
+      });
+    }
   } else {
     // 替换数据
     if (x) {
@@ -217,10 +218,10 @@ function beforeValue(pen: Pen, value: ChartData): any {
         });
       }
     }
+    // 更新视图
+    const chart = highchartsList[pen.id].chart;
+    chart.update(highcharts.option);
   }
-  // 更新视图
-  const chart = highchartsList[pen.id].chart;
-  chart.update(highcharts.option);
   // 3. 设置完后，清空
   delete value.dataX;
   delete value.dataY;
