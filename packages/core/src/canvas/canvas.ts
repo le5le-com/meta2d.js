@@ -4432,6 +4432,7 @@ export class Canvas {
   }
 
   updateValue(pen: Pen, data: any) {
+    const penRect = this.getPenRect(pen);
     Object.assign(pen, data);
     data.newId && this.changePenId(pen.id, data.newId);
     let willUpdatePath = false;
@@ -4502,30 +4503,30 @@ export class Canvas {
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
+    if (willSetPenRect) {
+      const rect: Rect = {
+        x: data.x ?? penRect.x,
+        y: data.y ?? penRect.y,
+        width: data.width ?? penRect.width,
+        height: data.height ?? penRect.height,
+      };
+      this.setPenRect(pen, rect, false);
+      this.updateLines(pen, true);
+    } else if (willDirtyPenRect) {
+      this.dirtyPenRect(pen);
+    } else {
+      willCalcTextRect && calcTextRect(pen);
+      willCalcIconRect && calcIconRect(this.store.pens, pen);
+      if (willUpdatePath) {
+        globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+      }
+    }
+    // 若同时设置 x,y,width,height 与 rotate ，先 setPenRect ，再计算 rotate
     if (oldRotate !== undefined) {
       const currentRotate = pen.calculative.rotate;
       pen.calculative.rotate = oldRotate;
+      // TODO: rotatePen 会执行 dirtyPenRect ，上面已经执行 dirtyPenRect
       this.rotatePen(pen, currentRotate - oldRotate, pen.calculative.worldRect);
-      willDirtyPenRect = false;
-    }
-    if (willSetPenRect) {
-      this.setPenRect(pen, { x: pen.x, y: pen.y, width: pen.width, height: pen.height }, false);
-      this.updateLines(pen, true);
-      willCalcTextRect = false;
-      willUpdatePath = false;
-      willCalcIconRect = false;
-      willDirtyPenRect = false;
-    }
-    if (willDirtyPenRect) {
-      this.dirtyPenRect(pen);
-      willCalcTextRect = false;
-      willUpdatePath = false;
-      willCalcIconRect = false;
-    }
-    willCalcTextRect && calcTextRect(pen);
-    willCalcIconRect && calcIconRect(this.store.pens, pen);
-    if (willUpdatePath) {
-      globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     }
     if (data.image || data.backgroundImage || data.strokeImage) {
       pen.calculative.image = undefined;
