@@ -149,7 +149,9 @@ function beforeValue(pen: Pen, value: ChartData): any {
       if (!Array.isArray(x)) {
         x = [x];
       }
-      const xData: any[] = highcharts.option.xAxis.categories;
+      // xAxis 存在数组的情况，只考虑 单 x 轴的情况
+      const xAxis = highcharts.option.xAxis;
+      const xData: any[] = Array.isArray(xAxis) ? xAxis[0].categories : xAxis.categories;
       if (xData) {
         // categories 存在，手动添加 category
         // 只更改数据，不更新视图

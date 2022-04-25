@@ -30,5 +30,8 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14",
+  "devDependencies": {
+    "highcharts": "^10.0.0"
+  }
 }
