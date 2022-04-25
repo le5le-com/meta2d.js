@@ -1624,7 +1624,13 @@ export class Topology {
     }
   }
 
-  toComponent(pens: Pen[] = this.store.data.pens, showChild?: number): Pen[] {
+  /**
+   * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件 
+   * @param pens 画笔数组
+   * @param showChild 是否作为状态复用（参考 combine showChild）
+   * @returns 组合图形
+   */
+  toComponent(pens = this.store.data.pens, showChild?: number): Pen[] {
     if (pens.length === 1) {
       const pen: Pen = deepClone(pens[0]);
       pen.type = PenType.Node;
@@ -1632,7 +1638,8 @@ export class Topology {
       return [pen];
     }
 
-    const rect = getRect(pens);
+    const components = deepClone(pens, true);
+    const rect = getRect(components);
     let parent: Pen = {
       id: s8(),
       name: 'combine',
@@ -1640,19 +1647,21 @@ export class Topology {
       children: [],
       showChild,
     };
-    const p = pens.find((pen) => {
+    const p = components.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
-    if (p && showChild === undefined) {
+    const oneIsParent = p && showChild === undefined;
+    if (oneIsParent) {
       if (!p.children) {
         p.children = [];
       }
       parent = p;
     } else {
-      this.canvas.makePen(parent);
+      // 不影响画布数据，生成一个组合图形便于二次复用
+      // this.canvas.makePen(parent);
     }
 
-    pens.forEach((pen) => {
+    components.forEach((pen) => {
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
@@ -1668,7 +1677,7 @@ export class Topology {
       // pen.type = PenType.Node;
     });
 
-    return deepClone(pens);
+    return oneIsParent ? deepClone(components): deepClone([parent, ...components]);
   }
 
   setVisible(pen: Pen, visible: boolean) {

@@ -5,7 +5,7 @@ export const globalStore: {
   path2dDraws: { [key: string]: any };
   canvasDraws: { [key: string]: any };
   anchors: { [key: string]: any };
-  htmlElements: { [key: string]: any };
+  htmlElements: { [key: string]: HTMLImageElement };  // 目前只存在图片资源，此处使用 HTMLImageElement
 } = {
   version: pkg.version,
   path2dDraws: {},
