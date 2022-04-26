@@ -204,6 +204,16 @@ export class Topology {
   setBackgroundImage(url: string) {
     this.store.data.bkImage = url;
     this.canvas.canvasImageBottom.canvas.style.backgroundImage = url ? `url(${url})` : '';
+    if (url) {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        // 用作 toPng 的绘制
+        this.store.bkImg = img;
+      }
+    } else {
+      this.store.bkImg = null;
+    }
   }
 
   setBackgroundColor(color: string = this.store.data.background) {
@@ -1069,8 +1079,8 @@ export class Topology {
     renderPenRaw(ctx, pen, rect);
   }
 
-  toPng(padding: Padding = 0, callback?: any) {
-    return this.canvas.toPng(padding, callback);
+  toPng(padding?: Padding, callback?: BlobCallback, containBkImg = false) {
+    return this.canvas.toPng(padding, callback, containBkImg);
   }
 
   /**
@@ -1078,10 +1088,10 @@ export class Topology {
    * @param name 传入参数自带文件后缀名 例如：'test.png'
    * @param padding 上右下左的内边距
    */
-  downloadPng(name?: string, padding: Padding = 0) {
+  downloadPng(name?: string, padding?: Padding) {
     const a = document.createElement('a');
     a.setAttribute('download', name || 'le5le.topology.png');
-    a.setAttribute('href', this.toPng(padding));
+    a.setAttribute('href', this.toPng(padding, undefined, true));
     const evt = document.createEvent('MouseEvents');
     evt.initEvent('click', true, true);
     a.dispatchEvent(evt);

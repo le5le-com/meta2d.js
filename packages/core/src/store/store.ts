@@ -81,6 +81,7 @@ export interface TopologyStore {
   clipboard?: TopologyClipboard;
   dirtyBackground?: boolean; // 是否需要重绘背景，包含网格
   dirtyTop?: boolean;   // 是否需要重绘标尺
+  bkImg: HTMLImageElement;
 }
 
 export interface TopologyClipboard {

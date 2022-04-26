@@ -60,6 +60,7 @@ import {
   calcExy,
   calcRelativePoint,
   getRect,
+  getRectOfPoints,
   pointInRect,
   pointInSimpleRect,
   Rect,
@@ -4576,12 +4577,35 @@ export class Canvas {
     };
   }
 
-  toPng(padding: Padding = 0, callback?: BlobCallback) {
+  toPng(padding: Padding = 2, callback?: BlobCallback, containBkImg = false) {
     const rect = getRect(this.store.data.pens);
     if (!isFinite(rect.width)) {
       throw new Error('can not to png, because width is not finite');
     }
-    const p = formatPadding(padding || 2);
+    const oldRect = deepClone(rect);
+    const storeData = this.store.data;
+    // TODO: 目前背景颜色优先级更高
+    const isDrawBkImg = containBkImg && !storeData.background && this.store.bkImg;
+    // 主体在背景的右侧，下侧
+    let isRight = false, isBottom = false;
+    if (isDrawBkImg) {
+      rect.x += storeData.x;
+      rect.y += storeData.y;
+      calcExy(rect);
+      if (rectInRect(rect, this.canvasRect, true)) {
+        // 全部在区域内，那么 rect 就是 canvasRect
+        Object.assign(rect, this.canvasRect);
+      } else {
+        // 合并区域
+        const mergeArea = getRectOfPoints([...rectToPoints(rect), ...rectToPoints(this.canvasRect)]);
+        Object.assign(rect, mergeArea);
+      }
+      isRight = rect.x === 0;
+      isBottom = rect.y === 0;
+    }
+    
+    // 有背景图，也添加 padding
+    const p = formatPadding(padding);
     rect.x -= p[3];
     rect.y -= p[0];
     rect.width += p[3] + p[1];
@@ -4593,6 +4617,11 @@ export class Canvas {
     canvas.height = rect.height;
     const ctx = canvas.getContext('2d');
     ctx.textBaseline = 'middle'; // 默认垂直居中
+    if (isDrawBkImg) {
+      const x = rect.x < 0 ? -rect.x : 0;
+      const y = rect.y < 0 ? -rect.y : 0;
+      ctx.drawImage(this.store.bkImg, x, y, this.canvasRect.width, this.canvasRect.height);
+    }
     const background = this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色
@@ -4601,7 +4630,12 @@ export class Canvas {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
     }
-    ctx.translate(-rect.x, -rect.y);
+    if (!isDrawBkImg) {
+      ctx.translate(-rect.x, -rect.y);
+    } else {
+      // 平移画布，画笔的 worldRect 不变化
+      ctx.translate(isRight ? storeData.x: -oldRect.x, isBottom ? storeData.y: -oldRect.y);
+    }
     for (const pen of this.store.data.pens) {
       // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
       if (pen.visible == false) {
