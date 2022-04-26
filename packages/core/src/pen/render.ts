@@ -29,8 +29,10 @@ export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
   }
   const children: Pen[] = [];
   pen.children.forEach((id) => {
-    children.push(store.pens[id]);
-    children.push(...getAllChildren(store.pens[id], store));
+    if (store.pens[id]) {
+      children.push(store.pens[id]);
+      children.push(...getAllChildren(store.pens[id], store));
+    }
   });
   return children;
 }
