@@ -509,6 +509,15 @@ export class Canvas {
           this.externalElements.style.cursor = 'move';
         }
         break;
+      case 's':
+      case 'S':
+        // 分割线
+        if (!this.store.data.locked
+          && this.hoverType === HoverType.LineAnchor
+          && this.store.hover === this.store.active[0]) {
+          this.splitLine(this.store.active[0], this.store.hoverAnchor);
+        }
+        break;
       case 'v':
       case 'V':
         if (e.ctrlKey || e.metaKey) {
@@ -585,6 +594,55 @@ export class Canvas {
 
     this.render();
   };
+
+  /**
+   * 分割连线的锚点，变成两条线
+   * @param line 连线
+   * @param anchor 锚点，连线的某个锚点，引用相同
+   */
+  splitLine(line: Pen, anchor: Point): void {
+    const worldAnchors = line.calculative.worldAnchors;
+    const index = worldAnchors.findIndex(a => a === anchor);
+    if ([-1, 0, worldAnchors.length - 1].includes(index)) {
+      // 没找到，起终点不处理
+      return;
+    }
+
+    const initLine = deepClone(line, true);
+    const newLine = deepClone(line, true);
+    const id = s8();
+    newLine.id = id;
+    newLine.calculative.canvas = this;
+    newLine.calculative.active = false;
+    newLine.calculative.hover = false;
+
+    // index 作为公共点
+    const preAnchors = deepClone(worldAnchors.slice(0, index + 1));
+    const laterAnchors = deepClone(worldAnchors.slice(index)).map(a => {
+      a.penId = id;
+      return a;
+    });
+
+    line.calculative.worldAnchors = preAnchors;
+    newLine.calculative.worldAnchors = laterAnchors;
+    this.initLineRect(line);
+    this.initLineRect(newLine);
+    this.store.data.pens.push(newLine);
+    this.store.pens[id] = newLine;
+
+    this.pushHistory({
+      type: EditType.Add,
+      pens: [deepClone(newLine, true)],
+      step: 2
+    });
+
+    this.pushHistory({
+      type: EditType.Update,
+      initPens: [initLine],
+      pens: [deepClone(line, true)],
+      step: 2
+    });
+  }
 
   private translateMovingAnchor(x: number, y: number) {
     this.movingAnchor.x += x;
@@ -955,6 +1013,7 @@ export class Canvas {
             };
             newline = true;
           }
+          // TODO: 使用初始点似乎不合理 自动瞄点，找最近的 
           this.store.hoverAnchor = nearestAnchor(this.store.hover, this.drawingLine.calculative.worldAnchors[0]);
           this.drawingLine.autoTo = true;
           pt.connectTo = this.store.hover.id;
@@ -963,6 +1022,7 @@ export class Canvas {
             connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, pt.id, this.store.hoverAnchor.id);
         }
 
+        // 自动瞄点 并非新创建的线
         if (!newline && this.store.hoverAnchor) {
           if (this.drawingLine) {
             const to = getToAnchor(this.drawingLine);
@@ -977,6 +1037,7 @@ export class Canvas {
           }
         }
       }
+      // TODO: 调整锚点关联的偏移
       if (this.hoverType && this.hoverType < HoverType.Resize && this.store.hoverAnchor) {
         pt.x = this.store.hoverAnchor.x;
         pt.y = this.store.hoverAnchor.y;
@@ -984,6 +1045,7 @@ export class Canvas {
         pt.anchorId = this.store.hoverAnchor.id;
       }
       if (this.drawingLine) {
+        // 添加点
         const to = getToAnchor(this.drawingLine);
         if (to.isTemp) {
           this.drawingLine.calculative.activeAnchor =
@@ -1001,6 +1063,7 @@ export class Canvas {
         this.drawingLine.calculative.drawlineH = undefined;
         this.drawline();
       } else {
+        // 初始点
         const id = s8();
         pt.penId = id;
         this.drawingLine = {
@@ -1459,6 +1522,7 @@ export class Canvas {
       this.store.active[0] &&
       this.store.active[0] !== this.store.hover
     ) {
+      // 在线瞄点上抬起，此处只有线连线的场景
       const line = this.store.active[0];
       const from = getFromAnchor(line);
       const to = getToAnchor(line);
@@ -1468,8 +1532,8 @@ export class Canvas {
         const isHoverTo = getToAnchor(hover) === this.store.hoverAnchor;
         const isActiveFrom = from === this.store.activeAnchor;
         const isActiveTo = to === this.store.activeAnchor;
-        // TODO: 按下某个快捷键才触发连线
-        if (hover.type === PenType.Line && (isHoverFrom || isHoverTo) && (isActiveFrom || isActiveTo)) {
+        // 按下 alt 才可 线连线
+        if (e.altKey && hover.type === PenType.Line && (isHoverFrom || isHoverTo) && (isActiveFrom || isActiveTo)) {
           // 连线合并
           const hoverAnchors: Point[] = hover.calculative.worldAnchors.map((anchor) => {
             return {
@@ -1493,6 +1557,7 @@ export class Canvas {
           this.delete([hover]);
           // TODO: 历史记录
         } else {
+          // 非合并线
           if (from === this.store.activeAnchor) {
             line.autoFrom = undefined;
           } else {
