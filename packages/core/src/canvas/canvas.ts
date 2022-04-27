@@ -84,6 +84,7 @@ import {
   lineSegment,
   iframes,
   videos,
+  getLineR,
 } from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
@@ -906,7 +907,7 @@ export class Canvas {
 
       const pt: Point = { x: e.x, y: e.y, id: s8() };
 
-      // 在锚点上，完成绘画
+      // TODO: 鼠标抬起时做，// 在锚点上，完成绘画
       if (
         this.hoverType &&
         this.hoverType < HoverType.Line &&
@@ -921,7 +922,7 @@ export class Canvas {
         return;
       }
 
-      // 右键，完成绘画
+      // TODO: 考虑鼠标抬起时做，右键，完成绘画
       if (
         e.buttons === 2 ||
         (this.drawingLineName === 'mind' && this.drawingLine?.calculative.worldAnchors.length > 1)
@@ -964,7 +965,7 @@ export class Canvas {
 
         if (!newline && this.store.hoverAnchor) {
           if (this.drawingLine) {
-            const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+            const to = getToAnchor(this.drawingLine);
             to.x = this.store.hoverAnchor.x;
             to.y = this.store.hoverAnchor.y;
             to.connectTo = this.store.hover.id;
@@ -983,7 +984,7 @@ export class Canvas {
         pt.anchorId = this.store.hoverAnchor.id;
       }
       if (this.drawingLine) {
-        const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+        const to = getToAnchor(this.drawingLine);
         if (to.isTemp) {
           this.drawingLine.calculative.activeAnchor =
             this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2];
@@ -1243,11 +1244,12 @@ export class Canvas {
         this.drawingLineName === 'curve' &&
         !this.drawingLine.calculative.worldAnchors[0].connectTo
       ) {
+        // TODO: 鼠标按下移动，手柄变化
         this.drawline(pt);
       } else {
         let to: Point;
         if (this.drawingLine.calculative.worldAnchors.length > 1) {
-          to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+          to = getToAnchor(this.drawingLine);
           disconnectLine(this.store.pens[to.connectTo], this.drawingLine.id, to.id, to.anchorId);
         }
 
@@ -1432,13 +1434,23 @@ export class Canvas {
       this.drawingLine &&
       this.drawingLine.calculative.worldAnchors.length > 1
     ) {
-      const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+      const to = getToAnchor(this.drawingLine);
       to.connectTo = this.store.hover.id;
       to.anchorId = this.store.hoverAnchor.id;
       connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, to.anchorId);
       this.finishDrawline(true);
       return;
     }
+
+    // TODO: 考虑在鼠标抬起时做，  右键，完成绘画
+    // if (
+    //   e.button === 2 ||
+    //   (this.drawingLineName === 'mind' && this.drawingLine?.calculative.worldAnchors.length > 1)
+    // ) {
+    //   this.finishDrawline(true);
+    //   this.drawingLineName = this.store.options.drawingLineName;
+    //   return;
+    // }
 
     if (
       this.mouseDown &&
@@ -1916,10 +1928,7 @@ export class Canvas {
         continue;
       }
 
-      let r = 4;
-      if (pen.lineWidth) {
-        r += pen.lineWidth / 2;
-      }
+      const r = getLineR(pen);
       if (
         !pen.calculative.active &&
         !pointInSimpleRect(pt, pen.calculative.worldRect, r) &&
@@ -2011,7 +2020,7 @@ export class Canvas {
         continue;
       }
 
-      const r = pen.lineWidth ? pen.lineWidth / 2 + 4 : 4;
+      const r = getLineR(pen);
       if (!pointInSimpleRect(pt, pen.calculative.worldRect, r)) {
         continue;
       }
@@ -2259,19 +2268,15 @@ export class Canvas {
               }
             }
             pen.calculative.image = undefined;
-            if (pen.parentId) {
-              this.dirtyPenRect(pen);
-            } else {
-              const rect = this.getPenRect(pen, action.origin, action.scale);
-              this.setPenRect(pen, rect, false);
-            }
+            const rect = this.getPenRect(pen, action.origin, action.scale);
+            this.setPenRect(pen, rect, false);
             this.updateLines(pen, true);
           }
         });
         break;
       case EditType.Delete:
         action.pens.forEach((aPen) => {
-          const pen: Pen = deepClone(aPen, true);
+          const pen = deepClone(aPen, true);
           this.store.data.pens.splice(pen.calculative.layer, 0, pen);
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
@@ -2279,12 +2284,8 @@ export class Canvas {
         });
         action.pens.forEach((aPen) => {
           const pen = this.store.pens[aPen.id];
-          if (pen.parentId) {
-            this.dirtyPenRect(pen);
-          } else {
-            const rect = this.getPenRect(pen, action.origin, action.scale);
-            this.setPenRect(pen, rect, false);
-          }
+          const rect = this.getPenRect(pen, action.origin, action.scale);
+          this.setPenRect(pen, rect, false);
           pen.calculative.image = undefined;
           pen.calculative.backgroundImage = undefined;
           pen.calculative.strokeImage = undefined;
@@ -4298,8 +4299,7 @@ export class Canvas {
     const initPens = [deepClone(pen, true)];
 
     if (typeof pen.dropdownList[index] === 'object') {
-      const rect = this.getPenRect(pen);
-      this.updateValue(pen, { ...rect, ...pen.dropdownList[index] });
+      this.updateValue(pen, { ...pen.dropdownList[index] });
       // 上面会更新 calculative.text 下方置空
       pen.calculative.text = '';
       this.calcActiveRect();
@@ -4455,12 +4455,14 @@ export class Canvas {
 
   setPenRect(pen: Pen, rect: Rect, render = true) {
     if (pen.parentId) {
-      throw new Error('can not set pen rect, because it is child pen');
+      // 子节点的 rect 值，一定得是比例值
+      Object.assign(pen, rect);
+    } else {
+      pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
+      pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
+      pen.width = rect.width * this.store.data.scale;
+      pen.height = rect.height * this.store.data.scale;
     }
-    pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
-    pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
-    pen.width = rect.width * this.store.data.scale;
-    pen.height = rect.height * this.store.data.scale;
     this.dirtyPenRect(pen);
     pen.onResize?.(pen);
 
@@ -4470,6 +4472,16 @@ export class Canvas {
   getPenRect(pen: Pen, origin = this.store.data.origin, scale = this.store.data.scale) {
     if (!pen) {
       return;
+    }
+
+    if (pen.parentId) {
+      // 子节点的 rect 只与父节点 rect 有关
+      return {
+        x: pen.x,
+        y: pen.y,
+        width: pen.width,
+        height: pen.height,
+      }
     }
 
     return {
