@@ -135,11 +135,10 @@ export class Topology {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
       const pens = e.params ? this.find(e.params) : [pen];
       pens.forEach((pen: Pen) => {
-        const rect = this.getPenRect(pen);
         if (e.value.hasOwnProperty('visible')) {
           this.setVisible(pen, e.value.visible);
         }
-        this._setValue({ id: pen.id, ...rect, ...e.value }, { willRender: false });
+        this._setValue({ id: pen.id, ...e.value }, { willRender: false });
       });
       this.render();
     };
@@ -1188,10 +1187,7 @@ export class Topology {
     // 2. 修改其它画笔的 宽高 fontSize
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      const penRect = this.getPenRect(pen);
-      penRect.width = width;
-      penRect.height = height;
-      this._setValue({ id: pen.id, ...penRect, ...attrs }, { willRender: false });
+      this._setValue({ id: pen.id, width, height, ...attrs }, { willRender: false });
     }
     this.render(Infinity);
 
