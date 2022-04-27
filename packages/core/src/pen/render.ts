@@ -1618,6 +1618,8 @@ function isShowChild(pen: Pen, store: TopologyStore) {
       }
     }
   }
+  pen.visible = true;
+  pen.calculative.visible = true;
   return true;
 }
 
