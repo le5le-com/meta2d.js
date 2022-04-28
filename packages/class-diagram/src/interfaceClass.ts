@@ -70,30 +70,31 @@ export function interfaceClass(pen: Pen) {
   path.closePath();
   return path;
 }
-function onAdd(pen: any) {
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
-  let w = pen.calculative.worldRect.width;
-  let h = pen.calculative.worldRect.height;
-  let childPen: any = {
+function onAdd(pen: Pen) {
+  const x = pen.calculative.worldRect.x;
+  const y = pen.calculative.worldRect.y;
+  const w = pen.calculative.worldRect.width;
+  const h = pen.calculative.worldRect.height;
+  const list: { text: string }[] = (pen as any).list;
+  let childPen: Pen = {
     name: 'text',
     x: x,
     y: y + 0.2 * h,
     width: w,
     height: 0.4 * h,
-    text: pen.list[0].text,
+    text: list[0].text,
     textAlign: 'left',
     textBaseline: 'top',
     textLeft: 10,
     textTop: 10,
   };
-  let childPen1: any = {
+  let childPen1: Pen = {
     name: 'text',
     x: x,
     y: y + 0.6 * h,
     width: w,
     height: 0.4 * h,
-    text: pen.list[1].text,
+    text: list[1].text,
     textAlign: 'left',
     textBaseline: 'top',
     textLeft: 10,
@@ -105,7 +106,7 @@ function onAdd(pen: any) {
   pen.calculative.canvas.parent.pushChildren(pen, [childPen1]);
 }
 
-function onDestroy(pen: any) {
+function onDestroy(pen: Pen) {
   pen.children.forEach((p) => {
     const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
       (item) => item.id === p

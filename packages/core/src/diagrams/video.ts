@@ -1,6 +1,8 @@
 import { Pen, setElemPosition } from '../pen';
 
-export const videos: any = {};
+export const videos: {
+  [id: string]: HTMLDivElement;
+} = {};
 export function video(pen: Pen) {
   pen.onDestroy = destory;
   pen.onMove = move;
@@ -95,7 +97,7 @@ function move(pen: Pen) {
   setElemPosition(pen, videos[pen.id]);
   const progress = videos[pen.id].children[0];
   const media = videos[pen.id].children[1];
-  resizeProcessWidth(progress, media, pen.calculative.worldRect.width);
+  resizeProcessWidth(progress as HTMLDivElement, media as HTMLMediaElement, pen.calculative.worldRect.width);
 }
 
 function click(pen: Pen) {
@@ -108,7 +110,11 @@ function click(pen: Pen) {
     }
   }
 }
-function resizeProcessWidth(progress: any, media: HTMLMediaElement, width: number) {
+function resizeProcessWidth(
+  progress: HTMLDivElement,
+  media: HTMLMediaElement,
+  width: number
+) {
   // worldRect 会重新赋值，而 pen 不会变，这里才能取到实时的 worldRect
   progress.style.width = (media.currentTime / media.duration) * width + 'px';
 }
