@@ -68,6 +68,8 @@ export const needDirtyPenRectProps = [
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
+export interface ConnectLine { lineId: string; lineAnchor: string; anchor: string }
+
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -196,7 +198,7 @@ export interface Pen extends Rect {
   autoFrom?: boolean;
   autoTo?: boolean;
 
-  connectedLines?: { lineId: string; lineAnchor: string; anchor: string }[];
+  connectedLines?: ConnectLine[];
 
   // Cycle count. Infinite if == 0.
   animateCycle?: number;

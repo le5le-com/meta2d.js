@@ -1,6 +1,8 @@
 import { Pen, setElemPosition } from '../pen';
 
-export const iframes: any = {};
+export const iframes: {
+  [id: string]: HTMLIFrameElement;
+} = {};
 
 export function iframe(pen: Pen) {
   if (!pen.onDestroy) {

@@ -44,6 +44,7 @@ import {
   getAllChildren,
   calcInView,
   isShowChild,
+  ConnectLine,
 } from '../pen';
 import {
   calcRotate,
@@ -94,8 +95,6 @@ import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
 import { lockedError } from '../utils/error';
 import { Topology } from '../core';
-
-declare const window: any;
 
 export class Canvas {
   canvas = document.createElement('canvas');
@@ -151,11 +150,11 @@ export class Canvas {
   dirty = false;
   lastRender = 0;
   touchStart = 0;
-  timer: any;
+  timer: NodeJS.Timeout;
 
   private lastAnimateRender = 0;
   animateRendering = false;
-  renderTimer: any;
+  renderTimer: number;
 
   initPens?: Pen[];
 
@@ -246,9 +245,9 @@ export class Canvas {
     // ios
     this.externalElements.addEventListener('gesturestart', this.onGesturestart);
 
-    this.externalElements.ondragover = (e: any) => e.preventDefault();
+    this.externalElements.ondragover = (e) => e.preventDefault();
     this.externalElements.ondrop = this.ondrop;
-    this.externalElements.oncontextmenu = (e: any) => e.preventDefault();
+    this.externalElements.oncontextmenu = (e) => e.preventDefault();
     if (isMobile()) {
       this.store.options.interval = 50;
       this.externalElements.ontouchstart = this.ontouchstart;
@@ -850,7 +849,7 @@ export class Canvas {
     return list;
   }
 
-  ontouchstart = (e: any) => {
+  ontouchstart = (e: TouchEvent) => {
     this.touchStart = performance.now();
     const x = e.changedTouches[0].pageX;
     const y = e.changedTouches[0].pageY;
@@ -871,7 +870,7 @@ export class Canvas {
       });
   };
 
-  ontouchmove = (event: any) => {
+  ontouchmove = (event: TouchEvent) => {
     event.stopPropagation();
 
     const touches = event.touches;
@@ -925,7 +924,7 @@ export class Canvas {
     });
   };
 
-  ontouchend = (event: any) => {
+  ontouchend = (event: TouchEvent) => {
     this.touches = undefined;
     this.touchCenter = undefined;
 
@@ -942,7 +941,7 @@ export class Canvas {
     });
   };
 
-  onGesturestart = (e: any) => {
+  onGesturestart = (e) => {
     e.preventDefault();
   };
 
@@ -1506,9 +1505,9 @@ export class Canvas {
       }
     }
 
-    window && window.debug && console.time('hover');
+    window && (window as any).debug && console.time('hover');
     this.willGetHover(e);
-    window && window.debug && console.timeEnd('hover');
+    window && (window as any).debug && console.timeEnd('hover');
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.dirty = true;
     }
@@ -2771,7 +2770,7 @@ export class Canvas {
       pen.calculative.strokeImage = pen.strokeImage;
     }
   }
-  private imageTimer: any;
+  private imageTimer: NodeJS.Timeout;
   // 避免初始化图片加载重复调用 render，此处防抖
   imageLoaded() {
     this.imageTimer && clearTimeout(this.imageTimer);
@@ -2866,9 +2865,9 @@ export class Canvas {
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
     offscreenCtx.save();
     offscreenCtx.translate(this.store.data.x, this.store.data.y);
-    window && window.debugRender && console.time('renderPens');
+    window && (window as any).debugRender && console.time('renderPens');
     this.renderPens();
-    window && window.debugRender && console.timeEnd('renderPens');
+    window && (window as any).debugRender && console.timeEnd('renderPens');
     this.renderBorder();
     this.renderHoverPoint();
     offscreenCtx.restore();
@@ -3661,7 +3660,7 @@ export class Canvas {
     }
   }
 
-  private calcAutoAnchor(line: Pen, lineAnchor: Point, pen: Pen, penConnection?: any) {
+  private calcAutoAnchor(line: Pen, lineAnchor: Point, pen: Pen, penConnection?: ConnectLine) {
     const from = getFromAnchor(line);
     const to = getToAnchor(line);
     const newAnchor = nearestAnchor(pen, lineAnchor === from ? to : from);
@@ -4205,7 +4204,7 @@ export class Canvas {
     });
   }
 
-  private ondblclick = (e: any) => {
+  private ondblclick = (e: MouseEvent) => {
     if (this.store.hover && !this.store.data.locked && !this.store.options.disableInput) {
       if (this.store.hover.onShowInput) {
         this.store.hover.onShowInput(this.store.hover, e);
@@ -4419,14 +4418,14 @@ export class Canvas {
     }
   };
 
-  private selectDropdown = (e: any) => {
+  private selectDropdown = (e: MouseEvent) => {
     const li = e.target;
     const pen = this.store.pens[this.input.dataset.penId];
     if (!li || !pen || !pen.dropdownList) {
       return;
     }
 
-    const index = +li.dataset.i;
+    const index = +(li as any).dataset.i;
     if (!pen.dropdownList[index]) {
       return;
     }
@@ -4861,7 +4860,7 @@ export class Canvas {
     // ios
     this.externalElements.removeEventListener('gesturestart', this.onGesturestart);
 
-    this.externalElements.ondragover = (e: any) => e.preventDefault();
+    this.externalElements.ondragover = (e) => e.preventDefault();
     this.externalElements.ondrop = undefined;
     if (isMobile()) {
       this.externalElements.ontouchstart = undefined;

@@ -2,7 +2,7 @@ import { calcRotate, Point } from '../point';
 import { TopologyStore } from '../store';
 import { Pen } from './model';
 
-const arrows: any = {};
+const arrows: Record<string, (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => void> = {};
 
 export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
   if (!arrows[pen.fromArrow]) {

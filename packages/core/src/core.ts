@@ -37,12 +37,12 @@ import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
 import { Map } from './map';
+// TODO: 这种引入方式 webpack 5 报错
+// import { MqttClient } from 'mqtt';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
-
-declare const window: any;
 
 export class Topology {
   store: TopologyStore;
@@ -50,9 +50,9 @@ export class Topology {
   websocket: WebSocket;
   mqttClient: any;
   socketFn: Function;
-  events: any = {};
+  events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: Map;
-  mapTimer: any;
+  mapTimer: NodeJS.Timeout;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
@@ -60,7 +60,7 @@ export class Topology {
     this.register(commonPens());
     this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
-    window && (window.topology = this);
+    window && ((window as any).topology = this);
     this['facePen'] = facePen;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
@@ -128,7 +128,7 @@ export class Topology {
   }
 
   initEventFns() {
-    this.events[EventAction.Link] = (pen: any, e: Event) => {
+    this.events[EventAction.Link] = (pen: Pen, e: Event) => {
       window.open(e.value, e.params === undefined ? '_blank' : e.params);
     };
     this.events[EventAction.SetProps] = (pen: Pen, e: Event) => {
@@ -165,12 +165,12 @@ export class Topology {
       }
       e.fn?.(pen, e.params);
     };
-    this.events[EventAction.WindowFn] = (pen: any, e: Event) => {
+    this.events[EventAction.WindowFn] = (pen: Pen, e: Event) => {
       if (window && window[e.value]) {
-        window[e.value](pen, e.params);
+        (window as any)[e.value](pen, e.params);
       }
     };
-    this.events[EventAction.Emit] = (pen: any, e: Event) => {
+    this.events[EventAction.Emit] = (pen: Pen, e: Event) => {
       this.store.emitter.emit(e.value, {
         pen,
         params: e.params,
@@ -427,15 +427,15 @@ export class Topology {
     return this;
   }
 
-  register(path2dFns: { [key: string]: (pen: any) => void }) {
+  register(path2dFns: { [key: string]: (pen: Pen) => void }) {
     register(path2dFns);
   }
 
-  registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: any) => void }) {
+  registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: Pen) => void }) {
     registerCanvasDraw(drawFns);
   }
 
-  registerAnchors(path2dFns: { [key: string]: (pen: any) => void }) {
+  registerAnchors(path2dFns: { [key: string]: (pen: Pen) => void }) {
     registerAnchors(path2dFns);
   }
 
@@ -829,7 +829,7 @@ export class Topology {
     this.mqttClient?.end();
   }
 
-  httpTimer: any;
+  httpTimer: NodeJS.Timeout;
   connectHttp() {
     this.closeHttp();
     const { http, httpTimeInterval } = this.store.data;
