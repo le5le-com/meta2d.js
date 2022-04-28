@@ -945,6 +945,31 @@ export class Canvas {
     e.preventDefault();
   };
 
+  /**
+   * 获取初始化的 drawingLine
+   * @param pt 需包含 penId
+   */
+  private getInitDrawingLine(pt: Point): Pen {
+    const { data, options } = this.store;
+    return {
+      id: pt.penId,
+      name: 'line',
+      lineName: this.drawingLineName,
+      x: pt.x,
+      y: pt.y,
+      type: PenType.Line,
+      calculative: {
+        canvas: this,
+        active: true,
+        worldAnchors: [pt],
+        lineWidth: data.lineWidth || 1,
+      },
+      fromArrow: data.fromArrow || options.fromArrow,
+      toArrow: data.toArrow || options.toArrow,
+      lineWidth: data.lineWidth || 1,
+    };
+  }
+
   onMouseDown = (e: {
     x: number;
     y: number;
@@ -1009,14 +1034,12 @@ export class Canvas {
 
       const pt: Point = { x: e.x, y: e.y, id: s8() };
 
-      // TODO: 鼠标抬起时做，// 在锚点上，完成绘画
+      // TODO: 考虑鼠标抬起时做，// 在锚点上，完成绘画
       if (
-        this.hoverType &&
-        this.hoverType < HoverType.Line &&
-        this.drawingLine &&
-        this.drawingLine.calculative.worldAnchors.length > 1
+        [HoverType.LineAnchor, HoverType.NodeAnchor].includes(this.hoverType) &&
+        this.drawingLine?.calculative.worldAnchors.length > 1
       ) {
-        const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+        const to = getToAnchor(this.drawingLine);
         to.connectTo = this.store.hover.id;
         to.anchorId = this.store.hoverAnchor.id;
         connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, to.anchorId);
@@ -1038,23 +1061,8 @@ export class Canvas {
         let newline = false;
         if (this.store.options.autoAnchor) {
           if (!this.drawingLine) {
-            this.drawingLine = {
-              id: s8(),
-              name: 'line',
-              lineName: this.drawingLineName,
-              x: pt.x,
-              y: pt.y,
-              type: PenType.Line,
-              calculative: {
-                canvas: this,
-                active: true,
-                worldAnchors: [pt],
-                lineWidth: this.store.data.lineWidth || 1,
-              },
-              fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
-              toArrow: this.store.data.toArrow || this.store.options.toArrow,
-              lineWidth: this.store.data.lineWidth || 1,
-            };
+            pt.penId = s8();
+            this.drawingLine = this.getInitDrawingLine(pt);
             newline = true;
           }
           // TODO: 使用初始点似乎不合理 自动瞄点，找最近的 
@@ -1108,25 +1116,8 @@ export class Canvas {
         this.drawline();
       } else {
         // 初始点
-        const id = s8();
-        pt.penId = id;
-        this.drawingLine = {
-          id,
-          name: 'line',
-          lineName: this.drawingLineName,
-          x: pt.x,
-          y: pt.y,
-          type: PenType.Line,
-          calculative: {
-            canvas: this,
-            active: true,
-            worldAnchors: [pt],
-            lineWidth: this.store.data.lineWidth || 1,
-          },
-          fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
-          toArrow: this.store.data.toArrow || this.store.options.toArrow,
-          lineWidth: this.store.data.lineWidth || 1,
-        };
+        pt.penId = s8();
+        this.drawingLine = this.getInitDrawingLine(pt);
         this.drawingLine.calculative.activeAnchor = pt;
         this.drawline();
         if (pt.connectTo) {
@@ -1556,10 +1547,8 @@ export class Canvas {
 
     // 在锚点上，完成绘画
     if (
-      this.hoverType &&
-      this.hoverType < HoverType.Line &&
-      this.drawingLine &&
-      this.drawingLine.calculative.worldAnchors.length > 1
+      [HoverType.LineAnchor, HoverType.NodeAnchor].includes(this.hoverType) &&
+      this.drawingLine?.calculative.worldAnchors.length > 1
     ) {
       const to = getToAnchor(this.drawingLine);
       to.connectTo = this.store.hover.id;
@@ -3348,7 +3337,7 @@ export class Canvas {
         const value: Pen = {
           globalAlpha: 0.5,
         };
-        if ([...isDomShapes].includes(pen.name) || pen.image) {
+        if (isDomShapes.includes(pen.name) || pen.image) {
           value.name = 'rectangle';
           value.onMove = undefined;
         }
