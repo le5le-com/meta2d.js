@@ -1601,7 +1601,10 @@ export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {
   return v;
 }
 
-function isShowChild(pen: Pen, store: TopologyStore) {
+/**
+ * 判断该画笔 是否是组合为状态中 展示的画笔
+ */
+export function isShowChild(pen: Pen, store: TopologyStore) {
   let selfPen = pen;
   while (selfPen.parentId) {
     const oldPen = selfPen;
@@ -1610,16 +1613,11 @@ function isShowChild(pen: Pen, store: TopologyStore) {
     if (showChildIndex != undefined) {
       const showChildId = selfPen.children[showChildIndex];
       if (showChildId !== oldPen.id) {
-        // TODO: toPng 不展示它 若 visible 的改变影响到其它，待修复
-        pen.visible = false;
-        pen.calculative.visible = false;
-        // pen.calculative.inView = false;
+        // toPng 不展示它
         return false;
       }
     }
   }
-  pen.visible = true;
-  pen.calculative.visible = true;
   return true;
 }
 
@@ -1629,19 +1627,16 @@ function isShowChild(pen: Pen, store: TopologyStore) {
  * @param calcChild 是否计算子画笔
  */
 export function calcInView(pen: Pen, calcChild = false) {
+  const { store, canvasRect } = pen.calculative.canvas as Canvas;
   if (calcChild) {
     pen.children?.forEach(id => {
-      const store: TopologyStore = pen.calculative.canvas.store;
       const child = store.pens[id];
       child && calcInView(child, true);
     })
   }
 
   pen.calculative.inView = true;
-  const { store, canvasRect } = pen.calculative.canvas as Canvas;
-  isShowChild(pen, store)
-
-  if (pen.visible == false || pen.calculative.visible == false) {
+  if (!isShowChild(pen, store) || pen.visible == false || pen.calculative.visible == false) {
     pen.calculative.inView = false;
   } else {
     const { x, y, width, height, rotate } = pen.calculative.worldRect;
