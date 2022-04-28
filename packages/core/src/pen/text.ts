@@ -1,5 +1,7 @@
 import { Pen } from '.';
+import { Canvas } from '../canvas';
 import { calcExy } from '../rect';
+import { getFont } from './render';
 
 export function calcTextRect(pen: Pen) {
   const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
@@ -137,12 +139,9 @@ export function calcTextLines(pen: Pen, text?: string) {
   return lines;
 }
 
-export function getWords(txt: string) {
-  const words = [];
+export function getWords(txt: string = '') {
+  const words: string[] = [];
   let word = '';
-  if (!txt) {
-    txt = '';
-  }
   for (let i = 0; i < txt.length; ++i) {
     const ch = txt.charCodeAt(i);
     if (ch < 33 || ch > 126) {
@@ -151,7 +150,6 @@ export function getWords(txt: string) {
         word = '';
       }
       words.push(txt[i]);
-      continue;
     } else {
       word += txt[i];
     }
@@ -165,18 +163,36 @@ export function getWords(txt: string) {
 }
 
 export function wrapLines(words: string[], pen: Pen) {
-  const lines = [];
+  const canvas: Canvas = pen.calculative.canvas;
+  const ctx = canvas.offscreen.getContext('2d') as CanvasRenderingContext2D;
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
+  ctx.save();  
+  const lines: string[] = [];
   let currentLine = words[0] || '';
   for (let i = 1; i < words.length; ++i) {
     const word = words[i] || '';
     const text = currentLine + word;
-    const chinese = text.match(/[^\x00-\xff]/g) || '';
-    const chineseLen = chinese.length;
+    let currentWidth = 0;
+    if (canvas.store.options.measureTextWidth) {
+      ctx.font = getFont({
+        fontStyle,
+        fontWeight,
+        fontFamily: fontFamily || canvas.store.options.fontFamily,
+        fontSize,
+        lineHeight,
+      });
+      currentWidth = ctx.measureText(text).width;
+    } else {
+      // 近似计算
+      const chinese = text.match(/[^\x00-\xff]/g) || '';
+      const chineseWidth = chinese.length * fontSize;  // 中文占用的宽度
+      const spaces = text.match(/\s/g) || '';
+      const spaceWidth = spaces.length * fontSize * 0.3; // 空格占用的宽度
+      const otherWidth = (text.length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
+      currentWidth = chineseWidth + spaceWidth + otherWidth;
+    }
     const textWidth = pen.calculative.worldTextRect.width;
-    if (
-      (text.length - chineseLen) * pen.calculative.fontSize * 0.6 + chineseLen * pen.calculative.fontSize <=
-      textWidth
-    ) {
+    if (currentWidth <= textWidth) {
       currentLine += word;
     } else {
       currentLine.length && lines.push(currentLine);
@@ -184,6 +200,7 @@ export function wrapLines(words: string[], pen: Pen) {
     }
   }
   currentLine.length && lines.push(currentLine);
+  ctx.restore();
   return lines;
 }
 

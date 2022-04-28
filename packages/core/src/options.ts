@@ -71,6 +71,7 @@ export interface Options {
   disableRuleLine?: boolean;
   ruleLineColor?: string;
   defaultAnchors?: Point[]; // 图形的默认瞄点
+  measureTextWidth?: boolean; // 测量文字宽度
 }
 
 export const defaultOptions: Options = {
@@ -124,4 +125,5 @@ export const defaultOptions: Options = {
       y: 0.5,
     },
   ],
+  measureTextWidth: true,
 };
