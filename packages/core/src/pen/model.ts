@@ -1,6 +1,7 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
 import { Event } from '../event';
+import { Canvas } from '../canvas';
 
 export enum PenType {
   Node,
@@ -383,7 +384,7 @@ export interface Pen extends Rect {
     layer?: number;
     dropdownList?: any[];
 
-    canvas?: any;
+    canvas?: Canvas;
 
     iframe?: string;
     video?: string;
