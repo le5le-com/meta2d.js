@@ -43,6 +43,7 @@ import {
   needSetPenProps,
   getAllChildren,
   calcInView,
+  isShowChild,
 } from '../pen';
 import {
   calcRotate,
@@ -4618,7 +4619,7 @@ export class Canvas {
     }
     for (const pen of this.store.data.pens) {
       // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
-      if (pen.visible == false) {
+      if (!isShowChild(pen, this.store) || pen.visible == false) {
         continue;
       }
       // TODO: hover 待考虑，若出现再补上
