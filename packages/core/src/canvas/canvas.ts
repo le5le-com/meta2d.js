@@ -4168,6 +4168,7 @@ export class Canvas {
     }
     const textRect = rect || pen.calculative.worldTextRect;
     this.input.value = pen.calculative.tempText || pen.text || '';
+    this.input.style.fontSize = pen.calculative.fontSize + 'px';
     this.inputParent.style.left = textRect.x + this.store.data.x + 5 + 'px';
     this.inputParent.style.top = textRect.y + this.store.data.y + 5 + 'px';
     this.inputParent.style.width = textRect.width - 10 + 'px';
