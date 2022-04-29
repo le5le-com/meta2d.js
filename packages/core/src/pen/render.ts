@@ -1543,17 +1543,12 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
 }
 
 /**
- * 画笔们的 locked >= 1
+ * 每个画笔 locked 
  * @param pens 画笔
  * @returns
  */
 export function getPensLock(pens: Pen[]): boolean {
-  for (const pen of pens) {
-    if (!pen.locked) {
-      return false;
-    }
-  }
-  return true;
+  return pens.every((pen) => pen.locked);
 }
 
 /**
@@ -1563,12 +1558,7 @@ export function getPensLock(pens: Pen[]): boolean {
  * @returns
  */
 export function getPensDisableRotate(pens: Pen[]): boolean {
-  for (const pen of pens) {
-    if (!pen.disableRotate) {
-      return false;
-    }
-  }
-  return true;
+  return pens.every((pen) => pen.disableRotate);
 }
 
 /**
@@ -1578,12 +1568,7 @@ export function getPensDisableRotate(pens: Pen[]): boolean {
  * @returns
  */
 export function getPensDisableResize(pens: Pen[]): boolean {
-  for (const pen of pens) {
-    if (!pen.disableSize) {
-      return false;
-    }
-  }
-  return true;
+  return pens.every((pen) => pen.disableSize);
 }
 
 export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {

@@ -13,7 +13,7 @@ export enum HoverType {
 export enum HotkeyType {
   None,
   Translate,
-  Select,
+  Select, // TODO: 未实现
   Resize,
   AddAnchor,
 }
@@ -32,7 +32,17 @@ export enum Direction {
   Left,
 }
 
-export const defaultCursors = ['nw-resize', 'ne-resize', 'se-resize', 'sw-resize'];
-export const rotatedCursors = ['n-resize', 'e-resize', 's-resize', 'w-resize'];
+export const defaultCursors = [
+  'nw-resize',
+  'ne-resize',
+  'se-resize',
+  'sw-resize',
+] as const;
+export const rotatedCursors = [
+  'n-resize',
+  'e-resize',
+  's-resize',
+  'w-resize',
+] as const;
 
 export const defaultDrawLineFns = ['curve', 'polyline', 'line'];
