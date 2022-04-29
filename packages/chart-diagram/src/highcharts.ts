@@ -124,10 +124,11 @@ function changeId(pen: Pen, oldId: string, newId: string) {
 }
 
 function beforeValue(pen: Pen, value: ChartData): any {
-  if ((value as any).highcharts || (!value.dataX && !value.dataY)) {
+  if ((value as any).highcharts) {
     const chart = highchartsList[pen.id].chart;
     chart.update((value as any).highcharts.option);
-    // 整体传参，不做处理
+    return value;
+  } else if ((!value.dataX && !value.dataY)) {
     return value;
   }
   // 1. 拿到老的 echarts

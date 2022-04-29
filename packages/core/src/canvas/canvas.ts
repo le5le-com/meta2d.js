@@ -158,7 +158,7 @@ export class Canvas {
 
   initPens?: Pen[];
 
-  pointSize = 8;
+  pointSize = 8 as const;
   pasteOffset = 10;
 
   /**
@@ -523,7 +523,12 @@ export class Canvas {
         if (e.ctrlKey || e.metaKey) {
           this.paste();
         } else {
-          this.drawingLineName = this.drawingLineName ? '' : this.store.options.drawingLineName;
+          if (this.drawingLineName) {
+            this.finishDrawline();
+            this.drawingLineName = '';
+          } else {
+            this.drawingLineName = this.store.options.drawingLineName;
+          }
         }
         break;
       case 'b':
@@ -946,6 +951,31 @@ export class Canvas {
   };
 
   /**
+   * 获取初始化的 pencilLine
+   * @param pt 需包含 penId
+   */
+  private getInitPencilLine(pt: Point): Pen {
+    const { data, options } = this.store;
+    return {
+      id: pt.penId,
+      name: 'line',
+      x: pt.x,
+      y: pt.y,
+      type: PenType.Line,
+      calculative: {
+        canvas: this,
+        pencil: true,
+        active: true,
+        worldAnchors: [pt],
+        lineWidth: data.lineWidth || 1,
+      },
+      fromArrow: data.fromArrow || options.fromArrow,
+      toArrow: data.toArrow || options.toArrow,
+      lineWidth: data.lineWidth || 1,
+    };
+  }
+
+  /**
    * 获取初始化的 drawingLine
    * @param pt 需包含 penId
    */
@@ -1065,8 +1095,10 @@ export class Canvas {
             this.drawingLine = this.getInitDrawingLine(pt);
             newline = true;
           }
-          // TODO: 使用初始点似乎不合理 自动瞄点，找最近的 
-          this.store.hoverAnchor = nearestAnchor(this.store.hover, this.drawingLine.calculative.worldAnchors[0]);
+          const worldAnchors = this.drawingLine.calculative.worldAnchors;
+          const lastAnchor = worldAnchors.length > 1 ? worldAnchors[worldAnchors.length - 2] : worldAnchors[0];
+          // 自动瞄点 使用倒数第二个点，若只有一个点，即第一个点
+          this.store.hoverAnchor = nearestAnchor(this.store.hover, lastAnchor);
           this.drawingLine.autoTo = true;
           pt.connectTo = this.store.hover.id;
           pt.anchorId = this.store.hoverAnchor.id;
@@ -1126,25 +1158,9 @@ export class Canvas {
       }
     } else if (this.pencil) {
       this.inactive(true);
-      const id = s8();
-      const pt: Point = { x: e.x, y: e.y, id: s8(), penId: id };
-      this.pencilLine = {
-        id,
-        name: 'line',
-        x: pt.x,
-        y: pt.y,
-        type: PenType.Line,
-        calculative: {
-          canvas: this,
-          pencil: true,
-          active: true,
-          worldAnchors: [pt],
-          lineWidth: this.store.data.lineWidth || 1,
-        },
-        fromArrow: this.store.data.fromArrow || this.store.options.fromArrow,
-        toArrow: this.store.data.toArrow || this.store.options.toArrow,
-        lineWidth: this.store.data.lineWidth || 1,
-      };
+      const penId = s8();
+      const pt: Point = { x: e.x, y: e.y, id: s8(), penId };
+      this.pencilLine = this.getInitPencilLine(pt);
     } else {
       switch (this.hoverType) {
         case HoverType.None:
@@ -1962,32 +1978,16 @@ export class Canvas {
       }
 
       // 大小控制点
-      if ((!this.hotkeyType || this.hotkeyType === HotkeyType.Resize) && !activePensLock && !activePensDisableResize) {
-        for (let i = 0; i < 4; i++) {
-          if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
-            let cursors = defaultCursors;
+      if (!activePensLock && !activePensDisableResize) {
+        for (let i = 0; i < 8; i++) {
+          const firstFour = i < 4;
+          const hotKeyIsResize = this.hotkeyType === HotkeyType.Resize || (firstFour && !this.hotkeyType);
+          if (hotKeyIsResize && hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
+            let cursors = firstFour ? defaultCursors : rotatedCursors;
             let offset = 0;
             if (Math.abs((this.activeRect.rotate % 90) - 45) < 25) {
-              cursors = rotatedCursors;
-              offset = Math.round((this.activeRect.rotate - 45) / 90);
-            } else {
-              offset = Math.round(this.activeRect.rotate / 90);
-            }
-            hoverType = HoverType.Resize;
-            this.resizeIndex = i;
-            this.externalElements.style.cursor = cursors[(i + offset) % 4];
-            break;
-          }
-        }
-      }
-      if (this.hotkeyType === HotkeyType.Resize && !activePensLock && !activePensDisableResize) {
-        for (let i = 4; i < 8; i++) {
-          if (hitPoint(pt, this.sizeCPs[i], this.pointSize)) {
-            let cursors = rotatedCursors;
-            let offset = 0;
-            if (Math.abs((this.activeRect.rotate % 90) - 45) < 25) {
-              cursors = defaultCursors;
-              offset = Math.round((this.activeRect.rotate - 45) / 90) + 1;
+              cursors = firstFour ? rotatedCursors: defaultCursors;
+              offset = Math.round((this.activeRect.rotate - 45) / 90) + (firstFour ? 0 : 1);
             } else {
               offset = Math.round(this.activeRect.rotate / 90);
             }
@@ -2035,12 +2035,12 @@ export class Canvas {
       this.store.lastHover = this.store.hover;
     }
 
-    this.store.hover?.onMouseMove && this.store.hover.onMouseMove(this.store.hover, this.mousePos);
+    this.store.hover?.onMouseMove?.(this.store.hover, this.mousePos);
   };
 
   private inPens = (pt: Point, pens: Pen[]) => {
     let hoverType = HoverType.None;
-    for (let i = pens.length - 1; i >= 0; --i) {
+    outer: for (let i = pens.length - 1; i >= 0; --i) {
       const pen = pens[i];
       if (pen.visible == false || pen.calculative.inView == false || pen.locked === LockState.Disable) {
         continue;
@@ -2060,12 +2060,9 @@ export class Canvas {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
             if (hoverType) {
-              break;
+              break outer;
             }
           }
-        }
-        if (hoverType) {
-          break;
         }
       }
       // 图形
@@ -2090,7 +2087,7 @@ export class Canvas {
         }
       } else {
         if (pen.children) {
-          const pens = [];
+          const pens = [];  // TODO: 只考虑了一级子
           pen.children.forEach((id) => {
             pens.push(this.store.pens[id]);
           });
@@ -2494,9 +2491,7 @@ export class Canvas {
       return;
     }
 
-    if (this[this.drawingLineName]) {
-      this[this.drawingLineName](this.store, this.drawingLine, mouse);
-    }
+    this[this.drawingLineName]?.(this.store, this.drawingLine, mouse);
     this.store.path2dMap.set(this.drawingLine, globalStore.path2dDraws.line(this.drawingLine));
     this.dirty = true;
   }
@@ -2555,9 +2550,9 @@ export class Canvas {
       this.drawingLine.calculative.worldAnchors.pop();
       to = getToAnchor(this.drawingLine);
     }
-    !end && !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
     if (!end) {
-      if (this.drawingLine.calculative.worldAnchors[0] === this.drawingLine.calculative.activeAnchor) {
+      !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
+      if (getFromAnchor(this.drawingLine) === this.drawingLine.calculative.activeAnchor) {
         this.drawingLine = undefined;
         this.render(Infinity);
         return;
@@ -3315,6 +3310,7 @@ export class Canvas {
       const suffix = '-moving';
       containChildPens.forEach((pen) => {
         pen.id += suffix;
+        // TODO: ctrl + shift 移动子节点报错
         pen.parentId && (pen.parentId += suffix);
         if (pen.children) {
           pen.children = pen.children.map((child) => child + suffix);
@@ -3337,6 +3333,7 @@ export class Canvas {
         const value: Pen = {
           globalAlpha: 0.5,
         };
+        // TODO: 例如 pen.name = 'triangle' 的情况，但有图片，是否还需要变成矩形呢？
         if (isDomShapes.includes(pen.name) || pen.image) {
           value.name = 'rectangle';
           value.onMove = undefined;
@@ -3460,7 +3457,7 @@ export class Canvas {
     }
 
     if (!this.initPens) {
-      this.initPens = deepClone(this.store.active);
+      this.initPens = deepClone(this.store.active, true);
     }
 
     this.store.activeAnchor.prev.x = e.x;
@@ -3488,7 +3485,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.store.active);
+      const currentPens = deepClone(this.store.active, true);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3503,7 +3500,7 @@ export class Canvas {
       return;
     }
     if (!this.initPens) {
-      this.initPens = deepClone(this.store.active);
+      this.initPens = deepClone(this.store.active, true);
     }
 
     this.store.activeAnchor.next.x = e.x;
@@ -3532,7 +3529,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.store.active);
+      const currentPens = deepClone(this.store.active, true);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,

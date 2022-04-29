@@ -3,10 +3,10 @@ import { calcExy, getRect, translateRect } from '../rect';
 
 export class Map {
   box: HTMLElement;
-  readonly boxWidth: number = 320;
-  readonly boxHeight: number = 180;
+  readonly boxWidth = 320;
+  readonly boxHeight = 180;
   readonly ratio = this.boxWidth / this.boxHeight;
-  readonly padding: number = 5;
+  readonly padding = 5;
   img: HTMLImageElement;
   isShow: boolean;
   isDown: boolean;
