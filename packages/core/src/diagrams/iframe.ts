@@ -21,9 +21,9 @@ export function iframe(pen: Pen) {
     iframe.src = pen.iframe;
     iframes[pen.id] = iframe;
     pen.calculative.iframe = pen.iframe;
-    pen.calculative.canvas.externalElements && pen.calculative.canvas.externalElements.appendChild(iframe);
+    pen.calculative.canvas.externalElements?.appendChild(iframe);
     setElemPosition(pen, iframe);
-  } else if (pen.iframe !== pen.calculative.iframe) {
+  } else if (iframes[pen.id].getAttribute('src') !== pen.iframe) {
     iframes[pen.id].src = pen.iframe;
     pen.calculative.iframe = pen.iframe;
   }
@@ -40,7 +40,13 @@ function destory(pen: Pen) {
 }
 
 function move(pen: Pen) {
+  if (!iframes[pen.id]) {
+    return;
+  }
   setElemPosition(pen, iframes[pen.id]);
+  if (iframes[pen.id].getAttribute('src') !== pen.iframe) {
+    iframes[pen.id].src = pen.iframe;
+  }
 }
 
 function changeId(pen: Pen, oldId: string, newId: string) {
