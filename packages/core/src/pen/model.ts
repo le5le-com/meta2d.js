@@ -350,7 +350,7 @@ export interface Pen extends Rect {
     pencil?: boolean;
     activeAnchor?: Point;
     dirty?: boolean;
-    visible?: boolean;
+    visible?: boolean;   // TODO: visible 是否参与动画呢？
     // 仅仅内部专用
     inView?: boolean;
     // 辅助变量，画线时，动态计算锚点是否时水平方向
