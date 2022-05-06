@@ -7,6 +7,7 @@ import {
   calcTextDrawRect,
   calcTextLines,
   calcTextRect,
+  ChartData,
   facePen,
   formatAttrs,
   getAllChildren,
@@ -18,6 +19,7 @@ import {
   Pen,
   PenType,
   renderPenRaw,
+  SetValue,
 } from './pen';
 import { Point } from './point';
 import {
@@ -870,22 +872,22 @@ export class Topology {
     }
   }
 
-  setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
+  setValue(data: SetValue, { willRender = true }: { willRender?: boolean } = {}) {
     this._setValue(data, { willRender }).forEach((pen) => {
       this.store.emitter.emit('valueUpdate', pen);
     });
   }
 
-  updateValue(pen: Pen, data: any) {
+  updateValue(pen: Pen, data: SetValue) {
     this.canvas.updateValue(pen, data);
   }
 
-  _setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
+  _setValue(data: SetValue, { willRender = true }: { willRender?: boolean } = {}) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       let afterData = data;
       if (pen.onBeforeValue) {
-        afterData = pen.onBeforeValue(pen, data);
+        afterData = pen.onBeforeValue(pen, data as ChartData);
       }
       this.updateValue(pen, afterData);
       pen.onValue?.(pen);

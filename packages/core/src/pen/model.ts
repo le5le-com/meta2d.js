@@ -71,6 +71,8 @@ export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
 export interface ConnectLine { lineId: string; lineAnchor: string; anchor: string }
 
+// SetValue 方法参数类型
+export type SetValue = Pen & Partial<Record<'tag' | 'newId', string>> & {[key: string]: any};
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
