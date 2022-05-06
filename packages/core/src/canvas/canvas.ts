@@ -45,6 +45,7 @@ import {
   calcInView,
   isShowChild,
   ConnectLine,
+  SetValue,
 } from '../pen';
 import {
   calcRotate,
@@ -4416,7 +4417,7 @@ export class Canvas {
     }
   }
 
-  updateValue(pen: Pen, data: any) {
+  updateValue(pen: Pen, data: SetValue): void {
     const penRect = this.getPenRect(pen);
     Object.assign(pen, data);
     data.newId && this.changePenId(pen.id, data.newId);
