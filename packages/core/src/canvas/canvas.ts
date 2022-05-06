@@ -4447,6 +4447,12 @@ export class Canvas {
     });
   }
 
+  findOne(idOrTag: string): Pen | undefined{
+    return this.store.data.pens.find((pen) => {
+      return pen.id == idOrTag || (pen.tags && pen.tags.indexOf(idOrTag) > -1);
+    });
+  }
+
   changePenId(oldId: string, newId: string): void {
     if (oldId === newId) {
       throw new Error('oldId is same as newId');

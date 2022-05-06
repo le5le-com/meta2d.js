@@ -471,6 +471,14 @@ export class Topology {
     return this.canvas.find(idOrTag);
   }
 
+  /**
+   * 使用 Array.find 找到即返回，否则返回 undefined
+   * @param idOrTag id or tag
+   */
+  findOne(idOrTag: string): Pen | undefined {
+    return this.canvas.findOne(idOrTag);
+  }
+
   getPenRect(pen: Pen) {
     return this.canvas.getPenRect(pen);
   }
@@ -1170,8 +1178,7 @@ export class Topology {
   }
 
   /**
-   * 其它图形的大小字体变成第一个的
-   * 目前只更改 width ，height ，fontSize
+   * 其它图形的部分变成第一个的
    * @param pens 画笔们
    */
   beSameByFirst(pens: Pen[] = this.store.data.pens) {
