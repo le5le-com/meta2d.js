@@ -1,40 +1,63 @@
 import { Pen } from '.';
 import { Canvas } from '../canvas';
-import { calcExy } from '../rect';
+import { calcExy, Rect } from '../rect';
 import { getFont } from './render';
 
 export function calcTextRect(pen: Pen) {
-  const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
+  const {
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    worldRect,
+    canvas,
+  } = pen.calculative;
+  let { textLeft, textTop, textWidth, textHeight } = pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;
-  let textWidth = pen.calculative.textWidth || pen.calculative.worldRect.width;
-  textWidth < 1 && (textWidth = textWidth * pen.calculative.worldRect.width);
-  let textHeight = pen.calculative.textHeight || pen.calculative.worldRect.height;
-  textHeight < 1 && (textHeight = textHeight * pen.calculative.worldRect.height);
-  let width = textWidth - paddingLeft - paddingRight;
-  let height = textHeight - paddingTop - paddingBottom;
-  let textLeft = pen.calculative.textLeft;
-  let textTop = pen.calculative.textTop;
   if (textLeft && Math.abs(textLeft) < 1) {
-    textLeft = pen.calculative.worldRect.width * textLeft;
+    textLeft *= worldRect.width;
   }
-
   if (textTop && Math.abs(textTop) < 1) {
-    textTop = pen.calculative.worldRect.height * textTop;
+    textTop *= worldRect.height;
   }
-  x += textLeft || 0;
-  y += textTop || 0;
-  width -= textLeft || 0;
-  height -= textTop || 0;
+  const width = worldRect.width - paddingLeft - paddingRight - (textLeft || 0);
+  const height = worldRect.height - paddingTop - paddingBottom - (textTop || 0);
+  if (textWidth && textWidth < 1) {
+    textWidth *= worldRect.width;
+  }
+  if (textHeight && textHeight < 1) {
+    textHeight *= worldRect.height;
+  }
+  // 默认居左，居上
+  x += (textLeft || 0) + worldRect.x;
+  y += (textTop || 0) + worldRect.y;
+  const textAlign = pen.textAlign || canvas.store.options.textAlign;
+  const textBaseline = pen.textBaseline || canvas.store.options.textBaseline;
 
-  x = pen.calculative.worldRect.x + x;
-  y = pen.calculative.worldRect.y + y;
+  switch (textAlign) {
+    case 'center':
+      x += (width - (textWidth || width)) / 2;
+      break;
+    case 'right':
+      x += width - (textWidth || width);
+      break;
+  }
 
-  const rect = {
+  switch (textBaseline) {
+    case 'middle':
+      y += (height - (textHeight || height)) / 2;
+      break;
+    case 'bottom':
+      y += height - (textHeight || height);
+      break;
+  }
+
+  const rect: Rect = {
     x,
     y,
-    width,
-    height,
+    width: textWidth || width,
+    height: textHeight || height,
   };
   calcExy(rect);
   pen.calculative.worldTextRect = rect;
@@ -47,7 +70,7 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
   // By default, the text is center aligned.
   const lineHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
   const h = pen.calculative.textLines.length * lineHeight;
-  const textWidth = calcTextAdaptionWidth(ctx, pen);
+  const textWidth = calcTextAdaptionWidth(ctx, pen); // 多行文本最大宽度
   const rect = pen.calculative.worldTextRect;
   let x = rect.x + (rect.width - textWidth) / 2;
   let y = rect.y + (rect.height - h) / 2;
@@ -80,39 +103,50 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
   calcExy(pen.calculative.textDrawRect);
 }
 
-export function calcTextLines(pen: Pen, text?: string) {
-  if (!pen.calculative.text && !text) {
+export function calcTextLines(pen: Pen, text = pen.calculative.text) {
+  if (!text) {
     pen.calculative.textLines = [];
     return;
   }
-  if (!text) {
-    text = pen.calculative.text;
-  }
   text = text.toString();
   let lines: string[] = [];
+  const oneRowHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
+  const textHeight = pen.calculative.worldTextRect.height;
+  const calcRows = Math.floor(textHeight / oneRowHeight);
+  // 最小值为 1
+  const maxRows = calcRows > 1 ? calcRows : 1;
   switch (pen.whiteSpace) {
     case 'nowrap':
-      lines.push(text);
+      if (pen.ellipsis !== false) {
+        const allLines = wrapLines(text.split(''), pen);
+        lines.push(allLines[0]);
+        if (allLines.length > 1) {
+          // 存在第二行，说明宽度超出
+          setEllipsisOnLastLine(lines);
+        }
+      } else {
+        lines.push(text);
+      }
       break;
     case 'pre-line':
       lines = text.split(/[\n]/g);
+      if (pen.ellipsis !== false && lines.length > maxRows) {
+        lines = lines.slice(0, maxRows);
+        setEllipsisOnLastLine(lines);
+      }
       break;
+    case 'break-all':
     default:
-      const paragraphs: string[] = text.split(/[\n]/g);
-      const oneRowHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
-      const textHeight = pen.calculative.worldTextRect.height;
-      const calcRows = Math.floor(textHeight / oneRowHeight);
-      const maxRows = calcRows > 1 ? calcRows : 1;  // 最小值为 1
+      const paragraphs = text.split(/[\n]/g);
       let currentRow = 0;
       outer: for (const paragraph of paragraphs) {
-        const items = wrapLines(getWords(paragraph), pen);
-        if (pen.ellipsis != false && items.length > 1) {
+        const words = pen.whiteSpace === 'break-all' ? paragraph.split('') : getWords(paragraph);
+        const items = wrapLines(words, pen);
+        if (pen.ellipsis != false) {
           for (const l of items) {
             currentRow++;
             if (currentRow > maxRows) {
-              // 该行不要，把上一行最后变成 ...
-              // TODO: 中文的三个字符宽度比 . 大，显示起来像是删多了
-              lines[lines.length - 1] = lines[lines.length - 1].slice(0, -3) + '...';
+              setEllipsisOnLastLine(lines);
               break outer;
             } else {
               lines.push(l);
@@ -125,11 +159,12 @@ export function calcTextLines(pen: Pen, text?: string) {
       break;
   }
 
-  if (pen.calculative.keepDecimal || pen.calculative.keepDecimal === 0) {
+  const keepDecimal = pen.calculative.keepDecimal;
+  if (keepDecimal != undefined) {
     lines.forEach((text, i) => {
       const textNum = Number(text);
       if (!isNaN(textNum)) {
-        lines[i] = textNum.toFixed(pen.calculative.keepDecimal);
+        lines[i] = textNum.toFixed(keepDecimal);
       }
     });
   }
@@ -165,8 +200,9 @@ export function getWords(txt: string = '') {
 export function wrapLines(words: string[], pen: Pen) {
   const canvas: Canvas = pen.calculative.canvas;
   const ctx = canvas.offscreen.getContext('2d') as CanvasRenderingContext2D;
-  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
-  ctx.save();  
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } =
+    pen.calculative;
+  ctx.save();
   const lines: string[] = [];
   let currentLine = words[0] || '';
   for (let i = 1; i < words.length; ++i) {
@@ -185,10 +221,11 @@ export function wrapLines(words: string[], pen: Pen) {
     } else {
       // 近似计算
       const chinese = text.match(/[^\x00-\xff]/g) || '';
-      const chineseWidth = chinese.length * fontSize;  // 中文占用的宽度
+      const chineseWidth = chinese.length * fontSize; // 中文占用的宽度
       const spaces = text.match(/\s/g) || '';
       const spaceWidth = spaces.length * fontSize * 0.3; // 空格占用的宽度
-      const otherWidth = (text.length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
+      const otherWidth =
+        (text.length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
       currentWidth = chineseWidth + spaceWidth + otherWidth;
     }
     const textWidth = pen.calculative.worldTextRect.width;
@@ -204,7 +241,10 @@ export function wrapLines(words: string[], pen: Pen) {
   return lines;
 }
 
-export function calcTextAdaptionWidth(ctx: CanvasRenderingContext2D, pen: Pen): number {
+export function calcTextAdaptionWidth(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen
+): number {
   let maxWidth = 0;
   pen.calculative.textLineWidths = [];
   pen.calculative.textLines.forEach((text: string) => {
@@ -213,4 +253,13 @@ export function calcTextAdaptionWidth(ctx: CanvasRenderingContext2D, pen: Pen): 
     maxWidth < width && (maxWidth = width);
   });
   return maxWidth;
+}
+/**
+ * 副作用函数，会修改传入的参数
+ * 把最后一行的最后变成 ...
+ * TODO: 中文的三个字符宽度比 . 大，显示起来像是删多了
+ * @param lines 
+ */
+function setEllipsisOnLastLine(lines: string[]) {
+  lines[lines.length - 1] = lines[lines.length - 1].slice(0, -3) + '...';
 }

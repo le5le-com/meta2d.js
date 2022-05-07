@@ -206,6 +206,65 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
   ctx.drawImage(pen.calculative.img, x, y, w, h);
 }
 
+function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const store = pen.calculative.canvas.store;
+  ctx.save();
+  if (!pen.calculative.textHasShadow) {
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
+  let fill: string = undefined;
+  if (pen.calculative.hover) {
+    fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
+  } else if (pen.calculative.active) {
+    fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
+  }
+  if (fill) {
+    ctx.fillStyle = fill;
+  } else {
+    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.data.color || store.options.color;
+  }
+
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
+  ctx.font = getFont({
+    fontStyle,
+    fontWeight,
+    fontFamily: fontFamily || store.options.fontFamily,
+    fontSize,
+    lineHeight,
+  });
+
+  !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
+  const { x: drawRectX, y: drawRectY, width, height } = pen.calculative.textDrawRect;
+  if (pen.calculative.textBackground) {
+    ctx.save();
+    ctx.fillStyle = pen.calculative.textBackground;
+    ctx.fillRect(drawRectX, drawRectY, width, height);
+    ctx.restore();
+  }
+
+  const y = 0.55;
+  const textAlign = pen.textAlign || store.options.textAlign;
+  const oneRowHeight = fontSize * lineHeight;
+  pen.calculative.textLines.forEach((text, i) => {
+    const textLineWidth = pen.calculative.textLineWidths[i];
+    let x = 0;
+    if (textAlign === 'center') {
+      x = (width - textLineWidth) / 2;
+    } else if (textAlign === 'right') {
+      x = width - textLineWidth;
+    }
+    ctx.fillText(
+      text,
+      drawRectX + x,
+      drawRectY + (i + y) * oneRowHeight
+    );
+  });
+
+  ctx.restore();
+}
+
 export function drawIcon(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
   const store: TopologyStore = pen.calculative.canvas.store;
   ctx.save();
@@ -354,6 +413,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   const store: TopologyStore = pen.calculative.canvas.store;
 
+  InspectRect(ctx, store, pen);  // 审查 rect
   let fill: any;
   // 该变量控制在 hover active 状态下的节点是否设置填充颜色
   let setBack = true;
@@ -548,65 +608,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
-    ctx.save();
-    if (!pen.calculative.textHasShadow) {
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-    }
-    if (pen.calculative.hover) {
-      fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
-    } else if (pen.calculative.active) {
-      fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
-    } else {
-      fill = undefined;
-    }
-    if (fill) {
-      ctx.fillStyle = fill;
-    } else {
-      ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.data.color || store.options.color;
-    }
-
-    const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
-    ctx.font = getFont({
-      fontStyle,
-      fontWeight,
-      fontFamily: fontFamily || store.options.fontFamily,
-      fontSize,
-      lineHeight,
-    });
-
-    !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
-    if (pen.calculative.textBackground) {
-      ctx.save();
-      ctx.fillStyle = pen.calculative.textBackground;
-      ctx.fillRect(
-        pen.calculative.textDrawRect.x,
-        pen.calculative.textDrawRect.y,
-        pen.calculative.textDrawRect.width,
-        pen.calculative.textDrawRect.height
-      );
-      ctx.restore();
-    }
-
-    const y = 0.55;
-    const { width } = pen.calculative.textDrawRect;
-    const textAlign = pen.textAlign || store.options.textAlign;
-    pen.calculative.textLines.forEach((text, i) => {
-      let x = 0;
-      if (textAlign === 'center') {
-        x = (width - pen.calculative.textLineWidths[i]) / 2;
-      } else if (textAlign === 'right') {
-        x = width - pen.calculative.textLineWidths[i];
-      }
-      ctx.fillText(
-        text,
-        pen.calculative.textDrawRect.x + x,
-        pen.calculative.textDrawRect.y + (i + y) * pen.calculative.fontSize * pen.calculative.lineHeight
-      );
-    });
-
-    ctx.restore();
+    drawText(ctx, pen);
   }
 
   ctx.restore();
@@ -784,48 +786,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   }
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
-    ctx.save();
-    if (!pen.calculative.textHasShadow) {
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-    }
-    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
-    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
-      pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily || store.options.fontFamily}`;
-
-    !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
-    if (pen.calculative.textBackground) {
-      ctx.save();
-      ctx.fillStyle = pen.calculative.textBackground;
-      ctx.fillRect(
-        pen.calculative.textDrawRect.x,
-        pen.calculative.textDrawRect.y,
-        pen.calculative.textDrawRect.width,
-        pen.calculative.textDrawRect.height
-      );
-      ctx.restore();
-    }
-
-    const y = 0.55;
-    const { width } = pen.calculative.textDrawRect;
-    const textAlign = pen.textAlign || store.options.textAlign;
-    pen.calculative.textLines.forEach((text, i) => {
-      let x = 0;
-      if (textAlign === 'center') {
-        x = (width - pen.calculative.textLineWidths[i]) / 2;
-      } else if (textAlign === 'right') {
-        x = width - pen.calculative.textLineWidths[i];
-      }
-      ctx.fillText(
-        text,
-        pen.calculative.textDrawRect.x + x,
-        pen.calculative.textDrawRect.y + (i + y) * pen.calculative.fontSize * pen.calculative.lineHeight
-      );
-    });
-
-    ctx.restore();
+    drawText(ctx, pen);
   }
 
   ctx.restore();
@@ -1640,4 +1601,17 @@ export function calcInView(pen: Pen, calcChild = false) {
   // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
   // 更改 view 后，修改 dom 节点的显示隐藏
   pen.onMove?.(pen);
+}
+
+/**
+ * 绘制 rect ，上线后可查看 rect 位置
+ */
+function InspectRect(ctx: CanvasRenderingContext2D, store: TopologyStore, pen: Pen) {
+  if (store.fillWorldTextRect) {
+    ctx.save();
+    ctx.fillStyle = '#c3deb7';
+    const {x,y,width,height} = pen.calculative.worldTextRect;
+    ctx.fillRect(x,y,width,height);
+    ctx.restore();
+  }
 }
