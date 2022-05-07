@@ -1,3 +1,4 @@
+import { TextAlign, TextBaseline } from './pen';
 import { Point } from './point';
 
 export enum KeydownType {
@@ -24,8 +25,8 @@ export interface Options {
   fontFamily?: string;
   fontSize?: number;
   lineHeight?: number;
-  textAlign?: string;
-  textBaseline?: string;
+  textAlign?: TextAlign;
+  textBaseline?: TextBaseline;
   rotateCursor?: string;
   hoverCursor?: string;
   disableInput?: boolean;

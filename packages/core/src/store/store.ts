@@ -82,6 +82,8 @@ export interface TopologyStore {
   dirtyBackground?: boolean; // 是否需要重绘背景，包含网格
   dirtyTop?: boolean;   // 是否需要重绘标尺
   bkImg: HTMLImageElement;
+  // 测试使用
+  fillWorldTextRect?: boolean;  // 填充文本区域
 }
 
 export interface TopologyClipboard {
