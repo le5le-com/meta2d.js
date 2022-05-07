@@ -68,6 +68,8 @@ import {
   pointInSimpleRect,
   Rect,
   rectInRect,
+  isLineIntersectRectangle, // sis: 直线与dragrect相交判断
+  isBezierIntersectRectangle, // sis: 贝塞尔与dragrect相交判断
   rectToPoints,
   resizeRect,
   translateRect,
@@ -1687,12 +1689,37 @@ export class Canvas {
 
     if (this.dragRect) {
       const pens = this.store.data.pens.filter((pen) => {
-        return (
-          pen.visible != false &&
-          pen.locked !== LockState.Disable &&
-          !pen.parentId &&
-          rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)
-        );
+        // 如果是线条类型，判断是否和线相交，同时判断是直线还是贝塞尔,如果是全选模式，直接使用rectInRect
+        if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
+          let flag = false;
+          pen.calculative.worldAnchors.forEach((element, index) => {
+            if (index >= pen.calculative.worldAnchors.length - 1) {
+              return flag;
+            }
+            if (flag) {
+              return;
+            }
+            if (element.prev === undefined) {
+              flag = pen.visible != false &&
+                pen.locked !== LockState.Disable &&
+                !pen.parentId &&
+                isLineIntersectRectangle(pen.calculative.worldAnchors[index], pen.calculative.worldAnchors[index + 1], this.dragRect)
+            } else if (pen.calculative.worldAnchors.length >= index + 1) {
+              flag = pen.visible != false &&
+                pen.locked !== LockState.Disable &&
+                !pen.parentId &&
+                isBezierIntersectRectangle(pen.calculative.worldAnchors[index], pen.calculative.worldAnchors[index + 1], this.dragRect)
+            }
+          });
+          return flag;
+        } else {
+          return (
+            pen.visible != false &&
+            pen.locked !== LockState.Disable &&
+            !pen.parentId &&
+            rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)
+          );
+        }
       });
       this.active(pens);
     }

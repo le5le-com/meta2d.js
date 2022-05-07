@@ -392,3 +392,110 @@ export function calcRelativePoint(pt: Point, worldRect: Rect) {
   }
   return point;
 }
+
+/// <summary>
+/// 线段与矩形是否相交
+/// </summary>
+/// <param name="pt1">点1</param>
+/// <param name="pt2">点2</param>
+/// <param name="dragRect">矩形</param>
+/// <returns></returns>
+export function isLineIntersectRectangle(pt1: Point, pt2: Point, dragRect: Rect) {
+  const linePointX1 = pt1.x;
+  const linePointY1 = pt1.y;
+  const linePointX2 = pt2.x;
+  const linePointY2 = pt2.y;
+
+  let rectangleLeftTopX = dragRect.x;
+  let rectangleLeftTopY = dragRect.y;
+  let rectangleRightBottomX = dragRect.ex;
+  let rectangleRightBottomY = dragRect.ey;
+
+  const lineHeight = linePointY1 - linePointY2;
+  const lineWidth = linePointX2 - linePointX1;  // 计算叉乘 
+  const c = linePointX1 * linePointY2 - linePointX2 * linePointY1;
+  if ((lineHeight * rectangleLeftTopX + lineWidth * rectangleLeftTopY + c >= 0 && lineHeight * rectangleRightBottomX + lineWidth * rectangleRightBottomY + c <= 0)
+    || (lineHeight * rectangleLeftTopX + lineWidth * rectangleLeftTopY + c <= 0 && lineHeight * rectangleRightBottomX + lineWidth * rectangleRightBottomY + c >= 0)
+    || (lineHeight * rectangleLeftTopX + lineWidth * rectangleRightBottomY + c >= 0 && lineHeight * rectangleRightBottomX + lineWidth * rectangleLeftTopY + c <= 0)
+    || (lineHeight * rectangleLeftTopX + lineWidth * rectangleRightBottomY + c <= 0 && lineHeight * rectangleRightBottomX + lineWidth * rectangleLeftTopY + c >= 0)) {
+    if (rectangleLeftTopX > rectangleRightBottomX) {
+      const temp = rectangleLeftTopX;
+      rectangleLeftTopX = rectangleRightBottomX;
+      rectangleRightBottomX = temp;
+    }
+    if (rectangleLeftTopY < rectangleRightBottomY) {
+      const temp1 = rectangleLeftTopY;
+      rectangleLeftTopY = rectangleRightBottomY;
+      rectangleRightBottomY = temp1;
+    }
+    if ((linePointX1 < rectangleLeftTopX && linePointX2 < rectangleLeftTopX)
+      || (linePointX1 > rectangleRightBottomX && linePointX2 > rectangleRightBottomX)
+      || (linePointY1 > rectangleLeftTopY && linePointY2 > rectangleLeftTopY)
+      || (linePointY1 < rectangleRightBottomY && linePointY2 < rectangleRightBottomY)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  else {
+    return false;
+  }
+}
+
+
+/// <summary>
+/// 贝塞尔与矩形是否相交
+/// </summary>
+/// <param name="pt1">点1</param>
+/// <param name="pt2">点2</param>
+/// <param name="dragRect">矩形</param>
+/// <returns></returns>
+export function isBezierIntersectRectangle(pt1: Point, pt2: Point, dragRect: Rect) {
+  let x = 0;
+  let y = 0;
+  // 步长
+  let step = 0.001;
+  let flag = false;
+  // 控制点
+  let controlPt = []
+  controlPt.push(pt1)
+  if (pt1.next !== undefined) {
+    controlPt.push(pt1.next)
+  }
+  if (pt2.prev !== undefined) {
+    controlPt.push(pt2.prev)
+  }
+  controlPt.push(pt2)
+  const n = controlPt.length - 1;
+  // 计算
+  for (let location = 0; location <= 1;) {
+    if (flag) {
+      break;
+    }
+    controlPt.forEach((item, index) => {
+      if (!index) {
+        x += item.x * Math.pow((1 - location), n - index) * Math.pow(location, index);
+        y += item.y * Math.pow((1 - location), n - index) * Math.pow(location, index);
+      } else {
+        x += factorial(n) / factorial(index) / factorial(n - index) * item.x * Math.pow((1 - location), n - index) * Math.pow(location, index)
+        y += factorial(n) / factorial(index) / factorial(n - index) * item.y * Math.pow((1 - location), n - index) * Math.pow(location, index)
+      }
+    })
+    location += step
+    if (x >= dragRect.x && x <= dragRect.ex && y >= dragRect.y && y <= dragRect.ey) {
+      flag = true;
+    }
+    x = 0;
+    y = 0;
+  }
+  return flag;
+}
+
+// 阶乘函数
+export function factorial(n: number) {
+  let result = 1;
+  for (n; n > 0; n--) {
+    result = result * n
+  }
+  return result
+}
