@@ -68,8 +68,6 @@ import {
   pointInSimpleRect,
   Rect,
   rectInRect,
-  isLineIntersectRectangle, // sis: 直线与dragrect相交判断
-  isBezierIntersectRectangle, // sis: 贝塞尔与dragrect相交判断
   rectToPoints,
   resizeRect,
   translateRect,
@@ -87,9 +85,8 @@ import {
   simplify,
   smoothLine,
   lineSegment,
-  iframes,
-  videos,
   getLineR,
+  lineInRect,
 } from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
@@ -1628,26 +1625,12 @@ export class Canvas {
           pen.parentId) {
           return false;
         }
-        // 如果是线条类型，判断是否和线相交，同时判断是直线还是贝塞尔,如果是全选模式，直接使用rectInRect
-        if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
-          let flag = false;
-          pen.calculative.worldAnchors.forEach((element, index) => {
-            if (index >= pen.calculative.worldAnchors.length - 1) {
-              return flag;
-            }
-            if (flag) {
-              return;
-            }
-            const nextElement = pen.calculative.worldAnchors[index + 1];
-            if (element.prev !== undefined && nextElement.next !== undefined) {
-              flag = isLineIntersectRectangle(element, nextElement, this.dragRect);
-            } else if (pen.calculative.worldAnchors.length >= index + 1) {
-              flag = isBezierIntersectRectangle(element, nextElement, this.dragRect);
-            }
-          });
-          return flag;
-        } else {
-          return rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn);
+        if (rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)) {
+          // 先判断在区域内，若不在区域内，则锚点肯定不在框选区域内，避免每条连线过度计算
+          if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
+            return lineInRect(pen, this.dragRect);
+          } 
+          return true;
         }
       });
       this.active(pens);
