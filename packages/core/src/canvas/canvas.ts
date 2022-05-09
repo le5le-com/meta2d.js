@@ -1704,10 +1704,11 @@ export class Canvas {
             if (flag) {
               return;
             }
-            if (element.prev === undefined) {
-              flag = isLineIntersectRectangle(pen.calculative.worldAnchors[index], pen.calculative.worldAnchors[index + 1], this.dragRect);
+            const nextElement = pen.calculative.worldAnchors[index + 1];
+            if (element.prev !== undefined && nextElement.next !== undefined) {
+              flag = isLineIntersectRectangle(element, nextElement, this.dragRect);
             } else if (pen.calculative.worldAnchors.length >= index + 1) {
-              flag = isBezierIntersectRectangle(pen.calculative.worldAnchors[index], pen.calculative.worldAnchors[index + 1], this.dragRect);
+              flag = isBezierIntersectRectangle(element, nextElement, this.dragRect);
             }
           });
           return flag;
