@@ -124,6 +124,7 @@ export class Canvas {
   addCaches: Pen[];
   touchCenter?: Point;
   touches?: TouchList;
+  touchScale: number;
 
   lastOffsetX = 0;
   lastOffsetY = 0;
@@ -863,9 +864,16 @@ export class Canvas {
 
     if (e.touches.length > 1) {
       this.touches = e.touches;
+      this.touchScale = this.store.data.scale;
       return;
     }
 
+    const pos: Point = { x, y };
+    pos.x -= this.bounding.left || this.bounding.x;
+    pos.y -= this.bounding.top || this.bounding.y;
+    this.calibrateMouse(pos);
+    // click 消息需要用到 hover 的 pen
+    this.getHover(pos);
     !(e.target as HTMLElement).dataset.l &&
       this.onMouseDown({
         x,
@@ -891,6 +899,7 @@ export class Canvas {
 
     const now = performance.now();
     if (now - this.touchStart < 50) {
+      event.preventDefault();
       return;
     }
     this.touchStart = now;
@@ -899,22 +908,17 @@ export class Canvas {
     const y = event.touches[0].pageY;
     if (len > 1) {
       if (len === 2) {
-        if (now - this.touchStart < 200) {
-          return;
-        }
         const scale =
           (event as any).scale ||
           Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) /
             Math.hypot(this.touches[0].pageX - this.touches[1].pageX, this.touches[0].pageY - this.touches[1].pageY);
         event.preventDefault();
-        if (scale < 0) {
-          this.scale(this.store.data.scale + 0.1, this.touchCenter);
-        } else {
-          this.scale(this.store.data.scale - 0.1, this.touchCenter);
-        }
-      } else if (len === 3) {
-        this.translate(x, y);
-      }
+        this.scale(this.touchScale * scale, deepClone(this.touchCenter));
+      } 
+      // else if (len === 3) {
+      //   // 三指不阻止默认行为，也不做任何处理
+      //   // this.translate(x, y);
+      // }
 
       return;
     }
@@ -934,6 +938,7 @@ export class Canvas {
   ontouchend = (event: TouchEvent) => {
     this.touches = undefined;
     this.touchCenter = undefined;
+    this.touchScale = undefined;
 
     const x = event.changedTouches[0].pageX;
     const y = event.changedTouches[0].pageY;
@@ -3126,6 +3131,11 @@ export class Canvas {
     }
   }
 
+  /**
+   * 缩放整个画布
+   * @param scale 缩放比例，最终的 data.scale
+   * @param center 中心点，引用类型，存在副作用，会更改原值
+   */
   scale(scale: number, center = { x: 0, y: 0 }) {
     const { minScale, maxScale } = this.store.options;
     if (scale < minScale || scale > maxScale) {
