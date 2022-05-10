@@ -45,6 +45,7 @@ import {
   calcInView,
   isShowChild,
   ConnectLine,
+  SetValue,
 } from '../pen';
 import {
   calcRotate,
@@ -84,9 +85,8 @@ import {
   simplify,
   smoothLine,
   lineSegment,
-  iframes,
-  videos,
   getLineR,
+  lineInRect,
 } from '../diagrams';
 import { polyline } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
@@ -1622,12 +1622,18 @@ export class Canvas {
 
     if (this.dragRect) {
       const pens = this.store.data.pens.filter((pen) => {
-        return (
-          pen.visible != false &&
-          pen.locked !== LockState.Disable &&
-          !pen.parentId &&
-          rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)
-        );
+        if (pen.visible === false ||
+          pen.locked === LockState.Disable ||
+          pen.parentId) {
+          return false;
+        }
+        if (rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)) {
+          // 先判断在区域内，若不在区域内，则锚点肯定不在框选区域内，避免每条连线过度计算
+          if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
+            return lineInRect(pen, this.dragRect);
+          } 
+          return true;
+        }
       });
       this.active(pens);
     }
@@ -4378,6 +4384,12 @@ export class Canvas {
     });
   }
 
+  findOne(idOrTag: string): Pen | undefined{
+    return this.store.data.pens.find((pen) => {
+      return pen.id == idOrTag || (pen.tags && pen.tags.indexOf(idOrTag) > -1);
+    });
+  }
+
   changePenId(oldId: string, newId: string): void {
     if (oldId === newId) {
       throw new Error('oldId is same as newId');
@@ -4418,7 +4430,7 @@ export class Canvas {
     }
   }
 
-  updateValue(pen: Pen, data: any) {
+  updateValue(pen: Pen, data: SetValue): void {
     const penRect = this.getPenRect(pen);
     Object.assign(pen, data);
     data.newId && this.changePenId(pen.id, data.newId);

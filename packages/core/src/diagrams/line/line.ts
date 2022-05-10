@@ -1,6 +1,6 @@
 import { deleteTempAnchor, getFromAnchor, getToAnchor, Pen } from '../../pen';
 import { hitPoint, Point } from '../../point';
-import { getRectOfPoints } from '../../rect';
+import { getRectOfPoints, pointInSimpleRect, Rect } from '../../rect';
 import { TopologyStore } from '../../store';
 import { getBezierPoint, getQuadraticPoint } from './curve';
 
@@ -9,7 +9,7 @@ export function line(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
     path = new Path2D();
   }
   if (pen.calculative.worldAnchors.length > 1) {
-    let from: Point;   // 上一个点
+    let from: Point; // 上一个点
     pen.calculative.worldAnchors.forEach((pt: Point) => {
       if (from) {
         draw(path, from, pt);
@@ -52,7 +52,14 @@ function draw(path: CanvasRenderingContext2D | Path2D, from: Point, to: Point) {
   from.start && path.moveTo(from.x, from.y);
   if (from.next) {
     if (to.prev) {
-      path.bezierCurveTo(from.next.x, from.next.y, to.prev.x, to.prev.y, to.x, to.y);
+      path.bezierCurveTo(
+        from.next.x,
+        from.next.y,
+        to.prev.x,
+        to.prev.y,
+        to.x,
+        to.y
+      );
     } else {
       path.quadraticCurveTo(from.next.x, from.next.y, to.x, to.y);
     }
@@ -75,7 +82,7 @@ export function getLineRect(pen: Pen) {
  */
 export function getLinePoints(pen: Pen) {
   const pts: Point[] = [];
-  let from: Point;  // 上一个点
+  let from: Point; // 上一个点
   pen.calculative.worldAnchors.forEach((pt: Point) => {
     pts.push(pt);
     from && pts.push(...getPoints(from, pt, pen));
@@ -132,7 +139,7 @@ export function pointInLine(pt: Point, pen: Pen) {
   const r = getLineR(pen);
 
   let i = 0;
-  let from: Point;  // 上一个点
+  let from: Point; // 上一个点
   let point: Point;
   for (const anchor of pen.calculative.worldAnchors) {
     if (from) {
@@ -166,7 +173,14 @@ export function pointInLineSegment(pt: Point, pt1: Point, pt2: Point, r = 4) {
     const maxX = Math.max(x1, x2);
     const minY = Math.min(y1, y2);
     const maxY = Math.max(y1, y2);
-    if (!(pt.x >= minX - r && pt.x <= maxX + r && pt.y >= minY - r && pt.y <= maxY + r)) {
+    if (
+      !(
+        pt.x >= minX - r &&
+        pt.x <= maxX + r &&
+        pt.y >= minY - r &&
+        pt.y <= maxY + r
+      )
+    ) {
       return;
     }
     return pointToLine(pt, pt1, pt2, r);
@@ -206,16 +220,30 @@ export function pointToLine(pt: Point, pt1: Point, pt2: Point, r = 4) {
 
 function lineLen(from: Point, cp1?: Point, cp2?: Point, to?: Point): number {
   if (!cp1 && !cp2) {
-    return Math.sqrt(Math.pow(Math.abs(from.x - to.x), 2) + Math.pow(Math.abs(from.y - to.y), 2)) || 0;
+    return (
+      Math.sqrt(
+        Math.pow(Math.abs(from.x - to.x), 2) +
+          Math.pow(Math.abs(from.y - to.y), 2)
+      ) || 0
+    );
   }
 
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   if (cp1 && cp2) {
-    path.setAttribute('d', `M${from.x} ${from.y} C${cp1.x} ${cp1.y} ${cp2.x} ${cp2.y} ${to.x} ${to.y}`);
+    path.setAttribute(
+      'd',
+      `M${from.x} ${from.y} C${cp1.x} ${cp1.y} ${cp2.x} ${cp2.y} ${to.x} ${to.y}`
+    );
   } else if (cp1) {
-    path.setAttribute('d', `M${from.x} ${from.y} Q${cp1.x} ${cp1.y} ${to.x} ${to.y}`);
+    path.setAttribute(
+      'd',
+      `M${from.x} ${from.y} Q${cp1.x} ${cp1.y} ${to.x} ${to.y}`
+    );
   } else {
-    path.setAttribute('d', `M${from.x} ${from.y} Q${cp2.x} ${cp2.y} ${to.x} ${to.y}`);
+    path.setAttribute(
+      'd',
+      `M${from.x} ${from.y} Q${cp2.x} ${cp2.y} ${to.x} ${to.y}`
+    );
   }
   return path.getTotalLength() || 0;
 }
@@ -226,7 +254,7 @@ export function getLineLength(pen: Pen): number {
   }
 
   let len = 0;
-  let from: Point;   // 上一个点
+  let from: Point; // 上一个点
   pen.calculative.worldAnchors.forEach((pt: Point) => {
     if (from) {
       from.lineLength = lineLen(from, from.next, pt.prev, pt);
@@ -242,4 +270,127 @@ export function getLineLength(pen: Pen): number {
   }
   pen.length = len;
   return len;
+}
+
+/**
+ * 连线在 rect 内， 连线与 rect 相交
+ */
+export function lineInRect(line: Pen, rect: Rect) {
+  // 判断是直线还是贝塞尔
+  const worldAnchors = line.calculative.worldAnchors;
+  for (let index = 0; index < worldAnchors.length - 1; index++) {
+    const current = worldAnchors[index];
+    const next = worldAnchors[index + 1];
+    if (!current.next && !next.prev) {
+      // 线段
+      if (isLineIntersectRectangle(current, next, rect)) {
+        return true;
+      }
+    } else {
+      // 贝塞尔
+      if (isBezierIntersectRectangle(current, next, rect)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * 线段与矩形是否相交
+ * @param rect 矩形
+ */
+export function isLineIntersectRectangle(pt1: Point, pt2: Point, rect: Rect) {
+  if (pointInSimpleRect(pt1, rect) || pointInSimpleRect(pt2, rect)) {
+    // 存在一个点在矩形内部
+    return true;
+  }
+  const linePointX1 = pt1.x;
+  const linePointY1 = pt1.y;
+  const linePointX2 = pt2.x;
+  const linePointY2 = pt2.y;
+
+  let rectangleLeftTopX = rect.x;
+  let rectangleLeftTopY = rect.y;
+  let rectangleRightBottomX = rect.ex;
+  let rectangleRightBottomY = rect.ey;
+
+  const lineHeight = linePointY1 - linePointY2;
+  const lineWidth = linePointX2 - linePointX1; // 计算叉乘
+  const c = linePointX1 * linePointY2 - linePointX2 * linePointY1;
+  if (
+    (lineHeight * rectangleLeftTopX + lineWidth * rectangleLeftTopY + c >= 0 &&
+      lineHeight * rectangleRightBottomX +
+        lineWidth * rectangleRightBottomY +
+        c <=
+        0) ||
+    (lineHeight * rectangleLeftTopX + lineWidth * rectangleLeftTopY + c <= 0 &&
+      lineHeight * rectangleRightBottomX +
+        lineWidth * rectangleRightBottomY +
+        c >=
+        0) ||
+    (lineHeight * rectangleLeftTopX + lineWidth * rectangleRightBottomY + c >=
+      0 &&
+      lineHeight * rectangleRightBottomX + lineWidth * rectangleLeftTopY + c <=
+        0) ||
+    (lineHeight * rectangleLeftTopX + lineWidth * rectangleRightBottomY + c <=
+      0 &&
+      lineHeight * rectangleRightBottomX + lineWidth * rectangleLeftTopY + c >=
+        0)
+  ) {
+    if (rectangleLeftTopX > rectangleRightBottomX) {
+      const temp = rectangleLeftTopX;
+      rectangleLeftTopX = rectangleRightBottomX;
+      rectangleRightBottomX = temp;
+    }
+    if (rectangleLeftTopY < rectangleRightBottomY) {
+      const temp1 = rectangleLeftTopY;
+      rectangleLeftTopY = rectangleRightBottomY;
+      rectangleRightBottomY = temp1;
+    }
+    if (
+      (linePointX1 < rectangleLeftTopX && linePointX2 < rectangleLeftTopX) ||
+      (linePointX1 > rectangleRightBottomX &&
+        linePointX2 > rectangleRightBottomX) ||
+      (linePointY1 > rectangleLeftTopY && linePointY2 > rectangleLeftTopY) ||
+      (linePointY1 < rectangleRightBottomY &&
+        linePointY2 < rectangleRightBottomY)
+    ) {
+      return false;
+    } else {
+      return true;
+    }
+  } else {
+    return false;
+  }
+}
+
+/**
+ * 贝塞尔曲线与矩形是否相交
+ * @param from 前点
+ * @param to 后点
+ * @param rect 矩形
+ */
+export function isBezierIntersectRectangle(from: Point, to: Point, rect: Rect) {
+  const step = 0.02;
+  if (!from.next && !to.prev) {
+    // 直线
+    return isLineIntersectRectangle(from, to, rect);
+  } else if (from.next && to.prev) {
+    for (let i = step; i < 1; i += step) {
+      const point = getBezierPoint(i, from, from.next, to.prev, to);
+      if (pointInSimpleRect(point, rect)) {
+        return true;
+      }
+    }
+  } else if (from.next || to.prev) {
+    for (let i = step; i < 1; i += step) {
+      const point = getQuadraticPoint(i, from, from.next || to.prev, to);
+      if (pointInSimpleRect(point, rect)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
