@@ -512,9 +512,11 @@ export class Canvas {
       case 's':
       case 'S':
         // 分割线
-        if (!this.store.data.locked
-          && this.hoverType === HoverType.LineAnchor
-          && this.store.hover === this.store.active[0]) {
+        if (
+          !this.store.data.locked &&
+          this.hoverType === HoverType.LineAnchor &&
+          this.store.hover === this.store.active[0]
+        ) {
           this.splitLine(this.store.active[0], this.store.hoverAnchor);
         }
         break;
@@ -607,7 +609,7 @@ export class Canvas {
    */
   splitLine(line: Pen, anchor: Point): void {
     const worldAnchors = line.calculative.worldAnchors;
-    const index = worldAnchors.findIndex(a => a === anchor);
+    const index = worldAnchors.findIndex((a) => a === anchor);
     if ([-1, 0, worldAnchors.length - 1].includes(index)) {
       // 没找到，起终点不处理
       return;
@@ -623,7 +625,7 @@ export class Canvas {
 
     // index 作为公共点
     const preAnchors = deepClone(worldAnchors.slice(0, index + 1));
-    const laterAnchors = deepClone(worldAnchors.slice(index)).map(a => {
+    const laterAnchors = deepClone(worldAnchors.slice(index)).map((a) => {
       a.penId = id;
       return a;
     });
@@ -638,14 +640,14 @@ export class Canvas {
     this.pushHistory({
       type: EditType.Add,
       pens: [deepClone(newLine, true)],
-      step: 2
+      step: 2,
     });
 
     this.pushHistory({
       type: EditType.Update,
       initPens: [initLine],
       pens: [deepClone(line, true)],
-      step: 2
+      step: 2,
     });
   }
 
@@ -754,7 +756,7 @@ export class Canvas {
       !pen.parentId && this.randomCombineId(pen, pens);
     }
     for (const pen of pens) {
-      // TODO: randomCombineId 会更改 id， 此处应该不存在空 id 
+      // TODO: randomCombineId 会更改 id， 此处应该不存在空 id
       if (!pen.id) {
         pen.id = s8();
       }
@@ -796,7 +798,7 @@ export class Canvas {
   }
 
   async addPens(pens: Pen[], history?: boolean): Promise<Pen[]> {
-    if (this.beforeAddPens && await this.beforeAddPens(pens) != true) {
+    if (this.beforeAddPens && (await this.beforeAddPens(pens)) != true) {
       return [];
     }
     const list: Pen[] = [];
@@ -1922,7 +1924,7 @@ export class Canvas {
             let cursors = firstFour ? defaultCursors : rotatedCursors;
             let offset = 0;
             if (Math.abs((this.activeRect.rotate % 90) - 45) < 25) {
-              cursors = firstFour ? rotatedCursors: defaultCursors;
+              cursors = firstFour ? rotatedCursors : defaultCursors;
               offset = Math.round((this.activeRect.rotate - 45) / 90) + (firstFour ? 0 : 1);
             } else {
               offset = Math.round(this.activeRect.rotate / 90);
@@ -2023,7 +2025,7 @@ export class Canvas {
         }
       } else {
         if (pen.children) {
-          const pens = [];  // TODO: 只考虑了一级子
+          const pens = []; // TODO: 只考虑了一级子
           pen.children.forEach((id) => {
             pens.push(this.store.pens[id]);
           });
@@ -2202,7 +2204,7 @@ export class Canvas {
   }
 
   async addPen(pen: Pen, history?: boolean): Promise<Pen> {
-    if (this.beforeAddPens && await this.beforeAddPens([pen]) != true) {
+    if (this.beforeAddPens && (await this.beforeAddPens([pen])) != true) {
       return;
     }
 
@@ -2366,7 +2368,7 @@ export class Canvas {
       !pen.pathId && (pen.pathId = s8());
       const paths = this.store.data.paths;
       !paths[pen.pathId] && (paths[pen.pathId] = pen.path);
-      
+
       pen.path = undefined;
     }
     // end
@@ -2524,8 +2526,9 @@ export class Canvas {
     this.drawingLine.calculative.worldRect = rect;
     this.drawingLine.calculative.activeAnchor = getToAnchor(this.drawingLine);
     this.store.activeAnchor = this.drawingLine.calculative.activeAnchor;
-    const allowAdd = (!this.beforeAddPens || await this.beforeAddPens([this.drawingLine]))
-      && (!this.beforeAddPen || this.beforeAddPen(this.drawingLine));
+    const allowAdd =
+      (!this.beforeAddPens || (await this.beforeAddPens([this.drawingLine]))) &&
+      (!this.beforeAddPen || this.beforeAddPen(this.drawingLine));
     if (allowAdd) {
       this.initLineRect(this.drawingLine);
       this.store.data.pens.push(this.drawingLine);
@@ -2557,8 +2560,9 @@ export class Canvas {
       if (this.pencilLine.calculative.worldAnchors.length > 1) {
         this.pencilLine.calculative.pencil = false;
         this.store.path2dMap.set(this.pencilLine, globalStore.path2dDraws[this.pencilLine.name](this.pencilLine));
-        const allowAdd = (!this.beforeAddPens || await this.beforeAddPens([this.pencilLine]))
-          && (!this.beforeAddPen || this.beforeAddPen(this.pencilLine));
+        const allowAdd =
+          (!this.beforeAddPens || (await this.beforeAddPens([this.pencilLine]))) &&
+          (!this.beforeAddPen || this.beforeAddPen(this.pencilLine));
         if (allowAdd) {
           this.initLineRect(this.pencilLine);
           this.store.data.pens.push(this.pencilLine);
@@ -2832,7 +2836,7 @@ export class Canvas {
   };
 
   private renderPenContainChild = (ctx: CanvasRenderingContext2D, pen: Pen) => {
-    pen.calculative.inView && renderPen(ctx, pen);  // 可见才绘制，组合为状态只显示其中一个
+    pen.calculative.inView && renderPen(ctx, pen); // 可见才绘制，组合为状态只显示其中一个
     pen.children?.forEach((id) => {
       const child = this.store.pens[id];
       child && this.renderPenContainChild(ctx, child);
@@ -3694,10 +3698,7 @@ export class Canvas {
       }
 
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
-      if (
-        (line.autoPolyline ?? this.store.options.autoPolyline) &&
-        line.lineName === 'polyline'
-      ) {
+      if ((line.autoPolyline ?? this.store.options.autoPolyline) && line.lineName === 'polyline') {
         let from = line.calculative.worldAnchors[0];
         let to = line.calculative.worldAnchors[line.calculative.worldAnchors.length - 1];
 
@@ -3841,6 +3842,7 @@ export class Canvas {
         if (!pen.type) {
           if (setNodeAnimate(pen, now)) {
             if (pen.calculative.dirty) {
+              calcCenter(pen.calculative.worldRect);
               this.dirtyPenRect(pen, { worldRectIsReady: true, playingAnimate: true });
             }
           } else {
@@ -3932,7 +3934,7 @@ export class Canvas {
       }
       this.store.clipboard = clipboard.data;
     }
-    if (this.beforeAddPens && await this.beforeAddPens(this.store.clipboard.pens) != true) {
+    if (this.beforeAddPens && (await this.beforeAddPens(this.store.clipboard.pens)) != true) {
       return;
     }
     this.store.clipboard = deepClone(this.store.clipboard, true);
@@ -4066,7 +4068,7 @@ export class Canvas {
       return;
     }
 
-    if (this.beforeRemovePens && await this.beforeRemovePens(pens) != true) {
+    if (this.beforeRemovePens && (await this.beforeRemovePens(pens)) != true) {
       return;
     }
 
@@ -4396,10 +4398,10 @@ export class Canvas {
     // 父子
     if (pen.parentId) {
       const parent = this.store.pens[pen.parentId];
-      const index = parent.children?.findIndex(id => id === oldId);
+      const index = parent.children?.findIndex((id) => id === oldId);
       index !== -1 && parent.children?.splice(index, 1, newId);
     }
-    pen.children?.forEach(childId => {
+    pen.children?.forEach((childId) => {
       const child = this.store.pens[childId];
       child.parentId = newId;
     });
@@ -4409,10 +4411,10 @@ export class Canvas {
       this.changeNodeConnectedLine(oldId, pen, this.store.data.pens);
     } else {
       this.changeLineAnchors(oldId, pen, this.store.data.pens);
-      pen.connectedLines?.forEach(({lineId})=>{
+      pen.connectedLines?.forEach(({ lineId }) => {
         const line = this.store.pens[lineId];
         calcWorldAnchors(line);
-      })
+      });
     }
   }
 
@@ -4533,7 +4535,7 @@ export class Canvas {
         y: pen.y,
         width: pen.width,
         height: pen.height,
-      }
+      };
     }
 
     return {
@@ -4554,7 +4556,8 @@ export class Canvas {
     // TODO: 目前背景颜色优先级更高
     const isDrawBkImg = containBkImg && !storeData.background && this.store.bkImg;
     // 主体在背景的右侧，下侧
-    let isRight = false, isBottom = false;
+    let isRight = false,
+      isBottom = false;
     if (isDrawBkImg) {
       rect.x += storeData.x;
       rect.y += storeData.y;
@@ -4570,7 +4573,7 @@ export class Canvas {
       isRight = rect.x === 0;
       isBottom = rect.y === 0;
     }
-    
+
     // 有背景图，也添加 padding
     const p = formatPadding(padding);
     rect.x -= p[3];
@@ -4601,7 +4604,7 @@ export class Canvas {
       ctx.translate(-rect.x, -rect.y);
     } else {
       // 平移画布，画笔的 worldRect 不变化
-      ctx.translate(isRight ? storeData.x: -oldRect.x, isBottom ? storeData.y: -oldRect.y);
+      ctx.translate(isRight ? storeData.x : -oldRect.x, isBottom ? storeData.y : -oldRect.y);
     }
     for (const pen of this.store.data.pens) {
       // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的

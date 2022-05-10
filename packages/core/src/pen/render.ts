@@ -275,7 +275,7 @@ export function drawIcon(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderin
   ctx.font = getFont({
     fontSize,
     fontWeight,
-    fontFamily
+    fontFamily,
   });
   ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
 
@@ -300,7 +300,7 @@ export function getFont({
   fontWeight = 'normal',
   fontSize = 12,
   fontFamily = 'Arial',
-  lineHeight = 1  // TODO: lineHeight 默认值待测试
+  lineHeight = 1, // TODO: lineHeight 默认值待测试
 }: {
   fontStyle?: string;
   textDecoration?: string;
@@ -936,10 +936,10 @@ export function calcWorldRects(pen: Pen) {
     rect.width = parentRect.width * pen.width;
     rect.height = parentRect.height * pen.height;
     if (parent.flipX) {
-      rect.x = parentRect.width - ((rect.x - parentRect.x) + rect.width) + parentRect.x;
+      rect.x = parentRect.width - (rect.x - parentRect.x + rect.width) + parentRect.x;
     }
     if (parent.flipY) {
-      rect.y = parentRect.height - ((rect.y - parentRect.y) + rect.height) + parentRect.y;
+      rect.y = parentRect.height - (rect.y - parentRect.y + rect.height) + parentRect.y;
     }
 
     calcExy(rect);
@@ -1371,20 +1371,26 @@ export function setNodeAnimate(pen: Pen, now: number) {
       pen.calculative.y = pen.calculative.initRect.y;
       pen.calculative.rotate = pen.calculative.initRect.rotate || 0;
 
+      pen.lastFrame = {};
+      const frame = pen.frames[frameIndex - 1];
+      for (const k in frame) {
+        pen.lastFrame[k] = frame[k];
+      }
+
       if (frameIndex > 0) {
-        pen.lastFrame = {
+        Object.assign(pen.lastFrame, {
           rotate: pen.frames[frameIndex - 1].rotate || 0,
           x: pen.frames[frameIndex - 1].x || 0,
           y: pen.frames[frameIndex - 1].y || 0,
           scale: pen.frames[frameIndex - 1].scale || 1,
-        };
+        });
       } else {
-        pen.lastFrame = {
+        Object.assign(pen.lastFrame, {
           rotate: 0,
           x: 0,
           y: 0,
           scale: 1,
-        };
+        });
       }
     }
   }
@@ -1421,11 +1427,18 @@ export function setNodeAnimate(pen: Pen, now: number) {
         pen.calculative.rotate = (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
         pen.calculative.dirty = true;
       } else if (isLinear(frame[k], k, pen)) {
-        if (!pen.lastFrame[k]) {
-          pen.lastFrame[k] = 0;
+        if (pen.lastFrame[k] == null) {
+          if (k === 'globalAlpha') {
+            pen.lastFrame[k] = 1;
+          } else {
+            pen.lastFrame[k] = 0;
+          }
         }
+
         const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
         pen.calculative[k] = Math.round(current * 100) / 100;
+
+        console.log(123123, pen.lastFrame[k], current);
       } else {
         pen.calculative[k] = frame[k];
       }
@@ -1533,7 +1546,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
   if (pen.locked || store.data.locked) {
-    // TODO: gif 组合后成子节点 locked = 2 导致可选择 dom 无法拖拽 
+    // TODO: gif 组合后成子节点 locked = 2 导致可选择 dom 无法拖拽
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
   } else {
@@ -1543,7 +1556,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
 }
 
 /**
- * 每个画笔 locked 
+ * 每个画笔 locked
  * @param pens 画笔
  * @returns
  */
@@ -1614,10 +1627,10 @@ export function isShowChild(pen: Pen, store: TopologyStore) {
 export function calcInView(pen: Pen, calcChild = false) {
   const { store, canvasRect } = pen.calculative.canvas as Canvas;
   if (calcChild) {
-    pen.children?.forEach(id => {
+    pen.children?.forEach((id) => {
       const child = store.pens[id];
       child && calcInView(child, true);
-    })
+    });
   }
 
   pen.calculative.inView = true;
