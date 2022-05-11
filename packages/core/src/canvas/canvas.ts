@@ -3679,11 +3679,7 @@ export class Canvas {
     if (penConnection) {
       penConnection.anchor = newAnchor.id;
     } else {
-      pen.connectedLines.push({
-        lineId: line.id,
-        lineAnchor: lineAnchor.id,
-        anchor: newAnchor.id,
-      });
+      connectLine(pen, line.id, lineAnchor.id, newAnchor.id);
     }
 
     if (this[line.lineName]) {
@@ -4749,6 +4745,9 @@ export class Canvas {
 
   toggleAnchorMode() {
     if (!this.hotkeyType) {
+      if (this.store.options.disableAnchor || this.store.hover?.disableAnchor) {
+        return;
+      }
       this.hotkeyType = HotkeyType.AddAnchor;
       if (this.store.hover) {
         this.externalElements.style.cursor = 'pointer';
