@@ -875,7 +875,7 @@ export class Canvas {
             Math.hypot(this.touches[0].pageX - this.touches[1].pageX, this.touches[0].pageY - this.touches[1].pageY);
         event.preventDefault();
         this.scale(this.touchScale * scale, deepClone(this.touchCenter));
-      } 
+      }
       // else if (len === 3) {
       //   // 三指不阻止默认行为，也不做任何处理
       //   // this.translate(x, y);
@@ -1627,16 +1627,14 @@ export class Canvas {
 
     if (this.dragRect) {
       const pens = this.store.data.pens.filter((pen) => {
-        if (pen.visible === false ||
-          pen.locked === LockState.Disable ||
-          pen.parentId) {
+        if (pen.visible === false || pen.locked === LockState.Disable || pen.parentId) {
           return false;
         }
         if (rectInRect(pen.calculative.worldRect, this.dragRect, this.store.options.dragAllIn)) {
           // 先判断在区域内，若不在区域内，则锚点肯定不在框选区域内，避免每条连线过度计算
           if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
             return lineInRect(pen, this.dragRect);
-          } 
+          }
           return true;
         }
       });
@@ -3663,7 +3661,7 @@ export class Canvas {
         }
         pen.calculative.worldRect = pen.calculative.initRect;
       }
-      this.dirtyPenRect(pen, { worldRectIsReady: !pen.keepAnimateState });
+      this.dirtyPenRect(pen, { worldRectIsReady: true });
       if (pen.calculative.text !== pen.text) {
         pen.calculative.text = pen.text;
         calcTextLines(pen);
@@ -4394,7 +4392,7 @@ export class Canvas {
     });
   }
 
-  findOne(idOrTag: string): Pen | undefined{
+  findOne(idOrTag: string): Pen | undefined {
     return this.store.data.pens.find((pen) => {
       return pen.id == idOrTag || (pen.tags && pen.tags.indexOf(idOrTag) > -1);
     });

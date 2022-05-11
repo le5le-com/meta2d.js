@@ -211,7 +211,7 @@ export class Topology {
       img.onload = () => {
         // 用作 toPng 的绘制
         this.store.bkImg = img;
-      }
+      };
     } else {
       this.store.bkImg = null;
     }
@@ -663,7 +663,7 @@ export class Topology {
       child.locked = LockState.None;
       child.calculative.active = undefined;
       child.calculative.hover = false;
-      this.setVisible(child, true);   // 子节点的 visible 属性已经改变，需要恢复
+      this.setVisible(child, true); // 子节点的 visible 属性已经改变，需要恢复
     });
     const step = pen.name === 'combine' ? 3 : 2;
     this.pushHistory({
@@ -1043,9 +1043,10 @@ export class Topology {
     const updatePens: Pen[] = [];
     children.forEach((pen) => {
       let oldPen: Pen = deepClone(pen, true);
-      if (!pen.id || !this.store.pens[pen.id]) {  // 不存在于 store 中
+      if (!pen.id || !this.store.pens[pen.id]) {
+        // 不存在于 store 中
         this.canvas.makePen(pen);
-        oldPen = null;  // 添加操作
+        oldPen = null; // 添加操作
       }
       if (pen.parentId) {
         const oldParent = this.store.pens[pen.parentId];
@@ -1081,7 +1082,7 @@ export class Topology {
       initPens: initUpdatePens,
       pens: updatePens,
       step,
-    })
+    });
   }
 
   renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
@@ -1444,16 +1445,16 @@ export class Topology {
    */
   top(pen: Pen, pens: Pen[] = this.store.data.pens) {
     // 获取它包含它的子节点
-    const allIds = [...getAllChildren(pen, this.store), pen].map(p => p.id);
-    const allPens = pens.filter(p => allIds.includes(p.id));
-    allPens.forEach(pen => {
+    const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
+    const allPens = pens.filter((p) => allIds.includes(p.id));
+    allPens.forEach((pen) => {
       const index = pens.findIndex((p: Pen) => p.id === pen.id);
       if (index > -1) {
         pens.push(pens[index]);
         pens.splice(index, 1);
         this.needInitStatus([pen]);
       }
-    })
+    });
   }
 
   /**
@@ -1469,8 +1470,8 @@ export class Topology {
    * 该画笔置底，即放到数组最前，最后绘制即在底部
    */
   bottom(pen: Pen, pens: Pen[] = this.store.data.pens) {
-    const allIds = [...getAllChildren(pen, this.store), pen].map(p => p.id);
-    const allPens = pens.filter(p => allIds.includes(p.id));
+    const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
+    const allPens = pens.filter((p) => allIds.includes(p.id));
     // 从后往前，保证 allPens 顺序不变
     for (let i = allPens.length - 1; i >= 0; i--) {
       const pen = allPens[i];
@@ -1613,7 +1614,7 @@ export class Topology {
   }
 
   /**
-   * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件 
+   * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件
    * @param pens 画笔数组
    * @param showChild 是否作为状态复用（参考 combine showChild）
    * @returns 组合图形
@@ -1665,7 +1666,7 @@ export class Topology {
       // pen.type = PenType.Node;
     });
 
-    return oneIsParent ? deepClone(components): deepClone([parent, ...components]);
+    return oneIsParent ? deepClone(components) : deepClone([parent, ...components]);
   }
 
   setVisible(pen: Pen, visible: boolean) {
