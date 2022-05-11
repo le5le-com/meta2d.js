@@ -1296,6 +1296,8 @@ export function setNodeAnimate(pen: Pen, now: number) {
     // 播放结束
     if (cycleCount > pen.animateCycle) {
       pen.calculative.start = undefined;
+      setNodeAnimateProcess(pen, 1);
+      pen.calculative.initRect = deepClone(pen.calculative.worldRect);
       return 0;
     }
 
@@ -1356,6 +1358,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
     }
   }
 
+<<<<<<< HEAD
   const frame = pen.frames[pen.calculative.frameIndex];
   let process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
   if (process > 0) {
@@ -1409,8 +1412,72 @@ export function setNodeAnimate(pen: Pen, now: number) {
       }
     }
   }
+=======
+  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
+  setNodeAnimateProcess(pen, process);
+>>>>>>> 30150a4 (fix bug: #62)
 
   return true;
+}
+
+// 根据process进度值（纯小数），计算节点动画属性
+export function setNodeAnimateProcess(pen: Pen, process: number) {
+  if (process < 0) {
+    return;
+  }
+
+  if (process > 1) {
+    process = 1;
+  }
+
+  const frame = pen.frames[pen.calculative.frameIndex];
+  for (const k in frame) {
+    if (k === 'duration') {
+      continue;
+    } else if (k === 'scale') {
+      pen.calculative.worldRect = deepClone(pen.calculative.initRect);
+      scaleRect(pen.calculative.worldRect, pen.lastFrame.scale, pen.calculative.worldRect.center);
+      const newScale = pen.lastFrame.scale + (frame[k] - pen.lastFrame.scale) * process;
+      scaleRect(pen.calculative.worldRect, newScale / pen.lastFrame.scale, pen.calculative.worldRect.center);
+      pen.calculative.dirty = true;
+    } else if (k === 'x') {
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
+      pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
+      translateRect(pen.calculative.worldRect, frame[k] * process, 0);
+      pen.calculative.dirty = true;
+    } else if (k === 'y') {
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
+      pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
+      translateRect(pen.calculative.worldRect, 0, frame[k] * process);
+      pen.calculative.dirty = true;
+    } else if (k === 'rotate') {
+      if (pen.lastFrame[k] >= 360) {
+        pen.lastFrame[k] %= 360;
+      }
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      pen.calculative.rotate = (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
+      pen.calculative.dirty = true;
+    } else if (isLinear(frame[k], k, pen)) {
+      if (pen.lastFrame[k] == null) {
+        if (k === 'globalAlpha') {
+          pen.lastFrame[k] = 1;
+        } else {
+          pen.lastFrame[k] = 0;
+        }
+      }
+
+      const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
+      pen.calculative[k] = Math.round(current * 100) / 100;
+    } else {
+      pen.calculative[k] = frame[k];
+    }
+
+    if (k === 'text') {
+      calcTextLines(pen);
+    }
+  }
 }
 
 /**
