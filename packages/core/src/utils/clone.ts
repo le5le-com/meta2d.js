@@ -18,7 +18,7 @@ export function deepClone<T>(o: T, keepCalc = false): T {
       return o;
     }
     const _o: any = {};
-    for (let key in o) {
+    for (const key in o) {
       if (
         ['canvas', 'lastFrame'].includes(key) ||
         o[key] instanceof HTMLImageElement ||

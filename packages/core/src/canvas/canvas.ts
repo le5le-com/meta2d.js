@@ -3340,7 +3340,7 @@ export class Canvas {
       return;
     }
     if (!this.initPens) {
-      this.initPens = deepClone(this.store.active);
+      this.initPens = deepClone(this.store.active, true);
     }
 
     if (this.store.activeAnchor) {
@@ -3388,6 +3388,8 @@ export class Canvas {
     }
 
     const line = this.store.active[0];
+    // 移动线锚点，折线自动计算关闭
+    line.lineName === 'polyline' && (line.autoPolyline = false);
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
     this.render(Infinity);
@@ -3397,7 +3399,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.store.active);
+      const currentPens = deepClone(this.store.active, true);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
