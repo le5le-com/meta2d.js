@@ -39,8 +39,8 @@ import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
 import { Map } from './map';
-// TODO: 这种引入方式 webpack 5 报错
-// import { MqttClient } from 'mqtt';
+// TODO: 这种引入方式，引入 connect， webpack 5 报错
+import { MqttClient } from 'mqtt';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
@@ -50,7 +50,7 @@ export class Topology {
   store: TopologyStore;
   canvas: Canvas;
   websocket: WebSocket;
-  mqttClient: any;
+  mqttClient: MqttClient;
   socketFn: Function;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: Map;
@@ -785,6 +785,8 @@ export class Topology {
     if (this.store.data.websocket) {
       this.websocket = new WebSocket(this.store.data.websocket);
       this.websocket.onmessage = (e) => {
+        // TODO: 目前只支持 string 类型的数据
+        // ws 本身还支持 Blob 和 ArrayBuffer 的
         this.doSocket(e.data);
       };
 
@@ -825,7 +827,7 @@ export class Topology {
       }
 
       this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
-      this.mqttClient.on('message', (topic: string, message: any) => {
+      this.mqttClient.on('message', (topic: string, message: Buffer) => {
         this.doSocket(message.toString());
       });
 
@@ -860,19 +862,17 @@ export class Topology {
     this.httpTimer = undefined;
   }
 
-  doSocket(message: any) {
+  doSocket(message: string) {
     if (this.socketFn) {
       this.socketFn(message);
       return;
     }
 
     try {
-      message = JSON.parse(message);
-      if (!Array.isArray(message)) {
-        message = [message];
-      }
-      message.forEach((item: any) => {
-        this.setValue(item, { willRender: false });
+      const messageObj = JSON.parse(message);
+      const values: SetValue[] = !Array.isArray(messageObj) ? [messageObj] : messageObj;
+      values.forEach(value => {
+        this.setValue(value, { willRender: false });
       });
       this.render(Infinity);
     } catch (error) {
@@ -931,7 +931,7 @@ export class Topology {
       case 'add':
         {
           e.forEach((pen: Pen) => {
-            pen.onAdd && pen.onAdd(pen);
+            pen.onAdd?.(pen);
           });
         }
         this.onSizeUpdate();

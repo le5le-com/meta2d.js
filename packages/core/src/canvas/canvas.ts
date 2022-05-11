@@ -318,7 +318,7 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
-    const target: any = e.target;
+    const target: HTMLElement = e.target;
     // TODO: 若遇到其它 dom 的滚动影响了画布缩放，需要设置 noWheel 属性
     if (target?.dataset.noWheel) {
       return;
