@@ -128,8 +128,16 @@ function beforeValue(pen: Pen, value: ChartData) {
   // 2. 特殊处理
   let x = value.dataX;
   let y = value.dataY;
+  const series: { data: any[] }[] = echarts.option.series;
   // 确认有几条线，即多折线的场景
-  const length = echarts.option.series.length;
+  const length = series.length;
+  const xAxis = echarts.option.xAxis;
+  if (Array.isArray(xAxis) && xAxis.length > 1) {
+    // 多 x 轴不考虑
+    console.warn('echarts 只支持单 x 轴，多 x 轴将被忽略');
+  }
+  // 单 x 轴
+  const oneXAxis: { data: any[] } = Array.isArray(xAxis) ? xAxis[0] : xAxis;
   if (!value.overwrite) {
     // 追加数据
     if (x) {
@@ -137,7 +145,7 @@ function beforeValue(pen: Pen, value: ChartData) {
       if (!Array.isArray(x)) {
         x = [x];
       }
-      const xData: any[] = echarts.option.xAxis.data;
+      const xData = oneXAxis.data;
       xData.push(...x);
       // 删除开头的多余数据
       xData.splice(0, xData.length - max);
@@ -148,13 +156,13 @@ function beforeValue(pen: Pen, value: ChartData) {
         if (!Array.isArray(y)) {
           y = [y];
         }
-        const yData: any[] = echarts.option.series[0].data;
+        const yData: any[] = series[0].data;
         yData.push(...y);
         // 删除开头的多余数据
         yData.splice(0, yData.length - max);
       } else {
         // 多条线
-        echarts.option.series.forEach((serie, index: number) => {
+        series.forEach((serie, index: number) => {
           if (!Array.isArray(y[index])) {
             y[index] = [y[index]];
           }
@@ -168,22 +176,16 @@ function beforeValue(pen: Pen, value: ChartData) {
   } else {
     // 替换数据
     if (x) {
-      echarts.option.xAxis.data = x;
-      echarts.option.xAxis.data.splice(
-        0,
-        echarts.option.xAxis.data.length - max
-      );
+      oneXAxis.data = x;
+      oneXAxis.data.splice(0, oneXAxis.data.length - max);
     }
     if (y) {
       if (length === 1) {
-        echarts.option.series[0].data = y;
-        echarts.option.series[0].data.splice(
-          0,
-          echarts.option.series[0].data.length - max
-        );
+        series[0].data = y;
+        series[0].data.splice(0, series[0].data.length - max);
       } else {
         // 多条线
-        echarts.option.series.forEach((serie, index: number) => {
+        series.forEach((serie, index: number) => {
           serie.data = y[index];
           serie.data.splice(0, serie.data.length - max);
         });
