@@ -1,4 +1,4 @@
-import { ctxFlip, ctxRotate, drawImage, Pen } from '../pen';
+import { ctxFlip, ctxRotate, drawImage, Pen, setGlobalAlpha } from '../pen';
 import { TopologyStore } from '../store';
 import { rgba } from '../utils';
 import { createOffscreen } from './offscreen';
@@ -134,6 +134,7 @@ export class CanvasImage {
           ctxRotate(ctx, pen);
         }
 
+        setGlobalAlpha(ctx, pen);
         drawImage(ctx, pen);
         ctx.restore();
       }
@@ -155,6 +156,7 @@ export class CanvasImage {
           ctxRotate(ctx, pen);
         }
 
+        setGlobalAlpha(ctx, pen);
         drawImage(ctx, pen);
         ctx.restore();
       }
