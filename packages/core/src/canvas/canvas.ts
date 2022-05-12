@@ -318,7 +318,7 @@ export class Canvas {
   }
 
   onwheel = (e: any) => {
-    const target: any = e.target;
+    const target: HTMLElement = e.target;
     // TODO: 若遇到其它 dom 的滚动影响了画布缩放，需要设置 noWheel 属性
     if (target?.dataset.noWheel) {
       return;
@@ -3338,7 +3338,7 @@ export class Canvas {
       return;
     }
     if (!this.initPens) {
-      this.initPens = deepClone(this.store.active);
+      this.initPens = deepClone(this.store.active, true);
     }
 
     if (this.store.activeAnchor) {
@@ -3386,6 +3386,8 @@ export class Canvas {
     }
 
     const line = this.store.active[0];
+    // 移动线锚点，折线自动计算关闭
+    line.lineName === 'polyline' && (line.autoPolyline = false);
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
     this.render(Infinity);
@@ -3395,7 +3397,7 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.store.active);
+      const currentPens = deepClone(this.store.active, true);
       this.pushHistory({
         type: EditType.Update,
         pens: currentPens,
@@ -3613,11 +3615,7 @@ export class Canvas {
     if (penConnection) {
       penConnection.anchor = newAnchor.id;
     } else {
-      pen.connectedLines.push({
-        lineId: line.id,
-        lineAnchor: lineAnchor.id,
-        anchor: newAnchor.id,
-      });
+      connectLine(pen, line.id, lineAnchor.id, newAnchor.id);
     }
 
     if (this[line.lineName]) {
@@ -4654,6 +4652,9 @@ export class Canvas {
 
   toggleAnchorMode() {
     if (!this.hotkeyType) {
+      if (this.store.options.disableAnchor || this.store.hover?.disableAnchor) {
+        return;
+      }
       this.hotkeyType = HotkeyType.AddAnchor;
       if (this.store.hover) {
         this.externalElements.style.cursor = 'pointer';

@@ -380,7 +380,8 @@ export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRendering
 }
 
 export function ctxRotate(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
-  ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
+  const { x, y } = pen.calculative.worldRect.center;
+  ctx.translate(x, y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
   // 目前只有水平和垂直翻转，都需要 * -1
   if (pen.calculative.flipX) {
@@ -389,7 +390,7 @@ export function ctxRotate(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
     rotate *= -1;
   }
   ctx.rotate(rotate);
-  ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
+  ctx.translate(-x, -y);
 }
 
 export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
@@ -480,9 +481,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.lineJoin = 'round';
   }
 
-  if (pen.calculative.globalAlpha < 1) {
-    ctx.globalAlpha = pen.calculative.globalAlpha;
-  }
+  setGlobalAlpha(ctx, pen);
 
   if (pen.calculative.lineDash) {
     ctx.setLineDash(pen.calculative.lineDash);
@@ -692,9 +691,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.lineJoin = 'round';
   }
 
-  if (pen.calculative.globalAlpha < 1) {
-    ctx.globalAlpha = pen.calculative.globalAlpha;
-  }
+  setGlobalAlpha(ctx, pen);
 
   if (pen.calculative.lineDash) {
     ctx.setLineDash(pen.calculative.lineDash);
@@ -1172,7 +1169,11 @@ export function deleteTempAnchor(pen: Pen) {
   }
 }
 
-// 添加line到pen的connectedLines中，并关联相关属性
+/**
+ * 添加line到pen的connectedLines中，并关联相关属性
+ * 不添加连线到画布中，请确保画布中已经有该连线。  
+ * 不改动 line.anchors 中的 connectTo 和 anchorId ，请手动更改
+ * */
 export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
   if (!pen || !lineId || !lineAnchor || !anchor) {
     return;
@@ -1632,5 +1633,12 @@ function inspectRect(ctx: CanvasRenderingContext2D, store: TopologyStore, pen: P
     const { x, y, width, height } = pen.calculative.worldTextRect;
     ctx.fillRect(x, y, width, height);
     ctx.restore();
+  }
+}
+
+export function setGlobalAlpha(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+  const globalAlpha = pen.calculative.globalAlpha;
+  if (globalAlpha < 1) {
+    ctx.globalAlpha = globalAlpha;
   }
 }

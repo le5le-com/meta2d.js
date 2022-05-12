@@ -218,7 +218,7 @@ function parseCommands(type: string, path: string, cursor: number): { cursor: nu
 }
 
 function calcWorldPoints(command: SvgCommand, previous: SvgCommand) {
-  const worldPoints: any[] = [];
+  const worldPoints: number[] = [];
   let current = command.relative && previous ? {
     x: previous.worldPoints[previous.worldPoints.length - 2],
     y: previous.worldPoints[previous.worldPoints.length - 1]
