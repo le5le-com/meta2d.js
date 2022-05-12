@@ -1,84 +1,46 @@
 import { Pen } from '../../core/src/pen';
-export function simpleClass(pen: Pen) {
+export function simpleClass(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if (!pen.onDestroy) {
     pen.onDestroy = onDestroy;
     pen.onAdd = onAdd;
   }
-  const path = new Path2D();
-  if (!pen.calculative.borderRadius) {
-    pen.calculative.borderRadius = 0;
-  }
-  let wr = pen.calculative.borderRadius;
-  let hr = pen.calculative.borderRadius;
-  if (pen.calculative.borderRadius < 1) {
-    wr = pen.calculative.worldRect.width * pen.calculative.borderRadius;
-    hr = pen.calculative.worldRect.height * pen.calculative.borderRadius;
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height, ex } = pen.calculative.worldRect;
+  let wr = pen.calculative.borderRadius || 0,
+    hr = wr;
+  if (wr < 1) {
+    wr = width * wr;
+    hr = height * hr;
   }
   let r = wr < hr ? wr : hr;
-  if (pen.calculative.worldRect.width < 2 * r) {
-    r = pen.calculative.worldRect.width / 2;
+  if (width < 2 * r) {
+    r = width / 2;
   }
-  if (pen.calculative.worldRect.height < 2 * r) {
-    r = pen.calculative.worldRect.height / 2;
+  if (height < 2 * r) {
+    r = height / 2;
   }
-  path.moveTo(pen.calculative.worldRect.x + r, pen.calculative.worldRect.y);
-  path.arcTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height,
-    r
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height - r
-  );
-  path.arcTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height,
-    r
-  );
-  path.arcTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    r
-  );
-  path.arcTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y,
-    r
-  );
-  const topHeight = 0.2 * pen.calculative.worldRect.height;
-  path.moveTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + topHeight
-  );
-  path.lineTo(
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.y + topHeight
-  );
+  path.moveTo(x + r, y);
+  path.arcTo(x + width, y, x + width, y + height, r);
+  path.lineTo(x + width, y + height - r);
+  path.arcTo(x + width, y + height, x, y + height, r);
+  path.arcTo(x, y + height, x, y, r);
+  path.arcTo(x, y, x + width, y, r);
+  const topHeight = 0.2 * height;
+  path.moveTo(x, y + topHeight);
+  path.lineTo(ex, y + topHeight);
   path.closePath();
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
 function onAdd(pen: Pen) {
-  const x = pen.calculative.worldRect.x;
-  const y = pen.calculative.worldRect.y;
-  const w = pen.calculative.worldRect.width;
-  const h = pen.calculative.worldRect.height;
+  const { x, y, width, height } = pen.calculative.worldRect;
   const list: { text: string }[] = (pen as any).list;
   let childPen: Pen = {
     name: 'text',
     x: x,
-    y: y + 0.2 * h,
-    width: w,
-    height: 0.8 * h,
+    y: y + 0.2 * height,
+    width,
+    height: 0.8 * height,
     text: list[0].text,
     textAlign: 'left',
     textBaseline: 'top',
@@ -89,13 +51,12 @@ function onAdd(pen: Pen) {
   pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
 }
 function onDestroy(pen: Pen) {
+  const store = pen.calculative.canvas.store;
   pen.children.forEach((p) => {
-    const i = pen.calculative.canvas.parent.store.data.pens.findIndex(
-      (item) => item.id === p
-    );
+    const i = store.data.pens.findIndex((item) => item.id === p);
     if (i > -1) {
-      pen.calculative.canvas.parent.store.data.pens.splice(i, 1);
-      pen.calculative.canvas.parent.store.pens[p] = undefined;
+      store.data.pens.splice(i, 1);
+      store.pens[p] = undefined;
     }
   });
   pen.children = undefined;

@@ -1,16 +1,9 @@
 import { Pen } from '../../core/src/pen';
-export function focus(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-
-  path.rect(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.width,
-    pen.calculative.worldRect.height
-  );
+export function focus(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  path.rect(x, y, width, height);
 
   path.closePath();
-  return path;
+  if (path instanceof Path2D) return path;
 }
