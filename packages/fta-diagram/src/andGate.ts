@@ -1,12 +1,11 @@
-export function andGate(pen: any, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
+import { Pen, Point } from '@topology/core';
 
-  let myh = pen.calculative.worldRect.height / 6;
-  let myw = pen.calculative.worldRect.width / 4;
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
+export function andGate(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
+
+  const myh = height / 6;
+  const myw = width / 4;
   path.moveTo(x + myw * 2, y + 0);
   path.lineTo(x + myw * 2, y + myh);
   path.moveTo(x, y + myh + myw * 2);
@@ -28,12 +27,11 @@ export function andGate(pen: any, path?: CanvasRenderingContext2D | Path2D) {
   path.moveTo(x + myw * 3, y + myh * 5);
   path.lineTo(x + myw * 3, y + myh * 6);
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
-export function andGateAnchors(pen: any) {
-  const anchors: any[] = [];
+export function andGateAnchors(pen: Pen) {
+  const anchors: Point[] = [];
   anchors.push({
     id: '0',
     penId: pen.id,

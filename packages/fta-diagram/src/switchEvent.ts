@@ -1,15 +1,11 @@
-export function switchEvent(
-  pen: any,
-  path?: CanvasRenderingContext2D | Path2D
-) {
-  if (!path) {
-    path = new Path2D();
-  }
+import { Pen } from '@topology/core';
 
-  let myh = pen.calculative.worldRect.height / 4;
-  let myw = 0.5 * pen.calculative.worldRect.width;
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
+export function switchEvent(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+
+  const { x, y, width, height } = pen.calculative.worldRect;
+  const myh = height / 4;
+  const myw = 0.5 * width;
   path.moveTo(x + myw, y);
   path.lineTo(x + myw, y + myh);
   path.lineTo(x + myw * 2, y + myh * 2);
@@ -19,5 +15,5 @@ export function switchEvent(
   path.lineTo(x + myw, y + myh);
   path.closePath();
 
-  return path;
+  if (path instanceof Path2D) return path;
 }
