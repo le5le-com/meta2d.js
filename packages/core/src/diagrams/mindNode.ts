@@ -1,13 +1,13 @@
 import { calcWorldAnchors, Pen, Point } from '@topology/core';
 import { rectangle } from '.';
 
-export function mindNode(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!pen.onDestroy) {
+export function mindNode(pen: Pen, ctx?: CanvasRenderingContext2D) {
+  if (!pen.onResize) {
     pen.onResize = resize;
     pen.onValue = value;
   }
 
-  return rectangle(pen, path);
+  return rectangle(pen, ctx);
 }
 
 function resize(pen: Pen) {

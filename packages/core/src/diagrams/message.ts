@@ -1,37 +1,17 @@
 import { Pen } from '../pen';
 
-export function message(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
+export function message(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height, ey } = pen.calculative.worldRect;
 
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y);
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 3) / 4
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width * 8) / 16,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 3) / 4
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 4,
-    pen.calculative.worldRect.ey
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width * 5) / 16,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 3) / 4
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 3) / 4
-  );
+  path.moveTo(x, y);
+  path.lineTo(x + width, y);
+  path.lineTo(x + width, y + (height * 3) / 4);
+  path.lineTo(x + (width * 8) / 16, y + (height * 3) / 4);
+  path.lineTo(x + width / 4, ey);
+  path.lineTo(x + (width * 5) / 16, y + (height * 3) / 4);
+  path.lineTo(x, y + (height * 3) / 4);
 
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }

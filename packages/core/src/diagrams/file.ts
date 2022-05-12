@@ -1,21 +1,19 @@
 import { Pen } from '../pen';
 
-export function file(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-  const offsetX = pen.calculative.worldRect.width / 6;
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y);
-  path.lineTo(pen.calculative.worldRect.ex - offsetX, pen.calculative.worldRect.y);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + offsetX);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.ey);
-  path.lineTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey);
+export function file(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, ex, ey } = pen.calculative.worldRect;
+  const offsetX = width / 6;
+  path.moveTo(x, y);
+  path.lineTo(ex - offsetX, y);
+  path.lineTo(ex, y + offsetX);
+  path.lineTo(ex, ey);
+  path.lineTo(x, ey);
   path.closePath();
-  path.moveTo(pen.calculative.worldRect.ex - offsetX, pen.calculative.worldRect.y);
-  path.lineTo(pen.calculative.worldRect.ex - offsetX, pen.calculative.worldRect.y + offsetX);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + offsetX);
+  path.moveTo(ex - offsetX, y);
+  path.lineTo(ex - offsetX, y + offsetX);
+  path.lineTo(ex, y + offsetX);
 
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }

@@ -1,114 +1,50 @@
 import { Pen } from '../pen';
 
-export function leftArrow(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
+export function leftArrow(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
 
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2);
-  path.lineTo(pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2, pen.calculative.worldRect.y);
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 2) / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 2) / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 2) / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height
-  );
+  path.moveTo(x, y + height / 2);
+  path.lineTo(x + height / 2, y);
+  path.lineTo(x + height / 2, y + height / 3);
+  path.lineTo(x + width, y + height / 3);
+  path.lineTo(x + width, y + (height * 2) / 3);
+  path.lineTo(x + height / 2, y + (height * 2) / 3);
+  path.lineTo(x + height / 2, y + (height * 2) / 3);
+  path.lineTo(x + height / 2, y + height);
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
-export function rightArrow(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.height / 3);
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 2) / 3
-  );
-  path.lineTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 2) / 3);
+export function rightArrow(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  path.moveTo(x, y + height / 3);
+  path.lineTo(x + (width - height / 2), y + height / 3);
+  path.lineTo(x + (width - height / 2), y);
+  path.lineTo(x + width, y + height / 2);
+  path.lineTo(x + (width - height / 2), y + height);
+  path.lineTo(x + (width - height / 2), y + (height * 2) / 3);
+  path.lineTo(x, y + (height * 2) / 3);
 
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
-export function twowayArrow(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
+export function twowayArrow(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
 
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2);
-  path.lineTo(pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2, pen.calculative.worldRect.y);
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width - pen.calculative.worldRect.height / 2),
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 2) / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 2) / 3
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height
-  );
+  path.moveTo(x, y + height / 2);
+  path.lineTo(x + height / 2, y);
+  path.lineTo(x + height / 2, y + height / 3);
+  path.lineTo(x + (width - height / 2), y + height / 3);
+  path.lineTo(x + (width - height / 2), y);
+  path.lineTo(x + width, y + height / 2);
+  path.lineTo(x + (width - height / 2), y + height);
+  path.lineTo(x + (width - height / 2), y + (height * 2) / 3);
+  path.lineTo(x + height / 2, y + (height * 2) / 3);
+  path.lineTo(x + height / 2, y + height);
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }

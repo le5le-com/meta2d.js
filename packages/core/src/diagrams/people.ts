@@ -1,25 +1,23 @@
 import { Pen } from '../pen';
 
-export function people(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-  const r = pen.calculative.worldRect.width / 4;
-  const middle = pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
-  path.arc(middle, pen.calculative.worldRect.y + r, r, 0, Math.PI * 2);
+export function people(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, ex, ey } = pen.calculative.worldRect;
+  const r = width / 4;
+  const middle = x + width / 2;
+  path.arc(middle, y + r, r, 0, Math.PI * 2);
 
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + r * 3);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + r * 3);
+  path.moveTo(x, y + r * 3);
+  path.lineTo(ex, y + r * 3);
 
-  path.moveTo(middle, pen.calculative.worldRect.y + r * 2);
-  path.lineTo(middle, pen.calculative.worldRect.y + r * 4);
+  path.moveTo(middle, y + r * 2);
+  path.lineTo(middle, y + r * 4);
 
-  path.moveTo(middle, pen.calculative.worldRect.y + r * 4);
-  path.lineTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey);
+  path.moveTo(middle, y + r * 4);
+  path.lineTo(x, ey);
 
-  path.moveTo(middle, pen.calculative.worldRect.y + r * 4);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.ey);
+  path.moveTo(middle, y + r * 4);
+  path.lineTo(ex, ey);
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }
