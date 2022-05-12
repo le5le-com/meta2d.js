@@ -1,36 +1,20 @@
 import { Pen } from '../../core/src/pen';
-export function flowDisplay(
-  pen: Pen,
-  path?: CanvasRenderingContext2D | Path2D
-) {
-  if (!path) {
-    path = new Path2D();
-  }
-  const offsetX = pen.calculative.worldRect.width / 8;
-  path.moveTo(
-    pen.calculative.worldRect.x + offsetX,
-    pen.calculative.worldRect.y
-  );
-  path.lineTo(
-    pen.calculative.worldRect.ex - offsetX,
-    pen.calculative.worldRect.y
-  );
+export function flowDisplay(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
+  const offsetX = width / 8;
+  path.moveTo(x + offsetX, y);
+  path.lineTo(ex - offsetX, y);
   path.bezierCurveTo(
-    pen.calculative.worldRect.ex + offsetX / 3,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.ex + offsetX / 3,
-    pen.calculative.worldRect.ey,
-    pen.calculative.worldRect.ex - offsetX,
-    pen.calculative.worldRect.ey
+    ex + offsetX / 3,
+    y,
+    ex + offsetX / 3,
+    ey,
+    ex - offsetX,
+    ey
   );
-  path.lineTo(
-    pen.calculative.worldRect.x + offsetX,
-    pen.calculative.worldRect.ey
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2
-  );
+  path.lineTo(x + offsetX, ey);
+  path.lineTo(x, y + height / 2);
   path.closePath();
-  return path;
+  if (path instanceof Path2D) return path;
 }
