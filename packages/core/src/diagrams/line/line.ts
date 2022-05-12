@@ -4,13 +4,15 @@ import { getRectOfPoints, pointInSimpleRect, Rect } from '../../rect';
 import { TopologyStore } from '../../store';
 import { getBezierPoint, getQuadraticPoint } from './curve';
 
-export function line(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-  if (pen.calculative.worldAnchors.length > 1) {
+export function line(
+  pen: Pen,
+  ctx?: CanvasRenderingContext2D | Path2D
+): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const worldAnchors = pen.calculative.worldAnchors;
+  if (worldAnchors.length > 1) {
     let from: Point; // 上一个点
-    pen.calculative.worldAnchors.forEach((pt: Point) => {
+    worldAnchors.forEach((pt: Point) => {
       if (from) {
         draw(path, from, pt);
       } else {
@@ -19,10 +21,10 @@ export function line(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
       from = pt;
     });
     if (pen.close) {
-      draw(path, from, pen.calculative.worldAnchors[0]);
+      draw(path, from, worldAnchors[0]);
     }
   }
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
 export function lineSegment(store: TopologyStore, pen: Pen, mousedwon?: Point) {

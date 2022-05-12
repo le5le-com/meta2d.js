@@ -1,23 +1,17 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
 
-export function pentagram(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!pen.onDestroy) {
+export function pentagram(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  if (!pen.onResize) {
     pen.onResize = resize;
   }
+  const path = !ctx ? new Path2D() : ctx;
+  const { width, height, center } = pen.calculative.worldRect;
 
-  if (!path) {
-    path = new Path2D();
-  }
-
-  const r =
-    pen.calculative.worldRect.width > pen.calculative.worldRect.height
-      ? pen.calculative.worldRect.height
-      : pen.calculative.worldRect.width;
-  const centerx =
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2; //旋转中心点
-  const centery =
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2;
+  const r = width > height ? height : width;
+  //旋转中心点
+  const centerx = center.x;
+  const centery = center.y;
   const basey = centery - r / 2;
   const baseyi = centery - r / 4;
 
@@ -25,6 +19,7 @@ export function pentagram(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
   const ly = (baseyi - centery) * Math.cos((Math.PI / 180) * 324) + centery;
   path.moveTo(lx, ly);
   for (let i = 0; i < 5; ++i) {
+    // TODO: Math.sin Math.cos 考虑优化下
     path.lineTo(
       -(basey - centery) * Math.sin((Math.PI / 180) * 72 * i) + centerx,
       (basey - centery) * Math.cos((Math.PI / 180) * 72 * i) + centery
@@ -39,8 +34,7 @@ export function pentagram(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
     );
   }
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
 export function pentagramAnchors(pen: Pen) {
@@ -51,7 +45,7 @@ export function pentagramAnchors(pen: Pen) {
 
   for (let i = 0; i < 5; ++i) {
     anchors.push({
-      flag: 1,    // 默认锚点
+      flag: 1, // 默认锚点
       id: String(i),
       penId: pen.id,
       x: 0.5 + ((r / 2) * Math.sin((Math.PI / 180) * 72 * i)) / width,

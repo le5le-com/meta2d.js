@@ -51,7 +51,7 @@ export class Topology {
   canvas: Canvas;
   websocket: WebSocket;
   mqttClient: MqttClient;
-  socketFn: Function;
+  socketFn: (e: string) => void;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: Map;
   mapTimer: NodeJS.Timeout;
@@ -429,7 +429,7 @@ export class Topology {
     return this;
   }
 
-  register(path2dFns: { [key: string]: (pen: Pen) => void }) {
+  register(path2dFns: { [key: string]: (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D }) {
     register(path2dFns);
   }
 
@@ -768,7 +768,7 @@ export class Topology {
       if (!socketFn) {
         return false;
       }
-      this.socketFn = socketFn;
+      this.socketFn = socketFn as (e: string) => void;
     } catch (e) {
       console.error('Create the function for socket:', e);
       return false;
