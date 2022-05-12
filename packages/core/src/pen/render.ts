@@ -1293,7 +1293,6 @@ export function setNodeAnimate(pen: Pen, now: number) {
     if (cycleCount > pen.animateCycle) {
       pen.calculative.start = undefined;
       setNodeAnimateProcess(pen, 1);
-      pen.calculative.initRect = deepClone(pen.calculative.worldRect);
       return 0;
     }
 
@@ -1384,13 +1383,13 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
       pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
       pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
-      translateRect(pen.calculative.worldRect, frame[k] * process, 0);
+      translateRect(pen.calculative.worldRect, frame[k] * process * pen.calculative.canvas.store.data.scale, 0);
       pen.calculative.dirty = true;
     } else if (k === 'y') {
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
       pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
       pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
-      translateRect(pen.calculative.worldRect, 0, frame[k] * process);
+      translateRect(pen.calculative.worldRect, 0, frame[k] * process * pen.calculative.canvas.store.data.scale);
       pen.calculative.dirty = true;
     } else if (k === 'rotate') {
       if (pen.lastFrame[k] >= 360) {
