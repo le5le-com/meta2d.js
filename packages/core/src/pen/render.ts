@@ -1200,6 +1200,10 @@ export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor
   }
 }
 
+/**
+ * 从 pen.connectedLines 中删除 lineId 和 lineAnchor
+ * 不改动 line.anchors 中的 connectTo 和 anchorId ，请手动更改
+ */
 export function disconnectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
   if (!pen || !lineId || !lineAnchor || !anchor) {
     return;
