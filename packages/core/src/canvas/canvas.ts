@@ -3705,7 +3705,11 @@ export class Canvas {
             k !== 'initRect' &&
             (typeof pen[k] !== 'object' || k === 'lineDash')
           ) {
-            pen[k] = pen.calculative[k];
+            if (k === 'fontSize') {
+              pen[k] = pen.calculative[k] / pen.calculative.canvas.store.data.scale;
+            } else {
+              pen[k] = pen.calculative[k];
+            }
           }
         }
       } else {
