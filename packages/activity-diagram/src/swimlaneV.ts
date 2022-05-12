@@ -1,60 +1,32 @@
 import { Pen } from '../../core/src/pen';
-export function swimlaneV(pen: Pen): Path2D {
-  const path = new Path2D();
+export function swimlaneV(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height, ex } = pen.calculative.worldRect;
 
-  if (!pen.calculative.borderRadius) {
-    pen.calculative.borderRadius = 0;
-  }
-  const worldRect = pen.calculative.worldRect;
-
-  let wr = pen.calculative.borderRadius;
-  let hr = pen.calculative.borderRadius;
-  if (pen.calculative.borderRadius < 1) {
-    wr = worldRect.width * pen.calculative.borderRadius;
-    hr = worldRect.height * pen.calculative.borderRadius;
+  let wr = pen.calculative.borderRadius || 0,
+    hr = wr;
+  if (wr < 1) {
+    wr = width * wr;
+    hr = height * hr;
   }
   let r = wr < hr ? wr : hr;
-  if (worldRect.width < 2 * r) {
-    r = worldRect.width / 2;
+  if (width < 2 * r) {
+    r = width / 2;
   }
-  if (worldRect.height < 2 * r) {
-    r = worldRect.height / 2;
+  if (height < 2 * r) {
+    r = height / 2;
   }
 
-  path.moveTo(worldRect.x + r, worldRect.y);
-  path.arcTo(
-    worldRect.x + worldRect.width,
-    worldRect.y,
-    worldRect.x + worldRect.width,
-    worldRect.y + worldRect.height,
-    r
-  );
-  path.arcTo(
-    worldRect.x + worldRect.width,
-    worldRect.y + worldRect.height,
-    worldRect.x,
-    worldRect.y + worldRect.height,
-    r
-  );
-  path.arcTo(
-    worldRect.x,
-    worldRect.y + worldRect.height,
-    worldRect.x,
-    worldRect.y,
-    r
-  );
-  path.arcTo(
-    worldRect.x,
-    worldRect.y,
-    worldRect.x + worldRect.width,
-    worldRect.y,
-    r
-  );
+  path.moveTo(x + r, y);
+  path.arcTo(x + width, y, x + width, y + height, r);
+  path.arcTo(x + width, y + height, x, y + height, r);
+  path.arcTo(x, y + height, x, y, r);
+  path.arcTo(x, y, x + width, y, r);
   path.closePath();
 
   //   40 肯定是不合理的，TODO: 该处用高度的部分值
-  path.moveTo(worldRect.x, worldRect.y + 0.1 * worldRect.height);
-  path.lineTo(worldRect.ex, worldRect.y + 0.1 * worldRect.height);
+  path.moveTo(x, y + 0.1 * height);
+  path.lineTo(ex, y + 0.1 * height);
 
-  return path;
+  if (path instanceof Path2D) return path;
 }
