@@ -1,13 +1,16 @@
+import { Pen } from '@topology/core';
+import { rectangle } from '@topology/core/src/diagrams';
 import { activityFinal } from './final';
-// TODO: 该图形像个矩形，考虑删除
-import { fork } from './fork';
 import { swimlaneH } from './swimlaneH';
 import { swimlaneV } from './swimlaneV';
 
-export function activityDiagram() {
+export function activityDiagram(): Record<
+  string,
+  (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D
+> {
   return {
-    forkV: fork,
-    forkH: fork,
+    forkV: rectangle,
+    forkH: rectangle,
     swimlaneH,
     swimlaneV,
   };
