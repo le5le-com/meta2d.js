@@ -1,32 +1,22 @@
-export function basicEvent(pen: any, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
+import { Pen, Point } from '@topology/core';
 
-  let vlineL =
-    pen.calculative.worldRect.height - pen.calculative.worldRect.width;
-  let radius = 0.5 * pen.calculative.worldRect.width;
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
-  path.moveTo(x + pen.calculative.worldRect.width / 2, y);
-  path.lineTo(x + pen.calculative.worldRect.width / 2, y + vlineL);
-  path.moveTo(x + pen.calculative.worldRect.width, y + radius + vlineL);
-  path.arc(
-    x + pen.calculative.worldRect.width / 2,
-    y + radius + vlineL,
-    radius,
-    0,
-    Math.PI * 2,
-    false
-  );
+export function basicEvent(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  const vlineL = height - width;
+  const radius = 0.5 * width;
+  path.moveTo(x + width / 2, y);
+  path.lineTo(x + width / 2, y + vlineL);
+  path.moveTo(x + width, y + radius + vlineL);
+  path.arc(x + width / 2, y + radius + vlineL, radius, 0, Math.PI * 2, false);
 
   path.closePath();
 
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
-export function basicEventAnchors(pen: any) {
-  const anchors: any[] = [];
+export function basicEventAnchors(pen: Pen) {
+  const anchors: Point[] = [];
   anchors.push({
     id: '0',
     penId: pen.id,
@@ -35,7 +25,7 @@ export function basicEventAnchors(pen: any) {
   });
 
   anchors.push({
-    id: '2',
+    id: '1',
     penId: pen.id,
     x: 0.5,
     y: 1,

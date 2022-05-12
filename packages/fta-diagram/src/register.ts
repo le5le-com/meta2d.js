@@ -1,3 +1,4 @@
+import { Pen } from '@topology/core';
 import { andGate, andGateAnchors } from './andGate';
 import { basicEvent, basicEventAnchors } from './basicEvent';
 import { conditionalEvent, conditionalEventAnchors } from './conditionalEvent';
@@ -11,7 +12,10 @@ import { unexpandedEvent, unexpandedEventAnchors } from './unexpandedEvent';
 import { votingGate } from './votingGate';
 import { xorGate, xorGateAnchors } from './xorGate';
 
-export function ftaPens() {
+export function ftaPens(): Record<
+  string,
+  (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D
+> {
   return {
     andGate,
     basicEvent,
