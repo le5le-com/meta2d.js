@@ -1,26 +1,14 @@
 import { Point } from '@topology/core';
 import { Pen } from '../../core/src/pen';
-export function flowComment(
-  pen: Pen,
-  path?: CanvasRenderingContext2D | Path2D
-) {
-  if (!path) {
-    path = new Path2D();
-  }
-
-  const offsetX = pen.calculative.worldRect.width / 4;
-  path.moveTo(
-    pen.calculative.worldRect.x + offsetX,
-    pen.calculative.worldRect.y
-  );
-  path.lineTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y);
-  path.lineTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey);
-  path.lineTo(
-    pen.calculative.worldRect.x + offsetX,
-    pen.calculative.worldRect.ey
-  );
-
-  return path;
+export function flowComment(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, ey } = pen.calculative.worldRect;
+  const offsetX = width / 4;
+  path.moveTo(x + offsetX, y);
+  path.lineTo(x, y);
+  path.lineTo(x, ey);
+  path.lineTo(x + offsetX, ey);
+  if (path instanceof Path2D) return path;
 }
 
 export function flowCommentAnchors(pen: Pen) {
@@ -40,7 +28,7 @@ export function flowCommentAnchors(pen: Pen) {
   });
 
   anchors.push({
-    id: '1',
+    id: '2',
     penId: pen.id,
     x: 0,
     y: 0.5,

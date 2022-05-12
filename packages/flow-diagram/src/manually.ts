@@ -1,22 +1,15 @@
 import { Point } from '@topology/core/src/point';
 import { Pen } from '../../core/src/pen';
-export function flowManually(
-  pen: Pen,
-  path?: CanvasRenderingContext2D | Path2D
-) {
-  if (!path) {
-    path = new Path2D();
-  }
-  const offsetY = pen.calculative.worldRect.height / 4;
-  path.moveTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + offsetY
-  );
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.ey);
-  path.lineTo(pen.calculative.worldRect.x, pen.calculative.worldRect.ey);
+export function flowManually(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, height, ex, ey } = pen.calculative.worldRect;
+  const offsetY = height / 4;
+  path.moveTo(x, y + offsetY);
+  path.lineTo(ex, y);
+  path.lineTo(ex, ey);
+  path.lineTo(x, ey);
   path.closePath();
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
 export function flowManuallyAnchors(pen: Pen) {

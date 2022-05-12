@@ -1,3 +1,4 @@
+import { Pen } from '@topology/core';
 import { flowComment, flowCommentAnchors } from './comment';
 import { flowData } from './data';
 import { flowDb } from './db';
@@ -10,7 +11,10 @@ import { flowParallel, flowParallelAnchors } from './parallel';
 import { flowQueue } from './queue';
 import { flowSubprocess } from './subprocess';
 
-export function flowPens() {
+export function flowPens(): Record<
+  string,
+  (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D
+> {
   return {
     flowComment,
     flowData,

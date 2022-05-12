@@ -1,37 +1,32 @@
 import { Point } from '@topology/core';
 import { Pen } from '../../core/src/pen';
-export function flowDocument(
-  pen: Pen,
-  path?: CanvasRenderingContext2D | Path2D
-) {
-  if (!path) {
-    path = new Path2D();
-  }
-  const x = pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
-  const y =
-    pen.calculative.worldRect.y + (pen.calculative.worldRect.height * 6) / 7;
-  const offsetY = pen.calculative.worldRect.height / 6;
-  path.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y);
-  path.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y);
-  path.lineTo(pen.calculative.worldRect.ex, y);
+export function flowDocument(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height, ex, center } = pen.calculative.worldRect;
+  const centerX = center.x;
+  const rightBottomY = y + (height * 6) / 7;
+  const offsetY = height / 6;
+  path.moveTo(x, y);
+  path.lineTo(ex, y);
+  path.lineTo(ex, rightBottomY);
   path.bezierCurveTo(
-    pen.calculative.worldRect.ex - 20,
-    y - offsetY,
-    x + pen.calculative.worldRect.width / 5,
-    y - offsetY,
-    x,
-    y
+    ex - 20,
+    rightBottomY - offsetY,
+    centerX + width / 5,
+    rightBottomY - offsetY,
+    centerX,
+    rightBottomY
   );
   path.bezierCurveTo(
-    x - pen.calculative.worldRect.width / 5,
-    y + offsetY,
-    pen.calculative.worldRect.x,
-    y + offsetY,
-    pen.calculative.worldRect.x,
-    y
+    centerX - width / 5,
+    rightBottomY + offsetY,
+    x,
+    rightBottomY + offsetY,
+    x,
+    rightBottomY
   );
   path.closePath();
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
 export function flowDocumentAnchors(pen: Pen) {
