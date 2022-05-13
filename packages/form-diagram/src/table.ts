@@ -8,8 +8,12 @@ export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
 import { calcExy } from "@topology/core";
 
 export function table(ctx: CanvasRenderingContext2D, pen: any) {
+<<<<<<< HEAD
 >>>>>>> 99df05d (canvasRect not calc again; use calcExy method)
   if (!pen.onDestroy) {
+=======
+  if (!pen.onAdd) {
+>>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onAdd = onAdd;
     pen.onMouseMove = onMouseMove;
     pen.onMouseLeave = onMouseLeave;
@@ -34,8 +38,6 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
 
   // 画单元格
   drawCell(ctx, pen);
-
-  return false;
 }
 
 function initRect(pen: formPen) {

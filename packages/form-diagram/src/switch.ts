@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 import { formPen } from './common';
 
 export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onDestroy) {
+=======
+export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
+  if (!pen.onClick) {
+>>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onClick = click;
   }
   let x = pen.calculative.worldRect.x;
@@ -46,7 +51,6 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
     ctx.fill();
   }
   ctx.closePath();
-  return false;
 }
 
 function click(pen: formPen) {

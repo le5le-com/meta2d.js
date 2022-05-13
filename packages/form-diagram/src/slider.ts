@@ -7,8 +7,12 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
 import { calcExy } from "@topology/core";
 
 export function slider(ctx: CanvasRenderingContext2D, pen: any) {
+<<<<<<< HEAD
 >>>>>>> 99df05d (canvasRect not calc again; use calcExy method)
   if (!pen.onDestroy) {
+=======
+  if (!pen.onAdd) {
+>>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onAdd = initRect;
     pen.onResize = initRect;
     pen.onMouseMove = mouseMove;
@@ -63,8 +67,6 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.arc(x, y, pen.calculative.ballRect.width / 2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-
-  return false;
 }
 
 function initRect(pen: formPen) {

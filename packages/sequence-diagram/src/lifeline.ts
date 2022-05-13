@@ -35,5 +35,4 @@ export function lifeline(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.closePath();
   ctx.stroke();
   ctx.restore();
-  return false;
 }

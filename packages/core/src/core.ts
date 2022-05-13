@@ -433,7 +433,7 @@ export class Topology {
     register(path2dFns);
   }
 
-  registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: Pen) => void }) {
+  registerCanvasDraw(drawFns: { [key: string]: (ctx: CanvasRenderingContext2D, pen: Pen) => void }) {
     registerCanvasDraw(drawFns);
   }
 

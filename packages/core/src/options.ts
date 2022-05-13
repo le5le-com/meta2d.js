@@ -67,8 +67,8 @@ export interface Options {
   scroll?: boolean;
   uploadFn?: (file: File) => Promise<string>; // uploadFn 优先级最高
   uploadUrl?: string;
-  uploadParams?: object;
-  uploadHeaders?: { [key: string]: string };
+  uploadParams?: Record<string, any>;
+  uploadHeaders?: Record<string, string>;
   disableRuleLine?: boolean;
   ruleLineColor?: string;
   defaultAnchors?: Point[]; // 图形的默认瞄点
