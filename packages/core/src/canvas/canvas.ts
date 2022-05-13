@@ -2374,7 +2374,8 @@ export class Canvas {
             this.store.data.pens.splice(i, 1);
             this.store.pens[pen.id] = undefined;
             pen.calculative.canvas = this;
-            pen.onDestroy && pen.onDestroy(pen);
+            this.store.animates.delete(pen);
+            pen.onDestroy?.(pen);
           }
         });
         action.type = EditType.Delete;
@@ -3911,7 +3912,7 @@ export class Canvas {
       this.animateRendering = true;
       const dels: Pen[] = [];
       let active = false;
-      for (let pen of this.store.animates) {
+      for (const pen of this.store.animates) {
         if (pen.calculative.pause) {
           continue;
         }
@@ -4166,7 +4167,8 @@ export class Canvas {
         this.store.data.pens.splice(i, 1);
         this.store.pens[pen.id] = undefined;
       }
-      pen.onDestroy && pen.onDestroy(pen);
+      this.store.animates.delete(pen);
+      pen.onDestroy?.(pen);
       if (Array.isArray(pen.children)) {
         const sonPens = pen.children.map((id) => this.store.pens[id]);
         this.delete(sonPens, true, delLock); // 递归删除子节点
