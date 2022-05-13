@@ -592,11 +592,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
   }
 
-  if (globalStore.canvasDraws[pen.name]) {
-    ctx.save();
-    globalStore.canvasDraws[pen.name](ctx, pen, store);
-    ctx.restore();
-  }
+  ctxDrawCanvas(ctx, pen);
 
   if (!(pen.image && pen.calculative.img) && pen.calculative.icon) {
     drawIcon(ctx, pen);
@@ -616,9 +612,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   }
 
   // for canvas2svg
-  if ((ctx as any).setAttrs) {
-    (ctx as any).setAttrs(pen);
-  }
+  (ctx as any).setAttrs?.(pen);
   // end
 
   ctx.beginPath();
@@ -756,14 +750,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     }
   }
 
-  if (globalStore.canvasDraws[pen.name]) {
-    ctx.save();
-    const ret = globalStore.canvasDraws[pen.name](ctx, pen, store);
-    ctx.restore();
-    if (ret) {
-      return;
-    }
-  }
+  ctxDrawCanvas(ctx, pen);
 
   // renderPenRaw 用在 downloadPng svg , echarts 等图形需要
   if (pen.calculative.img) {
@@ -1644,5 +1631,21 @@ export function setGlobalAlpha(ctx: CanvasRenderingContext2D | OffscreenCanvasRe
   const globalAlpha = pen.calculative.globalAlpha;
   if (globalAlpha < 1) {
     ctx.globalAlpha = globalAlpha;
+  }
+}
+
+/**
+ * ctx 绘制图纸，并非 Path2D
+ * @param ctx 画布上下文
+ * @param pen 画笔
+ */
+function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const canvasDraw = globalStore.canvasDraws[pen.name];
+  if (canvasDraw) {
+    // TODO: 后续考虑优化 save / restore
+    ctx.save();
+    // TODO: 原有 return 终止后续操作，必要性不大
+    canvasDraw(ctx, pen);
+    ctx.restore();
   }
 }

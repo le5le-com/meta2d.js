@@ -1,5 +1,5 @@
 //饼状图
-export function pieChart(ctx: CanvasRenderingContext2D, pen: any) {
+export function pieChart(ctx: CanvasRenderingContext2D, pen: any): void {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
@@ -46,7 +46,7 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: any) {
         parseFloat(isEcharts ? series.radius[1] : pen.chartsRadius[ser][1])) /
       100;
     if (fromR > toR) {
-      return false;
+      return;
     }
     let beforeAngle = 0;
     let afterAngle = 0;
@@ -155,5 +155,4 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: any) {
 
     beforeSeriesLength += data.length;
   }
-  return false;
 }

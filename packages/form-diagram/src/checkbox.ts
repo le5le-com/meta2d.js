@@ -1,7 +1,7 @@
 import { getTextLength, initOptions } from './common';
 
 export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
-  if (!pen.onDestroy) {
+  if (!pen.onAdd) {
     pen.onAdd = onAdd;
     pen.onMouseDown = onMousedown;
     pen.onValue = onValue;
@@ -153,7 +153,6 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
       ctx.restore();
     }
   }
-  return false;
 }
 
 function onAdd(pen: any) {

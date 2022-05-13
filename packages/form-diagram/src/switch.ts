@@ -1,5 +1,5 @@
 export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
-  if (!pen.onDestroy) {
+  if (!pen.onClick) {
     pen.onClick = click;
   }
   let x = pen.calculative.worldRect.x;
@@ -44,7 +44,6 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
     ctx.fill();
   }
   ctx.closePath();
-  return false;
 }
 
 function click(pen: any) {

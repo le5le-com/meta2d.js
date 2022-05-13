@@ -1,7 +1,7 @@
 import { calcExy } from "@topology/core";
 
 export function table(ctx: CanvasRenderingContext2D, pen: any) {
-  if (!pen.onDestroy) {
+  if (!pen.onAdd) {
     pen.onAdd = onAdd;
     pen.onMouseMove = onMouseMove;
     pen.onMouseLeave = onMouseLeave;
@@ -26,8 +26,6 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
 
   // 画单元格
   drawCell(ctx, pen);
-
-  return false;
 }
 
 function initRect(pen: any) {
