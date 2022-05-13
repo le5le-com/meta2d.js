@@ -4,13 +4,15 @@ export const videos: {
   [id: string]: HTMLDivElement;
 } = {};
 export function video(pen: Pen) {
-  pen.onDestroy = destory;
-  pen.onMove = move;
-  pen.onResize = move;
-  pen.onRotate = move;
-  pen.onClick = click;
-  pen.onValue = move;
-  pen.onChangeId = changeId;
+  if (!pen.onDestroy) {
+    pen.onDestroy = destory;
+    pen.onMove = move;
+    pen.onResize = move;
+    pen.onRotate = move;
+    pen.onClick = click;
+    pen.onValue = move;
+    pen.onChangeId = changeId;
+  }
 
   if (!videos[pen.id]) {
     const player = document.createElement('div');

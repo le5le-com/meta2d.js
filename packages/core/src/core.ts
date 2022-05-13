@@ -254,7 +254,7 @@ export class Topology {
 
   open(data?: TopologyData) {
     for (const pen of this.store.data.pens) {
-      pen.onDestroy && pen.onDestroy(pen);
+      pen.onDestroy?.(pen);
     }
 
     clearStore(this.store);
@@ -550,6 +550,7 @@ export class Topology {
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
     });
+    this.needInitStatus(pens);
     setTimeout(() => {
       this.canvas.calcActiveRect();
       this.render(Infinity);
@@ -1694,7 +1695,7 @@ export class Topology {
 
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
-      pen.onDestroy && pen.onDestroy(pen);
+      pen.onDestroy?.(pen);
     }
     this.closeSocket();
     clearStore(this.store);
