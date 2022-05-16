@@ -1,7 +1,7 @@
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
-import { calcExy } from "@topology/core";
+import { calcExy } from '@topology/core';
 
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -265,7 +265,7 @@ function onAdd(pen: formPen) {
   initRect(pen);
 }
 
-function onShowInput(pen: any, text: string) {
+function onShowInput(pen: any, e: Point) {
   // 没有活动单元格
   if (!pen.calculative.hoverCell) {
     return;

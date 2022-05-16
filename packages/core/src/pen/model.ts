@@ -69,13 +69,18 @@ export const needDirtyPenRectProps = [
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
-export interface ConnectLine { lineId: string; lineAnchor: string; anchor: string }
+export interface ConnectLine {
+  lineId: string;
+  lineAnchor: string;
+  anchor: string;
+}
 
 export type TextAlign = 'left' | 'center' | 'right';
 export type TextBaseline = 'top' | 'middle' | 'bottom';
 export type WhiteSpace = 'nowrap' | 'pre-line' | 'break-all' | '';
 // SetValue 方法参数类型
-export type SetValue = Pen & Partial<Record<'tag' | 'newId', string>> & {[key: string]: any};
+export type SetValue = Pen &
+  Partial<Record<'tag' | 'newId', string>> & { [key: string]: any };
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -356,7 +361,7 @@ export interface Pen extends Rect {
     pencil?: boolean;
     activeAnchor?: Point;
     dirty?: boolean;
-    visible?: boolean;   // TODO: visible 是否参与动画呢？
+    visible?: boolean; // TODO: visible 是否参与动画呢？
     // 仅仅内部专用
     inView?: boolean;
     // 辅助变量，画线时，动态计算锚点是否时水平方向
@@ -427,7 +432,7 @@ export interface Pen extends Rect {
   onMouseDown?: (pen: Pen, e: Point) => void;
   onMouseMove?: (pen: Pen, e: Point) => void;
   onMouseUp?: (pen: Pen, e: Point) => void;
-  onShowInput?: (pen: Pen, text: string) => void;
+  onShowInput?: (pen: Pen, e: Point) => void;
   onInput?: (pen: Pen, text: string) => void;
   onChangeId?: (pen: Pen, oldId: string, newId: string) => void;
 }
