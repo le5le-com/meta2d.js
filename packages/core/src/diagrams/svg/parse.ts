@@ -35,7 +35,7 @@ const grammar: { [key: string]: RegExp[]; } = {
 
 export function parseSvgPath(path: string): SvgPath {
   let cursor = 0;
-  let commands: any[] = [];
+  const commands: SvgCommand[] = [];
   while (cursor < path.length) {
     const match = path.slice(cursor).match(commandRegex);
     if (match !== null) {

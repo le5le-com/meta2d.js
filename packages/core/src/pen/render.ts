@@ -1413,7 +1413,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
  * @param pen 画笔
  * @returns
  */
-function isLinear(value: any, key: string, pen: Pen): boolean {
+function isLinear(value: unknown, key: string, pen: Pen): boolean {
   // 不线性变化的属性
   const noLinear = ['strokeType', 'bkType'];
   return typeof value === 'number' && pen.linear !== false && !noLinear.includes(key);
