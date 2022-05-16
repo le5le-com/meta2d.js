@@ -81,6 +81,10 @@ export type WhiteSpace = 'nowrap' | 'pre-line' | 'break-all' | '';
 // SetValue 方法参数类型
 export type SetValue = Pen &
   Partial<Record<'tag' | 'newId', string>> & { [key: string]: any };
+
+// obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
+// string 类型，只展示文字
+export type Dropdown = string | { text: string; [key: string]: any };
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -239,8 +243,7 @@ export interface Pen extends Rect {
   animateList?: Pen[][];
 
   input?: boolean;
-  dropdownList?: any[]; // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
-  // string 类型数组，只展示文字
+  dropdownList?: Dropdown[];
 
   events?: Event[];
 
@@ -395,7 +398,6 @@ export interface Pen extends Rect {
     pause?: number;
 
     layer?: number;
-    dropdownList?: any[];
 
     canvas?: Canvas;
 
