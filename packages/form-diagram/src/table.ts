@@ -1,4 +1,8 @@
-export function table(ctx: CanvasRenderingContext2D, pen: any) {
+import { formPen } from './common';
+import { Point } from '../../core/src/point';
+import { Rect } from '../../core/src/rect';
+
+export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onDestroy) {
     pen.onAdd = onAdd;
     pen.onMouseMove = onMouseMove;
@@ -28,7 +32,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   return false;
 }
 
-function initRect(pen: any) {
+function initRect(pen: formPen) {
   const colPos = [];
   const rowPos = [];
 
@@ -78,7 +82,7 @@ function initRect(pen: any) {
   }
 }
 
-function drawGridLine(ctx: CanvasRenderingContext2D, pen: any) {
+function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.colPos) {
     return;
   }
@@ -124,7 +128,7 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.restore();
 }
 
-function drawCell(ctx: CanvasRenderingContext2D, pen: any) {
+function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.colPos) {
     return;
   }
@@ -259,7 +263,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: any) {
 }
 
 // 添加table节点回调
-function onAdd(pen: any) {
+function onAdd(pen: formPen) {
   initRect(pen);
 }
 
@@ -291,7 +295,7 @@ function onShowInput(pen: any, text: string) {
 }
 
 //将输入的数据写入到对应的data中
-function onInput(pen: any, text: string) {
+function onInput(pen: formPen, text: string) {
   if (!pen.calculative.inputCell) {
     return;
   }
@@ -305,23 +309,23 @@ function onInput(pen: any, text: string) {
   pen.calculative.canvas.render(Infinity);
 }
 
-function onMouseMove(pen: any, e: any) {
+function onMouseMove(pen: formPen, e: Point) {
   pen.calculative.hoverCell = getCellIndex(pen, e);
   pen.calculative.canvas.render(Infinity);
 }
 
-function onMouseLeave(pen: any, e: any) {
+function onMouseLeave(pen: formPen, e: Point) {
   pen.calculative.hoverCell = undefined;
   pen.calculative.canvas.render(Infinity);
 }
 
-function onMouseDown(pen: any, e: any) {
+function onMouseDown(pen: formPen, e: Point) {
   pen.calculative.activeCell = getCellIndex(pen, e);
   pen.calculative.canvas.render(Infinity);
 }
 
 // 根据坐标，计算在哪个cell
-function getCellIndex(pen: any, e: any) {
+function getCellIndex(pen: formPen, e: Point) {
   const scaleX = pen.calculative.worldRect.width / pen.tableWidth;
   const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
 
@@ -342,7 +346,7 @@ function getCellIndex(pen: any, e: any) {
 }
 
 // 根据index获取cell
-function getCell(pen: any, rowIndex: number, colIndex: number) {
+function getCell(pen: formPen, rowIndex: number, colIndex: number) {
   if (!pen.table.data || !Array.isArray(pen.table.data)) {
     return;
   }
@@ -380,7 +384,7 @@ function getCell(pen: any, rowIndex: number, colIndex: number) {
 
 // 设置cell的文本
 function setCellText(
-  pen: any,
+  pen: formPen,
   rowIndex: number,
   colIndex: number,
   text: string
@@ -431,7 +435,7 @@ function setCellText(
 }
 
 // 计算cell世界坐标区域
-function getCellRect(pen: any, rowIndex: number, colIndex: number) {
+function getCellRect(pen: formPen, rowIndex: number, colIndex: number) {
   const scaleX = pen.calculative.worldRect.width / pen.tableWidth;
   const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
 
@@ -458,7 +462,7 @@ function getCellRect(pen: any, rowIndex: number, colIndex: number) {
 }
 
 // 计算cell子节点的世界坐标区域
-function calcChildrenRect(pen: any, rect: any, children: any) {
+function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
   const scaleX = pen.calculative.worldRect.width / pen.tableWidth;
   const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
 
