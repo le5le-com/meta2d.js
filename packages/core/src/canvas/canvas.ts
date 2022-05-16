@@ -318,8 +318,8 @@ export class Canvas {
     }
   }
 
-  onwheel = (e: any) => {
-    const target: HTMLElement = e.target;
+  onwheel = (e: WheelEvent) => {
+    const target = e.target as HTMLElement;
     // TODO: 若遇到其它 dom 的滚动影响了画布缩放，需要设置 noWheel 属性
     if (target?.dataset.noWheel) {
       return;
@@ -335,7 +335,8 @@ export class Canvas {
       return;
     }
     if (this.store.data.locked === LockState.Disable) return;
-    const isTouchPad = e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0;
+    // 触摸板平移
+    const isTouchPad = !(!e.deltaX && e.deltaY);
     const now = performance.now();
     if (now - this.touchStart < 50) {
       return;
@@ -347,7 +348,7 @@ export class Canvas {
     let y = e.y - (this.bounding.top || this.bounding.y);
 
     if (isTouchPad) {
-      this.translate(e.wheelDeltaX, e.wheelDeltaY);
+      this.translate(e.deltaX, e.deltaY);
     } else {
       if (e.deltaY < 0) {
         this.scale(this.store.data.scale + 0.1, { x, y });
