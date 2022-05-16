@@ -137,6 +137,7 @@ export class Canvas {
   pencilLine?: Pen;
 
   movingPens: Pen[];
+  private movingSuffix = '-moving' as const;
 
   dirtyLines?: Set<Pen> = new Set();
   dock: { xDock: Point; yDock: Point };
@@ -1766,9 +1767,6 @@ export class Canvas {
     // 鼠标松手才更新，此处是更新前的值
     const initPens = deepClone(this.store.active, true);
     this.store.active.forEach((pen, i: number) => {
-      if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
-        return;
-      }
       const { x, y } = this.movingPens[i];
       Object.assign(pen, {
         x,
@@ -3325,25 +3323,30 @@ export class Canvas {
     if (!this.movingPens) {
       this.movingPens = deepClone(this.store.active, true);
       const containChildPens = this.getAllByPens(this.movingPens);
-      // 只考虑父子关系，修改 id
-      const suffix = '-moving';
+      const copyContainChildPens = deepClone(containChildPens, true);
+      // 考虑父子关系，修改 id
       containChildPens.forEach((pen) => {
-        pen.id += suffix;
-        // TODO: ctrl + shift 移动子节点报错
-        pen.parentId && (pen.parentId += suffix);
+        pen.id += this.movingSuffix;
+        if (pen.parentId && copyContainChildPens.find((p) => p.id === pen.parentId)) {
+          pen.parentId += this.movingSuffix;
+        }
         if (pen.children) {
-          pen.children = pen.children.map((child) => child + suffix);
+          pen.children = pen.children.map((child) => child + this.movingSuffix);
         }
         // 连接关系也需要变，用在 updateLines 中
         if (pen.connectedLines) {
           pen.connectedLines = pen.connectedLines.map((line) => {
-            line.lineId += suffix;
+            if (copyContainChildPens.find((p) => p.id === line.lineId)) {
+              line.lineId += this.movingSuffix;
+            }
             return line;
           });
         }
         if (pen.type && pen.calculative.worldAnchors) {
           pen.calculative.worldAnchors = pen.calculative.worldAnchors.map((anchor) => {
-            anchor.connectTo && (anchor.connectTo += suffix);
+            if (anchor.connectTo && copyContainChildPens.find((p) => p.id === anchor.connectTo)) {
+              anchor.connectTo += this.movingSuffix;
+            }
             return anchor;
           });
         }
@@ -3599,34 +3602,61 @@ export class Canvas {
     });
   }
 
-  translatePens(pens: Pen[], x: number, y: number, doing?: boolean) {
-    if (
-      !pens ||
-      pens.length < 1 ||
-      (pens.length === 1 && pens[0].type && pens[0].anchors.findIndex((pt) => pt.connectTo) > -1)
-    ) {
-      return false;
+  /**
+   * 连线允许移动，若与其它图形有连接，但其它图形不在此次移动中，会断开连接
+   * @param line 连线
+   * @param pens 本次移动的全部图形，包含子节点
+   */
+  private notInDisconnect(line: Pen, pens: Pen[]) {
+    line.calculative.worldAnchors.forEach((anchor) => {
+      if (anchor.connectTo && !pens.find(p => p.id === anchor.connectTo)) {
+        const lineId = line.id.includes(this.movingSuffix) ? line.id.replace(this.movingSuffix, '') : line.id;
+        disconnectLine(this.store.pens[anchor.connectTo], lineId, anchor.id, anchor.anchorId);
+        anchor.connectTo = undefined;
+        anchor.anchorId = undefined;
+      }
+    });
+
+    // 线连接其它线的场景
+    if (Array.isArray(line.connectedLines)) {
+      for (let i = 0; i < line.connectedLines.length; i++) {
+        const { lineId, lineAnchor, anchor } = line.connectedLines[i];
+        if (!pens.find(p => p.id === lineId)) {
+          disconnectLine(line, lineId, lineAnchor, anchor);
+          const lineAnchorP = getAnchor(this.store.pens[lineId], lineAnchor);
+          lineAnchorP.connectTo = undefined;
+          lineAnchorP.anchorId = undefined;
+          // disconnectLine 改变了 line.connectedLines 长度，此处 -- 
+          i--;
+        }
+      }
+    }
+  }
+
+  /**
+   * 移动 画笔们
+   * @param pens 画笔们，不包含子节点
+   * @param x 偏移 x
+   * @param y 偏移 y
+   * @param doing 是否持续移动
+   */
+  translatePens(pens = this.store.active, x: number, y: number, doing?: boolean) {
+    if (!pens || !pens.length) {
+      return;
     }
 
-    if (!doing) {
-      this.initPens = deepClone(pens);
-    }
-
+    const initPens = !doing && deepClone(pens, true);
     translateRect(this.activeRect, x, y);
 
+    const containChildPens = this.getAllByPens(pens);
     pens.forEach((pen) => {
-      // TODO: 之前版本代码，不确定何种原因移除
-      if (!pen.parentId && pen.type && pen.anchors.findIndex((pt) => pt.connectTo) > -1) {
-        return;
-      }
-
       if (pen.locked >= LockState.DisableMove) {
-        // 禁止移动
         return;
       }
 
-      if (pen.type) {
+      if (pen.type === PenType.Line) {
         translateLine(pen, x, y);
+        this.notInDisconnect(pen, containChildPens);
         this.dirtyLines.add(pen);
         this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
       } else {
@@ -3642,8 +3672,8 @@ export class Canvas {
         }
         this.updateLines(pen);
       }
-      pen.onMove && pen.onMove(pen);
-    });
+      pen.onMove?.(pen);
+    })
     this.getSizeCPs();
 
     this.dirtyLines.forEach((pen) => {
@@ -3659,10 +3689,9 @@ export class Canvas {
       // 单次的移动需要记历史记录
       this.pushHistory({
         type: EditType.Update,
-        pens: deepClone(pens),
-        initPens: this.initPens,
+        pens: deepClone(pens, true),
+        initPens,
       });
-      this.initPens = undefined;
       this.needInitStatus(pens);
     }
   }
@@ -3750,7 +3779,8 @@ export class Canvas {
     }
     pen.connectedLines.forEach((item) => {
       const line = this.store.pens[item.lineId];
-      if (!line) {
+      // TODO: 活动层的线不需要更新，若出现问题需查
+      if (!line || line.calculative.active) {
         return;
       }
 
@@ -3780,8 +3810,8 @@ export class Canvas {
 
       translatePoint(lineAnchor, penAnchor.x - lineAnchor.x, penAnchor.y - lineAnchor.y);
       if ((line.autoPolyline ?? this.store.options.autoPolyline) && line.lineName === 'polyline') {
-        let from = line.calculative.worldAnchors[0];
-        let to = line.calculative.worldAnchors[line.calculative.worldAnchors.length - 1];
+        let from = getFromAnchor(line);
+        let to = getToAnchor(line);
 
         let found = false;
 
