@@ -1207,13 +1207,7 @@ export function getAnchor(pen: Pen, anchorId: string) {
     return;
   }
 
-  if (pen.calculative.worldAnchors) {
-    for (const item of pen.calculative.worldAnchors) {
-      if (item.id === anchorId) {
-        return item;
-      }
-    }
-  }
+  return pen.calculative.worldAnchors?.find((item) => item.id === anchorId);
 }
 
 export function getFromAnchor(pen: Pen) {
@@ -1229,6 +1223,7 @@ export function getToAnchor(pen: Pen) {
     return;
   }
 
+  // return pen.calculative.worldAnchors.at(-1);
   return pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
 }
 
