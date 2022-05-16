@@ -1,18 +1,19 @@
 import { Pen } from '../pen';
 
-export function circle(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
+export function circle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
   path.ellipse(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2,
-    pen.calculative.worldRect.width / 2,
-    pen.calculative.worldRect.height / 2,
+    x + width / 2,
+    y + height / 2,
+    width / 2,
+    height / 2,
     0,
     0,
     Math.PI * 2
   );
 
-  return path;
+  if (path instanceof Path2D) {
+    return path;
+  }
 }

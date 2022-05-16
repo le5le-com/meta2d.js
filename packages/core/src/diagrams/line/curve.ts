@@ -1,5 +1,5 @@
 import { Direction } from '../../data';
-import { facePen, Pen } from '../../pen';
+import { facePen, getToAnchor, Pen } from '../../pen';
 import { distance, Point, PrevNextType, rotatePoint } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
@@ -178,7 +178,7 @@ export function mind(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   }
 
   let from = pen.calculative.activeAnchor;
-  let to = mousedwon || pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+  let to = mousedwon || getToAnchor(pen);
   if (!from || !to) {
     return;
   }

@@ -5,22 +5,38 @@
  * @LastEditTime: 2021-10-13 14:05:59
 -->
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 // 测试本地使用
 // import { Topology } from "../../../../packages/core";
 import { register as registerEcharts } from "@topology/chart-diagram";
-import { Topology } from "@topology/core";
+import { Pen, Topology } from "@topology/core";
 
 onMounted(() => {
-  new Topology("topology");
+  const topology = new Topology("topology");
   registerEcharts();
+
+  // 监听消息
+  topology.on("showDialog", ({ pen }: { pen: Pen }) => {
+    currentPen.value = pen;
+
+    // vue 打开弹窗
+    visible.value = true;
+  });
 });
+
+const visible = ref(false);
+const currentPen = ref<Pen>({});
 </script>
 
 <template>
   <div class="main">
     <div class="topology" id="topology"></div>
   </div>
+
+  <a-modal v-model:visible="visible" :title="currentPen.text">
+    <p>{{ currentPen.name }}</p>
+    <p>{{ currentPen.text }}</p>
+  </a-modal>
 </template>
 
 <style scoped></style>

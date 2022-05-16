@@ -15,7 +15,9 @@
   ],
   "author": "alsmile123@qq.com",
   "peerDependencies": {
-    "@topology/core": "^1.0.0",
+    "@topology/core": "^1.0.0"
+  },
+  "dependencies": {
     "fast-xml-parser": "^4.0.1"
   },
   "publishConfig": {

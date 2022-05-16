@@ -1,15 +1,14 @@
-export function forbiddenGate(
-  pen: any,
-  path?: CanvasRenderingContext2D | Path2D
-) {
-  if (!path) {
-    path = new Path2D();
-  }
+import { Pen, Point } from '@topology/core';
 
-  let myh = pen.calculative.worldRect.height / 8;
-  let myw = 0.25 * pen.calculative.worldRect.width;
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
+export function forbiddenGate(
+  pen: Pen,
+  ctx?: CanvasRenderingContext2D
+): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
+
+  const myh = height / 8;
+  const myw = 0.25 * width;
   path.moveTo(x + myw * 2, y);
   path.lineTo(x + myw * 2, y + myh * 2);
   path.lineTo(x + myw * 3, y + myh * 3);
@@ -24,12 +23,11 @@ export function forbiddenGate(
   path.lineTo(x + myw * 2, y + myh * 8);
 
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
-export function forbiddenGateAnchors(pen: any) {
-  const anchors: any[] = [];
+export function forbiddenGateAnchors(pen: Pen) {
+  const anchors: Point[] = [];
   anchors.push({
     id: '0',
     penId: pen.id,

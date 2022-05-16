@@ -1,4 +1,5 @@
 import { Pen } from '../../core/src/pen';
+import { calcExy } from '@topology/core';
 export interface formPen extends Pen {
   optionPos?: any[];
   direction?: string;
@@ -66,11 +67,10 @@ export function initOptions(pen: any) {
     pen.calculative.worldRect = {
       x: pen.x,
       y: pen.y,
-      ex: pen.x + pen.width,
-      ey: pen.y + pen.height,
       height: pen.height,
       width: pen.width,
     };
+    calcExy(pen.calculative.worldRect);
   } else if (pen.direction == 'vertical') {
     if (!pen.optionInterval) {
       pen.optionInterval = 20;
@@ -91,11 +91,10 @@ export function initOptions(pen: any) {
       pen.calculative.worldRect = {
         x: pen.x,
         y: pen.y,
-        ex: pen.x + pen.width,
-        ey: pen.y + pen.height,
         height: pen.height,
         width: pen.width,
       };
+      calcExy(pen.calculative.worldRect);
     }
   }
 }

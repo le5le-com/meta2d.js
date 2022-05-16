@@ -114,3 +114,16 @@ i.iconfont {
 #topology {
   height: 100%;
 }
+
+.test-dialog {
+  width: 400px;
+  height: 200px;
+  border: 1px solid #ccc;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1890ff55;
+  z-index: 100;
+  display: none;
+}

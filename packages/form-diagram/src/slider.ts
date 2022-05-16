@@ -1,8 +1,9 @@
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
+import { calcExy } from '@topology/core';
 
 export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
-  if (!pen.onDestroy) {
+  if (!pen.onAdd) {
     pen.onAdd = initRect;
     pen.onResize = initRect;
     pen.onMouseMove = mouseMove;
@@ -57,8 +58,6 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.arc(x, y, pen.calculative.ballRect.width / 2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-
-  return false;
 }
 
 function initRect(pen: formPen) {
@@ -94,13 +93,10 @@ function initRect(pen: formPen) {
   pen.calculative.barRect = {
     x: 0,
     y: (pen.calculative.worldRect.height - pen.barHeight * scaleY) / 2,
-    ex: barWidth,
-    ey:
-      (pen.calculative.worldRect.height - pen.barHeight * scaleY) / 2 +
-      pen.barHeight * scaleY,
     width: barWidth,
     height: pen.barHeight * scaleY,
   };
+  calcExy(pen.calculative.barRect);
 
   calcBallRect(pen);
 }
@@ -111,11 +107,10 @@ function calcBallRect(pen: formPen) {
   pen.calculative.ballRect = {
     x: progress,
     y: (pen.calculative.worldRect.height - height) / 2,
-    ex: progress + height,
-    ey: (pen.calculative.worldRect.height - height) / 2 + height,
     width: height,
     height,
   };
+  calcExy(pen.calculative.ballRect);
 
   pen.calculative.text = pen.value + pen.unit;
   pen.calculative.canvas.parent.calcTextRect(pen);

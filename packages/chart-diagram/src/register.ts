@@ -1,9 +1,9 @@
-import { register as topologyRegister } from '@topology/core';
+import { register as topologyRegister, Topology } from '@topology/core';
 
 import { echarts, echartsList } from './echarts';
 import { highcharts, highchartsList } from './highcharts';
 import { lightningCharts, lightningChartsList } from './LightningChart';
-declare const topology: any;
+declare const topology: Topology;
 declare const window: Window;
 
 export function register(_echarts?: any) {
@@ -22,7 +22,7 @@ export function register(_echarts?: any) {
 }
 
 export function registerHighcharts(_highcharts?: any) {
-  highchartsList.hightcharts = _highcharts;
+  highchartsList.highcharts = _highcharts;
   if (!highchartsList.highcharts && !(window as any).Highcharts) {
     const loaderScript = document.createElement('script');
     loaderScript.type = 'text/javascript';

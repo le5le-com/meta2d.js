@@ -1,10 +1,11 @@
+import { TopologyStore } from './../store/store';
 import { Pen } from '../pen';
 import { calcCenter } from '../rect';
-import { globalStore } from '../store';
 import { getRect, parseSvgPath, pathToString, scalePath, translatePath } from './svg/parse';
 
-export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D | Path2D) {
-  const pathText = globalStore.paths[pen.pathId];
+export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const store: TopologyStore = pen.calculative.canvas.store;
+  const pathText = store.data.paths[pen.pathId];
   if (!pathText) {
     return new Path2D();
   }
@@ -30,8 +31,8 @@ export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D | Path2D) {
 
   const pathStr = pathToString(path);
   if (ctx) {
-    (ctx as any).svgPath && (ctx as any).svgPath(pathStr);
-    return ctx;
+    (ctx as any).svgPath?.(pathStr);
+    return;
   }
 
   const path2D = new Path2D(pathStr);

@@ -4,21 +4,21 @@
  * @param keepCalc 是否保留计算属性， false, 不保留， true, 保留（但 calculative.canvas 属性仍不保存）
  * @returns 拷贝后的对象
  */
-export function deepClone(o?: any, keepCalc = false) {
+export function deepClone<T>(o: T, keepCalc = false): T {
   if (Array.isArray(o)) {
     const arr = [];
     o.forEach((item) => {
       arr.push(deepClone(item, keepCalc));
     });
-    return arr;
+    return arr as any;
   } else if (typeof o === 'object') {
     if (o === null) {
       return null;
     } else if (o.constructor === RegExp) {
       return o;
     }
-    const _o = {};
-    for (let key in o) {
+    const _o: any = {};
+    for (const key in o) {
       if (
         ['canvas', 'lastFrame'].includes(key) ||
         o[key] instanceof HTMLImageElement ||

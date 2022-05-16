@@ -1,52 +1,29 @@
 import { Pen } from '../pen';
 
-export function rectangle(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-  let wr = pen.calculative.borderRadius || 0;
-  let hr = pen.calculative.borderRadius || 0;
+export function rectangle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  let wr = pen.calculative.borderRadius || 0,
+    hr = wr;
+  const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
   if (wr < 1) {
-    wr = pen.calculative.worldRect.width * wr;
-    hr = pen.calculative.worldRect.height * hr;
+    wr = width * wr;
+    hr = height * hr;
   }
   let r = wr < hr ? wr : hr;
-  if (pen.calculative.worldRect.width < 2 * r) {
-    r = pen.calculative.worldRect.width / 2;
+  if (width < 2 * r) {
+    r = width / 2;
   }
-  if (pen.calculative.worldRect.height < 2 * r) {
-    r = pen.calculative.worldRect.height / 2;
+  if (height < 2 * r) {
+    r = height / 2;
   }
 
-  path.moveTo(pen.calculative.worldRect.x + r, pen.calculative.worldRect.y);
-  path.arcTo(
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.ey,
-    r
-  );
-  path.arcTo(
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.ey,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.ey,
-    r
-  );
-  path.arcTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.ey,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    r
-  );
-  path.arcTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.y,
-    r
-  );
-  return path;
+  path.moveTo(x + r, y);
+  path.arcTo(ex, y, ex, ey, r);
+  path.arcTo(ex, ey, x, ey, r);
+  path.arcTo(x, ey, x, y, r);
+  path.arcTo(x, y, ex, y, r);
+  if (path instanceof Path2D) {
+    return path;
+  }
 }
 export const square = rectangle;

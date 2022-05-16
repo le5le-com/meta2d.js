@@ -3,7 +3,7 @@ import { formPen } from './common';
 import { Point } from '../../core/src/point';
 
 export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
-  if (!pen.onDestroy) {
+  if (!pen.onAdd) {
     pen.onAdd = onAdd;
     pen.onMouseDown = onMousedown;
     pen.onValue = onValue;
@@ -150,7 +150,6 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.restore();
     }
   }
-  return false;
 }
 
 function onAdd(pen: formPen) {

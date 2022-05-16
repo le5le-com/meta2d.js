@@ -2,7 +2,7 @@ import { Pen } from './model';
 import { getSplitAnchor, line } from '../diagrams';
 import { Direction } from '../data';
 import { distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
-import { calcCenter, calcRelativePoint, Rect, rectInRect, scaleRect, translateRect } from '../rect';
+import { calcCenter, calcExy, calcRelativePoint, Rect, rectInRect, scaleRect, translateRect } from '../rect';
 import { globalStore, TopologyStore } from '../store';
 import { calcTextLines, calcTextDrawRect } from './text';
 import { deepClone } from '../utils/clone';
@@ -29,8 +29,10 @@ export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
   }
   const children: Pen[] = [];
   pen.children.forEach((id) => {
-    children.push(store.pens[id]);
-    children.push(...getAllChildren(store.pens[id], store));
+    if (store.pens[id]) {
+      children.push(store.pens[id]);
+      children.push(...getAllChildren(store.pens[id], store));
+    }
   });
   return children;
 }
@@ -204,6 +206,167 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
   ctx.drawImage(pen.calculative.img, x, y, w, h);
 }
 
+function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const store = pen.calculative.canvas.store;
+  ctx.save();
+  if (!pen.calculative.textHasShadow) {
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
+  let fill: string = undefined;
+  if (pen.calculative.hover) {
+    fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
+  } else if (pen.calculative.active) {
+    fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
+  }
+  if (fill) {
+    ctx.fillStyle = fill;
+  } else {
+    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.data.color || store.options.color;
+  }
+
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
+  ctx.font = getFont({
+    fontStyle,
+    fontWeight,
+    fontFamily: fontFamily || store.options.fontFamily,
+    fontSize,
+    lineHeight,
+  });
+
+  !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
+  const { x: drawRectX, y: drawRectY, width, height } = pen.calculative.textDrawRect;
+  if (pen.calculative.textBackground) {
+    ctx.save();
+    ctx.fillStyle = pen.calculative.textBackground;
+    ctx.fillRect(drawRectX, drawRectY, width, height);
+    ctx.restore();
+  }
+
+  const y = 0.55;
+  const textAlign = pen.textAlign || store.options.textAlign;
+  const oneRowHeight = fontSize * lineHeight;
+  pen.calculative.textLines.forEach((text, i) => {
+    const textLineWidth = pen.calculative.textLineWidths[i];
+    let x = 0;
+    if (textAlign === 'center') {
+      x = (width - textLineWidth) / 2;
+    } else if (textAlign === 'right') {
+      x = width - textLineWidth;
+    }
+    ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
+  });
+
+  ctx.restore();
+}
+
+export function drawIcon(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+  const store: TopologyStore = pen.calculative.canvas.store;
+  ctx.save();
+  ctx.shadowColor = '';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const iconRect = pen.calculative.worldIconRect;
+  let x = iconRect.x + iconRect.width / 2;
+  let y = iconRect.y + iconRect.height / 2;
+
+  switch (pen.iconAlign) {
+    case 'top':
+      y = iconRect.y;
+      ctx.textBaseline = 'top';
+      break;
+    case 'bottom':
+      y = iconRect.ey;
+      ctx.textBaseline = 'bottom';
+      break;
+    case 'left':
+      x = iconRect.x;
+      ctx.textAlign = 'left';
+      break;
+    case 'right':
+      x = iconRect.ex;
+      ctx.textAlign = 'right';
+      break;
+    case 'left-top':
+      x = iconRect.x;
+      y = iconRect.y;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      break;
+    case 'right-top':
+      x = iconRect.ex;
+      y = iconRect.y;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      break;
+    case 'left-bottom':
+      x = iconRect.x;
+      y = iconRect.ey;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      break;
+    case 'right-bottom':
+      x = iconRect.ex;
+      y = iconRect.ey;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      break;
+  }
+
+  const fontWeight = pen.calculative.iconWeight;
+  let fontSize: number = undefined;
+  const fontFamily = pen.calculative.iconFamily;
+  if (pen.calculative.iconSize > 0) {
+    fontSize = pen.calculative.iconSize;
+  } else if (iconRect.width > iconRect.height) {
+    fontSize = iconRect.height;
+  } else {
+    fontSize = iconRect.width;
+  }
+  ctx.font = getFont({
+    fontSize,
+    fontWeight,
+    fontFamily,
+  });
+  ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
+
+  if (pen.calculative.iconRotate) {
+    ctx.translate(iconRect.center.x, iconRect.center.y);
+    ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
+    ctx.translate(-iconRect.center.x, -iconRect.center.y);
+  }
+
+  ctx.beginPath();
+  ctx.fillText(pen.calculative.icon, x, y);
+  ctx.restore();
+}
+
+/**
+ * canvas2svg 中对 font 的解析规则比 canvas 中简单，能识别的类型很少
+ * @returns ctx.font
+ */
+export function getFont({
+  fontStyle = 'normal',
+  textDecoration = 'normal',
+  fontWeight = 'normal',
+  fontSize = 12,
+  fontFamily = 'Arial',
+  lineHeight = 1, // TODO: lineHeight 默认值待测试
+}: {
+  fontStyle?: string;
+  textDecoration?: string;
+  fontWeight?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  lineHeight?: number;
+} = {}) {
+  return `${fontStyle} ${textDecoration} ${fontWeight} ${fontSize}px/${lineHeight} ${fontFamily}`;
+}
+
 // TODO: 0.5 偏移量在 图片中可能存在问题
 export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.flipX) {
@@ -217,7 +380,8 @@ export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRendering
 }
 
 export function ctxRotate(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
-  ctx.translate(pen.calculative.worldRect.center.x, pen.calculative.worldRect.center.y);
+  const { x, y } = pen.calculative.worldRect.center;
+  ctx.translate(x, y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
   // 目前只有水平和垂直翻转，都需要 * -1
   if (pen.calculative.flipX) {
@@ -226,7 +390,7 @@ export function ctxRotate(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
     rotate *= -1;
   }
   ctx.rotate(rotate);
-  ctx.translate(-pen.calculative.worldRect.center.x, -pen.calculative.worldRect.center.y);
+  ctx.translate(-x, -y);
 }
 
 export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
@@ -246,6 +410,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   const store: TopologyStore = pen.calculative.canvas.store;
 
+  inspectRect(ctx, store, pen); // 审查 rect
   let fill: any;
   // 该变量控制在 hover active 状态下的节点是否设置填充颜色
   let setBack = true;
@@ -316,9 +481,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.lineJoin = 'round';
   }
 
-  if (pen.calculative.globalAlpha < 1) {
-    ctx.globalAlpha = pen.calculative.globalAlpha;
-  }
+  setGlobalAlpha(ctx, pen);
 
   if (pen.calculative.lineDash) {
     ctx.setLineDash(pen.calculative.lineDash);
@@ -429,146 +592,14 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
   }
 
-  if (globalStore.canvasDraws[pen.name]) {
-    ctx.save();
-    globalStore.canvasDraws[pen.name](ctx, pen, store);
-    ctx.restore();
-  }
+  ctxDrawCanvas(ctx, pen);
 
-  if (pen.calculative.icon) {
-    ctx.save();
-    ctx.shadowColor = '';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const iconRect = pen.calculative.worldIconRect;
-    let x = iconRect.x + iconRect.width / 2;
-    let y = iconRect.y + iconRect.height / 2;
-
-    switch (pen.iconAlign) {
-      case 'top':
-        y = iconRect.y;
-        ctx.textBaseline = 'top';
-        break;
-      case 'bottom':
-        y = iconRect.ey;
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'left':
-        x = iconRect.x;
-        ctx.textAlign = 'left';
-        break;
-      case 'right':
-        x = iconRect.ex;
-        ctx.textAlign = 'right';
-        break;
-      case 'left-top':
-        x = iconRect.x;
-        y = iconRect.y;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        break;
-      case 'right-top':
-        x = iconRect.ex;
-        y = iconRect.y;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        break;
-      case 'left-bottom':
-        x = iconRect.x;
-        y = iconRect.ey;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'right-bottom':
-        x = iconRect.ex;
-        y = iconRect.ey;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'bottom';
-        break;
-    }
-
-    if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
-        pen.calculative.iconFamily
-      }'`;
-    } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
-    } else {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.width}px '${pen.calculative.iconFamily}'`;
-    }
-    ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
-
-    if (pen.calculative.iconRotate) {
-      ctx.translate(iconRect.center.x, iconRect.center.y);
-      ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
-      ctx.translate(-iconRect.center.x, -iconRect.center.y);
-    }
-
-    ctx.beginPath();
-    ctx.fillText(pen.calculative.icon, x, y);
-
-    ctx.restore();
+  if (!(pen.image && pen.calculative.img) && pen.calculative.icon) {
+    drawIcon(ctx, pen);
   }
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
-    ctx.save();
-    if (!pen.calculative.textHasShadow) {
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-    }
-    if (pen.calculative.hover) {
-      fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
-    } else if (pen.calculative.active) {
-      fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
-    } else {
-      fill = undefined;
-    }
-    if (fill) {
-      ctx.fillStyle = fill;
-    } else {
-      ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.data.color || store.options.color;
-    }
-
-    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
-      pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily || store.options.fontFamily}`;
-
-    !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
-    if (pen.calculative.textBackground) {
-      ctx.save();
-      ctx.fillStyle = pen.calculative.textBackground;
-      ctx.fillRect(
-        pen.calculative.textDrawRect.x,
-        pen.calculative.textDrawRect.y,
-        pen.calculative.textDrawRect.width,
-        pen.calculative.textDrawRect.height
-      );
-      ctx.restore();
-    }
-
-    const y = 0.55;
-    const { width } = pen.calculative.textDrawRect;
-    const textAlign = pen.textAlign || store.options.textAlign;
-    pen.calculative.textLines.forEach((text, i) => {
-      let x = 0;
-      if (textAlign === 'center') {
-        x = (width - pen.calculative.textLineWidths[i]) / 2;
-      } else if (textAlign === 'right') {
-        x = width - pen.calculative.textLineWidths[i];
-      }
-      ctx.fillText(
-        text,
-        pen.calculative.textDrawRect.x + x,
-        pen.calculative.textDrawRect.y + (i + y) * pen.calculative.fontSize * pen.calculative.lineHeight
-      );
-    });
-
-    ctx.restore();
+    drawText(ctx, pen);
   }
 
   ctx.restore();
@@ -581,9 +612,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   }
 
   // for canvas2svg
-  if ((ctx as any).setAttrs) {
-    (ctx as any).setAttrs(pen);
-  }
+  (ctx as any).setAttrs?.(pen);
   // end
 
   ctx.beginPath();
@@ -656,9 +685,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.lineJoin = 'round';
   }
 
-  if (pen.calculative.globalAlpha < 1) {
-    ctx.globalAlpha = pen.calculative.globalAlpha;
-  }
+  setGlobalAlpha(ctx, pen);
 
   if (pen.calculative.lineDash) {
     ctx.setLineDash(pen.calculative.lineDash);
@@ -723,16 +750,10 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     }
   }
 
-  if (globalStore.canvasDraws[pen.name]) {
-    ctx.save();
-    const ret = globalStore.canvasDraws[pen.name](ctx, pen, store);
-    ctx.restore();
-    if (ret) {
-      return;
-    }
-  }
+  ctxDrawCanvas(ctx, pen);
 
-  if (pen.image && pen.calculative.img) {
+  // renderPenRaw 用在 downloadPng svg , echarts 等图形需要
+  if (pen.calculative.img) {
     ctx.save();
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
@@ -740,126 +761,12 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     ctx.shadowOffsetY = 0;
     drawImage(ctx, pen);
     ctx.restore();
-  } else if (pen.icon) {
-    ctx.save();
-    ctx.shadowColor = '';
-    ctx.shadowBlur = 0;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const iconRect = pen.calculative.worldIconRect;
-    let x = iconRect.x + iconRect.width / 2;
-    let y = iconRect.y + iconRect.height / 2;
-
-    switch (pen.iconAlign) {
-      case 'top':
-        y = iconRect.y;
-        ctx.textBaseline = 'top';
-        break;
-      case 'bottom':
-        y = iconRect.ey;
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'left':
-        x = iconRect.x;
-        ctx.textAlign = 'left';
-        break;
-      case 'right':
-        x = iconRect.ex;
-        ctx.textAlign = 'right';
-        break;
-      case 'left-top':
-        x = iconRect.x;
-        y = iconRect.y;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        break;
-      case 'right-top':
-        x = iconRect.ex;
-        y = iconRect.y;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        break;
-      case 'left-bottom':
-        x = iconRect.x;
-        y = iconRect.ey;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        break;
-      case 'right-bottom':
-        x = iconRect.ex;
-        y = iconRect.ey;
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'bottom';
-        break;
-    }
-
-    if (pen.calculative.iconSize > 0) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${pen.calculative.iconSize}px '${
-        pen.calculative.iconFamily
-      }'`;
-    } else if (iconRect.width > iconRect.height) {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.height}px '${pen.calculative.iconFamily}'`;
-    } else {
-      ctx.font = `${pen.calculative.iconWeight || 'normal'} ${iconRect.width}px '${pen.calculative.iconFamily}'`;
-    }
-    ctx.fillStyle = pen.iconColor || pen.textColor || store.options.textColor;
-
-    if (pen.calculative.worldRect.rotate) {
-      ctx.translate(iconRect.center.x, iconRect.center.y);
-      ctx.rotate((pen.calculative.worldRect.rotate * Math.PI) / 180);
-      ctx.translate(-iconRect.center.x, -iconRect.center.y);
-    }
-
-    ctx.beginPath();
-    ctx.fillText(pen.icon, x, y);
-
-    ctx.restore();
+  } else if (pen.calculative.icon) {
+    drawIcon(ctx, pen);
   }
 
   if (pen.calculative.text && !pen.calculative.hiddenText) {
-    ctx.save();
-    if (!pen.calculative.textHasShadow) {
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-    }
-    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color;
-    ctx.font = `${pen.calculative.fontStyle || 'normal'} normal ${pen.calculative.fontWeight || 'normal'} ${
-      pen.calculative.fontSize
-    }px/${pen.calculative.lineHeight} ${pen.calculative.fontFamily || store.options.fontFamily}`;
-
-    !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
-    if (pen.calculative.textBackground) {
-      ctx.save();
-      ctx.fillStyle = pen.calculative.textBackground;
-      ctx.fillRect(
-        pen.calculative.textDrawRect.x,
-        pen.calculative.textDrawRect.y,
-        pen.calculative.textDrawRect.width,
-        pen.calculative.textDrawRect.height
-      );
-      ctx.restore();
-    }
-
-    const y = 0.55;
-    const { width } = pen.calculative.textDrawRect;
-    const textAlign = pen.textAlign || store.options.textAlign;
-    pen.calculative.textLines.forEach((text, i) => {
-      let x = 0;
-      if (textAlign === 'center') {
-        x = (width - pen.calculative.textLineWidths[i]) / 2;
-      } else if (textAlign === 'right') {
-        x = width - pen.calculative.textLineWidths[i];
-      }
-      ctx.fillText(
-        text,
-        pen.calculative.textDrawRect.x + x,
-        pen.calculative.textDrawRect.y + (i + y) * pen.calculative.fontSize * pen.calculative.lineHeight
-      );
-    });
-
-    ctx.restore();
+    drawText(ctx, pen);
   }
 
   ctx.restore();
@@ -953,11 +860,10 @@ export function calcWorldRects(pen: Pen) {
   };
 
   if (!pen.parentId) {
-    rect.ex = pen.x + pen.width;
-    rect.ey = pen.y + pen.height;
     rect.width = pen.width;
     rect.height = pen.height;
     rect.rotate = pen.rotate;
+    calcExy(rect);
     calcCenter(rect);
   } else {
     const parent = store.pens[pen.parentId];
@@ -971,14 +877,13 @@ export function calcWorldRects(pen: Pen) {
     rect.width = parentRect.width * pen.width;
     rect.height = parentRect.height * pen.height;
     if (parent.flipX) {
-      rect.x = parentRect.width - ((rect.x - parentRect.x) + rect.width) + parentRect.x;
+      rect.x = parentRect.width - (rect.x - parentRect.x + rect.width) + parentRect.x;
     }
     if (parent.flipY) {
-      rect.y = parentRect.height - ((rect.y - parentRect.y) + rect.height) + parentRect.y;
+      rect.y = parentRect.height - (rect.y - parentRect.y + rect.height) + parentRect.y;
     }
 
-    rect.ex = rect.x + rect.width;
-    rect.ey = rect.y + rect.height;
+    calcExy(rect);
 
     rect.rotate = parentRect.rotate + pen.rotate;
     calcCenter(rect);
@@ -1021,10 +926,6 @@ export function calcPenRect(pen: Pen) {
 
 export function calcWorldAnchors(pen: Pen) {
   const store: TopologyStore = pen.calculative.canvas.store;
-  if ((pen.disableAnchor || store.options.disableAnchor) && !pen.type) {
-    pen.calculative.worldAnchors = [];
-    return;
-  }
   let anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
@@ -1122,10 +1023,9 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
     y,
     width,
     height,
-    ex: x + width,
-    ey: y + height,
     rotate,
   };
+  calcExy(pen.calculative.worldIconRect);
   calcCenter(pen.calculative.worldIconRect);
 }
 
@@ -1256,7 +1156,11 @@ export function deleteTempAnchor(pen: Pen) {
   }
 }
 
-// 添加line到pen的connectedLines中，并关联相关属性
+/**
+ * 添加line到pen的connectedLines中，并关联相关属性
+ * 不添加连线到画布中，请确保画布中已经有该连线。  
+ * 不改动 line.anchors 中的 connectTo 和 anchorId ，请手动更改
+ * */
 export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
   if (!pen || !lineId || !lineAnchor || !anchor) {
     return;
@@ -1279,6 +1183,10 @@ export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor
   }
 }
 
+/**
+ * 从 pen.connectedLines 中删除 lineId 和 lineAnchor
+ * 不改动 line.anchors 中的 connectTo 和 anchorId ，请手动更改
+ */
 export function disconnectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
   if (!pen || !lineId || !lineAnchor || !anchor) {
     return;
@@ -1299,13 +1207,7 @@ export function getAnchor(pen: Pen, anchorId: string) {
     return;
   }
 
-  if (pen.calculative.worldAnchors) {
-    for (const item of pen.calculative.worldAnchors) {
-      if (item.id === anchorId) {
-        return item;
-      }
-    }
-  }
+  return pen.calculative.worldAnchors?.find((item) => item.id === anchorId);
 }
 
 export function getFromAnchor(pen: Pen) {
@@ -1321,6 +1223,7 @@ export function getToAnchor(pen: Pen) {
     return;
   }
 
+  // return pen.calculative.worldAnchors.at(-1);
   return pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
 }
 
@@ -1376,6 +1279,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
     // 播放结束
     if (cycleCount > pen.animateCycle) {
       pen.calculative.start = undefined;
+      setNodeAnimateProcess(pen, 1);
       return 0;
     }
 
@@ -1412,72 +1316,94 @@ export function setNodeAnimate(pen: Pen, now: number) {
       pen.calculative.y = pen.calculative.initRect.y;
       pen.calculative.rotate = pen.calculative.initRect.rotate || 0;
 
+      pen.lastFrame = {};
+      const frame = pen.frames[frameIndex - 1];
+      for (const k in frame) {
+        pen.lastFrame[k] = frame[k];
+      }
+
       if (frameIndex > 0) {
-        pen.lastFrame = {
+        Object.assign(pen.lastFrame, {
           rotate: pen.frames[frameIndex - 1].rotate || 0,
           x: pen.frames[frameIndex - 1].x || 0,
           y: pen.frames[frameIndex - 1].y || 0,
           scale: pen.frames[frameIndex - 1].scale || 1,
-        };
+        });
       } else {
-        pen.lastFrame = {
+        Object.assign(pen.lastFrame, {
           rotate: 0,
           x: 0,
           y: 0,
           scale: 1,
-        };
+        });
       }
     }
+  }
+
+  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
+  setNodeAnimateProcess(pen, process);
+
+  return true;
+}
+
+// 根据process进度值（纯小数），计算节点动画属性
+export function setNodeAnimateProcess(pen: Pen, process: number) {
+  if (process < 0) {
+    return;
+  }
+
+  if (process > 1) {
+    process = 1;
   }
 
   const frame = pen.frames[pen.calculative.frameIndex];
-  let process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
-  if (process > 0) {
-    for (const k in frame) {
-      if (k === 'duration') {
-        continue;
-      } else if (k === 'scale') {
-        pen.calculative.worldRect = deepClone(pen.calculative.initRect);
-        scaleRect(pen.calculative.worldRect, pen.lastFrame.scale, pen.calculative.worldRect.center);
-        const newScale = pen.lastFrame.scale + (frame[k] - pen.lastFrame.scale) * process;
-        scaleRect(pen.calculative.worldRect, newScale / pen.lastFrame.scale, pen.calculative.worldRect.center);
-        pen.calculative.dirty = true;
-      } else if (k === 'x') {
-        const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-        pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
-        pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
-        translateRect(pen.calculative.worldRect, frame[k] * process, 0);
-        pen.calculative.dirty = true;
-      } else if (k === 'y') {
-        const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-        pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
-        pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
-        translateRect(pen.calculative.worldRect, 0, frame[k] * process);
-        pen.calculative.dirty = true;
-      } else if (k === 'rotate') {
-        if (pen.lastFrame[k] >= 360) {
-          pen.lastFrame[k] %= 360;
-        }
-        const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-        pen.calculative.rotate = (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
-        pen.calculative.dirty = true;
-      } else if (isLinear(frame[k], k, pen)) {
-        if (!pen.lastFrame[k]) {
+  for (const k in frame) {
+    if (k === 'duration') {
+      continue;
+    } else if (k === 'scale') {
+      pen.calculative.worldRect = deepClone(pen.calculative.initRect);
+      scaleRect(pen.calculative.worldRect, pen.lastFrame.scale, pen.calculative.worldRect.center);
+      const newScale = pen.lastFrame.scale + (frame[k] - pen.lastFrame.scale) * process;
+      scaleRect(pen.calculative.worldRect, newScale / pen.lastFrame.scale, pen.calculative.worldRect.center);
+      pen.calculative.dirty = true;
+    } else if (k === 'x') {
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
+      pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
+      translateRect(pen.calculative.worldRect, frame[k] * process * pen.calculative.canvas.store.data.scale, 0);
+      pen.calculative.dirty = true;
+    } else if (k === 'y') {
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
+      pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
+      translateRect(pen.calculative.worldRect, 0, frame[k] * process * pen.calculative.canvas.store.data.scale);
+      pen.calculative.dirty = true;
+    } else if (k === 'rotate') {
+      if (pen.lastFrame[k] >= 360) {
+        pen.lastFrame[k] %= 360;
+      }
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      pen.calculative.rotate = (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
+      pen.calculative.dirty = true;
+    } else if (isLinear(frame[k], k, pen)) {
+      if (pen.lastFrame[k] == null) {
+        if (k === 'globalAlpha') {
+          pen.lastFrame[k] = 1;
+        } else {
           pen.lastFrame[k] = 0;
         }
-        const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
-        pen.calculative[k] = Math.round(current * 100) / 100;
-      } else {
-        pen.calculative[k] = frame[k];
       }
 
-      if (k === 'text') {
-        calcTextLines(pen);
-      }
+      const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
+      pen.calculative[k] = Math.round(current * 100) / 100;
+    } else {
+      pen.calculative[k] = frame[k];
+    }
+
+    if (k === 'text') {
+      calcTextLines(pen);
     }
   }
-
-  return true;
 }
 
 /**
@@ -1574,6 +1500,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
   if (pen.locked || store.data.locked) {
+    // TODO: gif 组合后成子节点 locked = 2 导致可选择 dom 无法拖拽
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
   } else {
@@ -1583,17 +1510,12 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
 }
 
 /**
- * 画笔们的 locked >= 1
+ * 每个画笔 locked
  * @param pens 画笔
  * @returns
  */
 export function getPensLock(pens: Pen[]): boolean {
-  for (const pen of pens) {
-    if (!pen.locked) {
-      return false;
-    }
-  }
-  return true;
+  return pens.every((pen) => pen.locked);
 }
 
 /**
@@ -1603,12 +1525,7 @@ export function getPensLock(pens: Pen[]): boolean {
  * @returns
  */
 export function getPensDisableRotate(pens: Pen[]): boolean {
-  for (const pen of pens) {
-    if (!pen.disableRotate) {
-      return false;
-    }
-  }
-  return true;
+  return pens.every((pen) => pen.disableRotate);
 }
 
 /**
@@ -1618,12 +1535,7 @@ export function getPensDisableRotate(pens: Pen[]): boolean {
  * @returns
  */
 export function getPensDisableResize(pens: Pen[]): boolean {
-  for (const pen of pens) {
-    if (!pen.disableSize) {
-      return false;
-    }
-  }
-  return true;
+  return pens.every((pen) => pen.disableSize);
 }
 
 export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {
@@ -1641,7 +1553,10 @@ export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {
   return v;
 }
 
-function isShowChild(pen: Pen, store: TopologyStore) {
+/**
+ * 判断该画笔 是否是组合为状态中 展示的画笔
+ */
+export function isShowChild(pen: Pen, store: TopologyStore) {
   let selfPen = pen;
   while (selfPen.parentId) {
     const oldPen = selfPen;
@@ -1650,7 +1565,7 @@ function isShowChild(pen: Pen, store: TopologyStore) {
     if (showChildIndex != undefined) {
       const showChildId = selfPen.children[showChildIndex];
       if (showChildId !== oldPen.id) {
-        pen.calculative.inView = false;
+        // toPng 不展示它
         return false;
       }
     }
@@ -1658,39 +1573,74 @@ function isShowChild(pen: Pen, store: TopologyStore) {
   return true;
 }
 
-export function calcInView(pen: Pen) {
+/**
+ * 计算画笔的 inView
+ * @param pen 画笔
+ * @param calcChild 是否计算子画笔
+ */
+export function calcInView(pen: Pen, calcChild = false) {
+  const { store, canvasRect } = pen.calculative.canvas as Canvas;
+  if (calcChild) {
+    pen.children?.forEach((id) => {
+      const child = store.pens[id];
+      child && calcInView(child, true);
+    });
+  }
+
   pen.calculative.inView = true;
-  const canvas: Canvas = pen.calculative.canvas;
-  const store = canvas.store;
-  if (!isShowChild(pen, store)){
-    return;
-  }
-
-  if (pen.visible == false || pen.calculative.visible == false) {
+  if (!isShowChild(pen, store) || pen.visible == false || pen.calculative.visible == false) {
     pen.calculative.inView = false;
-    return;
+  } else {
+    const { x, y, width, height, rotate } = pen.calculative.worldRect;
+    const penRect: Rect = {
+      x: x + store.data.x,
+      y: y + store.data.y,
+      width,
+      height,
+      rotate,
+    };
+    calcExy(penRect);
+    if (!rectInRect(penRect, canvasRect)) {
+      pen.calculative.inView = false;
+    }
   }
+  // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
+  // 更改 view 后，修改 dom 节点的显示隐藏
+  pen.onMove?.(pen);
+}
 
-  const canvasRect = {
-    x: 0,
-    y: 0,
-    ex: canvas.width,
-    ey: canvas.height,
-    width: canvas.width,
-    height: canvas.height,
-  };
-  const x = pen.calculative.worldRect.x + store.data.x;
-  const y = pen.calculative.worldRect.y + store.data.y;
-  const penRect: Rect = {
-    x,
-    y,
-    width: pen.calculative.worldRect.width,
-    height: pen.calculative.worldRect.height,
-    ex: x + pen.calculative.worldRect.width,
-    ey: y + pen.calculative.worldRect.height,
-    rotate: pen.calculative.worldRect.rotate,
-  };
-  if (!rectInRect(penRect, canvasRect)) {
-    pen.calculative.inView = false;
+/**
+ * 绘制 rect ，上线后可查看 rect 位置
+ */
+function inspectRect(ctx: CanvasRenderingContext2D, store: TopologyStore, pen: Pen) {
+  if (store.fillWorldTextRect) {
+    ctx.save();
+    ctx.fillStyle = '#c3deb7';
+    const { x, y, width, height } = pen.calculative.worldTextRect;
+    ctx.fillRect(x, y, width, height);
+    ctx.restore();
+  }
+}
+
+export function setGlobalAlpha(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+  const globalAlpha = pen.calculative.globalAlpha;
+  if (globalAlpha < 1) {
+    ctx.globalAlpha = globalAlpha;
+  }
+}
+
+/**
+ * ctx 绘制图纸，并非 Path2D
+ * @param ctx 画布上下文
+ * @param pen 画笔
+ */
+function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const canvasDraw = globalStore.canvasDraws[pen.name];
+  if (canvasDraw) {
+    // TODO: 后续考虑优化 save / restore
+    ctx.save();
+    // TODO: 原有 return 终止后续操作，必要性不大
+    canvasDraw(ctx, pen);
+    ctx.restore();
   }
 }

@@ -1,46 +1,36 @@
 import { Pen } from '../../core/src/pen';
-export function flowDb(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-  const offsetY = pen.calculative.worldRect.height / 7;
-  path.moveTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + offsetY
-  );
+export function flowDb(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, height, ex, ey } = pen.calculative.worldRect;
+  const offsetY = height / 7;
+  path.moveTo(x, y + offsetY);
   path.bezierCurveTo(
-    pen.calculative.worldRect.x,
-    (pen.calculative.worldRect.y - offsetY / 2) | 0,
-    pen.calculative.worldRect.ex,
-    (pen.calculative.worldRect.y - offsetY / 2) | 0,
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.y + offsetY
+    x,
+    (y - offsetY / 2) | 0,
+    ex,
+    (y - offsetY / 2) | 0,
+    ex,
+    y + offsetY
   );
-  path.lineTo(
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.ey - offsetY
-  );
+  path.lineTo(ex, ey - offsetY);
   path.bezierCurveTo(
-    pen.calculative.worldRect.ex,
-    (pen.calculative.worldRect.ey + offsetY / 2) | 0,
-    pen.calculative.worldRect.x,
-    (pen.calculative.worldRect.ey + offsetY / 2) | 0,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.ey - offsetY
+    ex,
+    (ey + offsetY / 2) | 0,
+    x,
+    (ey + offsetY / 2) | 0,
+    x,
+    ey - offsetY
   );
   path.closePath();
-  path.moveTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.ey - offsetY
-  );
+  path.moveTo(x, ey - offsetY);
   path.bezierCurveTo(
-    pen.calculative.worldRect.x,
-    (pen.calculative.worldRect.ey - offsetY * 2) | 0,
-    pen.calculative.worldRect.ex,
-    (pen.calculative.worldRect.ey - offsetY * 2) | 0,
-    pen.calculative.worldRect.ex,
-    pen.calculative.worldRect.ey - offsetY
+    x,
+    (ey - offsetY * 2) | 0,
+    ex,
+    (ey - offsetY * 2) | 0,
+    ex,
+    ey - offsetY
   );
   //   path.closePath();
-  return path;
+  if (path instanceof Path2D) return path;
 }

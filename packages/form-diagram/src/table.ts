@@ -1,9 +1,10 @@
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
+import { calcExy } from "@topology/core";
 
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
-  if (!pen.onDestroy) {
+  if (!pen.onAdd) {
     pen.onAdd = onAdd;
     pen.onMouseMove = onMouseMove;
     pen.onMouseLeave = onMouseLeave;
@@ -28,8 +29,6 @@ export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
 
   // 画单元格
   drawCell(ctx, pen);
-
-  return false;
 }
 
 function initRect(pen: formPen) {
@@ -74,11 +73,10 @@ function initRect(pen: formPen) {
     pen.calculative.worldRect = {
       x: pen.x,
       y: pen.y,
-      ex: pen.x + pen.width,
-      ey: pen.y + pen.height,
       height: pen.height,
       width: pen.width,
     };
+    calcExy(pen.calculative.worldRect);
   }
 }
 

@@ -1,7 +1,7 @@
 import { getValidValue } from './common';
 //仪表全盘
 let clockInterval: any;
-export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
+export function gauge(ctx: CanvasRenderingContext2D, pen: any): void {
   if (!pen.onAdd) {
     pen.onAdd = onAdd;
     pen.onDestroy = onDestroy;
@@ -293,7 +293,6 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any) {
     ctx.fill();
     ctx.closePath();
   }
-  return false;
 }
 
 function onAdd(pen: any) {

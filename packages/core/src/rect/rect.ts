@@ -17,8 +17,7 @@ export function pointInRect(pt: Point, rect: Rect) {
     return;
   }
   if (rect.ex == null) {
-    rect.ex = rect.x + rect.width;
-    rect.ey = rect.y + rect.height;
+    calcExy(rect);
   }
 
   if (!rect.rotate || rect.width < 20 || rect.height < 20 || rect.rotate % 360 === 0) {
@@ -53,6 +52,11 @@ export function calcCenter(rect: Rect) {
   }
   rect.center.x = rect.x + rect.width / 2;
   rect.center.y = rect.y + rect.height / 2;
+}
+
+export function calcExy(rect: Rect) {
+  rect.ex = rect.x + rect.width;
+  rect.ey = rect.y + rect.height;
 }
 
 export function pointInVertices(point: { x: number; y: number }, vertices: Point[]): boolean {
@@ -343,12 +347,8 @@ export function scaleRect(rect: Rect, scale: number, center: Point) {
   rect.height *= scale;
   scalePoint(rect as Point, scale, center);
 
-  rect.ex = rect.x + rect.width;
-  rect.ey = rect.y + rect.height;
-  rect.center = {
-    x: rect.x + rect.width / 2,
-    y: rect.y + rect.height / 2,
-  };
+  calcExy(rect);
+  calcCenter(rect);
 }
 
 export function calcRelativeRect(rect: Rect, worldRect: Rect) {
@@ -358,8 +358,7 @@ export function calcRelativeRect(rect: Rect, worldRect: Rect) {
     width: rect.width / worldRect.width,
     height: rect.height / worldRect.height,
   };
-  relRect.ex = relRect.x + relRect.width;
-  relRect.ey = relRect.y + relRect.height;
+  calcExy(relRect);
 
   return relRect;
 }

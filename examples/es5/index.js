@@ -166,6 +166,13 @@ function getIconList() {
         text: '圆形',
         width: 100,
         height: 100,
+        events: [
+          {
+            name: 'click',
+            action: 7,
+            value: 'showDialog',
+          },
+        ],
       },
     },
     {

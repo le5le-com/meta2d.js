@@ -1,3 +1,4 @@
+import { TextAlign, TextBaseline } from './pen';
 import { Point } from './point';
 
 export enum KeydownType {
@@ -24,8 +25,8 @@ export interface Options {
   fontFamily?: string;
   fontSize?: number;
   lineHeight?: number;
-  textAlign?: string;
-  textBaseline?: string;
+  textAlign?: TextAlign;
+  textBaseline?: TextBaseline;
   rotateCursor?: string;
   hoverCursor?: string;
   disableInput?: boolean;
@@ -66,11 +67,12 @@ export interface Options {
   scroll?: boolean;
   uploadFn?: (file: File) => Promise<string>; // uploadFn 优先级最高
   uploadUrl?: string;
-  uploadParams?: object;
-  uploadHeaders?: { [key: string]: string };
+  uploadParams?: Record<string, any>;
+  uploadHeaders?: Record<string, string>;
   disableRuleLine?: boolean;
   ruleLineColor?: string;
   defaultAnchors?: Point[]; // 图形的默认瞄点
+  measureTextWidth?: boolean; // 测量文字宽度
 }
 
 export const defaultOptions: Options = {
@@ -124,4 +126,5 @@ export const defaultOptions: Options = {
       y: 0.5,
     },
   ],
+  measureTextWidth: true,
 };

@@ -1,4 +1,4 @@
-import { commonAnchors, commonPens } from './diagrams';
+import { commonAnchors, commonPens, cube } from './diagrams';
 import { EventType, Handler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
@@ -7,14 +7,19 @@ import {
   calcTextDrawRect,
   calcTextLines,
   calcTextRect,
+  ChartData,
   facePen,
   formatAttrs,
+  getAllChildren,
+  getFromAnchor,
   getParent,
+  getToAnchor,
   getWords,
   LockState,
   Pen,
   PenType,
   renderPenRaw,
+  SetValue,
 } from './pen';
 import { Point } from './point';
 import {
@@ -34,28 +39,30 @@ import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
 import { Map } from './map';
+// TODO: 这种引入方式，引入 connect， webpack 5 报错
+import { MqttClient } from 'mqtt';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
-
-declare const window: any;
+import { lockedError } from './utils/error';
 
 export class Topology {
   store: TopologyStore;
   canvas: Canvas;
   websocket: WebSocket;
-  mqttClient: any;
-  socketFn: Function;
-  events: any = {};
+  mqttClient: MqttClient;
+  socketFn: (e: string) => void;
+  events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: Map;
-  mapTimer: any;
+  mapTimer: NodeJS.Timeout;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
     this.init(parent);
     this.register(commonPens());
+    this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
-    window && (window.topology = this);
+    window && ((window as any).topology = this);
     this['facePen'] = facePen;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
@@ -66,29 +73,41 @@ export class Topology {
     this['calcTextDrawRect'] = calcTextDrawRect;
   }
 
+  /**
+   * @deprecated 改用 beforeAddPens
+   */
   get beforeAddPen() {
     return this.canvas.beforeAddPen;
   }
+  /**
+   * @deprecated 改用 beforeAddPens
+   */
   set beforeAddPen(fn: (pen: Pen) => boolean) {
     this.canvas.beforeAddPen = fn;
+  }
+  get beforeAddPens() {
+    return this.canvas.beforeAddPens;
+  }
+  set beforeAddPens(fn: (pens: Pen[]) => Promise<boolean>) {
+    this.canvas.beforeAddPens = fn;
   }
   get beforeAddAnchor() {
     return this.canvas.beforeAddAnchor;
   }
-  set beforeAddAnchor(fn: (pen: Pen, anchor: Point) => boolean) {
+  set beforeAddAnchor(fn: (pen: Pen, anchor: Point) => Promise<boolean>) {
     this.canvas.beforeAddAnchor = fn;
   }
-  get beforeRemovePen() {
-    return this.canvas.beforeRemovePen;
+  get beforeRemovePens() {
+    return this.canvas.beforeRemovePens;
   }
-  set beforeRemovePen(fn: (pen: Pen) => boolean) {
-    this.canvas.beforeRemovePen = fn;
+  set beforeRemovePens(fn: (pens: Pen[]) => Promise<boolean>) {
+    this.canvas.beforeRemovePens = fn;
   }
   get beforeRemoveAnchor() {
-    return this.canvas.beforeAddAnchor;
+    return this.canvas.beforeRemoveAnchor;
   }
-  set beforeRemoveAnchor(fn: (pen: Pen, anchor: Point) => boolean) {
-    this.canvas.beforeAddAnchor = fn;
+  set beforeRemoveAnchor(fn: (pen: Pen, anchor: Point) => Promise<boolean>) {
+    this.canvas.beforeRemoveAnchor = fn;
   }
 
   setOptions(opts: Options = {}) {
@@ -111,43 +130,30 @@ export class Topology {
   }
 
   initEventFns() {
-    this.events[EventAction.Link] = (pen: any, e: Event) => {
+    this.events[EventAction.Link] = (pen: Pen, e: Event) => {
       window.open(e.value, e.params === undefined ? '_blank' : e.params);
     };
     this.events[EventAction.SetProps] = (pen: Pen, e: Event) => {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
       const pens = e.params ? this.find(e.params) : [pen];
       pens.forEach((pen: Pen) => {
-        const rect = this.getPenRect(pen);
         if (e.value.hasOwnProperty('visible')) {
           this.setVisible(pen, e.value.visible);
         }
-        this._setValue({ id: pen.id, ...rect, ...e.value }, { willRender: false });
+        this._setValue({ id: pen.id, ...e.value }, { willRender: false });
       });
       this.render();
     };
-    this.events[EventAction.StartAnimate] = (pen: any, e: Event) => {
-      if (e.value) {
-        this.startAnimate(e.value);
-      } else {
-        this.startAnimate([pen]);
-      }
+    this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
+      this.startAnimate(e.value || [pen]);
     };
-    this.events[EventAction.PauseAnimate] = (pen: any, e: Event) => {
-      if (e.value) {
-        this.pauseAnimate(e.value);
-      } else {
-        this.pauseAnimate([pen]);
-      }
+    this.events[EventAction.PauseAnimate] = (pen: Pen, e: Event) => {
+      this.pauseAnimate(e.value || [pen]);
     };
-    this.events[EventAction.StopAnimate] = (pen: any, e: Event) => {
-      if (e.value) {
-        this.stopAnimate(e.value);
-      } else {
-        this.stopAnimate([pen]);
-      }
+    this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
+      this.stopAnimate(e.value || [pen]);
     };
-    this.events[EventAction.Function] = (pen: any, e: Event) => {
+    this.events[EventAction.Function] = (pen: Pen, e: Event) => {
       if (e.value && !e.fn) {
         try {
           if (e.value.replaceAll) {
@@ -159,14 +165,14 @@ export class Topology {
           console.error('Error: make function:', err);
         }
       }
-      e.fn && e.fn(pen, e.params);
+      e.fn?.(pen, e.params);
     };
-    this.events[EventAction.WindowFn] = (pen: any, e: Event) => {
+    this.events[EventAction.WindowFn] = (pen: Pen, e: Event) => {
       if (window && window[e.value]) {
-        window[e.value](pen, e.params);
+        (window as any)[e.value](pen, e.params);
       }
     };
-    this.events[EventAction.Emit] = (pen: any, e: Event) => {
+    this.events[EventAction.Emit] = (pen: Pen, e: Event) => {
       this.store.emitter.emit(e.value, {
         pen,
         params: e.params,
@@ -184,12 +190,12 @@ export class Topology {
     }
   }
 
-  addPen(pen: Pen, history?: boolean) {
-    return this.canvas.addPen(pen, history);
+  async addPen(pen: Pen, history?: boolean) {
+    return await this.canvas.addPen(pen, history);
   }
 
-  addPens(pens: Pen[], history?: boolean) {
-    return this.canvas.addPens(pens, history);
+  async addPens(pens: Pen[], history?: boolean) {
+    return await this.canvas.addPens(pens, history);
   }
 
   render(now?: number) {
@@ -198,7 +204,17 @@ export class Topology {
 
   setBackgroundImage(url: string) {
     this.store.data.bkImage = url;
-    this.canvas.canvas.style.backgroundImage = `url(${url})`;
+    this.canvas.canvasImageBottom.canvas.style.backgroundImage = url ? `url(${url})` : '';
+    if (url) {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        // 用作 toPng 的绘制
+        this.store.bkImg = img;
+      };
+    } else {
+      this.store.bkImg = null;
+    }
   }
 
   setBackgroundColor(color: string = this.store.data.background) {
@@ -238,7 +254,7 @@ export class Topology {
 
   open(data?: TopologyData) {
     for (const pen of this.store.data.pens) {
-      pen.onDestroy && pen.onDestroy(pen);
+      pen.onDestroy?.(pen);
     }
 
     clearStore(this.store);
@@ -249,12 +265,8 @@ export class Topology {
 
     this.store.dirtyBackground = true;
     this.store.dirtyTop = true;
+    this.setBackgroundImage(data?.bkImage);
     if (data) {
-      if (data.paths) {
-        // 存在 svgPath 存储到 globalStore.paths 中
-        Object.assign(globalStore.paths, data.paths);
-      }
-      data.bkImage && this.setBackgroundImage(data.bkImage);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
       // 第一遍赋初值
@@ -303,6 +315,7 @@ export class Topology {
   }
 
   drawLine(lineName?: string) {
+    lineName && lockedError(this.store);
     this.canvas.drawingLineName = lineName;
   }
 
@@ -314,13 +327,20 @@ export class Topology {
     this.canvas.stopPencil();
   }
 
-  // end  - 当前鼠标位置，是否作为终点
-  finishDrawLine(end?: boolean) {
-    this.canvas.finishDrawline(end);
+  lock(lock: LockState) {
+    this.store.data.locked = lock;
+    this.finishDrawLine(true);
+    this.canvas.drawingLineName = '';
+    this.stopPencil();
   }
 
-  finishPencil() {
-    this.canvas.finishPencil();
+  // end  - 当前鼠标位置，是否作为终点
+  async finishDrawLine(end?: boolean) {
+    await this.canvas.finishDrawline(end);
+  }
+
+  async finishPencil() {
+    await this.canvas.finishPencil();
   }
 
   updateLineType(pen: Pen, lineName: string) {
@@ -329,8 +349,8 @@ export class Topology {
     }
 
     pen.lineName = lineName;
-    const from: any = pen.calculative.worldAnchors[0];
-    const to: any = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    const from = getFromAnchor(pen);
+    const to = getToAnchor(pen);
     from.prev = undefined;
     from.next = undefined;
     to.prev = undefined;
@@ -409,15 +429,15 @@ export class Topology {
     return this;
   }
 
-  register(path2dFns: { [key: string]: (pen: any) => void }) {
+  register(path2dFns: { [key: string]: (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D }) {
     register(path2dFns);
   }
 
-  registerCanvasDraw(drawFns: { [key: string]: (ctx: any, pen: any) => void }) {
+  registerCanvasDraw(drawFns: { [key: string]: (ctx: CanvasRenderingContext2D, pen: Pen) => void }) {
     registerCanvasDraw(drawFns);
   }
 
-  registerAnchors(path2dFns: { [key: string]: (pen: any) => void }) {
+  registerAnchors(path2dFns: { [key: string]: (pen: Pen) => void }) {
     registerAnchors(path2dFns);
   }
 
@@ -449,6 +469,14 @@ export class Topology {
 
   find(idOrTag: string) {
     return this.canvas.find(idOrTag);
+  }
+
+  /**
+   * 使用 Array.find 找到即返回，否则返回 undefined
+   * @param idOrTag id or tag
+   */
+  findOne(idOrTag: string): Pen | undefined {
+    return this.canvas.findOne(idOrTag);
   }
 
   getPenRect(pen: Pen) {
@@ -522,6 +550,7 @@ export class Topology {
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
     });
+    this.needInitStatus(pens);
     setTimeout(() => {
       this.canvas.calcActiveRect();
       this.render(Infinity);
@@ -582,13 +611,11 @@ export class Topology {
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
+      // pen 来自于 store.active ，不存在有 parentId 的情况
       parent.children.push(pen.id);
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
-      pen.x = childRect.x;
-      pen.y = childRect.y;
-      pen.width = childRect.width;
-      pen.height = childRect.height;
+      Object.assign(pen, childRect);
       pen.locked = LockState.DisableMove;
       // pen.type = PenType.Node;
     });
@@ -610,10 +637,8 @@ export class Topology {
       step,
     });
     if (showChild != undefined) {
-      pens.forEach(pen => {
-        calcInView(pen);
-        // 更改 view 后，修改 dom 节点的显示隐藏
-        pen.onValue && pen.onValue(pen);
+      pens.forEach((pen) => {
+        calcInView(pen, true);
       });
       this.needInitStatus([parent]);
     }
@@ -628,7 +653,7 @@ export class Topology {
       return;
     }
 
-    const children = pen.children.map(childId => this.store.pens[childId]);
+    const children = pen.children.map((childId) => this.store.pens[childId]);
     let initPens = deepClone(children);
     children.forEach((child) => {
       child.parentId = undefined;
@@ -639,6 +664,7 @@ export class Topology {
       child.locked = LockState.None;
       child.calculative.active = undefined;
       child.calculative.hover = false;
+      this.setVisible(child, true); // 子节点的 visible 属性已经改变，需要恢复
     });
     const step = pen.name === 'combine' ? 3 : 2;
     this.pushHistory({
@@ -699,8 +725,18 @@ export class Topology {
 
   data(): TopologyData {
     const data: TopologyData = deepClone(this.store.data);
+    const { pens, paths } = this.store.data;
     (data as any).version = pkg.version;
-    data.paths = globalStore.paths;
+    // TODO: 未在 delete 时清除，避免撤销等操作。
+    // 清除一些未使用到的 paths
+    data.paths = {};
+    for (const pathId in paths) {
+      if (Object.prototype.hasOwnProperty.call(paths, pathId)) {
+        if (pens.find((pen) => pen.pathId === pathId)) {
+          data.paths[pathId] = paths[pathId];
+        }
+      }
+    }
     return data;
   }
 
@@ -733,7 +769,7 @@ export class Topology {
       if (!socketFn) {
         return false;
       }
-      this.socketFn = socketFn;
+      this.socketFn = socketFn as (e: string) => void;
     } catch (e) {
       console.error('Create the function for socket:', e);
       return false;
@@ -750,6 +786,8 @@ export class Topology {
     if (this.store.data.websocket) {
       this.websocket = new WebSocket(this.store.data.websocket);
       this.websocket.onmessage = (e) => {
+        // TODO: 目前只支持 string 类型的数据
+        // ws 本身还支持 Blob 和 ArrayBuffer 的
         this.doSocket(e.data);
       };
 
@@ -790,7 +828,7 @@ export class Topology {
       }
 
       this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
-      this.mqttClient.on('message', (topic: string, message: any) => {
+      this.mqttClient.on('message', (topic: string, message: Buffer) => {
         this.doSocket(message.toString());
       });
 
@@ -804,7 +842,7 @@ export class Topology {
     this.mqttClient?.end();
   }
 
-  httpTimer: any;
+  httpTimer: NodeJS.Timeout;
   connectHttp() {
     this.closeHttp();
     const { http, httpTimeInterval } = this.store.data;
@@ -825,19 +863,17 @@ export class Topology {
     this.httpTimer = undefined;
   }
 
-  doSocket(message: any) {
+  doSocket(message: string) {
     if (this.socketFn) {
       this.socketFn(message);
       return;
     }
 
     try {
-      message = JSON.parse(message);
-      if (!Array.isArray(message)) {
-        message = [message];
-      }
-      message.forEach((item: any) => {
-        this.setValue(item, { willRender: false });
+      const messageObj = JSON.parse(message);
+      const values: SetValue[] = !Array.isArray(messageObj) ? [messageObj] : messageObj;
+      values.forEach(value => {
+        this.setValue(value, { willRender: false });
       });
       this.render(Infinity);
     } catch (error) {
@@ -845,25 +881,25 @@ export class Topology {
     }
   }
 
-  setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
-    this._setValue(data, { willRender }).forEach(pen => {
+  setValue(data: SetValue, { willRender = true }: { willRender?: boolean } = {}) {
+    this._setValue(data, { willRender }).forEach((pen) => {
       this.store.emitter.emit('valueUpdate', pen);
     });
   }
 
-  updateValue(pen: Pen, data: any) {
+  updateValue(pen: Pen, data: SetValue) {
     this.canvas.updateValue(pen, data);
   }
 
-  _setValue(data: any, { willRender = true }: { willRender?: boolean } = {}) {
+  _setValue(data: SetValue, { willRender = true }: { willRender?: boolean } = {}) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       let afterData = data;
       if (pen.onBeforeValue) {
-        afterData = pen.onBeforeValue(pen, data);
+        afterData = pen.onBeforeValue(pen, data as ChartData);
       }
       this.updateValue(pen, afterData);
-      pen.onValue && pen.onValue(pen);
+      pen.onValue?.(pen);
     });
 
     if (!this.store.data.locked && this.store.active.length && !this.canvas.movingPens) {
@@ -896,7 +932,7 @@ export class Topology {
       case 'add':
         {
           e.forEach((pen: Pen) => {
-            pen.onAdd && pen.onAdd(pen);
+            pen.onAdd?.(pen);
           });
         }
         this.onSizeUpdate();
@@ -934,7 +970,8 @@ export class Topology {
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
       case 'valueUpdate':
-        e.onValue && e.onValue(e);
+        // TODO: setValue 触发 valueUpdate 消息，导致执行两次 onValue 事件
+        e.onValue?.(e);
         this.store.data.locked && this.doEvent(e, eventName);
         break;
       case 'update':
@@ -999,27 +1036,53 @@ export class Topology {
   };
 
   pushChildren(parent: Pen, children: Pen[]) {
+    const initUpdatePens: Pen[] = [deepClone(parent, true)];
+    const addPens: Pen[] = [];
     if (!parent.children) {
       parent.children = [];
     }
+    const updatePens: Pen[] = [];
     children.forEach((pen) => {
-      if (!pen.calculative) {
+      let oldPen: Pen = deepClone(pen, true);
+      if (!pen.id || !this.store.pens[pen.id]) {
+        // 不存在于 store 中
         this.canvas.makePen(pen);
+        oldPen = null; // 添加操作
       }
       if (pen.parentId) {
-        const p = this.store.pens[pen.parentId];
-        const i = p.children.findIndex((id) => id === pen.id);
-        p.children.splice(i, 1);
+        const oldParent = this.store.pens[pen.parentId];
+        const i = oldParent.children.findIndex((id) => id === pen.id);
+        initUpdatePens.push(deepClone(oldParent, true));
+        oldParent.children.splice(i, 1);
+        updatePens.push(deepClone(oldParent, true));
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
-      pen.x = childRect.x;
-      pen.y = childRect.y;
-      pen.width = childRect.width;
-      pen.height = childRect.height;
+      Object.assign(pen, childRect);
       pen.locked = LockState.DisableMove;
-      this.store.pens[pen.id] = pen;
+      if (!oldPen) {
+        addPens.push(deepClone(pen, true));
+      } else {
+        initUpdatePens.push(oldPen);
+        updatePens.push(deepClone(pen, true));
+      }
+    });
+    updatePens.push(deepClone(parent, true));
+    let step = 1;
+    if (addPens.length) {
+      step = 2;
+      this.pushHistory({
+        type: EditType.Add,
+        pens: addPens,
+        step,
+      });
+    }
+    this.pushHistory({
+      type: EditType.Update,
+      initPens: initUpdatePens,
+      pens: updatePens,
+      step,
     });
   }
 
@@ -1027,8 +1090,8 @@ export class Topology {
     renderPenRaw(ctx, pen, rect);
   }
 
-  toPng(padding: Padding = 0, callback?: any) {
-    return this.canvas.toPng(padding, callback);
+  toPng(padding?: Padding, callback?: BlobCallback, containBkImg = false) {
+    return this.canvas.toPng(padding, callback, containBkImg);
   }
 
   /**
@@ -1036,20 +1099,16 @@ export class Topology {
    * @param name 传入参数自带文件后缀名 例如：'test.png'
    * @param padding 上右下左的内边距
    */
-  downloadPng(name?: string, padding: Padding = 0) {
+  downloadPng(name?: string, padding?: Padding) {
     const a = document.createElement('a');
     a.setAttribute('download', name || 'le5le.topology.png');
-    a.setAttribute('href', this.toPng(padding));
+    a.setAttribute('href', this.toPng(padding, undefined, true));
     const evt = document.createEvent('MouseEvents');
     evt.initEvent('click', true, true);
     a.dispatchEvent(evt);
   }
 
-  getRect(pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-
+  getRect(pens: Pen[] = this.store.data.pens) {
     return getRect(pens);
   }
 
@@ -1121,8 +1180,7 @@ export class Topology {
   }
 
   /**
-   * 其它图形的大小字体变成第一个的
-   * 目前只更改 width ，height ，fontSize
+   * 其它图形的部分变成第一个的
    * @param pens 画笔们
    */
   beSameByFirst(pens: Pen[] = this.store.data.pens) {
@@ -1140,10 +1198,7 @@ export class Topology {
     // 2. 修改其它画笔的 宽高 fontSize
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      const penRect = this.getPenRect(pen);
-      penRect.width = width;
-      penRect.height = height;
-      this._setValue({ id: pen.id, ...penRect, ...attrs }, { willRender: false });
+      this._setValue({ id: pen.id, width, height, ...attrs }, { willRender: false });
     }
     this.render(Infinity);
 
@@ -1389,23 +1444,25 @@ export class Topology {
    * @param pen pen 置顶的画笔
    * @param pens 画笔们
    */
-  top(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-    const index = pens.findIndex((p: Pen) => p.id === pen.id);
-    if (index > -1) {
-      pens.push(pens[index]);
-      pens.splice(index, 1);
-      this.needInitStatus([pen]);
-    }
+  top(pen: Pen, pens: Pen[] = this.store.data.pens) {
+    // 获取它包含它的子节点
+    const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
+    const allPens = pens.filter((p) => allIds.includes(p.id));
+    allPens.forEach((pen) => {
+      const index = pens.findIndex((p: Pen) => p.id === pen.id);
+      if (index > -1) {
+        pens.push(pens[index]);
+        pens.splice(index, 1);
+        this.needInitStatus([pen]);
+      }
+    });
   }
 
   /**
-  * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层
-  * 子节点中包含图片，也需要重绘
-  * @param pens 本次改变的 pens
-  */
+   * 若本次改变的画笔存在图片，并且在上层 or 下层，需要擦除上层 or 下层
+   * 子节点中包含图片，也需要重绘
+   * @param pens 本次改变的 pens
+   */
   needInitStatus(pens: Pen[]) {
     this.canvas.needInitStatus(pens);
   }
@@ -1413,22 +1470,22 @@ export class Topology {
   /**
    * 该画笔置底，即放到数组最前，最后绘制即在底部
    */
-  bottom(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-    const index = pens.findIndex((p: Pen) => p.id === pen.id);
-    if (index > -1) {
-      pens.unshift(pens[index]);
-      pens.splice(index + 1, 1);
-      this.needInitStatus([pen]);
+  bottom(pen: Pen, pens: Pen[] = this.store.data.pens) {
+    const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
+    const allPens = pens.filter((p) => allIds.includes(p.id));
+    // 从后往前，保证 allPens 顺序不变
+    for (let i = allPens.length - 1; i >= 0; i--) {
+      const pen = allPens[i];
+      const index = pens.findIndex((p: Pen) => p.id === pen.id);
+      if (index > -1) {
+        pens.unshift(pens[index]);
+        pens.splice(index + 1, 1);
+        this.needInitStatus([pen]);
+      }
     }
   }
 
-  up(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
+  up(pen: Pen, pens: Pen[] = this.store.data.pens) {
     const index = pens.findIndex((p: Pen) => p.id === pen.id);
 
     if (index > -1 && index !== pens.length - 1) {
@@ -1438,10 +1495,7 @@ export class Topology {
     }
   }
 
-  down(pen: Pen, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
+  down(pen: Pen, pens: Pen[] = this.store.data.pens) {
     const index = pens.findIndex((p: Pen) => p.id === pen.id);
     if (index > -1 && index !== 0) {
       pens.splice(index - 1, 0, pens[index]);
@@ -1468,8 +1522,8 @@ export class Topology {
     }
   }
 
-  changePenId(oldId: string, newId: string): boolean {
-    return this.canvas.changePenId(oldId, newId);
+  changePenId(oldId: string, newId: string): void {
+    this.canvas.changePenId(oldId, newId);
   }
 
   /**
@@ -1560,41 +1614,44 @@ export class Topology {
     }
   }
 
-  toComponent(pens?: Pen[], showChild?: number) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
-
+  /**
+   * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件
+   * @param pens 画笔数组
+   * @param showChild 是否作为状态复用（参考 combine showChild）
+   * @returns 组合图形
+   */
+  toComponent(pens = this.store.data.pens, showChild?: number): Pen[] {
     if (pens.length === 1) {
-      pens[0].type = PenType.Node;
-      return deepClone(pens);
+      const pen: Pen = deepClone(pens[0]);
+      pen.type = PenType.Node;
+      pen.id = undefined;
+      return [pen];
     }
 
-    const rect = getRect(pens);
-    const id = s8();
+    const components = deepClone(pens, true);
+    const rect = getRect(components);
     let parent: Pen = {
-      id,
+      id: s8(),
       name: 'combine',
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
+      ...rect,
       children: [],
       showChild,
     };
-    const p = pens.find((pen) => {
+    const p = components.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
-    if (p && showChild === undefined) {
+    const oneIsParent = p && showChild === undefined;
+    if (oneIsParent) {
       if (!p.children) {
         p.children = [];
       }
       parent = p;
     } else {
-      this.canvas.makePen(parent);
+      // 不影响画布数据，生成一个组合图形便于二次复用
+      // this.canvas.makePen(parent);
     }
 
-    pens.forEach((pen) => {
+    components.forEach((pen) => {
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
@@ -1605,24 +1662,22 @@ export class Topology {
       parent.children.push(pen.id);
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
-      pen.x = childRect.x;
-      pen.y = childRect.y;
-      pen.width = childRect.width;
-      pen.height = childRect.height;
+      Object.assign(pen, childRect);
       pen.locked = LockState.DisableMove;
       // pen.type = PenType.Node;
     });
 
-    return deepClone(pens);
+    return oneIsParent ? deepClone(components) : deepClone([parent, ...components]);
   }
 
   setVisible(pen: Pen, visible: boolean) {
+    this.onSizeUpdate();
     this._setValue(
       {
         id: pen.id,
         visible,
       },
-      { willRender: false },
+      { willRender: false }
     );
     if (pen.children) {
       for (const childId of pen.children) {
@@ -1640,7 +1695,7 @@ export class Topology {
 
   destroy(global?: boolean) {
     for (const pen of this.store.data.pens) {
-      pen.onDestroy && pen.onDestroy(pen);
+      pen.onDestroy?.(pen);
     }
     this.closeSocket();
     clearStore(this.store);

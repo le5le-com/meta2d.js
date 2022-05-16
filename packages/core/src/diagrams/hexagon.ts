@@ -1,43 +1,19 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
 
-export function hexagon(pen: Pen, path?: CanvasRenderingContext2D | Path2D) {
-  if (!path) {
-    path = new Path2D();
-  }
-
-  path.moveTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 4,
-    pen.calculative.worldRect.y
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width * 3) / 4,
-    pen.calculative.worldRect.y
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width * 3) / 4,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + (pen.calculative.worldRect.width * 1) / 4,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + pen.calculative.worldRect.height / 2
-  );
-  path.lineTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 4,
-    pen.calculative.worldRect.y
-  );
+export function hexagon(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  path.moveTo(x + width / 4, y);
+  path.lineTo(x + (width * 3) / 4, y);
+  path.lineTo(x + width, y + height / 2);
+  path.lineTo(x + (width * 3) / 4, y + height);
+  path.lineTo(x + (width * 1) / 4, y + height);
+  path.lineTo(x, y + height / 2);
+  path.lineTo(x + width / 4, y);
 
   path.closePath();
-
-  return path;
+  if (path instanceof Path2D) return path;
 }
 
 // export function hexagonAnchors(pen: Pen) {

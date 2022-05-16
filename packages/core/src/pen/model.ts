@@ -1,6 +1,7 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
 import { Event } from '../event';
+import { Canvas } from '../canvas';
 
 export enum PenType {
   Node,
@@ -68,6 +69,13 @@ export const needDirtyPenRectProps = [
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
+export interface ConnectLine { lineId: string; lineAnchor: string; anchor: string }
+
+export type TextAlign = 'left' | 'center' | 'right';
+export type TextBaseline = 'top' | 'middle' | 'bottom';
+export type WhiteSpace = 'nowrap' | 'pre-line' | 'break-all' | '';
+// SetValue 方法参数类型
+export type SetValue = Pen & Partial<Record<'tag' | 'newId', string>> & {[key: string]: any};
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -134,10 +142,10 @@ export interface Pen extends Rect {
   lineHeight?: number;
   fontStyle?: string;
   fontWeight?: string;
-  textAlign?: 'left' | 'center' | 'right';
-  textBaseline?: 'top' | 'middle' | 'bottom';
+  textAlign?: TextAlign;
+  textBaseline?: TextBaseline;
   textBackground?: string;
-  whiteSpace?: string;
+  whiteSpace?: WhiteSpace;
   ellipsis?: boolean;
 
   image?: string;
@@ -196,11 +204,12 @@ export interface Pen extends Rect {
   autoFrom?: boolean;
   autoTo?: boolean;
 
-  connectedLines?: { lineId: string; lineAnchor: string; anchor: string }[];
+  connectedLines?: ConnectLine[];
 
   // Cycle count. Infinite if == 0.
   animateCycle?: number;
   nextAnimate?: string;
+  // TODO: video 与 动画公用该属性，可能是个问题
   autoPlay?: boolean;
   playLoop?: boolean;
 
@@ -281,11 +290,7 @@ export interface Pen extends Rect {
     lineDashOffset?: number;
     color?: string;
     background?: string;
-    anchorColor?: string;
-    hoverColor?: string;
-    hoverBackground?: string;
-    activeColor?: string;
-    activeBackground?: string;
+    // anchorColor?: string;    // TODO: 锚点颜色动画，应该不需要
     bkType?: number;
     gradientFromColor?: string;
     gradientToColor?: string;
@@ -312,8 +317,6 @@ export interface Pen extends Rect {
     textLeft?: number;
     textTop?: number;
     textColor?: string;
-    hoverTextColor?: string;
-    activeTextColor?: string;
     fontFamily?: string;
     fontSize?: number;
     lineHeight?: number;
@@ -353,7 +356,7 @@ export interface Pen extends Rect {
     pencil?: boolean;
     activeAnchor?: Point;
     dirty?: boolean;
-    visible?: boolean;
+    visible?: boolean;   // TODO: visible 是否参与动画呢？
     // 仅仅内部专用
     inView?: boolean;
     // 辅助变量，画线时，动态计算锚点是否时水平方向
@@ -389,7 +392,7 @@ export interface Pen extends Rect {
     layer?: number;
     dropdownList?: any[];
 
-    canvas?: any;
+    canvas?: Canvas;
 
     iframe?: string;
     video?: string;

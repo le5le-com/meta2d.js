@@ -1,68 +1,38 @@
-export function lifeline(ctx: CanvasRenderingContext2D, pen: any) {
-  let height = 0;
-  if (!pen.headHeight) {
-    height = 50;
-  } else {
-    height = pen.headHeight;
-  }
-  if (!pen.calculative.borderRadius) {
-    pen.calculative.borderRadius = 0;
-  }
-  let wr = pen.calculative.borderRadius;
-  let hr = pen.calculative.borderRadius;
+import { Pen } from '@topology/core';
+
+export function lifeline(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const headHeight = (pen as any).headHeight ? (pen as any).headHeight : 50;
+  const { x, y, width, height, ey } = pen.calculative.worldRect;
+  let wr = pen.calculative.borderRadius || 0,
+    hr = wr;
   if (pen.calculative.borderRadius < 1) {
-    wr = pen.calculative.worldRect.width * pen.calculative.borderRadius;
-    hr = pen.calculative.worldRect.height * pen.calculative.borderRadius;
+    wr *= width;
+    hr *= height;
   }
   let r = wr < hr ? wr : hr;
-  if (pen.calculative.worldRect.width < 2 * r) {
-    r = pen.calculative.worldRect.width / 2;
+  if (width < 2 * r) {
+    r = width / 2;
   }
-  if (height < 2 * r) {
-    r = height / 2;
+  if (headHeight < 2 * r) {
+    r = headHeight / 2;
   }
   ctx.beginPath();
-  ctx.moveTo(pen.calculative.worldRect.x + r, pen.calculative.worldRect.y);
-  ctx.arcTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + height,
-    r
-  );
-  ctx.arcTo(
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y + height,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + height,
-    r
-  );
-  ctx.arcTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y + height,
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    r
-  );
-  ctx.arcTo(
-    pen.calculative.worldRect.x,
-    pen.calculative.worldRect.y,
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width,
-    pen.calculative.worldRect.y,
-    r
-  );
-  ctx.stroke();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + headHeight, r);
+  ctx.arcTo(x + width, y + headHeight, x, y + headHeight, r);
+  ctx.arcTo(x, y + headHeight, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
   ctx.closePath();
+  ctx.stroke();
 
+  ctx.save();
   ctx.beginPath();
   ctx.lineWidth = 1;
   ctx.setLineDash([7, 7]);
-  const middle =
-    pen.calculative.worldRect.x + pen.calculative.worldRect.width / 2;
-  ctx.moveTo(middle, pen.calculative.worldRect.y + height + 1);
-  ctx.lineTo(middle, pen.calculative.worldRect.ey);
+  const middle = x + width / 2;
+  ctx.moveTo(middle, y + headHeight + 1);
+  ctx.lineTo(middle, ey);
+  ctx.closePath();
   ctx.stroke();
   ctx.restore();
-  ctx.closePath();
-  return false;
 }

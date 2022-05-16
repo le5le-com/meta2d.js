@@ -1,15 +1,14 @@
-export function transferSymbol(
-  pen: any,
-  path?: CanvasRenderingContext2D | Path2D
-) {
-  if (!path) {
-    path = new Path2D();
-  }
+import { Pen } from '@topology/core';
 
-  let myh = pen.calculative.worldRect.height / 4;
-  let myw = pen.calculative.worldRect.width / 2;
-  let x = pen.calculative.worldRect.x;
-  let y = pen.calculative.worldRect.y;
+export function transferSymbol(
+  pen: Pen,
+  ctx?: CanvasRenderingContext2D
+): Path2D {
+  const path = !ctx ? new Path2D() : ctx;
+  const { x, y, width, height } = pen.calculative.worldRect;
+
+  const myh = height / 4;
+  const myw = width / 2;
 
   path.moveTo(x + myw, y);
   path.lineTo(x + myw, y + myh);
@@ -19,5 +18,5 @@ export function transferSymbol(
 
   path.closePath();
 
-  return path;
+  if (path instanceof Path2D) return path;
 }

@@ -1,6 +1,8 @@
-import { Pen, setElemPosition } from '@topology/core';
+import { Pen, setElemPosition } from "../pen";
 
-export const gifsList: any = {};
+export const gifsList: {
+  [key: string]: HTMLImageElement;
+} = {};
 
 export function gif(pen: Pen): Path2D {
   if (!pen.onDestroy) {
@@ -21,7 +23,7 @@ export function gif(pen: Pen): Path2D {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = pen.image;
-    gifsList[pen.id] = img;   // 提前赋值，避免重复创建
+    gifsList[pen.id] = img; // 提前赋值，避免重复创建
     img.onload = () => {
       pen.calculative.img = img;
       pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
@@ -54,15 +56,17 @@ function resize(pen: Pen) {
   if (!gifsList[pen.id]) {
     return;
   }
-  setElemPosition(pen, gifsList[pen.id].div);
+  setElemPosition(pen, gifsList[pen.id]);
 }
 
 function value(pen: Pen) {
-  if (!gifsList[pen.id] || gifsList[pen.id].src === pen.image) {
+  if (!gifsList[pen.id]) {
     return;
   }
-  setElemPosition(pen, gifsList[pen.id].div);
-  gifsList[pen.id].src = pen.image;
+  setElemPosition(pen, gifsList[pen.id]);
+  if (gifsList[pen.id].getAttribute('src') !== pen.image) {
+    gifsList[pen.id].src = pen.image;
+  }
 }
 
 function changeId(pen: Pen, oldId: string, newId: string) {

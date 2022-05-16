@@ -154,6 +154,7 @@ function transformPath(path: any, pen: any): any {
   const pathPen = {
     ...pen,
     name: 'svgPath',
+    pathId: s8(),    // 同样的 pathId ，避免重复存储 path
     path: d,
     x,
     y,
@@ -421,8 +422,7 @@ function transformPolyline(childProperty: any, pen: any) {
 
 function transformText(childProperty, textContent, pen: any) {
   // 文字
-  const text = textContent[0][contentProp];
-
+  const text = textContent[0]?.[contentProp];
   const width = measureText(text, pen);
   const height = pen.fontSize / shapeScale;
 

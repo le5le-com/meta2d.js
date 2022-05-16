@@ -14,15 +14,17 @@ export async function fileToBase64(file: File): Promise<string> {
 export async function uploadFile(
   file: File,
   url: string,
-  params: object,
-  headers: any
+  params: Record<string, any>,
+  headers: Record<string, string>
 ): Promise<string> {
   const formData = new FormData();
   // 后端接受的 formData 文件属性名一定为 file
   formData.append('file', file);
   if (params) {
     for (const key in params) {
-      formData.append(key, params[key]);
+      if (params.hasOwnProperty(key)) {
+        formData.append(key, params[key]);
+      }
     }
   }
   const res = await fetch(url, {
