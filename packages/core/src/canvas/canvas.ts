@@ -4355,25 +4355,13 @@ export class Canvas {
     const text = this.input.value;
     let i = 0;
     for (const item of pen.dropdownList) {
+      const t = typeof item === 'string' ? item : item.text;
       if (search && text) {
-        const t: string = item.text || item + '';
-        if (t.indexOf(text) > -1) {
-          const li = document.createElement('li');
-          li.dataset.noWheel = '1';
-          li.innerText = item.text || item;
-          li.dataset.l = '1';
-          li.dataset.i = i + '';
-          li.onclick = this.selectDropdown;
-          this.dropdown.appendChild(li);
+        if (t.includes(text)) { // 过滤
+          this.dropdownAppendOption(t, i);
         }
       } else {
-        const li = document.createElement('li');
-        li.dataset.noWheel = '1';
-        li.innerText = item.text || item;
-        li.dataset.l = '1';
-        li.dataset.i = i + '';
-        li.onclick = this.selectDropdown;
-        this.dropdown.appendChild(li);
+        this.dropdownAppendOption(t, i);
       }
       ++i;
     }
@@ -4386,6 +4374,21 @@ export class Canvas {
       this.dropdown.appendChild(none);
     }
   };
+
+  /**
+   * 添加一个选项到 dropdown dom 中
+   * @param text 选项文字
+   * @param index 选项索引
+   */
+  private dropdownAppendOption(text: string, index: number) {
+    const li = document.createElement('li');
+    li.dataset.noWheel = '1';
+    li.innerText = text;
+    li.dataset.l = '1';
+    li.dataset.i = index + '';
+    li.onclick = this.selectDropdown;
+    this.dropdown.appendChild(li);
+  }
 
   private selectDropdown = (e: MouseEvent) => {
     const li = e.target;
@@ -4401,13 +4404,14 @@ export class Canvas {
 
     const initPens = [deepClone(pen, true)];
 
-    if (typeof pen.dropdownList[index] === 'object') {
-      this.updateValue(pen, { ...pen.dropdownList[index] });
+    const dropdown = pen.dropdownList[index];
+    if (typeof dropdown === 'object') {
+      this.updateValue(pen, { ...dropdown });
       // 上面会更新 calculative.text 下方置空
       pen.calculative.text = '';
       this.calcActiveRect();
     } else {
-      pen.text = pen.dropdownList[index] + '';
+      pen.text = dropdown + '';
     }
     this.input.value = pen.text;
     this.dropdown.style.display = 'none';
