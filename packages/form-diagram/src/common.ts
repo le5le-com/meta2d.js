@@ -1,3 +1,44 @@
+import { Pen } from '../../core/src/pen';
+export interface formPen extends Pen {
+  optionPos?: any[];
+  direction?: string;
+  checkboxWidth?: number;
+  options?: any[];
+  optionHeight?: number;
+  checkboxHeight?: number;
+  calculative?: any;
+  checked?: boolean;
+  onColor?: string;
+  disable?: boolean;
+  disableOnColor?: string;
+  offColor?: string;
+  disableOffColor?: string;
+  _textWidth?: number;
+  _fontSize?: number;
+  unit?: string;
+  sliderWidth?: number;
+  sliderHeight?: number;
+  barHeight?: number;
+  value?: number;
+  min?: number;
+  max?: number;
+  table?: {
+    rowHeight: number;
+    colWidth: number;
+    header: {
+      data: any;
+      show: boolean;
+      height: number;
+      fontWeight: number;
+    };
+    data: any;
+  };
+  colPos: number[];
+  rowPos: number[];
+  tableWidth: number;
+  tableHeight: number;
+}
+
 export function getTextLength(text: string, pen: any) {
   const textScale = (pen.calculative.worldRect.height * 14) / 16;
   const chinese = text.match(/[\u4e00-\u9fa5]/g) || '';

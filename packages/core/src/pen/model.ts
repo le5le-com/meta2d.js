@@ -55,7 +55,16 @@ export const needCalcTextRectProps = [
 
 export const needSetPenProps = ['x', 'y', 'width', 'height'];
 
-export const needDirtyPenRectProps = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'flipX', 'flipY', 'visible', 'showChild'];
+export const needDirtyPenRectProps = [
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+  'flipX',
+  'flipY',
+  'visible',
+  'showChild',
+];
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
@@ -415,7 +424,7 @@ export interface Pen extends Rect {
   onMouseDown?: (pen: Pen, e: Point) => void;
   onMouseMove?: (pen: Pen, e: Point) => void;
   onMouseUp?: (pen: Pen, e: Point) => void;
-  onShowInput?: (pen: Pen, e: Point) => void;
+  onShowInput?: (pen: Pen, text: string) => void;
   onInput?: (pen: Pen, text: string) => void;
   onChangeId?: (pen: Pen, oldId: string, newId: string) => void;
 }
@@ -432,7 +441,14 @@ export interface ChartData {
 /**
  * dom 类型的 图形
  */
-export const isDomShapes = ['gif', 'iframe', 'video', 'echarts', 'highcharts', 'lightningCharts'];
+export const isDomShapes = [
+  'gif',
+  'iframe',
+  'video',
+  'echarts',
+  'highcharts',
+  'lightningCharts',
+];
 
 // 格式刷同步的属性
 export const formatAttrs: Set<string> = new Set([
@@ -446,8 +462,8 @@ export const formatAttrs: Set<string> = new Set([
   'progressColor',
   'verticalProgress',
   // 'flip',
-  "flipX",
-  "flipY",
+  'flipX',
+  'flipY',
   'input',
   'lineDash',
   'lineCap',

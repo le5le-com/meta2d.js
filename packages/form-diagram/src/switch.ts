@@ -1,4 +1,6 @@
-export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
+import { formPen } from './common';
+
+export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onDestroy) {
     pen.onClick = click;
   }
@@ -47,7 +49,7 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: any) {
   return false;
 }
 
-function click(pen: any) {
+function click(pen: formPen) {
   if (pen.disable) {
     return;
   }

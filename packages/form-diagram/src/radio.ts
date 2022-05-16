@@ -1,6 +1,8 @@
 import { getTextLength, initOptions } from './common';
+import { formPen } from './common';
+import { Point } from '../../core/src/point';
 
-export function radio(ctx: CanvasRenderingContext2D, pen: any) {
+export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onDestroy) {
     pen.onAdd = onAdd;
     pen.onMouseDown = onMousedown;
@@ -151,11 +153,11 @@ export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   return false;
 }
 
-function onAdd(pen: any) {
+function onAdd(pen: formPen) {
   initOptions(pen);
 }
 
-function onMousedown(pen: any, e: any) {
+function onMousedown(pen: formPen, e: Point) {
   if (pen.direction == 'horizontal') {
     let checkedIndex = -1;
     for (let i = 0; i < pen.optionPos.length; i++) {
@@ -210,6 +212,6 @@ function onMousedown(pen: any, e: any) {
   pen.calculative.canvas.render(Infinity);
 }
 
-function onValue(pen: any) {
+function onValue(pen: formPen) {
   initOptions(pen);
 }

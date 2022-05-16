@@ -1,4 +1,7 @@
-export function slider(ctx: CanvasRenderingContext2D, pen: any) {
+import { formPen } from './common';
+import { Point } from '../../core/src/point';
+
+export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onDestroy) {
     pen.onAdd = initRect;
     pen.onResize = initRect;
@@ -8,7 +11,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   }
 
   if (!pen.calculative.barRect) {
-    initRect(pen)
+    initRect(pen);
     // return;
   }
 
@@ -58,7 +61,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   return false;
 }
 
-function initRect(pen: any) {
+function initRect(pen: formPen) {
   if (!pen._textWidth) {
     pen._textWidth = pen.textWidth || 50;
     pen._fontSize = pen.fontSize || 12;
@@ -102,7 +105,7 @@ function initRect(pen: any) {
   calcBallRect(pen);
 }
 
-function calcBallRect(pen: any) {
+function calcBallRect(pen: formPen) {
   const height = pen.calculative.barRect.height * 3.5;
   const progress = (pen.calculative.barRect.width * pen.value) / 100;
   pen.calculative.ballRect = {
@@ -118,7 +121,7 @@ function calcBallRect(pen: any) {
   pen.calculative.canvas.parent.calcTextRect(pen);
 }
 
-function mouseDown(pen: any, e: any) {
+function mouseDown(pen: formPen, e: Point) {
   const pos = e.x - pen.calculative.worldRect.x;
   if (pos > pen.calculative.barRect.width) {
     return;
@@ -128,7 +131,7 @@ function mouseDown(pen: any, e: any) {
   if (value < pen.min || value > pen.max) {
     return;
   }
-  console.log('move', value);
+  // console.log('move', value);
   pen.value = value;
   calcBallRect(pen);
   pen.calculative.text = pen.value + pen.unit;
@@ -137,12 +140,12 @@ function mouseDown(pen: any, e: any) {
   pen.calculative.canvas.render(Infinity);
 }
 
-function mouseMove(pen: any, e: any) {
+function mouseMove(pen: formPen, e: Point) {
   if (pen.calculative.canvas.mouseDown) {
     mouseDown(pen, e);
   }
 }
 
-function onValue(pen: any) {
+function onValue(pen: formPen) {
   calcBallRect(pen);
 }
