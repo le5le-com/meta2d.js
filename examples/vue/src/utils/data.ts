@@ -69,7 +69,7 @@ export const icons = [
     },
   },
   {
-    // TODO: 该图形能拖入画布，说明注册成功
+    // 该图形能拖入画布，说明注册成功
     key: 'pentagram',
     title: '企业图形库',
     data: {
