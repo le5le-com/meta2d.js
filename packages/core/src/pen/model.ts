@@ -84,7 +84,7 @@ export type SetValue = Pen &
 
 // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
 // string 类型，只展示文字
-export type Dropdown = string | { text: string; [key: string]: any };
+export type Dropdown = string | SetValue;
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];

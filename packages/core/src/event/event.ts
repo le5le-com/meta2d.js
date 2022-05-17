@@ -1,8 +1,11 @@
+import { SetValue } from "../pen";
+
+export type EventValue = string | SetValue | undefined | null;
 export interface Event {
   name: string;
   action: EventAction;
   where?: Where;
-  value?: any;
+  value?: EventValue;
   params?: string;
   fn?: Function;
 }
@@ -21,7 +24,7 @@ export enum EventAction {
 export interface Where {
   key?: string;
   comparison?: string;
-  value?: any;
+  value?: unknown;
   fn?: Function;
   fnJs?: string;
 }

@@ -4466,13 +4466,13 @@ export class Canvas {
     }
 
     const index = +(li as any).dataset.i;
-    if (!pen.dropdownList[index]) {
+    const dropdown = pen.dropdownList[index];
+    if (!dropdown) {
       return;
     }
 
     const initPens = [deepClone(pen, true)];
 
-    const dropdown = pen.dropdownList[index];
     if (typeof dropdown === 'object') {
       this.updateValue(pen, { ...dropdown });
       // 上面会更新 calculative.text 下方置空

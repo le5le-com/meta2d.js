@@ -1,0 +1,26 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "declaration": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es5",
+    "allowJs": true,
+    "lib": [
+      "es2018",
+      "ES2021.String",
+      "dom"
+    ],
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports":true,
+    "paths": {
+      "@topology/*": ["packages/*"],
+    }
+  },
+  "include": ["packages/**/*"],
+  "exclude": ["node_modules", "dist","topology.js", "**/*.spec.ts"]
+}

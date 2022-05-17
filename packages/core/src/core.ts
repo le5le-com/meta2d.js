@@ -131,35 +131,61 @@ export class Topology {
 
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
-      window.open(e.value, e.params === undefined ? '_blank' : e.params);
+      if (e.value && typeof e.value === 'string') {
+        window.open(e.value, e.params ?? '_blank');
+        return;
+      }
+      console.warn('[topology] link event value is not string');
     };
     this.events[EventAction.SetProps] = (pen: Pen, e: Event) => {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
-      const pens = e.params ? this.find(e.params) : [pen];
-      pens.forEach((pen: Pen) => {
-        if (e.value.hasOwnProperty('visible')) {
-          this.setVisible(pen, e.value.visible);
-        }
-        this._setValue({ id: pen.id, ...e.value }, { willRender: false });
-      });
-      this.render();
+      const value = e.value;
+      if (value && typeof value === 'object') {
+        const pens = e.params ? this.find(e.params) : [pen];
+        pens.forEach((pen: Pen) => {
+          if (value.hasOwnProperty('visible')) {
+            this.setVisible(pen, value.visible);
+          }
+          this._setValue({ id: pen.id, ...value }, { willRender: false });
+        });
+        this.render();
+        return;
+      }
+      console.warn('[topology] setProps event value is not object');
     };
     this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
-      this.startAnimate(e.value || [pen]);
+      if (!e.value || typeof e.value === 'string') {
+        this.startAnimate(e.value as string || [pen]);
+        return;
+      }
+      console.warn('[topology] startAnimate event value is not string');
     };
     this.events[EventAction.PauseAnimate] = (pen: Pen, e: Event) => {
-      this.pauseAnimate(e.value || [pen]);
+      if (!e.value || typeof e.value === 'string') {
+        this.pauseAnimate(e.value as string || [pen]);
+        return;
+      }
+      console.warn('[topology] pauseAnimate event value is not string');
     };
     this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
-      this.stopAnimate(e.value || [pen]);
+      if (!e.value || typeof e.value === 'string') {
+        this.stopAnimate(e.value as string || [pen]);
+        return;
+      }
+      console.warn('[topology] stopAnimate event value is not string');
     };
     this.events[EventAction.Function] = (pen: Pen, e: Event) => {
       if (e.value && !e.fn) {
         try {
-          if (e.value.replaceAll) {
-            e.fn = new Function('pen', 'params', e.value.replaceAll('.setValue(', '._setValue('));
+          if (typeof e.value !== 'string') {
+            throw new Error('function event value must be string');
+          }
+          // TODO: 编译 string.replaceAll 报错
+          const value: any = e.value;
+          if (value.replaceAll) {
+            e.fn = new Function('pen', 'params', value.replaceAll('.setValue(', '._setValue('));
           } else {
-            e.fn = new Function('pen', 'params', e.value.replace(/.setValue\(/g, '._setValue('));
+            e.fn = new Function('pen', 'params', value.replace(/.setValue\(/g, '._setValue('));
           }
         } catch (err) {
           console.error('Error: make function:', err);
@@ -168,11 +194,19 @@ export class Topology {
       e.fn?.(pen, e.params);
     };
     this.events[EventAction.WindowFn] = (pen: Pen, e: Event) => {
+      if (typeof e.value !== 'string') {
+        console.warn('[topology] windowFn event value must be string');
+        return;
+      }
       if (window && window[e.value]) {
         (window as any)[e.value](pen, e.params);
       }
     };
     this.events[EventAction.Emit] = (pen: Pen, e: Event) => {
+      if (typeof e.value !== 'string') {
+        console.warn('[topology] emit event value must be string');
+        return;
+      }
       this.store.emitter.emit(e.value, {
         pen,
         params: e.params,
@@ -415,7 +449,7 @@ export class Topology {
     this.canvas.render();
   }
 
-  emit(eventType: EventType, data: any) {
+  emit(eventType: EventType, data: unknown) {
     this.store.emitter.emit(eventType, data);
   }
 
