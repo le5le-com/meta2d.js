@@ -1,6 +1,6 @@
-import { SetValue } from "../pen";
+import { IValue } from "../pen";
 
-export type EventValue = string | SetValue | undefined | null;
+export type EventValue = string | IValue | undefined | null;
 export interface Event {
   name: string;
   action: EventAction;

@@ -104,7 +104,7 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 export function calcTextLines(pen: Pen, text = pen.calculative.text) {
-  if (!text) {
+  if (text == undefined) {
     pen.calculative.textLines = [];
     return;
   }

@@ -79,12 +79,12 @@ export type TextAlign = 'left' | 'center' | 'right';
 export type TextBaseline = 'top' | 'middle' | 'bottom';
 export type WhiteSpace = 'nowrap' | 'pre-line' | 'break-all' | '';
 // SetValue 方法参数类型
-export type SetValue = Pen &
+export type IValue = Pen &
   Partial<Record<'tag' | 'newId', string>> & { [key: string]: any };
 
 // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
 // string 类型，只展示文字
-export type Dropdown = string | SetValue;
+export type Dropdown = string | IValue;
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -268,6 +268,7 @@ export interface Pen extends Rect {
   animateDotSize?: number; // 线条原点动画，原点大小
   isRuleLine?: boolean; // 是否是规则线，规则线不受缩放，平移影响
   isBottom?: boolean; // 是否是底部图片
+  form?: FormItem[]; // 业务表单
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -437,7 +438,20 @@ export interface Pen extends Rect {
   onShowInput?: (pen: Pen, e: Point) => void;
   onInput?: (pen: Pen, text: string) => void;
   onChangeId?: (pen: Pen, oldId: string, newId: string) => void;
+  onBinds?: (pen: Pen, values: IValue[], formItem: FormItem) => IValue[];
 }
+
+// 属性绑定变量
+export interface FormItem {
+  key: string;
+  // 单属性绑定单变量 或 绑定多变量
+  dataIds?: BindId | BindId[];
+}
+
+export type BindId = {
+  dataId: string;
+  name: string;  // TODO: 未来可用作图表的归类
+};
 
 /**
  * 图表追加或替换数据，只关注数据
