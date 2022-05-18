@@ -207,6 +207,9 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
 }
 
 function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
+  if (pen.calculative.text == undefined || pen.calculative.hiddenText) {
+    return;
+  }
   const store = pen.calculative.canvas.store;
   ctx.save();
   if (!pen.calculative.textHasShadow) {
@@ -598,9 +601,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     drawIcon(ctx, pen);
   }
 
-  if (pen.calculative.text && !pen.calculative.hiddenText) {
-    drawText(ctx, pen);
-  }
+  drawText(ctx, pen);
 
   ctx.restore();
 }
@@ -765,9 +766,7 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
     drawIcon(ctx, pen);
   }
 
-  if (pen.calculative.text && !pen.calculative.hiddenText) {
-    drawText(ctx, pen);
-  }
+  drawText(ctx, pen);
 
   ctx.restore();
 }

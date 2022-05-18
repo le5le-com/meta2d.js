@@ -19,7 +19,7 @@ import {
   Pen,
   PenType,
   renderPenRaw,
-  SetValue,
+  IValue,
 } from './pen';
 import { Point } from './point';
 import {
@@ -905,9 +905,14 @@ export class Topology {
 
     try {
       const messageObj = JSON.parse(message);
-      const values: SetValue[] = !Array.isArray(messageObj) ? [messageObj] : messageObj;
+      const values: IValue[] = !Array.isArray(messageObj) ? [messageObj] : messageObj;
+      const formPens = this.store.data.pens.filter((pen) => pen.form);
+      const dataIdValues = values.filter((value) => value.dataId);
+      dataIdValues.length && this.setValuesByDataId(formPens, dataIdValues);
       values.forEach(value => {
-        this.setValue(value, { willRender: false });
+        if (!value.dataId) {
+          this.setValue(value, { willRender: false });
+        }
       });
       this.render(Infinity);
     } catch (error) {
@@ -915,17 +920,53 @@ export class Topology {
     }
   }
 
-  setValue(data: SetValue, { willRender = true }: { willRender?: boolean } = {}) {
+  /**
+   * bind 变量，根据 dataId 变量值 setValue
+   * @param pens 要更新的 pens ，此处即 formPens
+   * @param dataIdValues 包含 dataId 的 values
+   */
+  private setValuesByDataId(pens: Pen[] = [], dataIdValues: IValue[]) {
+    const values: IValue[] = [];
+    pens.forEach((pen) => {
+      pen.form?.forEach(formItem => {
+        const dataIds = formItem.dataIds;
+        if (!dataIds) {
+          return;
+        }
+        if (Array.isArray(dataIds)) {
+          // TODO: 单属性 绑定多变量 dataId
+          if (typeof pen.onBinds === 'function') {
+            values.push(...pen.onBinds(pen, dataIdValues, formItem));
+          } else {
+            console.warn('Not support onBinds for pen:', pen);
+          }
+        } else {
+          const dataIdValue = dataIdValues.find((value) => value.dataId === dataIds.dataId);
+          if (dataIdValue) {
+            values.push({
+              id: pen.id,
+              [formItem.key]: dataIdValue.value
+            } as IValue);
+          }
+        }
+      });
+    });
+    values.forEach(value => {
+      this.setValue(value, { willRender: false });
+    });
+  }
+
+  setValue(data: IValue, { willRender = true }: { willRender?: boolean } = {}) {
     this._setValue(data, { willRender }).forEach((pen) => {
       this.store.emitter.emit('valueUpdate', pen);
     });
   }
 
-  updateValue(pen: Pen, data: SetValue) {
+  updateValue(pen: Pen, data: IValue) {
     this.canvas.updateValue(pen, data);
   }
 
-  _setValue(data: SetValue, { willRender = true }: { willRender?: boolean } = {}) {
+  _setValue(data: IValue, { willRender = true }: { willRender?: boolean } = {}) {
     const pens: Pen[] = this.find(data.id || data.tag) || [];
     pens.forEach((pen) => {
       let afterData = data;
