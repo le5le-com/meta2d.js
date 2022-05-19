@@ -731,9 +731,11 @@ export class Canvas {
 
   ondrop = async (event: DragEvent) => {
     if (this.store.data.locked) {
+      console.warn('canvas is locked, can not drop');
       return;
     }
     try {
+      // TODO: 若画布锁定，阻止默认行为不再执行。在 firefox 上拖拽图片会打开新页
       event.preventDefault();
       event.stopPropagation();
       const json = event.dataTransfer.getData('Topology') || event.dataTransfer.getData('Text');
