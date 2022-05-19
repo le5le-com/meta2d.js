@@ -46,6 +46,7 @@ import {
   isShowChild,
   ConnectLine,
   IValue,
+  getTextColor,
 } from '../pen';
 import {
   calcRotate,
@@ -4275,6 +4276,7 @@ export class Canvas {
     const textRect = rect || pen.calculative.worldTextRect;
     this.input.value = pen.calculative.tempText || pen.text || '';
     this.input.style.fontSize = pen.calculative.fontSize + 'px';
+    this.input.style.color = getTextColor(pen, this.store);
     this.inputParent.style.left = textRect.x + this.store.data.x + 5 + 'px';
     this.inputParent.style.top = textRect.y + this.store.data.y + 5 + 'px';
     this.inputParent.style.width = textRect.width - 10 + 'px';
@@ -4296,7 +4298,7 @@ export class Canvas {
     }
     this.input.focus();
 
-    pen.calculative.text = '';
+    pen.calculative.text = undefined;
     this.render(Infinity);
   };
 
@@ -4478,7 +4480,7 @@ export class Canvas {
     if (typeof dropdown === 'object') {
       this.updateValue(pen, { ...dropdown });
       // 上面会更新 calculative.text 下方置空
-      pen.calculative.text = '';
+      pen.calculative.text = undefined;
       this.calcActiveRect();
     } else {
       pen.text = dropdown + '';

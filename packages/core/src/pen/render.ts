@@ -206,6 +206,15 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
   ctx.drawImage(pen.calculative.img, x, y, w, h);
 }
 
+/**
+ * 获取文字颜色， textColor 优先其次 color
+ */
+export function getTextColor(pen: Pen, store: TopologyStore) {
+  const { textColor, color } = pen.calculative;
+  const { data, options } = store;
+  return textColor || options.textColor || color || data.color || options.color;
+}
+
 function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.text == undefined || pen.calculative.hiddenText) {
     return;
@@ -226,7 +235,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (fill) {
     ctx.fillStyle = fill;
   } else {
-    ctx.fillStyle = pen.calculative.textColor || pen.calculative.color || store.data.color || store.options.color;
+    ctx.fillStyle = getTextColor(pen, store);
   }
 
   const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
@@ -339,7 +348,7 @@ export function drawIcon(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderin
     fontWeight,
     fontFamily,
   });
-  ctx.fillStyle = pen.calculative.iconColor || pen.calculative.textColor || store.options.textColor;
+  ctx.fillStyle = pen.calculative.iconColor || getTextColor(pen, store);
 
   if (pen.calculative.iconRotate) {
     ctx.translate(iconRect.center.x, iconRect.center.y);
