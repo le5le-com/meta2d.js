@@ -76,7 +76,6 @@ export interface Options {
 }
 
 export const defaultOptions: Options = {
-  textColor: '#222222',
   fontFamily:
     '"Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial',
   fontSize: 12,
