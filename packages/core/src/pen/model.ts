@@ -80,6 +80,7 @@ export type TextBaseline = 'top' | 'middle' | 'bottom';
 export type WhiteSpace = 'nowrap' | 'pre-line' | 'break-all' | '';
 // SetValue 方法参数类型
 export type IValue = Pen &
+  Partial<ChartData> &
   Partial<Record<'tag' | 'newId', string>> & { [key: string]: any };
 
 // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
@@ -444,13 +445,16 @@ export interface Pen extends Rect {
 // 属性绑定变量
 export interface FormItem {
   key: string;
-  // 单属性绑定单变量 或 绑定多变量
+  /**
+   * 单属性绑定单变量 或 绑定多变量
+   * 为数组时，顺序不重要
+   */
   dataIds?: BindId | BindId[];
 }
 
 export type BindId = {
   dataId: string;
-  name: string;  // TODO: 未来可用作图表的归类
+  name: string; // TODO: 用作图表的归类
 };
 
 /**
@@ -459,6 +463,9 @@ export type BindId = {
 export interface ChartData {
   dataX: any | any[]; // x 轴数据变化
   dataY: any | any[]; // y 轴数据变化
+  /**
+   * @deprecated 旧版本，未来移除该属性
+   */
   overwrite?: boolean; // 追加 or 替换 ， false 追加
 }
 
