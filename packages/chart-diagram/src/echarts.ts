@@ -25,7 +25,11 @@ export interface ChartPen extends Pen {
       series: {
         data: any[];
         name: string;
+        type: string; // 线类型
       }[];
+      legend: {
+        data?: any[];
+      };
     }; // echarts 参数
     max: number; // 最大数据量
     replaceMode: ReplaceMode; // 替换模式
@@ -289,6 +293,7 @@ function changeId(pen: Pen, oldId: string, newId: string) {
   delete echartsList[oldId];
 }
 
+// TODO: 等测试稳定后再清除日志
 function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
   // 1. 拿到老的 echarts
   const echarts = pen.echarts;
@@ -321,6 +326,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
           }
         }
       });
+      console.log('单饼图 dataY', JSON.stringify(dataY));
       return [
         {
           id: pen.id,
@@ -346,6 +352,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
         }
       }
     });
+    console.log('dataX', JSON.stringify(dataX), 'dataY', JSON.stringify(dataY));
     return [
       {
         id: pen.id,
@@ -354,7 +361,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
       },
     ];
   } else if (oneXAxis.type === 'time') {
-    // TODO: x 轴时间
+    // x 轴时间
     const dataY: any[][] = [];
     const now = +new Date();
     let hasValue = false;
@@ -383,6 +390,12 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     } else {
       return [];
     }
+    console.log(
+      'series',
+      JSON.stringify(series.map((serie) => serie.name)),
+      'dataY',
+      JSON.stringify(dataY)
+    );
     return [
       {
         id: pen.id,
