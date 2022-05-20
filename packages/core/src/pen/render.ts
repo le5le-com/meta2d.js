@@ -212,7 +212,7 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
 export function getTextColor(pen: Pen, store: TopologyStore) {
   const { textColor, color } = pen.calculative;
   const { data, options } = store;
-  return textColor || options.textColor || color || data.color || options.color;
+  return textColor || color || data.color || options.textColor || options.color;
 }
 
 function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
