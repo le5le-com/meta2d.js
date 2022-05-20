@@ -86,6 +86,12 @@ export type IValue = Pen &
 // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
 // string 类型，只展示文字
 export type Dropdown = string | IValue;
+
+export enum LineAnimateType {
+  Normal, // 水流
+  Beads, // 水珠流动
+  Dot, // 圆点
+}
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -237,7 +243,7 @@ export interface Pen extends Rect {
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
 
-  lineAnimateType?: number;
+  lineAnimateType?: LineAnimateType;
 
   frames?: Pen[];
   // 提前预置的不同效果的动画组
