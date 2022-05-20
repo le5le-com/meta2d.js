@@ -31,11 +31,12 @@ export function getParent(pen: Pen, root?: boolean): Pen {
     return undefined;
   }
 
-  const store: TopologyStore = pen.calculative.canvas.store;
+  const store = pen.calculative.canvas.store;
+  const parent = store.pens[pen.parentId];
   if (!root) {
-    return store.pens[pen.parentId];
+    return parent;
   }
-  return getParent(store.pens[pen.parentId], root) || store.pens[pen.parentId];
+  return getParent(parent, root) || parent;
 }
 
 export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
@@ -44,21 +45,24 @@ export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
   }
   const children: Pen[] = [];
   pen.children.forEach((id) => {
-    if (store.pens[id]) {
-      children.push(store.pens[id]);
-      children.push(...getAllChildren(store.pens[id], store));
+    const child = store.pens[id];
+    if (child) {
+      children.push(child);
+      children.push(...getAllChildren(child, store));
     }
   });
   return children;
 }
 
 function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { worldRect, gradientFromColor, gradientToColor, gradientAngle } =
+    pen.calculative;
   return linearGradient(
     ctx,
-    pen.calculative.worldRect,
-    pen.calculative.gradientFromColor,
-    pen.calculative.gradientToColor,
-    pen.calculative.gradientAngle
+    worldRect,
+    gradientFromColor,
+    gradientToColor,
+    gradientAngle
   );
 }
 
@@ -69,38 +73,46 @@ function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
  * @returns 径向渐变
  */
 function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  if (!pen.calculative.gradientFromColor || !pen.calculative.gradientToColor) {
+  const { worldRect, gradientFromColor, gradientToColor, gradientRadius } =
+    pen.calculative;
+  if (!gradientFromColor || !gradientToColor) {
     return;
   }
 
-  const { worldRect } = pen.calculative;
-  let r = worldRect.width;
-  if (r < worldRect.height) {
-    r = worldRect.height;
+  const { width, height, center } = worldRect;
+  const { x: centerX, y: centerY } = center;
+  let r = width;
+  if (r < height) {
+    r = height;
   }
   r *= 0.5;
-  !pen.calculative.gradientRadius && (pen.calculative.gradientRadius = 0);
   const grd = ctx.createRadialGradient(
-    worldRect.center.x,
-    worldRect.center.y,
-    r * pen.calculative.gradientRadius,
-    worldRect.center.x,
-    worldRect.center.y,
+    centerX,
+    centerY,
+    r * (gradientRadius || 0),
+    centerX,
+    centerY,
     r
   );
-  grd.addColorStop(0, pen.calculative.gradientFromColor);
-  grd.addColorStop(1, pen.calculative.gradientToColor);
+  grd.addColorStop(0, gradientFromColor);
+  grd.addColorStop(1, gradientToColor);
 
   return grd;
 }
 
 function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const {
+    worldRect,
+    lineGradientFromColor,
+    lineGradientToColor,
+    lineGradientAngle,
+  } = pen.calculative;
   return linearGradient(
     ctx,
-    pen.calculative.worldRect,
-    pen.calculative.lineGradientFromColor,
-    pen.calculative.lineGradientToColor,
-    pen.calculative.lineGradientAngle
+    worldRect,
+    lineGradientFromColor,
+    lineGradientToColor,
+    lineGradientAngle
   );
 }
 
@@ -121,25 +133,24 @@ function linearGradient(
     return;
   }
 
+  const { x, y, center, ex, ey } = worldRect;
   const from: Point = {
-    x: worldRect.x,
-    y: worldRect.center.y,
+    x,
+    y: center.y,
   };
   const to: Point = {
-    x: worldRect.ex,
-    y: worldRect.center.y,
+    x: ex,
+    y: center.y,
   };
   if (angle % 90 === 0 && angle % 180) {
+    from.x = center.x;
+    to.x = center.x;
     if (angle % 270) {
-      from.x = worldRect.center.x;
-      from.y = worldRect.y;
-      to.x = worldRect.center.x;
-      to.y = worldRect.ey;
+      from.y = y;
+      to.y = ey;
     } else {
-      from.x = worldRect.center.x;
-      from.y = worldRect.ey;
-      to.x = worldRect.center.x;
-      to.y = worldRect.y;
+      from.y = ey;
+      to.y = y;
     }
   } else if (angle) {
     rotatePoint(from, angle, worldRect.center);
@@ -157,34 +168,34 @@ export function drawImage(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
 ) {
-  const rect = pen.calculative.worldIconRect;
-  let x = rect.x;
-  let y = rect.y;
-  let w = rect.width;
-  let h = rect.height;
-  if (pen.calculative.iconWidth) {
-    w = pen.calculative.iconWidth;
+  const {
+    worldIconRect: rect,
+    iconWidth,
+    iconHeight,
+    imgNaturalWidth,
+    imgNaturalHeight,
+    iconRotate,
+    img,
+  } = pen.calculative;
+  let { x, y, width: w, height: h } = rect;
+  if (iconWidth) {
+    w = iconWidth;
   }
-  if (pen.calculative.iconHeight) {
-    h = pen.calculative.iconHeight;
+  if (iconHeight) {
+    h = iconHeight;
   }
-  if (
-    pen.calculative.imgNaturalWidth &&
-    pen.calculative.imgNaturalHeight &&
-    pen.imageRatio
-  ) {
-    let scaleW = rect.width / pen.calculative.imgNaturalWidth;
-    let scaleH = rect.height / pen.calculative.imgNaturalHeight;
-    let scaleMin = scaleW > scaleH ? scaleH : scaleW;
-    const wDivideH =
-      pen.calculative.imgNaturalWidth / pen.calculative.imgNaturalHeight;
-    if (pen.calculative.iconWidth) {
-      h = pen.calculative.iconWidth / wDivideH;
-    } else if (pen.calculative.iconHeight) {
-      w = pen.calculative.iconHeight * wDivideH;
+  if (imgNaturalWidth && imgNaturalHeight && pen.imageRatio) {
+    const scaleW = rect.width / imgNaturalWidth;
+    const scaleH = rect.height / imgNaturalHeight;
+    const scaleMin = Math.min(scaleW, scaleH);
+    const wDivideH = imgNaturalWidth / imgNaturalHeight;
+    if (iconWidth) {
+      h = iconWidth / wDivideH;
+    } else if (iconHeight) {
+      w = iconHeight * wDivideH;
     } else {
-      w = scaleMin * pen.calculative.imgNaturalWidth;
-      h = scaleMin * pen.calculative.imgNaturalHeight;
+      w = scaleMin * imgNaturalWidth;
+      h = scaleMin * imgNaturalHeight;
     }
   }
   x += (rect.width - w) / 2;
@@ -221,12 +232,13 @@ export function drawImage(
       break;
   }
 
-  if (pen.calculative.iconRotate) {
-    ctx.translate(rect.center.x, rect.center.y);
-    ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
-    ctx.translate(-rect.center.x, -rect.center.y);
+  if (iconRotate) {
+    const { x: centerX, y: centerY } = rect.center;
+    ctx.translate(centerX, centerY);
+    ctx.rotate((iconRotate * Math.PI) / 180);
+    ctx.translate(-centerX, -centerY);
   }
-  ctx.drawImage(pen.calculative.img, x, y, w, h);
+  ctx.drawImage(img, x, y, w, h);
 }
 
 /**
@@ -239,12 +251,24 @@ export function getTextColor(pen: Pen, store: TopologyStore) {
 }
 
 function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
-  if (pen.calculative.text == undefined || pen.calculative.hiddenText) {
+  const {
+    fontStyle,
+    fontWeight,
+    fontSize,
+    fontFamily,
+    lineHeight,
+    text,
+    hiddenText,
+    canvas,
+    textHasShadow,
+    textBackground,
+  } = pen.calculative;
+  if (text == undefined || hiddenText) {
     return;
   }
-  const store = pen.calculative.canvas.store;
+  const store = canvas.store;
   ctx.save();
-  if (!pen.calculative.textHasShadow) {
+  if (!textHasShadow) {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
@@ -255,14 +279,8 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   } else if (pen.calculative.active) {
     fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
   }
-  if (fill) {
-    ctx.fillStyle = fill;
-  } else {
-    ctx.fillStyle = getTextColor(pen, store);
-  }
+  ctx.fillStyle = fill || getTextColor(pen, store);
 
-  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } =
-    pen.calculative;
   ctx.font = getFont({
     fontStyle,
     fontWeight,
@@ -278,9 +296,9 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     width,
     height,
   } = pen.calculative.textDrawRect;
-  if (pen.calculative.textBackground) {
+  if (textBackground) {
     ctx.save();
-    ctx.fillStyle = pen.calculative.textBackground;
+    ctx.fillStyle = textBackground;
     ctx.fillRect(drawRectX, drawRectY, width, height);
     ctx.restore();
   }
@@ -306,7 +324,7 @@ export function drawIcon(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
 ) {
-  const store: TopologyStore = pen.calculative.canvas.store;
+  const store = pen.calculative.canvas.store;
   ctx.save();
   ctx.shadowColor = '';
   ctx.shadowBlur = 0;
@@ -416,18 +434,13 @@ export function ctxFlip(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
 ) {
+  const { x, ex, y, ey } = pen.calculative.worldRect;
   if (pen.calculative.flipX) {
-    ctx.translate(
-      pen.calculative.worldRect.x + pen.calculative.worldRect.ex + 0.5,
-      0.5
-    );
+    ctx.translate(x + ex + 0.5, 0.5);
     ctx.scale(-1, 1);
   }
   if (pen.calculative.flipY) {
-    ctx.translate(
-      0.5,
-      pen.calculative.worldRect.y + pen.calculative.worldRect.ey + 0.5
-    );
+    ctx.translate(0.5, y + ey + 0.5);
     ctx.scale(1, -1);
   }
 }
@@ -464,7 +477,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
 
-  const store: TopologyStore = pen.calculative.canvas.store;
+  const store = pen.calculative.canvas.store;
 
   inspectRect(ctx, store, pen); // 审查 rect
   let fill: any;
@@ -489,14 +502,10 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       fill && (setBack = false);
     }
   } else {
-    if (pen.calculative.strokeImage) {
-      if (pen.calculative.strokeImg) {
-        ctx.strokeStyle = ctx.createPattern(
-          pen.calculative.strokeImg,
-          'repeat'
-        );
-        fill = true;
-      }
+    const strokeImg = pen.calculative.strokeImg;
+    if (pen.calculative.strokeImage && strokeImg) {
+      ctx.strokeStyle = ctx.createPattern(strokeImg, 'repeat');
+      fill = true;
     } else {
       let stroke: string | CanvasGradient | CanvasPattern;
       // TODO: 线只有线性渐变
@@ -509,14 +518,10 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
   }
   if (setBack) {
-    if (pen.calculative.backgroundImage) {
-      if (pen.calculative.backgroundImg) {
-        ctx.fillStyle = ctx.createPattern(
-          pen.calculative.backgroundImg,
-          'repeat'
-        );
-        fill = true;
-      }
+    const backgroundImg = pen.calculative.backgroundImg;
+    if (pen.calculative.backgroundImage && backgroundImg) {
+      ctx.fillStyle = ctx.createPattern(backgroundImg, 'repeat');
+      fill = true;
     } else {
       let back: string | CanvasGradient | CanvasPattern;
       if (pen.calculative.bkType === Gradient.Linear) {
@@ -531,17 +536,8 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
   }
 
-  if (pen.calculative.lineCap) {
-    ctx.lineCap = pen.calculative.lineCap as CanvasLineCap;
-  } else if (pen.type) {
-    ctx.lineCap = 'round';
-  }
-
-  if (pen.calculative.lineJoin) {
-    ctx.lineJoin = pen.calculative.lineJoin as CanvasLineJoin;
-  } else if (pen.type) {
-    ctx.lineJoin = 'round';
-  }
+  setLineCap(ctx, pen);
+  setLineJoin(ctx, pen);
 
   setGlobalAlpha(ctx, pen);
 
@@ -573,7 +569,31 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 /**
- * 通常用在下载 svg 
+ * 更改 ctx 的 lineCap 属性
+ */
+export function setLineCap(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const lineCap = pen.lineCap;
+  if (lineCap) {
+    ctx.lineCap = lineCap;
+  } else if (pen.type) {
+    ctx.lineCap = 'round';
+  }
+}
+
+/**
+ * 更改 ctx 的 lineJoin 属性
+ */
+export function setLineJoin(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const lineJoin = pen.lineJoin;
+  if (lineJoin) {
+    ctx.lineJoin = lineJoin;
+  } else if (pen.type) {
+    ctx.lineJoin = 'round';
+  }
+}
+
+/**
+ * 通常用在下载 svg
  * canvas2svg 与 canvas ctx 设置 strokeStyle 表现不同
  * 若设置值为 undefined ，canvas2svg 为空， canvas ctx 为上一个值
  */
@@ -667,17 +687,8 @@ export function renderPenRaw(
     }
   }
 
-  if (pen.calculative.lineCap) {
-    ctx.lineCap = pen.calculative.lineCap as CanvasLineCap;
-  } else if (pen.type) {
-    ctx.lineCap = 'round';
-  }
-
-  if (pen.calculative.lineJoin) {
-    ctx.lineJoin = pen.calculative.lineJoin as CanvasLineJoin;
-  } else if (pen.type) {
-    ctx.lineJoin = 'round';
-  }
+  setLineCap(ctx, pen);
+  setLineJoin(ctx, pen);
 
   setGlobalAlpha(ctx, pen);
 
