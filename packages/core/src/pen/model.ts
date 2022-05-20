@@ -137,8 +137,8 @@ export interface Pen extends Rect {
   lineGradientToColor?: string;
   lineGradientAngle?: number;
 
-  lineCap?: string;
-  lineJoin?: string;
+  lineCap?: CanvasLineCap;
+  lineJoin?: CanvasLineJoin;
   shadowColor?: string;
   shadowBlur?: number;
   shadowOffsetX?: number;
@@ -318,8 +318,6 @@ export interface Pen extends Rect {
     lineGradientFromColor?: string;
     lineGradientToColor?: string;
     lineGradientAngle?: number;
-    lineCap?: string;
-    lineJoin?: string;
     shadowColor?: string;
     shadowBlur?: number;
     shadowOffsetX?: number;
