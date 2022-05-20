@@ -47,6 +47,7 @@ import {
   ConnectLine,
   IValue,
   getTextColor,
+  getGlobalColor,
 } from '../pen';
 import {
   calcRotate,
@@ -929,6 +930,8 @@ export class Canvas {
    */
   private getInitPencilLine(pt: Point): Pen {
     const { data, options } = this.store;
+    const scale = data.scale;
+    const lineWidth = (data.lineWidth || 1);
     return {
       id: pt.penId,
       name: 'line',
@@ -940,11 +943,11 @@ export class Canvas {
         pencil: true,
         active: true,
         worldAnchors: [pt],
-        lineWidth: data.lineWidth || 1,
+        lineWidth: lineWidth * scale,
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
-      lineWidth: data.lineWidth || 1,
+      lineWidth
     };
   }
 
@@ -954,6 +957,8 @@ export class Canvas {
    */
   private getInitDrawingLine(pt: Point): Pen {
     const { data, options } = this.store;
+    const scale = data.scale;
+    const lineWidth = (data.lineWidth || 1);
     return {
       id: pt.penId,
       name: 'line',
@@ -965,11 +970,11 @@ export class Canvas {
         canvas: this,
         active: true,
         worldAnchors: [pt],
-        lineWidth: data.lineWidth || 1,
+        lineWidth: lineWidth * scale,
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
-      lineWidth: data.lineWidth || 1,
+      lineWidth
     };
   }
 
@@ -2385,7 +2390,7 @@ export class Canvas {
     }
     // end
 
-    if (!pen.lineWidth && pen.lineWidth !== 0) {
+    if (pen.lineWidth == undefined) {
       pen.lineWidth = 1;
     }
     const { fontSize, lineHeight } = this.store.options;
@@ -2821,7 +2826,7 @@ export class Canvas {
 
   renderPens = () => {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
-    ctx.strokeStyle = this.store.data.color || this.store.options.color;
+    ctx.strokeStyle = getGlobalColor(this.store);
 
     for (const pen of this.store.data.pens) {
       if (!isFinite(pen.x)) {

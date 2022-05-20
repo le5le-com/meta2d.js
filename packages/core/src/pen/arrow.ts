@@ -27,7 +27,8 @@ export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: 
   }
   ctx.save();
   ctx.beginPath();
-  ctx.strokeStyle = pen.fromArrowColor || pen.calculative.color;
+  const fromArrowColor = pen.fromArrowColor || pen.calculative.color;
+  fromArrowColor && (ctx.strokeStyle = fromArrowColor);
   arrows[pen.fromArrow](ctx, pen, store, pt);
   ctx.restore();
 }
@@ -52,7 +53,8 @@ export function renderToArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: To
     }
   }
   ctx.beginPath();
-  ctx.strokeStyle = pen.toArrowColor || pen.calculative.color;
+  const toArrowColor = pen.toArrowColor || pen.calculative.color;
+  toArrowColor && (ctx.strokeStyle = toArrowColor);
   arrows[pen.toArrow](ctx, pen, store, pt);
   ctx.restore();
 }
