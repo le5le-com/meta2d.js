@@ -1,6 +1,7 @@
 import { calcRotate, Point } from '../point';
 import { TopologyStore } from '../store';
 import { Pen } from './model';
+import { getFromAnchor, getToAnchor } from './render';
 
 const arrows: Record<string, (ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore, point: Point) => void> = {};
 
@@ -8,7 +9,7 @@ export function renderFromArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: 
   if (!arrows[pen.fromArrow]) {
     return;
   }
-  const from = pen.calculative.worldAnchors[0];
+  const from = getFromAnchor(pen);
   const { x, y } = from;
   const pt: Point = { x, y };
   pt.step = (pen.fromArrowSize || 10) * store.data.scale;
@@ -38,7 +39,7 @@ export function renderToArrow(ctx: CanvasRenderingContext2D, pen: Pen, store: To
     return;
   }
   ctx.save();
-  const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+  const to = getToAnchor(pen);
   const { x, y } = to;
   const pt: Point = { x, y };
   pt.step = (pen.toArrowSize || 10) * store.data.scale;
