@@ -13,6 +13,7 @@ import {
   calcCenter,
   calcExy,
   calcRelativePoint,
+  calcRelativeRect,
   Rect,
   rectInRect,
   scaleRect,
@@ -1036,19 +1037,14 @@ export function calcPadding(pen: Pen, rect: Rect) {
 }
 
 export function calcPenRect(pen: Pen) {
+  const worldRect = pen.calculative.worldRect;
   if (!pen.parentId) {
-    pen.x = pen.calculative.worldRect.x;
-    pen.y = pen.calculative.worldRect.y;
-    pen.width = pen.calculative.worldRect.width;
-    pen.height = pen.calculative.worldRect.height;
+    Object.assign(pen, worldRect);
     return;
   }
   const store = pen.calculative.canvas.store;
   const parentRect = store.pens[pen.parentId].calculative.worldRect;
-  pen.x = (pen.calculative.worldRect.x - parentRect.x) / parentRect.width;
-  pen.y = (pen.calculative.worldRect.y - parentRect.y) / parentRect.height;
-  pen.width = pen.calculative.worldRect.width / parentRect.width;
-  pen.height = pen.calculative.worldRect.height / parentRect.height;
+  Object.assign(pen, calcRelativeRect(worldRect, parentRect));
 }
 
 export function calcWorldAnchors(pen: Pen) {
@@ -1096,30 +1092,23 @@ export function calcWorldAnchors(pen: Pen) {
 
 export function calcWorldPointOfPen(pen: Pen, pt: Point) {
   const p: Point = { ...pt };
-  p.x = pen.calculative.worldRect.x + pen.calculative.worldRect.width * pt.x;
-  p.y = pen.calculative.worldRect.y + pen.calculative.worldRect.height * pt.y;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  p.x = x + width * pt.x;
+  p.y = y + height * pt.y;
   if (pt.prev) {
     p.prev = {
       penId: pen.id,
       connectTo: pt.prev.connectTo,
-      x:
-        pen.calculative.worldRect.x +
-        pen.calculative.worldRect.width * pt.prev.x,
-      y:
-        pen.calculative.worldRect.y +
-        pen.calculative.worldRect.height * pt.prev.y,
+      x: x + width * pt.prev.x,
+      y: y + height * pt.prev.y,
     };
   }
   if (pt.next) {
     p.next = {
       penId: pen.id,
       connectTo: pt.next.connectTo,
-      x:
-        pen.calculative.worldRect.x +
-        pen.calculative.worldRect.width * pt.next.x,
-      y:
-        pen.calculative.worldRect.y +
-        pen.calculative.worldRect.height * pt.next.y,
+      x: x + width * pt.next.x,
+      y: y + height * pt.next.y,
     };
   }
 
@@ -1293,15 +1282,13 @@ export function translateLine(pen: Pen, x: number, y: number) {
 
 export function deleteTempAnchor(pen: Pen) {
   if (pen && pen.calculative && pen.calculative.worldAnchors.length) {
-    let to: Point =
-      pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    let to: Point = getToAnchor(pen);
     while (
       pen.calculative.worldAnchors.length &&
       to !== pen.calculative.activeAnchor
     ) {
       pen.calculative.worldAnchors.pop();
-      to =
-        pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+      to = getToAnchor(pen);
     }
   }
 }

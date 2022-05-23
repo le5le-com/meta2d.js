@@ -1,5 +1,5 @@
 import { Direction } from '../../data';
-import { deleteTempAnchor, facePen, Pen } from '../../pen';
+import { deleteTempAnchor, facePen, getToAnchor, Pen } from '../../pen';
 import { Point } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
@@ -15,7 +15,7 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   }
 
   let from = pen.calculative.activeAnchor;
-  let to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+  let to = getToAnchor(pen);
   if (!from || !to || !to.id || from === to) {
     return;
   }
