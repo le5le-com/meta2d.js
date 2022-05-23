@@ -760,7 +760,7 @@ export class Topology {
   data(): TopologyData {
     const data: TopologyData = deepClone(this.store.data);
     const { pens, paths } = this.store.data;
-    (data as any).version = pkg.version;
+    data.version = pkg.version;
     // TODO: 未在 delete 时清除，避免撤销等操作。
     // 清除一些未使用到的 paths
     data.paths = {};

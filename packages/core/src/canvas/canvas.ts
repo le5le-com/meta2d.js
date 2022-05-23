@@ -4405,13 +4405,13 @@ export class Canvas {
   }
 
   private selectDropdown = (e: MouseEvent) => {
-    const li = e.target;
+    const li = e.target as HTMLElement;
     const pen = this.store.pens[this.input.dataset.penId];
     if (!li || !pen || !pen.dropdownList) {
       return;
     }
 
-    const index = +(li as any).dataset.i;
+    const index = +li.dataset.i;
     const dropdown = pen.dropdownList[index];
     if (!dropdown) {
       return;

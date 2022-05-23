@@ -43,6 +43,6 @@ export const formatPadding = (padding: Padding): number[] => {
  * isNil(NaN)
  * // => false
  */
-function isNil(value: any): boolean {
+function isNil(value: unknown): value is null {
   return value == null;
 }

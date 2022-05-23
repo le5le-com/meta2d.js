@@ -42,6 +42,7 @@ export interface TopologyData {
   bkImage?: string; // 背景图片
   http?: string; // http 请求 Url
   httpTimeInterval?: number; // http 请求间隔
+  version?: string; // 版本号
 }
 
 export enum EditType {
