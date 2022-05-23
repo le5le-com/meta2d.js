@@ -3574,31 +3574,36 @@ export class Canvas {
 
   async setAnchor(e: { x: number; y: number }) {
     const initPens = [deepClone(this.store.hover, true)];
+    const hoverPen = this.store.hover;
 
     if (this.store.hoverAnchor) {
-      if (this.beforeRemoveAnchor && !(await this.beforeRemoveAnchor(this.store.hover, this.store.hoverAnchor))) {
+      if (this.beforeRemoveAnchor && !(await this.beforeRemoveAnchor(hoverPen, this.store.hoverAnchor))) {
         return;
       }
-      removePenAnchor(this.store.hover, this.store.hoverAnchor);
-      if (this.store.hover.type) {
-        this.initLineRect(this.store.hover);
+      if (hoverPen.type === PenType.Line && hoverPen.calculative.worldAnchors?.length <= 2) {
+        this.delete([hoverPen]);
+      } else {
+        removePenAnchor(hoverPen, this.store.hoverAnchor);
+        if (hoverPen.type === PenType.Line) {
+          this.initLineRect(hoverPen);
+        }
       }
       this.store.hoverAnchor = undefined;
       this.store.activeAnchor = undefined;
       this.externalElements.style.cursor = 'default';
-    } else if (this.store.hover) {
-      if (this.beforeAddAnchor && !(await this.beforeAddAnchor(this.store.hover, this.store.pointAt))) {
+    } else if (hoverPen) {
+      if (this.beforeAddAnchor && !(await this.beforeAddAnchor(hoverPen, this.store.pointAt))) {
         return;
       }
-      if (this.store.hover.type) {
-        this.store.activeAnchor = addLineAnchor(this.store.hover, this.store.pointAt, this.store.pointAtIndex);
-        this.initLineRect(this.store.hover);
+      if (hoverPen.type === PenType.Line) {
+        this.store.activeAnchor = addLineAnchor(hoverPen, this.store.pointAt, this.store.pointAtIndex);
+        this.initLineRect(hoverPen);
 
         const pt = { x: e.x, y: e.y };
         this.getHover(pt);
       } else {
         const pt = { id: s8(), x: e.x, y: e.y };
-        this.store.activeAnchor = pushPenAnchor(this.store.hover, pt);
+        this.store.activeAnchor = pushPenAnchor(hoverPen, pt);
       }
     }
     this.hotkeyType = HotkeyType.None;
@@ -3606,7 +3611,7 @@ export class Canvas {
 
     this.pushHistory({
       type: EditType.Update,
-      pens: [deepClone(this.store.hover, true)],
+      pens: [deepClone(hoverPen, true)],
       initPens,
     });
   }

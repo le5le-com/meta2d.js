@@ -438,7 +438,8 @@ export function ctxFlip(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
 ) {
-  const { x, ex, y, ey } = pen.calculative.worldRect;
+  // worldRect 可能为 undefined
+  const { x, ex, y, ey } = pen.calculative.worldRect || {};
   if (pen.calculative.flipX) {
     ctx.translate(x + ex + 0.5, 0.5);
     ctx.scale(-1, 1);
