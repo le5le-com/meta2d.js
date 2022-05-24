@@ -774,7 +774,7 @@ export function ctxDrawPath(
     if (progress != null) {
       ctx.save();
       const { x, y, width, height, ey } = pen.calculative.worldRect;
-      const grd = pen.verticalProgress
+      const grd = !pen.verticalProgress
         ? ctx.createLinearGradient(x, y, x + width * progress, y)
         : ctx.createLinearGradient(x, ey, x, y + height * (1 - progress));
       const color =
