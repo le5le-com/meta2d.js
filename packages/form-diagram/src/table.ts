@@ -7,6 +7,7 @@ import { Rect } from '../../core/src/rect';
 import { calcExy } from '@topology/core';
 >>>>>>> d7f4457 (modify_onShowInput)
 
+let isInit = true;
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
 =======
 import { calcExy } from "@topology/core";
@@ -148,11 +149,12 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.calculative.texts = [];
   }
 
-  const textScale = Math.min(
-    pen.calculative.worldRect.width / pen.tableWidth,
-    pen.calculative.worldRect.height / pen.tableHeight
-  );
+  // const textScale = Math.min(
+  //   pen.calculative.worldRect.width / pen.tableWidth,
+  //   pen.calculative.worldRect.height / pen.tableHeight
+  // );
 
+  const textScale = 1;
   for (let i = 0; i < pen.rowPos.length; i++) {
     for (let j = 0; j < pen.colPos.length; j++) {
       let cell = getCell(pen, i, j);
@@ -211,11 +213,13 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       if (rowText[j] == null) {
         if (Array.isArray(cell)) {
           rowText[j] = '';
-          calcChildrenRect(pen, rect, cell);
-          if (!cell[0].id) {
-            pen.calculative.canvas.parent.pushChildren(pen, cell);
+          if (isInit) {
+            calcChildrenRect(pen, rect, cell);
+            if (!cell[0].id) {
+              pen.calculative.canvas.parent.pushChildren(pen, cell);
+            }
+            continue;
           }
-          continue;
         } else {
           rowText[j] = cell.text || cell + '';
         }
@@ -271,6 +275,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.restore();
     }
   }
+  isInit = false;
 }
 
 // 添加table节点回调
@@ -403,7 +408,7 @@ function setCellText(
   if (!pen.table.data || !Array.isArray(pen.table.data)) {
     return;
   }
-
+  //TODO 导致错误
   pen.calculative.texts = undefined;
 
   let rowData: any;
