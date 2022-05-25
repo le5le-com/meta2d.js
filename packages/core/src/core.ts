@@ -1607,10 +1607,11 @@ export class Topology {
    * @param type 类型，全部的连接线/入线/出线
    */
   getLines(node: Pen, type: 'all' | 'in' | 'out' = 'all'): Pen[] {
-    if (node.type) {
+    if (node.type === PenType.Line) {
       return [];
     }
     const lines: Pen[] = [];
+<<<<<<< HEAD
     !node.connectedLines && (node.connectedLines = []);
 
     node.connectedLines.forEach((line) => {
@@ -1641,17 +1642,25 @@ export class Topology {
         }
 =======
       const linePen: Pen = this.store.pens[line.lineId];
+=======
+    node.connectedLines?.forEach(({lineId}) => {
+      const line = this.store.pens[lineId];
+      if (!line) {
+        console.warn(node, 'node contain a error connectedLine')
+        return;
+      }
+>>>>>>> 47d7ed6 (getLines connectedLines lineId not in store.pens)
       switch (type) {
         case 'all':
-          lines.push(linePen);
+          lines.push(line);
           break;
         case 'in':
           // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
-          linePen.anchors[linePen.anchors.length - 1].connectTo === node.id && lines.push(linePen);
+          getToAnchor(line).connectTo === node.id && lines.push(line);
           break;
         case 'out':
           // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
-          linePen.anchors[0].connectTo === node.id && lines.push(linePen);
+          getFromAnchor(line).connectTo === node.id && lines.push(line);
           break;
 >>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
       }
@@ -1666,12 +1675,10 @@ export class Topology {
    * @param pen 节点或连线
    */
   nextNode(pen: Pen): Pen[] {
-    if (pen.type) {
-      // 连线
-      const nextNodeId = pen.anchors[pen.anchors.length - 1].connectTo;
-      return [this.store.pens[nextNodeId]];
+    if (pen.type === PenType.Line) {
+      const nextNode = this.store.pens[getToAnchor(pen).connectTo];
+      return nextNode ? [nextNode] : [];
     } else {
-      // 节点
       // 1. 得到所有的出线
       const lines = this.getLines(pen, 'out');
       const nextNodes: Pen[] = [];
@@ -1694,12 +1701,10 @@ export class Topology {
    * @param pen 节点或连线
    */
   previousNode(pen: Pen): Pen[] {
-    if (pen.type) {
-      // 连线
-      const preNodeId = pen.anchors[0].connectTo;
-      return [this.store.pens[preNodeId]];
+    if (pen.type === PenType.Line) {
+      const preNode = this.store.pens[getFromAnchor(pen).connectTo];
+      return preNode ? [preNode] : [];
     } else {
-      // 节点
       // 1. 得到所有的入线
       const lines = this.getLines(pen, 'in');
       const preNodes: Pen[] = [];
