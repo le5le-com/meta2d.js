@@ -2217,6 +2217,8 @@ export class Canvas {
     this.sizeCPs = undefined;
     this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.offscreen.getContext('2d').clearRect(0, 0, this.offscreen.width, this.offscreen.height);
+    this.canvasImage.clear();
+    this.canvasImageBottom.clear();
   }
 
   async addPen(pen: Pen, history?: boolean): Promise<Pen> {
