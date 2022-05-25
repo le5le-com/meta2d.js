@@ -294,8 +294,7 @@ export class Topology {
     clearStore(this.store);
     this.hideInput();
     this.canvas.tooltip.hide();
-    this.canvas.activeRect = undefined;
-    this.canvas.sizeCPs = undefined;
+    this.canvas.clearCanvas();
 
     this.store.dirtyBackground = true;
     this.store.dirtyTop = true;
@@ -320,8 +319,6 @@ export class Topology {
       }
     }
 
-    this.canvas.canvasImage.clear();
-    this.canvas.canvasImageBottom.clear();
     this.canvas.render(Infinity);
     this.listenSocket();
     this.connectSocket();
