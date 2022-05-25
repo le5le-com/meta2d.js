@@ -12,6 +12,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.onMouseDown = onMouseDown;
     pen.onShowInput = onShowInput;
     pen.onInput = onInput;
+    pen.onValue = onValue;
   }
 
   const data = pen.calculative.canvas.store.data;
@@ -267,6 +268,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
 
 // 添加table节点回调
 function onAdd(pen: formPen) {
+  isInit = true;
   initRect(pen);
 }
 
@@ -499,4 +501,8 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
       item.y += top;
     }
   }
+}
+
+function onValue(pen: formPen) {
+  pen.calculative.texts = undefined;
 }
