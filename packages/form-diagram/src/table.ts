@@ -7,7 +7,6 @@ import { Rect } from '../../core/src/rect';
 import { calcExy } from '@topology/core';
 >>>>>>> d7f4457 (modify_onShowInput)
 
-let isInit = true;
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
 =======
 import { calcExy } from "@topology/core";
@@ -156,6 +155,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
   // );
 
   const textScale = 1;
+
   for (let i = 0; i < pen.rowPos.length; i++) {
     for (let j = 0; j < pen.colPos.length; j++) {
       let cell = getCell(pen, i, j);
@@ -214,7 +214,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       if (rowText[j] == null) {
         if (Array.isArray(cell)) {
           rowText[j] = '';
-          if (isInit) {
+          if (pen.isInit) {
             calcChildrenRect(pen, rect, cell);
             if (!cell[0].id) {
               pen.calculative.canvas.parent.pushChildren(pen, cell);
@@ -276,12 +276,12 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.restore();
     }
   }
-  isInit = false;
+  pen.isInit = false;
 }
 
 // 添加table节点回调
 function onAdd(pen: formPen) {
-  isInit = true;
+  pen.isInit = true;
   initRect(pen);
 }
 

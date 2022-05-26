@@ -38,6 +38,7 @@ export interface formPen extends Pen {
   rowPos: number[];
   tableWidth: number;
   tableHeight: number;
+  isInit: boolean;
 }
 =======
 import { calcExy } from "@topology/core";
