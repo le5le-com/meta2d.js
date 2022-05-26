@@ -1,5 +1,6 @@
 import { isEqual, Pen } from '../pen';
 import { Point, rotatePoint, scalePoint } from '../point';
+import { formatPadding, Padding } from '../utils';
 
 export interface Rect {
   x?: number;
@@ -143,6 +144,30 @@ export function rectInRect(source: Rect, target: Rect, allIn?: boolean) {
     return source.x > target.x && source.ex < target.ex && source.y > target.y && source.ey < target.ey;
   }
   return !(source.x > target.ex || source.ex < target.x || source.ey < target.y || source.y > target.ey);
+}
+
+/**
+ * 一个 rect 在另一个 rect 的 四个角，即水平区域不重合，垂直区域不重合
+ */
+export function rectInFourAngRect(source: Rect, target: Rect) {
+  return (target.x > source.ex || target.ex < source.x) && (target.y > source.ey || target.ey < source.y);
+}
+
+/**
+ * 扩大 rect ，x，y，ex，ey 值都会变
+ * @param rect 原 rect ，无副作用
+ * @param size padding 类型，可传四个方向的值，也可以只传一个值
+ */
+export function getLargerRect(rect: Rect, size: Padding): Rect {
+  const padding = formatPadding(size);
+  const retRect = {
+    x: rect.x - padding[3],
+    y: rect.y - padding[0],
+    width: rect.width + padding[1] + padding[3],
+    height: rect.height + padding[0] + padding[2],
+  };
+  calcExy(retRect);
+  return retRect;
 }
 
 export function translateRect(rect: Rect | Pen, x: number, y: number) {
