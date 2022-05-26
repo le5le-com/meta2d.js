@@ -1,6 +1,12 @@
 import { PenType } from '.';
 import { Point } from '../point';
-import { calcCenter, getRect, Rect, rectToPoints } from '../rect';
+import {
+  calcCenter,
+  getLargerRect,
+  Rect,
+  rectInFourAngRect,
+  rectToPoints,
+} from '../rect';
 import { TopologyStore } from '../store';
 import { deepClone } from '../utils';
 import { Pen } from './model';
@@ -349,7 +355,7 @@ export function calcMoveDock(
     calcCenter(rect);
     activePoints = [rect.center, ...rectToPoints(rect)];
   }
-  return calcDockByPoints(store, activePoints);
+  return calcDockByPoints(store, activePoints, rect);
 }
 
 /**
@@ -379,30 +385,31 @@ export function calcResizeDock(
   resizeIndex: number
 ): { xDock: Point; yDock: Point } {
   const activePoints = rectToPoints(rect);
-  return calcDockByPoints(store, activePoints);
+  return calcDockByPoints(store, activePoints, rect);
 }
 
 function calcDockByPoints(
   store: TopologyStore,
-  activePoints: Point[]
+  activePoints: Point[],
+  rect: Rect // 当前区域
 ): { xDock: Point; yDock: Point } {
   let xDock: Point;
   let yDock: Point;
   let x = Infinity;
   let y = Infinity;
   const size = 8;
-  for (const pen of store.data.pens) {
-    if (pen.calculative.inView === false) {
-      continue;
-    }
-
-    if (
-      pen.type &&
-      store.active.some((active) => isConnectLine(store, active, pen))
-    ) {
-      continue;
-    }
-
+  const largerRect = getLargerRect(rect, size); // rect 扩大 size 区域
+  // 过滤出本次需要计算的画笔们
+  const pens = store.data.pens.filter((pen) => {
+    const { inView, worldRect } = pen.calculative;
+    return !(
+      inView === false ||
+      rectInFourAngRect(largerRect, worldRect) || // 水平和垂直方向 无重合
+      (pen.type &&
+        store.active.some((active) => isConnectLine(store, active, pen)))
+    );
+  });
+  for (const pen of pens) {
     // 得到图形的全部点
     const points = getPointsByPen(pen);
     // 比对 points 中的点，必须找出最近的点，不可提前跳出
