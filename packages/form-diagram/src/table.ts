@@ -201,13 +201,12 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       if (rowText[j] == null) {
         if (Array.isArray(cell)) {
           rowText[j] = '';
-          if (pen.isInit) {
+          //子节点创建后无需再计算位置
+          if (!cell[0].id) {
             calcChildrenRect(pen, rect, cell);
-            if (!cell[0].id) {
-              pen.calculative.canvas.parent.pushChildren(pen, cell);
-            }
-            continue;
+            pen.calculative.canvas.parent.pushChildren(pen, cell);
           }
+          continue;
         } else {
           rowText[j] = cell.text || cell + '';
         }
@@ -263,12 +262,10 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.restore();
     }
   }
-  pen.isInit = false;
 }
 
 // 添加table节点回调
 function onAdd(pen: formPen) {
-  pen.isInit = true;
   initRect(pen);
 }
 
