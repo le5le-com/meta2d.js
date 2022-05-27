@@ -1239,8 +1239,12 @@ export class Topology {
     canvas.scrollTo(x, y);
   }
 
+  /**
+   * 画布是否有 画笔 
+   * RuleLine 不算
+   */
   hasView(): boolean {
-    return !!this.store.data.pens.length;
+    return !!this.store.data.pens.filter(pen => !pen.isRuleLine).length;
   }
 
   private getViewCenter() {
