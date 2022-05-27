@@ -1025,7 +1025,7 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
-    console.warn('e.buttons', e.buttons, 'this.drawingLine', this.drawingLine);
+    console.info('e.buttons', e.buttons, 'this.drawingLine', this.drawingLine);
     if (e.buttons === 2 && !this.drawingLine) {
       this.mouseRight = MouseRight.Down;
     }
@@ -1342,7 +1342,7 @@ export class Canvas {
       // 画布平移操作提前
       if (this.mouseRight === MouseRight.Down) {
         this.mouseRight = MouseRight.Translate;
-        console.warn('mousemove', this.mouseRight);
+        console.info('mousemove', this.mouseRight);
       }
       // Translate
       if (
@@ -1564,7 +1564,7 @@ export class Canvas {
     e.x -= this.bounding.left || this.bounding.x;
     e.y -= this.bounding.top || this.bounding.y;
 
-    console.warn('mouseRight', this.mouseRight);
+    console.info('mouseRight', this.mouseRight);
     if (this.mouseRight === MouseRight.Down) {
       this.store.emitter.emit('contextmenu', {
         e,
