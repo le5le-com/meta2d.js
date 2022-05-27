@@ -98,6 +98,7 @@ import { MagnifierCanvas } from './magnifierCanvas';
 import { lockedError } from '../utils/error';
 import { Topology } from '../core';
 
+export const movingSuffix = '-moving' as const;
 export class Canvas {
   canvas = document.createElement('canvas');
   offscreen = createOffscreen();
@@ -139,7 +140,6 @@ export class Canvas {
   pencilLine?: Pen;
 
   movingPens: Pen[];
-  private movingSuffix = '-moving' as const;
 
   dirtyLines?: Set<Pen> = new Set();
   dock: { xDock: Point; yDock: Point };
@@ -1910,33 +1910,22 @@ export class Canvas {
 
   getSizeCPs() {
     this.sizeCPs = rectToPoints(this.activeRect);
-    let pt = {
-      x: this.activeRect.x + this.activeRect.width * 0.5,
-      y: this.activeRect.y,
-    };
-    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
-    this.sizeCPs.push(pt);
-
-    pt = {
-      x: this.activeRect.ex,
-      y: this.activeRect.y + this.activeRect.height * 0.5,
-    };
-    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
-    this.sizeCPs.push(pt);
-
-    pt = {
-      x: this.activeRect.x + this.activeRect.width * 0.5,
-      y: this.activeRect.ey,
-    };
-    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
-    this.sizeCPs.push(pt);
-
-    pt = {
-      x: this.activeRect.x,
-      y: this.activeRect.y + this.activeRect.height * 0.5,
-    };
-    rotatePoint(pt, this.activeRect.rotate, this.activeRect.center);
-    this.sizeCPs.push(pt);
+    // 正上 正右 正下 正左
+    const pts = [
+      { x: 0.5, y: 0 },
+      { x: 1, y: 0.5 },
+      { x: 0.5, y: 1 },
+      { x: 0, y: 0.5 },
+    ] as const;
+    const { x, y, width, height, rotate, center } = this.activeRect;
+    pts.forEach((pt) => {
+      const p = {
+        x: pt.x * width + x,
+        y: pt.y * height + y,
+      };
+      rotatePoint(p, rotate, center);
+      this.sizeCPs.push(p);
+    });
   }
 
   onResize = () => {
@@ -3324,48 +3313,7 @@ export class Canvas {
     }
 
     if (!this.movingPens) {
-      this.movingPens = deepClone(this.store.active, true);
-      const containChildPens = this.getAllByPens(this.movingPens);
-      const copyContainChildPens = deepClone(containChildPens, true);
-      // 考虑父子关系，修改 id
-      containChildPens.forEach((pen) => {
-        pen.id += this.movingSuffix;
-        if (pen.parentId && copyContainChildPens.find((p) => p.id === pen.parentId)) {
-          pen.parentId += this.movingSuffix;
-        }
-        if (pen.children) {
-          pen.children = pen.children.map((child) => child + this.movingSuffix);
-        }
-        // 连接关系也需要变，用在 updateLines 中
-        if (pen.connectedLines) {
-          pen.connectedLines = pen.connectedLines.map((line) => {
-            if (copyContainChildPens.find((p) => p.id === line.lineId)) {
-              line.lineId += this.movingSuffix;
-            }
-            return line;
-          });
-        }
-        if (pen.type && pen.calculative.worldAnchors) {
-          pen.calculative.worldAnchors = pen.calculative.worldAnchors.map((anchor) => {
-            if (anchor.connectTo && copyContainChildPens.find((p) => p.id === anchor.connectTo)) {
-              anchor.connectTo += this.movingSuffix;
-            }
-            return anchor;
-          });
-        }
-        this.store.pens[pen.id] = pen; // dirtyPenRect 时需要计算
-        pen.calculative.canvas = this;
-        const value: Pen = {
-          globalAlpha: 0.5,
-        };
-        // TODO: 例如 pen.name = 'triangle' 的情况，但有图片，是否还需要变成矩形呢？
-        if (isDomShapes.includes(pen.name) || pen.image) {
-          value.name = 'rectangle';
-          value.onMove = undefined;
-        }
-        this.updateValue(pen, value);
-        pen.calculative.image = undefined;
-      });
+      this.initMovingPens();
       this.store.active.forEach((pen) => {
         setHover(pen, false);
       });
@@ -3400,6 +3348,65 @@ export class Canvas {
     }
 
     this.translatePens(this.movingPens, offset.x, offset.y, true);
+  }
+
+  /**
+   * 初始化移动，更改画笔的 id parentId 等关联关系
+   * @param pen 要修改的画笔
+   * @param pens 本次操作的画笔们，包含子画笔
+   */
+  private changeIdsByMoving(pen: Pen, pens: Pen[]) {
+    pen.id += movingSuffix;
+    if (pen.parentId && pens.find((p) => p.id === pen.parentId)) {
+      pen.parentId += movingSuffix;
+    }
+    if (pen.children) {
+      pen.children = pen.children.map((child) => child + movingSuffix);
+    }
+    // 连接关系也需要变，用在 updateLines 中
+    if (pen.connectedLines) {
+      pen.connectedLines = pen.connectedLines.map((line) => {
+        if (pens.find((p) => p.id === line.lineId)) {
+          line.lineId += movingSuffix;
+        }
+        return line;
+      });
+    }
+    if (pen.type && pen.calculative.worldAnchors) {
+      pen.calculative.worldAnchors = pen.calculative.worldAnchors.map((anchor) => {
+        if (anchor.connectTo && pens.find((p) => p.id === anchor.connectTo)) {
+          anchor.connectTo += movingSuffix;
+        }
+        return anchor;
+      });
+    }
+  }
+
+  /**
+   * 初始化 this.movingPens
+   * 修改 ids （id parentId children 等）
+   * 半透明，去图片
+   */
+  private initMovingPens() {
+    this.movingPens = deepClone(this.store.active, true);
+    const containChildPens = this.getAllByPens(this.movingPens);
+    const copyContainChildPens = deepClone(containChildPens, true);
+    // 考虑父子关系，修改 id
+    containChildPens.forEach((pen) => {
+      this.changeIdsByMoving(pen, copyContainChildPens);
+      this.store.pens[pen.id] = pen; // dirtyPenRect 时需要计算
+      pen.calculative.canvas = this;
+      const value: Pen = {
+        globalAlpha: 0.5,
+      };
+      // TODO: 例如 pen.name = 'triangle' 的情况，但有图片，是否还需要变成矩形呢？
+      if (isDomShapes.includes(pen.name) || pen.image) {
+        value.name = 'rectangle';
+        value.onMove = undefined;
+      }
+      this.updateValue(pen, value);
+      pen.calculative.image = undefined;
+    });
   }
 
   moveLineAnchor(e: { x: number; y: number }) {
@@ -3613,7 +3620,7 @@ export class Canvas {
   private notInDisconnect(line: Pen, pens: Pen[]) {
     line.calculative.worldAnchors.forEach((anchor) => {
       if (anchor.connectTo && !pens.find(p => p.id === anchor.connectTo)) {
-        const lineId = line.id.includes(this.movingSuffix) ? line.id.replace(this.movingSuffix, '') : line.id;
+        const lineId = line.id.includes(movingSuffix) ? line.id.replace(movingSuffix, '') : line.id;
         disconnectLine(this.store.pens[anchor.connectTo], lineId, anchor.id, anchor.anchorId);
         anchor.connectTo = undefined;
         anchor.anchorId = undefined;
@@ -3845,7 +3852,10 @@ export class Canvas {
     const canMovePens = this.store.active.filter(
       (pen: Pen) => (!pen.locked || pen.locked < LockState.DisableMove) && pen.visible != false
     );
-    if (canMovePens.length === 1) {
+    if (!canMovePens.length) {
+      console.warn("active have no movable pens");
+      return;
+    } else if (canMovePens.length === 1) {
       this.activeRect = deepClone(canMovePens[0].calculative.worldRect);
       this.activeRect.rotate = canMovePens[0].calculative.rotate || 0;
       calcCenter(this.activeRect);
