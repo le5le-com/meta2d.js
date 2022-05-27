@@ -355,7 +355,7 @@ export function calcMoveDock(
     calcCenter(rect);
     activePoints = [rect.center, ...rectToPoints(rect)];
   }
-  return calcDockByPoints(store, activePoints, rect);
+  return calcDockByPoints(store, activePoints, rect, true);
 }
 
 /**
@@ -388,10 +388,17 @@ export function calcResizeDock(
   return calcDockByPoints(store, activePoints, rect);
 }
 
+/**
+ * 通过当前 活动层 的所有点 计算 dock
+ * @param activePoints 活动层 的所有点
+ * @param rect 当前区域
+ * @param calcActive 是否与 活动层画笔 的点进行计算
+ */
 function calcDockByPoints(
   store: TopologyStore,
   activePoints: Point[],
-  rect: Rect // 当前区域
+  rect: Rect,
+  calcActive = false
 ): { xDock: Point; yDock: Point } {
   let xDock: Point;
   let yDock: Point;
@@ -401,9 +408,10 @@ function calcDockByPoints(
   const largerRect = getLargerRect(rect, size); // rect 扩大 size 区域
   // 过滤出本次需要计算的画笔们
   const pens = store.data.pens.filter((pen) => {
-    const { inView, worldRect } = pen.calculative;
+    const { inView, worldRect, active } = pen.calculative;
     return !(
       inView === false ||
+      (!calcActive && active) ||  // 如果不计算活动层，则过滤掉活动层
       rectInFourAngRect(largerRect, worldRect) || // 水平和垂直方向 无重合
       (pen.type &&
         store.active.some((active) => isConnectLine(store, active, pen)))

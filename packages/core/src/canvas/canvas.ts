@@ -3217,10 +3217,9 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.getAllByPens(this.store.active));
       this.pushHistory({
         type: EditType.Update,
-        pens: currentPens,
+        pens: deepClone(this.getAllByPens(this.store.active)),
         initPens: this.initPens,
       });
       this.initPens = undefined;
@@ -3229,7 +3228,7 @@ export class Canvas {
 
   resizePens(e: Point) {
     if (!this.initPens) {
-      this.initPens = deepClone(this.store.active);
+      this.initPens = deepClone(this.store.active, true);
     }
 
     if (!this.initActiveRect) {
@@ -3251,19 +3250,17 @@ export class Canvas {
     calcCenter(rect);
     if (!this.store.options.disableDockLine) {
       this.clearDock();
-      if (this.customeResizeDock) {
-        this.dock = this.customeResizeDock(this.store, rect, this.store.active, this.resizeIndex);
-      } else {
-        this.dock = calcResizeDock(this.store, rect, this.store.active, this.resizeIndex);
-      }
-      if (this.dock.xDock) {
-        x += this.dock.xDock.step;
-        const dockPen = this.store.pens[this.dock.xDock.penId];
+      const resizeDock = this.customeResizeDock || calcResizeDock;
+      this.dock = resizeDock(this.store, rect, this.store.active, this.resizeIndex);
+      const { xDock, yDock } = this.dock;
+      if (xDock) {
+        x += xDock.step;
+        const dockPen = this.store.pens[xDock.penId];
         dockPen.calculative.isDock = true;
       }
-      if (this.dock.yDock) {
-        y += this.dock.yDock.step;
-        const dockPen = this.store.pens[this.dock.yDock.penId];
+      if (yDock) {
+        y += yDock.step;
+        const dockPen = this.store.pens[yDock.penId];
         dockPen.calculative.isDock = true;
       }
     }
@@ -3307,14 +3304,9 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const pens = this.store.active;
-      const currentPens = [];
-      for (let pen of pens) {
-        currentPens.push(deepClone(pen));
-      }
       this.pushHistory({
         type: EditType.Update,
-        pens: currentPens,
+        pens: deepClone(this.store.active, true),
         initPens: this.initPens,
       });
       this.initPens = undefined;
@@ -3392,19 +3384,17 @@ export class Canvas {
     };
     if (!this.store.options.disableDockLine) {
       this.clearDock();
-      if (this.customeMoveDock) {
-        this.dock = this.customeMoveDock(this.store, rect, this.movingPens, offset);
-      } else {
-        this.dock = calcMoveDock(this.store, rect, this.movingPens, offset);
-      }
-      if (this.dock.xDock) {
-        offset.x += this.dock.xDock.step;
-        const dockPen = this.store.pens[this.dock.xDock.penId];
+      const moveDock = this.customeMoveDock || calcMoveDock;
+      this.dock = moveDock(this.store, rect, this.movingPens, offset);
+      const { xDock, yDock } = this.dock;
+      if (xDock) {
+        offset.x += xDock.step;
+        const dockPen = this.store.pens[xDock.penId];
         dockPen.calculative.isDock = true;
       }
-      if (this.dock.yDock) {
-        offset.y += this.dock.yDock.step;
-        const dockPen = this.store.pens[this.dock.yDock.penId];
+      if (yDock) {
+        offset.y += yDock.step;
+        const dockPen = this.store.pens[yDock.penId];
         dockPen.calculative.isDock = true;
       }
     }
@@ -3476,10 +3466,9 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.store.active, true);
       this.pushHistory({
         type: EditType.Update,
-        pens: currentPens,
+        pens: deepClone(this.store.active, true),
         initPens: this.initPens,
       });
       this.initPens = undefined;
@@ -3520,10 +3509,9 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.store.active, true);
       this.pushHistory({
         type: EditType.Update,
-        pens: currentPens,
+        pens: deepClone(this.store.active, true),
         initPens: this.initPens,
       });
       this.initPens = undefined;
@@ -3564,10 +3552,9 @@ export class Canvas {
     }
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      const currentPens = deepClone(this.store.active, true);
       this.pushHistory({
         type: EditType.Update,
-        pens: currentPens,
+        pens: deepClone(this.store.active, true),
         initPens: this.initPens,
       });
       this.initPens = undefined;
