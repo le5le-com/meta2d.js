@@ -6,18 +6,18 @@
  */
 export function deepClone<T>(o: T, keepCalc = false): T {
   if (Array.isArray(o)) {
-    const arr = [];
+    const arr = [] as (T & any[]);
     o.forEach((item) => {
       arr.push(deepClone(item, keepCalc));
     });
-    return arr as any;
+    return arr;
   } else if (typeof o === 'object') {
     if (o === null) {
       return null;
     } else if (o.constructor === RegExp) {
       return o;
     }
-    const _o: any = {};
+    const _o = {} as T;
     for (const key in o) {
       if (
         ['canvas', 'lastFrame'].includes(key) ||

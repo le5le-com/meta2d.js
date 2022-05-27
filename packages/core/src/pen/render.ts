@@ -1165,7 +1165,7 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
     scaleRect(pen.calculative.initRect, scale, center);
   }
   if (pen.calculative.x) {
-    scalePoint(pen.calculative as any, scale, center);
+    scalePoint((pen.calculative as any) as Point, scale, center);
   }
 
   if (pen.type) {

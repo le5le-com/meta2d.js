@@ -1,7 +1,7 @@
 import { Pen } from '@topology/core';
 
 export function lifeline(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const headHeight = (pen as any).headHeight ? (pen as any).headHeight : 50;
+  const headHeight = (pen as any).headHeight ?? 50;
   const { x, y, width, height, ey } = pen.calculative.worldRect;
   let wr = pen.calculative.borderRadius || 0,
     hr = wr;
