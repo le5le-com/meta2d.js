@@ -1,5 +1,11 @@
 <<<<<<< HEAD
 import { Pen } from '../../core/src/pen';
+<<<<<<< HEAD
+=======
+import { ChartData } from '../../core/src/pen';
+
+import { calcExy } from '@topology/core';
+>>>>>>> b30d7d8 (add_table_beforeValue)
 export interface formPen extends Pen {
   optionPos?: any[];
   direction?: string;
@@ -43,6 +49,12 @@ export interface formPen extends Pen {
 =======
 import { calcExy } from "@topology/core";
 >>>>>>> 99df05d (canvasRect not calc again; use calcExy method)
+
+export interface cellData extends ChartData {
+  row: number;
+  col: number;
+  value: string;
+}
 
 export function getTextLength(text: string, pen: any) {
   const textScale = (pen.calculative.worldRect.height * 14) / 16;

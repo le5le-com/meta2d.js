@@ -1,5 +1,9 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { formPen } from './common';
+=======
+import { formPen, cellData } from './common';
+>>>>>>> b30d7d8 (add_table_beforeValue)
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
 <<<<<<< HEAD
@@ -25,6 +29,7 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
     pen.onShowInput = onShowInput;
     pen.onInput = onInput;
     pen.onValue = onValue;
+    pen.onBeforeValue = beforeValue;
   }
 
   const data = pen.calculative.canvas.store.data;
@@ -515,4 +520,17 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
 
 function onValue(pen: formPen) {
   pen.calculative.texts = undefined;
+}
+
+function beforeValue(pen: formPen, value: any) {
+  if (
+    (value as any).table ||
+    (value.col == undefined && value.row == undefined)
+  ) {
+    // 整体传参，不做处理
+    return value;
+  }
+  setCellText(pen, value.row, value.col, value.value);
+  pen.calculative.canvas.render(Infinity);
+  return value;
 }
