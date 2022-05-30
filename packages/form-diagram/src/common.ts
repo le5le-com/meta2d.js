@@ -1,4 +1,6 @@
 import { Pen } from '../../core/src/pen';
+import { ChartData } from '../../core/src/pen';
+
 import { calcExy } from '@topology/core';
 export interface formPen extends Pen {
   optionPos?: any[];
@@ -39,6 +41,12 @@ export interface formPen extends Pen {
   tableWidth: number;
   tableHeight: number;
   isInit: boolean;
+}
+
+export interface cellData extends ChartData {
+  row: number;
+  col: number;
+  value: string;
 }
 
 export function getTextLength(text: string, pen: any) {
