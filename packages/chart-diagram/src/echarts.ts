@@ -383,8 +383,10 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
       // 说明有线有值，无值的线补充一个原值，保证每条线每个时间点都有值
       dataY.forEach((oneDataY, index: number) => {
         if (!oneDataY || oneDataY.length === 0) {
+          const last = series[index].data[series[index].data.length - 1];
+          // series[index].data.at(-1) 92 版本 chrome 才支持
           // 0 时间， 1 值
-          dataY[index] = [[now, series[index].data.at(-1)[1]]];
+          dataY[index] = [[now, last[1]]];
         }
       });
     } else {
