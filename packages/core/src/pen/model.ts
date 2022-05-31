@@ -465,8 +465,8 @@ export type BindId = {
  * 图表追加或替换数据，只关注数据
  */
 export interface ChartData {
-  dataX: any | any[]; // x 轴数据变化
-  dataY: any | any[]; // y 轴数据变化
+  dataX: any | any[]; // x轴 或 y 轴分类变化
+  dataY: any | any[]; // series 数据变化
   /**
    * @deprecated 旧版本，未来移除该属性
    */
