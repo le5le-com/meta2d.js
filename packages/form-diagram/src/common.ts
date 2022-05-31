@@ -88,7 +88,7 @@ export function initOptions(pen: any) {
     };
     calcExy(pen.calculative.worldRect);
   } else if (pen.direction == 'vertical') {
-    if (!pen.optionInterval) {
+    if (pen.optionInterval == undefined) {
       pen.optionInterval = 20;
     }
     if (!pen.optionHeight) {

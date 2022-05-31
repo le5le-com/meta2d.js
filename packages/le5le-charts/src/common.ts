@@ -12,6 +12,12 @@ export function getValidValue(num: any, value: number) {
   return Math.round(Number(num) * 1000) / 1000;
 }
 
+export enum ReplaceMode {
+  Add,
+  Replace,
+  ReplaceAll,
+}
+
 export interface leChartPen extends Pen {
   echarts?: any;
   startAngle?: number;
@@ -31,4 +37,6 @@ export interface leChartPen extends Pen {
   smooth?: boolean;
   chartsRadius?: any;
   frames?: leChartPen[];
+  xAxisData?: any;
+  replaceMode?: ReplaceMode;
 }
