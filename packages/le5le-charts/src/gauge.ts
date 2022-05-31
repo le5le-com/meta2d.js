@@ -1,7 +1,8 @@
-import { getValidValue } from './common';
+import { getValidValue, leChartPen } from './common';
+
 //仪表全盘
 let clockInterval: any;
-export function gauge(ctx: CanvasRenderingContext2D, pen: any): void {
+export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   if (!pen.onAdd) {
     pen.onAdd = onAdd;
     pen.onDestroy = onDestroy;
@@ -295,7 +296,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: any): void {
   }
 }
 
-function onAdd(pen: any) {
+function onAdd(pen: leChartPen) {
   if (pen.isClock) {
     clockInterval = setInterval(() => {
       var date = new Date();

@@ -1,5 +1,7 @@
+import { leChartPen } from './common';
+
 //饼状图
-export function pieChart(ctx: CanvasRenderingContext2D, pen: any): void {
+export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
