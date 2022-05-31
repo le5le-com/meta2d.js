@@ -10,11 +10,15 @@ export class CanvasImage {
    * isBottom true 指背景颜色，背景网格
    * isBottom false 指 标尺
    */
-  otherOffsreen = createOffscreen();   // 非图片的
+  otherOffsreen = createOffscreen(); // 非图片的
   offscreen = createOffscreen();
   animateOffsScreen = createOffscreen();
 
-  constructor(public parentElement: HTMLElement, public store: TopologyStore, private isBottom?: boolean) {
+  constructor(
+    public parentElement: HTMLElement,
+    public store: TopologyStore,
+    private isBottom?: boolean
+  ) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
@@ -42,23 +46,34 @@ export class CanvasImage {
     this.animateOffsScreen.width = w;
     this.animateOffsScreen.height = h;
 
-    this.otherOffsreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.otherOffsreen
+      .getContext('2d')
+      .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.otherOffsreen.getContext('2d').textBaseline = 'middle';
 
-    this.offscreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.offscreen
+      .getContext('2d')
+      .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.offscreen.getContext('2d').textBaseline = 'middle';
 
-    this.animateOffsScreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.animateOffsScreen
+      .getContext('2d')
+      .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.animateOffsScreen.getContext('2d').textBaseline = 'middle';
 
     this.initStatus();
   }
 
   initStatus() {
-    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.offscreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (const pen of this.store.data.pens) {
-      if (this.hasImage(pen)) {   // 只影响本层的
+      if (this.hasImage(pen)) {
+        // 只影响本层的
         pen.calculative.imageDrawed = false;
       }
     }
@@ -67,17 +82,25 @@ export class CanvasImage {
   }
 
   clear() {
-    this.otherOffsreen.getContext('2d').clearRect(0, 0, this.otherOffsreen.width, this.otherOffsreen.height);
-    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.otherOffsreen
+      .getContext('2d')
+      .clearRect(0, 0, this.otherOffsreen.width, this.otherOffsreen.height);
+    this.offscreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.canvas
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   hasImage(pen: Pen) {
     pen.calculative.hasImage =
       pen.calculative &&
       pen.calculative.inView &&
-      !pen.isBottom == !this.isBottom &&   // undefined == false 结果 false
+      !pen.isBottom == !this.isBottom && // undefined == false 结果 false
       pen.image &&
       pen.calculative.img &&
       pen.name !== 'gif';
@@ -102,7 +125,8 @@ export class CanvasImage {
     if (dirtyBackground && this.isBottom) {
       const ctx = this.otherOffsreen.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      const background = this.store.data.background || this.store.options.background;
+      const background =
+        this.store.data.background || this.store.options.background;
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
@@ -124,7 +148,11 @@ export class CanvasImage {
       ctx.save();
       ctx.translate(this.store.data.x, this.store.data.y);
       for (const pen of this.store.data.pens) {
-        if (!pen.calculative.hasImage || pen.calculative.imageDrawed || this.store.animates.has(pen)) {
+        if (
+          !pen.calculative.hasImage ||
+          pen.calculative.imageDrawed ||
+          this.store.animates.has(pen)
+        ) {
           continue;
         }
         pen.calculative.imageDrawed = true;
@@ -163,37 +191,72 @@ export class CanvasImage {
       ctx.restore();
     }
 
-    if (dirty || dirtyAnimate || (dirtyBackground && this.isBottom) || (dirtyTop && !this.isBottom)) {
+    if (
+      dirty ||
+      dirtyAnimate ||
+      (dirtyBackground && this.isBottom) ||
+      (dirtyTop && !this.isBottom)
+    ) {
       const ctxCanvas = this.canvas.getContext('2d');
       ctxCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
       if (this.isBottom) {
-        ctxCanvas.drawImage(this.otherOffsreen, 0, 0, this.canvas.width, this.canvas.height);
+        ctxCanvas.drawImage(
+          this.otherOffsreen,
+          0,
+          0,
+          this.canvas.width,
+          this.canvas.height
+        );
         this.store.dirtyBackground = false;
       }
-      ctxCanvas.drawImage(this.offscreen, 0, 0, this.canvas.width, this.canvas.height);
-      ctxCanvas.drawImage(this.animateOffsScreen, 0, 0, this.canvas.width, this.canvas.height);
+      ctxCanvas.drawImage(
+        this.offscreen,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
+      ctxCanvas.drawImage(
+        this.animateOffsScreen,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
       if (!this.isBottom) {
-        ctxCanvas.drawImage(this.otherOffsreen, 0, 0, this.canvas.width, this.canvas.height);
+        ctxCanvas.drawImage(
+          this.otherOffsreen,
+          0,
+          0,
+          this.canvas.width,
+          this.canvas.height
+        );
         this.store.dirtyTop = false;
       }
     }
   }
 
-  renderGrid(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
-    if (!this.store.options.grid && !this.store.data.grid) {
+  renderGrid(
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+  ) {
+    const { data, options } = this.store;
+    const { grid, gridRotate, gridColor, gridSize, scale } = data;
+    if (!(grid ?? options.grid)) {
+      // grid false 时不绘制, undefined 时看 options.grid
       return;
     }
     ctx.save();
-    if (this.store.data.gridRotate) {
-      ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
-      ctx.rotate((this.store.data.gridRotate * Math.PI) / 180);
-      ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2);
+    const { width, height } = this.canvas;
+    if (gridRotate) {
+      ctx.translate(width / 2, height / 2);
+      ctx.rotate((gridRotate * Math.PI) / 180);
+      ctx.translate(-width / 2, -height / 2);
     }
     ctx.lineWidth = 1;
-    ctx.strokeStyle = this.store.data.gridColor || this.store.options.gridColor;
+    ctx.strokeStyle = gridColor || options.gridColor;
     ctx.beginPath();
-    const size = (this.store.data.gridSize || this.store.options.gridSize) * this.store.data.scale;
-    const longSide = Math.max(this.canvas.width, this.canvas.height);
+    const size = (gridSize || options.gridSize) * scale;
+    const longSide = Math.max(width, height);
     const count = Math.ceil(longSide / size);
     for (let i = -size * count; i < longSide * 2; i += size) {
       ctx.moveTo(i, -longSide);
@@ -207,19 +270,25 @@ export class CanvasImage {
     ctx.restore();
   }
 
-  renderRule(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
-    if (!this.store.options.rule && !this.store.data.rule) {
+  renderRule(
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+  ) {
+    const { data, options } = this.store;
+    const { rule, ruleColor, scale, origin } = data;
+    if (!(rule ?? options.rule)) {
+      // rule false 时不绘制, undefined 时看 options.rule
       return;
     }
 
-    const span = this.store.data.scale * 10;
+    const span = scale * 10;
 
     ctx.save();
 
-    ctx.strokeStyle = rgba(this.store.data.ruleColor || this.store.options.ruleColor, 0.7);
+    const finalRuleColor = ruleColor || options.ruleColor;
+    ctx.strokeStyle = rgba(finalRuleColor, 0.7);
 
-    const x = this.store.data.origin.x + this.store.data.x;
-    const y = this.store.data.origin.y + this.store.data.y;
+    const x = origin.x + data.x;
+    const y = origin.y + data.y;
     const { width, height } = this.canvas;
 
     // horizontal rule
@@ -239,7 +308,7 @@ export class CanvasImage {
     ctx.stroke();
 
     // the big rule
-    ctx.strokeStyle = this.store.data.ruleColor || this.store.options.ruleColor;
+    ctx.strokeStyle = finalRuleColor;
     ctx.beginPath();
     ctx.lineWidth = 24;
     ctx.lineDashOffset = -x % (span * 10);
@@ -284,5 +353,4 @@ export class CanvasImage {
     }
     ctx.restore();
   }
-  
 }
