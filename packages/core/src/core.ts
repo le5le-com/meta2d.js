@@ -1795,6 +1795,10 @@ export class Topology {
     }
   }
 
+  clearHover(): void {
+    this.canvas.clearHover();
+  }
+
   closeSocket() {
     this.closeWebsocket();
     this.closeMqtt();
