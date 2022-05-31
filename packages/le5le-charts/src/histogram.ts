@@ -1,7 +1,8 @@
 import { coordinateAxis } from './coordinateAxis';
+import { leChartPen } from './common';
 
 //柱状图
-export function histogram(ctx: CanvasRenderingContext2D, pen: any) {
+export function histogram(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;

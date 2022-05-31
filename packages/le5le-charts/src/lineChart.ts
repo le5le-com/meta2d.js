@@ -1,7 +1,8 @@
 import { coordinateAxis } from './coordinateAxis';
+import { leChartPen } from './common';
 
 //折线图
-export function lineChart(ctx: CanvasRenderingContext2D, pen: any) {
+export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
