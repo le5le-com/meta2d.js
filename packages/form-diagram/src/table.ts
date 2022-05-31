@@ -515,5 +515,7 @@ function beforeValue(pen: formPen, value: any) {
   }
   setCellText(pen, value.row, value.col, value.value);
   pen.calculative.canvas.render(Infinity);
+  delete value.col;
+  delete value.row;
   return value;
 }
