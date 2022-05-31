@@ -1,8 +1,11 @@
 import { coordinateAxis } from './coordinateAxis';
-import { leChartPen } from './common';
+import { leChartPen, ReplaceMode } from './common';
 
 //折线图
 export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
+  if (!pen.onBeforeValue) {
+    pen.onBeforeValue = beforeValue;
+  }
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
@@ -23,9 +26,11 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   let dash = coordinate.dash;
   let normalizedOption = coordinate.normalizedOption;
   //数据值绘制
-  const smooth =
-    (pen.echarts ? pen.echarts.option.series[0].smooth : pen.smooth) || true;
-
+  const smooth = (
+    pen.echarts ? pen.echarts.option.series[0].smooth : pen.smooth
+  )
+    ? true
+    : false;
   let coordinateValue = [];
   if (pen.echarts) {
     for (let i = 0; i < pen.echarts.option.series.length; i++) {
@@ -139,4 +144,42 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     });
     coordinateValue = [];
   }
+}
+
+export function beforeValue(pen: leChartPen, value: any) {
+  if (value.xAxisData || value.data || (!value.dataX && !value.dataY)) {
+    // 整体传参，不做处理
+    return value;
+  }
+
+  const _xAxisData = pen.xAxisData;
+  const _data = pen.data;
+  const replaceMode = pen.replaceMode;
+  let xAxisData = [];
+  let data = [];
+  if (!replaceMode) {
+    //追加
+    xAxisData = [..._xAxisData, ...value.dataX];
+    _data.forEach((item: any, index: number) => {
+      let _item = [...item, ...value.dataY[index]];
+      data.push(_item);
+    });
+  } else if (replaceMode === ReplaceMode.Replace) {
+    //替换部分
+    value.dataX.forEach((item: any, i: number) => {
+      let _index = _xAxisData.indexOf(item);
+      _data.forEach((d: any, index: number) => {
+        d[_index] = value.dataY[index][i];
+      });
+    });
+    xAxisData = _xAxisData;
+    data = _data;
+  } else if (replaceMode === ReplaceMode.ReplaceAll) {
+    //全部替换
+    xAxisData = value.dataX;
+    data = value.dataY;
+  }
+  delete value.dataX;
+  delete value.dataY;
+  return Object.assign(value, { xAxisData, data });
 }

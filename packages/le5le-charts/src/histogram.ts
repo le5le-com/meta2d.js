@@ -1,8 +1,13 @@
 import { coordinateAxis } from './coordinateAxis';
 import { leChartPen } from './common';
+import { beforeValue } from './lineChart';
 
 //柱状图
 export function histogram(ctx: CanvasRenderingContext2D, pen: leChartPen) {
+  if (!pen.onBeforeValue) {
+    pen.onBeforeValue = beforeValue;
+  }
+
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
