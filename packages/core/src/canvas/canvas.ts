@@ -1891,6 +1891,12 @@ export class Canvas {
     return pt;
   };
 
+  clearHover() {
+    this.hoverType = HoverType.None;
+    this.store.hover = null;
+    this.store.hoverAnchor = null;
+  }
+
   private getHover = (pt: Point) => {
     if (this.dragRect) {
       return;
