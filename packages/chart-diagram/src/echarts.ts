@@ -22,6 +22,7 @@ export interface ChartPen extends Pen {
   echarts: {
     option: {
       xAxis: XAxisType | XAxisType[];
+      yAxis: XAxisType | XAxisType[];
       series: {
         data: any[];
         name: string;
@@ -170,18 +171,20 @@ function beforeValue(pen: ChartPen, value: ChartData) {
   const series = echarts.option.series;
   // 确认有几条线，即多折线的场景
   const length = series.length;
-  const xAxis = echarts.option.xAxis;
+  const { xAxis, yAxis } = echarts.option;
   if (Array.isArray(xAxis) && xAxis.length > 1) {
     // 多 x 轴不考虑
     console.warn('echarts 只支持单 x 轴，多 x 轴将被忽略');
   }
   // 单 x 轴
   const oneXAxis = Array.isArray(xAxis) ? xAxis[0] : xAxis;
+  const oneYAxis = Array.isArray(yAxis) ? yAxis[0] : yAxis;
   if (!replaceMode) {
     // 追加数据
     if (x) {
       // x 轴考虑只有一条
       !Array.isArray(x) && (x = [x]);
+      // TODO: Y 轴是分类，x 轴是值，追加不考虑
       const xData = oneXAxis.data;
       xData.push(...x);
       // 删除开头的多余数据
@@ -210,7 +213,7 @@ function beforeValue(pen: ChartPen, value: ChartData) {
     }
   } else if (replaceMode === ReplaceMode.Replace) {
     // 替换部分数据
-    if (!oneXAxis) {
+    if (!oneXAxis && !oneYAxis) {
       /**
        * 饼图、仪表盘等
        */
@@ -237,23 +240,25 @@ function beforeValue(pen: ChartPen, value: ChartData) {
           });
         }
       }
-    } else if (oneXAxis.type === 'category') {
+    } else if (oneXAxis.type === 'category' || oneYAxis.type === 'category') {
       /**
        * dataX 中传的值用来找到对应的 y 轴值
        */
       if (x && y) {
+        const categoryData =
+          oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
         !Array.isArray(x) && (x = [x]);
         !Array.isArray(y) && (y = [y]);
         if (length === 1) {
           y.forEach((yItem, index: number) => {
-            const xIndex = oneXAxis.data.indexOf(x[index]);
+            const xIndex = categoryData.indexOf(x[index]);
             series[0].data[xIndex] = yItem;
           });
         } else {
           // 多条线
           series.forEach((serie, index: number) => {
             y[index].forEach((yItem, index: number) => {
-              const xIndex = oneXAxis.data.indexOf(x[index]);
+              const xIndex = categoryData.indexOf(x[index]);
               serie.data[xIndex] = yItem;
             });
           });
@@ -263,6 +268,7 @@ function beforeValue(pen: ChartPen, value: ChartData) {
   } else if (replaceMode === ReplaceMode.ReplaceAll) {
     // 替换数据
     if (x) {
+      // TODO: Y 轴是分类，x 轴是值，替换全部不考虑
       oneXAxis.data = x;
       oneXAxis.data.splice(0, oneXAxis.data.length - max);
     }
@@ -297,15 +303,16 @@ function changeId(pen: Pen, oldId: string, newId: string) {
 function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
   // 1. 拿到老的 echarts
   const echarts = pen.echarts;
-  const xAxis = echarts.option.xAxis;
+  const { xAxis, yAxis } = echarts.option;
   if (Array.isArray(xAxis) && xAxis.length > 1) {
     // 多 x 轴不考虑
     console.warn('echarts 只支持单 x 轴，多 x 轴将被忽略');
   }
   // 单 x 轴
   const oneXAxis = Array.isArray(xAxis) ? xAxis[0] : xAxis;
+  const oneYAxis = Array.isArray(yAxis) ? yAxis[0] : yAxis;
   const series = echarts.option.series;
-  if (!oneXAxis) {
+  if (!oneXAxis && !oneYAxis) {
     /**
      * 饼图、仪表盘等
      */
@@ -326,7 +333,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
           }
         }
       });
-      console.log('单饼图 dataY', JSON.stringify(dataY));
+      // console.log('单饼图 dataY', JSON.stringify(dataY));
       return [
         {
           id: pen.id,
@@ -336,11 +343,13 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     } else {
       // TODO: 多个饼待考虑
     }
-  } else if (oneXAxis.type === 'category') {
+  } else if (oneXAxis.type === 'category' || oneYAxis.type === 'category') {
     // 根据 x 轴的类型排序 dataY
     const dataY: number[] = [],
       dataX = [];
-    oneXAxis.data.forEach((category: string) => {
+    const categoryData =
+      oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
+    categoryData?.forEach((category: string) => {
       const { dataId: id } = (formItem.dataIds as BindId[]).find(
         (dataId) => dataId.name === category
       );
@@ -352,7 +361,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
         }
       }
     });
-    console.log('dataX', JSON.stringify(dataX), 'dataY', JSON.stringify(dataY));
+    // console.log('dataX', JSON.stringify(dataX), 'dataY', JSON.stringify(dataY));
     return [
       {
         id: pen.id,
@@ -361,6 +370,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
       },
     ];
   } else if (oneXAxis.type === 'time') {
+    // TODO: Y 轴时间不考虑
     // x 轴时间
     const dataY: any[][] = [];
     const now = +new Date();
@@ -392,12 +402,12 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     } else {
       return [];
     }
-    console.log(
-      'series',
-      JSON.stringify(series.map((serie) => serie.name)),
-      'dataY',
-      JSON.stringify(dataY)
-    );
+    // console.log(
+    //   'series',
+    //   JSON.stringify(series.map((serie) => serie.name)),
+    //   'dataY',
+    //   JSON.stringify(dataY)
+    // );
     return [
       {
         id: pen.id,
@@ -405,4 +415,79 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
       },
     ];
   }
+  return [];
+}
+
+/**
+ * 配置 echarts option, 并修改 replaceMode
+ * @param pen 当前画笔
+ * @param ids 绑定 id 数组
+ * @param isTime 是否实时，用于折线图与柱状图，若实时多条线
+ * @param isYCategory 是否 Y 轴为 category，用于折线图与柱状图
+ */
+export function setEchartsOption(
+  pen: ChartPen,
+  ids: BindId[],
+  isTime: boolean = false,
+  isYCategory: boolean = false
+) {
+  if (pen.name !== 'echarts') {
+    console.warn('当前画笔不是 echarts');
+    return;
+  }
+  // 该画笔类型是 echarts
+  const echarts = pen.echarts;
+  const { xAxis, yAxis } = echarts.option;
+  // 单 x 轴
+  const oneXAxis = Array.isArray(xAxis) ? xAxis[0] : xAxis;
+  const oneYAxis = Array.isArray(yAxis) ? yAxis[0] : yAxis;
+  const series = echarts.option.series;
+  if (!oneXAxis && !oneYAxis) {
+    /**
+     * 饼图、仪表盘等
+     */
+    // 单饼图
+    echarts.option.legend = {};
+    series[0].data = ids.map((id) => {
+      return {
+        name: id.name,
+        value: 100, // TODO: 该值为初始值
+      };
+    });
+  } else {
+    if (isTime) {
+      // TODO: 时间类型，只可以 x 轴是时间
+      // x 轴时间
+      const yType = series[0].type; // 类型，折线或柱状
+      const now = +new Date();
+      // x 轴时间，若选择多个，即为多线图
+      oneXAxis.type = 'time';
+      oneXAxis.data = [];
+      oneYAxis.type = 'value';
+      oneYAxis.data = [];
+      echarts.option.legend = {};
+      echarts.option.series = ids.map((id) => {
+        return {
+          name: id.name,
+          type: yType,
+          data: [[now, 0]], // TODO: 初始值
+        };
+      });
+      echarts.replaceMode = ReplaceMode.Add; // 追加
+    } else {
+      // x 轴分类，或 y 轴分类
+      const [categoryAxis, valueAxis] = isYCategory
+        ? [oneYAxis, oneXAxis]
+        : [oneXAxis, oneYAxis];
+      categoryAxis.type = 'category';
+      categoryAxis.data = ids.map((id) => id.name);
+      valueAxis.type = 'value';
+      valueAxis.data = [];
+      series.length = 1;
+      series[0].data.length = ids.length;
+      echarts.replaceMode = ReplaceMode.Replace; // 替换
+    }
+  }
+  const topology = pen.calculative.canvas.parent;
+  topology.setValue({ id: pen.id, echarts }, { willRender: false });
 }
