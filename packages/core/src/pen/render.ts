@@ -1165,7 +1165,7 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
     scaleRect(pen.calculative.initRect, scale, center);
   }
   if (pen.calculative.x) {
-    scalePoint((pen.calculative as any) as Point, scale, center);
+    scalePoint(pen.calculative as any as Point, scale, center);
   }
 
   if (pen.type) {
@@ -1593,9 +1593,12 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
  */
 function isLinear(value: unknown, key: string, pen: Pen): boolean {
   // 不线性变化的属性
-  const noLinear = ['strokeType', 'bkType'];
+  const noLinear = ['strokeType', 'bkType', 'showChild'] as const;
+  type NoLinear = typeof noLinear[number];
   return (
-    typeof value === 'number' && pen.linear !== false && !noLinear.includes(key)
+    typeof value === 'number' &&
+    pen.linear !== false &&
+    !noLinear.includes(key as NoLinear)
   );
 }
 
