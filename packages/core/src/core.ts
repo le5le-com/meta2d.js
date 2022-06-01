@@ -51,7 +51,7 @@ export class Topology {
   canvas: Canvas;
   websocket: WebSocket;
   mqttClient: MqttClient;
-  socketFn: (e: string) => void;
+  socketFn: (e: string, topic: string) => void;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: Map;
   mapTimer: NodeJS.Timeout;
@@ -794,13 +794,14 @@ export class Topology {
   listenSocket() {
     try {
       let socketFn: Function;
-      if (this.store.data.socketCbJs) {
-        socketFn = new Function('e', this.store.data.socketCbJs);
+      const socketCbJs = this.store.data.socketCbJs;
+      if (socketCbJs) {
+        socketFn = new Function('e', 'topic', socketCbJs);
       }
       if (!socketFn) {
         return false;
       }
-      this.socketFn = socketFn as (e: string) => void;
+      this.socketFn = socketFn as (e: string, topic: string) => void;
     } catch (e) {
       console.error('Create the function for socket:', e);
       return false;
@@ -860,7 +861,7 @@ export class Topology {
 
       this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
       this.mqttClient.on('message', (topic: string, message: Buffer) => {
-        this.doSocket(message.toString());
+        this.doSocket(message.toString(), topic);
       });
 
       if (this.store.data.mqttTopics) {
@@ -894,9 +895,9 @@ export class Topology {
     this.httpTimer = undefined;
   }
 
-  doSocket(message: string) {
+  doSocket(message: string, topic = '') {
     if (this.socketFn) {
-      this.socketFn(message);
+      this.socketFn(message, topic);
       return;
     }
 
