@@ -4131,7 +4131,7 @@ export class Canvas {
     }
   }
 
-  async delete(pens: Pen[] = this.store.active, isSon: boolean = false, delLock = false) {
+  async delete(pens = this.store.active, isSon: boolean = false, delLock = false) {
     if (!pens || !pens.length) {
       return;
     }
@@ -4145,8 +4145,8 @@ export class Canvas {
       if (!delLock && pen.locked && !isSon && !pen.isRuleLine) return;
       const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
       if (i > -1) {
-        // 删除画笔关联线的 connectTo
         this.delLineConnectTo(this.store.data.pens[i]);
+        this.delNodeConnectLine(this.store.data.pens[i]);
         this.store.data.pens.splice(i, 1);
         this.store.pens[pen.id] = undefined;
       }
@@ -4158,37 +4158,58 @@ export class Canvas {
       }
     });
     this.inactive();
-    this.store.hoverAnchor = undefined;
-    this.store.hover = undefined;
+    this.clearHover();
     this.render(Infinity);
+    // TODO: 连线的删除 ，连接的 node 的 connectLines 会变化（删除 node ，line 的 anchors 类似），未记历史记录
     this.pushHistory({ type: EditType.Delete, pens });
     this.store.emitter.emit('delete', pens);
   }
 
   /**
-   * 删除该画笔关联线的 connectTo 该节点内容
-   * @param pen 画笔
+   * 删除该连线后，删除其它与该 line 连接的节点的对应 connectedLines
+   * @param line 连线
    */
-  delLineConnectTo(pen: Pen) {
-    pen.connectedLines?.forEach((info) => {
-      const line = this.store.pens[info.lineId];
+  private delNodeConnectLine(line: Pen) {
+    if (!line.type) {
+      return;
+    }
+    line.calculative.worldAnchors?.forEach(({ connectTo, id: lineAnchorId }, index) => {
+      if (!connectTo) {
+        return;
+      }
+      const node = this.store.pens[connectTo];
+      if (node) {
+        node.calculative.worldAnchors?.forEach((anchor) => {
+          // 删除连线，每个与该连线连接的锚点都需要清除，若无连接也不会报错
+          disconnectLine(node, line.id, lineAnchorId, anchor.id);
+        });
+      } else {
+        console.warn('node not found', line, 'lineAnchorIndex', index);
+      }
+    });
+  }
+
+  /**
+   * 删除该节点 关联的 连线 的 connectTo
+   * @param node 节点
+   */
+   private delLineConnectTo(node: Pen) {
+    node.connectedLines?.forEach(({ lineId, lineAnchor }) => {
+      const line = this.store.pens[lineId];
       if (line) {
-        const from = line.anchors[0];
-        const to = line.anchors[line.anchors.length - 1];
-        if (from.connectTo === pen.id) {
-          from.connectTo = undefined;
-          from.anchorId = undefined;
-          from.prev && (from.prev.connectTo = undefined);
-          from.next && (from.next.connectTo = undefined);
-        }
-        if (to.connectTo === pen.id) {
-          to.connectTo = undefined;
-          to.anchorId = undefined;
-          to.prev && (to.prev.connectTo = undefined);
-          to.next && (to.next.connectTo = undefined);
+        const anchor = line.anchors.find((anchor) => anchor.id === lineAnchor);
+        if (anchor?.connectTo === node.id) {
+          anchor.connectTo = undefined;
+          anchor.anchorId = undefined;
+          anchor.prev && (anchor.prev.connectTo = undefined);
+          anchor.next && (anchor.next.connectTo = undefined);
+        } else {
+          console.warn('anchor not in line', anchor, 'or connectTo not match penId', node);
         }
         calcWorldAnchors(line);
         getLineRect(line);
+      } else {
+        console.warn('line not found', node, 'lineId', lineId);
       }
     });
   }
