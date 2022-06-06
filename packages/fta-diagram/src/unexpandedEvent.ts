@@ -21,33 +21,30 @@ export function unexpandedEvent(
 }
 
 export function unexpandedEventAnchors(pen: Pen) {
-  const anchors: Point[] = [];
-  anchors.push({
-    id: '0',
-    penId: pen.id,
-    x: 0.5,
-    y: 0,
+  const points = [
+    {
+      x: 0.5,
+      y: 0,
+    },
+    {
+      x: 1,
+      y: 2 / 3,
+    },
+    {
+      x: 0.5,
+      y: 1,
+    },
+    {
+      x: 0,
+      y: 2 / 3,
+    },
+  ] as const;
+  pen.anchors = points.map(({ x, y }, index) => {
+    return {
+      id: `${index}`,
+      penId: pen.id,
+      x,
+      y,
+    };
   });
-
-  anchors.push({
-    id: '1',
-    penId: pen.id,
-    x: 1,
-    y: 2 / 3,
-  });
-
-  anchors.push({
-    id: '2',
-    penId: pen.id,
-    x: 0.5,
-    y: 1,
-  });
-
-  anchors.push({
-    id: '3',
-    penId: pen.id,
-    x: 0,
-    y: 2 / 3,
-  });
-  pen.anchors = anchors;
 }

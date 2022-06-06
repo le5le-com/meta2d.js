@@ -12,26 +12,26 @@ export function flowComment(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
 }
 
 export function flowCommentAnchors(pen: Pen) {
-  const anchors: Point[] = [];
-  anchors.push({
-    id: '0',
-    penId: pen.id,
-    x: 0.25,
-    y: 0,
+  const points = [
+    {
+      x: 0.25,
+      y: 0,
+    },
+    {
+      x: 0.25,
+      y: 1,
+    },
+    {
+      x: 0,
+      y: 0.5,
+    },
+  ] as const;
+  pen.anchors = points.map(({ x, y }, index) => {
+    return {
+      id: index + '',
+      x,
+      y,
+      penId: pen.id,
+    };
   });
-
-  anchors.push({
-    id: '1',
-    penId: pen.id,
-    x: 0.25,
-    y: 1,
-  });
-
-  anchors.push({
-    id: '2',
-    penId: pen.id,
-    x: 0,
-    y: 0.5,
-  });
-  pen.anchors = anchors;
 }
