@@ -391,31 +391,39 @@ export function calcRelativeRect(rect: Rect, worldRect: Rect) {
   return relRect;
 }
 
+/**
+ * 计算相对点 ，anchors 中的值都是百分比
+ * @param pt 绝对坐标
+ * @param worldRect 图形外接矩形
+ * @returns 相对坐标点
+ */
 export function calcRelativePoint(pt: Point, worldRect: Rect) {
+  const { x, y, width, height } = worldRect;
+  const { id, penId, connectTo, anchorId, prevNextType, hidden } = pt;
   const point: Point = {
-    id: pt.id,
-    penId: pt.penId,
-    connectTo: pt.connectTo,
-    x: worldRect.width ? (pt.x - worldRect.x) / worldRect.width : 0,
-    y: worldRect.height ? (pt.y - worldRect.y) / worldRect.height : 0,
-    anchorId: pt.anchorId,
-    prevNextType: pt.prevNextType,
-    hidden: pt.hidden,
+    id,
+    penId,
+    connectTo,
+    x: width ? (pt.x - x) / width : 0,
+    y: height ? (pt.y - y) / height : 0,
+    anchorId,
+    prevNextType,
+    hidden,
   };
   if (pt.prev) {
     point.prev = {
-      penId: pt.penId,
-      connectTo: pt.connectTo,
-      x: worldRect.width ? (pt.prev.x - worldRect.x) / worldRect.width : 0,
-      y: worldRect.height ? (pt.prev.y - worldRect.y) / worldRect.height : 0,
+      penId,
+      connectTo,
+      x: width ? (pt.prev.x - x) / width : 0,
+      y: height ? (pt.prev.y - y) / height : 0,
     };
   }
   if (pt.next) {
     point.next = {
-      penId: pt.penId,
-      connectTo: pt.connectTo,
-      x: worldRect.width ? (pt.next.x - worldRect.x) / worldRect.width : 0,
-      y: worldRect.height ? (pt.next.y - worldRect.y) / worldRect.height : 0,
+      penId,
+      connectTo,
+      x: width ? (pt.next.x - x) / width : 0,
+      y: height ? (pt.next.y - y) / height : 0,
     };
   }
   return point;
