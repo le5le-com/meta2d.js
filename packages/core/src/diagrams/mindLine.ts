@@ -10,16 +10,22 @@ export function mindLine(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
 }
 
 export function mindLineAnchors(pen: Pen) {
-  const anchors: Point[] = [];
-  anchors.push({
-    id: '0',
-    x: 0,
-    y: 1,
+  const points = [
+    {
+      x: 0,
+      y: 1,
+    },
+    {
+      x: 1,
+      y: 1,
+    },
+  ] as const;
+  pen.anchors = points.map(({ x, y }, index) => {
+    return {
+      id: index + '',
+      x,
+      y,
+      penId: pen.id,
+    };
   });
-  anchors.push({
-    id: '0',
-    x: 1,
-    y: 1,
-  });
-  pen.anchors = anchors;
 }

@@ -387,7 +387,7 @@ export class Canvas {
         break;
       case 'Shift':
         if (this.drawingLine) {
-          const to = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 1];
+          const to = getToAnchor(this.drawingLine);
           if (to !== this.drawingLine.calculative.activeAnchor) {
             deleteTempAnchor(this.drawingLine);
             this.drawingLine.calculative.worldAnchors.push(to);
@@ -918,6 +918,7 @@ export class Canvas {
       altKey: event.altKey,
       buttons: 1,
     });
+    this.render();
   };
 
   onGesturestart = (e) => {
@@ -2423,15 +2424,8 @@ export class Canvas {
     if (pen.type) {
       this.initLineRect(pen);
     } else if (!pen.anchors) {
-      pen.anchors = [];
-      pen.calculative.worldAnchors.forEach((pt) => {
-        const anchor = {
-          id: pt.id,
-          penId: pen.id,
-          x: (pt.x - pen.calculative.worldRect.x) / pen.calculative.worldRect.width,
-          y: (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
-        };
-        pen.anchors.push(anchor);
+      pen.anchors = pen.calculative.worldAnchors.map(pt => {
+        return calcRelativePoint(pt, pen.calculative.worldRect);
       });
     }
     !pen.rotate && (pen.rotate = 0);
@@ -2451,10 +2445,7 @@ export class Canvas {
   initLineRect(pen: Pen) {
     const rect = getLineRect(pen);
     if (!pen.parentId) {
-      pen.x = rect.x;
-      pen.y = rect.y;
-      pen.width = rect.width;
-      pen.height = rect.height;
+      Object.assign(pen, rect);
     }
     const { fontSize, lineHeight } = this.store.options;
     if (!pen.fontSize) {
@@ -2472,9 +2463,8 @@ export class Canvas {
     calcInView(pen);
     this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     if (pen.calculative.worldAnchors) {
-      pen.anchors = [];
-      pen.calculative.worldAnchors.forEach((pt) => {
-        pen.anchors.push(calcRelativePoint(pt, pen.calculative.worldRect));
+      pen.anchors = pen.calculative.worldAnchors.map(pt => {
+        return calcRelativePoint(pt, pen.calculative.worldRect);
       });
     }
   }
