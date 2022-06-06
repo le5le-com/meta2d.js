@@ -25,26 +25,26 @@ export function xorGate(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
 }
 
 export function xorGateAnchors(pen: Pen) {
-  const anchors: Point[] = [];
-  anchors.push({
-    id: '0',
-    penId: pen.id,
-    x: 0.5,
-    y: 0,
+  const points = [
+    {
+      x: 0.5,
+      y: 0,
+    },
+    {
+      x: 1 / 5,
+      y: 1,
+    },
+    {
+      x: 4 / 5,
+      y: 1,
+    },
+  ] as const;
+  pen.anchors = points.map(({ x, y }, index) => {
+    return {
+      id: `${index}`,
+      penId: pen.id,
+      x,
+      y,
+    };
   });
-
-  anchors.push({
-    id: '1',
-    penId: pen.id,
-    x: 1 / 5,
-    y: 1,
-  });
-
-  anchors.push({
-    id: '2',
-    penId: pen.id,
-    x: 4 / 5,
-    y: 1,
-  });
-  pen.anchors = anchors;
 }
