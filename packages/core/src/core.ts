@@ -965,12 +965,20 @@ export class Topology {
   }
 
   _setValue(data: IValue, { willRender = true }: { willRender?: boolean } = {}) {
-    const pens: Pen[] = this.find(data.id || data.tag) || [];
+    let pens: Pen[] = [];
+    if (data.id) {
+      /**
+       * 传入 id 使用 findOne ，性能相对优于 find 方法
+       * TODO: 考虑使用 store.pens 性能更好
+       * TODO: 代码或许可以优化成一行
+       */
+      const pen = this.findOne(data.id);
+      pen && pens.push(pen);
+    } else {
+      pens = this.find(data.tag);
+    }
     pens.forEach((pen) => {
-      let afterData = data;
-      if (pen.onBeforeValue) {
-        afterData = pen.onBeforeValue(pen, data as ChartData);
-      }
+      const afterData: IValue = pen.onBeforeValue ? pen.onBeforeValue(pen, data as ChartData) : data;
       this.updateValue(pen, afterData);
       pen.onValue?.(pen);
     });
