@@ -34,7 +34,7 @@ import {
   TopologyStore,
   useStore,
 } from './store';
-import { formatPadding, Padding, s8 } from './utils';
+import { formatPadding, Padding, s8, valueInRange } from './utils';
 import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction } from './event';
@@ -146,6 +146,7 @@ export class Topology {
           if (value.hasOwnProperty('visible')) {
             this.setVisible(pen, value.visible);
           }
+          // TODO: 执行时机比 setValue 中的 render 晚
           this._setValue({ id: pen.id, ...value }, { willRender: false });
         });
         this.render();
@@ -1105,6 +1106,12 @@ export class Topology {
                 break;
               case '!=':
                 can = pen[event.where.key] != event.where.value;
+                break;
+              case '[)':
+                can = valueInRange(+pen[event.where.key], event.where.value);
+                break;
+              case '![)':
+                can = !valueInRange(+pen[event.where.key], event.where.value);
                 break;
             }
           }
