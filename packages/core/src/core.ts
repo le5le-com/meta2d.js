@@ -37,7 +37,7 @@ import {
 import { formatPadding, Padding, s8, valueInArray, valueInRange } from './utils';
 import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
-import { Event, EventAction } from './event';
+import { Event, EventAction, EventName } from './event';
 import { Map } from './map';
 // TODO: 这种引入方式，引入 connect， webpack 5 报错
 import { MqttClient } from 'mqtt';
@@ -335,12 +335,18 @@ export class Topology {
     this.connectHttp();
   }
 
+  /**
+   * open 后执行初始化 Js ，每个图纸可配置一个初始化 js
+   */
   private doInitJS() {
-    if (this.store.data.initJs && this.store.data.initJs.trim()) {
-      // 字符串类型存在
-      // TODO: 每次 open 都 new 一次 Function，性能或许需要调整
-      const fn = new Function(this.store.data.initJs) as () => void;
-      fn();
+    const initJs = this.store.data.initJs;
+    if (initJs && initJs.trim()) {
+      try {
+        const fn = new Function(initJs) as () => void;
+        fn();
+      } catch (e) {
+        console.warn('initJs error', e);
+      }
     }
   }
 
@@ -1060,7 +1066,7 @@ export class Topology {
     }
   };
 
-  private doEvent = (pen: Pen, eventName: string) => {
+  private doEvent = (pen: Pen, eventName: EventName) => {
     if (!pen) {
       return;
     }

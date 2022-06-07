@@ -1,8 +1,19 @@
 import { IValue, Pen } from '../pen';
 
 export type EventValue = string | IValue | undefined | null;
+// 事件行为
+export type EventName =
+  | 'enter'
+  | 'leave'
+  | 'active'
+  | 'inactive'
+  | 'click'
+  | 'mousedown'
+  | 'mouseup'
+  | 'dblclick'
+  | 'valueUpdate';
 export interface Event {
-  name: string; // 事件行为，例如 'click'，'dblclick' 等 参照上面。
+  name: EventName;
   action: EventAction; // 事件动作
   where?: Where; // 若无条件，必须为 undefined or null，不可为空对象
   value?: EventValue; // 不同 action 下，该值含义不同，例如：动画相关的，即为 节点 tag; Function 类型即为 字符串函数
