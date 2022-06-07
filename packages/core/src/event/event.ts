@@ -1,13 +1,13 @@
-import { IValue } from '../pen';
+import { IValue, Pen } from '../pen';
 
 export type EventValue = string | IValue | undefined | null;
 export interface Event {
-  name: string;
-  action: EventAction;
-  where?: Where;
-  value?: EventValue;
+  name: string; // 事件行为，例如 'click'，'dblclick' 等 参照上面。
+  action: EventAction; // 事件动作
+  where?: Where; // 若无条件，必须为 undefined or null，不可为空对象
+  value?: EventValue; // 不同 action 下，该值含义不同，例如：动画相关的，即为 节点 tag; Function 类型即为 字符串函数
   params?: string;
-  fn?: Function;
+  fn?: (pen: Pen, params: string) => void;
 }
 
 export enum EventAction {
@@ -25,7 +25,7 @@ export interface Where {
   key?: string;
   comparison?: Comparison;
   value?: unknown;
-  fn?: Function;
+  fn?: (pen: Pen) => boolean;
   fnJs?: string;
 }
 
