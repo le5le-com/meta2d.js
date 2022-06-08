@@ -2769,7 +2769,7 @@ export class Canvas {
 
   render = (dirty?: number | boolean) => {
     let now: number;
-    if (dirty == null) {
+    if (dirty == null || dirty === true) {
       now = performance.now();
       this.dirty = true;
     } else if (dirty > 1) {
