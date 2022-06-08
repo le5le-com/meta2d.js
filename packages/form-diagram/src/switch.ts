@@ -62,5 +62,5 @@ function click(pen: formPen) {
   }
   pen.checked = !pen.checked;
   pen.calculative.canvas.store.emitter.emit('valueUpdate', pen);
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
 }

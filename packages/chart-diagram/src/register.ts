@@ -53,7 +53,7 @@ function loadJS(url: string, callback?: () => void, render?: boolean) {
   loaderScript.src = url;
   loaderScript.addEventListener('load', () => {
     callback?.();
-    render && topology.render(Infinity);
+    render && topology.render();
   });
   document.body.appendChild(loaderScript);
 }

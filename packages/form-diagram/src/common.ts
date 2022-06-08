@@ -4,8 +4,18 @@ import { Pen } from '../../core/src/pen';
 =======
 import { ChartData } from '../../core/src/pen';
 
+<<<<<<< HEAD
 import { calcExy } from '@topology/core';
 >>>>>>> b30d7d8 (add_table_beforeValue)
+=======
+import { calcExy, Rect } from '@topology/core';
+
+export interface Pos {
+  row: number;
+  col: number;
+}
+
+>>>>>>> b050489 (render)
 export interface formPen extends Pen {
   optionPos?: any[];
   direction?: string;
@@ -13,7 +23,14 @@ export interface formPen extends Pen {
   options?: any[];
   optionHeight?: number;
   checkboxHeight?: number;
-  calculative?: any;
+  calculative?: {
+    barRect: Rect;
+    ballRect: Rect;
+    texts: any[];
+    activeCell: Pos;
+    hoverCell: Pos;
+    inputCell: Pos;
+  } & Pen['calculative'];
   checked?: boolean;
   onColor?: string;
   disable?: boolean;

@@ -1,6 +1,10 @@
 <<<<<<< HEAD
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
+<<<<<<< HEAD
+=======
+import { calcExy, calcTextRect } from '@topology/core';
+>>>>>>> b050489 (render)
 
 export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
 =======
@@ -45,7 +49,8 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.fill();
 
   // draw active bar
-  ctx.fillStyle = pen.activeColor || data.activeColor || options.activeColor;
+  // ctx.fillStyle = pen.activeColor || data.activeColor || options.activeColor;
+  ctx.fillStyle = pen.activeColor || options.activeColor;
   ctx.beginPath();
   w = pen.calculative.ballRect.x;
   ctx.moveTo(x + r, y);
@@ -122,7 +127,7 @@ function calcBallRect(pen: formPen) {
   calcExy(pen.calculative.ballRect);
 
   pen.calculative.text = pen.value + pen.unit;
-  pen.calculative.canvas.parent.calcTextRect(pen);
+  calcTextRect(pen);
 }
 
 function mouseDown(pen: formPen, e: Point) {
@@ -142,9 +147,9 @@ function mouseDown(pen: formPen, e: Point) {
   pen.value = value;
   calcBallRect(pen);
   pen.calculative.text = pen.value + pen.unit;
-  pen.calculative.canvas.parent.calcTextRect(pen);
+  calcTextRect(pen);
   pen.calculative.canvas.store.emitter.emit('valueUpdate', pen);
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
 }
 
 function mouseMove(pen: formPen, e: Point) {

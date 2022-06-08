@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { formPen } from './common';
 =======
 import { formPen, cellData } from './common';
@@ -10,6 +11,12 @@ import { Rect } from '../../core/src/rect';
 =======
 import { calcExy } from '@topology/core';
 >>>>>>> d7f4457 (modify_onShowInput)
+=======
+import { formPen, cellData, Pos } from './common';
+import { Point } from '../../core/src/point';
+import { Rect } from '../../core/src/rect';
+import { calcExy, calcTextLines } from '@topology/core';
+>>>>>>> b050489 (render)
 
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
 =======
@@ -36,12 +43,10 @@ export function table(ctx: CanvasRenderingContext2D, pen: any) {
   const options = pen.calculative.canvas.store.options;
 
   pen.color = pen.color || data.color || options.color;
-  pen.activeColor = pen.activeColor || data.activeColor || options.activeColor;
-  pen.hoverColor = pen.hoverColor || data.hoverColor || options.hoverColor;
-  pen.activeBackground =
-    pen.activeBackground || data.activeBackground || options.activeBackground;
-  pen.hoverBackground =
-    pen.hoverBackground || data.hoverBackground || options.hoverBackground;
+  pen.activeColor = pen.activeColor || options.activeColor;
+  pen.hoverColor = pen.hoverColor || options.hoverColor;
+  pen.activeBackground = pen.activeBackground || options.activeBackground;
+  pen.hoverBackground = pen.hoverBackground || options.hoverBackground;
 
   // 画网格线
   drawGridLine(ctx, pen);
@@ -233,10 +238,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
           continue;
         }
         // 计算换行和省略号
-        rowText[j] = pen.calculative.canvas.parent.calcTextLines(
-          pen,
-          rowText[j]
-        );
+        rowText[j] = calcTextLines(pen, rowText[j]);
       }
 
       if (!rowText[j]) {
@@ -326,30 +328,30 @@ function onInput(pen: formPen, text: string) {
     pen.calculative.inputCell.col,
     text
   );
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
 }
 
 function onMouseMove(pen: formPen, e: Point) {
   pen.calculative.hoverCell = getCellIndex(pen, e);
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
 }
 
 function onMouseLeave(pen: formPen, e: Point) {
   pen.calculative.hoverCell = undefined;
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
 }
 
 function onMouseDown(pen: formPen, e: Point) {
   pen.calculative.activeCell = getCellIndex(pen, e);
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
 }
 
 // 根据坐标，计算在哪个cell
-function getCellIndex(pen: formPen, e: Point) {
+function getCellIndex(pen: formPen, e: Point): Pos {
   const scaleX = pen.calculative.worldRect.width / pen.tableWidth;
   const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
 
-  const pos = { row: 0, col: 0 };
+  const pos: Pos = { row: 0, col: 0 };
 
   for (let i = 0; i < pen.colPos.length; i++) {
     if (e.x > pen.calculative.worldRect.x + pen.colPos[i] * scaleX) {
@@ -531,7 +533,7 @@ function beforeValue(pen: formPen, value: any) {
     return value;
   }
   setCellText(pen, value.row, value.col, value.value);
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
   delete value.col;
   delete value.row;
   return value;
