@@ -135,7 +135,7 @@ export class Topology {
         window.open(e.value, e.params ?? '_blank');
         return;
       }
-      console.warn('[topology] link event value is not string');
+      console.warn('[topology] Link param is not a string');
     };
     this.events[EventAction.SetProps] = (pen: Pen, e: Event) => {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
@@ -147,53 +147,53 @@ export class Topology {
             this.setVisible(pen, value.visible);
           }
           // TODO: 执行时机比 setValue 中的 render 晚
-          this._setValue({ id: pen.id, ...value }, { willRender: false });
+          this._setValue({ id: pen.id, ...value });
         });
         this.render();
         return;
       }
-      console.warn('[topology] setProps event value is not object');
+      console.warn('[topology] SetProps value is not an object');
     };
     this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
-        this.startAnimate(e.value as string || [pen]);
+        this.startAnimate((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] startAnimate event value is not string');
+      console.warn('[topology] StartAnimate value is not a string');
     };
     this.events[EventAction.PauseAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
-        this.pauseAnimate(e.value as string || [pen]);
+        this.pauseAnimate((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] pauseAnimate event value is not string');
+      console.warn('[topology] PauseAnimate value is not a string');
     };
     this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
-        this.stopAnimate(e.value as string || [pen]);
+        this.stopAnimate((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] stopAnimate event value is not string');
+      console.warn('[topology] StopAnimate event value is not a string');
     };
     this.events[EventAction.Function] = (pen: Pen, e: Event) => {
       if (e.value && !e.fn) {
         try {
           if (typeof e.value !== 'string') {
-            throw new Error('function event value must be string');
+            throw new Error('[topology] Function value must be string');
           }
           // TODO: 编译 string.replaceAll 报错
           const value: any = e.value;
           const fnJs = value.replaceAll ? value.replaceAll('.setValue(', '._setValue(') : value.replace(/.setValue\(/g, '._setValue(');
           e.fn = new Function('pen', 'params', fnJs) as (pen: Pen, params: string) => void;
         } catch (err) {
-          console.error('Error: make function:', err);
+          console.error('[topology]: Error on make a function:', err);
         }
       }
       e.fn?.(pen, e.params);
     };
     this.events[EventAction.WindowFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
-        console.warn('[topology] windowFn event value must be string');
+        console.warn('[topology] WindowFn value must be a string');
         return;
       }
       if (window && window[e.value]) {
@@ -202,7 +202,7 @@ export class Topology {
     };
     this.events[EventAction.Emit] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
-        console.warn('[topology] emit event value must be string');
+        console.warn('[topology] Emit value must be a string');
         return;
       }
       this.store.emitter.emit(e.value, {
@@ -230,8 +230,8 @@ export class Topology {
     return await this.canvas.addPens(pens, history);
   }
 
-  render(now?: number) {
-    this.canvas.render(now);
+  render(dirty?: boolean | number) {
+    this.canvas.render(dirty);
   }
 
   setBackgroundImage(url: string) {
@@ -317,7 +317,7 @@ export class Topology {
       }
     }
 
-    this.canvas.render(Infinity);
+    this.canvas.render(true);
     this.listenSocket();
     this.connectSocket();
     this.startAnimate();
@@ -418,7 +418,7 @@ export class Topology {
     }
     pen.calculative.activeAnchor = undefined;
     this.canvas.initLineRect(pen);
-    this.render(Infinity);
+    this.render();
   }
 
   addDrawLineFn(fnName: string, fn: Function) {
@@ -592,7 +592,7 @@ export class Topology {
     this.needInitStatus(pens);
     setTimeout(() => {
       this.canvas.calcActiveRect();
-      this.render(Infinity);
+      this.render();
     }, 20);
   }
 
@@ -656,7 +656,6 @@ export class Topology {
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
       pen.locked = LockState.DisableMove;
-      // pen.type = PenType.Node;
     });
     this.canvas.active([parent]);
     let step = 1;
@@ -915,12 +914,12 @@ export class Topology {
       const formPens = this.store.data.pens.filter((pen) => pen.form);
       const dataIdValues = values.filter((value) => value.dataId);
       dataIdValues.length && this.setValuesByDataId(formPens, dataIdValues);
-      values.forEach(value => {
+      values.forEach((value) => {
         if (!value.dataId) {
-          this.setValue(value, { willRender: false });
+          this.setValue(value, { render: false });
         }
       });
-      this.render(Infinity);
+      this.render();
     } catch (error) {
       console.warn('Invalid socket data:', error);
     }
@@ -934,7 +933,7 @@ export class Topology {
   private setValuesByDataId(pens: Pen[] = [], dataIdValues: IValue[]) {
     const values: IValue[] = [];
     pens.forEach((pen) => {
-      pen.form?.forEach(formItem => {
+      pen.form?.forEach((formItem) => {
         const dataIds = formItem.dataIds;
         if (!dataIds) {
           return;
@@ -951,28 +950,26 @@ export class Topology {
           if (dataIdValue) {
             values.push({
               id: pen.id,
-              [formItem.key]: dataIdValue.value
+              [formItem.key]: dataIdValue.value,
             } as IValue);
           }
         }
       });
     });
-    values.forEach(value => {
-      this.setValue(value, { willRender: false });
+    values.forEach((value) => {
+      this.setValue(value, { render: false });
     });
   }
 
-  setValue(data: IValue, { willRender = true }: { willRender?: boolean } = {}) {
-    this._setValue(data, { willRender }).forEach((pen) => {
+  setValue(data: IValue, { render = true }: { render?: boolean } = {}) {
+    this._setValue(data).forEach((pen) => {
       this.store.emitter.emit('valueUpdate', pen);
     });
+
+    render && this.render();
   }
 
-  updateValue(pen: Pen, data: IValue) {
-    this.canvas.updateValue(pen, data);
-  }
-
-  _setValue(data: IValue, { willRender = true }: { willRender?: boolean } = {}) {
+  _setValue(data: IValue) {
     let pens: Pen[] = [];
     if (data.id) {
       /**
@@ -986,7 +983,7 @@ export class Topology {
     }
     pens.forEach((pen) => {
       const afterData: IValue = pen.onBeforeValue ? pen.onBeforeValue(pen, data as ChartData) : data;
-      this.updateValue(pen, afterData);
+      this.canvas.updateValue(pen, afterData);
       pen.onValue?.(pen);
     });
 
@@ -995,7 +992,6 @@ export class Topology {
       this.canvas.calcActiveRect();
     }
 
-    willRender && this.render(Infinity);
     return pens;
   }
 
@@ -1269,11 +1265,11 @@ export class Topology {
   }
 
   /**
-   * 画布是否有 画笔 
+   * 画布是否有 画笔
    * RuleLine 不算
    */
   hasView(): boolean {
-    return !!this.store.data.pens.filter(pen => !pen.isRuleLine).length;
+    return !!this.store.data.pens.filter((pen) => !pen.isRuleLine).length;
   }
 
   private getViewCenter() {
@@ -1303,9 +1299,9 @@ export class Topology {
     // 2. 修改其它画笔的 宽高 fontSize
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      this._setValue({ id: pen.id, width, height, ...attrs }, { willRender: false });
+      this._setValue({ id: pen.id, width, height, ...attrs });
     }
-    this.render(Infinity);
+    this.render();
 
     this.pushHistory({
       type: EditType.Update,
@@ -1320,7 +1316,7 @@ export class Topology {
     for (const item of pens) {
       this.alignPen(align, item, rect);
     }
-    this.render(Infinity);
+    this.render();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1341,7 +1337,7 @@ export class Topology {
       const pen = pens[i];
       this.alignPen(align, pen, rect);
     }
-    this.render(Infinity);
+    this.render();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1378,7 +1374,8 @@ export class Topology {
         penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
         break;
     }
-    this._setValue({ id: pen.id, ...penRect }, { willRender: false });
+    this._setValue({ id: pen.id, ...penRect });
+    this.render();
   }
 
   /**
@@ -1420,9 +1417,9 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this._setValue({ id: pen.id, ...penRect }, { willRender: false });
+      this._setValue({ id: pen.id, ...penRect });
     }
-    this.render(Infinity);
+    this.render();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1460,7 +1457,7 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this._setValue({ id: pen.id, ...penRect }, { willRender: false });
+      this._setValue({ id: pen.id, ...penRect });
 
       if (index === pens.length - 1) {
         return;
@@ -1476,7 +1473,7 @@ export class Topology {
         currentY += maxHeight + space;
       }
     });
-    this.render(Infinity);
+    this.render();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -1498,7 +1495,7 @@ export class Topology {
 
     this.canvas.canvasImage.initStatus();
     this.canvas.canvasImageBottom.initStatus();
-    this.canvas.render(Infinity);
+    this.canvas.render(true);
   }
 
   showMap() {
@@ -1641,10 +1638,10 @@ export class Topology {
       return [];
     }
     const lines: Pen[] = [];
-    node.connectedLines?.forEach(({lineId}) => {
+    node.connectedLines?.forEach(({ lineId }) => {
       const line = this.store.pens[lineId];
       if (!line) {
-        console.warn(node, 'node contain a error connectedLine')
+        console.warn(node, 'node contain a error connectedLine');
         return;
       }
       switch (type) {
@@ -1775,18 +1772,15 @@ export class Topology {
 
   setVisible(pen: Pen, visible: boolean) {
     this.onSizeUpdate();
-    this._setValue(
-      {
-        id: pen.id,
-        visible,
-      },
-      { willRender: false }
-    );
+    this._setValue({ id: pen.id, visible });
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.store.pens[childId];
         child && this.setVisible(child, visible);
       }
+    } else {
+      // 在下个绘画周期重绘，给时间（当前绘画周期）执行递归
+      this.render(100);
     }
   }
 
