@@ -146,7 +146,6 @@ export class Topology {
           if (value.hasOwnProperty('visible')) {
             this.setVisible(pen, value.visible);
           }
-          // TODO: 执行时机比 setValue 中的 render 晚
           this._setValue({ id: pen.id, ...value });
         });
         this.render();
@@ -214,7 +213,7 @@ export class Topology {
 
   resize(width?: number, height?: number) {
     this.canvas.resize(width, height);
-    this.canvas.render();
+    this.render();
     this.store.emitter.emit('resize', { width, height });
 
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
@@ -317,7 +316,7 @@ export class Topology {
       }
     }
 
-    this.canvas.render(true);
+    this.render();
     this.listenSocket();
     this.connectSocket();
     this.startAnimate();
@@ -448,7 +447,7 @@ export class Topology {
   clear() {
     clearStore(this.store);
     this.canvas.clearCanvas();
-    this.canvas.render();
+    this.render();
   }
 
   emit(eventType: EventType, data: unknown) {
@@ -1375,7 +1374,6 @@ export class Topology {
         break;
     }
     this._setValue({ id: pen.id, ...penRect });
-    this.render();
   }
 
   /**
@@ -1495,7 +1493,7 @@ export class Topology {
 
     this.canvas.canvasImage.initStatus();
     this.canvas.canvasImageBottom.initStatus();
-    this.canvas.render(true);
+    this.render();
   }
 
   showMap() {
@@ -1770,18 +1768,16 @@ export class Topology {
     return oneIsParent ? deepClone(components) : deepClone([parent, ...components]);
   }
 
-  setVisible(pen: Pen, visible: boolean) {
+  setVisible(pen: Pen, visible: boolean, render = true) {
     this.onSizeUpdate();
     this._setValue({ id: pen.id, visible });
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.store.pens[childId];
-        child && this.setVisible(child, visible);
+        child && this.setVisible(child, visible, false);
       }
-    } else {
-      // 在下个绘画周期重绘，给时间（当前绘画周期）执行递归
-      this.render(100);
     }
+    render && this.render();
   }
 
   clearHover(): void {
