@@ -2838,6 +2838,8 @@ export class Canvas {
       this.dirty = true;
     } else if (dirty > 1) {
       now = dirty as number;
+    } else {
+      now = performance.now();
     }
     if (!this.dirty) {
       return;
