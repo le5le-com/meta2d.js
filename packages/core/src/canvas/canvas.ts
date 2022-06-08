@@ -236,14 +236,14 @@ export class Canvas {
     this.bounding = this.externalElements.getBoundingClientRect();
     this.listen();
 
-    this['curve'] = curve;
-    this['polyline'] = polyline;
-    this['mind'] = mind;
-    this['line'] = lineSegment;
-
     window && window.addEventListener('resize', this.onResize);
     window && window.addEventListener('scroll', this.onScroll);
   }
+
+  curve = curve;
+  polyline = polyline;
+  mind = mind;
+  line = lineSegment;
 
   listen() {
     // ios
@@ -3762,7 +3762,7 @@ export class Canvas {
         if (found) {
           line.calculative.worldAnchors = [from, to];
           line.calculative.activeAnchor = from;
-          this['polyline'](this.store, line, to);
+          this.polyline(this.store, line, to);
           this.initLineRect(line);
         }
       }

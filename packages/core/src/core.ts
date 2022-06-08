@@ -63,15 +63,16 @@ export class Topology {
     this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
     window && ((window as any).topology = this);
-    this['facePen'] = facePen;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
 
-    this['getWords'] = getWords;
-    this['calcTextLines'] = calcTextLines;
-    this['calcTextRect'] = calcTextRect;
-    this['calcTextDrawRect'] = calcTextDrawRect;
   }
+
+  facePen = facePen;
+  getWords = getWords;
+  calcTextLines = calcTextLines;
+  calcTextRect = calcTextRect;
+  calcTextDrawRect = calcTextDrawRect;
 
   /**
    * @deprecated 改用 beforeAddPens
