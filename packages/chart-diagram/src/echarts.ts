@@ -1,11 +1,4 @@
-import {
-  BindId,
-  ChartData,
-  FormItem,
-  IValue,
-  Pen,
-  setElemPosition,
-} from '@topology/core';
+import { BindId, ChartData, FormItem, IValue, Pen, setElemPosition } from '@topology/core';
 
 export enum ReplaceMode {
   Add,
@@ -222,9 +215,7 @@ function beforeValue(pen: ChartPen, value: ChartData) {
           !Array.isArray(y) && (y = [y]);
           // 单饼
           y.forEach((yItem, index: number) => {
-            const part = series[0].data.find(
-              (part) => part.name === yItem.name
-            );
+            const part = series[0].data.find((part) => part.name === yItem.name);
             part && (part.value = yItem.value);
           });
         } else {
@@ -245,8 +236,7 @@ function beforeValue(pen: ChartPen, value: ChartData) {
        * dataX 中传的值用来找到对应的 y 轴值
        */
       if (x && y) {
-        const categoryData =
-          oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
+        const categoryData = oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
         !Array.isArray(x) && (x = [x]);
         !Array.isArray(y) && (y = [y]);
         if (length === 1) {
@@ -320,9 +310,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     // 单个饼
     if (Array.isArray(series) && series.length === 1) {
       series[0].data.forEach((item) => {
-        const { dataId: id } = (formItem.dataIds as BindId[]).find(
-          (dataId) => dataId.name === item.name
-        );
+        const { dataId: id } = (formItem.dataIds as BindId[]).find((dataId) => dataId.name === item.name);
         if (id) {
           const value = values.find((value) => value.dataId === id);
           if (value) {
@@ -347,12 +335,9 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     // 根据 x 轴的类型排序 dataY
     const dataY: number[] = [],
       dataX = [];
-    const categoryData =
-      oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
+    const categoryData = oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
     categoryData?.forEach((category: string) => {
-      const { dataId: id } = (formItem.dataIds as BindId[]).find(
-        (dataId) => dataId.name === category
-      );
+      const { dataId: id } = (formItem.dataIds as BindId[]).find((dataId) => dataId.name === category);
       if (id) {
         const value = values.find((value) => value.dataId === id);
         if (value) {
@@ -377,9 +362,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     let hasValue = false;
     series.forEach((serie, index: number) => {
       const oneDataY = [];
-      const { dataId: id } = (formItem.dataIds as BindId[]).find(
-        (dataId) => dataId.name === serie.name
-      );
+      const { dataId: id } = (formItem.dataIds as BindId[]).find((dataId) => dataId.name === serie.name);
       if (id) {
         const value = values.find((value) => value.dataId === id);
         if (value) {
@@ -425,12 +408,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
  * @param isTime 是否实时，用于折线图与柱状图，若实时多条线
  * @param isYCategory 是否 Y 轴为 category，用于折线图与柱状图
  */
-export function setEchartsOption(
-  pen: ChartPen,
-  ids: BindId[],
-  isTime: boolean = false,
-  isYCategory: boolean = false
-) {
+export function setEchartsOption(pen: ChartPen, ids: BindId[], isTime: boolean = false, isYCategory: boolean = false) {
   if (pen.name !== 'echarts') {
     console.warn('当前画笔不是 echarts');
     return;
@@ -476,9 +454,7 @@ export function setEchartsOption(
       echarts.replaceMode = ReplaceMode.Add; // 追加
     } else {
       // x 轴分类，或 y 轴分类
-      const [categoryAxis, valueAxis] = isYCategory
-        ? [oneYAxis, oneXAxis]
-        : [oneXAxis, oneYAxis];
+      const [categoryAxis, valueAxis] = isYCategory ? [oneYAxis, oneXAxis] : [oneXAxis, oneYAxis];
       categoryAxis.type = 'category';
       categoryAxis.data = ids.map((id) => id.name);
       valueAxis.type = 'value';
@@ -489,5 +465,5 @@ export function setEchartsOption(
     }
   }
   const topology = pen.calculative.canvas.parent;
-  topology.setValue({ id: pen.id, echarts }, { willRender: false });
+  topology.setValue({ id: pen.id, echarts }, { render: false });
 }
