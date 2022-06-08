@@ -1057,6 +1057,7 @@ export class Topology {
         // TODO: setValue 触发 valueUpdate 消息，导致执行两次 onValue 事件
         e.onValue?.(e);
         this.store.data.locked && this.doEvent(e, eventName);
+        this.canvas.tooltip.updateText(e as Pen);
         break;
       case 'update':
       case 'delete':

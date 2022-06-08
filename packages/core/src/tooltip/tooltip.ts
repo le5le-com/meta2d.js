@@ -12,6 +12,7 @@ export class Tooltip {
   arrowDown: HTMLElement;
   x: number;
   y: number;
+  private currentPen: Pen; // 本次 tooltip 在哪个画笔上
   constructor(public parentElement: HTMLElement, private store: TopologyStore) {
     this.box = document.createElement('div');
     this.text = document.createElement('div');
@@ -50,48 +51,120 @@ export class Tooltip {
       style.type = 'text/css';
       document.head.appendChild(style);
       sheet = style.sheet;
-      sheet.insertRule('.topology-tooltip{position:absolute;padding:8px 0;z-index:10;left: -9999px;top: -9999px;}');
+      sheet.insertRule(
+        '.topology-tooltip{position:absolute;padding:8px 0;z-index:10;left: -9999px;top: -9999px;}'
+      );
       sheet.insertRule(
         '.topology-tooltip .text{max-width:320px;min-height:30px;max-height:400px;outline:none;padding:8px 16px;border-radius:4px;background:#777777;color:#ffffff;line-height:1.8;overflow-y:auto;}'
       );
       sheet.insertRule(
         '.topology-tooltip .arrow{position:absolute;border:6px solid transparent;background:transparent;top:-4px;left:50%;transform:translateX(-50%)}'
       );
-      sheet.insertRule('.topology-tooltip .arrow.down{top:initial;bottom: 1.5px;}');
+      sheet.insertRule(
+        '.topology-tooltip .arrow.down{top:initial;bottom: 1.5px;}'
+      );
     }
   }
 
-  show(pen: Pen, pos: Point) {
-    if (!pen.title) {
-      return;
+  /**
+   * 通过 pen 的 titleFn titleFnJs title 来获取 title
+   * @returns 此次应该展示的 title
+   */
+  private static getTitle(pen: Pen) {
+    if (pen.titleFnJs && !pen.titleFn) {
+      try {
+        pen.titleFn = new Function('pen', pen.titleFnJs) as (
+          pen: Pen
+        ) => string;
+      } catch (error) {
+        console.log('titleFnJs', error);
+      }
     }
+    return pen.titleFn ? pen.titleFn(pen) : String(pen.title);
+  }
 
+  /**
+   * 更改 tooltip dom 的文本
+   * @returns 返回设置前的 rect
+   */
+  private setText(pen: Pen): DOMRect {
+    const oldElemRect = this.box.getBoundingClientRect();
     let marked: any;
     if (window) {
       marked = window.marked;
     } else if (global) {
       marked = global.marked;
     }
+    const title = Tooltip.getTitle(pen);
     if (marked) {
       if (marked.parse) {
         marked = marked.parse;
       }
-      this.text.innerHTML = marked(pen.title);
+      this.text.innerHTML = marked(title);
       const a = this.text.getElementsByTagName('A');
       for (let i = 0; i < a.length; ++i) {
         a[i].setAttribute('target', '_blank');
       }
     } else {
-      this.text.innerHTML = pen.title;
+      this.text.innerHTML = title;
+    }
+    return oldElemRect;
+  }
+
+  /**
+   * 更新文字
+   */
+  updateText(pen: Pen) {
+    if (this.currentPen?.id !== pen.id) {
+      return;
     }
 
+    if (Tooltip.titleEmpty(pen)) {
+      return;
+    }
+
+    const oldRect = this.setText(pen);
+    const newRect = this.box.getBoundingClientRect();
+    this.changePositionByText(oldRect, newRect);
+  }
+
+  /**
+   * 改变文字会 影响 box 的大小，需要重新设置位置
+   * @param oldRect 原
+   * @param newRect 新
+   */
+  private changePositionByText(oldRect: DOMRect, newRect: DOMRect) {
+    this.x -= (newRect.width - oldRect.width) / 2;
+    this.y -= newRect.height - oldRect.height;
+    this.box.style.left = this.x + 'px';
+    this.box.style.top = this.y + 'px';
+  }
+
+  private static titleEmpty(pen: Pen) {
+    return !pen.title && !pen.titleFn && !pen.titleFnJs;
+  }
+
+  show(pen: Pen, pos: Point) {
+    this.currentPen = pen;
+    if (Tooltip.titleEmpty(pen)) {
+      return;
+    }
+
+    this.setText(pen);
     const elemRect = this.box.getBoundingClientRect();
     const rect = pen.calculative.worldRect;
     let x = pos.x - elemRect.width / 2;
     let y = pos.y - elemRect.height;
     if (!pen.type) {
-      x = pen.calculative.canvas.store.data.x + rect.x - (elemRect.width - rect.width) / 2;
-      y = pen.calculative.canvas.store.data.y + rect.ey - elemRect.height - rect.height;
+      x =
+        pen.calculative.canvas.store.data.x +
+        rect.x -
+        (elemRect.width - rect.width) / 2;
+      y =
+        pen.calculative.canvas.store.data.y +
+        rect.ey -
+        elemRect.height -
+        rect.height;
     }
 
     if (y > 0) {
@@ -110,6 +183,7 @@ export class Tooltip {
   }
 
   hide() {
+    this.currentPen = null;
     this.x = -9999;
     this.box.style.left = '-9999px';
   }
@@ -125,6 +199,6 @@ export class Tooltip {
   }
 
   destroy() {
-    this.box.onmouseleave = null; 
+    this.box.onmouseleave = null;
   }
 }
