@@ -34,10 +34,10 @@ import {
   TopologyStore,
   useStore,
 } from './store';
-import { formatPadding, Padding, s8, valueInRange } from './utils';
+import { formatPadding, Padding, s8, valueInArray, valueInRange } from './utils';
 import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
-import { Event, EventAction } from './event';
+import { Event, EventAction, EventName } from './event';
 import { Map } from './map';
 // TODO: 这种引入方式，引入 connect， webpack 5 报错
 import { MqttClient } from 'mqtt';
@@ -183,11 +183,8 @@ export class Topology {
           }
           // TODO: 编译 string.replaceAll 报错
           const value: any = e.value;
-          if (value.replaceAll) {
-            e.fn = new Function('pen', 'params', value.replaceAll('.setValue(', '._setValue('));
-          } else {
-            e.fn = new Function('pen', 'params', value.replace(/.setValue\(/g, '._setValue('));
-          }
+          const fnJs = value.replaceAll ? value.replaceAll('.setValue(', '._setValue(') : value.replace(/.setValue\(/g, '._setValue(');
+          e.fn = new Function('pen', 'params', fnJs) as (pen: Pen, params: string) => void;
         } catch (err) {
           console.error('[topology]: Error on make a function:', err);
         }
@@ -338,11 +335,18 @@ export class Topology {
     this.connectHttp();
   }
 
+  /**
+   * open 后执行初始化 Js ，每个图纸可配置一个初始化 js
+   */
   private doInitJS() {
-    if (this.store.data.initJs && this.store.data.initJs.trim()) {
-      // 字符串类型存在
-      const fn = new Function(this.store.data.initJs);
-      fn();
+    const initJs = this.store.data.initJs;
+    if (initJs && initJs.trim()) {
+      try {
+        const fn = new Function(initJs) as () => void;
+        fn();
+      } catch (e) {
+        console.warn('initJs error', e);
+      }
     }
   }
 
@@ -793,15 +797,15 @@ export class Topology {
 
   listenSocket() {
     try {
-      let socketFn: Function;
+      let socketFn: (e: string, topic: string) => void;
       const socketCbJs = this.store.data.socketCbJs;
       if (socketCbJs) {
-        socketFn = new Function('e', 'topic', socketCbJs);
+        socketFn = new Function('e', 'topic', socketCbJs) as (e: string, topic: string) => void;
       }
       if (!socketFn) {
         return false;
       }
-      this.socketFn = socketFn as (e: string, topic: string) => void;
+      this.socketFn = socketFn;
     } catch (e) {
       console.error('Create the function for socket:', e);
       return false;
@@ -1062,7 +1066,7 @@ export class Topology {
     }
   };
 
-  private doEvent = (pen: Pen, eventName: string) => {
+  private doEvent = (pen: Pen, eventName: EventName) => {
     if (!pen) {
       return;
     }
@@ -1071,11 +1075,12 @@ export class Topology {
       if (this.events[event.action] && event.name === eventName) {
         let can = !event.where;
         if (event.where) {
-          if (event.where.fn) {
-            can = event.where.fn(pen);
-          } else if (event.where.fnJs) {
+          const { fn, fnJs, comparison, key, value } = event.where;
+          if (fn) {
+            can = fn(pen);
+          } else if (fnJs) {
             try {
-              event.where.fn = new Function('pen', 'params', event.where.fnJs);
+              event.where.fn = new Function('pen', fnJs) as (pen: Pen) => boolean;
             } catch (err) {
               console.error('Error: make function:', err);
             }
@@ -1083,31 +1088,37 @@ export class Topology {
               can = event.where.fn(pen);
             }
           } else {
-            switch (event.where.comparison) {
+            switch (comparison) {
               case '>':
-                can = pen[event.where.key] > +event.where.value;
+                can = pen[key] > +value;
                 break;
               case '>=':
-                can = pen[event.where.key] >= +event.where.value;
+                can = pen[key] >= +value;
                 break;
               case '<':
-                can = pen[event.where.key] < +event.where.value;
+                can = pen[key] < +value;
                 break;
               case '<=':
-                can = pen[event.where.key] <= +event.where.value;
+                can = pen[key] <= +value;
                 break;
               case '=':
               case '==':
-                can = pen[event.where.key] == event.where.value;
+                can = pen[key] == value;
                 break;
               case '!=':
-                can = pen[event.where.key] != event.where.value;
+                can = pen[key] != value;
                 break;
               case '[)':
-                can = valueInRange(+pen[event.where.key], event.where.value);
+                can = valueInRange(+pen[key], value);
                 break;
               case '![)':
-                can = !valueInRange(+pen[event.where.key], event.where.value);
+                can = !valueInRange(+pen[key], value);
+                break;
+              case '[]':
+                can = valueInArray(+pen[key], value);
+                break;
+              case '![]':
+                can = !valueInArray(+pen[key], value);
                 break;
             }
           }
