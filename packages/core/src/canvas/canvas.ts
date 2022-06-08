@@ -573,7 +573,7 @@ export class Canvas {
               this.dirty = true;
             }
           });
-          this.render();
+          this.render(false);
         }
         break;
       case 'Escape':
@@ -593,13 +593,13 @@ export class Canvas {
             this.updateLines(pen);
           });
           this.calcActiveRect();
-          this.render(Infinity);
+          this.render();
         }
         this.hotkeyType = HotkeyType.None;
         this.movingAnchor = undefined;
         if (this.magnifierCanvas.magnifier) {
           this.magnifierCanvas.magnifier = false;
-          this.render(Infinity);
+          this.render();
         }
         break;
     }
@@ -692,7 +692,7 @@ export class Canvas {
     }
 
     if (this.hotkeyType) {
-      this.render(Infinity);
+      this.render();
     }
     if (this.hotkeyType < HotkeyType.AddAnchor) {
       this.hotkeyType = HotkeyType.None;
@@ -816,7 +816,7 @@ export class Canvas {
       this.makePen(pen);
       list.push(pen);
     }
-    this.render(Infinity);
+    this.render();
     this.store.emitter.emit('add', list);
     if (history) {
       this.pushHistory({ type: EditType.Add, pens: deepClone(list, true) });
@@ -932,7 +932,7 @@ export class Canvas {
   private getInitPencilLine(pt: Point): Pen {
     const { data, options } = this.store;
     const scale = data.scale;
-    const lineWidth = (data.lineWidth || 1);
+    const lineWidth = data.lineWidth || 1;
     return {
       id: pt.penId,
       name: 'line',
@@ -948,7 +948,7 @@ export class Canvas {
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
-      lineWidth
+      lineWidth,
     };
   }
 
@@ -959,7 +959,7 @@ export class Canvas {
   private getInitDrawingLine(pt: Point): Pen {
     const { data, options } = this.store;
     const scale = data.scale;
-    const lineWidth = (data.lineWidth || 1);
+    const lineWidth = data.lineWidth || 1;
     return {
       id: pt.penId,
       name: 'line',
@@ -975,7 +975,7 @@ export class Canvas {
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
-      lineWidth
+      lineWidth,
     };
   }
 
@@ -1197,7 +1197,7 @@ export class Canvas {
       pen: this.store.hover,
     });
 
-    this.render();
+    this.render(false);
   };
 
   private addRuleLine(e: {
@@ -1291,7 +1291,7 @@ export class Canvas {
     this.mousePos.x = e.x;
     this.mousePos.y = e.y;
     if (this.magnifierCanvas.magnifier) {
-      this.render(Infinity);
+      this.render();
       return;
     }
 
@@ -1472,7 +1472,7 @@ export class Canvas {
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.dirty = true;
     }
-    this.render();
+    this.render(false);
   };
 
   private hoverTimer: number = 0;
@@ -1683,7 +1683,7 @@ export class Canvas {
       this.calcActiveRect();
       this.willInactivePen = undefined;
       this.store.emitter.emit('inactive', [this.willInactivePen]);
-      this.render(Infinity);
+      this.render();
     }
 
     if (this.movingPens) {
@@ -2205,7 +2205,7 @@ export class Canvas {
     this.offscreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
     this.offscreen.getContext('2d').textBaseline = 'middle';
 
-    this.render(Infinity);
+    this.render();
   }
 
   clearCanvas() {
@@ -2367,7 +2367,7 @@ export class Canvas {
     } else {
       this.needInitStatus(action.pens);
     }
-    this.render(Infinity);
+    this.render();
 
     this.store.emitter.emit(undo ? 'undo' : 'redo', action);
   }
@@ -2424,7 +2424,7 @@ export class Canvas {
     if (pen.type) {
       this.initLineRect(pen);
     } else if (!pen.anchors) {
-      pen.anchors = pen.calculative.worldAnchors.map(pt => {
+      pen.anchors = pen.calculative.worldAnchors.map((pt) => {
         return calcRelativePoint(pt, pen.calculative.worldRect);
       });
     }
@@ -2463,7 +2463,7 @@ export class Canvas {
     calcInView(pen);
     this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     if (pen.calculative.worldAnchors) {
-      pen.anchors = pen.calculative.worldAnchors.map(pt => {
+      pen.anchors = pen.calculative.worldAnchors.map((pt) => {
         return calcRelativePoint(pt, pen.calculative.worldRect);
       });
     }
@@ -2496,7 +2496,7 @@ export class Canvas {
       !to.connectTo && this.drawingLine.calculative.worldAnchors.pop();
       if (getFromAnchor(this.drawingLine) === this.drawingLine.calculative.activeAnchor) {
         this.drawingLine = undefined;
-        this.render(Infinity);
+        this.render();
         return;
       }
     }
@@ -2504,7 +2504,7 @@ export class Canvas {
       if (this.store.options.disableEmptyLine) {
         // 有一端未连线，且 禁止创建空线条
         this.drawingLine = undefined;
-        this.render(Infinity);
+        this.render();
         return;
       }
     } else {
@@ -2520,7 +2520,7 @@ export class Canvas {
         if (line) {
           // 存在重复连线
           this.drawingLine = undefined;
-          this.render(Infinity);
+          this.render();
           return;
         }
       }
@@ -2545,7 +2545,7 @@ export class Canvas {
     this.store.path2dMap.set(this.drawingLine, globalStore.path2dDraws[this.drawingLine.name](this.drawingLine));
     this.drawingLine = undefined;
     this.drawingLineName = undefined;
-    this.render(Infinity);
+    this.render();
   }
 
   async finishPencil() {
@@ -2577,7 +2577,7 @@ export class Canvas {
         }
       }
       this.pencilLine = undefined;
-      this.render(Infinity);
+      this.render();
     }
   }
 
@@ -2767,16 +2767,16 @@ export class Canvas {
     pen.type && this.initLineRect(pen);
   }
 
-  render = (now?: number) => {
-    if (now === Infinity) {
-      this.dirty = true;
+  render = (dirty?: number | boolean) => {
+    let now: number;
+    if (dirty == null) {
       now = performance.now();
+      this.dirty = true;
+    } else if (dirty > 1) {
+      now = dirty as number;
     }
     if (!this.dirty) {
       return;
-    }
-    if (now == null) {
-      now = performance.now();
     }
 
     if (now - this.lastRender < this.store.options.interval) {
@@ -2799,16 +2799,13 @@ export class Canvas {
     this.renderBorder();
     this.renderHoverPoint();
     offscreenCtx.restore();
-
     this.magnifierCanvas.render();
-
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
-
-    this.dirty = false;
     this.canvasImageBottom.render();
     this.canvasImage.render();
+    this.dirty = false;
   };
 
   renderPens = () => {
@@ -3026,7 +3023,7 @@ export class Canvas {
     this.store.data.y = Math.round(this.store.data.y);
     this.canvasImage.initStatus();
     this.canvasImageBottom.initStatus();
-    this.render(Infinity);
+    this.render();
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
       y: this.store.data.y,
@@ -3072,7 +3069,6 @@ export class Canvas {
     }
 
     this.calibrateMouse(center);
-    this.dirty = true;
     const s = scale / this.store.data.scale;
     this.store.data.scale = scale;
     this.store.data.center = center;
@@ -3106,7 +3102,7 @@ export class Canvas {
     if (map && map.isShow) {
       map.setView();
     }
-    this.render(Infinity);
+    this.render();
     this.store.emitter.emit('scale', this.store.data.scale);
   }
 
@@ -3130,7 +3126,7 @@ export class Canvas {
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
     this.needInitStatus(this.store.active);
-    this.render(Infinity);
+    this.render();
     this.store.emitter.emit('rotatePens', this.store.active);
 
     if (this.timer) {
@@ -3217,7 +3213,7 @@ export class Canvas {
     });
     this.getSizeCPs();
     this.needInitStatus(this.store.active);
-    this.render(Infinity);
+    this.render();
     this.store.emitter.emit('resizePens', this.store.active);
 
     if (this.timer) {
@@ -3400,7 +3396,7 @@ export class Canvas {
     line.lineName === 'polyline' && (line.autoPolyline = false);
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
-    this.render(Infinity);
+    this.render();
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -3443,7 +3439,7 @@ export class Canvas {
     const line = this.store.active[0];
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
-    this.render(Infinity);
+    this.render();
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -3486,7 +3482,7 @@ export class Canvas {
     const line = this.store.active[0];
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
-    this.render(Infinity);
+    this.render();
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -3537,7 +3533,7 @@ export class Canvas {
       }
     }
     this.hotkeyType = HotkeyType.None;
-    this.render(Infinity);
+    this.render();
 
     this.pushHistory({
       type: EditType.Update,
@@ -3553,7 +3549,7 @@ export class Canvas {
    */
   private notInDisconnect(line: Pen, pens: Pen[]) {
     line.calculative.worldAnchors.forEach((anchor) => {
-      if (anchor.connectTo && !pens.find(p => p.id === anchor.connectTo)) {
+      if (anchor.connectTo && !pens.find((p) => p.id === anchor.connectTo)) {
         const lineId = line.id.includes(movingSuffix) ? line.id.replace(movingSuffix, '') : line.id;
         disconnectLine(this.store.pens[anchor.connectTo], lineId, anchor.id, anchor.anchorId);
         anchor.connectTo = undefined;
@@ -3565,12 +3561,12 @@ export class Canvas {
     if (Array.isArray(line.connectedLines)) {
       for (let i = 0; i < line.connectedLines.length; i++) {
         const { lineId, lineAnchor, anchor } = line.connectedLines[i];
-        if (!pens.find(p => p.id === lineId)) {
+        if (!pens.find((p) => p.id === lineId)) {
           disconnectLine(line, lineId, lineAnchor, anchor);
           const lineAnchorP = getAnchor(this.store.pens[lineId], lineAnchor);
           lineAnchorP.connectTo = undefined;
           lineAnchorP.anchorId = undefined;
-          // disconnectLine 改变了 line.connectedLines 长度，此处 -- 
+          // disconnectLine 改变了 line.connectedLines 长度，此处 --
           i--;
         }
       }
@@ -3617,7 +3613,7 @@ export class Canvas {
         this.updateLines(pen);
       }
       pen.onMove?.(pen);
-    })
+    });
     this.getSizeCPs();
 
     this.dirtyLines.forEach((pen) => {
@@ -3625,7 +3621,7 @@ export class Canvas {
         pen.type && this.initLineRect(pen);
       }
     });
-    this.render(Infinity);
+    this.render();
     this.tooltip.translate(x, y);
     this.store.emitter.emit('translatePens', pens);
 
@@ -3787,7 +3783,7 @@ export class Canvas {
       (pen: Pen) => (!pen.locked || pen.locked < LockState.DisableMove) && pen.visible != false
     );
     if (!canMovePens.length) {
-      console.warn("active have no movable pens");
+      console.warn('active have no movable pens');
       return;
     } else if (canMovePens.length === 1) {
       this.activeRect = deepClone(canMovePens[0].calculative.worldRect);
@@ -3941,7 +3937,7 @@ export class Canvas {
       dels.forEach((pen) => {
         this.store.animates.delete(pen);
       });
-      this.render();
+      this.render(false);
       this.animateRendering = false;
       this.animate();
     });
@@ -4149,7 +4145,7 @@ export class Canvas {
     });
     this.inactive();
     this.clearHover();
-    this.render(Infinity);
+    this.render();
     // TODO: 连线的删除 ，连接的 node 的 connectLines 会变化（删除 node ，line 的 anchors 类似），未记历史记录
     this.pushHistory({ type: EditType.Delete, pens });
     this.store.emitter.emit('delete', pens);
@@ -4183,7 +4179,7 @@ export class Canvas {
    * 删除该节点 关联的 连线 的 connectTo
    * @param node 节点
    */
-   private delLineConnectTo(node: Pen) {
+  private delLineConnectTo(node: Pen) {
     node.connectedLines?.forEach(({ lineId, lineAnchor }) => {
       const line = this.store.pens[lineId];
       if (line) {
@@ -4259,7 +4255,7 @@ export class Canvas {
     this.input.focus();
 
     pen.calculative.text = undefined;
-    this.render(Infinity);
+    this.render();
   };
 
   hideInput = () => {
@@ -4389,7 +4385,8 @@ export class Canvas {
     for (const item of pen.dropdownList) {
       const t = typeof item === 'string' ? item : item.text;
       if (search && text) {
-        if (t.includes(text)) { // 过滤
+        if (t.includes(text)) {
+          // 过滤
           this.dropdownAppendOption(t, i);
         }
       } else {
@@ -4453,7 +4450,7 @@ export class Canvas {
       pens: [deepClone(pen, true)],
       initPens,
     });
-    this.render(Infinity);
+    this.render();
     this.store.emitter.emit('valueUpdate', pen);
   };
 
@@ -4816,19 +4813,19 @@ export class Canvas {
     this.onMovePens();
     this.canvasImage.initStatus();
     this.canvasImageBottom.initStatus();
-    this.render(Infinity);
+    this.render();
   }
 
   showMagnifier() {
     this.magnifierCanvas.magnifier = true;
     this.externalElements.style.cursor = 'default';
-    this.render(Infinity);
+    this.render();
   }
 
   hideMagnifier() {
     this.magnifierCanvas.magnifier = false;
     this.externalElements.style.cursor = 'default';
-    this.render(Infinity);
+    this.render();
   }
 
   toggleMagnifier() {
@@ -4836,7 +4833,7 @@ export class Canvas {
     if (this.magnifierCanvas.magnifier) {
       this.externalElements.style.cursor = 'default';
     }
-    this.render(Infinity);
+    this.render();
   }
 
   destroy() {
