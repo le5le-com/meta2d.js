@@ -503,14 +503,17 @@ export class Topology {
     this.canvas.customeResizeDock = dock;
   }
 
-  find(idOrTag: string) {
+  find(id: string): Pen[];
+  find(tag: string): Pen[];
+  find(idOrTag: string): Pen[] {
     return this.canvas.find(idOrTag);
   }
 
   /**
    * 使用 Array.find 找到即返回，否则返回 undefined
-   * @param idOrTag id or tag
    */
+  findOne(id: string): Pen | undefined;
+  findOne(tag: string): Pen | undefined;
   findOne(idOrTag: string): Pen | undefined {
     return this.canvas.findOne(idOrTag);
   }
@@ -523,7 +526,7 @@ export class Topology {
     this.canvas.setPenRect(pen, rect, render);
   }
 
-  startAnimate(idOrTagOrPens?: string | Pen[]) {
+  startAnimate(idOrTagOrPens?: string | Pen[]): void {
     let pens: Pen[];
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
@@ -970,11 +973,10 @@ export class Topology {
     let pens: Pen[] = [];
     if (data.id) {
       /**
-       * 传入 id 使用 findOne ，性能相对优于 find 方法
-       * TODO: 考虑使用 store.pens 性能更好
+       * 传入 id 使用 store.pens 查找
        * TODO: 代码或许可以优化成一行
        */
-      const pen = this.findOne(data.id);
+      const pen = this.store.pens[data.id];
       pen && pens.push(pen);
     } else {
       pens = this.find(data.tag);
