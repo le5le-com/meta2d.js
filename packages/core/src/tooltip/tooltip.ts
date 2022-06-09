@@ -1,6 +1,7 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
 import { TopologyStore } from '../store';
+import type { marked as Marked } from 'marked';
 
 declare const window: any;
 declare const global: any;
@@ -89,7 +90,7 @@ export class Tooltip {
    */
   private setText(pen: Pen): DOMRect {
     const oldElemRect = this.box.getBoundingClientRect();
-    let marked: any;
+    let marked: typeof Marked;
     if (window) {
       marked = window.marked;
     } else if (global) {
@@ -97,9 +98,6 @@ export class Tooltip {
     }
     const title = Tooltip.getTitle(pen);
     if (marked) {
-      if (marked.parse) {
-        marked = marked.parse;
-      }
       this.text.innerHTML = marked(title);
       const a = this.text.getElementsByTagName('A');
       for (let i = 0; i < a.length; ++i) {
