@@ -465,17 +465,11 @@ export class Topology {
     return this;
   }
 
-  register(path2dFns: { [key: string]: (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D }) {
-    register(path2dFns);
-  }
+  register = register;
 
-  registerCanvasDraw(drawFns: { [key: string]: (ctx: CanvasRenderingContext2D, pen: Pen) => void }) {
-    registerCanvasDraw(drawFns);
-  }
+  registerCanvasDraw = registerCanvasDraw;
 
-  registerAnchors(path2dFns: { [key: string]: (pen: Pen) => void }) {
-    registerAnchors(path2dFns);
-  }
+  registerAnchors = registerAnchors;
 
   // customeDock = (store, rect, pens, offset) => {xDock, yDock}
   // customDock return:
@@ -1184,9 +1178,7 @@ export class Topology {
     });
   }
 
-  renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
-    renderPenRaw(ctx, pen, rect);
-  }
+  renderPenRaw = renderPenRaw;
 
   toPng(padding?: Padding, callback?: BlobCallback, containBkImg = false) {
     return this.canvas.toPng(padding, callback, containBkImg);
