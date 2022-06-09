@@ -11,7 +11,7 @@
     "allowJs": true,
     "lib": [
       "es2018",
-      "ES2021.String",
+      "es2020.string",
       "dom"
     ],
     "downlevelIteration": true,

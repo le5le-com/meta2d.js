@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/le5le-com/topology.js#readme",
   "devDependencies": {
+    "@types/marked": "^4.0.3",
     "@types/offscreencanvas": "latest"
   },
   "dependencies": {
