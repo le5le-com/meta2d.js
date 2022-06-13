@@ -63,15 +63,16 @@ export class Topology {
     this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
     window && ((window as any).topology = this);
-    this['facePen'] = facePen;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
 
-    this['getWords'] = getWords;
-    this['calcTextLines'] = calcTextLines;
-    this['calcTextRect'] = calcTextRect;
-    this['calcTextDrawRect'] = calcTextDrawRect;
   }
+
+  facePen = facePen;
+  getWords = getWords;
+  calcTextLines = calcTextLines;
+  calcTextRect = calcTextRect;
+  calcTextDrawRect = calcTextDrawRect;
 
   /**
    * @deprecated 改用 beforeAddPens
@@ -146,7 +147,6 @@ export class Topology {
           if (value.hasOwnProperty('visible')) {
             this.setVisible(pen, value.visible);
           }
-          // TODO: 执行时机比 setValue 中的 render 晚
           this._setValue({ id: pen.id, ...value });
         });
         this.render();
@@ -214,7 +214,7 @@ export class Topology {
 
   resize(width?: number, height?: number) {
     this.canvas.resize(width, height);
-    this.canvas.render();
+    this.render();
     this.store.emitter.emit('resize', { width, height });
 
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
@@ -317,7 +317,7 @@ export class Topology {
       }
     }
 
-    this.canvas.render(true);
+    this.render();
     this.listenSocket();
     this.connectSocket();
     this.startAnimate();
@@ -448,7 +448,7 @@ export class Topology {
   clear() {
     clearStore(this.store);
     this.canvas.clearCanvas();
-    this.canvas.render();
+    this.render();
   }
 
   emit(eventType: EventType, data: unknown) {
@@ -465,17 +465,11 @@ export class Topology {
     return this;
   }
 
-  register(path2dFns: { [key: string]: (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D }) {
-    register(path2dFns);
-  }
+  register = register;
 
-  registerCanvasDraw(drawFns: { [key: string]: (ctx: CanvasRenderingContext2D, pen: Pen) => void }) {
-    registerCanvasDraw(drawFns);
-  }
+  registerCanvasDraw = registerCanvasDraw;
 
-  registerAnchors(path2dFns: { [key: string]: (pen: Pen) => void }) {
-    registerAnchors(path2dFns);
-  }
+  registerAnchors = registerAnchors;
 
   // customeDock = (store, rect, pens, offset) => {xDock, yDock}
   // customDock return:
@@ -503,14 +497,17 @@ export class Topology {
     this.canvas.customeResizeDock = dock;
   }
 
-  find(idOrTag: string) {
+  find(id: string): Pen[];
+  find(tag: string): Pen[];
+  find(idOrTag: string): Pen[] {
     return this.canvas.find(idOrTag);
   }
 
   /**
    * 使用 Array.find 找到即返回，否则返回 undefined
-   * @param idOrTag id or tag
    */
+  findOne(id: string): Pen | undefined;
+  findOne(tag: string): Pen | undefined;
   findOne(idOrTag: string): Pen | undefined {
     return this.canvas.findOne(idOrTag);
   }
@@ -523,7 +520,7 @@ export class Topology {
     this.canvas.setPenRect(pen, rect, render);
   }
 
-  startAnimate(idOrTagOrPens?: string | Pen[]) {
+  startAnimate(idOrTagOrPens?: string | Pen[]): void {
     let pens: Pen[];
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
@@ -970,11 +967,10 @@ export class Topology {
     let pens: Pen[] = [];
     if (data.id) {
       /**
-       * 传入 id 使用 findOne ，性能相对优于 find 方法
-       * TODO: 考虑使用 store.pens 性能更好
+       * 传入 id 使用 store.pens 查找
        * TODO: 代码或许可以优化成一行
        */
-      const pen = this.findOne(data.id);
+      const pen = this.store.pens[data.id];
       pen && pens.push(pen);
     } else {
       pens = this.find(data.tag);
@@ -1055,6 +1051,7 @@ export class Topology {
         // TODO: setValue 触发 valueUpdate 消息，导致执行两次 onValue 事件
         e.onValue?.(e);
         this.store.data.locked && this.doEvent(e, eventName);
+        this.canvas.tooltip.updateText(e as Pen);
         break;
       case 'update':
       case 'delete':
@@ -1181,9 +1178,7 @@ export class Topology {
     });
   }
 
-  renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
-    renderPenRaw(ctx, pen, rect);
-  }
+  renderPenRaw = renderPenRaw;
 
   toPng(padding?: Padding, callback?: BlobCallback, containBkImg = false) {
     return this.canvas.toPng(padding, callback, containBkImg);
@@ -1373,7 +1368,6 @@ export class Topology {
         break;
     }
     this._setValue({ id: pen.id, ...penRect });
-    this.render();
   }
 
   /**
@@ -1493,7 +1487,7 @@ export class Topology {
 
     this.canvas.canvasImage.initStatus();
     this.canvas.canvasImageBottom.initStatus();
-    this.canvas.render(true);
+    this.render();
   }
 
   showMap() {
@@ -1768,18 +1762,16 @@ export class Topology {
     return oneIsParent ? deepClone(components) : deepClone([parent, ...components]);
   }
 
-  setVisible(pen: Pen, visible: boolean) {
+  setVisible(pen: Pen, visible: boolean, render = true) {
     this.onSizeUpdate();
     this._setValue({ id: pen.id, visible });
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.store.pens[childId];
-        child && this.setVisible(child, visible);
+        child && this.setVisible(child, visible, false);
       }
-    } else {
-      // 在下个绘画周期重绘，给时间（当前绘画周期）执行递归
-      this.render(100);
     }
+    render && this.render();
   }
 
   clearHover(): void {

@@ -208,7 +208,7 @@ function onMousedown(pen: formPen, e: Point) {
       });
     }
   }
-  pen.calculative.canvas.render(Infinity);
+  pen.calculative.canvas.render();
 }
 
 function onValue(pen: formPen) {

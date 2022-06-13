@@ -108,6 +108,9 @@ export interface Pen extends Rect {
   length?: number;
 
   title?: string;
+  // 优先级高于 title
+  titleFnJs?: string;
+  titleFn?: (pen: Pen) => string;
 
   lineWidth?: number;
   borderWidth?: number;

@@ -1,7 +1,13 @@
 import { Pen } from '../../core/src/pen';
 import { ChartData } from '../../core/src/pen';
 
-import { calcExy } from '@topology/core';
+import { calcExy, Rect } from '@topology/core';
+
+export interface Pos {
+  row: number;
+  col: number;
+}
+
 export interface formPen extends Pen {
   optionPos?: any[];
   direction?: string;
@@ -9,7 +15,14 @@ export interface formPen extends Pen {
   options?: any[];
   optionHeight?: number;
   checkboxHeight?: number;
-  calculative?: any;
+  calculative?: {
+    barRect: Rect;
+    ballRect: Rect;
+    texts: any[];
+    activeCell: Pos;
+    hoverCell: Pos;
+    inputCell: Pos;
+  } & Pen['calculative'];
   checked?: boolean;
   onColor?: string;
   disable?: boolean;

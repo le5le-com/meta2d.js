@@ -236,14 +236,14 @@ export class Canvas {
     this.bounding = this.externalElements.getBoundingClientRect();
     this.listen();
 
-    this['curve'] = curve;
-    this['polyline'] = polyline;
-    this['mind'] = mind;
-    this['line'] = lineSegment;
-
     window && window.addEventListener('resize', this.onResize);
     window && window.addEventListener('scroll', this.onScroll);
   }
+
+  curve = curve;
+  polyline = polyline;
+  mind = mind;
+  line = lineSegment;
 
   listen() {
     // ios
@@ -573,7 +573,6 @@ export class Canvas {
               this.dirty = true;
             }
           });
-          this.render(false);
         }
         break;
       case 'Escape':
@@ -593,18 +592,18 @@ export class Canvas {
             this.updateLines(pen);
           });
           this.calcActiveRect();
-          this.render();
+          this.dirty = true;
         }
         this.hotkeyType = HotkeyType.None;
         this.movingAnchor = undefined;
         if (this.magnifierCanvas.magnifier) {
           this.magnifierCanvas.magnifier = false;
-          this.render();
+          this.dirty = true;
         }
         break;
     }
 
-    this.render();
+    this.render(false);
   };
 
   /**
@@ -1397,7 +1396,7 @@ export class Canvas {
         const x = e.x - this.movingAnchor.x;
         const y = e.y - this.movingAnchor.y;
         this.translateMovingAnchor(x, y);
-        this.render();
+        this.render(false);
         return;
       }
 
@@ -2616,7 +2615,6 @@ export class Canvas {
         pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
         pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
         globalStore.htmlElements[pen.image] = img;
-        this.dirty = true;
         this.imageLoaded();
       };
     };
@@ -2647,7 +2645,6 @@ export class Canvas {
               pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
               pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
               globalStore.htmlElements[pen.image] = img;
-              this.dirty = true;
               this.imageLoaded();
             };
           }
@@ -2669,7 +2666,6 @@ export class Canvas {
           img.onload = () => {
             pen.calculative.backgroundImg = img;
             globalStore.htmlElements[pen.backgroundImage] = img;
-            this.dirty = true;
             this.imageLoaded();
           };
         }
@@ -2690,7 +2686,6 @@ export class Canvas {
           img.onload = () => {
             pen.calculative.strokeImg = img;
             globalStore.htmlElements[pen.strokeImage] = img;
-            this.dirty = true;
             this.imageLoaded();
           };
         }
@@ -3767,7 +3762,7 @@ export class Canvas {
         if (found) {
           line.calculative.worldAnchors = [from, to];
           line.calculative.activeAnchor = from;
-          this['polyline'](this.store, line, to);
+          this.polyline(this.store, line, to);
           this.initLineRect(line);
         }
       }
