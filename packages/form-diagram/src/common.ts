@@ -17,10 +17,15 @@ export interface Pos {
 
 >>>>>>> b050489 (render)
 export interface formPen extends Pen {
-  optionPos?: any[];
+  optionPos?: number[];
   direction?: string;
   checkboxWidth?: number;
-  options?: any[];
+  options?: {
+    isForbidden: boolean;
+    isChecked: boolean;
+    background: string;
+    text: string;
+  }[];
   optionHeight?: number;
   checkboxHeight?: number;
   calculative?: {
@@ -55,7 +60,7 @@ export interface formPen extends Pen {
       height: number;
       fontWeight: number;
     };
-    data: any;
+    data: any[];
   };
   colPos: number[];
   rowPos: number[];

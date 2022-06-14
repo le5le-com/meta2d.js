@@ -21,6 +21,7 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
       '#d48265',
     ];
   }
+  pen.chartsColor = pen.echarts.option.color;
   const seriesArray = isEcharts ? pen.echarts.option.series : pen.data;
   let beforeSeriesLength = 0;
   for (let ser = 0; ser < seriesArray.length; ser++) {

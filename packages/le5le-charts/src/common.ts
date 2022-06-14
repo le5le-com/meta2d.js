@@ -19,24 +19,33 @@ export enum ReplaceMode {
 }
 
 export interface leChartPen extends Pen {
-  echarts?: any;
+  // echarts?: any;
+  echarts?: {
+    option: {
+      xAxis: {
+        data: any[];
+      };
+      series: any[];
+      color: string[];
+    };
+  };
   startAngle?: number;
   endAngle?: number;
   min?: number;
   max?: number;
-  axisLine?: any[];
+  axisLine?: [number, string];
   unit?: string;
-  value?: any;
+  value?: number;
   splitNumber?: number;
   isClock?: boolean;
   hourvalue?: string;
   minutevalue?: string;
   secondvalue?: string;
-  data?: any;
+  data?: any[]; // (number[] | { name: string; value: number }...)[];
   chartsColor?: string[];
   smooth?: boolean;
-  chartsRadius?: any;
+  chartsRadius?: string[][];
   frames?: leChartPen[];
-  xAxisData?: any;
+  xAxisData?: string[];
   replaceMode?: ReplaceMode;
 }
