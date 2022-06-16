@@ -34,7 +34,7 @@ export function lightningCharts(pen: Pen): Path2D {
   if (typeof (pen as any).lightningCharts === 'string') {
     try {
       (pen as any).lightningCharts = JSON.parse((pen as any).lightningCharts);
-    } catch {}
+    } catch(e) {}
   }
   if (!(pen as any).lightningCharts) {
     return;

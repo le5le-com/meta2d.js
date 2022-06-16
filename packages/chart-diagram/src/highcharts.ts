@@ -36,7 +36,7 @@ export function highcharts(pen: Pen): Path2D {
   if (typeof (pen as any).highcharts === 'string') {
     try {
       (pen as any).highcharts = JSON.parse((pen as any).highcharts.option);
-    } catch {}
+    } catch(e) {}
   }
   if (!(pen as any).highcharts) {
     return;

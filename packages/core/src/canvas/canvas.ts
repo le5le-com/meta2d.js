@@ -791,8 +791,12 @@ export class Canvas {
 >>>>>>> 27370d1 (onwheel)
 =======
       this.dropPens(obj, pt);
+<<<<<<< HEAD
 >>>>>>> 7750889 (drop 和 click 抽取一个方法出来使用)
     } catch {}
+=======
+    } catch(e) {}
+>>>>>>> a5d70ab (catch e)
   };
 
   async dropPens(pens: Pen[], e: Point) {
