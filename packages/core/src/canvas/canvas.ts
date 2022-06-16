@@ -753,7 +753,7 @@ export class Canvas {
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
       this.dropPens(obj, pt);
-    } catch {}
+    } catch(e) {}
   };
 
   async dropPens(pens: Pen[], e: Point) {
