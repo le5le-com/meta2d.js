@@ -58,7 +58,7 @@ export function echarts(pen: ChartPen): Path2D {
   if (typeof pen.echarts === 'string') {
     try {
       pen.echarts = JSON.parse(pen.echarts);
-    } catch {}
+    } catch(e) {}
   }
   if (!pen.echarts) {
     return;

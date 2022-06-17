@@ -18,7 +18,7 @@ const onOpen = (e) => {
     try {
       const json = JSON.parse(event.target.result);
       window.topology.open(json);
-    } catch {
+    } catch(e) {
       console.log("读取文件失败，请检查数据格式");
     }
   };
