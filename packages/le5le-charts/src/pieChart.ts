@@ -10,18 +10,53 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   const h = pen.calculative.worldRect.height;
 
   const isEcharts = pen.echarts ? true : false;
-  if (pen.echarts && !pen.echarts.option.color) {
-    pen.echarts.option.color = [
-      '#1890ff',
-      '#2FC25B',
-      '#FACC14',
-      '#c23531',
-      '#2f4554',
-      '#61a0a8',
-      '#d48265',
-    ];
+  // if (pen.echarts && !pen.echarts.option.color) {
+  //   pen.echarts.option.color = [
+  //     '#1890ff',
+  //     '#2FC25B',
+  //     '#FACC14',
+  //     '#c23531',
+  //     '#2f4554',
+  //     '#61a0a8',
+  //     '#d48265',
+  //   ];
+  // } else {
+  //   pen.chartsColor = [
+  //     '#1890ff',
+  //     '#2FC25B',
+  //     '#FACC14',
+  //     '#c23531',
+  //     '#2f4554',
+  //     '#61a0a8',
+  //     '#d48265',
+  //   ];
+  // }
+  if (pen.echarts) {
+    if (!pen.echarts.option.color) {
+      pen.echarts.option.color = [
+        '#1890ff',
+        '#2FC25B',
+        '#FACC14',
+        '#c23531',
+        '#2f4554',
+        '#61a0a8',
+        '#d48265',
+      ];
+    }
+    pen.chartsColor = pen.echarts.option.color;
+  } else {
+    if (!pen.chartsColor) {
+      pen.chartsColor = [
+        '#1890ff',
+        '#2FC25B',
+        '#FACC14',
+        '#c23531',
+        '#2f4554',
+        '#61a0a8',
+        '#d48265',
+      ];
+    }
   }
-  pen.chartsColor = pen.echarts.option.color;
   const seriesArray = isEcharts ? pen.echarts.option.series : pen.data;
   let beforeSeriesLength = 0;
   for (let ser = 0; ser < seriesArray.length; ser++) {
