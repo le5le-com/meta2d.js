@@ -649,7 +649,7 @@ export class Topology {
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
-      pen.locked = LockState.DisableMove;
+      pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
     });
     this.canvas.active([parent]);
     let step = 1;
@@ -1152,7 +1152,7 @@ export class Topology {
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
       Object.assign(pen, childRect);
-      pen.locked = LockState.DisableMove;
+      pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
       if (!oldPen) {
         addPens.push(deepClone(pen, true));
       } else {
@@ -1755,7 +1755,7 @@ export class Topology {
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
-      pen.locked = LockState.DisableMove;
+      pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
       // pen.type = PenType.Node;
     });
 
