@@ -320,6 +320,18 @@ export class Canvas {
     }
   }
 
+  /**
+   * 根据 dom 元素的位置，计算出相对坐标
+   * 注意：该方法是个 副作用 方法，会改变传入的参数
+   * @param e 事件的鼠标位置
+   */
+  private calcEByBounding(e: { x: number, y: number }) {
+    // 61 chrome 可使用 bounding.x
+    const { x, y, left, top } = this.bounding;
+    e.x -= (x || left);
+    e.y -= (y || top); 
+  }
+
   onwheel = (e: WheelEvent) => {
     const target = e.target as HTMLElement;
     // TODO: 若遇到其它 dom 的滚动影响了画布缩放，需要设置 noWheel 属性
@@ -346,8 +358,8 @@ export class Canvas {
 
     this.touchStart = now;
 
-    let x = e.x - (this.bounding.left || this.bounding.x);
-    let y = e.y - (this.bounding.top || this.bounding.y);
+    this.calcEByBounding(e);
+    const { x, y } = e;
 
     if (isTouchPad) {
       this.translate(e.deltaX, e.deltaY);
@@ -878,8 +890,7 @@ export class Canvas {
     }
 
     const pos: Point = { x, y };
-    pos.x -= this.bounding.left || this.bounding.x;
-    pos.y -= this.bounding.top || this.bounding.y;
+    this.calcEByBounding(pos);
     this.calibrateMouse(pos);
     // click 消息需要用到 hover 的 pen
     this.getHover(pos);
@@ -1044,8 +1055,7 @@ export class Canvas {
       return;
     }
 
-    e.x -= this.bounding.left || this.bounding.x;
-    e.y -= this.bounding.top || this.bounding.y;
+    this.calcEByBounding(e);
     this.calibrateMouse(e);
     this.mousePos.x = e.x;
     this.mousePos.y = e.y;
@@ -1331,9 +1341,7 @@ export class Canvas {
       this.lastMouseTime = 0;
     }
 
-    e.x -= this.bounding.left || this.bounding.x;
-    e.y -= this.bounding.top || this.bounding.y;
-
+    this.calcEByBounding(e);
     this.calibrateMouse(e);
     this.mousePos.x = e.x;
     this.mousePos.y = e.y;
@@ -1565,9 +1573,7 @@ export class Canvas {
       return;
     }
 
-    e.x -= this.bounding.left || this.bounding.x;
-    e.y -= this.bounding.top || this.bounding.y;
-
+    this.calcEByBounding(e);
     console.info('mouseRight', this.mouseRight);
     if (this.mouseRight === MouseRight.Down) {
       this.store.emitter.emit('contextmenu', {
