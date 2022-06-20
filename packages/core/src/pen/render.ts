@@ -1,4 +1,4 @@
-import { LineAnimateType, Pen } from './model';
+import { LineAnimateType, LockState, Pen } from './model';
 import { getSplitAnchor, line } from '../diagrams';
 import { Direction } from '../data';
 import { calcRotate, distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
@@ -1664,11 +1664,12 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   elem.style.display = pen.calculative.inView != false ? 'inline' : 'none'; // 是否隐藏元素
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
-  if (pen.locked || store.data.locked) {
-    // TODO: gif 组合后成子节点 locked = 2 导致可选择 dom 无法拖拽
+  if (pen.locked === LockState.DisableEdit || pen.locked === LockState.DisableMove || store.data.locked) {
+    // gif 组合后，作为子节点可通过 lockedOnCombine 来决定自身的 locked 状态
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
   } else {
+    // pen.locked LockState.Disable 不响应鼠标
     elem.style.userSelect = 'none';
     elem.style.pointerEvents = 'none';
   }

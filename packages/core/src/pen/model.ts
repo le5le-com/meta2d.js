@@ -279,6 +279,7 @@ export interface Pen extends Rect {
   isRuleLine?: boolean; // 是否是规则线，规则线不受缩放，平移影响
   isBottom?: boolean; // 是否是底部图片
   form?: FormItem[]; // 业务表单
+  lockedOnCombine?: LockState; // 组合成 combine ，该节点的 locked 值
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
