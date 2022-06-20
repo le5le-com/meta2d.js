@@ -330,6 +330,8 @@ export class Canvas {
     const { x, y, left, top } = this.bounding;
     e.x -= (x || left);
     e.y -= (y || top); 
+
+    return e;
   }
 
   onwheel = (e: WheelEvent) => {
@@ -358,8 +360,7 @@ export class Canvas {
 
     this.touchStart = now;
 
-    this.calcEByBounding(e);
-    const { x, y } = e;
+    const { x, y } = this.calcEByBounding({ x: e.x, y: e.y });
 
     if (isTouchPad) {
       this.translate(e.deltaX, e.deltaY);
