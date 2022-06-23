@@ -322,19 +322,9 @@ export class Topology {
   }
 
   open(data?: TopologyData) {
-    for (const pen of this.store.data.pens) {
-      pen.onDestroy?.(pen);
-    }
-
-    clearStore(this.store);
-    this.hideInput();
-    this.canvas.tooltip.hide();
-    this.canvas.clearCanvas();
-
-    this.store.dirtyBackground = true;
-    this.store.dirtyTop = true;
-    this.setBackgroundImage(data?.bkImage);
+    this.clear(false);
     if (data) {
+      this.setBackgroundImage(data.bkImage);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
       // 第一遍赋初值
@@ -483,10 +473,24 @@ export class Topology {
     this.canvas.toggleMagnifier();
   }
 
-  clear() {
+  /**
+   * 擦除画布，释放 store 上的 pens
+   * @param render 是否重绘
+   */
+  clear(render = true) {
+    for (const pen of this.store.data.pens) {
+      pen.onDestroy?.(pen);
+    }
     clearStore(this.store);
+    this.hideInput();
+    this.canvas.tooltip.hide();
     this.canvas.clearCanvas();
-    this.render();
+
+    // 非必要，为的是 open 时重绘 背景与网格
+    this.store.dirtyBackground = true;
+    this.store.dirtyTop = true;
+    this.setBackgroundImage(undefined);
+    render && this.render();
   }
 
   emit(eventType: EventType, data: unknown) {
@@ -1936,16 +1940,14 @@ export class Topology {
   }
 
   destroy(global?: boolean) {
-    for (const pen of this.store.data.pens) {
-      pen.onDestroy?.(pen);
-    }
+    this.clear(false);
     this.closeSocket();
-    clearStore(this.store);
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     // Clear data.
     globalStore[this.store.id] = undefined;
     globalStore.path2dDraws = {};
+    // TODO: globalStore 其它资源为何不清空？
     this.canvas = undefined;
 
     if (global) {

@@ -10,7 +10,7 @@ export function video(pen: Pen) {
     pen.onResize = move;
     pen.onRotate = move;
     pen.onClick = click;
-    pen.onValue = move;
+    pen.onValue = value;
     pen.onChangeId = changeId;
   }
 
@@ -52,8 +52,7 @@ export function video(pen: Pen) {
     media.style.height = '100%';
     player.appendChild(media);
     videos[pen.id] = player;
-    pen.calculative.canvas.externalElements &&
-      pen.calculative.canvas.externalElements.appendChild(player);
+    pen.calculative.canvas.externalElements?.appendChild(player);
     setElemPosition(pen, player);
     if (pen.autoPlay) {
       media.autoplay = true;
@@ -64,6 +63,7 @@ export function video(pen: Pen) {
     pen.calculative.media &&
     pen.video !== pen.calculative.video
   ) {
+    console.warn('video 更改, 此处是否执行？');
     pen.calculative.media.src = pen.video;
     if (pen.autoPlay) {
       pen.calculative.media.muted = true;
@@ -99,7 +99,11 @@ function move(pen: Pen) {
   setElemPosition(pen, videos[pen.id]);
   const progress = videos[pen.id].children[0];
   const media = videos[pen.id].children[1];
-  resizeProcessWidth(progress as HTMLDivElement, media as HTMLMediaElement, pen.calculative.worldRect.width);
+  resizeProcessWidth(
+    progress as HTMLDivElement,
+    media as HTMLMediaElement,
+    pen.calculative.worldRect.width
+  );
 }
 
 function click(pen: Pen) {
@@ -127,4 +131,29 @@ function changeId(pen: Pen, oldId: string, newId: string) {
   }
   videos[newId] = videos[oldId];
   delete videos[oldId];
+}
+
+function value(pen: Pen) {
+  const video = videos[pen.id];
+  if (!video) {
+    return;
+  }
+  setElemPosition(pen, video);
+  const currentSrc = pen.calculative.media.getAttribute('src');
+  if (pen.video) {
+    if (currentSrc !== pen.video) {
+      pen.calculative.media.src = pen.video;
+    }
+  } else if (pen.audio) {
+    if (currentSrc !== pen.audio) {
+      pen.calculative.media.src = pen.audio;
+    }
+  }
+  // TODO: 下面每次都改动，是否影响性能？
+  if (pen.autoPlay) {
+    pen.calculative.media.muted = true;
+    // TODO: 自动播放何时关？
+    pen.calculative.media.autoplay = true;
+  }
+  pen.calculative.media.loop = pen.playLoop;
 }

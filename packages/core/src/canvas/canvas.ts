@@ -2428,6 +2428,7 @@ export class Canvas {
     this.dirtyPenRect(pen);
 
     if (pen.type) {
+      // TODO: 上面 dirtyPenRect 方法会调用 initLineRect
       this.initLineRect(pen);
     } else if (!pen.anchors) {
       pen.anchors = pen.calculative.worldAnchors.map((pt) => {
@@ -3097,7 +3098,7 @@ export class Canvas {
         }
       }
       this.dirtyPenRect(pen, { worldRectIsReady: true });
-      pen.onResize && pen.onResize(pen);
+      this.execPenResize(pen);
     });
     this.calcActiveRect();
     this.canvasImage.initStatus();
@@ -3211,8 +3212,8 @@ export class Canvas {
       pen.calculative.iconHeight && (pen.calculative.iconHeight *= scaleY);
       calcExy(pen.calculative.worldRect);
       calcCenter(pen.calculative.worldRect);
-      pen.onResize && pen.onResize(pen);
       this.dirtyPenRect(pen, { worldRectIsReady: true });
+      this.execPenResize(pen);
       this.updateLines(pen);
     });
     this.getSizeCPs();
@@ -4599,18 +4600,30 @@ export class Canvas {
     }
   }
 
+  /**
+   * 执行 pen ，以及 pen 的子孙节点的 onResize 生命周期函数
+   */
+  private execPenResize(pen: Pen) {
+    pen.onResize?.(pen);
+    pen.children?.forEach(chlidId => {
+      const child = this.store.pens[chlidId];
+      child && this.execPenResize(child);
+    })
+  }
+
   setPenRect(pen: Pen, rect: Rect, render = true) {
     if (pen.parentId) {
       // 子节点的 rect 值，一定得是比例值
       Object.assign(pen, rect);
     } else {
-      pen.x = this.store.data.origin.x + rect.x * this.store.data.scale;
-      pen.y = this.store.data.origin.y + rect.y * this.store.data.scale;
-      pen.width = rect.width * this.store.data.scale;
-      pen.height = rect.height * this.store.data.scale;
+      const { origin, scale } = this.store.data;
+      pen.x = origin.x + rect.x * scale;
+      pen.y = origin.y + rect.y * scale;
+      pen.width = rect.width * scale;
+      pen.height = rect.height * scale;
     }
     this.dirtyPenRect(pen);
-    pen.onResize?.(pen);
+    this.execPenResize(pen);
 
     render && this.render();
   }
