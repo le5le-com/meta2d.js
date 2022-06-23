@@ -130,6 +130,7 @@ function resize(pen: Pen) {
     return;
   }
   setElemPosition(pen, echartsList[pen.id].div);
+  // TODO: resize 执行的过于频繁时会消耗性能
   echartsList[pen.id].chart.resize();
 }
 
