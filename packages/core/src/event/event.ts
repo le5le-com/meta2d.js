@@ -30,6 +30,9 @@ export enum EventAction {
   Function,
   WindowFn,
   Emit,
+  StartVideo,
+  PauseVideo,
+  StopVideo,
 }
 
 export interface Where {
