@@ -4871,6 +4871,7 @@ export class Canvas {
       this.externalElements.onmousemove = undefined;
       this.externalElements.onmouseup = undefined;
       this.externalElements.onmouseleave = undefined;
+      this.externalElements.onwheel = undefined;
     }
     this.externalElements.ondblclick = undefined;
     switch (this.store.options.keydown) {
