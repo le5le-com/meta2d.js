@@ -1505,11 +1505,12 @@ export class Canvas {
           this.willInactivePen = undefined;
         }
         if (this.store.active.length === 1) {
+          const activePen = this.store.active[0];
           if (
             this.store.data.locked === LockState.DisableMove ||
-            this.store.active[0].locked === LockState.DisableMove
+            activePen.locked === LockState.DisableMove
           ) {
-            this.store.active[0]?.onMouseMove && this.store.active[0].onMouseMove(this.store.active[0], this.mousePos);
+            activePen?.onMouseMove?.(activePen, this.mousePos);
           }
         }
         this.movePens(e);
