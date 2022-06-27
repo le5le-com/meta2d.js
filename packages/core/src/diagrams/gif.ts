@@ -1,4 +1,4 @@
-import { Pen, setElemPosition } from "../pen";
+import { Pen, setElemPosition } from '../pen';
 
 export const gifsList: {
   [key: string]: HTMLImageElement;
@@ -28,14 +28,13 @@ export function gif(pen: Pen): Path2D {
       pen.calculative.img = img;
       pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
       pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
-      pen.calculative.canvas.externalElements &&
-        pen.calculative.canvas.externalElements.appendChild(img);
-      setElemPosition(pen, img);
+      pen.calculative.canvas.externalElements?.appendChild(img);
+      setImagePosition(pen, img);
     };
   }
 
   if (pen.calculative.dirty && gifsList[pen.id]) {
-    setElemPosition(pen, gifsList[pen.id]);
+    setImagePosition(pen, gifsList[pen.id]);
   }
   return path;
 }
@@ -49,21 +48,21 @@ function move(pen: Pen) {
   if (!gifsList[pen.id]) {
     return;
   }
-  setElemPosition(pen, gifsList[pen.id]);
+  setImagePosition(pen, gifsList[pen.id]);
 }
 
 function resize(pen: Pen) {
   if (!gifsList[pen.id]) {
     return;
   }
-  setElemPosition(pen, gifsList[pen.id]);
+  setImagePosition(pen, gifsList[pen.id]);
 }
 
 function value(pen: Pen) {
   if (!gifsList[pen.id]) {
     return;
   }
-  setElemPosition(pen, gifsList[pen.id]);
+  setImagePosition(pen, gifsList[pen.id]);
   if (gifsList[pen.id].getAttribute('src') !== pen.image) {
     gifsList[pen.id].src = pen.image;
   }
@@ -75,4 +74,15 @@ function changeId(pen: Pen, oldId: string, newId: string) {
   }
   gifsList[newId] = gifsList[oldId];
   delete gifsList[oldId];
+}
+
+/**
+ * gif 保持比例，除了更改 position ，还需要是否可保持比例
+ * @param pen 画笔
+ * @param elem 图片 dom
+ */
+function setImagePosition(pen: Pen, elem: HTMLImageElement) {
+  // topology canvas 绘制图片 drawImage 保持比例，是短边填充
+  elem.style.objectFit = pen.imageRatio ? 'contain' : 'fill';
+  setElemPosition(pen, elem);
 }

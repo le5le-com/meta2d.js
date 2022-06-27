@@ -132,15 +132,17 @@ function linearGradient(
   return grd;
 }
 
-export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+/**
+ * 根据图片的宽高， imageRatio iconAlign 来获取图片的实际位置
+ * @param pen 画笔
+ */
+function getImagePosition(pen: Pen) {
   const {
     worldIconRect: rect,
     iconWidth,
     iconHeight,
     imgNaturalWidth,
     imgNaturalHeight,
-    iconRotate,
-    img,
   } = pen.calculative;
   let { x, y, width: w, height: h } = rect;
   if (iconWidth) {
@@ -197,13 +199,25 @@ export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderi
       break;
   }
 
+  return {
+    x,
+    y,
+    width: w,
+    height: h
+  }
+}
+
+export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+  const { x, y, width, height } = getImagePosition(pen);
+  const { worldIconRect, iconRotate, img } = pen.calculative;
+
   if (iconRotate) {
-    const { x: centerX, y: centerY } = rect.center;
+    const { x: centerX, y: centerY } = worldIconRect.center;
     ctx.translate(centerX, centerY);
     ctx.rotate((iconRotate * Math.PI) / 180);
     ctx.translate(-centerX, -centerY);
   }
-  ctx.drawImage(img, x, y, w, h);
+  ctx.drawImage(img, x, y, width, height);
 }
 
 /**

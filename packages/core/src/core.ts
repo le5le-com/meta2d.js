@@ -735,6 +735,7 @@ export class Topology {
       showChild,
     };
     const p = pens.find((pen) => {
+      // TODO: js 计算误差，可能导致包含着其它的 pens 的最大 pen 无法计算出来
       return pen.width === rect.width && pen.height === rect.height;
     });
     // 其中一个认为是父节点
