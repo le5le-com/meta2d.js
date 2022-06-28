@@ -543,3 +543,26 @@ export const formatAttrs: Set<string> = new Set([
   'hiddenText',
   'keepDecimal',
 ]);
+
+/**
+ * 清空 pen 的 生命周期
+ */
+export function clearLifeCycle(pen: Pen) {
+  pen.onAdd = undefined;
+  pen.onValue = undefined;
+  pen.onBeforeValue = undefined;
+  pen.onDestroy = undefined;
+  pen.onMove = undefined;
+  pen.onResize = undefined;
+  pen.onRotate = undefined;
+  pen.onClick = undefined;
+  pen.onMouseEnter = undefined;
+  pen.onMouseLeave = undefined;
+  pen.onMouseDown = undefined;
+  pen.onMouseMove = undefined;
+  pen.onMouseUp = undefined;
+  pen.onShowInput = undefined;
+  pen.onInput = undefined;
+  pen.onChangeId = undefined;
+  pen.onBinds = undefined;
+}
