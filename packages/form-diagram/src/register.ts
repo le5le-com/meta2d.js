@@ -3,6 +3,7 @@ import { le5leSwitch } from './switch';
 import { slider } from './slider';
 import { checkbox } from './checkbox';
 import { radio } from './radio';
+import { table2 } from './table_two';
 
 export function formPens() {
   return {
@@ -11,5 +12,6 @@ export function formPens() {
     slider,
     checkbox,
     table,
+    table2,
   };
 }

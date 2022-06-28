@@ -27,6 +27,7 @@ export interface formPen extends Pen {
     activeCell: Pos;
     hoverCell: Pos;
     inputCell: Pos;
+    isUpdateData: boolean;
   } & Pen['calculative'];
   checked?: boolean;
   onColor?: string;
@@ -59,6 +60,20 @@ export interface formPen extends Pen {
   tableWidth: number;
   tableHeight: number;
   isInit: boolean;
+  rowHeight: number;
+  colWidth: number;
+  styles: {
+    row: number;
+    col: number;
+    color: string;
+    background: string;
+    width: number;
+    height: number;
+    wheres: { comparison: string; key: string; value: string }[];
+    pens: formPen[];
+  }[];
+  data: any;
+  isFirstTime: boolean;
 }
 
 export interface cellData extends ChartData {
