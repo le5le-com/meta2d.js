@@ -48,6 +48,7 @@ import {
   IValue,
   getTextColor,
   getGlobalColor,
+  clearLifeCycle,
 } from '../pen';
 import {
   calcRotate,
@@ -3337,8 +3338,9 @@ export class Canvas {
       pen.lineWidth === 0 && (value.lineWidth = 1);
       // TODO: 例如 pen.name = 'triangle' 的情况，但有图片，是否还需要变成矩形呢？
       if (isDomShapes.includes(pen.name) || pen.image) {
+        // 修改名称会执行 onDestroy ，清空它
         value.name = 'rectangle';
-        value.onMove = undefined;
+        value.onDestroy = undefined;
       }
       this.updateValue(pen, value);
       pen.calculative.image = undefined;
@@ -4514,7 +4516,10 @@ export class Canvas {
 
   updateValue(pen: Pen, data: IValue): void {
     const penRect = this.getPenRect(pen);
+    const oldName = pen.name;
     Object.assign(pen, data);
+    // data 可能没有 name 属性
+    const isChangedName = oldName !== pen.name; // name changed
     data.newId && this.changePenId(pen.id, data.newId);
     let willUpdatePath = false;
     let willCalcTextRect = false;
@@ -4555,6 +4560,11 @@ export class Canvas {
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
+    if (isChangedName) {
+      pen.onDestroy?.(pen);
+      clearLifeCycle(pen);
+      // 后续代码会重算 path2D
+    }
     if (willSetPenRect) {
       const rect: Rect = {
         x: data.x ?? penRect.x,
