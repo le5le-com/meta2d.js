@@ -1690,7 +1690,7 @@ export class Topology {
   /**
    * 将该画笔置顶，即放到数组最后，最后绘制即在顶部
    * @param pen pen 置顶的画笔
-   * @param pens 画笔们
+   * @param pens 画笔们，注意 pen 必须在该数组内才有效
    */
   top(pen: Pen, pens: Pen[] = this.store.data.pens) {
     // 获取它包含它的子节点
@@ -1717,6 +1717,7 @@ export class Topology {
 
   /**
    * 该画笔置底，即放到数组最前，最后绘制即在底部
+   * @param pens 画笔们，注意 pen 必须在该数组内才有效
    */
   bottom(pen: Pen, pens: Pen[] = this.store.data.pens) {
     const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
@@ -1733,6 +1734,10 @@ export class Topology {
     }
   }
 
+  /**
+   * 该画笔上移，即把该画笔在数组中的位置向后移动一个
+   * @param pens 画笔们，注意 pen 必须在该数组内才有效
+   */
   up(pen: Pen, pens: Pen[] = this.store.data.pens) {
     const index = pens.findIndex((p: Pen) => p.id === pen.id);
 
@@ -1743,6 +1748,10 @@ export class Topology {
     }
   }
 
+  /**
+   * 该画笔下移，即把该画笔在该数组中的位置前移一个
+   * @param pens 画笔们，注意 pen 必须在该数组内才有效
+   */
   down(pen: Pen, pens: Pen[] = this.store.data.pens) {
     const index = pens.findIndex((p: Pen) => p.id === pen.id);
     if (index > -1 && index !== 0) {
@@ -1752,10 +1761,7 @@ export class Topology {
     }
   }
 
-  setLayer(pen: Pen, toIndex: number, pens?: Pen[]) {
-    if (!pens) {
-      pens = this.store.data.pens;
-    }
+  setLayer(pen: Pen, toIndex: number, pens = this.store.data.pens) {
     const index = pens.findIndex((p: Pen) => p.id === pen.id);
     if (index > -1) {
       if (index > toIndex) {
