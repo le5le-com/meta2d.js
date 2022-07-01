@@ -3,7 +3,7 @@ import { le5leSwitch } from './switch';
 import { slider } from './slider';
 import { checkbox } from './checkbox';
 import { radio } from './radio';
-import { table2 } from './table_two';
+import { table2 } from './table2';
 
 export function formPens() {
   return {
