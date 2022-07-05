@@ -326,11 +326,11 @@ export class Canvas {
    * 注意：该方法是个 副作用 方法，会改变传入的参数
    * @param e 事件的鼠标位置
    */
-  private calcEByBounding(e: { x: number, y: number }) {
+  private calcEByBounding(e: { x: number; y: number }) {
     // 61 chrome 可使用 bounding.x
     const { x, y, left, top } = this.bounding;
-    e.x -= (x || left);
-    e.y -= (y || top); 
+    e.x -= x || left;
+    e.y -= y || top;
 
     return e;
   }
@@ -806,11 +806,15 @@ export class Canvas {
 =======
       this.dropPens(obj, pt);
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 7750889 (drop 和 click 抽取一个方法出来使用)
     } catch {}
 =======
     } catch(e) {}
 >>>>>>> a5d70ab (catch e)
+=======
+    } catch (e) {}
+>>>>>>> 41e008b (video)
   };
 
   async dropPens(pens: Pen[], e: Point) {
@@ -1507,10 +1511,7 @@ export class Canvas {
         }
         if (this.store.active.length === 1) {
           const activePen = this.store.active[0];
-          if (
-            this.store.data.locked === LockState.DisableMove ||
-            activePen.locked === LockState.DisableMove
-          ) {
+          if (this.store.data.locked === LockState.DisableMove || activePen.locked === LockState.DisableMove) {
             activePen?.onMouseMove?.(activePen, this.mousePos);
           }
         }
@@ -4717,10 +4718,10 @@ export class Canvas {
    */
   private execPenResize(pen: Pen) {
     pen.onResize?.(pen);
-    pen.children?.forEach(chlidId => {
+    pen.children?.forEach((chlidId) => {
       const child = this.store.pens[chlidId];
       child && this.execPenResize(child);
-    })
+    });
   }
 
   setPenRect(pen: Pen, rect: Rect, render = true) {

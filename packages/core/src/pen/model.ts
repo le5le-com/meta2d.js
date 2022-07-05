@@ -448,6 +448,9 @@ export interface Pen extends Rect {
   onInput?: (pen: Pen, text: string) => void;
   onChangeId?: (pen: Pen, oldId: string, newId: string) => void;
   onBinds?: (pen: Pen, values: IValue[], formItem: FormItem) => IValue[];
+  onStartVideo?: (pen: Pen) => void;
+  onPauseVideo?: (pen: Pen) => void;
+  onStopVideo?: (pen: Pen) => void;
 }
 
 // 属性绑定变量
