@@ -65,6 +65,18 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
   children.forEach((child) => {
     let pen: Pen | Pen[] = undefined;
     const childProperty = child[selfName];
+    if (childProperty && childProperty.transform) {
+      child.g &&
+        child.g.forEach((item) => {
+          if (!item[selfName]) {
+            item[selfName] = {
+              transform: childProperty.transform,
+            };
+          } else {
+            item[selfName].transform = childProperty.transform;
+          }
+        });
+    }
     if (child.g) {
       // g 类型
       pen = transformCombines(
@@ -137,13 +149,35 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
 
   return pens;
 }
+
+function getTranslate(transform: string) {
+  let offsetX = 0;
+  let offsetY = 0;
+  if (transform) {
+    let matchArr = transform
+      .replace('translate(', '')
+      .replace(')', '')
+      .split(',');
+    offsetX = parseFloat(matchArr[0]);
+    offsetY = parseFloat(matchArr[1]);
+  }
+  return {
+    offsetX,
+    offsetY,
+  };
+}
 function transformPath(path: any, pen: any): any {
-  const d = path.d;
+  let d = path.d;
   if (!d) {
     return;
   }
-  const rect = getRect(parseSvgPath(d));
-
+  let commands = parseSvgPath(d);
+  let rect = getRect(commands);
+  let { offsetX, offsetY } = getTranslate(path.transform);
+  rect.x += offsetX;
+  rect.ex += offsetX;
+  rect.y += offsetY;
+  rect.ey += offsetY;
   const x = (rect.x + pen.x - allRect.x) / allRect.width;
   const y = (rect.y + pen.y - allRect.y) / allRect.height;
   const width =
@@ -154,7 +188,7 @@ function transformPath(path: any, pen: any): any {
   const pathPen = {
     ...pen,
     name: 'svgPath',
-    pathId: s8(),    // 同样的 pathId ，避免重复存储 path
+    pathId: s8(), // 同样的 pathId ，避免重复存储 path
     path: d,
     x,
     y,
@@ -424,15 +458,24 @@ function transformText(childProperty, textContent, pen: any) {
   // 文字
   const text = textContent[0]?.[contentProp];
   const width = measureText(text, pen);
-  const height = pen.fontSize / shapeScale;
-
+  const height = 0; // pen.fontSize / shapeScale;
+  //TODO 这里为什么需要减去height
+  let { offsetX, offsetY } = getTranslate(childProperty.transform);
   return {
     ...pen,
     name: 'text',
     textAlign: 'left',
     text,
-    x: (childProperty.x || 0 - allRect.x + pen.x) / allRect.width,
-    y: (childProperty.y || 0 - allRect.y + pen.y - height) / allRect.height,
+    x:
+      (parseFloat(childProperty.x) + (offsetX || 0) - allRect.x + pen.x) /
+      allRect.width,
+    y:
+      (parseFloat(childProperty.y) +
+        (offsetY || 0) -
+        allRect.y +
+        pen.y -
+        height) /
+      allRect.height,
     width: width / allRect.width,
     height: height / allRect.height,
   };

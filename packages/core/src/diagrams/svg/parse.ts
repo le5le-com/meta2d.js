@@ -1,4 +1,3 @@
-
 import { Rect } from '../../rect';
 
 export interface SvgCommand {
@@ -16,22 +15,37 @@ export interface SvgPath {
 // https://github.com/Yqnn/svg-path-editor
 const commandRegex = /^[\t\n\f\r ]*([MLHVZCSQTAmlhvzcsqta])[\t\n\f\r ]*/;
 const flagRegex = /^[01]/;
-const numberRegex = /^[+-]?(([0-9]*\.[0-9]+)|([0-9]+\.)|([0-9]+))([eE][+-]?[0-9]+)?/;
+const numberRegex =
+  /^[+-]?(([0-9]*\.[0-9]+)|([0-9]+\.)|([0-9]+))([eE][+-]?[0-9]+)?/;
 const commaWsp = /^(([\t\n\f\r ]+,?[\t\n\f\r ]*)|(,[\t\n\f\r ]*))/;
 
-const grammar: { [key: string]: RegExp[]; } = {
+const grammar: { [key: string]: RegExp[] } = {
   M: [numberRegex, numberRegex],
   L: [numberRegex, numberRegex],
   H: [numberRegex],
   V: [numberRegex],
   Z: [],
-  C: [numberRegex, numberRegex, numberRegex, numberRegex, numberRegex, numberRegex],
+  C: [
+    numberRegex,
+    numberRegex,
+    numberRegex,
+    numberRegex,
+    numberRegex,
+    numberRegex,
+  ],
   S: [numberRegex, numberRegex, numberRegex, numberRegex],
   Q: [numberRegex, numberRegex, numberRegex, numberRegex],
   T: [numberRegex, numberRegex],
-  A: [numberRegex, numberRegex, numberRegex, flagRegex, flagRegex, numberRegex, numberRegex],
+  A: [
+    numberRegex,
+    numberRegex,
+    numberRegex,
+    flagRegex,
+    flagRegex,
+    numberRegex,
+    numberRegex,
+  ],
 };
-
 
 export function parseSvgPath(path: string): SvgPath {
   let cursor = 0;
@@ -87,7 +101,7 @@ export function getRect(path: SvgPath): Rect {
     ex,
     ey,
     width: ex - x + 1,
-    height: ey - y + 1
+    height: ey - y + 1,
   };
 }
 
@@ -131,7 +145,7 @@ export function scalePath(path: SvgPath, x: number, y?: number) {
       case 'a':
         const a = item.values[0];
         const b = item.values[1];
-        const angle = Math.PI * item.values[2] / 180.;
+        const angle = (Math.PI * item.values[2]) / 180;
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
         const A = b * b * y * y * cos * cos + a * a * y * y * sin * sin;
@@ -142,11 +156,16 @@ export function scalePath(path: SvgPath, x: number, y?: number) {
         const val1 = Math.sqrt((A - C) * (A - C) + B * B);
 
         // New rotation:
-        item.values[2] = B !== 0 ? Math.atan((C - A - val1) / B) * 180 / Math.PI : (A < C ? 0 : 90);
+        item.values[2] =
+          B !== 0
+            ? (Math.atan((C - A - val1) / B) * 180) / Math.PI
+            : A < C
+            ? 0
+            : 90;
 
         // New radius-x, radius-y
-        item.values[0] = -Math.sqrt(2 * det * F * ((A + C) + val1)) / det;
-        item.values[1] = -Math.sqrt(2 * det * F * ((A + C) - val1)) / det;
+        item.values[0] = -Math.sqrt(2 * det * F * (A + C + val1)) / det;
+        item.values[1] = -Math.sqrt(2 * det * F * (A + C - val1)) / det;
 
         // New target
         item.values[5] *= x;
@@ -180,7 +199,11 @@ export function pathToString(path: SvgPath): string {
   return text;
 }
 
-function parseCommands(type: string, path: string, cursor: number): { cursor: number, commands: SvgCommand[]; } {
+function parseCommands(
+  type: string,
+  path: string,
+  cursor: number
+): { cursor: number; commands: SvgCommand[] } {
   const expectedRegexList = grammar[type.toUpperCase()];
 
   const commands: SvgCommand[] = [];
@@ -219,10 +242,13 @@ function parseCommands(type: string, path: string, cursor: number): { cursor: nu
 
 function calcWorldPoints(command: SvgCommand, previous: SvgCommand) {
   const worldPoints: number[] = [];
-  let current = command.relative && previous ? {
-    x: previous.worldPoints[previous.worldPoints.length - 2],
-    y: previous.worldPoints[previous.worldPoints.length - 1]
-  } : { x: 0, y: 0 };
+  let current =
+    command.relative && previous
+      ? {
+          x: previous.worldPoints[previous.worldPoints.length - 2],
+          y: previous.worldPoints[previous.worldPoints.length - 1],
+        }
+      : { x: 0, y: 0 };
   for (let i = 0; i < command.values.length - 1; i += 2) {
     worldPoints.push(current.x + command.values[i]);
     worldPoints.push(current.y + command.values[i + 1]);
@@ -244,25 +270,34 @@ function calcWorldPositions(path: SvgPath) {
       case 'H':
         item.worldPoints = [
           item.values[0],
-          previous.worldPoints[previous.worldPoints.length - 1]
+          previous.worldPoints[previous.worldPoints.length - 1],
         ];
         break;
       case 'h':
         item.worldPoints = [
-          item.values[0] + previous.worldPoints[previous.worldPoints.length - 2],
-          previous.worldPoints[previous.worldPoints.length - 1]
+          item.values[0] +
+            previous.worldPoints[previous.worldPoints.length - 2],
+          previous.worldPoints[previous.worldPoints.length - 1],
         ];
         break;
       case 'V':
         item.worldPoints = [
           previous.worldPoints[previous.worldPoints.length - 2],
-          item.values[0]
+          item.values[0],
         ];
         break;
       case 'v':
         item.worldPoints = [
           previous.worldPoints[previous.worldPoints.length - 2],
-          item.values[0] + previous.worldPoints[previous.worldPoints.length - 1]
+          item.values[0] +
+            previous.worldPoints[previous.worldPoints.length - 1],
+        ];
+        break;
+      case 'A':
+        item.worldPoints = [
+          previous.worldPoints[previous.worldPoints.length - 2],
+          item.values[0] +
+            previous.worldPoints[previous.worldPoints.length - 1],
         ];
         break;
       default:
@@ -270,7 +305,12 @@ function calcWorldPositions(path: SvgPath) {
         break;
     }
 
-    if (item.key === 'M' || item.key === 'm' || item.key === 'Z' || item.key === 'z') {
+    if (
+      item.key === 'M' ||
+      item.key === 'm' ||
+      item.key === 'Z' ||
+      item.key === 'z'
+    ) {
       x = item.worldPoints[item.worldPoints.length - 2];
       y = item.worldPoints[item.worldPoints.length - 1];
     }
