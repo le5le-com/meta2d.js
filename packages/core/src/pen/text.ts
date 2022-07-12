@@ -140,8 +140,13 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
       const paragraphs = text.split(/[\n]/g);
       let currentRow = 0;
       outer: for (const paragraph of paragraphs) {
-        const words = pen.whiteSpace === 'break-all' ? paragraph.split('') : getWords(paragraph);
-        const items = wrapLines(words, pen);
+        const words =
+          pen.whiteSpace === 'break-all'
+            ? paragraph.split('')
+            : getWords(paragraph);
+        let items = wrapLines(words, pen);
+        // 空行换行的情况
+        if (items.length === 0) items = [''];
         if (pen.ellipsis != false) {
           for (const l of items) {
             currentRow++;
@@ -258,7 +263,7 @@ export function calcTextAdaptionWidth(
  * 副作用函数，会修改传入的参数
  * 把最后一行的最后变成 ...
  * TODO: 中文的三个字符宽度比 . 大，显示起来像是删多了
- * @param lines 
+ * @param lines
  */
 function setEllipsisOnLastLine(lines: string[]) {
   lines[lines.length - 1] = lines[lines.length - 1].slice(0, -3) + '...';
