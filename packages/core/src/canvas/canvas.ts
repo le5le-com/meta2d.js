@@ -713,7 +713,7 @@ export class Canvas {
     }
   };
 
-  async fileToPen(file: File): Promise<Pen> {
+  async fileToPen(file: File, isGif: boolean): Promise<Pen> {
     let url = '';
     if (this.store.options.uploadFn) {
       url = await this.store.options.uploadFn(file);
@@ -734,7 +734,7 @@ export class Canvas {
         resolve({
           width: img.width,
           height: img.height,
-          name: 'image',
+          name: isGif ? 'gif' : 'image',
           image: url,
         });
       };
@@ -757,10 +757,11 @@ export class Canvas {
       const json = event.dataTransfer.getData('Topology') || event.dataTransfer.getData('Text');
       let obj = null;
       if (!json) {
-        const { files, items } = event.dataTransfer;
-        if (files.length && items[0].type.match('image.*')) {
+        const { files } = event.dataTransfer;
+        if (files.length && files[0].type.match('image.*')) {
           // 必须是图片类型
-          obj = await this.fileToPen(files[0]);
+          const isGif = files[0].type === 'image/gif';
+          obj = await this.fileToPen(files[0], isGif);
         }
       }
       !obj && (obj = JSON.parse(json));
