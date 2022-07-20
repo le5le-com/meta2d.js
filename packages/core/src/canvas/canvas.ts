@@ -4348,14 +4348,20 @@ export class Canvas {
     }
   }
 
-  async delete(pens = this.store.active) {
+  async delete(pens = this.store.active, canDelLocked = false) {
+    if (!pens || !pens.length) {
+      return;
+    }
+    if (this.beforeRemovePens && (await this.beforeRemovePens(pens)) != true) {
+      return;
+    }
+    if (!canDelLocked) {
+      pens = pens.filter((pen) => !pen.locked);
+    }
     if (!pens || !pens.length) {
       return;
     }
 
-    if (this.beforeRemovePens && (await this.beforeRemovePens(pens)) != true) {
-      return;
-    }
     this._del(pens);
     this.initImageCanvas(pens);
     this.inactive();
