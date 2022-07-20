@@ -818,10 +818,10 @@ export class Topology {
   /**
    * 删除画笔
    * @param pens 需要删除的画笔们
-   * @param delLock 是否删除已经锁住的画笔
+   * @param canDelLocked 是否删除已经锁住的画笔
    */
-  delete(pens?: Pen[], delLock = false) {
-    this.canvas.delete(pens, undefined, delLock);
+  delete(pens?: Pen[], canDelLocked = false) {
+    this.canvas.delete(pens, canDelLocked);
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
