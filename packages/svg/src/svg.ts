@@ -86,7 +86,7 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
           y: 0,
           width: 1,
           height: 1,
-          locked: 2, // 内层的 combine locked 2
+          locked: 10, // 内层的 combine locked 10
           ...childProperty,
         },
         child.g
@@ -325,7 +325,7 @@ function transformNormalShape(
 
   return {
     id: s8(),
-    locked: 2,
+    locked: 10,
     parentId,
     x,
     y,
