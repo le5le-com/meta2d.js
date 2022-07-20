@@ -63,7 +63,7 @@ import {
 } from '../point';
 import {
   calcCenter,
-  calcExy,
+  calcRightBottom,
   calcRelativePoint,
   getRect,
   getRectOfPoints,
@@ -108,7 +108,7 @@ export class Canvas {
   height: number;
 
   externalElements = document.createElement('div');
-  clientRect?: clientRect;
+  clientRect?: DOMRect;
   canvasRect: Rect;
 
   activeRect: Rect;
@@ -123,12 +123,13 @@ export class Canvas {
   mouseDown: { x: number; y: number; restore?: boolean };
   hotkeyType: HotkeyType;
   mouseRight: MouseRight;
-  translateX: number;
-  translateY: number;
   addCaches: Pen[];
   touchCenter?: Point;
-  touches?: TouchList;
-  touchScale: number;
+  initTouchDis?: number;
+  initScale?: number;
+  touchScaling?: boolean;
+  touchMoving?: boolean;
+  startTouches?: TouchList;
 
   lastOffsetX = 0;
   lastOffsetY = 0;
@@ -149,13 +150,15 @@ export class Canvas {
   nextAnchor: Point;
 
   private lastMouseTime = 0;
+  private hoverTimer: number = 0;
   // 即将取消活动状态的画笔，用于Ctrl选中/取消选中画笔
   private willInactivePen: Pen;
 
   dirty = false;
   lastRender = 0;
   touchStart = 0;
-  timer: NodeJS.Timeout;
+  touchStartTimer: any;
+  timer: any;
 
   private lastAnimateRender = 0;
   animateRendering = false;
@@ -264,7 +267,6 @@ export class Canvas {
       this.externalElements.ontouchend = this.ontouchend;
     } else {
       this.externalElements.onmousedown = (e) => {
-        console.log(e.x - this.clientRect.x, e.offsetX, e.x);
         this.onMouseDown({
           x: e.offsetX,
           y: e.offsetY,
@@ -437,7 +439,7 @@ export class Canvas {
         break;
       case 'ArrowLeft':
         if (this.movingAnchor) {
-          this.translateMovingAnchor(-1, 0);
+          this.translateAnchor(-1, 0);
           break;
         }
         x = -10;
@@ -451,7 +453,7 @@ export class Canvas {
         break;
       case 'ArrowUp':
         if (this.movingAnchor) {
-          this.translateMovingAnchor(0, -1);
+          this.translateAnchor(0, -1);
           break;
         }
         y = -10;
@@ -465,7 +467,7 @@ export class Canvas {
         break;
       case 'ArrowRight':
         if (this.movingAnchor) {
-          this.translateMovingAnchor(1, 0);
+          this.translateAnchor(1, 0);
           break;
         }
         if (e.shiftKey) {
@@ -478,7 +480,7 @@ export class Canvas {
         break;
       case 'ArrowDown':
         if (this.movingAnchor) {
-          this.translateMovingAnchor(0, 1);
+          this.translateAnchor(0, 1);
           break;
         }
         if (e.shiftKey) {
@@ -570,24 +572,11 @@ export class Canvas {
       case 'Enter':
         if (this.drawingLineName) {
           this.finishDrawline(true, true);
-          this.drawingLineName = this.store.options.drawingLineName;
-        } else if (this.store.active) {
-          //取消 enter 快捷键 切换连线节点类型
-          // this.store.active.forEach((pen) => {
-          //   if (pen.name === 'line') {
-          //     if (pen.type && !pen.close) {
-          //       pen.type = PenType.Node;
-          //     } else if (!pen.type && pen.close) {
-          //       pen.type = PenType.Line;
-          //     }
-          //     pen.close = !pen.close;
-          //     this.store.path2dMap.set(
-          //       pen,
-          //       globalStore.path2dDraws[pen.name](pen)
-          //     );
-          //     this.dirty = true;
-          //   }
-          // });
+          if (this.store.active[0].anchors[0].connectTo) {
+            this.drawingLineName = '';
+          } else {
+            this.drawingLineName = this.store.options.drawingLineName;
+          }
         }
         break;
       case 'Escape':
@@ -670,7 +659,7 @@ export class Canvas {
     });
   }
 
-  private translateMovingAnchor(x: number, y: number) {
+  private translateAnchor(x: number, y: number) {
     this.movingAnchor.x += x;
     this.movingAnchor.y += y;
     // 点不在范围内，移动到范围内
@@ -886,95 +875,147 @@ export class Canvas {
   }
 
   ontouchstart = (e: TouchEvent) => {
-    this.touchStart = performance.now();
-    const x = e.changedTouches[0].pageX - this.clientRect.X;
-    const y = e.changedTouches[0].pageY - this.clientRect.Y;
-
-    if (e.touches.length > 1) {
-      this.touches = e.touches;
-      this.touchScale = this.store.data.scale;
+    if (this.store.data.locked === LockState.Disable) {
       return;
     }
+    if (this.touchStartTimer) {
+      clearTimeout(this.touchStartTimer);
+    }
+    this.touchStartTimer = setTimeout(() => {
+      this.touchStart = performance.now();
+      const x = e.touches[0].pageX - this.clientRect.x;
+      const y = e.touches[0].pageY - this.clientRect.y;
+      const pos: Point = { x, y };
+      this.calibrateMouse(pos);
+      this.getHover(pos);
+      this.onMouseDown({
+        x,
+        y,
+        clientX: e.touches[0].clientX,
+        clientY: e.touches[0].clientY,
+        pageX: e.touches[0].pageX,
+        pageY: e.touches[0].pageY,
+        ctrlKey: e.ctrlKey || e.metaKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        buttons: 1,
+      });
 
-    const pos: Point = { x, y };
-    this.calibrateMouse(pos);
-    // click 消息需要用到 hover 的 pen
-    this.getHover(pos);
-    this.onMouseDown({
-      x,
-      y,
-      clientX: e.changedTouches[0].clientX,
-      clientY: e.changedTouches[0].clientY,
-      pageX: e.changedTouches[0].pageX,
-      pageY: e.changedTouches[0].pageY,
-      ctrlKey: e.ctrlKey || e.metaKey,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      buttons: 1,
-    });
+      if (e.touches.length === 2) {
+        this.initTouchDis = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+        this.initScale = this.store.data.scale;
+        this.startTouches = e.touches;
+        this.touchCenter = {
+          x: e.touches[0].pageX + (e.touches[1].pageX - e.touches[0].pageX) / 2 - this.clientRect.x,
+          y: e.touches[0].pageY + (e.touches[1].pageY - e.touches[0].pageY) / 2 - this.clientRect.y,
+        };
+
+        return;
+      } else if (e.touches.length === 3) {
+        this.store.emitter.emit('contextmenu', {
+          e: {
+            x,
+            y,
+            clientX: e.touches[0].clientX,
+            clientY: e.touches[0].clientY,
+            pageX: e.touches[0].pageX,
+            pageY: e.touches[0].pageY,
+          },
+          clientRect: this.clientRect,
+        });
+
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      this.touchStartTimer = undefined;
+    }, 50);
   };
 
   ontouchmove = (event: TouchEvent) => {
-    event.stopPropagation();
-
-    const touches = event.touches;
-    const len = touches.length;
-    if (!this.touchCenter && len > 1) {
-      this.touchCenter = {
-        x: touches[0].pageX + (touches[1].pageX - touches[0].pageX) / 2 - this.clientRect.X,
-        y: touches[0].pageY + (touches[1].pageY - touches[0].pageY) / 2 - this.clientRect.Y,
-      };
+    if (this.store.data.locked === LockState.Disable) {
+      return;
     }
-
+    event.stopPropagation();
+    event.preventDefault();
     const now = performance.now();
     if (now - this.touchStart < 50) {
-      event.preventDefault();
       return;
     }
     this.touchStart = now;
 
-    const x = event.touches[0].pageX - this.clientRect.X;
-    const y = event.touches[0].pageY - this.clientRect.Y;
-    if (len > 1) {
-      if (len === 2) {
-        const scale =
-          (event as any).scale ||
-          Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) /
-            Math.hypot(this.touches[0].pageX - this.touches[1].pageX, this.touches[0].pageY - this.touches[1].pageY);
-        event.preventDefault();
-        this.scale(this.touchScale * scale, deepClone(this.touchCenter));
+    const touches = event.touches;
+    const len = touches.length;
+
+    const x = event.touches[0].pageX - this.clientRect.x;
+    const y = event.touches[0].pageY - this.clientRect.y;
+
+    if (len === 1) {
+      this.onMouseMove({
+        x,
+        y,
+        clientX: event.changedTouches[0].clientX,
+        clientY: event.changedTouches[0].clientY,
+        pageX: event.changedTouches[0].pageX,
+        pageY: event.changedTouches[0].pageY,
+        ctrlKey: event.ctrlKey || event.metaKey,
+        shiftKey: event.shiftKey,
+        altKey: event.altKey,
+        buttons: 1,
+      });
+    } else if (len === 2) {
+      if (!this.touchMoving && !this.touchScaling) {
+        const x1 = this.startTouches[0].pageX - touches[0].pageX;
+        const x2 = this.startTouches[1].pageX - touches[1].pageX;
+        const y1 = this.startTouches[0].pageY - touches[0].pageY;
+        const y2 = this.startTouches[1].pageY - touches[1].pageY;
+        if (((x1 >= 0 && x2 < 0) || (x1 <= 0 && x2 > 0)) && ((y1 >= 0 && y2 < 0) || (y1 <= 0 && y2 > 0))) {
+          this.touchScaling = true;
+        } else {
+          this.touchMoving = true;
+        }
       }
-      // else if (len === 3) {
-      //   // 三指不阻止默认行为，也不做任何处理
-      //   // this.translate(x, y);
-      // }
 
-      return;
+      if (this.touchScaling) {
+        if (this.store.options.disableScale) {
+          return;
+        }
+        const scale =
+          Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) / this.initTouchDis;
+        this.scale(this.initScale * scale, deepClone(this.touchCenter));
+      }
+
+      if (this.touchMoving) {
+        if (this.store.data.locked >= LockState.DisableMove || this.store.options.disableScale) {
+          return;
+        }
+        if (this.lastOffsetX) {
+          const { scale } = this.store.data;
+          this.translate((x - this.lastOffsetX) / scale, (y - this.lastOffsetY) / scale);
+        }
+
+        this.lastOffsetX = x;
+        this.lastOffsetY = y;
+      }
     }
-
-    event.preventDefault();
-
-    this.onMouseMove({
-      x,
-      y,
-      clientX: event.changedTouches[0].clientX,
-      clientY: event.changedTouches[0].clientY,
-      pageX: event.changedTouches[0].pageX,
-      pageY: event.changedTouches[0].pageY,
-      ctrlKey: event.ctrlKey || event.metaKey,
-      shiftKey: event.shiftKey,
-      altKey: event.altKey,
-      buttons: 1,
-    });
   };
 
   ontouchend = (event: TouchEvent) => {
-    this.touches = undefined;
+    if (this.store.data.locked === LockState.Disable) {
+      return;
+    }
     this.touchCenter = undefined;
-    this.touchScale = undefined;
+    this.touchScaling = undefined;
+    this.touchMoving = undefined;
+    this.startTouches = undefined;
+    this.lastOffsetX = 0;
+    this.lastOffsetY = 0;
 
-    const x = event.changedTouches[0].pageX - this.clientRect.X;
-    const y = event.changedTouches[0].pageY - this.clientRect.Y;
+    const x = event.changedTouches[0].pageX - this.clientRect.x;
+    const y = event.changedTouches[0].pageY - this.clientRect.y;
 
     this.onMouseUp({
       x,
@@ -1026,10 +1067,11 @@ export class Canvas {
    * 获取初始化的 drawingLine
    * @param pt 需包含 penId
    */
-  private getInitDrawingLine(pt: Point): Pen {
+  private createDrawingLine(pt: Point): Pen {
     const { data, options } = this.store;
     const scale = data.scale;
     const lineWidth = data.lineWidth || 1;
+    pt.penId = s8();
     return {
       id: pt.penId,
       name: 'line',
@@ -1088,18 +1130,12 @@ export class Canvas {
       return;
     }
 
-    this.translateX = e.x;
-    this.translateY = e.y;
-
     // Translate
-    if (
-      (e.ctrlKey && !this.hoverType) ||
-      this.hotkeyType === HotkeyType.Translate ||
-      this.mouseRight === MouseRight.Down
-    ) {
+    if (this.hotkeyType === HotkeyType.Translate || this.mouseRight === MouseRight.Down) {
       return;
 <<<<<<< HEAD
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     if (this.hoverType === HoverType.NodeAnchor && !this.drawingLineName) {
@@ -1120,103 +1156,89 @@ export class Canvas {
       // Start to draw a line.
       this.drawingLineName = this.store.options.drawingLineName;
     }
+=======
+>>>>>>> 748935f (draw line and pad)
 
-    if (this.drawingLineName) {
-      this.inactive(true);
-
-      const pt: Point = { x: e.x, y: e.y, id: s8() };
-
-      // TODO: 考虑鼠标抬起时做，// 在锚点上，完成绘画
-      if (
-        [HoverType.LineAnchor, HoverType.NodeAnchor].includes(this.hoverType) &&
-        this.drawingLine?.calculative.worldAnchors.length > 1
-      ) {
+    // 正在连线
+    if (this.drawingLine) {
+      // 单击在锚点上，完成绘画
+      if (this.store.hoverAnchor) {
         const to = getToAnchor(this.drawingLine);
-        to.connectTo = this.store.hover.id;
-        to.anchorId = this.store.hoverAnchor.id;
-        connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, to.anchorId);
+        to.x = this.store.hoverAnchor.x;
+        to.y = this.store.hoverAnchor.y;
+        connectLine(this.store.hover, this.store.hoverAnchor, this.drawingLine, to);
+        this.drawline();
         this.finishDrawline(true);
         return;
       }
 
-      // TODO: 考虑鼠标抬起时做，右键，完成绘画
+      // 右键，完成绘画
       if (
         e.buttons === 2 ||
         (this.drawingLineName === 'mind' && this.drawingLine?.calculative.worldAnchors.length > 1)
       ) {
         this.finishDrawline(true);
-        this.drawingLineName = this.store.options.drawingLineName;
+        if (this.store.active[0].anchors[0].connectTo) {
+          this.drawingLineName = '';
+        } else {
+          this.drawingLineName = this.store.options.drawingLineName;
+        }
         return;
       }
 
-      if (this.hoverType === HoverType.Node) {
-        let newline = false;
-        if (this.store.options.autoAnchor) {
-          if (!this.drawingLine) {
-            pt.penId = s8();
-            this.drawingLine = this.getInitDrawingLine(pt);
-            newline = true;
-          }
-          const worldAnchors = this.drawingLine.calculative.worldAnchors;
-          const lastAnchor = worldAnchors.length > 1 ? worldAnchors[worldAnchors.length - 2] : worldAnchors[0];
-          // 自动瞄点 使用倒数第二个点，若只有一个点，即第一个点
-          this.store.hoverAnchor = nearestAnchor(this.store.hover, lastAnchor);
-          this.drawingLine.autoTo = true;
-          pt.connectTo = this.store.hover.id;
-          pt.anchorId = this.store.hoverAnchor.id;
-          newline &&
-            connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, pt.id, this.store.hoverAnchor.id);
-        }
-
-        // 自动瞄点 并非新创建的线
-        if (!newline && this.store.hoverAnchor) {
-          if (this.drawingLine) {
-            const to = getToAnchor(this.drawingLine);
-            to.x = this.store.hoverAnchor.x;
-            to.y = this.store.hoverAnchor.y;
-            to.connectTo = this.store.hover.id;
-            to.anchorId = this.store.hoverAnchor.id;
-            connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, this.store.hoverAnchor.id);
-            this.drawline();
-            this.finishDrawline(true);
-            return;
-          }
-        }
-      }
-      // TODO: 调整锚点关联的偏移
-      if (this.hoverType && this.hoverType < HoverType.Resize && this.store.hoverAnchor) {
-        pt.x = this.store.hoverAnchor.x;
-        pt.y = this.store.hoverAnchor.y;
-        pt.connectTo = this.store.hover.id;
-        pt.anchorId = this.store.hoverAnchor.id;
-      }
-      if (this.drawingLine) {
-        // 添加点
+      // 自动锚点（单击节点），完成绘画
+      if (this.store.options.autoAnchor && this.hoverType === HoverType.Node) {
         const to = getToAnchor(this.drawingLine);
-        if (to.isTemp) {
-          this.drawingLine.calculative.activeAnchor =
-            this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2];
-          to.isTemp = undefined;
-        } else {
-          this.drawingLine.calculative.activeAnchor = to;
-          this.drawingLine.calculative.worldAnchors.push({
-            x: to.x,
-            y: to.y,
-            penId: to.penId,
-          });
-        }
+        const anchor = nearestAnchor(this.store.hover, e);
+        to.x = anchor.x;
+        to.y = anchor.y;
+        this.drawingLine.autoTo = true;
+        connectLine(this.store.hover, anchor, this.drawingLine, to);
+        this.drawline();
+        this.finishDrawline(true);
 
-        this.drawingLine.calculative.drawlineH = undefined;
-        this.drawline();
+        return;
+      }
+
+      // 添加点
+      const to = getToAnchor(this.drawingLine);
+      if (to.isTemp) {
+        this.drawingLine.calculative.activeAnchor =
+          this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2];
+        to.isTemp = undefined;
       } else {
-        // 初始点
-        pt.penId = s8();
-        this.drawingLine = this.getInitDrawingLine(pt);
-        this.drawingLine.calculative.activeAnchor = pt;
-        this.drawline();
-        if (pt.connectTo) {
-          connectLine(this.store.pens[pt.connectTo], this.drawingLine.id, pt.id, pt.anchorId);
+        this.drawingLine.calculative.activeAnchor = to;
+        this.drawingLine.calculative.worldAnchors.push({
+          x: to.x,
+          y: to.y,
+          penId: to.penId,
+        });
+      }
+
+      this.drawingLine.calculative.drawlineH = undefined;
+      this.drawline();
+    }
+
+    // 单击在节点上，通过自动锚点连线
+    if (this.drawingLineName) {
+      if (this.hoverType === HoverType.Node) {
+        if (this.store.options.autoAnchor) {
+          this.inactive(true);
+          const anchor = nearestAnchor(this.store.hover, e);
+          this.store.hoverAnchor = anchor;
+          const pt: Point = { id: s8(), x: anchor.x, y: anchor.y };
+          this.drawingLine = this.createDrawingLine(pt);
+          this.drawingLine.autoFrom = true;
+          connectLine(this.store.hover, anchor, this.drawingLine, pt);
+        } else {
+          this.inactive();
+          this.hoverType = HoverType.None;
         }
+      } else if (!this.drawingLine && this.drawingLineName !== 'curve') {
+        this.inactive(true);
+        const pt: Point = { id: s8(), x: e.x, y: e.y };
+        this.drawingLine = this.createDrawingLine(pt);
+        this.drawingLine.calculative.activeAnchor = pt;
       }
     } else if (this.pencil) {
       this.inactive(true);
@@ -1277,71 +1299,15 @@ export class Canvas {
           });
           break;
       }
+      this.store.emitter.emit('mousedown', {
+        x: e.x,
+        y: e.y,
+        pen: this.store.hover,
+      });
     }
 
-    this.store.emitter.emit('mousedown', {
-      x: e.x,
-      y: e.y,
-      pen: this.store.hover,
-    });
-
-    this.render(false);
+    this.render();
   };
-
-  private addRuleLine(e: {
-    x: number;
-    y: number;
-    buttons?: number;
-    ctrlKey?: boolean;
-    shiftKey?: boolean;
-    altKey?: boolean;
-  }) {
-    const { x: offsetX, y: offsetY } = this.store.data;
-    // 靠近左上角的 x ，y
-    const x = e.x + offsetX;
-    const y = e.y + offsetY;
-    let lineX = e.x;
-    let lineY = e.y;
-    let width = 0;
-    let height = 0;
-    let otherPX = 0;
-    let otherPY = 0;
-    if (x <= y && x < 20) {
-      // 绘制一条水平线
-      lineX = -offsetX;
-      width = this.width;
-      otherPX = 1;
-    } else if (y < x && y < 20) {
-      // 绘制一条垂直线
-      lineY = -offsetY;
-      height = this.height;
-      otherPY = 1;
-    } else {
-      return;
-    }
-    this.addPen({
-      isRuleLine: true,
-      locked: LockState.DisableMove,
-      type: PenType.Line,
-      name: 'line',
-      lineName: 'line',
-      x: lineX,
-      y: lineY,
-      width,
-      height,
-      color: this.store.options.ruleLineColor,
-      anchors: [
-        {
-          x: 0,
-          y: 0,
-        },
-        {
-          x: otherPX,
-          y: otherPY,
-        },
-      ],
-    });
-  }
 
   onMouseMove = (e: {
     x: number;
@@ -1385,30 +1351,126 @@ export class Canvas {
     }
 
     if (this.mouseDown) {
-      // 画布平移操作提前
+      // 画布平移前提
       if (this.mouseRight === MouseRight.Down) {
         this.mouseRight = MouseRight.Translate;
-        console.info('mousemove', this.mouseRight);
       }
       // Translate
       if (
         this.store.data.locked === LockState.DisableEdit ||
-        (e.ctrlKey && !this.hoverType) ||
         this.hotkeyType === HotkeyType.Translate ||
         this.mouseRight === MouseRight.Translate
       ) {
-        if (
-          this.translateX &&
-          this.translateY &&
-          !this.store.options.disableTranslate &&
-          (!this.store.data.locked ||
-            this.mouseRight === MouseRight.Translate ||
-            this.store.data.locked < LockState.DisableMove)
-        ) {
-          const { scale } = this.store.data;
-          this.translate((e.x - this.translateX) / scale, (e.y - this.translateY) / scale);
-          return false;
+        const { scale } = this.store.data;
+        this.translate((e.x - this.mouseDown.x) / scale, (e.y - this.mouseDown.y) / scale);
+        return;
+      }
+
+      if (this.store.data.locked) {
+        return;
+      }
+
+      if (!this.drawingLine && !this.pencil) {
+        if (!this.drawingLineName && !this.movingAnchor) {
+          // 在锚点上开始连线
+          if (this.hoverType === HoverType.NodeAnchor) {
+            this.drawingLineName = this.store.options.drawingLineName;
+            const pt: Point = { id: s8(), x: this.store.hoverAnchor.x, y: this.store.hoverAnchor.y };
+            this.drawingLine = this.createDrawingLine(pt);
+            this.drawingLine.calculative.activeAnchor = pt;
+            connectLine(this.store.hover, this.store.hoverAnchor, this.drawingLine, pt);
+            this.drawline();
+            return;
+          }
         }
+        // 钢笔画线
+        else if (this.drawingLineName && this.hoverType === HoverType.None) {
+          const pt: Point = { id: s8(), x: e.x, y: e.y };
+          this.drawingLine = this.createDrawingLine(pt);
+          this.drawingLine.calculative.activeAnchor = pt;
+          this.drawline();
+          return;
+        }
+
+        // 框选
+        if (e.buttons === 1 && !this.hoverType && !this.hotkeyType) {
+          this.dragRect = {
+            x: Math.min(this.mouseDown.x, e.x),
+            y: Math.min(this.mouseDown.y, e.y),
+            ex: Math.max(this.mouseDown.x, e.x),
+            ey: Math.max(this.mouseDown.y, e.y),
+            width: Math.abs(e.x - this.mouseDown.x),
+            height: Math.abs(e.y - this.mouseDown.y),
+          };
+          this.render();
+          return;
+        }
+
+        // 移动节点瞄点
+        if (this.movingAnchor) {
+          const x = e.x - this.movingAnchor.x;
+          const y = e.y - this.movingAnchor.y;
+          this.translateAnchor(x, y);
+          this.render();
+          return;
+        } else if (!this.store.active[0]?.locked) {
+          // Move line anchor
+          if (this.hoverType === HoverType.LineAnchor) {
+            this.getAnchorDock(e);
+            this.moveLineAnchor(e);
+            return;
+          }
+
+          // Move line anchor prev
+          if (this.hoverType === HoverType.LineAnchorPrev) {
+            this.moveLineAnchorPrev(e);
+            return;
+          }
+
+          // Move line anchor next
+          if (this.hoverType === HoverType.LineAnchorNext) {
+            this.moveLineAnchorNext(e);
+            return;
+          }
+        }
+
+        // Rotate
+        if (this.hoverType === HoverType.Rotate) {
+          this.rotatePens({ x: e.x, y: e.y });
+          return;
+        }
+
+        // Resize
+        if (this.hoverType === HoverType.Resize) {
+          this.resizePens(e);
+          return;
+        }
+
+        // Move
+        if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
+          const x = e.x - this.mouseDown.x;
+          const y = e.y - this.mouseDown.y;
+          const shake = 20;
+          if (e.ctrlKey && !e.shiftKey && !this.alreadyCopy && (Math.abs(x) >= shake || Math.abs(y) >= shake)) {
+            this.alreadyCopy = true;
+            this.willInactivePen = undefined;
+          }
+          if (this.store.active.length === 1) {
+            const activePen = this.store.active[0];
+            if (activePen.locked < LockState.DisableMove) {
+              activePen?.onMouseMove?.(activePen, this.mousePos);
+            }
+          }
+          this.movePens(e);
+          return;
+        }
+      } else if (this.pencil) {
+        const pt: Point = { ...e };
+        pt.id = s8();
+        pt.penId = this.pencilLine.id;
+        this.pencilLine.calculative.worldAnchors.push(pt);
+        this.store.path2dMap.set(this.pencilLine, globalStore.path2dDraws[this.pencilLine.name](this.pencilLine));
+        this.dirty = true;
       }
     }
 
@@ -1421,13 +1483,11 @@ export class Canvas {
         this.drawingLineName === 'curve' &&
         !this.drawingLine.calculative.worldAnchors[0].connectTo
       ) {
-        // TODO: 鼠标按下移动，手柄变化
         this.drawline(pt);
       } else {
         let to: Point;
         if (this.drawingLine.calculative.worldAnchors.length > 1) {
           to = getToAnchor(this.drawingLine);
-          disconnectLine(this.store.pens[to.connectTo], this.drawingLine.id, to.id, to.anchorId);
         }
 
         if (to) {
@@ -1438,26 +1498,21 @@ export class Canvas {
           }
           to.x = pt.x;
           to.y = pt.y;
-          to.connectTo = undefined;
         } else {
           to = { ...pt };
           this.drawingLine.calculative.worldAnchors.push(to);
         }
-
-        if (this.hoverType && this.hoverType < HoverType.Line && this.store.hoverAnchor) {
-          const from = this.drawingLine.calculative.worldAnchors[0];
-          if (!(this.store.hoverAnchor.id === from.anchorId && this.store.hover.id === from.connectTo)) {
-            to.x = this.store.hoverAnchor.x;
-            to.y = this.store.hoverAnchor.y;
-            to.connectTo = this.store.hoverAnchor.penId;
-            to.anchorId = this.store.hoverAnchor.id;
+        if (this.drawingLineName === 'line') {
+          if (e.ctrlKey) {
+            to.y = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2].y;
+          } else if (e.altKey) {
+            to.x = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2].x;
           }
         }
-        if (to.connectTo) {
-          connectLine(this.store.pens[to.connectTo], this.drawingLine.id, to.id, to.anchorId);
-        }
+
         this.drawline();
       }
+<<<<<<< HEAD
     } else if (this.pencil) {
       if (!this.mouseDown) {
         return;
@@ -1582,25 +1637,22 @@ export class Canvas {
       if (!this.dragRect) {
         return;
       }
+=======
+>>>>>>> 748935f (draw line and pad)
     }
 
     window && (window as any).debug && console.time('hover');
-    this.willGetHover(e);
+    const now = performance.now();
+    if (now - this.hoverTimer > 50) {
+      this.hoverTimer = now;
+      this.getHover(e);
+    }
     window && (window as any).debug && console.timeEnd('hover');
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.dirty = true;
     }
     this.render(false);
   };
-
-  private hoverTimer: number = 0;
-  willGetHover(e) {
-    const now = performance.now();
-    if (now - this.hoverTimer > 40) {
-      this.hoverTimer = now;
-      this.getHover(e);
-    }
-  }
 
   onMouseUp = (e: {
     x: number;
@@ -1620,9 +1672,13 @@ export class Canvas {
       return;
     }
 
+    if (!this.mouseDown) {
+      return;
+    }
+
     if (this.mouseRight === MouseRight.Down) {
       this.store.emitter.emit('contextmenu', {
-        e: {},
+        e,
         clientRect: this.clientRect,
       });
     }
@@ -1633,37 +1689,40 @@ export class Canvas {
     this.mousePos.y = e.y;
     this.pencil && this.finishPencil();
 
-    // 在锚点上，完成绘画
-    if (
-      [HoverType.LineAnchor, HoverType.NodeAnchor].includes(this.hoverType) &&
-      this.drawingLine?.calculative.worldAnchors.length > 1
-    ) {
-      const to = getToAnchor(this.drawingLine);
-      to.connectTo = this.store.hover.id;
-      to.anchorId = this.store.hoverAnchor.id;
-      connectLine(this.store.pens[this.store.hover.id], this.drawingLine.id, to.id, to.anchorId);
-      this.finishDrawline(true);
-      return;
+    if (this.drawingLine) {
+      // 在锚点上，完成绘画
+      if (this.store.hoverAnchor) {
+        const to = getToAnchor(this.drawingLine);
+        to.x = this.store.hoverAnchor.x;
+        to.y = this.store.hoverAnchor.y;
+        connectLine(this.store.hover, this.store.hoverAnchor, this.drawingLine, to);
+        this.drawline();
+        this.finishDrawline(true);
+        return;
+      }
+
+      // 自动锚点（单击节点），完成绘画
+      if (this.store.options.autoAnchor && this.hoverType === HoverType.Node) {
+        const to = getToAnchor(this.drawingLine);
+        const anchor = nearestAnchor(this.store.hover, e);
+        to.x = anchor.x;
+        to.y = anchor.y;
+        this.drawingLine.autoTo = true;
+        connectLine(this.store.hover, anchor, this.drawingLine, to);
+        this.drawline();
+        this.finishDrawline(true);
+
+        return;
+      }
     }
 
-    // TODO: 考虑在鼠标抬起时做，  右键，完成绘画
-    // if (
-    //   e.button === 2 ||
-    //   (this.drawingLineName === 'mind' && this.drawingLine?.calculative.worldAnchors.length > 1)
-    // ) {
-    //   this.finishDrawline(true);
-    //   this.drawingLineName = this.store.options.drawingLineName;
-    //   return;
-    // }
-
+    // 拖拽连线锚点
     if (
-      this.mouseDown &&
       this.hoverType === HoverType.LineAnchor &&
       this.store.hover &&
       this.store.active[0] &&
       this.store.active[0] !== this.store.hover
     ) {
-      // 在线瞄点上抬起，此处只有线连线的场景
       const line = this.store.active[0];
       const from = getFromAnchor(line);
       const to = getToAnchor(line);
@@ -1673,9 +1732,13 @@ export class Canvas {
         const isHoverTo = getToAnchor(hover) === this.store.hoverAnchor;
         const isActiveFrom = from === this.store.activeAnchor;
         const isActiveTo = to === this.store.activeAnchor;
-        // 按下 alt 才可 线连线
-        if (e.altKey && hover.type === PenType.Line && (isHoverFrom || isHoverTo) && (isActiveFrom || isActiveTo)) {
-          // 连线合并
+        if (
+          (e.ctrlKey || e.altKey) &&
+          hover.type === PenType.Line &&
+          (isHoverFrom || isHoverTo) &&
+          (isActiveFrom || isActiveTo)
+        ) {
+          // 合并连线
           const hoverAnchors: Point[] = hover.calculative.worldAnchors.map((anchor) => {
             return {
               ...anchor,
@@ -1697,25 +1760,14 @@ export class Canvas {
           }
           this.delete([hover]);
           // TODO: 历史记录
+
+          this.render();
         } else {
-          // 非合并线
-          if (from === this.store.activeAnchor) {
-            line.autoFrom = undefined;
-          } else {
-            line.autoTo = undefined;
-          }
+          // 连接连线
           this.store.activeAnchor.x = this.store.hoverAnchor.x;
           this.store.activeAnchor.y = this.store.hoverAnchor.y;
-          this.store.activeAnchor.prev = undefined;
-          this.store.activeAnchor.next = undefined;
-          this.store.activeAnchor.connectTo = this.store.hover.id;
-          this.store.activeAnchor.anchorId = this.store.hoverAnchor.id;
-          connectLine(
-            this.store.pens[this.store.activeAnchor.connectTo],
-            this.store.activeAnchor.penId,
-            this.store.activeAnchor.id,
-            this.store.activeAnchor.anchorId
-          );
+
+          connectLine(this.store.hover, this.store.hoverAnchor, line, this.store.activeAnchor);
         }
         if (this[line.lineName]) {
           this[line.lineName](this.store, line);
@@ -1723,6 +1775,7 @@ export class Canvas {
         this.store.path2dMap.set(line, globalStore.path2dDraws.line(line));
         this.initLineRect(line);
       } else {
+        // 连线起始点自动关联 到 pen
         if (from === this.store.activeAnchor && line.autoFrom) {
           this.calcAutoAnchor(line, from, this.store.hover);
         } else if (to === this.store.activeAnchor && line.autoTo) {
@@ -1770,7 +1823,7 @@ export class Canvas {
       this.active(pens);
     }
 
-    if (e.button !== 2 && this.mouseDown) {
+    if (e.button !== 2) {
       if (distance(this.mouseDown, e) < 2) {
         if (this.store.hover && this.store.hover.input) {
           this.showInput(this.store.hover);
@@ -1782,13 +1835,11 @@ export class Canvas {
         });
       }
 
-      if (this.store.hover) {
-        this.store.emitter.emit('mouseup', {
-          x: e.x,
-          y: e.y,
-          pen: this.store.hover,
-        });
-      }
+      this.store.emitter.emit('mouseup', {
+        x: e.x,
+        y: e.y,
+        pen: this.store.hover,
+      });
     }
 
     if (this.willInactivePen) {
@@ -1824,6 +1875,54 @@ export class Canvas {
     this.initActiveRect = undefined;
   };
 
+  private addRuleLine(e: { x: number; y: number }) {
+    const { x: offsetX, y: offsetY } = this.store.data;
+    // 靠近左上角的 x ，y
+    const x = e.x + offsetX;
+    const y = e.y + offsetY;
+    let lineX = e.x;
+    let lineY = e.y;
+    let width = 0;
+    let height = 0;
+    let otherPX = 0;
+    let otherPY = 0;
+    if (x <= y && x < 20) {
+      // 绘制一条水平线
+      lineX = -offsetX;
+      width = this.width;
+      otherPX = 1;
+    } else if (y < x && y < 20) {
+      // 绘制一条垂直线
+      lineY = -offsetY;
+      height = this.height;
+      otherPY = 1;
+    } else {
+      return;
+    }
+    this.addPen({
+      isRuleLine: true,
+      locked: LockState.DisableMove,
+      type: PenType.Line,
+      name: 'line',
+      lineName: 'line',
+      x: lineX,
+      y: lineY,
+      width,
+      height,
+      color: this.store.options.ruleLineColor,
+      anchors: [
+        {
+          x: 0,
+          y: 0,
+        },
+        {
+          x: otherPX,
+          y: otherPY,
+        },
+      ],
+    });
+  }
+
   /**
    * 拖拽结束，数据更新到 active.pens
    */
@@ -1857,7 +1956,7 @@ export class Canvas {
     });
     // active 消息表示拖拽结束
     this.store.emitter.emit('active', this.store.active);
-    this.needInitStatus(this.store.active);
+    this.initImageCanvas(this.store.active);
     // 此处是更新后的值
     this.pushHistory({
       type: EditType.Update,
@@ -1899,9 +1998,9 @@ export class Canvas {
    * 子节点中包含图片，也需要重绘
    * @param pens 本次改变的 pens
    */
-  needInitStatus(pens: Pen[]) {
-    pens.some((pen) => this.hasImage(pen, false)) && this.canvasImage.initStatus();
-    pens.some((pen) => this.hasImage(pen, true)) && this.canvasImageBottom.initStatus();
+  initImageCanvas(pens: Pen[]) {
+    pens.some((pen) => this.hasImage(pen, false)) && this.canvasImage.init();
+    pens.some((pen) => this.hasImage(pen, true)) && this.canvasImageBottom.init();
   }
 
   private hasImage(pen: Pen, isBottom: boolean): boolean {
@@ -2295,7 +2394,7 @@ export class Canvas {
       width: w,
       height: h,
     };
-    calcExy(this.canvasRect);
+    calcRightBottom(this.canvasRect);
 
     this.canvas.style.width = w + 'px';
     this.canvas.style.height = h + 'px';
@@ -2480,9 +2579,9 @@ export class Canvas {
         break;
     }
     if (action.type === EditType.Update) {
-      this.needInitStatus([...action.pens, ...action.initPens]);
+      this.initImageCanvas([...action.pens, ...action.initPens]);
     } else {
-      this.needInitStatus(action.pens);
+      this.initImageCanvas(action.pens);
     }
     this.render();
 
@@ -2829,8 +2928,8 @@ export class Canvas {
     this.imageTimer && clearTimeout(this.imageTimer);
     this.imageTimer = setTimeout(() => {
       // 加载完图片，重新渲染一次图片层
-      this.canvasImage.initStatus();
-      this.canvasImageBottom.initStatus();
+      this.canvasImage.init();
+      this.canvasImageBottom.init();
       this.render();
     }, 100);
   }
@@ -3152,8 +3251,8 @@ export class Canvas {
     this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
-    this.canvasImage.initStatus();
-    this.canvasImageBottom.initStatus();
+    this.canvasImage.init();
+    this.canvasImageBottom.init();
     this.render();
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
@@ -3227,8 +3326,8 @@ export class Canvas {
       this.execPenResize(pen);
     });
     this.calcActiveRect();
-    this.canvasImage.initStatus();
-    this.canvasImageBottom.initStatus();
+    this.canvasImage.init();
+    this.canvasImageBottom.init();
     const map = this.parent.map;
     if (map && map.isShow) {
       map.setView();
@@ -3253,10 +3352,11 @@ export class Canvas {
       }
       this.rotatePen(pen, angle, this.activeRect);
       pen.onRotate && pen.onRotate(pen);
+      this.updateLines(pen);
     }
     this.lastRotate = this.activeRect.rotate;
     this.getSizeCPs();
-    this.needInitStatus(this.store.active);
+    this.initImageCanvas(this.store.active);
     this.render();
     this.store.emitter.emit('rotatePens', this.store.active);
 
@@ -3336,14 +3436,14 @@ export class Canvas {
       pen.calculative.iconWidth && (pen.calculative.iconWidth *= scaleX);
       pen.calculative.worldRect.height *= scaleY;
       pen.calculative.iconHeight && (pen.calculative.iconHeight *= scaleY);
-      calcExy(pen.calculative.worldRect);
+      calcRightBottom(pen.calculative.worldRect);
       calcCenter(pen.calculative.worldRect);
       this.dirtyPenRect(pen, { worldRectIsReady: true });
       this.execPenResize(pen);
       this.updateLines(pen);
     });
     this.getSizeCPs();
-    this.needInitStatus(this.store.active);
+    this.initImageCanvas(this.store.active);
     this.render();
     this.store.emitter.emit('resizePens', this.store.active);
 
@@ -3479,18 +3579,15 @@ export class Canvas {
       this.initPens = deepClone(this.store.active, true);
     }
 
-    if (this.store.activeAnchor) {
-      if (this.store.activeAnchor.connectTo) {
-        disconnectLine(
-          this.store.pens[this.store.activeAnchor.connectTo],
-          this.store.activeAnchor.penId,
-          this.store.activeAnchor.id,
-          this.store.activeAnchor.anchorId
-        );
-      }
-      this.store.activeAnchor.connectTo = undefined;
+    if (this.store.activeAnchor?.connectTo) {
+      const pen = this.store.pens[this.store.activeAnchor.connectTo];
+      disconnectLine(
+        pen,
+        getAnchor(pen, this.store.activeAnchor.anchorId),
+        this.store.pens[this.store.activeAnchor.penId],
+        this.store.activeAnchor
+      );
     }
-
     const x = e.x - this.mouseDown.x;
     const y = e.y - this.mouseDown.y;
 
@@ -3679,30 +3776,21 @@ export class Canvas {
    * @param line 连线
    * @param pens 本次移动的全部图形，包含子节点
    */
-  private notInDisconnect(line: Pen, pens: Pen[]) {
+  private checkDisconnect(line: Pen, pens: Pen[]) {
+    if (line.id.indexOf(movingSuffix) > 0) {
+      const id = line.id;
+      line = this.store.pens[id.replace(movingSuffix, '')];
+    }
+    // 连接
     line.calculative.worldAnchors.forEach((anchor) => {
       if (anchor.connectTo && !pens.find((p) => p.id === anchor.connectTo)) {
-        const lineId = line.id.includes(movingSuffix) ? line.id.replace(movingSuffix, '') : line.id;
-        disconnectLine(this.store.pens[anchor.connectTo], lineId, anchor.id, anchor.anchorId);
-        anchor.connectTo = undefined;
-        anchor.anchorId = undefined;
+        const pen = this.store.pens[anchor.connectTo];
+        if (pen.type) {
+          return;
+        }
+        disconnectLine(pen, getAnchor(pen, anchor.anchorId), line, anchor);
       }
     });
-
-    // 线连接其它线的场景
-    if (Array.isArray(line.connectedLines)) {
-      for (let i = 0; i < line.connectedLines.length; i++) {
-        const { lineId, lineAnchor, anchor } = line.connectedLines[i];
-        if (!pens.find((p) => p.id === lineId)) {
-          disconnectLine(line, lineId, lineAnchor, anchor);
-          const lineAnchorP = getAnchor(this.store.pens[lineId], lineAnchor);
-          lineAnchorP.connectTo = undefined;
-          lineAnchorP.anchorId = undefined;
-          // disconnectLine 改变了 line.connectedLines 长度，此处 --
-          i--;
-        }
-      }
-    }
   }
 
   /**
@@ -3720,7 +3808,6 @@ export class Canvas {
       if (item.locked) return true;
     });
     if (hasLocked) {
-      console.info('存在锁定节点');
       return;
     }
     const initPens = !doing && deepClone(pens, true);
@@ -3734,9 +3821,15 @@ export class Canvas {
 
       if (pen.type === PenType.Line) {
         translateLine(pen, x, y);
-        this.notInDisconnect(pen, containChildPens);
-        this.dirtyLines.add(pen);
+        this.checkDisconnect(pen, containChildPens);
         this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+        if (!doing) {
+          this.initLineRect(pen);
+          pen.connectedLines?.forEach((item) => {
+            const line = this.store.pens[item.lineId];
+            this.initLineRect(line);
+          });
+        }
       } else {
         translateRect(pen.calculative.worldRect, x, y);
         this.dirtyPenRect(pen, { worldRectIsReady: true });
@@ -3748,17 +3841,11 @@ export class Canvas {
           pen.calculative.initRect.ex = pen.calculative.x + pen.calculative.width;
           pen.calculative.initRect.ey = pen.calculative.y + pen.calculative.height;
         }
-        this.updateLines(pen);
       }
+      this.updateLines(pen);
       pen.onMove?.(pen);
     });
     this.getSizeCPs();
-
-    this.dirtyLines.forEach((pen) => {
-      if (!doing || pen.text) {
-        pen.type && this.initLineRect(pen);
-      }
-    });
     this.render();
     this.tooltip.translate(x, y);
     this.store.emitter.emit('translatePens', pens);
@@ -3770,7 +3857,7 @@ export class Canvas {
         pens: deepClone(pens, true),
         initPens,
       });
-      this.needInitStatus(pens);
+      this.initImageCanvas(pens);
     }
   }
 
@@ -3782,12 +3869,10 @@ export class Canvas {
     lineAnchor.y = newAnchor.y;
     lineAnchor.prev = undefined;
     lineAnchor.next = undefined;
-    lineAnchor.connectTo = pen.id;
-
     if (penConnection) {
       penConnection.anchor = newAnchor.id;
     } else {
-      connectLine(pen, line.id, lineAnchor.id, newAnchor.id);
+      connectLine(pen, newAnchor, line, lineAnchor);
     }
 
     if (this[line.lineName]) {
@@ -3857,7 +3942,7 @@ export class Canvas {
     }
     pen.connectedLines.forEach((item) => {
       const line = this.store.pens[item.lineId];
-      // TODO: 活动层的线不需要更新，若出现问题需查
+      // 活动层的线不需要更新，会在活动层处理
       if (!line || line.calculative.active) {
         return;
       }
@@ -4262,7 +4347,7 @@ export class Canvas {
     }
   }
 
-  async delete(pens = this.store.active, isSon: boolean = false, delLock = false) {
+  async delete(pens = this.store.active) {
     if (!pens || !pens.length) {
       return;
     }
@@ -4270,24 +4355,8 @@ export class Canvas {
     if (this.beforeRemovePens && (await this.beforeRemovePens(pens)) != true) {
       return;
     }
-
-    !isSon && this.needInitStatus(pens); // needInitStatus 会递归，无需考虑 isSon
-    pens.forEach((pen) => {
-      if (!delLock && pen.locked && !isSon && !pen.isRuleLine) return;
-      const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
-      if (i > -1) {
-        this.delLineConnectTo(this.store.data.pens[i]);
-        this.delNodeConnectLine(this.store.data.pens[i]);
-        this.store.data.pens.splice(i, 1);
-        this.store.pens[pen.id] = undefined;
-      }
-      this.store.animates.delete(pen);
-      pen.onDestroy?.(pen);
-      if (Array.isArray(pen.children)) {
-        const sonPens = pen.children.map((id) => this.store.pens[id]);
-        this.delete(sonPens, true, delLock); // 递归删除子节点
-      }
-    });
+    this._del(pens);
+    this.initImageCanvas(pens);
     this.inactive();
     this.clearHover();
     this.render();
@@ -4296,51 +4365,61 @@ export class Canvas {
     this.store.emitter.emit('delete', pens);
   }
 
-  /**
-   * 删除该连线后，删除其它与该 line 连接的节点的对应 connectedLines
-   * @param line 连线
-   */
-  private delNodeConnectLine(line: Pen) {
-    if (!line.type) {
+  private _del(pens: Pen[]) {
+    if (!pens) {
       return;
     }
-    line.calculative.worldAnchors?.forEach(({ connectTo, id: lineAnchorId }, index) => {
-      if (!connectTo) {
-        return;
+    pens.forEach((pen) => {
+      if (pen.locked) return;
+      const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
+      if (i > -1) {
+        this.delConnectedLines(this.store.data.pens[i]);
+        this.store.data.pens.splice(i, 1);
+        this.store.pens[pen.id] = undefined;
       }
-      const node = this.store.pens[connectTo];
-      if (node) {
-        node.calculative.worldAnchors?.forEach((anchor) => {
-          // 删除连线，每个与该连线连接的锚点都需要清除，若无连接也不会报错
-          disconnectLine(node, line.id, lineAnchorId, anchor.id);
-        });
-      } else {
-        console.warn('node not found', line, 'lineAnchorIndex', index);
-      }
+      this.store.animates.delete(pen);
+      this._del(pen.children);
+      pen.onDestroy?.(pen);
     });
   }
 
-  /**
-   * 删除该节点 关联的 连线 的 connectTo
-   * @param node 节点
-   */
-  private delLineConnectTo(node: Pen) {
-    node.connectedLines?.forEach(({ lineId, lineAnchor }) => {
-      const line = this.store.pens[lineId];
-      if (line) {
-        const anchor = line.anchors.find((anchor) => anchor.id === lineAnchor);
-        if (anchor?.connectTo === node.id) {
-          anchor.connectTo = undefined;
-          anchor.anchorId = undefined;
-          anchor.prev && (anchor.prev.connectTo = undefined);
-          anchor.next && (anchor.next.connectTo = undefined);
-        } else {
-          console.warn('anchor not in line', anchor, 'or connectTo not match penId', node);
+  private delConnectedLines(pen: Pen) {
+    if (pen.connectedLines) {
+      for (let i = 0; i < pen.connectedLines.length; i++) {
+        const { lineId, lineAnchor } = pen.connectedLines[i];
+        const line = this.store.pens[lineId];
+        if (line) {
+          let anchor = line.anchors.find((anchor) => anchor.id === lineAnchor);
+          if (anchor?.connectTo === pen.id) {
+            anchor.connectTo = undefined;
+            anchor.anchorId = undefined;
+            anchor.prev && (anchor.prev.connectTo = undefined);
+            anchor.next && (anchor.next.connectTo = undefined);
+          }
+          anchor = getAnchor(line, lineAnchor);
+          if (anchor) {
+            anchor.connectTo = undefined;
+            anchor.anchorId = undefined;
+            anchor.prev && (anchor.prev.connectTo = undefined);
+            anchor.next && (anchor.next.connectTo = undefined);
+          }
         }
-        calcWorldAnchors(line);
-        getLineRect(line);
-      } else {
-        console.warn('line not found', node, 'lineId', lineId);
+      }
+    }
+
+    if (!pen.type) {
+      return;
+    }
+
+    pen.calculative.worldAnchors?.forEach((lineAnchor, index) => {
+      if (!lineAnchor.connectTo) {
+        return;
+      }
+      const connectTo = this.store.pens[lineAnchor.connectTo];
+      if (connectTo) {
+        connectTo.calculative.worldAnchors?.forEach((anchor) => {
+          disconnectLine(connectTo, anchor, pen, lineAnchor);
+        });
       }
     });
   }
@@ -4770,17 +4849,17 @@ export class Canvas {
       this.loadImage(pen);
     }
     if (containIsBottom) {
-      this.canvasImage.initStatus();
-      this.canvasImageBottom.initStatus();
+      this.canvasImage.init();
+      this.canvasImageBottom.init();
     } else if (willRenderImage) {
       // 存在先有 image 后无 image 的情况
       if (pen.isBottom) {
-        this.canvasImageBottom.initStatus();
+        this.canvasImageBottom.init();
       } else {
-        this.canvasImage.initStatus();
+        this.canvasImage.init();
       }
     } else {
-      this.needInitStatus([pen]);
+      this.initImageCanvas([pen]);
     }
   }
 
@@ -4850,7 +4929,7 @@ export class Canvas {
     if (isDrawBkImg) {
       rect.x += storeData.x;
       rect.y += storeData.y;
-      calcExy(rect);
+      calcRightBottom(rect);
       if (rectInRect(rect, this.canvasRect, true)) {
         // 全部在区域内，那么 rect 就是 canvasRect
         Object.assign(rect, this.canvasRect);
@@ -4869,7 +4948,7 @@ export class Canvas {
     rect.y -= p[0];
     rect.width += p[3] + p[1];
     rect.height += p[0] + p[2];
-    calcExy(rect);
+    calcRightBottom(rect);
 
     const canvas = document.createElement('canvas');
     canvas.width = rect.width;
@@ -5012,8 +5091,8 @@ export class Canvas {
     this.store.data.x = this.canvas.clientWidth / 2 - x * rect.width - rect.x;
     this.store.data.y = this.canvas.clientHeight / 2 - y * rect.height - rect.y;
     this.onMovePens();
-    this.canvasImage.initStatus();
-    this.canvasImageBottom.initStatus();
+    this.canvasImage.init();
+    this.canvasImageBottom.init();
     this.render();
   }
 

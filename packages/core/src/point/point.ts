@@ -20,7 +20,9 @@ export interface Point {
   background?: string;
   id?: string;
   penId?: string;
+  // line连接的pen.id
   connectTo?: string;
+  // line连接的pen的anchor.id
   anchorId?: string;
   twoWay?: TwoWay;
   prev?: Point;
@@ -33,7 +35,7 @@ export interface Point {
   rotate?: number;
   hidden?: boolean;
   flag?: number;
-  isTemp?: boolean;  // 临时绘制的点
+  isTemp?: boolean; // 临时绘制的点
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {

@@ -15,8 +15,12 @@ import { calcExy } from '@topology/core';
 import { formPen, cellData, Pos } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
+<<<<<<< HEAD
 import { calcExy, calcTextLines } from '@topology/core';
 >>>>>>> b050489 (render)
+=======
+import { calcRightBottom, calcTextLines } from '@topology/core';
+>>>>>>> 748935f (draw line and pad)
 
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
 =======
@@ -100,7 +104,7 @@ function initRect(pen: formPen) {
       height: pen.height,
       width: pen.width,
     };
-    calcExy(pen.calculative.worldRect);
+    calcRightBottom(pen.calculative.worldRect);
   }
 }
 
@@ -175,19 +179,13 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       let activeColor: any;
 
       // 选中
-      if (
-        pen.calculative.activeCell?.row === i &&
-        pen.calculative.activeCell?.col === j
-      ) {
+      if (pen.calculative.activeCell?.row === i && pen.calculative.activeCell?.col === j) {
         color = pen.activeColor;
         background = pen.activeBackground;
         activeColor = color;
       }
       // hover
-      if (
-        pen.calculative.hoverCell?.row === i &&
-        pen.calculative.hoverCell?.col === j
-      ) {
+      if (pen.calculative.hoverCell?.row === i && pen.calculative.hoverCell?.col === j) {
         color = pen.hoverColor;
         background = pen.hoverBackground;
 
@@ -259,24 +257,15 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         pen.calculative.fontFamily;
 
       if (rowText[j].length === 1) {
-        ctx.fillText(
-          rowText[j][0],
-          rect.x + rect.width / 2,
-          rect.y + rect.height / 2
-        );
+        ctx.fillText(rowText[j][0], rect.x + rect.width / 2, rect.y + rect.height / 2);
       } else {
         const y = 0.55;
-        const lineHeight =
-          pen.calculative.fontSize * pen.calculative.lineHeight * textScale;
+        const lineHeight = pen.calculative.fontSize * pen.calculative.lineHeight * textScale;
 
         const h = rowText[j].length * lineHeight;
         let top = (rect.height - h) / 2;
         rowText[j].forEach((text, i) => {
-          ctx.fillText(
-            text,
-            rect.x + rect.width / 2,
-            rect.y + top + (i + y) * lineHeight
-          );
+          ctx.fillText(text, rect.x + rect.width / 2, rect.y + top + (i + y) * lineHeight);
         });
       }
       ctx.restore();
@@ -295,11 +284,7 @@ function onShowInput(pen: any, e: Point) {
     return;
   }
 
-  const cell = getCell(
-    pen,
-    pen.calculative.hoverCell.row,
-    pen.calculative.hoverCell.col
-  );
+  const cell = getCell(pen, pen.calculative.hoverCell.row, pen.calculative.hoverCell.col);
   // 子节点，非文本
   if (Array.isArray(cell)) {
     return;
@@ -307,11 +292,7 @@ function onShowInput(pen: any, e: Point) {
 
   pen.calculative.inputCell = pen.calculative.hoverCell;
 
-  const rect = getCellRect(
-    pen,
-    pen.calculative.hoverCell.row,
-    pen.calculative.hoverCell.col
-  );
+  const rect = getCellRect(pen, pen.calculative.hoverCell.row, pen.calculative.hoverCell.col);
   pen.calculative.tempText = cell.text || cell + '';
   pen.calculative.canvas.showInput(pen, rect, '#ffffff');
 }
@@ -322,12 +303,7 @@ function onInput(pen: formPen, text: string) {
     return;
   }
 
-  setCellText(
-    pen,
-    pen.calculative.inputCell.row,
-    pen.calculative.inputCell.col,
-    text
-  );
+  setCellText(pen, pen.calculative.inputCell.row, pen.calculative.inputCell.col, text);
   pen.calculative.canvas.render();
 }
 
@@ -405,12 +381,7 @@ function getCell(pen: formPen, rowIndex: number, colIndex: number) {
 }
 
 // 设置cell的文本
-function setCellText(
-  pen: formPen,
-  rowIndex: number,
-  colIndex: number,
-  text: string
-) {
+function setCellText(pen: formPen, rowIndex: number, colIndex: number, text: string) {
   if (!pen.table.data || !Array.isArray(pen.table.data)) {
     return;
   }
@@ -525,10 +496,7 @@ function onValue(pen: formPen) {
 }
 
 function beforeValue(pen: formPen, value: any) {
-  if (
-    (value as any).table ||
-    (value.col == undefined && value.row == undefined)
-  ) {
+  if ((value as any).table || (value.col == undefined && value.row == undefined)) {
     // 整体传参，不做处理
     return value;
   }
