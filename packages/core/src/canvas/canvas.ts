@@ -212,6 +212,7 @@ export class Canvas {
 
   inputParent = document.createElement('div');
   input = document.createElement('textarea');
+  inputDiv = document.createElement('div');
   inputRight = document.createElement('div');
   dropdown = document.createElement('ul');
 
@@ -4644,18 +4645,43 @@ export class Canvas {
     ) {
       return;
     }
-    if (this.input.dataset.penId === pen.id) {
-      this.input.focus();
+    //TODO input
+    // if (this.input.dataset.penId === pen.id) {
+    //   this.input.focus();
+    //   return;
+    // }
+
+    if (this.inputDiv.dataset.penId === pen.id) {
+      //TODO input focus问题
+      // this.inputDiv.focus();
+      this.inputDiv.dataset.isInput = 'true';
+      this.inputDiv.contentEditable = 'true';
       return;
     }
+    this.setInputStyle(pen);
     const textRect = rect || pen.calculative.worldTextRect;
-    this.input.value = pen.calculative.tempText || pen.text || '';
-    this.input.style.fontSize = pen.calculative.fontSize + 'px';
-    this.input.style.color = getTextColor(pen, this.store);
-    this.inputParent.style.left = textRect.x + this.store.data.x + 5 + 'px';
-    this.inputParent.style.top = textRect.y + this.store.data.y + 5 + 'px';
-    this.inputParent.style.width = textRect.width - 10 + 'px';
-    this.inputParent.style.height = textRect.height - 10 + 'px';
+    // this.input.value = pen.calculative.tempText || pen.text || '';
+    // this.input.style.fontSize = pen.calculative.fontSize + 'px';
+    // this.input.style.color = getTextColor(pen, this.store);
+
+    //value和innerText问题
+    const preInputText = pen.calculative.tempText || pen.text || '';
+    const textArr = preInputText.split(/[\s\n]/);
+    const finalText = `${textArr.join('</div><div>')}</div>`
+      .replace('</div>', '')
+      .replace(/\<div\>\<\/div\>/g, '<div><br></div>');
+    this.inputDiv.innerHTML = finalText;
+    // this.inputDiv.style.fontSize = pen.calculative.fontSize + 'px';
+    // this.inputDiv.style.color = getTextColor(pen, this.store);
+
+    this.inputParent.style.left =
+      textRect.x + this.store.data.x + 5 - (pen.textLeft || 0) + 'px';
+    this.inputParent.style.top =
+      textRect.y + this.store.data.y + 5 - (pen.textTop || 0) + 'px';
+    this.inputParent.style.width =
+      textRect.width - 10 + (pen.textLeft || 0) + 'px';
+    this.inputParent.style.height =
+      textRect.height - 10 + (pen.textTop || 0) + 'px';
     this.inputParent.style.zIndex = '1000';
     this.inputParent.style.background = background;
     if (pen.rotate % 360) {
@@ -4664,8 +4690,13 @@ export class Canvas {
       this.inputParent.style.transform = null;
     }
     this.inputParent.style.display = 'flex';
-    this.input.dataset.penId = pen.id;
-    this.input.readOnly = pen.disableInput;
+    // this.input.dataset.penId = pen.id;
+    // this.input.readOnly = pen.disableInput;
+
+    this.inputDiv.dataset.penId = pen.id;
+    this.inputDiv.contentEditable =
+      pen.disableInput == undefined ? 'true' : pen.disableInput.toString();
+
     if (pen.dropdownList && this.dropdown.style.display !== 'block') {
       if (!this.store.data.locked) {
         this.inputRight.style.display = 'none';
@@ -4674,29 +4705,100 @@ export class Canvas {
     } else {
       this.inputRight.style.display = 'none';
     }
-    this.input.focus();
-
+    // this.input.focus();
+    // this.inputDiv.focus();
+    this.inputDiv.contentEditable = 'true';
     pen.calculative.text = undefined;
     this.render();
+  };
+
+  setInputStyle = (pen: Pen) => {
+    let sheet: any;
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      if (document.styleSheets[i].title === 'le5le.com') {
+        sheet = document.styleSheets[i];
+      }
+    }
+    let style = '';
+    if (pen.textAlign) {
+      style += `text-align: ${pen.textAlign};`;
+    } else {
+      style += 'text-align: center;';
+    }
+    if (pen.textBaseline) {
+      let baseLine = {
+        top: 'start',
+        middle: 'center',
+        bottom: 'end',
+      };
+      style += `justify-content: ${baseLine[pen.textBaseline]};`;
+    } else {
+      style += 'justify-content: center;';
+    }
+    if (pen.fontFamily) {
+      style += `font-family: ${pen.fontFamily};`;
+    }
+    if (pen.fontSize) {
+      style += `font-size:${pen.fontSize}px;`;
+    }
+    style += `color:${getTextColor(pen, this.store)};`;
+    if (pen.fontStyle) {
+      style += `font-style: ${pen.fontStyle};`;
+    }
+    if (pen.fontWeight) {
+      style += `font-weight: ${pen.fontWeight};`;
+    }
+    if (pen.textLeft) {
+      style += `margin-left:${pen.textLeft}px;`;
+    }
+    if (pen.textTop) {
+      style += `margin-top:${pen.textTop}px;`;
+    }
+    if (pen.lineHeight) {
+      style += `line-height:${pen.fontSize * pen.lineHeight}px;`;
+    }
+    if (pen.textHeight) {
+      style += `height:${pen.textHeight}px;`;
+    }
+    if (pen.textWidth) {
+      style += `width:${pen.textWidth}px;`;
+    }
+    if (pen.whiteSpace) {
+      style += `white-space:${pen.whiteSpace};`;
+    }
+    console.log('style', style);
+    sheet.deleteRule(0);
+    sheet.insertRule(
+      `.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;overflow: hidden;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;${style}}`
+    );
+    // sheet.insertRule(
+    //   '.topology-input .input-div div{width: 100%;text-align: center;}'
+    // );
   };
 
   hideInput = () => {
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
-      const pen = this.store.pens[this.input.dataset.penId];
+      // const pen = this.store.pens[this.input.dataset.penId];
+      const pen = this.store.pens[this.inputDiv.dataset.penId];
       if (!pen) {
         return;
       }
       // pen.calculative.text 恢复
       pen.calculative.text = pen.text;
-
+      this.inputDiv.dataset.value = this.inputDiv.innerHTML
+        .replace(/\<div\>/g, '\n')
+        .replace(/\<\/div\>/g, '')
+        .replace(/\<br\>/g, '');
       if (pen.onInput) {
-        pen.onInput(pen, this.input.value);
-      } else if (pen.text !== this.input.value) {
+        // pen.onInput(pen, this.input.value);
+        pen.onInput(pen, this.inputDiv.dataset.value);
+      } else if (pen.text !== this.inputDiv.dataset.value) {
         const initPens = [deepClone(pen, true)];
-        pen.text = this.input.value;
+        pen.text = this.inputDiv.dataset.value;
         pen.calculative.text = pen.text;
-        this.input.dataset.penId = undefined;
+        // this.input.dataset.penId = undefined;
+        this.inputDiv.dataset.penId = undefined;
         calcTextRect(pen);
         this.dirty = true;
         this.pushHistory({
@@ -4707,21 +4809,31 @@ export class Canvas {
         this.store.emitter.emit('valueUpdate', pen);
       }
     }
-    this.input.dataset.penId = undefined;
+    // this.input.dataset.penId = undefined;
+    this.inputDiv.dataset.penId = undefined;
     this.dropdown.style.display = 'none';
+    this.inputDiv.dataset.isInput = 'false';
   };
 
   private createInput() {
     this.inputParent.classList.add('topology-input');
     this.inputRight.classList.add('right');
-    this.inputParent.appendChild(this.input);
+    // this.inputParent.appendChild(this.input);
+    this.inputDiv.classList.add('input-div');
+    this.inputParent.appendChild(this.inputDiv);
     this.inputParent.appendChild(this.inputRight);
     this.inputParent.appendChild(this.dropdown);
     this.externalElements.appendChild(this.inputParent);
-
     this.inputParent.dataset.l = '1';
-    this.input.dataset.l = '1';
-    this.input.dataset.noWheel = '1';
+
+    //TODO input
+    // this.input.dataset.l = '1';
+    // this.input.dataset.noWheel = '1';
+
+    this.inputDiv.dataset.l = '1';
+    this.inputDiv.dataset.noWheel = '1';
+    this.inputDiv.contentEditable = 'true';
+
     this.inputRight.dataset.l = '1';
     this.dropdown.dataset.l = '1';
     this.inputRight.style.transform = 'rotate(135deg)';
@@ -4743,8 +4855,14 @@ export class Canvas {
       sheet.insertRule(
         '.topology-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
       );
+      // sheet.insertRule(
+      //   '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
+      // );
+      // sheet.insertRule(
+      //   '.topology-input .input-div div{width: 100%;text-align: center;}'
+      // );
       sheet.insertRule(
-        '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);}'
+        '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);position:absolute;right:1px;}'
       );
       sheet.insertRule(
         '.topology-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;}'
@@ -4753,9 +4871,32 @@ export class Canvas {
         '.topology-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
       );
       sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
+      sheet.insertRule(
+        '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
+      );
     }
-    this.input.onclick = () => {
-      const pen = this.store.pens[this.input.dataset.penId];
+
+    //TODO input
+    // this.input.onclick = () => {
+    //   const pen = this.store.pens[this.input.dataset.penId];
+    //   if (this.dropdown.style.display === 'block') {
+    //     this.dropdown.style.display = 'none';
+    //     this.inputRight.style.transform = 'rotate(135deg)';
+    //   } else if (pen?.dropdownList && this.store.data.locked) {
+    //     this.dropdown.style.display = 'block';
+    //     this.inputRight.style.transform = 'rotate(315deg)';
+    //   }
+    //   this.store.emitter.emit('clickInput', pen);
+    // };
+    // this.input.onkeyup = (e: KeyboardEvent) => {
+    //   this.setDropdownList(true);
+    //   const pen = this.store.pens[this.input.dataset.penId];
+    //   this.store.emitter.emit('input', { pen, text: e.key });
+    // };
+
+    this.inputDiv.onclick = (e: KeyboardEvent) => {
+      e.stopPropagation();
+      const pen = this.store.pens[this.inputDiv.dataset.penId];
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
         this.inputRight.style.transform = 'rotate(135deg)';
@@ -4765,10 +4906,17 @@ export class Canvas {
       }
       this.store.emitter.emit('clickInput', pen);
     };
-    this.input.onkeyup = (e: KeyboardEvent) => {
+    this.inputDiv.onkeyup = (e: KeyboardEvent) => {
       this.setDropdownList(true);
-      const pen = this.store.pens[this.input.dataset.penId];
+      const pen = this.store.pens[this.inputDiv.dataset.penId];
       this.store.emitter.emit('input', { pen, text: e.key });
+      e.stopPropagation();
+    };
+    this.inputDiv.onkeydown = (e: KeyboardEvent) => {
+      e.stopPropagation();
+    };
+    this.inputDiv.onmousedown = (e: KeyboardEvent) => {
+      e.stopPropagation();
     };
   }
 
@@ -4791,7 +4939,8 @@ export class Canvas {
     setTimeout(() => {
       this.inputRight.style.transform = 'rotate(315deg)';
     });
-    const pen = this.store.pens[this.input.dataset.penId];
+    // const pen = this.store.pens[this.input.dataset.penId];
+    const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!pen || !pen.dropdownList) {
       this.dropdown.style.display = 'none';
       this.inputRight.style.display = 'none';
@@ -4807,7 +4956,11 @@ export class Canvas {
       return;
     }
 
-    const text = this.input.value;
+    // const text = this.input.value;
+    const text = this.inputDiv.innerHTML
+      .replace(/\<div\>/g, '\n')
+      .replace(/\<\/div\>/g, '')
+      .replace(/\<br\>/g, '');
     let i = 0;
     for (const item of pen.dropdownList) {
       const t = typeof item === 'string' ? item : item.text;
@@ -4848,7 +5001,8 @@ export class Canvas {
 
   private selectDropdown = (e: MouseEvent) => {
     const li = e.target as HTMLElement;
-    const pen = this.store.pens[this.input.dataset.penId];
+    // const pen = this.store.pens[this.input.dataset.penId];
+    const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!li || !pen || !pen.dropdownList) {
       return;
     }
@@ -4869,7 +5023,10 @@ export class Canvas {
     } else {
       pen.text = dropdown + '';
     }
-    this.input.value = pen.text;
+    // this.input.value = pen.text;
+    // this.input.innerText = pen.text;
+
+    this.inputDiv.innerText = pen.text;
     // this.dropdown.style.display = 'none';
     // this.inputRight.style.transform = 'rotate(135deg)';
     this.hideInput();
