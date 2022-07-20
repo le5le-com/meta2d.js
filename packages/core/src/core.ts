@@ -569,8 +569,8 @@ export class Topology {
         this.store.animates.add(pen);
       }
     });
-    this.canvas.canvasImage.initStatus();
-    this.canvas.canvasImageBottom.initStatus();
+    this.canvas.canvasImage.init();
+    this.canvas.canvasImageBottom.init();
     this.canvas.animate();
   }
 
@@ -611,7 +611,7 @@ export class Topology {
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
     });
-    this.needInitStatus(pens);
+    this.initImageCanvas(pens);
     setTimeout(() => {
       this.canvas.calcActiveRect();
       this.render();
@@ -757,7 +757,7 @@ export class Topology {
       pens.forEach((pen) => {
         calcInView(pen, true);
       });
-      this.needInitStatus([parent]);
+      this.initImageCanvas([parent]);
     }
     this.render();
   }
@@ -1570,8 +1570,8 @@ export class Topology {
     this.store.data.x = x;
     this.store.data.y = y;
 
-    this.canvas.canvasImage.initStatus();
-    this.canvas.canvasImageBottom.initStatus();
+    this.canvas.canvasImage.init();
+    this.canvas.canvasImageBottom.init();
     this.render();
   }
 
@@ -1632,7 +1632,7 @@ export class Topology {
       if (index > -1) {
         pens.push(pens[index]);
         pens.splice(index, 1);
-        this.needInitStatus([pen]);
+        this.initImageCanvas([pen]);
       }
     });
   }
@@ -1642,8 +1642,8 @@ export class Topology {
    * 子节点中包含图片，也需要重绘
    * @param pens 本次改变的 pens
    */
-  needInitStatus(pens: Pen[]) {
-    this.canvas.needInitStatus(pens);
+  initImageCanvas(pens: Pen[]) {
+    this.canvas.initImageCanvas(pens);
   }
 
   /**
@@ -1660,7 +1660,7 @@ export class Topology {
       if (index > -1) {
         pens.unshift(pens[index]);
         pens.splice(index + 1, 1);
-        this.needInitStatus([pen]);
+        this.initImageCanvas([pen]);
       }
     }
   }
@@ -1675,7 +1675,7 @@ export class Topology {
     if (index > -1 && index !== pens.length - 1) {
       pens.splice(index + 2, 0, pens[index]);
       pens.splice(index, 1);
-      this.needInitStatus([pen]);
+      this.initImageCanvas([pen]);
     }
   }
 
@@ -1688,7 +1688,7 @@ export class Topology {
     if (index > -1 && index !== 0) {
       pens.splice(index - 1, 0, pens[index]);
       pens.splice(index + 1, 1);
-      this.needInitStatus([pen]);
+      this.initImageCanvas([pen]);
     }
   }
 

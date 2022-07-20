@@ -14,11 +14,7 @@ export class CanvasImage {
   offscreen = createOffscreen();
   animateOffsScreen = createOffscreen();
 
-  constructor(
-    public parentElement: HTMLElement,
-    public store: TopologyStore,
-    private isBottom?: boolean
-  ) {
+  constructor(public parentElement: HTMLElement, public store: TopologyStore, private isBottom?: boolean) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
@@ -46,31 +42,21 @@ export class CanvasImage {
     this.animateOffsScreen.width = w;
     this.animateOffsScreen.height = h;
 
-    this.otherOffsreen
-      .getContext('2d')
-      .scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.otherOffsreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
     this.otherOffsreen.getContext('2d').textBaseline = 'middle';
 
-    this.offscreen
-      .getContext('2d')
-      .scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.offscreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
     this.offscreen.getContext('2d').textBaseline = 'middle';
 
-    this.animateOffsScreen
-      .getContext('2d')
-      .scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.animateOffsScreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
     this.animateOffsScreen.getContext('2d').textBaseline = 'middle';
 
-    this.initStatus();
+    this.init();
   }
 
-  initStatus() {
-    this.offscreen
-      .getContext('2d')
-      .clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.animateOffsScreen
-      .getContext('2d')
-      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+  init() {
+    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (const pen of this.store.data.pens) {
       if (this.hasImage(pen)) {
         // 只影响本层的
@@ -82,18 +68,10 @@ export class CanvasImage {
   }
 
   clear() {
-    this.otherOffsreen
-      .getContext('2d')
-      .clearRect(0, 0, this.otherOffsreen.width, this.otherOffsreen.height);
-    this.offscreen
-      .getContext('2d')
-      .clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.animateOffsScreen
-      .getContext('2d')
-      .clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.canvas
-      .getContext('2d')
-      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.otherOffsreen.getContext('2d').clearRect(0, 0, this.otherOffsreen.width, this.otherOffsreen.height);
+    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   hasImage(pen: Pen) {
@@ -125,8 +103,7 @@ export class CanvasImage {
     if (dirtyBackground && this.isBottom) {
       const ctx = this.otherOffsreen.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      const background =
-        this.store.data.background || this.store.options.background;
+      const background = this.store.data.background || this.store.options.background;
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
@@ -148,11 +125,7 @@ export class CanvasImage {
       ctx.save();
       ctx.translate(this.store.data.x, this.store.data.y);
       for (const pen of this.store.data.pens) {
-        if (
-          !pen.calculative.hasImage ||
-          pen.calculative.imageDrawed ||
-          this.store.animates.has(pen)
-        ) {
+        if (!pen.calculative.hasImage || pen.calculative.imageDrawed || this.store.animates.has(pen)) {
           continue;
         }
         pen.calculative.imageDrawed = true;
@@ -191,54 +164,23 @@ export class CanvasImage {
       ctx.restore();
     }
 
-    if (
-      dirty ||
-      dirtyAnimate ||
-      (dirtyBackground && this.isBottom) ||
-      (dirtyTop && !this.isBottom)
-    ) {
+    if (dirty || dirtyAnimate || (dirtyBackground && this.isBottom) || (dirtyTop && !this.isBottom)) {
       const ctxCanvas = this.canvas.getContext('2d');
       ctxCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
       if (this.isBottom) {
-        ctxCanvas.drawImage(
-          this.otherOffsreen,
-          0,
-          0,
-          this.canvas.width,
-          this.canvas.height
-        );
+        ctxCanvas.drawImage(this.otherOffsreen, 0, 0, this.canvas.width, this.canvas.height);
         this.store.dirtyBackground = false;
       }
-      ctxCanvas.drawImage(
-        this.offscreen,
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      );
-      ctxCanvas.drawImage(
-        this.animateOffsScreen,
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      );
+      ctxCanvas.drawImage(this.offscreen, 0, 0, this.canvas.width, this.canvas.height);
+      ctxCanvas.drawImage(this.animateOffsScreen, 0, 0, this.canvas.width, this.canvas.height);
       if (!this.isBottom) {
-        ctxCanvas.drawImage(
-          this.otherOffsreen,
-          0,
-          0,
-          this.canvas.width,
-          this.canvas.height
-        );
+        ctxCanvas.drawImage(this.otherOffsreen, 0, 0, this.canvas.width, this.canvas.height);
         this.store.dirtyTop = false;
       }
     }
   }
 
-  renderGrid(
-    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
-  ) {
+  renderGrid(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
     const { data, options } = this.store;
     const { grid, gridRotate, gridColor, gridSize, scale } = data;
     if (!(grid ?? options.grid)) {
@@ -270,9 +212,7 @@ export class CanvasImage {
     ctx.restore();
   }
 
-  renderRule(
-    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
-  ) {
+  renderRule(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
     const { data, options } = this.store;
     const { rule, ruleColor, scale, origin } = data;
     if (!(rule ?? options.rule)) {

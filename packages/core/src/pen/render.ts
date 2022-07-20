@@ -4,7 +4,7 @@ import { Direction } from '../data';
 import { calcRotate, distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
 import {
   calcCenter,
-  calcExy,
+  calcRightBottom,
   calcRelativePoint,
   calcRelativeRect,
   Rect,
@@ -137,13 +137,7 @@ function linearGradient(
  * @param pen 画笔
  */
 function getImagePosition(pen: Pen) {
-  const {
-    worldIconRect: rect,
-    iconWidth,
-    iconHeight,
-    imgNaturalWidth,
-    imgNaturalHeight,
-  } = pen.calculative;
+  const { worldIconRect: rect, iconWidth, iconHeight, imgNaturalWidth, imgNaturalHeight } = pen.calculative;
   let { x, y, width: w, height: h } = rect;
   if (iconWidth) {
     w = iconWidth;
@@ -203,8 +197,8 @@ function getImagePosition(pen: Pen) {
     x,
     y,
     width: w,
-    height: h
-  }
+    height: h,
+  };
 }
 
 export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
@@ -978,7 +972,7 @@ export function calcWorldRects(pen: Pen) {
     rect.width = pen.width;
     rect.height = pen.height;
     rect.rotate = pen.rotate;
-    calcExy(rect);
+    calcRightBottom(rect);
     calcCenter(rect);
   } else {
     const parent = store.pens[pen.parentId];
@@ -998,7 +992,7 @@ export function calcWorldRects(pen: Pen) {
       rect.y = parentRect.height - (rect.y - parentRect.y + rect.height) + parentRect.y;
     }
 
-    calcExy(rect);
+    calcRightBottom(rect);
 
     rect.rotate = parentRect.rotate + pen.rotate;
     calcCenter(rect);
@@ -1136,7 +1130,7 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
     height,
     rotate,
   };
-  calcExy(pen.calculative.worldIconRect);
+  calcRightBottom(pen.calculative.worldIconRect);
   calcCenter(pen.calculative.worldIconRect);
 }
 
@@ -1270,11 +1264,19 @@ export function deleteTempAnchor(pen: Pen) {
 /**
  * 添加line到pen的connectedLines中，并关联相关属性
  * 不添加连线到画布中，请确保画布中已经有该连线。
- * 不改动 line.anchors 中的 connectTo 和 anchorId ，请手动更改
  * */
-export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
-  if (!pen || !lineId || !lineAnchor || !anchor) {
+export function connectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: Point) {
+  if (!pen || !anchor || !line || !lineAnchor) {
     return;
+  }
+
+  if (lineAnchor.connectTo === pen.id && lineAnchor.anchorId === anchor.id) {
+    return;
+  }
+
+  if (lineAnchor.connectTo) {
+    const p = pen.calculative.canvas.store.pens[lineAnchor.connectTo];
+    disconnectLine(p, getAnchor(p, lineAnchor.anchorId), line, lineAnchor);
   }
 
   if (!pen.connectedLines) {
@@ -1282,35 +1284,57 @@ export function connectLine(pen: Pen, lineId: string, lineAnchor: string, anchor
   }
 
   const i = pen.connectedLines.findIndex(
-    (item) => item.lineId === lineId && item.lineAnchor === lineAnchor && item.anchor === anchor
+    (item) => item.lineId === line.id && item.lineAnchor === lineAnchor.id && item.anchor === anchor.id
   );
 
   if (i < 0) {
     pen.connectedLines.push({
-      lineId,
-      lineAnchor,
-      anchor,
+      lineId: line.id,
+      lineAnchor: lineAnchor.id,
+      anchor: anchor.id,
     });
   }
+
+  lineAnchor.connectTo = pen.id;
+  lineAnchor.anchorId = anchor.id;
+
+  // 如果两条连线，则相互关联
+  if (pen.type) {
+    connectLine(line, lineAnchor, pen, anchor);
+  }
+  return true;
 }
 
 /**
  * 从 pen.connectedLines 中删除 lineId 和 lineAnchor
- * 不改动 line.anchors 中的 connectTo 和 anchorId ，请手动更改
  */
-export function disconnectLine(pen: Pen, lineId: string, lineAnchor: string, anchor: string) {
-  if (!pen || !lineId || !lineAnchor || !anchor) {
+export function disconnectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: Point) {
+  if (!pen || !anchor || !line || !lineAnchor) {
     return;
   }
 
-  if (!pen.connectedLines) {
-    pen.connectedLines = [];
+  if (!pen.connectedLines || !pen.connectedLines.length) {
+    return;
   }
 
-  const i = pen.connectedLines.findIndex(
-    (item) => item.lineId === lineId && item.lineAnchor === lineAnchor && item.anchor === anchor
-  );
-  i > -1 && pen.connectedLines.splice(i, 1);
+  pen.connectedLines.forEach((item, index, arr) => {
+    if (
+      (item.lineId === line.id || item.lineId === line.id) &&
+      item.lineAnchor === lineAnchor.id &&
+      item.anchor === anchor.id
+    ) {
+      arr.splice(index, 1);
+    }
+  });
+
+  lineAnchor.connectTo = undefined;
+  lineAnchor.anchorId = undefined;
+  // 如果两条连线相互关联，则都取消关联
+  if (pen.type && anchor.connectTo === line.id && anchor.anchorId === lineAnchor.id) {
+    disconnectLine(line, lineAnchor, pen, anchor);
+  }
+
+  return true;
 }
 
 export function getAnchor(pen: Pen, anchorId: string) {
@@ -1334,7 +1358,6 @@ export function getToAnchor(pen: Pen) {
     return;
   }
 
-  // return pen.calculative.worldAnchors.at(-1);
   return pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
 }
 
@@ -1710,7 +1733,7 @@ export function calcInView(pen: Pen, calcChild = false) {
       height,
       rotate,
     };
-    calcExy(penRect);
+    calcRightBottom(penRect);
     if (!rectInRect(penRect, canvasRect)) {
       pen.calculative.inView = false;
     }

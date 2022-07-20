@@ -1,7 +1,7 @@
 import { Pen } from '../../core/src/pen';
 import { ChartData } from '../../core/src/pen';
 
-import { calcExy, Rect } from '@topology/core';
+import { calcRightBottom, Rect } from '@topology/core';
 
 export interface Pos {
   row: number;
@@ -86,8 +86,7 @@ export function getTextLength(text: string, pen: any) {
   const textScale = (pen.calculative.worldRect.height * 14) / 16;
   const chinese = text.match(/[\u4e00-\u9fa5]/g) || '';
   const chineseLen = chinese.length;
-  const width =
-    (text.length - chineseLen) * textScale * 0.6 + chineseLen * textScale;
+  const width = (text.length - chineseLen) * textScale * 0.6 + chineseLen * textScale;
   return width;
 }
 
@@ -112,7 +111,7 @@ export function initOptions(pen: any) {
       height: pen.height,
       width: pen.width,
     };
-    calcExy(pen.calculative.worldRect);
+    calcRightBottom(pen.calculative.worldRect);
   } else if (pen.direction == 'vertical') {
     if (pen.optionInterval == undefined) {
       pen.optionInterval = 20;
@@ -136,7 +135,7 @@ export function initOptions(pen: any) {
         height: pen.height,
         width: pen.width,
       };
-      calcExy(pen.calculative.worldRect);
+      calcRightBottom(pen.calculative.worldRect);
     }
   }
 }

@@ -1,6 +1,6 @@
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
-import { calcExy, calcTextRect } from '@topology/core';
+import { calcRightBottom, calcTextRect } from '@topology/core';
 
 export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -51,10 +51,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   x = pen.calculative.worldRect.x + pen.calculative.ballRect.x;
-  y =
-    pen.calculative.worldRect.y +
-    pen.calculative.ballRect.y +
-    pen.calculative.ballRect.height / 2;
+  y = pen.calculative.worldRect.y + pen.calculative.ballRect.y + pen.calculative.ballRect.height / 2;
   ctx.lineWidth = pen.calculative.ballRect.width / 10;
   ctx.arc(x, y, pen.calculative.ballRect.width / 2, 0, Math.PI * 2);
   ctx.fill();
@@ -97,7 +94,7 @@ function initRect(pen: formPen) {
     width: barWidth,
     height: pen.barHeight * scaleY,
   };
-  calcExy(pen.calculative.barRect);
+  calcRightBottom(pen.calculative.barRect);
 
   calcBallRect(pen);
 }
@@ -111,7 +108,7 @@ function calcBallRect(pen: formPen) {
     width: height,
     height,
   };
-  calcExy(pen.calculative.ballRect);
+  calcRightBottom(pen.calculative.ballRect);
 
   pen.calculative.text = pen.value + pen.unit;
   calcTextRect(pen);

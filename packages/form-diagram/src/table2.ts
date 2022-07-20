@@ -1,7 +1,7 @@
 import { formPen, cellData, Pos } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
-import { calcExy, calcTextLines, PenType } from '@topology/core';
+import { calcRightBottom, calcTextLines, PenType } from '@topology/core';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -87,7 +87,7 @@ function initRect(pen: formPen) {
     height: pen.height,
     width: pen.width,
   };
-  calcExy(pen.calculative.worldRect);
+  calcRightBottom(pen.calculative.worldRect);
   //   }
 }
 
@@ -153,16 +153,10 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       let { value: cell, style: cellStyle } = getCell(pen, i, j);
       let isSuccess = true;
       //样式条件成立
-      if (
-        (cellStyle as any).wheres &&
-        Array.isArray((cellStyle as any).wheres)
-      ) {
+      if ((cellStyle as any).wheres && Array.isArray((cellStyle as any).wheres)) {
         isSuccess = false;
         isSuccess = (cellStyle as any).wheres.every(function (where: any) {
-          const fn = new Function(
-            'attr',
-            `return attr ${where.comparison} ${where.value}`
-          );
+          const fn = new Function('attr', `return attr ${where.comparison} ${where.value}`);
           return fn(cell);
         });
       }
@@ -175,19 +169,13 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       let activeColor: any;
 
       // 选中
-      if (
-        pen.calculative.activeCell?.row === i &&
-        pen.calculative.activeCell?.col === j
-      ) {
+      if (pen.calculative.activeCell?.row === i && pen.calculative.activeCell?.col === j) {
         color = pen.activeColor;
         background = pen.activeBackground;
         activeColor = color;
       }
       // hover
-      if (
-        pen.calculative.hoverCell?.row === i &&
-        pen.calculative.hoverCell?.col === j
-      ) {
+      if (pen.calculative.hoverCell?.row === i && pen.calculative.hoverCell?.col === j) {
         color = pen.hoverColor;
         background = pen.hoverBackground;
 
@@ -270,24 +258,15 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         pen.calculative.fontFamily;
 
       if (rowText[j].length === 1) {
-        ctx.fillText(
-          rowText[j][0],
-          rect.x + rect.width / 2,
-          rect.y + rect.height / 2
-        );
+        ctx.fillText(rowText[j][0], rect.x + rect.width / 2, rect.y + rect.height / 2);
       } else {
         const y = 0.55;
-        const lineHeight =
-          pen.calculative.fontSize * pen.calculative.lineHeight * textScale;
+        const lineHeight = pen.calculative.fontSize * pen.calculative.lineHeight * textScale;
 
         const h = rowText[j].length * lineHeight;
         let top = (rect.height - h) / 2;
         rowText[j].forEach((text, i) => {
-          ctx.fillText(
-            text,
-            rect.x + rect.width / 2,
-            rect.y + top + (i + y) * lineHeight
-          );
+          ctx.fillText(text, rect.x + rect.width / 2, rect.y + top + (i + y) * lineHeight);
         });
       }
       ctx.restore();
@@ -307,11 +286,7 @@ function onShowInput(pen: any, e: Point) {
     return;
   }
 
-  const { value: cell } = getCell(
-    pen,
-    pen.calculative.hoverCell.row,
-    pen.calculative.hoverCell.col
-  );
+  const { value: cell } = getCell(pen, pen.calculative.hoverCell.row, pen.calculative.hoverCell.col);
   // 子节点，非文本
   if (typeof cell === 'object') {
     return;
@@ -319,11 +294,7 @@ function onShowInput(pen: any, e: Point) {
 
   pen.calculative.inputCell = pen.calculative.hoverCell;
 
-  const rect = getCellRect(
-    pen,
-    pen.calculative.hoverCell.row,
-    pen.calculative.hoverCell.col
-  );
+  const rect = getCellRect(pen, pen.calculative.hoverCell.row, pen.calculative.hoverCell.col);
   pen.calculative.tempText = cell.text || cell + '';
   pen.calculative.canvas.showInput(pen, rect, '#ffffff');
 }
@@ -334,12 +305,7 @@ function onInput(pen: formPen, text: string) {
     return;
   }
 
-  setCellText(
-    pen,
-    pen.calculative.inputCell.row,
-    pen.calculative.inputCell.col,
-    text
-  );
+  setCellText(pen, pen.calculative.inputCell.row, pen.calculative.inputCell.col, text);
   pen.calculative.canvas.render();
 }
 
@@ -399,12 +365,7 @@ function getCell(pen: formPen, rowIndex: number, colIndex: number) {
 }
 
 // 设置cell的文本
-function setCellText(
-  pen: formPen,
-  rowIndex: number,
-  colIndex: number,
-  text: string
-) {
+function setCellText(pen: formPen, rowIndex: number, colIndex: number, text: string) {
   if (!pen.data || !Array.isArray(pen.data)) {
     return;
   }
@@ -494,20 +455,14 @@ function onValue(pen: formPen) {
     let temChildren = pen.children;
     pen.children = [];
     temChildren.forEach((child: string) => {
-      pen.calculative.canvas.delete(
-        [pen.calculative.canvas.findOne(child)],
-        true
-      );
+      pen.calculative.canvas.delete([pen.calculative.canvas.findOne(child)], true);
     });
     pen.calculative.texts = undefined;
   }
 }
 
 function beforeValue(pen: formPen, value: any) {
-  if (
-    (value as any).table ||
-    (value.col == undefined && value.row == undefined)
-  ) {
+  if ((value as any).table || (value.col == undefined && value.row == undefined)) {
     // 整体传参，不做处理
     if (value.data || pen.styles) {
       pen.calculative.isUpdateData = true;
