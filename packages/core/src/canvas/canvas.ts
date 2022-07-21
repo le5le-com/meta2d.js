@@ -571,12 +571,23 @@ export class Canvas {
         break;
       case 'Enter':
         if (this.drawingLineName) {
-          this.finishDrawline(true, true);
+          this.finishDrawline(true);
           if (this.store.active[0].anchors[0].connectTo) {
             this.drawingLineName = '';
           } else {
             this.drawingLineName = this.store.options.drawingLineName;
           }
+        }
+
+        if (this.store.active) {
+          this.store.active.forEach((pen) => {
+            if (pen.type) {
+              pen.close = !pen.close;
+              this.store.path2dMap.set(pen, globalStore.path2dDraws.line(pen));
+              getLineLength(pen);
+            }
+          });
+          this.render();
         }
         break;
       case 'Escape':
@@ -1499,10 +1510,17 @@ export class Canvas {
           }
           to.x = pt.x;
           to.y = pt.y;
+          to.connectTo = undefined;
         } else {
           to = { ...pt };
           this.drawingLine.calculative.worldAnchors.push(to);
         }
+        if (this.hoverType === HoverType.NodeAnchor || this.hoverType === HoverType.LineAnchor) {
+          to.x = this.store.hoverAnchor.x;
+          to.y = this.store.hoverAnchor.y;
+          to.connectTo = this.store.hoverAnchor.penId;
+        }
+
         if (this.drawingLineName === 'line') {
           if (e.ctrlKey) {
             to.y = this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2].y;
@@ -2699,7 +2717,7 @@ export class Canvas {
     this.externalElements.style.cursor = 'default';
   }
 
-  async finishDrawline(end?: boolean, close?: boolean) {
+  async finishDrawline(end?: boolean) {
     if (!this.drawingLine) {
       return;
     }
@@ -2723,12 +2741,6 @@ export class Canvas {
         this.drawingLine = undefined;
         this.render();
         return;
-      } else {
-        if (close && !from.connectTo && !to.connectTo) {
-          //两端都没有连接点
-          let end = Object.assign({}, from, { id: s8() });
-          this.drawingLine.calculative.worldAnchors.push(end);
-        }
       }
     } else {
       if (this.store.options.disableRepeatLine) {
@@ -3589,6 +3601,7 @@ export class Canvas {
         this.store.activeAnchor
       );
     }
+
     const x = e.x - this.mouseDown.x;
     const y = e.y - this.mouseDown.y;
 
@@ -3596,34 +3609,33 @@ export class Canvas {
     let offsetY = y - this.lastOffsetY;
     this.lastOffsetX = x;
     this.lastOffsetY = y;
-
     translatePoint(this.store.activeAnchor, offsetX, offsetY);
+    const line = this.store.active[0];
+    const from = getFromAnchor(line);
+    const to = getToAnchor(line);
+    // 移动线锚点，折线自动计算关闭
+    if (line.autoPolyline !== false && this.store.activeAnchor !== from && this.store.activeAnchor !== to) {
+      line.autoPolyline = false;
+    }
 
     if (this.store.hover && this.store.hoverAnchor && this.store.hoverAnchor.penId !== this.store.activeAnchor.penId) {
-      // TODO: 移动 lineAnchor , 不改变 connectTo
-      // this.store.activeAnchor.connectTo = this.store.hover.id;
-      // this.store.activeAnchor.anchorId = this.store.hoverAnchor.id;
       offsetX = this.store.hoverAnchor.x - this.store.activeAnchor.x;
       offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
       translatePoint(this.store.activeAnchor, offsetX, offsetY);
-    } else if (!this.store.options.disableDockLine) {
-      this.dock = calcAnchorDock(e, this.store.activeAnchor, this.store);
-      if (this.dock.xDock || this.dock.yDock) {
-        offsetX = 0;
-        offsetY = 0;
-        if (this.dock.xDock) {
-          offsetX = this.dock.xDock.x - this.store.activeAnchor.x;
-        }
-        if (this.dock.yDock) {
-          offsetY = this.dock.yDock.y - this.store.activeAnchor.y;
-        }
-        translatePoint(this.store.activeAnchor, offsetX, offsetY);
+
+      this.store.activeAnchor.connectTo = this.store.hover.id;
+      to.prev = undefined;
+      // 重新自动计算连线
+      if (line.lineName !== 'polyline') {
+        this[line.lineName]?.(this.store, line);
       }
     }
 
-    const line = this.store.active[0];
-    // 移动线锚点，折线自动计算关闭
-    line.lineName === 'polyline' && (line.autoPolyline = false);
+    // 重新自动计算连线
+    if (line.autoPolyline !== false && line.lineName === 'polyline') {
+      this[line.lineName]?.(this.store, line);
+    }
+
     this.dirtyLines.add(line);
     this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
     this.render();
@@ -3639,7 +3651,7 @@ export class Canvas {
         initPens: this.initPens,
       });
       this.initPens = undefined;
-    }, 200);
+    }, 500);
   }
 
   moveLineAnchorPrev(e: { x: number; y: number }) {

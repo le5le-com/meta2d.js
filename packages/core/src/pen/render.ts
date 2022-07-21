@@ -1258,9 +1258,21 @@ export function translateLine(pen: Pen, x: number, y: number) {
 export function deleteTempAnchor(pen: Pen) {
   if (pen && pen.calculative && pen.calculative.worldAnchors.length) {
     let to: Point = getToAnchor(pen);
-    while (pen.calculative.worldAnchors.length && to !== pen.calculative.activeAnchor) {
-      pen.calculative.worldAnchors.pop();
-      to = getToAnchor(pen);
+
+    // 第一次画线
+    if (!pen.anchors || !pen.anchors.length) {
+      while (pen.calculative.worldAnchors.length && to !== pen.calculative.activeAnchor) {
+        pen.calculative.worldAnchors.pop();
+        to = getToAnchor(pen);
+      }
+    }
+    // 拖拽终点
+    else if (to === pen.calculative.activeAnchor) {
+      pen.calculative.worldAnchors = [pen.calculative.worldAnchors[0]];
+    }
+    // 拖拽起点
+    else if (pen.calculative.worldAnchors[0] === pen.calculative.activeAnchor) {
+      pen.calculative.worldAnchors = [pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1]];
     }
   }
 }
