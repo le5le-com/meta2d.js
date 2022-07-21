@@ -1,5 +1,5 @@
 import { Direction } from '../../data';
-import { deleteTempAnchor, facePen, getToAnchor, Pen } from '../../pen';
+import { deleteTempAnchor, facePen, getFromAnchor, getToAnchor, Pen } from '../../pen';
 import { Point } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
@@ -14,18 +14,24 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     return;
   }
 
-  let from = pen.calculative.activeAnchor;
+  let from = getFromAnchor(pen);
   let to = getToAnchor(pen);
-  if (!from || !to || !to.id || from === to) {
-    return;
-  }
-  from.next = undefined;
-  deleteTempAnchor(pen);
 
-  if (from.x === to.x || from.y === to.y) {
-    pen.calculative.worldAnchors.push(to);
+  if (!from || !to) {
     return;
   }
+
+  // 拖拽起点
+  let dragFrom: boolean;
+  if (pen.anchors?.length && from === pen.calculative.activeAnchor) {
+    dragFrom = true;
+    from = to;
+    to = getFromAnchor(pen);
+  }
+
+  from.next = undefined;
+  to.prev = undefined;
+  deleteTempAnchor(pen);
 
   const pts: Point[] = [];
 
@@ -41,6 +47,7 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     pts.push(a);
   }
   a = getFacePoint(to, toFace, faceSpace);
+  const end = to;
   if (a) {
     to = a;
   }
@@ -60,7 +67,6 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
       break;
     default:
       pts.push(...getNextPoints(pen, from, to));
-      a = undefined;
       break;
   }
 
@@ -69,7 +75,15 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     anchor.penId = pen.id;
     pen.calculative.worldAnchors.push(anchor);
   });
+
   pen.calculative.worldAnchors.push(to);
+  if (a) {
+    pen.calculative.worldAnchors.push(end);
+  }
+
+  if (dragFrom) {
+    pen.calculative.worldAnchors.reverse();
+  }
 }
 
 function getFacePoint(pt: Point, d: Direction, dis: number) {
@@ -103,6 +117,16 @@ function getNextPointsOfUp(from: Point, to: Point, toFace: Direction) {
   let x: number;
   let y: number;
   switch (toFace) {
+    case Direction.Up:
+      if (from.y < to.y) {
+        x = to.x;
+        y = from.y;
+      } else {
+        x = from.x;
+        y = to.y;
+      }
+      pts.push({ x, y });
+      break;
     case Direction.Bottom:
       x = to.x;
       y = from.y;
@@ -236,6 +260,17 @@ function getNextPointsOfBottom(from: Point, to: Point, toFace: Direction) {
       }
       pts.push({ x, y });
       break;
+    case Direction.Bottom:
+      if (from.y > to.y) {
+        x = to.x;
+        y = from.y;
+      } else {
+        x = from.x;
+        y = to.y;
+      }
+      pts.push({ x, y });
+
+      break;
     case Direction.Left:
       x = to.x;
       y = from.y;
@@ -297,6 +332,13 @@ function getNextPointsOfLeft(from: Point, to: Point, toFace: Direction) {
       } else {
         const centerX = (from.x + to.x) / 2;
         pts.push({ x: centerX, y: from.y }, { x: centerX, y: to.y });
+      }
+      break;
+    case Direction.Left:
+      if (to.x > from.x) {
+        pts.push({ x: from.x, y: to.y });
+      } else {
+        pts.push({ x: to.x, y: from.y });
       }
       break;
     default:
