@@ -4738,16 +4738,6 @@ export class Canvas {
     this.store.emitter.emit('delete', pens);
   }
 
-  /**
-   *
-   * 1.获取待删除的pen
-   * 2.遍历pen ① 不存在父节点 没有被锁定  可以删除 递归删除所有子节点
-   *           ② 存在父节点 一直往上找  父节点被锁定 不能删除
-   *                                  未被锁定 且父节点在待删除pen里面  删除父节点
-   *                                           父节点不在待删除pen里 一直往上找
-   *                                           根父节点 都没有被锁定 删除改节点
-   */
-
   private _del(pens: Pen[]) {
     if (!pens) {
       return;
