@@ -22,6 +22,9 @@ export function calcTextRect(pen: Pen) {
   if (textHeight && textHeight < 1) {
     textHeight *= worldRect.height;
   }
+  if (textWidth < pen.calculative.fontSize) {
+    textWidth = pen.calculative.fontSize;
+  }
   // 默认居左，居上
   x += (textLeft || 0) + worldRect.x;
   y += (textTop || 0) + worldRect.y;
