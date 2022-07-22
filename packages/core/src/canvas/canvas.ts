@@ -4761,7 +4761,11 @@ export class Canvas {
       style += `height:${pen.textHeight}px;`;
     }
     if (pen.textWidth) {
-      style += `width:${pen.textWidth}px;`;
+      if (pen.textWidth < pen.fontSize) {
+        style += `width:${pen.fontSize}px;`;
+      } else {
+        style += `width:${pen.textWidth}px;`;
+      }
     }
     if (pen.whiteSpace) {
       style += `white-space:${pen.whiteSpace};`;
