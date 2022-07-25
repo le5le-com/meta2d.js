@@ -1143,6 +1143,7 @@ export class Canvas {
 
       // 添加点
       const to = getToAnchor(this.drawingLine);
+
       if (to.isTemp) {
         this.drawingLine.calculative.activeAnchor =
           this.drawingLine.calculative.worldAnchors[this.drawingLine.calculative.worldAnchors.length - 2];
@@ -1155,9 +1156,11 @@ export class Canvas {
           penId: to.penId,
         });
       }
-
+      if (this.drawingLineName === 'polyline') {
+        this.drawingLine.autoPolyline = false;
+      }
       this.drawingLine.calculative.drawlineH = undefined;
-      this.drawline();
+      this.drawingLineName !== 'polyline' && this.drawline();
     }
 
     // 单击在节点上，通过自动锚点连线
