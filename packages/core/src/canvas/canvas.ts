@@ -4768,7 +4768,11 @@ export class Canvas {
       }
     }
     if (pen.whiteSpace) {
-      style += `white-space:${pen.whiteSpace};`;
+      if (pen.whiteSpace === 'pre-line') {
+        style += `white-space:pre;`;
+      } else {
+        style += `white-space:${pen.whiteSpace};`;
+      }
     }
     console.log('style', style);
     sheet.deleteRule(0);
@@ -4817,6 +4821,8 @@ export class Canvas {
     this.inputDiv.dataset.penId = undefined;
     this.dropdown.style.display = 'none';
     this.inputDiv.dataset.isInput = 'false';
+    this.inputDiv.contentEditable = 'false';
+    this.render();
   };
 
   private createInput() {
