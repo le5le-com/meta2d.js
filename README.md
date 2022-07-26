@@ -26,6 +26,15 @@ Faster, better, smart, more productive.
 
 # Highlight
 
+- Data-driven view   
+- Rich interactive events  
+- Subscribe message  
+- Animation  
+- Real-time data monitoring  
+- Lifecycle hooks  
+- Video play  
+- Extensible  
+
 
 # License
 
