@@ -500,15 +500,15 @@ function onValue(pen: formPen) {
       );
     });
     pen.calculative.texts = undefined;
+    pen.calculative.canvas.active([pen]);
   }
 }
 
 function beforeValue(pen: formPen, value: any) {
   pen.calculative.isUpdateData = false;
   if (
-    (value as any).table &&
-    value.col == undefined &&
-    value.row == undefined
+    (value as any).table ||
+    (value.col == undefined && value.row == undefined)
   ) {
     // 整体传参，不做处理
     if (value.data || pen.styles) {
