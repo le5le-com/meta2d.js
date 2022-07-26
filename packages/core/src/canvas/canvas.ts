@@ -4999,9 +4999,9 @@ export class Canvas {
     // this.inputDiv.style.color = getTextColor(pen, this.store);
 
     this.inputParent.style.left =
-      textRect.x + this.store.data.x + 5 - (pen.textLeft || 0) + 'px';
+      textRect.x + this.store.data.x - (pen.textLeft || 0) + 'px'; //+ 5
     this.inputParent.style.top =
-      textRect.y + this.store.data.y + 5 - (pen.textTop || 0) + 'px';
+      textRect.y + this.store.data.y - (pen.textTop || 0) + 'px'; //+ 5
     this.inputParent.style.width =
       textRect.width - 10 + (pen.textLeft || 0) + 'px';
     this.inputParent.style.height =
@@ -5057,7 +5057,7 @@ export class Canvas {
       };
       style += `justify-content: ${baseLine[pen.textBaseline]};`;
     } else {
-      style += 'justify-content: center;';
+      style += 'justify-content: start;';
     }
     if (pen.fontFamily) {
       style += `font-family: ${pen.fontFamily};`;
@@ -5086,9 +5086,9 @@ export class Canvas {
     }
     if (pen.textWidth) {
       if (pen.textWidth < pen.fontSize) {
-        style += `width:${pen.fontSize}px;`;
+        style += `width:${pen.fontSize * 1.2}px;`;
       } else {
-        style += `width:${pen.textWidth}px;`;
+        style += `width:${pen.textWidth * 1.2}px;`;
       }
     }
     if (pen.whiteSpace) {
