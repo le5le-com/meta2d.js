@@ -4678,10 +4678,8 @@ export class Canvas {
       textRect.x + this.store.data.x - (pen.textLeft || 0) + 'px'; //+ 5
     this.inputParent.style.top =
       textRect.y + this.store.data.y - (pen.textTop || 0) + 'px'; //+ 5
-    this.inputParent.style.width =
-      textRect.width - 10 + (pen.textLeft || 0) + 'px';
-    this.inputParent.style.height =
-      textRect.height - 10 + (pen.textTop || 0) + 'px';
+    this.inputParent.style.width = textRect.width + (pen.textLeft || 0) + 'px'; //(textRect.width < pen.width ? 0 : 10)
+    this.inputParent.style.height = textRect.height + (pen.textTop || 0) + 'px'; //   (textRect.height < pen.height ? 0 : 10)
     this.inputParent.style.zIndex = '1000';
     this.inputParent.style.background = background;
     if (pen.rotate % 360) {
@@ -4733,7 +4731,11 @@ export class Canvas {
       };
       style += `justify-content: ${baseLine[pen.textBaseline]};`;
     } else {
-      style += 'justify-content: start;';
+      // if (pen.textWidth < pen.calculative.) {
+      //   style += 'justify-content: start;';
+      // } else {
+      style += 'justify-content: center;';
+      // }
     }
     if (pen.fontFamily) {
       style += `font-family: ${pen.fontFamily};`;
@@ -4760,7 +4762,7 @@ export class Canvas {
     if (pen.textHeight) {
       style += `height:${pen.textHeight}px;`;
     }
-    if (pen.textWidth) {
+    if (pen.textWidth && pen.whiteSpace !== 'pre-line') {
       if (pen.textWidth < pen.fontSize) {
         style += `width:${pen.fontSize * 1.2}px;`;
       } else {
