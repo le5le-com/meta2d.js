@@ -14,6 +14,10 @@ Topology is a diagram visualization framework uses canvas and typescript. Develo
 
 <br>
 
+# Use online
+
+http://topology.le5le.com/
+
 # Why
 
 Faster, better, smart, more productive.
@@ -21,6 +25,15 @@ Faster, better, smart, more productive.
 <br>
 
 # Highlight
+
+- Data-driven view   
+- Rich interactive events  
+- Subscribe message  
+- Animation  
+- Real-time data monitoring  
+- Lifecycle hooks  
+- Video play  
+- Extensible  
 
 
 # License

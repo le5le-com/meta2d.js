@@ -27,6 +27,8 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     dragFrom = true;
     from = to;
     to = getFromAnchor(pen);
+  } else if ((!pen.anchors || !pen.anchors.length) && from !== pen.calculative.activeAnchor) {
+    from = pen.calculative.activeAnchor;
   }
 
   from.next = undefined;
