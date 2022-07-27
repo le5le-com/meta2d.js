@@ -32,11 +32,11 @@ export function lineSegment(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     pen.calculative.worldAnchors = [];
   }
 
-  if (pen.calculative.worldAnchors.length < 2) {
+  if (pen.calculative.worldAnchors.length < 2 || pen.anchors?.length > 1) {
     return;
   }
 
-  let from = pen.calculative.activeAnchor;
+  const from = getFromAnchor(pen);
   const to = getToAnchor(pen);
   if (!from || !to || !to.id || from === to) {
     return;

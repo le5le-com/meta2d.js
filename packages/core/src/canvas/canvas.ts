@@ -2468,6 +2468,7 @@ export class Canvas {
           hoverType = HoverType.Node;
           this.store.pointAt = pt;
           // 锚点贴边吸附
+<<<<<<< HEAD
           let {x,y, ex, ey, rotate, center} = this.store.hover.calculative.worldRect;
           if (rotate) {
             const pts: Point[] = [
@@ -2486,6 +2487,43 @@ export class Canvas {
                 if (Math.abs(tempx - this.store.pointAt.x) < 7) {
                   this.store.pointAt.x = tempx;
                 } 
+=======
+          if (!(pt as any).ctrlKey) {
+            let { x, y, ex, ey, rotate, center } =
+              this.store.hover.calculative.worldRect;
+            if (rotate) {
+              const pts: Point[] = [
+                { x, y },
+                { x: ex, y: y },
+                { x: ex, y: ey },
+                { x: x, y: ey },
+              ];
+              pts.forEach((item: Point) => {
+                rotatePoint(item, rotate, center);
+              });
+              let last = pts[pts.length - 1];
+              for (const item of pts) {
+                if (last.y > pt.y !== item.y > pt.y) {
+                  const tempx =
+                    item.x +
+                    ((pt.y - item.y) * (last.x - item.x)) / (last.y - item.y);
+                  if (Math.abs(tempx - this.store.pointAt.x) < 10) {
+                    this.store.pointAt.x = tempx;
+                  }
+                }
+                last = item;
+              }
+            } else {
+              if (this.store.pointAt.x - 10 < x) {
+                this.store.pointAt.x = x;
+              } else if (this.store.pointAt.x + 10 > ex) {
+                this.store.pointAt.x = ex;
+              }
+              if (this.store.pointAt.y - 10 < y) {
+                this.store.pointAt.y = y;
+              } else if (this.store.pointAt.y + 10 > ey) {
+                this.store.pointAt.y = ey;
+>>>>>>> c2df768 (fix bug: line)
               }
               last = item;
             }
@@ -4758,7 +4796,7 @@ export class Canvas {
       pens = pens.filter((pen) => !pen.locked);
     }
     if (!pens || !pens.length) {
-        return;
+      return;
     }
 
     this._del(pens);
