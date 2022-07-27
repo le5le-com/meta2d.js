@@ -6,6 +6,7 @@ const selfName = ':@';
 
 let allRect: Rect;
 let shapeScale: number; // 图形缩小比例
+let anchorsArr = [];
 // (window as any).parseSvg = parseSvg; //  TODO: 测试
 export function parseSvg(svg: string): Pen[] {
   const parser = new XMLParser({
@@ -17,6 +18,7 @@ export function parseSvg(svg: string): Pen[] {
   const xmlJson: any[] = parser.parse(svg);
   const svgs = xmlJson.filter((item) => item.svg);
   const pens: Pen[] = [];
+  anchorsArr = [];
   svgs.forEach((svg) => {
     const selfProperty = svg[selfName];
     allRect = transformContainerRect(selfProperty);
@@ -43,8 +45,20 @@ export function parseSvg(svg: string): Pen[] {
 
     pens.push(...combinePens);
   });
-
+  setAnchor(pens[0]);
   return pens;
+}
+
+function setAnchor(pen: Pen) {
+  anchorsArr.map((item, index) => {
+    return {
+      id: index,
+      penId: pen.id,
+      x: item.x,
+      y: item.y,
+    };
+  });
+  pen.anchors = anchorsArr;
 }
 
 function transformCombines(selfProperty, children: any[]): Pen[] {
@@ -61,7 +75,6 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
     children: [],
   };
   pens.push(combinePen);
-
   children.forEach((child) => {
     let pen: Pen | Pen[] = undefined;
     const childProperty = child[selfName];
@@ -104,21 +117,104 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
       } else if (child.rect) {
         // rect 类型
         pen = transformRect(childProperty, pen);
+        const rectangle: Pen = pen;
+        //获取圆上右下左坐标
+        let circleAnchors = [
+          {
+            x: rectangle.x + rectangle.width * 0.5,
+            y: rectangle.y,
+          },
+          {
+            x: rectangle.x + rectangle.width * 1,
+            y: rectangle.y + rectangle.height * 0.5,
+          },
+          {
+            x: rectangle.x + rectangle.width * 0.5,
+            y: rectangle.y + rectangle.height * 1,
+          },
+          {
+            x: rectangle.x,
+            y: rectangle.y + rectangle.height * 0.5,
+          },
+        ];
+        circleAnchors.forEach((item) => {
+          if (
+            item.x <= 0.01 ||
+            item.x >= 0.99 ||
+            item.y <= 0.01 ||
+            item.y >= 0.99
+          ) {
+            anchorsArr.push(item);
+          }
+        });
       } else if (child.circle) {
         // circle 类型
         pen = transformCircle(childProperty, pen);
+        const circle: Pen = pen;
+        //获取圆上右下左坐标
+        let circleAnchors = [
+          {
+            x: circle.x + circle.width * 0.5,
+            y: circle.y,
+          },
+          {
+            x: circle.x + circle.width * 1,
+            y: circle.y + circle.height * 0.5,
+          },
+          {
+            x: circle.x + circle.width * 0.5,
+            y: circle.y + circle.height * 1,
+          },
+          {
+            x: circle.x,
+            y: circle.y + circle.height * 0.5,
+          },
+        ];
+        circleAnchors.forEach((item) => {
+          if (
+            item.x <= 0.01 ||
+            item.x >= 0.99 ||
+            item.y <= 0.01 ||
+            item.y >= 0.99
+          ) {
+            anchorsArr.push(item);
+          }
+        });
       } else if (child.ellipse) {
         // ellipse 类型
         pen = transformCircle(childProperty, pen);
       } else if (child.line) {
         // line 类型
         pen = transformLine(childProperty, pen);
+        const line: Pen = pen;
+        line.anchors.forEach((item) => {
+          const x = line.x + item.x * line.width;
+          const y = line.y + item.y * line.height;
+          if (x < 0.01 || x > 0.99 || y < 0.01 || y > 0.99) {
+            //TODO 连线太多的问题
+            anchorsArr.push({
+              x,
+              y,
+            });
+          }
+        });
       } else if (child.polygon) {
         // polygon 类型
         pen = transformPolygon(childProperty, pen);
       } else if (child.polyline) {
         // polyline 类型
         pen = transformPolyline(childProperty, pen);
+        const polyline: Pen = pen;
+        polyline.anchors.forEach((item) => {
+          const x = polyline.x + item.x * polyline.width;
+          const y = polyline.y + item.y * polyline.height;
+          if (x < 0.01 || x > 0.99 || y < 0.01 || y > 0.99) {
+            anchorsArr.push({
+              x,
+              y,
+            });
+          }
+        });
       } else if (child.text) {
         // text 类型
         pen = transformText(childProperty, child.text, pen);
@@ -146,7 +242,6 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
       }
     }
   });
-
   return pens;
 }
 
