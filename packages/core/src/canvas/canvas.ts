@@ -1526,10 +1526,21 @@ export class Canvas {
           this.render();
           return;
         } else if (!this.store.active[0]?.locked) {
+          const pt = { x: e.x, y: e.y };
           // Move line anchor
           if (this.hoverType === HoverType.LineAnchor) {
-            this.getAnchorDock(e);
-            this.moveLineAnchor(e);
+            if (!this.dockInAnchor(e) && !this.store.options.disableDockLine) {
+              this.clearDock();
+
+              this.dock = calcAnchorDock(
+                this.store,
+                pt,
+                this.store.activeAnchor
+              );
+              this.dock?.xDock && (pt.x += this.dock.xDock.step);
+              this.dock?.yDock && (pt.y += this.dock.yDock.step);
+            }
+            this.moveLineAnchor(pt);
             return;
           }
 
@@ -1601,6 +1612,14 @@ export class Canvas {
       const pt: Point = { ...e };
       pt.id = s8();
       pt.penId = this.drawingLine.id;
+
+      // dock
+      if (!this.store.options.disableDockLine) {
+        this.clearDock();
+        this.dock = calcAnchorDock(this.store, pt);
+        this.dock?.xDock && (pt.x += this.dock.xDock.step);
+        this.dock?.yDock && (pt.y += this.dock.yDock.step);
+      }
       if (
         this.mouseDown &&
         this.drawingLineName === 'curve' &&
@@ -2547,10 +2566,10 @@ export class Canvas {
     return hoverType;
   };
 
-  private getAnchorDock = (pt: Point) => {
+  private dockInAnchor = (pt: Point) => {
     this.store.hover = undefined;
 
-    outer: for (let i = this.store.data.pens.length - 1; i >= 0; --i) {
+    for (let i = this.store.data.pens.length - 1; i >= 0; --i) {
       const pen = this.store.data.pens[i];
       if (
         pen.visible == false ||
@@ -2571,7 +2590,7 @@ export class Canvas {
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             if (this.inAnchor(pt, pen, anchor)) {
-              break outer;
+              return true;
             }
           }
         }
@@ -3927,7 +3946,7 @@ export class Canvas {
     });
   }
 
-  moveLineAnchor(e: { x: number; y: number }) {
+  moveLineAnchor(pt: { x: number; y: number }) {
     if (!this.activeRect || this.store.data.locked) {
       return;
     }
@@ -3945,13 +3964,8 @@ export class Canvas {
       );
     }
 
-    const x = e.x - this.mouseDown.x;
-    const y = e.y - this.mouseDown.y;
-
-    let offsetX = x - this.lastOffsetX;
-    let offsetY = y - this.lastOffsetY;
-    this.lastOffsetX = x;
-    this.lastOffsetY = y;
+    let offsetX = pt.x - this.store.activeAnchor.x;
+    let offsetY = pt.y - this.store.activeAnchor.y;
     translatePoint(this.store.activeAnchor, offsetX, offsetY);
     const line = this.store.active[0];
     const from = getFromAnchor(line);
@@ -4251,7 +4265,6 @@ export class Canvas {
     this.getSizeCPs();
     this.render();
     this.tooltip.translate(x, y);
-    this.store.emitter.emit('translatePens', pens);
 
     if (!doing) {
       // 单次的移动需要记历史记录
@@ -4261,6 +4274,8 @@ export class Canvas {
         initPens,
       });
       this.initImageCanvas(pens);
+
+      this.store.emitter.emit('translatePens', pens);
     }
   }
 

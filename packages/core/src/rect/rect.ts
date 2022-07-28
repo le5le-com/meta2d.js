@@ -21,7 +21,12 @@ export function pointInRect(pt: Point, rect: Rect) {
     calcRightBottom(rect);
   }
 
-  if (!rect.rotate || rect.width < 20 || rect.height < 20 || rect.rotate % 360 === 0) {
+  if (
+    !rect.rotate ||
+    rect.width < 20 ||
+    rect.height < 20 ||
+    rect.rotate % 360 === 0
+  ) {
     return pt.x > rect.x && pt.x < rect.ex && pt.y > rect.y && pt.y < rect.ey;
   }
 
@@ -60,7 +65,10 @@ export function calcRightBottom(rect: Rect) {
   rect.ey = rect.y + rect.height;
 }
 
-export function pointInVertices(point: { x: number; y: number }, vertices: Point[]): boolean {
+export function pointInVertices(
+  point: { x: number; y: number },
+  vertices: Point[]
+): boolean {
   if (vertices.length < 3) {
     return false;
   }
@@ -68,7 +76,10 @@ export function pointInVertices(point: { x: number; y: number }, vertices: Point
   let last = vertices[vertices.length - 1];
   for (const item of vertices) {
     if (last.y > point.y !== item.y > point.y) {
-      if (item.x + ((point.y - item.y) * (last.x - item.x)) / (last.y - item.y) > point.x) {
+      if (
+        item.x + ((point.y - item.y) * (last.x - item.x)) / (last.y - item.y) >
+        point.x
+      ) {
         isIn = !isIn;
       }
     }
@@ -144,16 +155,29 @@ export function rectInRect(source: Rect, target: Rect, allIn?: boolean) {
     source = getRectOfPoints(rectToPoints(source)); // 更改 source 引用地址值，不影响原值
   }
   if (allIn) {
-    return source.x > target.x && source.ex < target.ex && source.y > target.y && source.ey < target.ey;
+    return (
+      source.x > target.x &&
+      source.ex < target.ex &&
+      source.y > target.y &&
+      source.ey < target.ey
+    );
   }
-  return !(source.x > target.ex || source.ex < target.x || source.ey < target.y || source.y > target.ey);
+  return !(
+    source.x > target.ex ||
+    source.ex < target.x ||
+    source.ey < target.y ||
+    source.y > target.ey
+  );
 }
 
 /**
  * 一个 rect 在另一个 rect 的 四个角，即水平区域不重合，垂直区域不重合
  */
 export function rectInFourAngRect(source: Rect, target: Rect) {
-  return (target.x > source.ex || target.ex < source.x) && (target.y > source.ey || target.ey < source.y);
+  return (
+    (target.x > source.ex || target.ex < source.x) &&
+    (target.y > source.ey || target.ey < source.y)
+  );
 }
 
 /**
@@ -161,7 +185,7 @@ export function rectInFourAngRect(source: Rect, target: Rect) {
  * @param rect 原 rect ，无副作用
  * @param size padding 类型，可传四个方向的值，也可以只传一个值
  */
-export function getLargerRect(rect: Rect, size: Padding): Rect {
+export function expandRect(rect: Rect, size: Padding): Rect {
   const padding = formatPadding(size);
   const retRect = {
     x: rect.x - padding[3],
@@ -190,7 +214,10 @@ export function translateRect(rect: Rect | Pen, x: number, y: number) {
  * @param line1 线段1
  * @param line2 线段2
  */
-function getIntersectPoint(line1: { from: Point; to: Point }, line2: { from: Point; to: Point }): Point {
+function getIntersectPoint(
+  line1: { from: Point; to: Point },
+  line2: { from: Point; to: Point }
+): Point {
   const k1 = (line1.to.y - line1.from.y) / (line1.to.x - line1.from.x);
   const k2 = (line2.to.y - line2.from.y) / (line2.to.x - line2.from.x);
   return getIntersectPointByK(
@@ -211,7 +238,10 @@ function getIntersectPoint(line1: { from: Point; to: Point }, line2: { from: Poi
  * @param line2 线段2
  * @returns
  */
-function getIntersectPointByK(line1: { k: number; point: Point }, line2: { k: number; point: Point }): Point {
+function getIntersectPointByK(
+  line1: { k: number; point: Point },
+  line2: { k: number; point: Point }
+): Point {
   if (isEqual(line1.k, 0)) {
     return {
       x: line2.point.x,
@@ -260,7 +290,12 @@ function pointsToRect(pts: Point[], rotate: number): Rect {
   return getRectOfPoints(pts);
 }
 
-export function resizeRect(rect: Rect | Pen, offsetX: number, offsetY: number, resizeIndex: number) {
+export function resizeRect(
+  rect: Rect | Pen,
+  offsetX: number,
+  offsetY: number,
+  resizeIndex: number
+) {
   if (rect.rotate && rect.rotate % 360) {
     // 计算出外边的四个点
     const pts = rectToPoints(rect);
