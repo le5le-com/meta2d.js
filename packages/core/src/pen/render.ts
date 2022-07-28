@@ -1,7 +1,15 @@
 import { LineAnimateType, LockState, Pen } from './model';
 import { getSplitAnchor, line } from '../diagrams';
 import { Direction } from '../data';
-import { calcRotate, distance, facePoint, Point, rotatePoint, scalePoint, translatePoint } from '../point';
+import {
+  calcRotate,
+  distance,
+  facePoint,
+  Point,
+  rotatePoint,
+  scalePoint,
+  translatePoint,
+} from '../point';
 import {
   calcCenter,
   calcRightBottom,
@@ -49,8 +57,15 @@ export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
 }
 
 function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const { worldRect, gradientFromColor, gradientToColor, gradientAngle } = pen.calculative;
-  return linearGradient(ctx, worldRect, gradientFromColor, gradientToColor, gradientAngle);
+  const { worldRect, gradientFromColor, gradientToColor, gradientAngle } =
+    pen.calculative;
+  return linearGradient(
+    ctx,
+    worldRect,
+    gradientFromColor,
+    gradientToColor,
+    gradientAngle
+  );
 }
 
 /**
@@ -60,7 +75,8 @@ function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
  * @returns 径向渐变
  */
 function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const { worldRect, gradientFromColor, gradientToColor, gradientRadius } = pen.calculative;
+  const { worldRect, gradientFromColor, gradientToColor, gradientRadius } =
+    pen.calculative;
   if (!gradientFromColor || !gradientToColor) {
     return;
   }
@@ -72,7 +88,14 @@ function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
     r = height;
   }
   r *= 0.5;
-  const grd = ctx.createRadialGradient(centerX, centerY, r * (gradientRadius || 0), centerX, centerY, r);
+  const grd = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    r * (gradientRadius || 0),
+    centerX,
+    centerY,
+    r
+  );
   grd.addColorStop(0, gradientFromColor);
   grd.addColorStop(1, gradientToColor);
 
@@ -80,8 +103,19 @@ function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const { worldRect, lineGradientFromColor, lineGradientToColor, lineGradientAngle } = pen.calculative;
-  return linearGradient(ctx, worldRect, lineGradientFromColor, lineGradientToColor, lineGradientAngle);
+  const {
+    worldRect,
+    lineGradientFromColor,
+    lineGradientToColor,
+    lineGradientAngle,
+  } = pen.calculative;
+  return linearGradient(
+    ctx,
+    worldRect,
+    lineGradientFromColor,
+    lineGradientToColor,
+    lineGradientAngle
+  );
 }
 
 /**
@@ -137,7 +171,13 @@ function linearGradient(
  * @param pen 画笔
  */
 function getImagePosition(pen: Pen) {
-  const { worldIconRect: rect, iconWidth, iconHeight, imgNaturalWidth, imgNaturalHeight } = pen.calculative;
+  const {
+    worldIconRect: rect,
+    iconWidth,
+    iconHeight,
+    imgNaturalWidth,
+    imgNaturalHeight,
+  } = pen.calculative;
   let { x, y, width: w, height: h } = rect;
   if (iconWidth) {
     w = iconWidth;
@@ -201,7 +241,10 @@ function getImagePosition(pen: Pen) {
   };
 }
 
-export function drawImage(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+export function drawImage(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+) {
   const { x, y, width, height } = getImagePosition(pen);
   const { worldIconRect, iconRotate, img } = pen.calculative;
 
@@ -263,7 +306,12 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   });
 
   !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
-  const { x: drawRectX, y: drawRectY, width, height } = pen.calculative.textDrawRect;
+  const {
+    x: drawRectX,
+    y: drawRectY,
+    width,
+    height,
+  } = pen.calculative.textDrawRect;
   if (textBackground) {
     ctx.save();
     ctx.fillStyle = textBackground;
@@ -293,7 +341,8 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
     return;
   }
 
-  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight, canvas } = pen.calculative;
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight, canvas } =
+    pen.calculative;
 
   const store = canvas.store;
   ctx.save();
@@ -349,7 +398,10 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
   ctx.restore();
 }
 
-export function drawIcon(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+export function drawIcon(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+) {
   const store = pen.calculative.canvas.store;
   ctx.save();
   ctx.shadowColor = '';
@@ -456,7 +508,10 @@ export function getFont({
 }
 
 // TODO: 0.5 偏移量在 图片中可能存在问题
-export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+export function ctxFlip(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+) {
   // worldRect 可能为 undefined
   const { x, ex, y, ey } = pen.calculative.worldRect || {};
   if (pen.calculative.flipX) {
@@ -469,7 +524,10 @@ export function ctxFlip(ctx: CanvasRenderingContext2D | OffscreenCanvasRendering
   }
 }
 
-export function ctxRotate(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+export function ctxRotate(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+) {
   const { x, y } = pen.calculative.worldRect.center;
   ctx.translate(x, y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
@@ -624,7 +682,11 @@ export function setLineJoin(ctx: CanvasRenderingContext2D, pen: Pen) {
  * canvas2svg 与 canvas ctx 设置 strokeStyle 表现不同
  * 若设置值为 undefined ，canvas2svg 为空， canvas ctx 为上一个值
  */
-export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rect) {
+export function renderPenRaw(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  rect?: Rect
+) {
   ctx.save();
   if (rect) {
     ctx.translate(-rect.x, -rect.y);
@@ -637,17 +699,29 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   ctx.beginPath();
   if (pen.calculative.flipX) {
     if (rect) {
-      ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex - rect.x, -rect.y);
+      ctx.translate(
+        pen.calculative.worldRect.x + pen.calculative.worldRect.ex - rect.x,
+        -rect.y
+      );
     } else {
-      ctx.translate(pen.calculative.worldRect.x + pen.calculative.worldRect.ex, 0);
+      ctx.translate(
+        pen.calculative.worldRect.x + pen.calculative.worldRect.ex,
+        0
+      );
     }
     ctx.scale(-1, 1);
   }
   if (pen.calculative.flipY) {
     if (rect) {
-      ctx.translate(-rect.x, pen.calculative.worldRect.y + pen.calculative.worldRect.ey - rect.x);
+      ctx.translate(
+        -rect.x,
+        pen.calculative.worldRect.y + pen.calculative.worldRect.ey - rect.x
+      );
     } else {
-      ctx.translate(0, pen.calculative.worldRect.y + pen.calculative.worldRect.ey);
+      ctx.translate(
+        0,
+        pen.calculative.worldRect.y + pen.calculative.worldRect.ey
+      );
     }
     ctx.scale(1, -1);
   }
@@ -674,7 +748,10 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
   } else {
     if (pen.strokeImage) {
       if (pen.calculative.strokeImg) {
-        ctx.strokeStyle = ctx.createPattern(pen.calculative.strokeImg, 'repeat');
+        ctx.strokeStyle = ctx.createPattern(
+          pen.calculative.strokeImg,
+          'repeat'
+        );
         fill = true;
       }
     } else {
@@ -683,7 +760,10 @@ export function renderPenRaw(ctx: CanvasRenderingContext2D, pen: Pen, rect?: Rec
 
     if (pen.backgroundImage) {
       if (pen.calculative.backgroundImg) {
-        ctx.fillStyle = ctx.createPattern(pen.calculative.backgroundImg, 'repeat');
+        ctx.fillStyle = ctx.createPattern(
+          pen.calculative.backgroundImg,
+          'repeat'
+        );
         fill = true;
       }
     } else {
@@ -750,7 +830,9 @@ export function ctxDrawPath(
   store: TopologyStore,
   fill: boolean
 ) {
-  const path = canUsePath ? store.path2dMap.get(pen) : globalStore.path2dDraws[pen.name];
+  const path = canUsePath
+    ? store.path2dMap.get(pen)
+    : globalStore.path2dDraws[pen.name];
   if (path) {
     if (pen.type === PenType.Line && pen.borderWidth) {
       ctx.save();
@@ -784,7 +866,10 @@ export function ctxDrawPath(
       const grd = !pen.verticalProgress
         ? ctx.createLinearGradient(x, y, x + width * progress, y)
         : ctx.createLinearGradient(x, ey, x, y + height * (1 - progress));
-      const color = pen.calculative.progressColor || pen.calculative.color || store.options.activeColor;
+      const color =
+        pen.calculative.progressColor ||
+        pen.calculative.color ||
+        store.options.activeColor;
       grd.addColorStop(0, color);
       grd.addColorStop(1, color);
       grd.addColorStop(1, 'transparent');
@@ -834,7 +919,11 @@ export function ctxDrawPath(
 /**
  * 设置线条动画，ctx 的 strokeStyle lineDash 等属性更改
  */
-export function setCtxLineAnimate(ctx: CanvasRenderingContext2D, pen: Pen, store: TopologyStore) {
+export function setCtxLineAnimate(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  store: TopologyStore
+) {
   ctx.strokeStyle = pen.animateColor || store.options.animateColor;
   let len = 0;
   switch (pen.lineAnimateType) {
@@ -856,7 +945,8 @@ export function setCtxLineAnimate(ctx: CanvasRenderingContext2D, pen: Pen, store
       } else {
         ctx.lineDashOffset = pen.length - pen.calculative.animatePos;
       }
-      len = pen.calculative.animateDotSize || pen.calculative.lineWidth * 2 || 6;
+      len =
+        pen.calculative.animateDotSize || pen.calculative.lineWidth * 2 || 6;
       if (len < 6) {
         len = 6;
       }
@@ -865,9 +955,16 @@ export function setCtxLineAnimate(ctx: CanvasRenderingContext2D, pen: Pen, store
       break;
     default:
       if (pen.animateReverse) {
-        ctx.setLineDash([0, pen.length - pen.calculative.animatePos + 1, pen.calculative.animatePos]);
+        ctx.setLineDash([
+          0,
+          pen.length - pen.calculative.animatePos + 1,
+          pen.calculative.animatePos,
+        ]);
       } else {
-        ctx.setLineDash([pen.calculative.animatePos, pen.length - pen.calculative.animatePos]);
+        ctx.setLineDash([
+          pen.calculative.animatePos,
+          pen.length - pen.calculative.animatePos,
+        ]);
       }
       break;
   }
@@ -893,7 +990,11 @@ export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.restore();
 }
 
-export function renderAnchor(ctx: CanvasRenderingContext2D, pt: Point, pen: Pen) {
+export function renderAnchor(
+  ctx: CanvasRenderingContext2D,
+  pt: Point,
+  pen: Pen
+) {
   if (!pt) {
     return;
   }
@@ -986,10 +1087,14 @@ export function calcWorldRects(pen: Pen) {
     rect.width = parentRect.width * pen.width;
     rect.height = parentRect.height * pen.height;
     if (parent.flipX) {
-      rect.x = parentRect.width - (rect.x - parentRect.x + rect.width) + parentRect.x;
+      rect.x =
+        parentRect.width - (rect.x - parentRect.x + rect.width) + parentRect.x;
     }
     if (parent.flipY) {
-      rect.y = parentRect.height - (rect.y - parentRect.y + rect.height) + parentRect.y;
+      rect.y =
+        parentRect.height -
+        (rect.y - parentRect.y + rect.height) +
+        parentRect.y;
     }
 
     calcRightBottom(rect);
@@ -1012,9 +1117,12 @@ export function calcPadding(pen: Pen, rect: Rect) {
   !pen.paddingRight && (pen.calculative.paddingRight = 0);
 
   pen.calculative.paddingTop < 1 && (pen.calculative.paddingTop *= rect.height);
-  pen.calculative.paddingBottom < 1 && (pen.calculative.paddingBottom *= rect.height);
-  pen.calculative.paddingLeft < 1 && (pen.calculative.paddingLeft *= rect.width);
-  pen.calculative.paddingRight < 1 && (pen.calculative.paddingRight *= rect.width);
+  pen.calculative.paddingBottom < 1 &&
+    (pen.calculative.paddingBottom *= rect.height);
+  pen.calculative.paddingLeft < 1 &&
+    (pen.calculative.paddingLeft *= rect.width);
+  pen.calculative.paddingRight < 1 &&
+    (pen.calculative.paddingRight *= rect.width);
 }
 
 export function calcPenRect(pen: Pen) {
@@ -1052,7 +1160,11 @@ export function calcWorldAnchors(pen: Pen) {
 
   if (pen.calculative.rotate) {
     anchors.forEach((anchor) => {
-      rotatePoint(anchor, pen.calculative.rotate, pen.calculative.worldRect.center);
+      rotatePoint(
+        anchor,
+        pen.calculative.rotate,
+        pen.calculative.worldRect.center
+      );
     });
   }
 
@@ -1093,7 +1205,8 @@ export function calcWorldPointOfPen(pen: Pen, pt: Point) {
 }
 
 export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
-  const { paddingTop, paddingBottom, paddingLeft, paddingRight } = pen.calculative;
+  const { paddingTop, paddingBottom, paddingLeft, paddingRight } =
+    pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;
   let width = pen.calculative.worldRect.width - paddingLeft - paddingRight;
@@ -1174,7 +1287,8 @@ export function pushPenAnchor(pen: Pen, pt: Point) {
       id: pt.id,
       penId: pen.id,
       x: (pt.x - pen.calculative.worldRect.x) / pen.calculative.worldRect.width,
-      y: (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
+      y:
+        (pt.y - pen.calculative.worldRect.y) / pen.calculative.worldRect.height,
     };
     pen.anchors.push(anchor);
   }
@@ -1192,7 +1306,11 @@ export function addLineAnchor(pen: Pen, pt: Point, index: number) {
 
   const worldAnchor = getSplitAnchor(pen, pt, index);
   pen.calculative.worldAnchors.splice(index + 1, 0, worldAnchor);
-  pen.anchors.splice(index + 1, 0, calcRelativePoint(worldAnchor, pen.calculative.worldRect));
+  pen.anchors.splice(
+    index + 1,
+    0,
+    calcRelativePoint(worldAnchor, pen.calculative.worldRect)
+  );
   pen.calculative.activeAnchor = worldAnchor;
   return worldAnchor;
 }
@@ -1257,7 +1375,10 @@ export function deleteTempAnchor(pen: Pen) {
 
     // 第一次画线
     if (!pen.anchors || !pen.anchors.length) {
-      while (pen.calculative.worldAnchors.length && to !== pen.calculative.activeAnchor) {
+      while (
+        pen.calculative.worldAnchors.length &&
+        to !== pen.calculative.activeAnchor
+      ) {
         pen.calculative.worldAnchors.pop();
         to = getToAnchor(pen);
       }
@@ -1268,7 +1389,9 @@ export function deleteTempAnchor(pen: Pen) {
     }
     // 拖拽起点
     else if (pen.calculative.worldAnchors[0] === pen.calculative.activeAnchor) {
-      pen.calculative.worldAnchors = [pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1]];
+      pen.calculative.worldAnchors = [
+        pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1],
+      ];
     }
   }
 }
@@ -1277,7 +1400,12 @@ export function deleteTempAnchor(pen: Pen) {
  * 添加line到pen的connectedLines中，并关联相关属性
  * 不添加连线到画布中，请确保画布中已经有该连线。
  * */
-export function connectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: Point) {
+export function connectLine(
+  pen: Pen,
+  anchor: Point,
+  line: Pen,
+  lineAnchor: Point
+) {
   if (!pen || !anchor || !line || !lineAnchor) {
     return;
   }
@@ -1296,7 +1424,10 @@ export function connectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: Poin
   }
 
   const i = pen.connectedLines.findIndex(
-    (item) => item.lineId === line.id && item.lineAnchor === lineAnchor.id && item.anchor === anchor.id
+    (item) =>
+      item.lineId === line.id &&
+      item.lineAnchor === lineAnchor.id &&
+      item.anchor === anchor.id
   );
 
   if (i < 0) {
@@ -1320,7 +1451,12 @@ export function connectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: Poin
 /**
  * 从 pen.connectedLines 中删除 lineId 和 lineAnchor
  */
-export function disconnectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: Point) {
+export function disconnectLine(
+  pen: Pen,
+  anchor: Point,
+  line: Pen,
+  lineAnchor: Point
+) {
   if (!pen || !anchor || !line || !lineAnchor) {
     return;
   }
@@ -1342,7 +1478,11 @@ export function disconnectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: P
   lineAnchor.connectTo = undefined;
   lineAnchor.anchorId = undefined;
   // 如果两条连线相互关联，则都取消关联
-  if (pen.type && anchor.connectTo === line.id && anchor.anchorId === lineAnchor.id) {
+  if (
+    pen.type &&
+    anchor.connectTo === line.id &&
+    anchor.anchorId === lineAnchor.id
+  ) {
     disconnectLine(line, lineAnchor, pen, anchor);
   }
 
@@ -1400,28 +1540,22 @@ export function setNodeAnimate(pen: Pen, now: number) {
     pen.calculative.frameIndex = 0;
     pen.calculative.frameStart = pen.calculative.start;
     pen.calculative.frameDuration = pen.frames[0].duration;
-    pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    pen.calculative.frameEnd =
+      pen.calculative.frameStart + pen.calculative.frameDuration;
     pen.calculative.cycleIndex = 1;
-
-    pen.lastFrame = {};
-    for (const k in pen) {
-      if (typeof pen[k] !== 'object' || k === 'lineDash') {
-        pen.lastFrame[k] = pen[k];
-      }
-    }
-    pen.lastFrame.rotate = 0;
-    pen.lastFrame.x = 0;
-    pen.lastFrame.y = 0;
-    pen.lastFrame.scale = 1;
     pen.calculative.x = pen.calculative.worldRect.x;
     pen.calculative.y = pen.calculative.worldRect.y;
     pen.calculative.initRect = deepClone(pen.calculative.worldRect);
     pen.calculative.initRect.rotate = pen.calculative.rotate || 0;
+
+    initPrevFrame(pen);
   } else {
     let frameIndex = 0;
-    const cycleCount = Math.ceil((now - pen.calculative.start) / pen.calculative.duration);
+    const cycleIndex = Math.ceil(
+      (now - pen.calculative.start) / pen.calculative.duration
+    );
     // 播放结束
-    if (cycleCount > pen.animateCycle) {
+    if (cycleIndex > pen.animateCycle) {
       pen.calculative.start = undefined;
       setNodeAnimateProcess(pen, 1);
       return 0;
@@ -1443,51 +1577,62 @@ export function setNodeAnimate(pen: Pen, now: number) {
     }
 
     pen.calculative.frameDuration = pen.frames[frameIndex].duration;
-    pen.calculative.frameStart = pen.calculative.start + pen.calculative.duration * (cycleCount - 1);
-    pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    pen.calculative.frameStart =
+      pen.calculative.start + pen.calculative.duration * (cycleIndex - 1);
+    pen.calculative.frameEnd =
+      pen.calculative.frameStart + pen.calculative.frameDuration;
 
     // 换帧
     const frameChanged = frameIndex !== pen.calculative.frameIndex;
     // 新循环播放
-    const cycleChanged = cycleCount > pen.calculative.cycleIndex;
+    const cycleChanged = cycleIndex > pen.calculative.cycleIndex;
 
     frameChanged && (pen.calculative.frameIndex = frameIndex);
-    cycleChanged && (pen.calculative.cycleIndex = cycleCount);
+    cycleChanged && (pen.calculative.cycleIndex = cycleIndex);
 
     if (frameChanged || cycleChanged) {
-      // 已初始位置为参考点。因为网页在后台时，不执行动画帧，网页恢复显示时，位置不确定
+      // 以初始位置为参考点。因为网页在后台时，不执行动画帧，网页恢复显示时，位置不确定
       pen.calculative.x = pen.calculative.initRect.x;
       pen.calculative.y = pen.calculative.initRect.y;
       pen.calculative.rotate = pen.calculative.initRect.rotate || 0;
 
-      pen.lastFrame = {};
-      const frame = pen.frames[frameIndex - 1];
-      for (const k in frame) {
-        pen.lastFrame[k] = frame[k];
-      }
-
       if (frameIndex > 0) {
-        Object.assign(pen.lastFrame, {
-          rotate: pen.frames[frameIndex - 1].rotate || 0,
-          x: pen.frames[frameIndex - 1].x || 0,
-          y: pen.frames[frameIndex - 1].y || 0,
-          scale: pen.frames[frameIndex - 1].scale || 1,
+        pen.prevFrame = {};
+        const prevFrame = pen.frames[frameIndex - 1];
+        for (const k in prevFrame) {
+          pen.prevFrame[k] = prevFrame[k];
+        }
+        Object.assign(pen.prevFrame, {
+          rotate: prevFrame.rotate || 0,
+          x: prevFrame.x || 0,
+          y: prevFrame.y || 0,
+          scale: prevFrame.scale || 1,
         });
       } else {
-        Object.assign(pen.lastFrame, {
-          rotate: 0,
-          x: 0,
-          y: 0,
-          scale: 1,
-        });
+        initPrevFrame(pen);
       }
     }
   }
 
-  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
+  const process =
+    ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
   setNodeAnimateProcess(pen, process);
 
   return true;
+}
+
+// 把前一个动画帧初始化为播放前状态
+export function initPrevFrame(pen: Pen) {
+  pen.prevFrame = {};
+  for (const k in pen) {
+    if (typeof pen[k] !== 'object' || k === 'lineDash') {
+      pen.prevFrame[k] = pen[k];
+    }
+  }
+  pen.prevFrame.rotate = 0;
+  pen.prevFrame.x = 0;
+  pen.prevFrame.y = 0;
+  pen.prevFrame.scale = 1;
 }
 
 // 根据process进度值（纯小数），计算节点动画属性
@@ -1506,39 +1651,58 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       continue;
     } else if (k === 'scale') {
       pen.calculative.worldRect = deepClone(pen.calculative.initRect);
-      scaleRect(pen.calculative.worldRect, pen.lastFrame.scale, pen.calculative.worldRect.center);
-      const newScale = pen.lastFrame.scale + (frame[k] - pen.lastFrame.scale) * process;
-      scaleRect(pen.calculative.worldRect, newScale / pen.lastFrame.scale, pen.calculative.worldRect.center);
+      scaleRect(
+        pen.calculative.worldRect,
+        pen.prevFrame.scale,
+        pen.calculative.worldRect.center
+      );
+      const newScale =
+        pen.prevFrame.scale + (frame[k] - pen.prevFrame.scale) * process;
+      scaleRect(
+        pen.calculative.worldRect,
+        newScale / pen.prevFrame.scale,
+        pen.calculative.worldRect.center
+      );
       pen.calculative.dirty = true;
     } else if (k === 'x') {
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
       pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
       pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
-      translateRect(pen.calculative.worldRect, frame[k] * process * pen.calculative.canvas.store.data.scale, 0);
+      translateRect(
+        pen.calculative.worldRect,
+        frame[k] * process * pen.calculative.canvas.store.data.scale,
+        0
+      );
       pen.calculative.dirty = true;
     } else if (k === 'y') {
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
       pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
       pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
-      translateRect(pen.calculative.worldRect, 0, frame[k] * process * pen.calculative.canvas.store.data.scale);
+      translateRect(
+        pen.calculative.worldRect,
+        0,
+        frame[k] * process * pen.calculative.canvas.store.data.scale
+      );
       pen.calculative.dirty = true;
     } else if (k === 'rotate') {
-      if (pen.lastFrame[k] >= 360) {
-        pen.lastFrame[k] %= 360;
+      if (pen.prevFrame[k] >= 360) {
+        pen.prevFrame[k] %= 360;
       }
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-      pen.calculative.rotate = (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
+      pen.calculative.rotate =
+        (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
       pen.calculative.dirty = true;
     } else if (isLinear(frame[k], k, pen)) {
-      if (pen.lastFrame[k] == null) {
+      if (pen.prevFrame[k] == null) {
         if (k === 'globalAlpha') {
-          pen.lastFrame[k] = 1;
+          pen.prevFrame[k] = 1;
         } else {
-          pen.lastFrame[k] = 0;
+          pen.prevFrame[k] = 0;
         }
       }
 
-      const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
+      const current =
+        pen.prevFrame[k] + (frame[k] - pen.prevFrame[k]) * process;
       pen.calculative[k] = Math.round(current * 100) / 100;
     } else {
       pen.calculative[k] = frame[k];
@@ -1561,7 +1725,11 @@ function isLinear(value: unknown, key: string, pen: Pen): boolean {
   // 不线性变化的属性
   const noLinear = ['strokeType', 'bkType', 'showChild'] as const;
   type NoLinear = typeof noLinear[number];
-  return typeof value === 'number' && pen.linear !== false && !noLinear.includes(key as NoLinear);
+  return (
+    typeof value === 'number' &&
+    pen.linear !== false &&
+    !noLinear.includes(key as NoLinear)
+  );
 }
 
 export function setLineAnimate(pen: Pen, now: number) {
@@ -1578,10 +1746,12 @@ export function setLineAnimate(pen: Pen, now: number) {
     pen.animateSpan = 1;
   }
 
-  pen.calculative.animatePos += pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+  pen.calculative.animatePos +=
+    pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
   if (!pen.calculative.start) {
     pen.calculative.start = Date.now();
-    pen.calculative.animatePos = pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+    pen.calculative.animatePos =
+      pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
     pen.calculative.cycleIndex = 1;
   } else if (pen.calculative.animatePos > pen.length) {
     // 播放到尾了
@@ -1622,7 +1792,10 @@ export function setHover(pen: Pen, hover = true) {
   if (pen.children) {
     pen.children.forEach((id) => {
       // 子节点没有自己的独立hover，继承父节点hover
-      if (store.pens[id]?.hoverColor == null && store.pens[id]?.hoverBackground == null) {
+      if (
+        store.pens[id]?.hoverColor == null &&
+        store.pens[id]?.hoverBackground == null
+      ) {
         setHover(store.pens[id], hover);
       }
     });
@@ -1644,7 +1817,11 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   elem.style.display = pen.calculative.inView != false ? 'inline' : 'none'; // 是否隐藏元素
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
-  if (pen.locked === LockState.DisableEdit || pen.locked === LockState.DisableMove || store.data.locked) {
+  if (
+    pen.locked === LockState.DisableEdit ||
+    pen.locked === LockState.DisableMove ||
+    store.data.locked
+  ) {
     // gif 组合后，作为子节点可通过 lockedOnCombine 来决定自身的 locked 状态
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
@@ -1734,7 +1911,11 @@ export function calcInView(pen: Pen, calcChild = false) {
   }
 
   pen.calculative.inView = true;
-  if (!isShowChild(pen, store) || pen.visible == false || pen.calculative.visible == false) {
+  if (
+    !isShowChild(pen, store) ||
+    pen.visible == false ||
+    pen.calculative.visible == false
+  ) {
     pen.calculative.inView = false;
   } else {
     const { x, y, width, height, rotate } = pen.calculative.worldRect;
@@ -1758,7 +1939,11 @@ export function calcInView(pen: Pen, calcChild = false) {
 /**
  * 绘制 rect ，上线后可查看 rect 位置
  */
-function inspectRect(ctx: CanvasRenderingContext2D, store: TopologyStore, pen: Pen) {
+function inspectRect(
+  ctx: CanvasRenderingContext2D,
+  store: TopologyStore,
+  pen: Pen
+) {
   if (store.fillWorldTextRect) {
     ctx.save();
     ctx.fillStyle = '#c3deb7';
@@ -1768,7 +1953,10 @@ function inspectRect(ctx: CanvasRenderingContext2D, store: TopologyStore, pen: P
   }
 }
 
-export function setGlobalAlpha(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pen: Pen) {
+export function setGlobalAlpha(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+) {
   const globalAlpha = pen.calculative.globalAlpha;
   if (globalAlpha < 1) {
     ctx.globalAlpha = globalAlpha;
