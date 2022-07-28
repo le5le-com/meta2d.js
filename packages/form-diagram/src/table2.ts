@@ -29,6 +29,7 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
 
   // 画单元格
   drawCell(ctx, pen);
+  pen.isFirstTime = false;
 }
 
 function initRect(pen: formPen) {
