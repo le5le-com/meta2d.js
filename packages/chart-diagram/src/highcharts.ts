@@ -36,7 +36,7 @@ export function highcharts(pen: Pen): Path2D {
   if (typeof (pen as any).highcharts === 'string') {
     try {
       (pen as any).highcharts = JSON.parse((pen as any).highcharts.option);
-    } catch(e) {}
+    } catch (e) {}
   }
   if (!(pen as any).highcharts) {
     return;
@@ -100,7 +100,9 @@ function resize(pen: Pen) {
     return;
   }
   setElemPosition(pen, highchartsList[pen.id].div);
-  highchartsList[pen.id].chart.reflow();
+  setTimeout(() => {
+    highchartsList[pen.id].chart.reflow();
+  }, 100);
 }
 
 function value(pen: Pen) {
@@ -128,7 +130,7 @@ function beforeValue(pen: Pen, value: ChartData): any {
     const chart = highchartsList[pen.id].chart;
     chart.update((value as any).highcharts.option);
     return value;
-  } else if ((!value.dataX && !value.dataY)) {
+  } else if (!value.dataX && !value.dataY) {
     return value;
   }
   // 1. 拿到老的 echarts
@@ -153,7 +155,9 @@ function beforeValue(pen: Pen, value: ChartData): any {
       }
       // xAxis 存在数组的情况，只考虑 单 x 轴的情况
       const xAxis = highcharts.option.xAxis;
-      const xData: any[] = Array.isArray(xAxis) ? xAxis[0].categories : xAxis.categories;
+      const xData: any[] = Array.isArray(xAxis)
+        ? xAxis[0].categories
+        : xAxis.categories;
       if (xData) {
         // categories 存在，手动添加 category
         // 只更改数据，不更新视图
