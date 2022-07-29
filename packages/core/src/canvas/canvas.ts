@@ -3694,7 +3694,7 @@ export class Canvas {
    * 修改 ids （id parentId children 等）
    * 半透明，去图片
    */
-  private initMovingPens() {
+  initMovingPens() {
     this.movingPens = deepClone(this.store.active, true);
     const containChildPens = this.getAllByPens(this.movingPens);
     const copyContainChildPens = deepClone(containChildPens, true);
