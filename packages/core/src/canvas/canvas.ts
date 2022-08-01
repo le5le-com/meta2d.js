@@ -5052,6 +5052,15 @@ export class Canvas {
     } else {
       style += 'text-align: center;';
     }
+    if (pen.textAlign && pen.whiteSpace === 'pre-line') {
+      let textAlign = {
+        left: 'start',
+        center: 'center',
+        right: 'end',
+      };
+      style += `align-items: ${textAlign[pen.textAlign]};`;
+    }
+
     if (pen.textBaseline) {
       let baseLine = {
         top: 'start',
@@ -5127,6 +5136,9 @@ export class Canvas {
     if (pen.whiteSpace) {
       if (pen.whiteSpace === 'pre-line') {
         style += `white-space:pre;`;
+        // if (!pen.textAlign) {
+        //   style += `align-items: center;`;
+        // }
       } else {
         style += `white-space:${pen.whiteSpace};`;
         if (pen.whiteSpace === 'nowrap') {
