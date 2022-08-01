@@ -5135,7 +5135,13 @@ export class Canvas {
         }
       }
     }
-
+    let textWidth = pen.fontSize * 1.2 * pen.text.length;
+    let contentWidth =
+      (pen.textWidth || pen.width) *
+      Math.floor(pen.height / (pen.lineHeight * pen.fontSize));
+    if (textWidth > contentWidth) {
+      style += 'justify-content: start;';
+    }
     sheet.deleteRule(0);
     sheet.deleteRule(0);
     sheet.insertRule(
