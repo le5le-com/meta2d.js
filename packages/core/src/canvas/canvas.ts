@@ -5041,7 +5041,7 @@ export class Canvas {
         sheet = document.styleSheets[i];
       }
     }
-    let style = '';
+    let style = 'overflow: hidden;';
     let div_style = '';
     let font_scale = 1;
     if (pen.fontSize < 12) {
@@ -5063,6 +5063,7 @@ export class Canvas {
       // if (pen.textWidth < pen.calculative.) {
       //   style += 'justify-content: start;';
       // } else {
+      //文字高度超出整个rect高度时
       style += 'justify-content: center;';
       // }
     }
@@ -5107,7 +5108,7 @@ export class Canvas {
         if (pen.textWidth < pen.fontSize) {
           style += `width:${pen.fontSize * 1.2 * font_scale}px;`;
         } else {
-          style += `width:${pen.textWidth * 1.2 * font_scale}px;`;
+          style += `width:${pen.textWidth * font_scale}px;`;
         }
       }
     } else {
@@ -5118,6 +5119,10 @@ export class Canvas {
         }
         style += `width:${tem * font_scale}px;`;
       }
+      // if (pen.whiteSpace === 'pre-line') {
+      //   //回车换行
+      //   style += `overflow: visible;`;
+      // }
     }
     if (pen.whiteSpace) {
       if (pen.whiteSpace === 'pre-line') {
@@ -5136,7 +5141,7 @@ export class Canvas {
     sheet.insertRule(
       `.topology-input 
       .input-div{
-        resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;overflow: hidden;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;${style}}`
+        resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;${style}}`
     );
     sheet.insertRule(`.input-div div{${div_style}}`);
     // sheet.insertRule(`.topology-input .input-div-font{${style_font}}`);
