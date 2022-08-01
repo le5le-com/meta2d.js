@@ -35,7 +35,13 @@ import {
   TopologyStore,
   useStore,
 } from './store';
-import { formatPadding, Padding, s8, valueInArray, valueInRange } from './utils';
+import {
+  formatPadding,
+  Padding,
+  s8,
+  valueInArray,
+  valueInRange,
+} from './utils';
 import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction, EventName } from './event';
@@ -121,7 +127,11 @@ export class Topology {
 
   private init(parent: string | HTMLElement) {
     if (typeof parent === 'string') {
-      this.canvas = new Canvas(this, document.getElementById(parent), this.store);
+      this.canvas = new Canvas(
+        this,
+        document.getElementById(parent),
+        this.store
+      );
     } else {
       this.canvas = new Canvas(this, parent, this.store);
     }
@@ -207,7 +217,10 @@ export class Topology {
           const fnJs = value.replaceAll
             ? value.replaceAll('.setValue(', '._setValue(')
             : value.replace(/.setValue\(/g, '._setValue(');
-          e.fn = new Function('pen', 'params', fnJs) as (pen: Pen, params: string) => void;
+          e.fn = new Function('pen', 'params', fnJs) as (
+            pen: Pen,
+            params: string
+          ) => void;
         } catch (err) {
           console.error('[topology]: Error on make a function:', err);
         }
@@ -259,7 +272,9 @@ export class Topology {
 
   setBackgroundImage(url: string) {
     this.store.data.bkImage = url;
-    this.canvas.canvasImageBottom.canvas.style.backgroundImage = url ? `url(${url})` : '';
+    this.canvas.canvasImageBottom.canvas.style.backgroundImage = url
+      ? `url(${url})`
+      : '';
     if (url) {
       const img = new Image();
       img.src = url;
@@ -511,7 +526,12 @@ export class Topology {
   // step - 自动吸附需要的偏移量
   // penId - 参考线的笔
   registerMoveDock(
-    dock: (store: TopologyStore, rect: Rect, pens: Pen[], offset: Point) => { xDock: Point; yDock: Point }
+    dock: (
+      store: TopologyStore,
+      rect: Rect,
+      pens: Pen[],
+      offset: Point
+    ) => { xDock: Point; yDock: Point }
   ) {
     this.canvas.customeMoveDock = dock;
   }
@@ -520,7 +540,12 @@ export class Topology {
    * 参数同方法 registerMoveDock ，最后一个参数由 offset 偏移修改成了当前 resize 的点
    */
   registerResizeDock(
-    dock: (store: TopologyStore, rect: Rect, pens: Pen[], resizeIndex: number) => { xDock: Point; yDock: Point }
+    dock: (
+      store: TopologyStore,
+      rect: Rect,
+      pens: Pen[],
+      resizeIndex: number
+    ) => { xDock: Point; yDock: Point }
   ) {
     this.canvas.customeResizeDock = dock;
   }
@@ -882,7 +907,10 @@ export class Topology {
       let socketFn: (e: string, topic: string) => void;
       const socketCbJs = this.store.data.socketCbJs;
       if (socketCbJs) {
-        socketFn = new Function('e', 'topic', socketCbJs) as (e: string, topic: string) => void;
+        socketFn = new Function('e', 'topic', socketCbJs) as (
+          e: string,
+          topic: string
+        ) => void;
       }
       if (!socketFn) {
         return false;
@@ -941,11 +969,17 @@ export class Topology {
       this.store.data.mqttOptions = params.mqttOptions;
     }
     if (this.store.data.mqtt) {
-      if (this.store.data.mqttOptions.clientId && !this.store.data.mqttOptions.customClientId) {
+      if (
+        this.store.data.mqttOptions.clientId &&
+        !this.store.data.mqttOptions.customClientId
+      ) {
         this.store.data.mqttOptions.clientId = s8();
       }
 
-      this.mqttClient = mqtt.connect(this.store.data.mqtt, this.store.data.mqttOptions);
+      this.mqttClient = mqtt.connect(
+        this.store.data.mqtt,
+        this.store.data.mqttOptions
+      );
       this.mqttClient.on('message', (topic: string, message: Buffer) => {
         this.doSocket(message.toString(), topic);
       });
@@ -989,7 +1023,9 @@ export class Topology {
 
     try {
       const messageObj = JSON.parse(message);
-      const values: IValue[] = !Array.isArray(messageObj) ? [messageObj] : messageObj;
+      const values: IValue[] = !Array.isArray(messageObj)
+        ? [messageObj]
+        : messageObj;
       const formPens = this.store.data.pens.filter((pen) => pen.form);
       const dataIdValues = values.filter((value) => value.dataId);
       dataIdValues.length && this.setValuesByDataId(formPens, dataIdValues);
@@ -1025,7 +1061,9 @@ export class Topology {
             console.warn('Not support onBinds for pen:', pen);
           }
         } else {
-          const dataIdValue = dataIdValues.find((value) => value.dataId === dataIds.dataId);
+          const dataIdValue = dataIdValues.find(
+            (value) => value.dataId === dataIds.dataId
+          );
           if (dataIdValue) {
             values.push({
               id: pen.id,
@@ -1061,12 +1099,26 @@ export class Topology {
       pens = this.find(data.tag);
     }
     pens.forEach((pen) => {
-      const afterData: IValue = pen.onBeforeValue ? pen.onBeforeValue(pen, data as ChartData) : data;
+      const afterData: IValue = pen.onBeforeValue
+        ? pen.onBeforeValue(pen, data as ChartData)
+        : data;
+      if (data.frames) {
+        this.stopAnimate([pen]);
+        if (!data.showDuration) {
+          data.showDuration = data.frames.reduce((total, item) => {
+            return total + item.duration;
+          }, 0);
+        }
+      }
       this.canvas.updateValue(pen, afterData);
       pen.onValue?.(pen);
     });
 
-    if (!this.store.data.locked && this.store.active.length && !this.canvas.movingPens) {
+    if (
+      !this.store.data.locked &&
+      this.store.active.length &&
+      !this.canvas.movingPens
+    ) {
       // 移动过程中，不重算 activeRect
       this.canvas.calcActiveRect();
     }
@@ -1122,11 +1174,15 @@ export class Topology {
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
       case 'mousedown':
-        e.pen && e.pen.onMouseDown && e.pen.onMouseDown(e.pen, this.canvas.mousePos);
+        e.pen &&
+          e.pen.onMouseDown &&
+          e.pen.onMouseDown(e.pen, this.canvas.mousePos);
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
       case 'mouseup':
-        e.pen && e.pen.onMouseUp && e.pen.onMouseUp(e.pen, this.canvas.mousePos);
+        e.pen &&
+          e.pen.onMouseUp &&
+          e.pen.onMouseUp(e.pen, this.canvas.mousePos);
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
       case 'dblclick':
@@ -1162,7 +1218,9 @@ export class Topology {
             can = fn(pen);
           } else if (fnJs) {
             try {
-              event.where.fn = new Function('pen', fnJs) as (pen: Pen) => boolean;
+              event.where.fn = new Function('pen', fnJs) as (
+                pen: Pen
+              ) => boolean;
             } catch (err) {
               console.error('Error: make function:', err);
             }
@@ -1235,7 +1293,10 @@ export class Topology {
       }
       parent.children.push(pen.id);
       pen.parentId = parent.id;
-      const childRect = calcRelativeRect(pen.calculative.worldRect, parent.calculative.worldRect);
+      const childRect = calcRelativeRect(
+        pen.calculative.worldRect,
+        parent.calculative.worldRect
+      );
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
       if (!oldPen) {
@@ -1512,7 +1573,11 @@ export class Topology {
     this.spaceBetweenByDirection('height', pens, height);
   }
 
-  layout(pens: Pen[] = this.store.data.pens, width?: number, space: number = 30) {
+  layout(
+    pens: Pen[] = this.store.data.pens,
+    width?: number,
+    space: number = 30
+  ) {
     const rect = this.getPenRect(getRect(pens));
     !width && (width = rect.width);
 
@@ -1541,7 +1606,10 @@ export class Topology {
       }
       const currentWidth = currentX + penRect.width - rect.x;
       const nextPenRect = this.getPenRect(pens[index + 1]);
-      if (Math.round(width - currentWidth) >= Math.round(nextPenRect.width + space))
+      if (
+        Math.round(width - currentWidth) >=
+        Math.round(nextPenRect.width + space)
+      )
         // 当前行
         currentX += penRect.width + space;
       else {
@@ -1560,11 +1628,20 @@ export class Topology {
 
   gotoView(pen: Pen) {
     const center = this.getViewCenter();
-    const x = center.x - pen.calculative.worldRect.x - pen.calculative.worldRect.width / 2;
-    const y = center.y - pen.calculative.worldRect.y - pen.calculative.worldRect.height / 2;
+    const x =
+      center.x -
+      pen.calculative.worldRect.x -
+      pen.calculative.worldRect.width / 2;
+    const y =
+      center.y -
+      pen.calculative.worldRect.y -
+      pen.calculative.worldRect.height / 2;
 
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
-      this.canvas.scroll.translate(x - this.store.data.x, y - this.store.data.y);
+      this.canvas.scroll.translate(
+        x - this.store.data.x,
+        y - this.store.data.y
+      );
     }
 
     this.store.data.x = x;
@@ -1850,7 +1927,9 @@ export class Topology {
       // pen.type = PenType.Node;
     });
 
-    return oneIsParent ? deepClone(components) : deepClone([parent, ...components]);
+    return oneIsParent
+      ? deepClone(components)
+      : deepClone([parent, ...components]);
   }
 
   setVisible(pen: Pen, visible: boolean, render = true) {
