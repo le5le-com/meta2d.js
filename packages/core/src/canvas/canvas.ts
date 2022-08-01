@@ -5042,6 +5042,11 @@ export class Canvas {
       }
     }
     let style = '';
+    let style_font = '';
+    let font_scale = 1;
+    if (pen.fontSize < 12) {
+      font_scale = 12 / pen.fontSize;
+    }
     if (pen.textAlign) {
       style += `text-align: ${pen.textAlign};`;
     } else {
@@ -5065,7 +5070,12 @@ export class Canvas {
       style += `font-family: ${pen.fontFamily};`;
     }
     if (pen.fontSize) {
-      style += `font-size:${pen.fontSize}px;`;
+      if (pen.fontSize < 12) {
+        style += `font-size:${pen.fontSize}px;`;
+        style += `zoom:${pen.fontSize / 12};`;
+      } else {
+        style += `font-size:${pen.fontSize}px;`;
+      }
     }
     style += `color:${getTextColor(pen, this.store)};`;
     if (pen.fontStyle) {
@@ -5075,22 +5085,30 @@ export class Canvas {
       style += `font-weight: ${pen.fontWeight};`;
     }
     if (pen.textLeft) {
-      style += `margin-left:${pen.textLeft}px;`;
+      style += `margin-left:${pen.textLeft * font_scale}px;`;
     }
     if (pen.textTop) {
-      style += `margin-top:${pen.textTop}px;`;
+      style += `margin-top:${pen.textTop * font_scale}px;`;
     }
     if (pen.lineHeight) {
-      style += `line-height:${pen.fontSize * pen.lineHeight}px;`;
+      style += `line-height:${pen.fontSize * pen.lineHeight * font_scale}px;`;
     }
     if (pen.textHeight) {
       style += `height:${pen.textHeight}px;`;
+    } else {
+      style += `height:${(pen.height - pen.textTop) * font_scale}px;`;
     }
-    if (pen.textWidth && pen.whiteSpace !== 'pre-line') {
-      if (pen.textWidth < pen.fontSize) {
-        style += `width:${pen.fontSize * 1.2}px;`;
-      } else {
-        style += `width:${pen.textWidth * 1.2}px;`;
+    if (pen.textWidth) {
+      if (pen.whiteSpace !== 'pre-line') {
+        if (pen.textWidth < pen.fontSize) {
+          style += `width:${pen.fontSize * 1.2 * font_scale}px;`;
+        } else {
+          style += `width:${pen.textWidth * 1.2 * font_scale}px;`;
+        }
+      }
+    } else {
+      if (pen.whiteSpace === undefined || pen.whiteSpace === 'break-all') {
+        style += `width:${(pen.width - pen.textLeft) * font_scale}px;`;
       }
     }
     if (pen.whiteSpace) {
@@ -5102,12 +5120,11 @@ export class Canvas {
     }
     console.log('style', style);
     sheet.deleteRule(0);
+    // sheet.deleteRule(0);
     sheet.insertRule(
       `.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;overflow: hidden;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;${style}}`
     );
-    // sheet.insertRule(
-    //   '.topology-input .input-div div{width: 100%;text-align: center;}'
-    // );
+    // sheet.insertRule(`.topology-input .input-div-font{${style_font}}`);
   };
 
   hideInput = () => {
@@ -5156,6 +5173,7 @@ export class Canvas {
     this.inputRight.classList.add('right');
     // this.inputParent.appendChild(this.input);
     this.inputDiv.classList.add('input-div');
+    this.inputDiv.classList.add('input-div-font');
     this.inputParent.appendChild(this.inputDiv);
     this.inputParent.appendChild(this.inputRight);
     this.inputParent.appendChild(this.dropdown);
@@ -5219,6 +5237,7 @@ export class Canvas {
       sheet.insertRule(
         '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
       );
+      // sheet.insertRule('.topology-input .input-div-font{}');
     }
 
     //TODO input
