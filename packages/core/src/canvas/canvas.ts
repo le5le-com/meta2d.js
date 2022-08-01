@@ -5042,7 +5042,7 @@ export class Canvas {
       }
     }
     let style = '';
-    let style_font = '';
+    let div_style = '';
     let font_scale = 1;
     if (pen.fontSize < 12) {
       font_scale = 12 / pen.fontSize;
@@ -5096,7 +5096,11 @@ export class Canvas {
     if (pen.textHeight) {
       style += `height:${pen.textHeight}px;`;
     } else {
-      style += `height:${(pen.height - pen.textTop) * font_scale}px;`;
+      let tem = pen.height - pen.textTop;
+      if (tem < 0) {
+        tem = 0;
+      }
+      style += `height:${tem * font_scale}px;`;
     }
     if (pen.textWidth) {
       if (pen.whiteSpace !== 'pre-line') {
@@ -5108,7 +5112,11 @@ export class Canvas {
       }
     } else {
       if (pen.whiteSpace === undefined || pen.whiteSpace === 'break-all') {
-        style += `width:${(pen.width - pen.textLeft) * font_scale}px;`;
+        let tem = pen.width - pen.textLeft;
+        if (tem < 0) {
+          tem = 0;
+        }
+        style += `width:${tem * font_scale}px;`;
       }
     }
     if (pen.whiteSpace) {
@@ -5116,14 +5124,21 @@ export class Canvas {
         style += `white-space:pre;`;
       } else {
         style += `white-space:${pen.whiteSpace};`;
+        if (pen.whiteSpace === 'nowrap') {
+          console.log('进入');
+          div_style += 'display:contents;';
+        }
       }
     }
-    console.log('style', style);
+
     sheet.deleteRule(0);
-    // sheet.deleteRule(0);
+    sheet.deleteRule(0);
     sheet.insertRule(
-      `.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;overflow: hidden;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;${style}}`
+      `.topology-input 
+      .input-div{
+        resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;overflow: hidden;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;${style}}`
     );
+    sheet.insertRule(`.input-div div{${div_style}}`);
     // sheet.insertRule(`.topology-input .input-div-font{${style_font}}`);
   };
 
@@ -5173,7 +5188,7 @@ export class Canvas {
     this.inputRight.classList.add('right');
     // this.inputParent.appendChild(this.input);
     this.inputDiv.classList.add('input-div');
-    this.inputDiv.classList.add('input-div-font');
+    // this.inputDiv.classList.add('input-div-font');
     this.inputParent.appendChild(this.inputDiv);
     this.inputParent.appendChild(this.inputRight);
     this.inputParent.appendChild(this.dropdown);
@@ -5237,6 +5252,7 @@ export class Canvas {
       sheet.insertRule(
         '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
       );
+      sheet.insertRule(`.input-div div{}`);
       // sheet.insertRule('.topology-input .input-div-font{}');
     }
 
