@@ -4980,6 +4980,10 @@ export class Canvas {
       // this.inputDiv.focus();
       this.inputDiv.dataset.isInput = 'true';
       this.inputDiv.contentEditable = 'true';
+      this.inputDiv.focus();
+      const range = window.getSelection(); //创建range
+      range.selectAllChildren(this.inputDiv); //range 选择obj下所有子内容
+      range.collapseToEnd(); //光标移至最后
       return;
     }
     this.setInputStyle(pen);
@@ -5028,8 +5032,13 @@ export class Canvas {
       this.inputRight.style.display = 'none';
     }
     // this.input.focus();
-    // this.inputDiv.focus();
+    //
     this.inputDiv.contentEditable = 'true';
+    this.inputDiv.focus();
+    const range = window.getSelection(); //创建range
+    range.selectAllChildren(this.inputDiv); //range 选择obj下所有子内容
+    range.collapseToEnd(); //光标移至最后
+
     pen.calculative.text = undefined;
     this.render();
   };
@@ -5046,7 +5055,7 @@ export class Canvas {
     let font_scale = 1;
     const { scale } = this.store.data;
     if (pen.fontSize < 12) {
-      font_scale = 12 / pen.fontSize;
+      font_scale = (12 / pen.fontSize) * scale;
     }
     if (pen.textAlign) {
       style += `text-align: ${pen.textAlign};`;
@@ -5155,14 +5164,6 @@ export class Canvas {
     if (textWidth > contentWidth) {
       style += 'justify-content: start;';
     }
-
-    // let el = document.getElementsByClassName('input-div')[0]; // jquery 对象转dom对象
-    // console.log(el);
-    // el.focus(); //解决ff不获取焦点无法定位问题
-    // var range = window.getSelection(); //创建range
-    // range.selectAllChildren(el); //range 选择obj下所有子内容
-    // range.collapseToEnd(); //光标移至最后
-
     sheet.deleteRule(0);
     sheet.deleteRule(0);
     sheet.insertRule(
