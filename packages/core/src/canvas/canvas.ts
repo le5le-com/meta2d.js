@@ -5044,6 +5044,7 @@ export class Canvas {
     let style = 'overflow: hidden;';
     let div_style = '';
     let font_scale = 1;
+    const { scale } = this.store.data;
     if (pen.fontSize < 12) {
       font_scale = 12 / pen.fontSize;
     }
@@ -5082,9 +5083,9 @@ export class Canvas {
     if (pen.fontSize) {
       if (pen.fontSize < 12) {
         style += `font-size:${pen.fontSize}px;`;
-        style += `zoom:${pen.fontSize / 12};`;
+        style += `zoom:${(pen.fontSize / 12) * scale};`;
       } else {
-        style += `font-size:${pen.fontSize}px;`;
+        style += `font-size:${pen.fontSize * scale}px;`;
       }
     }
     style += `color:${getTextColor(pen, this.store)};`;
@@ -5154,18 +5155,27 @@ export class Canvas {
     if (textWidth > contentWidth) {
       style += 'justify-content: start;';
     }
+
+    // let el = document.getElementsByClassName('input-div')[0]; // jquery 对象转dom对象
+    // console.log(el);
+    // el.focus(); //解决ff不获取焦点无法定位问题
+    // var range = window.getSelection(); //创建range
+    // range.selectAllChildren(el); //range 选择obj下所有子内容
+    // range.collapseToEnd(); //光标移至最后
+
     sheet.deleteRule(0);
     sheet.deleteRule(0);
     sheet.insertRule(
       `.topology-input 
       .input-div{
-        resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;${style}}`
+        resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;cursor: text;${style}}`
     );
     sheet.insertRule(`.input-div div{${div_style}}`);
     // sheet.insertRule(`.topology-input .input-div-font{${style_font}}`);
   };
 
   hideInput = () => {
+    console.log('hideInput');
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
       // const pen = this.store.pens[this.input.dataset.penId];
@@ -5321,6 +5331,10 @@ export class Canvas {
     this.inputDiv.onmousedown = (e: KeyboardEvent) => {
       e.stopPropagation();
     };
+    this.inputDiv.addEventListener('resize', (e) => {
+      e.stopPropagation();
+    });
+    // this.inputDiv.onmousemove
   }
 
   clearDropdownList() {
