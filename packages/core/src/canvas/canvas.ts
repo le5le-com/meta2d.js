@@ -2042,6 +2042,7 @@ export class Canvas {
         this.store.pens[pen.id] = undefined;
       });
       this.movingPens = undefined;
+      this.translatePens(this.movingPens, 0, 0);
     }
 
     this.mouseDown = undefined;
@@ -4274,9 +4275,9 @@ export class Canvas {
         initPens,
       });
       this.initImageCanvas(pens);
-
       this.store.emitter.emit('translatePens', pens);
     }
+    this.store.emitter.emit('translatingPens', pens);
   }
 
   private calcAutoAnchor(
