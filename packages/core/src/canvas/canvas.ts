@@ -1916,8 +1916,12 @@ export class Canvas {
             hoverAnchors.reverse();
           }
           if (isActiveFrom) {
+            line.calculative.worldAnchors[0].connectTo = undefined;
             line.calculative.worldAnchors.unshift(...hoverAnchors);
           } else if (isActiveTo) {
+            line.calculative.worldAnchors[
+              line.calculative.worldAnchors.length - 1
+            ].connectTo = undefined;
             line.calculative.worldAnchors.push(...hoverAnchors);
           }
           this.delete([hover]);
