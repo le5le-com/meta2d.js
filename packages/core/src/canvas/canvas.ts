@@ -368,6 +368,10 @@ export class Canvas {
   }
 
   onwheel = (e: WheelEvent) => {
+    //输入模式不允许滚动
+    if (this.inputDiv.contentEditable === 'true') {
+      return;
+    }
     const target = e.target as HTMLElement;
     // TODO: 若遇到其它 dom 的滚动影响了画布缩放，需要设置 noWheel 属性
     if (target?.dataset.noWheel) {
@@ -4661,6 +4665,7 @@ export class Canvas {
       range.selectAllChildren(this.inputDiv); //range 选择obj下所有子内容
       range.collapseToEnd(); //光标移至最后
       this.inputDiv.scrollTop = this.inputDiv.scrollHeight;
+      this.inputDiv.scrollLeft = this.inputDiv.scrollWidth;
 
       return;
     }
@@ -4717,6 +4722,7 @@ export class Canvas {
     range.selectAllChildren(this.inputDiv); //range 选择obj下所有子内容
     range.collapseToEnd(); //光标移至最后
     this.inputDiv.scrollTop = this.inputDiv.scrollHeight;
+    this.inputDiv.scrollLeft = this.inputDiv.scrollWidth;
     pen.calculative.text = undefined;
     this.render();
   };
@@ -4858,13 +4864,14 @@ export class Canvas {
         }
       }
     }
-
-    let textWidth = pen.fontSize * 1.2 * pen.text.length;
-    let contentWidth =
-      (pen.textWidth || pen.width / scale) *
-      Math.floor(pen.height / scale / (pen.lineHeight * pen.fontSize));
-    if (textWidth > contentWidth) {
-      style += 'justify-content: start;';
+    if (pen.whiteSpace !== 'nowrap') {
+      let textWidth = pen.fontSize * 1.2 * pen.text.length;
+      let contentWidth =
+        (pen.textWidth || pen.width / scale) *
+        Math.floor(pen.height / scale / (pen.lineHeight * pen.fontSize));
+      if (textWidth > contentWidth) {
+        style += 'justify-content: start;';
+      }
     }
     sheet.deleteRule(0);
     sheet.deleteRule(0);
