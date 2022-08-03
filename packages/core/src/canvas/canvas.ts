@@ -2580,7 +2580,8 @@ export class Canvas {
         continue;
       }
 
-      const r = getLineR(pen);
+      let r = getLineR(pen);
+      r += 2 * this.store.options.anchorRadius;
       if (!pointInSimpleRect(pt, pen.calculative.worldRect, r)) {
         continue;
       }
