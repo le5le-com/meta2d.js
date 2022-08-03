@@ -1427,12 +1427,6 @@ export function connectLine(
     pen.connectedLines = [];
   }
 
-  //不能连接同一个pen的多个锚点
-  const del_index = pen.connectedLines.findIndex(
-    (item) => item.lineId === line.id && item.anchor === anchor.id
-  );
-  pen.connectedLines.splice(del_index, 1);
-
   const i = pen.connectedLines.findIndex(
     (item) =>
       item.lineId === line.id &&
