@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "@topology/chart-diagram": "^1.0.2",
-    "@topology/core": "1.1.6",
-    "@topology/svg": "^1.0.1",
+    "@topology/core": "1.1.32",
+    "@topology/svg": "^1.0.2",
     "ant-design-vue": "^3.1.0-rc.6",
     "axios": "^0.26.0",
     "vue": "^3.2.16"
