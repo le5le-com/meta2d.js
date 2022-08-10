@@ -937,7 +937,10 @@ export function setCtxLineAnimate(
       if (len < 5) {
         len = 5;
       }
-      ctx.setLineDash(pen.animateLineDash || [len, len * 2]);
+      const dash =
+        pen.animateLineDash &&
+        pen.animateLineDash.map((item) => (item * len) / 5);
+      ctx.setLineDash(dash || [len, len * 2]);
       break;
     case LineAnimateType.Dot:
       if (pen.animateReverse) {
