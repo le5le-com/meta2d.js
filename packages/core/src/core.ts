@@ -65,6 +65,7 @@ export class Topology {
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
+    this.setDatabyOptions(opts);
     this.init(parent);
     this.register(commonPens());
     this.registerCanvasDraw({ cube });
@@ -123,6 +124,34 @@ export class Topology {
 
   getOptions() {
     return this.store.options;
+  }
+
+  setDatabyOptions(options: Options = {}) {
+    const {
+      color,
+      activeColor,
+      activeBackground,
+      grid,
+      gridColor,
+      gridSize,
+      fromArrow,
+      toArrow,
+      rule,
+      ruleColor,
+    } = options;
+    this.setRule({ rule, ruleColor });
+    this.setGrid({
+      grid,
+      gridColor,
+      gridSize,
+    });
+    this.store.data = Object.assign(this.store.data, {
+      color,
+      activeColor,
+      activeBackground,
+      fromArrow,
+      toArrow,
+    });
   }
 
   private init(parent: string | HTMLElement) {
