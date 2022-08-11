@@ -3996,7 +3996,7 @@ export class Canvas {
       return;
     }
     let hasLocked = pens.some((item: Pen) => {
-      if (item.locked) return true;
+      if (item.locked >= LockState.DisableMove) return true;
     });
     if (hasLocked) {
       return;
