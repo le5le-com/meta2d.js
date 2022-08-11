@@ -4994,7 +4994,10 @@ export class Canvas {
 
       return;
     }
-    this.setInputStyle(pen);
+    //过滤table2图元
+    if (!rect) {
+      this.setInputStyle(pen);
+    }
     const textRect = rect || pen.calculative.worldTextRect;
 
     //value和innerText问题
@@ -5045,6 +5048,9 @@ export class Canvas {
   };
 
   setInputStyle = (pen: Pen) => {
+    if (!pen.text) {
+      pen.text = '';
+    }
     let sheet: any;
     for (let i = 0; i < document.styleSheets.length; i++) {
       if (document.styleSheets[i].title === 'le5le.com') {
@@ -5311,7 +5317,7 @@ export class Canvas {
       sheet.insertRule(`.input-div div{}`);
     }
 
-    this.inputDiv.onclick = (e: KeyboardEvent) => {
+    this.inputDiv.onclick = (e) => {
       e.stopPropagation();
       const pen = this.store.pens[this.inputDiv.dataset.penId];
       if (this.dropdown.style.display === 'block') {
@@ -5332,9 +5338,7 @@ export class Canvas {
     this.inputDiv.onkeydown = (e: KeyboardEvent) => {
       e.stopPropagation();
     };
-    this.inputDiv.onmousedown = (e: KeyboardEvent) => {
-      e.stopPropagation();
-    };
+    this.inputDiv.onmousedown = this.stopPropagation;
     this.inputDiv.onwheel = (e) => {
       e.stopPropagation();
     };
