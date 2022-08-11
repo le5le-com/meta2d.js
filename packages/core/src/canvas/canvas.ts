@@ -214,7 +214,7 @@ export class Canvas {
   ) => { xDock: Point; yDock: Point };
 
   inputParent = document.createElement('div');
-  input = document.createElement('textarea');
+  // input = document.createElement('textarea');
   inputDiv = document.createElement('div');
   inputRight = document.createElement('div');
   dropdown = document.createElement('ul');
@@ -4730,15 +4730,8 @@ export class Canvas {
     ) {
       return;
     }
-    //TODO input
-    // if (this.input.dataset.penId === pen.id) {
-    //   this.input.focus();
-    //   return;
-    // }
 
     if (this.inputDiv.dataset.penId === pen.id) {
-      //TODO input focus问题
-      // this.inputDiv.focus();
       this.inputDiv.dataset.isInput = 'true';
       this.inputDiv.contentEditable = 'true';
       this.inputDiv.focus();
@@ -4752,9 +4745,6 @@ export class Canvas {
     }
     this.setInputStyle(pen);
     const textRect = rect || pen.calculative.worldTextRect;
-    // this.input.value = pen.calculative.tempText || pen.text || '';
-    // this.input.style.fontSize = pen.calculative.fontSize + 'px';
-    // this.input.style.color = getTextColor(pen, this.store);
 
     //value和innerText问题
     const preInputText = pen.calculative.tempText || pen.text || '';
@@ -4779,9 +4769,6 @@ export class Canvas {
       this.inputParent.style.transform = null;
     }
     this.inputParent.style.display = 'flex';
-    // this.input.dataset.penId = pen.id;
-    // this.input.readOnly = pen.disableInput;
-
     this.inputDiv.dataset.penId = pen.id;
     this.inputDiv.contentEditable =
       pen.disableInput == undefined ? 'true' : pen.disableInput.toString();
@@ -4794,8 +4781,6 @@ export class Canvas {
     } else {
       this.inputRight.style.display = 'none';
     }
-    // this.input.focus();
-    //
     this.inputDiv.contentEditable = 'true';
     this.inputDiv.focus();
     const range = window.getSelection(); //创建range
@@ -4968,25 +4953,21 @@ export class Canvas {
   hideInput = () => {
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
-      // const pen = this.store.pens[this.input.dataset.penId];
       const pen = this.store.pens[this.inputDiv.dataset.penId];
       if (!pen) {
         return;
       }
-      // pen.calculative.text 恢复
       pen.calculative.text = pen.text;
       this.inputDiv.dataset.value = this.inputDiv.innerHTML
         .replace(/\<div\>/g, '\n')
         .replace(/\<\/div\>/g, '')
         .replace(/\<br\>/g, '');
       if (pen.onInput) {
-        // pen.onInput(pen, this.input.value);
         pen.onInput(pen, this.inputDiv.dataset.value);
       } else if (pen.text !== this.inputDiv.dataset.value) {
         const initPens = [deepClone(pen, true)];
         pen.text = this.inputDiv.dataset.value;
         pen.calculative.text = pen.text;
-        // this.input.dataset.penId = undefined;
         this.inputDiv.dataset.penId = undefined;
         calcTextRect(pen);
         this.dirty = true;
@@ -4998,7 +4979,6 @@ export class Canvas {
         this.store.emitter.emit('valueUpdate', pen);
       }
     }
-    // this.input.dataset.penId = undefined;
     this.inputDiv.dataset.penId = undefined;
     this.dropdown.style.display = 'none';
     this.inputDiv.dataset.isInput = 'false';
@@ -5009,23 +4989,14 @@ export class Canvas {
   private createInput() {
     this.inputParent.classList.add('topology-input');
     this.inputRight.classList.add('right');
-    // this.inputParent.appendChild(this.input);
     this.inputDiv.classList.add('input-div');
-    // this.inputDiv.classList.add('input-div-font');
     this.inputParent.appendChild(this.inputDiv);
     this.inputParent.appendChild(this.inputRight);
     this.inputParent.appendChild(this.dropdown);
     this.externalElements.appendChild(this.inputParent);
     this.inputParent.onmousedown = this.stopPropagation;
-
-    //TODO input
-    // this.input.dataset.l = '1';
-    // this.input.dataset.noWheel = '1';
-
-    this.inputDiv.onmousedown = this.stopPropagation;
     this.inputDiv.onmousedown = this.stopPropagation;
     this.inputDiv.contentEditable = 'true';
-
     this.inputRight.onmousedown = this.stopPropagation;
     this.dropdown.onmousedown = this.stopPropagation;
     this.inputRight.style.transform = 'rotate(135deg)';
@@ -5047,12 +5018,6 @@ export class Canvas {
       sheet.insertRule(
         '.topology-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
       );
-      // sheet.insertRule(
-      //   '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
-      // );
-      // sheet.insertRule(
-      //   '.topology-input .input-div div{width: 100%;text-align: center;}'
-      // );
       sheet.insertRule(
         '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);position:absolute;right:1px;}'
       );
@@ -5068,26 +5033,7 @@ export class Canvas {
         '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
       );
       sheet.insertRule(`.input-div div{}`);
-      // sheet.insertRule('.topology-input .input-div-font{}');
     }
-
-    //TODO input
-    // this.input.onclick = () => {
-    //   const pen = this.store.pens[this.input.dataset.penId];
-    //   if (this.dropdown.style.display === 'block') {
-    //     this.dropdown.style.display = 'none';
-    //     this.inputRight.style.transform = 'rotate(135deg)';
-    //   } else if (pen?.dropdownList && this.store.data.locked) {
-    //     this.dropdown.style.display = 'block';
-    //     this.inputRight.style.transform = 'rotate(315deg)';
-    //   }
-    //   this.store.emitter.emit('clickInput', pen);
-    // };
-    // this.input.onkeyup = (e: KeyboardEvent) => {
-    //   this.setDropdownList(true);
-    //   const pen = this.store.pens[this.input.dataset.penId];
-    //   this.store.emitter.emit('input', { pen, text: e.key });
-    // };
 
     this.inputDiv.onclick = (e: KeyboardEvent) => {
       e.stopPropagation();
@@ -5116,7 +5062,6 @@ export class Canvas {
     this.inputDiv.onwheel = (e) => {
       e.stopPropagation();
     };
-    // this.inputDiv.onmousemove
   }
 
   clearDropdownList() {
@@ -5138,7 +5083,6 @@ export class Canvas {
     setTimeout(() => {
       this.inputRight.style.transform = 'rotate(315deg)';
     });
-    // const pen = this.store.pens[this.input.dataset.penId];
     const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!pen || !pen.dropdownList) {
       this.dropdown.style.display = 'none';
@@ -5154,8 +5098,6 @@ export class Canvas {
       this.dropdown.appendChild(none);
       return;
     }
-
-    // const text = this.input.value;
     const text = this.inputDiv.innerHTML
       .replace(/\<div\>/g, '\n')
       .replace(/\<\/div\>/g, '')
@@ -5200,7 +5142,6 @@ export class Canvas {
 
   private selectDropdown = (e: MouseEvent) => {
     const li = e.target as HTMLElement;
-    // const pen = this.store.pens[this.input.dataset.penId];
     const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!li || !pen || !pen.dropdownList) {
       return;
@@ -5216,15 +5157,11 @@ export class Canvas {
 
     if (typeof dropdown === 'object') {
       this.updateValue(pen, { ...dropdown });
-      // 上面会更新 calculative.text 下方置空
       pen.calculative.text = undefined;
       this.calcActiveRect();
     } else {
       pen.text = dropdown + '';
     }
-    // this.input.value = pen.text;
-    // this.input.innerText = pen.text;
-
     this.inputDiv.innerText = pen.text;
     // this.dropdown.style.display = 'none';
     // this.inputRight.style.transform = 'rotate(135deg)';
