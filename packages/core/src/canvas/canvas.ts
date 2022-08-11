@@ -215,6 +215,7 @@ export class Canvas {
 
   inputParent = document.createElement('div');
   input = document.createElement('textarea');
+  inputDiv = document.createElement('div');
   inputRight = document.createElement('div');
   dropdown = document.createElement('ul');
 
@@ -371,6 +372,10 @@ export class Canvas {
   }
 
   onwheel = (e: WheelEvent) => {
+    //输入模式不允许滚动
+    if (this.inputDiv.contentEditable === 'true') {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     if (this.store.options.scroll && !e.ctrlKey && !e.metaKey && this.scroll) {
@@ -4725,18 +4730,47 @@ export class Canvas {
     ) {
       return;
     }
-    if (this.input.dataset.penId === pen.id) {
-      this.input.focus();
+    //TODO input
+    // if (this.input.dataset.penId === pen.id) {
+    //   this.input.focus();
+    //   return;
+    // }
+
+    if (this.inputDiv.dataset.penId === pen.id) {
+      //TODO input focus问题
+      // this.inputDiv.focus();
+      this.inputDiv.dataset.isInput = 'true';
+      this.inputDiv.contentEditable = 'true';
+      this.inputDiv.focus();
+      const range = window.getSelection(); //创建range
+      range.selectAllChildren(this.inputDiv); //range 选择obj下所有子内容
+      range.collapseToEnd(); //光标移至最后
+      this.inputDiv.scrollTop = this.inputDiv.scrollHeight;
+      this.inputDiv.scrollLeft = this.inputDiv.scrollWidth;
+
       return;
     }
+    this.setInputStyle(pen);
     const textRect = rect || pen.calculative.worldTextRect;
-    this.input.value = pen.calculative.tempText || pen.text || '';
-    this.input.style.fontSize = pen.calculative.fontSize + 'px';
-    this.input.style.color = getTextColor(pen, this.store);
-    this.inputParent.style.left = textRect.x + this.store.data.x + 5 + 'px';
-    this.inputParent.style.top = textRect.y + this.store.data.y + 5 + 'px';
-    this.inputParent.style.width = textRect.width - 10 + 'px';
-    this.inputParent.style.height = textRect.height - 10 + 'px';
+    // this.input.value = pen.calculative.tempText || pen.text || '';
+    // this.input.style.fontSize = pen.calculative.fontSize + 'px';
+    // this.input.style.color = getTextColor(pen, this.store);
+
+    //value和innerText问题
+    const preInputText = pen.calculative.tempText || pen.text || '';
+    const textArr = preInputText.split(/[\s\n]/);
+    const finalText = `${textArr.join('</div><div>')}</div>`
+      .replace('</div>', '')
+      .replace(/\<div\>\<\/div\>/g, '<div><br></div>');
+    this.inputDiv.innerHTML = finalText;
+    // this.inputDiv.style.fontSize = pen.calculative.fontSize + 'px';
+    // this.inputDiv.style.color = getTextColor(pen, this.store);
+    this.inputParent.style.left =
+      textRect.x + this.store.data.x - (pen.textLeft || 0) + 'px'; //+ 5
+    this.inputParent.style.top =
+      textRect.y + this.store.data.y - (pen.textTop || 0) + 'px'; //+ 5
+    this.inputParent.style.width = textRect.width + (pen.textLeft || 0) + 'px'; //(textRect.width < pen.width ? 0 : 10)
+    this.inputParent.style.height = textRect.height + (pen.textTop || 0) + 'px'; //   (textRect.height < pen.height ? 0 : 10)
     this.inputParent.style.zIndex = '1000';
     this.inputParent.style.background = background;
     if (pen.rotate % 360) {
@@ -4745,8 +4779,13 @@ export class Canvas {
       this.inputParent.style.transform = null;
     }
     this.inputParent.style.display = 'flex';
-    this.input.dataset.penId = pen.id;
-    this.input.readOnly = pen.disableInput;
+    // this.input.dataset.penId = pen.id;
+    // this.input.readOnly = pen.disableInput;
+
+    this.inputDiv.dataset.penId = pen.id;
+    this.inputDiv.contentEditable =
+      pen.disableInput == undefined ? 'true' : pen.disableInput.toString();
+
     if (pen.dropdownList && this.dropdown.style.display !== 'block') {
       if (!this.store.data.locked) {
         this.inputRight.style.display = 'none';
@@ -4755,29 +4794,200 @@ export class Canvas {
     } else {
       this.inputRight.style.display = 'none';
     }
-    this.input.focus();
-
+    // this.input.focus();
+    //
+    this.inputDiv.contentEditable = 'true';
+    this.inputDiv.focus();
+    const range = window.getSelection(); //创建range
+    range.selectAllChildren(this.inputDiv); //range 选择obj下所有子内容
+    range.collapseToEnd(); //光标移至最后
+    this.inputDiv.scrollTop = this.inputDiv.scrollHeight;
+    this.inputDiv.scrollLeft = this.inputDiv.scrollWidth;
     pen.calculative.text = undefined;
     this.render();
+  };
+
+  setInputStyle = (pen: Pen) => {
+    let sheet: any;
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      if (document.styleSheets[i].title === 'le5le.com') {
+        sheet = document.styleSheets[i];
+      }
+    }
+    let style = 'overflow: scroll;';
+    let div_style = '';
+    let font_scale = 1;
+    const { scale } = this.store.data;
+    if (pen.fontSize < 12) {
+      font_scale = 12 / pen.fontSize;
+    }
+    if (pen.textAlign) {
+      style += `text-align: ${pen.textAlign};`;
+    } else {
+      style += 'text-align: center;';
+    }
+    if (pen.textAlign && pen.whiteSpace === 'pre-line') {
+      let textAlign = {
+        left: 'start',
+        center: 'center',
+        right: 'end',
+      };
+      style += `align-items: ${textAlign[pen.textAlign]};`;
+    }
+
+    if (pen.textBaseline) {
+      let baseLine = {
+        top: 'start',
+        middle: 'center',
+        bottom: 'end',
+      };
+      style += `justify-content: ${baseLine[pen.textBaseline]};`;
+    } else {
+      // if (pen.textWidth < pen.calculative.) {
+      //   style += 'justify-content: start;';
+      // } else {
+      //文字高度超出整个rect高度时
+      style += 'justify-content: center;';
+      // }
+    }
+    if (pen.fontFamily) {
+      style += `font-family: ${pen.fontFamily};`;
+    }
+    if (pen.fontSize) {
+      if (pen.fontSize * scale < 12) {
+        style += `font-size:${pen.fontSize}px;`;
+        style += `zoom:${(pen.fontSize / 12) * scale};`;
+      } else {
+        style += `font-size:${pen.fontSize * scale}px;`;
+      }
+    }
+    style += `color:${getTextColor(pen, this.store)};`;
+    if (pen.fontStyle) {
+      style += `font-style: ${pen.fontStyle};`;
+    }
+    if (pen.fontWeight) {
+      style += `font-weight: ${pen.fontWeight};`;
+    }
+    if (pen.textLeft) {
+      style += `margin-left:${
+        scale > 1
+          ? pen.textLeft * font_scale
+          : (pen.textLeft * font_scale) / scale
+      }px;`;
+    }
+    if (pen.textTop) {
+      style += `margin-top:${
+        scale > 1
+          ? pen.textTop * font_scale
+          : (pen.textTop * font_scale) / scale
+      }px;`;
+    }
+    if (pen.lineHeight) {
+      style += `line-height:${
+        scale > 1
+          ? pen.fontSize * pen.lineHeight * scale
+          : pen.fontSize * pen.lineHeight * font_scale
+      }px;`;
+    }
+    if (pen.textHeight) {
+      style += `height:${
+        scale > 1
+          ? pen.textHeight * font_scale * scale
+          : pen.textHeight * font_scale
+      }px;`;
+    } else {
+      let tem = pen.height / scale - (pen.textTop || 0);
+      if (tem < 0) {
+        tem = 0;
+      }
+      style += `height:${
+        pen.fontSize * scale < 12 ? tem * font_scale : tem * scale * font_scale
+      }px;`;
+    }
+    if (pen.textWidth) {
+      if (pen.whiteSpace !== 'pre-line') {
+        if (pen.textWidth < pen.fontSize) {
+          style += `width:${pen.fontSize * 1.2 * font_scale}px;`;
+        } else {
+          style += `width:${
+            scale > 1
+              ? pen.textWidth * font_scale * scale
+              : pen.textWidth * font_scale
+          }px;`;
+        }
+      }
+    } else {
+      if (pen.whiteSpace === undefined || pen.whiteSpace === 'break-all') {
+        let tem = pen.width / scale - (pen.textLeft || 0);
+        if (tem < 0) {
+          tem = 0;
+        }
+        style += `width:${
+          pen.fontSize * scale < 12 ? tem * font_scale : tem * scale
+        }px;`;
+      }
+      // if (pen.whiteSpace === 'pre-line') {
+      //   //回车换行
+      //   style += `overflow: visible;`;
+      // }
+    }
+    if (pen.whiteSpace) {
+      if (pen.whiteSpace === 'pre-line') {
+        style += `white-space:pre;`;
+        // if (!pen.textAlign) {
+        //   style += `align-items: center;`;
+        // }
+      } else {
+        style += `white-space:${pen.whiteSpace};`;
+        if (pen.whiteSpace === 'nowrap') {
+          div_style += 'display:contents;';
+        }
+      }
+    }
+    if (pen.whiteSpace !== 'nowrap') {
+      let textWidth = pen.fontSize * 1.2 * pen.text.length;
+      let contentWidth =
+        (pen.textWidth || pen.width / scale) *
+        Math.floor(pen.height / scale / (pen.lineHeight * pen.fontSize));
+      if (textWidth > contentWidth) {
+        style += 'justify-content: start;';
+      }
+    }
+    sheet.deleteRule(0);
+    sheet.deleteRule(0);
+    sheet.insertRule(
+      `.topology-input 
+      .input-div{
+        resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;cursor: text;${style}}`
+    );
+    sheet.insertRule(`.input-div div{${div_style}}`);
+
+    // sheet.insertRule(`.topology-input .input-div-font{${style_font}}`);
   };
 
   hideInput = () => {
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
-      const pen = this.store.pens[this.input.dataset.penId];
+      // const pen = this.store.pens[this.input.dataset.penId];
+      const pen = this.store.pens[this.inputDiv.dataset.penId];
       if (!pen) {
         return;
       }
       // pen.calculative.text 恢复
       pen.calculative.text = pen.text;
-
+      this.inputDiv.dataset.value = this.inputDiv.innerHTML
+        .replace(/\<div\>/g, '\n')
+        .replace(/\<\/div\>/g, '')
+        .replace(/\<br\>/g, '');
       if (pen.onInput) {
-        pen.onInput(pen, this.input.value);
-      } else if (pen.text !== this.input.value) {
+        // pen.onInput(pen, this.input.value);
+        pen.onInput(pen, this.inputDiv.dataset.value);
+      } else if (pen.text !== this.inputDiv.dataset.value) {
         const initPens = [deepClone(pen, true)];
-        pen.text = this.input.value;
+        pen.text = this.inputDiv.dataset.value;
         pen.calculative.text = pen.text;
-        this.input.dataset.penId = undefined;
+        // this.input.dataset.penId = undefined;
+        this.inputDiv.dataset.penId = undefined;
         calcTextRect(pen);
         this.dirty = true;
         this.pushHistory({
@@ -4788,21 +4998,34 @@ export class Canvas {
         this.store.emitter.emit('valueUpdate', pen);
       }
     }
-    this.input.dataset.penId = undefined;
+    // this.input.dataset.penId = undefined;
+    this.inputDiv.dataset.penId = undefined;
     this.dropdown.style.display = 'none';
+    this.inputDiv.dataset.isInput = 'false';
+    this.inputDiv.contentEditable = 'false';
+    this.render();
   };
 
   private createInput() {
     this.inputParent.classList.add('topology-input');
     this.inputRight.classList.add('right');
-    this.inputParent.appendChild(this.input);
+    // this.inputParent.appendChild(this.input);
+    this.inputDiv.classList.add('input-div');
+    // this.inputDiv.classList.add('input-div-font');
+    this.inputParent.appendChild(this.inputDiv);
     this.inputParent.appendChild(this.inputRight);
     this.inputParent.appendChild(this.dropdown);
     this.externalElements.appendChild(this.inputParent);
-
     this.inputParent.onmousedown = this.stopPropagation;
-    this.input.onmousedown = this.stopPropagation;
-    this.input.onmousedown = this.stopPropagation;
+
+    //TODO input
+    // this.input.dataset.l = '1';
+    // this.input.dataset.noWheel = '1';
+
+    this.inputDiv.onmousedown = this.stopPropagation;
+    this.inputDiv.onmousedown = this.stopPropagation;
+    this.inputDiv.contentEditable = 'true';
+
     this.inputRight.onmousedown = this.stopPropagation;
     this.dropdown.onmousedown = this.stopPropagation;
     this.inputRight.style.transform = 'rotate(135deg)';
@@ -4824,8 +5047,14 @@ export class Canvas {
       sheet.insertRule(
         '.topology-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
       );
+      // sheet.insertRule(
+      //   '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
+      // );
+      // sheet.insertRule(
+      //   '.topology-input .input-div div{width: 100%;text-align: center;}'
+      // );
       sheet.insertRule(
-        '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);}'
+        '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);position:absolute;right:1px;}'
       );
       sheet.insertRule(
         '.topology-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;}'
@@ -4834,9 +5063,35 @@ export class Canvas {
         '.topology-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
       );
       sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
+      sheet.insertRule(`.input-div::-webkit-scrollbar {display:none}`);
+      sheet.insertRule(
+        '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
+      );
+      sheet.insertRule(`.input-div div{}`);
+      // sheet.insertRule('.topology-input .input-div-font{}');
     }
-    this.input.onclick = () => {
-      const pen = this.store.pens[this.input.dataset.penId];
+
+    //TODO input
+    // this.input.onclick = () => {
+    //   const pen = this.store.pens[this.input.dataset.penId];
+    //   if (this.dropdown.style.display === 'block') {
+    //     this.dropdown.style.display = 'none';
+    //     this.inputRight.style.transform = 'rotate(135deg)';
+    //   } else if (pen?.dropdownList && this.store.data.locked) {
+    //     this.dropdown.style.display = 'block';
+    //     this.inputRight.style.transform = 'rotate(315deg)';
+    //   }
+    //   this.store.emitter.emit('clickInput', pen);
+    // };
+    // this.input.onkeyup = (e: KeyboardEvent) => {
+    //   this.setDropdownList(true);
+    //   const pen = this.store.pens[this.input.dataset.penId];
+    //   this.store.emitter.emit('input', { pen, text: e.key });
+    // };
+
+    this.inputDiv.onclick = (e: KeyboardEvent) => {
+      e.stopPropagation();
+      const pen = this.store.pens[this.inputDiv.dataset.penId];
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
         this.inputRight.style.transform = 'rotate(135deg)';
@@ -4846,11 +5101,22 @@ export class Canvas {
       }
       this.store.emitter.emit('clickInput', pen);
     };
-    this.input.onkeyup = (e: KeyboardEvent) => {
+    this.inputDiv.onkeyup = (e: KeyboardEvent) => {
       this.setDropdownList(true);
-      const pen = this.store.pens[this.input.dataset.penId];
+      const pen = this.store.pens[this.inputDiv.dataset.penId];
       this.store.emitter.emit('input', { pen, text: e.key });
+      e.stopPropagation();
     };
+    this.inputDiv.onkeydown = (e: KeyboardEvent) => {
+      e.stopPropagation();
+    };
+    this.inputDiv.onmousedown = (e: KeyboardEvent) => {
+      e.stopPropagation();
+    };
+    this.inputDiv.onwheel = (e) => {
+      e.stopPropagation();
+    };
+    // this.inputDiv.onmousemove
   }
 
   clearDropdownList() {
@@ -4872,7 +5138,8 @@ export class Canvas {
     setTimeout(() => {
       this.inputRight.style.transform = 'rotate(315deg)';
     });
-    const pen = this.store.pens[this.input.dataset.penId];
+    // const pen = this.store.pens[this.input.dataset.penId];
+    const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!pen || !pen.dropdownList) {
       this.dropdown.style.display = 'none';
       this.inputRight.style.display = 'none';
@@ -4888,7 +5155,11 @@ export class Canvas {
       return;
     }
 
-    const text = this.input.value;
+    // const text = this.input.value;
+    const text = this.inputDiv.innerHTML
+      .replace(/\<div\>/g, '\n')
+      .replace(/\<\/div\>/g, '')
+      .replace(/\<br\>/g, '');
     let i = 0;
     for (const item of pen.dropdownList) {
       const t = typeof item === 'string' ? item : item.text;
@@ -4929,7 +5200,8 @@ export class Canvas {
 
   private selectDropdown = (e: MouseEvent) => {
     const li = e.target as HTMLElement;
-    const pen = this.store.pens[this.input.dataset.penId];
+    // const pen = this.store.pens[this.input.dataset.penId];
+    const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!li || !pen || !pen.dropdownList) {
       return;
     }
@@ -4950,7 +5222,10 @@ export class Canvas {
     } else {
       pen.text = dropdown + '';
     }
-    this.input.value = pen.text;
+    // this.input.value = pen.text;
+    // this.input.innerText = pen.text;
+
+    this.inputDiv.innerText = pen.text;
     // this.dropdown.style.display = 'none';
     // this.inputRight.style.transform = 'rotate(135deg)';
     this.hideInput();
