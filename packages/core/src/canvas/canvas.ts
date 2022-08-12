@@ -4211,8 +4211,15 @@ export class Canvas {
       line = this.store.pens[id.replace(movingSuffix, '')];
     }
     // 连接
-    line.calculative.worldAnchors.forEach((anchor) => {
-      if (anchor.connectTo && !pens.find((p) => p.id === anchor.connectTo)) {
+    line.anchors.forEach((anchor) => {
+      if (
+        anchor.connectTo &&
+        !pens.find(
+          (p) =>
+            p.id === anchor.connectTo ||
+            p.id === anchor.connectTo + movingSuffix
+        )
+      ) {
         const pen = this.store.pens[anchor.connectTo];
         if (pen.type) {
           return;
@@ -5199,7 +5206,7 @@ export class Canvas {
     sheet.deleteRule(0);
     sheet.deleteRule(0);
     sheet.insertRule(
-      `.topology-input 
+      `.topology-input
       .input-div{
         resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;cursor: text;${style}}`
     );
