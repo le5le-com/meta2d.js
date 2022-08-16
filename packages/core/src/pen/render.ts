@@ -1413,7 +1413,7 @@ export function connectLine(
     return;
   }
 
-  if (lineAnchor.connectTo === pen.id && lineAnchor.anchorId === anchor.id) {
+  if (lineAnchor.connectTo !== pen.id && lineAnchor.anchorId !== anchor.id) {
     return;
   }
 
