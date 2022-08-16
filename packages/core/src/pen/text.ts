@@ -4,7 +4,14 @@ import { calcRightBottom, Rect } from '../rect';
 import { getFont } from './render';
 
 export function calcTextRect(pen: Pen) {
-  const { paddingTop, paddingBottom, paddingLeft, paddingRight, worldRect, canvas } = pen.calculative;
+  const {
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    worldRect,
+    canvas,
+  } = pen.calculative;
   let { textLeft, textTop, textWidth, textHeight } = pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;
@@ -115,10 +122,12 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
     case 'nowrap':
       if (pen.ellipsis !== false) {
         const allLines = wrapLines(text.split(''), pen);
-        lines.push(allLines[0]);
-        if (allLines.length > 1) {
-          // 存在第二行，说明宽度超出
-          setEllipsisOnLastLine(lines);
+        if (allLines[0]) {
+          lines.push(allLines[0]);
+          if (allLines.length > 1) {
+            // 存在第二行，说明宽度超出
+            setEllipsisOnLastLine(lines);
+          }
         }
       } else {
         lines.push(text);
@@ -136,7 +145,10 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
       const paragraphs = text.split(/[\n]/g);
       let currentRow = 0;
       outer: for (const paragraph of paragraphs) {
-        const words = pen.whiteSpace === 'break-all' ? paragraph.split('') : getWords(paragraph);
+        const words =
+          pen.whiteSpace === 'break-all'
+            ? paragraph.split('')
+            : getWords(paragraph);
         let items = wrapLines(words, pen);
         // 空行换行的情况
         if (items.length === 0) items = [''];
@@ -198,7 +210,8 @@ export function getWords(txt: string = '') {
 export function wrapLines(words: string[], pen: Pen) {
   const canvas: Canvas = pen.calculative.canvas;
   const ctx = canvas.offscreen.getContext('2d') as CanvasRenderingContext2D;
-  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } = pen.calculative;
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } =
+    pen.calculative;
   ctx.save();
   const lines: string[] = [];
   let currentLine = words[0] || '';
@@ -221,7 +234,8 @@ export function wrapLines(words: string[], pen: Pen) {
       const chineseWidth = chinese.length * fontSize; // 中文占用的宽度
       const spaces = text.match(/\s/g) || '';
       const spaceWidth = spaces.length * fontSize * 0.3; // 空格占用的宽度
-      const otherWidth = (text.length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
+      const otherWidth =
+        (text.length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
       currentWidth = chineseWidth + spaceWidth + otherWidth;
     }
     const textWidth = pen.calculative.worldTextRect.width;
@@ -237,7 +251,10 @@ export function wrapLines(words: string[], pen: Pen) {
   return lines;
 }
 
-export function calcTextAdaptionWidth(ctx: CanvasRenderingContext2D, pen: Pen): number {
+export function calcTextAdaptionWidth(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen
+): number {
   let maxWidth = 0;
   pen.calculative.textLineWidths = [];
   pen.calculative.textLines.forEach((text: string) => {
