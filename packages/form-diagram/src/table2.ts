@@ -495,10 +495,7 @@ function onValue(pen: formPen) {
     let temChildren = pen.children;
     pen.children = [];
     temChildren.forEach((child: string) => {
-      pen.calculative.canvas.delete(
-        [pen.calculative.canvas.findOne(child)],
-        true
-      );
+      pen.calculative.canvas.delForce(pen.calculative.canvas.findOne(child));
     });
     pen.calculative.texts = undefined;
     pen.calculative.canvas.active([pen]);
