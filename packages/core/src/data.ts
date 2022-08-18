@@ -80,4 +80,5 @@ export const canChangeTogether = [
   'textTop',
   'flipX',
   'flipY',
+  'lineDash',
 ];
