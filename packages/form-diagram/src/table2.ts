@@ -522,6 +522,7 @@ function beforeValue(pen: formPen, value: any) {
   } else {
     rowData[value.col] = value.value;
   }
+  setCellText(pen, value.row, value.col, value.value);
   pen.calculative.canvas.render();
   delete value.col;
   delete value.row;
