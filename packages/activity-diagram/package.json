@@ -1,6 +1,6 @@
 {
   "name": "@topology/activity-diagram",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "The activity library based on le5le topology.",
   "main": "index.ts",
   "types": "index.d.ts",

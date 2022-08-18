@@ -21,8 +21,10 @@ import {
   renderPenRaw,
   IValue,
   setElemPosition,
+  connectLine,
+  nearestAnchor,
 } from './pen';
-import { Point } from './point';
+import { Point, rotatePoint } from './point';
 import {
   clearStore,
   EditAction,
@@ -52,6 +54,7 @@ import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
+import { canChangeTogether } from './data';
 
 export class Topology {
   store: TopologyStore;
@@ -1139,7 +1142,8 @@ export class Topology {
           }, 0);
         }
       }
-      this.canvas.updateValue(pen, afterData);
+      this._setChildValue(pen, afterData);
+      // this.canvas.updateValue(pen, afterData);
       pen.onValue?.(pen);
     });
 
@@ -1153,6 +1157,26 @@ export class Topology {
     }
 
     return pens;
+  }
+
+  _setChildValue(_pen: Pen, data: IValue) {
+    this.canvas.updateValue(_pen, data);
+    if (_pen.name === 'combine' && _pen.showChild === undefined) {
+      const valueObj = {};
+      let keys = Object.keys(data);
+      keys.forEach((key) => {
+        if (canChangeTogether.includes(key)) {
+          valueObj[key] = data[key];
+        }
+      });
+      if (Object.keys(valueObj).length !== 0) {
+        const children = _pen.children;
+        children?.forEach((childId) => {
+          const child = this.store.pens[childId];
+          this._setChildValue(child, valueObj);
+        });
+      }
+    }
   }
 
   pushHistory(action: EditAction) {
@@ -1941,6 +1965,204 @@ export class Topology {
     }
   }
 
+  /**
+   * 获取节点所有的下一个连接关系
+   * @param pen
+   *
+   */
+  getNext(pen: Pen): any[] {
+    if (pen.type === PenType.Line) {
+      console.warn('非连线节点');
+      return;
+    }
+    const next: any[] = [];
+    pen.connectedLines?.forEach(({ lineId, anchor }) => {
+      const fromAnchor = pen.anchors?.filter(
+        (_anchor) => _anchor.id === anchor
+      )[0];
+      const line = this.findOne(lineId);
+      if (line.anchors[0].connectTo == pen.id) {
+        //from
+        const connectTo = line.anchors[line.anchors.length - 1].connectTo;
+        if (connectTo) {
+          const _next: Pen = this.findOne(connectTo);
+          const connectedLine = _next.connectedLines?.filter(
+            (item) => item.lineId === line.id
+          )[0];
+          const penAnchor = _next.anchors.filter(
+            (_anchor) => _anchor.id === connectedLine.anchor
+          )[0];
+          next.push({
+            from: pen,
+            fromAnchor,
+            line,
+            to: _next,
+            toAnchor: penAnchor,
+          });
+        }
+      }
+    });
+    return next;
+  }
+
+  /**
+   * 为画布添加锚点
+   * @param pen 画笔
+   * @param anchor 待添加锚点
+   * @param index 连线类型 添加锚点到哪个位置
+   */
+  addAnchor(pen: Pen, anchor: Point, index?: number) {
+    if (!pen) {
+      return;
+    }
+    if (!pen.anchors) {
+      pen.anchors = [];
+    }
+    if (!pen.calculative.worldAnchors) {
+      pen.calculative.worldAnchors = [];
+    }
+    if (pen.type === PenType.Line) {
+      if (index < 0) {
+        index = pen.anchors.length + 1 + index;
+      }
+      if (index > pen.anchors.length) {
+        index = pen.anchors.length;
+      }
+      if (index < 0) {
+        index = 0;
+      }
+      if (
+        (index == 0 && pen.anchors[0].connectTo) ||
+        (index == pen.anchors.length && pen.anchors[index - 1].connectTo)
+      ) {
+        console.warn('端点存在连接关系');
+        return;
+      }
+    }
+    let _anchor = null;
+    let _worldAnchor = null;
+    if (anchor.x <= 1 && anchor.x >= 0 && anchor.y <= 1 && anchor.y >= 0) {
+      //relative
+      _worldAnchor = {
+        id: anchor.id || s8(),
+        penId: pen.id,
+        x:
+          pen.calculative.worldRect.x +
+          pen.calculative.worldRect.width * anchor.x,
+        y:
+          pen.calculative.worldRect.y +
+          pen.calculative.worldRect.height * anchor.y,
+      };
+      if (pen.calculative.worldRect) {
+        if (pen.rotate % 360) {
+          rotatePoint(
+            _worldAnchor,
+            pen.rotate,
+            pen.calculative.worldRect.center
+          );
+        }
+      }
+      _anchor = {
+        id: _worldAnchor.id,
+        penId: pen.id,
+        x: anchor.x,
+        y: anchor.y,
+      };
+    } else {
+      //absolute
+      _worldAnchor = {
+        id: anchor.id || s8(),
+        penId: pen.id,
+        x: anchor.x,
+        y: anchor.y,
+      };
+      if (pen.calculative.worldRect) {
+        if (pen.rotate % 360) {
+          rotatePoint(anchor, -pen.rotate, pen.calculative.worldRect.center);
+        }
+        _anchor = {
+          id: _worldAnchor.id,
+          penId: pen.id,
+          x:
+            (anchor.x - pen.calculative.worldRect.x) /
+            pen.calculative.worldRect.width,
+          y:
+            (anchor.y - pen.calculative.worldRect.y) /
+            pen.calculative.worldRect.height,
+        };
+      }
+    }
+
+    if (pen.type === PenType.Line) {
+      //Line
+      pen.calculative.worldAnchors.splice(index, 0, _worldAnchor);
+      pen.anchors.splice(index, 0, _anchor);
+      this.canvas.updateLines(pen);
+      this.canvas.initLineRect(pen);
+      this.render();
+    } else {
+      //Node
+      pen.calculative.worldAnchors.push(_worldAnchor);
+      pen.anchors.push(_anchor);
+    }
+  }
+  /**
+   *
+   * @param from 连接节点
+   * @param fromAnchor 连接节点锚点
+   * @param to 被连接节点
+   * @param toAnchor 被连接节点锚点
+   */
+  connectLine(from: Pen, to: Pen, fromAnchor?: Point, toAnchor?: Point) {
+    if (!fromAnchor) {
+      const _worldRect = to.calculative.worldRect;
+      fromAnchor = nearestAnchor(from, {
+        x: _worldRect.x + _worldRect.width / 2,
+        y: _worldRect.y + _worldRect.height / 2,
+      });
+    }
+    if (!toAnchor) {
+      const _worldRect = from.calculative.worldRect;
+      toAnchor = nearestAnchor(to, {
+        x: _worldRect.x + _worldRect.width / 2,
+        y: _worldRect.y + _worldRect.height / 2,
+      });
+    }
+    const absWidth = Math.abs(fromAnchor.x - toAnchor.x);
+    const absHeight = Math.abs(fromAnchor.y - toAnchor.y);
+    const line: Pen = {
+      height: absHeight,
+      lineName: 'line',
+      lineWidth: 1,
+      name: 'line',
+      type: 1,
+      width: absWidth,
+      x: Math.min(fromAnchor.x, toAnchor.x),
+      y: Math.min(fromAnchor.y, toAnchor.y),
+      anchors: [
+        {
+          x: fromAnchor.x > toAnchor.x ? 1 : 0,
+          y: fromAnchor.y > toAnchor.y ? 1 : 0,
+          id: s8(),
+        },
+        {
+          x: fromAnchor.x > toAnchor.x ? 0 : 1,
+          y: fromAnchor.x > toAnchor.x ? 0 : 1,
+          id: s8(),
+        },
+      ],
+    };
+    this.addPens([line]);
+
+    connectLine(from, fromAnchor, line, line.calculative.worldAnchors[0]);
+    connectLine(to, toAnchor, line, line.calculative.worldAnchors[1]);
+    line.calculative.active = false;
+    this.canvas.updateLines(line);
+    this.canvas.updateLines(from);
+    this.canvas.updateLines(to);
+    this.canvas.initLineRect(line);
+    this.render();
+  }
   /**
    * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件
    * @param pens 画笔数组

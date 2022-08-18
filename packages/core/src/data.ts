@@ -46,3 +46,38 @@ export const rotatedCursors = [
 ] as const;
 
 export const defaultDrawLineFns = ['curve', 'polyline', 'line'];
+
+export const canChangeTogether = [
+  'dash',
+  'lineWidth',
+  'lineCap',
+  'lineJoin',
+  'strokeType',
+  'color',
+  'lineGradientFromColor',
+  'lineGradientToColor',
+  'lineGradientAngle',
+  'globalAlpha',
+  'bkType',
+  'background',
+  'gradientFromColor',
+  'gradientToColor',
+  'gradientAngle',
+  'gradientRadius',
+  'fontFamily',
+  'fontSize',
+  'textColor',
+  'hoverTextColor',
+  'activeTextColor',
+  'textBackground',
+  'fontStyle',
+  'fontWeight',
+  'textAlign',
+  'textBaseline',
+  'lineHeight',
+  'whiteSpace',
+  'textLeft',
+  'textTop',
+  'flipX',
+  'flipY',
+];
