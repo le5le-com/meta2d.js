@@ -2,6 +2,7 @@ import { formPen, cellData, Pos } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
 import { calcRightBottom, calcTextLines, PenType } from '@topology/core';
+import { ReplaceMode } from './common';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -44,13 +45,16 @@ function initRect(pen: formPen) {
   }
   let width = 0;
   //获取所有col width
-  const _col = pen.styles.filter((item) => {
-    return item.col !== undefined && item.row === undefined && item.width;
-  });
+  const _col =
+    pen.styles &&
+    pen.styles.filter((item) => {
+      return item.col !== undefined && item.row === undefined && item.width;
+    });
   let _colWidthMap = {};
-  _col.forEach((_c) => {
-    _colWidthMap[_c.col] = _c.width;
-  });
+  _col &&
+    _col.forEach((_c) => {
+      _colWidthMap[_c.col] = _c.width;
+    });
   for (let i = 0; i < pen.data[0].length; i++) {
     width += _colWidthMap[i] || pen.colWidth;
     colPos.push(width);
@@ -59,13 +63,16 @@ function initRect(pen: formPen) {
   let height = 0;
 
   //获取所有row height
-  const _row = pen.styles.filter((item) => {
-    return item.col === undefined && item.row !== undefined && item.height;
-  });
+  const _row =
+    pen.styles &&
+    pen.styles.filter((item) => {
+      return item.col === undefined && item.row !== undefined && item.height;
+    });
   let _rowHeightMap = {};
-  _row.forEach((_r) => {
-    _rowHeightMap[_r.row] = _r.height;
-  });
+  _row &&
+    _row.forEach((_r) => {
+      _rowHeightMap[_r.row] = _r.height;
+    });
   // 显示表头
   for (let j = 0; j < pen.data.length; j++) {
     height += _rowHeightMap[j] || pen.rowHeight;
@@ -225,9 +232,11 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       if (rowText[j] == null) {
         if (typeof cell === 'object') {
           // TODO 配置 {} 代表添加节点 考虑是否有表头
-          const _colPen = pen.styles.filter((item) => {
-            return item.col === j && item.row === undefined && item.pens;
-          });
+          const _colPen =
+            pen.styles &&
+            pen.styles.filter((item) => {
+              return item.col === j && item.row === undefined && item.pens;
+            });
           if (_colPen.length > 0) {
             rowText[j] = '';
             if (pen.isFirstTime) {
@@ -389,11 +398,13 @@ function getCell(pen: formPen, rowIndex: number, colIndex: number) {
 
   const row = pen.data[rowIndex];
   //TODO 没有获取单独设置 某行 某列 的样式
-  const style = pen.styles.filter((item) => {
-    return item.row === rowIndex && item.col === colIndex;
-  });
+  const style =
+    pen.styles &&
+    pen.styles.filter((item) => {
+      return item.row === rowIndex && item.col === colIndex;
+    });
   if (Array.isArray(row)) {
-    return { value: row[colIndex], style: style.length > 0 ? style[0] : {} };
+    return { value: row[colIndex], style: style?.length > 0 ? style[0] : {} };
   } else if (!row.data || !Array.isArray(row.data)) {
     return;
   }
@@ -494,9 +505,10 @@ function onValue(pen: formPen) {
     delete pen.calculative.isUpdateData;
     let temChildren = pen.children;
     pen.children = [];
-    temChildren.forEach((child: string) => {
-      pen.calculative.canvas.delForce(pen.calculative.canvas.findOne(child));
-    });
+    temChildren &&
+      temChildren.forEach((child: string) => {
+        pen.calculative.canvas.delForce(pen.calculative.canvas.findOne(child));
+      });
     pen.calculative.texts = undefined;
     pen.calculative.canvas.active([pen]);
   }
@@ -508,7 +520,34 @@ function beforeValue(pen: formPen, value: any) {
     (value as any).table ||
     (value.col == undefined && value.row == undefined)
   ) {
-    // 整体传参，不做处理
+    if (value.dataY) {
+      const replaceMode = pen.replaceMode;
+      let data = [];
+      if (!replaceMode) {
+        //追加
+        data = pen.data.concat(value.dataY);
+      } else if (replaceMode === ReplaceMode.Replace) {
+        //替换
+        data = pen.data;
+        value.dataX &&
+          value.dataX.forEach((item: number, index: number) => {
+            data[item] = value.dataY[index];
+          });
+      } else if (replaceMode === ReplaceMode.ReplaceAll) {
+        //替换指定
+        if (value.dataX) {
+          data[0] = value.dataX;
+        } else {
+          data[0] = pen.data[0];
+        }
+        data = data.concat(value.dataY);
+      }
+      delete value.dataX;
+      delete value.dataY;
+      pen.calculative.isUpdateData = true;
+      return Object.assign(value, { data });
+    }
+
     if (value.data || pen.styles) {
       pen.calculative.isUpdateData = true;
     }
