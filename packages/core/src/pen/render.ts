@@ -1893,14 +1893,16 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   elem.style.display = pen.calculative.inView != false ? 'inline' : 'none'; // 是否隐藏元素
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
-  if (pen.calculative.flipX) {
-    elem.style.transform = `rotateY(180deg)`;
-  }
-  if (pen.calculative.flipY) {
-    elem.style.transform = `rotateX(180deg)`;
-  }
-  if (pen.calculative.flipX && pen.calculative.flipY) {
-    elem.style.transform = `rotateZ(180deg)`;
+  if (!pen.calculative.rotate) {
+    if (pen.calculative.flipX) {
+      elem.style.transform = `rotateY(180deg)`;
+    }
+    if (pen.calculative.flipY) {
+      elem.style.transform = `rotateX(180deg)`;
+    }
+    if (pen.calculative.flipX && pen.calculative.flipY) {
+      elem.style.transform = `rotateZ(180deg)`;
+    }
   }
   if (
     pen.locked === LockState.DisableEdit ||
