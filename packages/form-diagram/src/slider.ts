@@ -26,6 +26,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
     pen.onMouseMove = mouseMove;
     pen.onMouseDown = mouseDown;
     pen.onValue = onValue;
+    pen.onBeforeValue = beforeValue;
   }
 
   if (!pen.calculative.barRect) {
@@ -68,7 +69,10 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   x = pen.calculative.worldRect.x + pen.calculative.ballRect.x;
-  y = pen.calculative.worldRect.y + pen.calculative.ballRect.y + pen.calculative.ballRect.height / 2;
+  y =
+    pen.calculative.worldRect.y +
+    pen.calculative.ballRect.y +
+    pen.calculative.ballRect.height / 2;
   ctx.lineWidth = pen.calculative.ballRect.width / 10;
   ctx.arc(x, y, pen.calculative.ballRect.width / 2, 0, Math.PI * 2);
   ctx.fill();
@@ -160,5 +164,22 @@ function mouseMove(pen: formPen, e: Point) {
 }
 
 function onValue(pen: formPen) {
+  if (pen.calculative.isUpdateData) {
+    delete pen.calculative.isUpdateData;
+    initRect(pen);
+  }
   calcBallRect(pen);
+}
+
+function beforeValue(pen: formPen, value: any) {
+  pen.calculative.isUpdateData = false;
+
+  if (value.textWidth || value.barHeight) {
+    if (value.textWidth) {
+      pen._textWidth = 0;
+    }
+    pen.calculative.isUpdateData = true;
+  }
+
+  return value;
 }
