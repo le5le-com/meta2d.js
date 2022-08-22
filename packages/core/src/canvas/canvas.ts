@@ -4550,7 +4550,13 @@ export class Canvas {
         pen.calculative.frameStart += d;
         pen.calculative.frameEnd += d;
       } else {
-        this.store.animates.add(pen);
+        if (pen.name === 'video') {
+          pen.calculative.media.currentTime = 0;
+          pen.calculative.media?.play();
+          pen.onStartVideo?.(pen);
+        } else if (pen.frames) {
+          this.store.animates.add(pen);
+        }
       }
     });
     this.animate();
