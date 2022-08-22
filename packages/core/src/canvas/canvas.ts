@@ -4704,15 +4704,17 @@ export class Canvas {
     this.store.clipboard = deepClone(this.store.clipboard, true);
     // this.store.clipboard 已经包括子节点
     // pastePen 是一个递归操作，只要遍历 父亲节点即可
-    const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
-    for (const pen of rootPens) {
-      this.pastePen(pen, undefined, this.store.clipboard);
-    }
+    if (this.store.clipboard) {
+      const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
+      for (const pen of rootPens) {
+        this.pastePen(pen, undefined, this.store.clipboard);
+      }
 
-    this.active(rootPens);
-    this.pushHistory({ type: EditType.Add, pens: this.store.clipboard.pens });
-    this.render();
-    this.store.emitter.emit('add', this.store.clipboard.pens);
+      this.active(rootPens);
+      this.pushHistory({ type: EditType.Add, pens: this.store.clipboard.pens });
+      this.render();
+      this.store.emitter.emit('add', this.store.clipboard.pens);
+    }
     localStorage.removeItem(this.clipboardName); // 清空缓存
   }
 
