@@ -2786,6 +2786,10 @@ export class Canvas {
     this.offscreen.getContext('2d').textBaseline = 'middle';
 
     this.render();
+    // TODO 窗口大小变化没有刷新图纸
+    for (const pen of this.store.data.pens) {
+      calcInView(pen);
+    }
   }
 
   clearCanvas() {
