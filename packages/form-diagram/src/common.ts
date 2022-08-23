@@ -48,6 +48,7 @@ export interface formPen extends Pen {
     hoverCell: Pos;
     inputCell: Pos;
     isUpdateData: boolean;
+    isHover: boolean;
   } & Pen['calculative'];
   checked?: boolean;
   onColor?: string;
@@ -95,6 +96,7 @@ export interface formPen extends Pen {
   data: any;
   isFirstTime: boolean;
   replaceMode?: ReplaceMode;
+  timer: NodeJS.Timeout;
 }
 =======
 import { calcExy } from "@topology/core";

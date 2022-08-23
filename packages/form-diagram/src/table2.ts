@@ -30,7 +30,50 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
 
   // 画单元格
   drawCell(ctx, pen);
+
+  // 画title
+  drawNote(ctx, pen);
   pen.isFirstTime = false;
+}
+
+function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
+  if (!pen.calculative.hoverCell) {
+    return;
+  }
+  if (!pen.calculative.isHover) {
+    return;
+  }
+  const { row, col } = pen.calculative.hoverCell;
+  const { x, y } = pen.calculative.canvas.mousePos;
+  let text = pen.data[row][col];
+  if (typeof text === 'object' || !text) {
+    return;
+  }
+  ctx.save();
+  ctx.textAlign = 'start';
+  ctx.textBaseline = 'middle';
+  ctx.font = ctx.font =
+    (pen.calculative.fontStyle || '') +
+    ' normal ' +
+    (pen.calculative.fontWeight || '') +
+    ' ' +
+    (pen.calculative.fontSize || 12) +
+    'px ' +
+    pen.calculative.fontFamily;
+
+  const noteWidth = ctx.measureText(text).width;
+  ctx.beginPath();
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = '#000';
+  ctx.moveTo(x, y);
+  ctx.rect(x - 10, y, noteWidth + 20, 20);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.fillStyle = '#000';
+  ctx.fillText(text, x, y + 10);
+  ctx.restore();
 }
 
 function initRect(pen: formPen) {
@@ -326,7 +369,8 @@ function onShowInput(pen: any, e: Point) {
   if (typeof cell === 'object') {
     return;
   }
-
+  pen.calculative.isHover = false;
+  pen.calculative.canvas.render();
   pen.calculative.inputCell = pen.calculative.hoverCell;
 
   const rect = getCellRect(
@@ -350,10 +394,19 @@ function onInput(pen: formPen, text: string) {
     pen.calculative.inputCell.col,
     text
   );
+  pen.calculative.isHover = true;
   pen.calculative.canvas.render();
 }
 
 function onMouseMove(pen: formPen, e: Point) {
+  if (pen.timer) {
+    pen.calculative.isHover = false;
+    clearTimeout(pen.timer);
+  }
+  pen.timer = setTimeout(() => {
+    pen.calculative.isHover = true;
+    pen.calculative.canvas.render();
+  }, 500);
   pen.calculative.hoverCell = getCellIndex(pen, e);
   pen.calculative.canvas.render();
 }
