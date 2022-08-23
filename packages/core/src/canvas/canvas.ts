@@ -360,6 +360,7 @@ export class Canvas {
       case KeydownType.Document:
         document.addEventListener('keydown', this.onkeydown);
         document.addEventListener('keyup', this.onkeyup);
+        document.addEventListener('paste', this.pasteImg);
         // TODO: 使用 paste 事件，可以实现 复制桌面图片上画布，但存在两个问题：
         // 1. http 协议，复制桌面图片后，无法清空剪贴板
         // 2. 复制桌面图片，拿不到鼠标位置信息
@@ -370,6 +371,53 @@ export class Canvas {
         break;
     }
   }
+
+  pasteImg = (event: ClipboardEvent) => {
+    if (event.clipboardData) {
+      const clipboardData = event.clipboardData;
+      let that = this;
+      if (clipboardData.items) {
+        // for chrome
+        const items = clipboardData.items;
+        const len = items.length;
+        let blob = null;
+        event.preventDefault();
+        if (len == 0) {
+          return;
+        }
+        const { x, y } = that.mousePos;
+        for (var i = 0; i < len; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            blob = items[i].getAsFile();
+            let name = items[i].type.slice(6) === 'gif' ? 'gif' : 'image';
+            if (blob !== null) {
+              let base64_str: any;
+              var reader = new FileReader();
+              reader.onload = function (event) {
+                base64_str = event.target.result;
+                const image = new Image();
+                image.src = base64_str;
+                image.onload = function () {
+                  const { width, height } = image;
+                  const pen = {
+                    name,
+                    x: x - width / 2,
+                    y: y - height / 2,
+                    externElement: name === 'gif',
+                    width,
+                    height,
+                    image: base64_str as any,
+                  };
+                  that.addPens([pen]);
+                };
+              };
+              reader.readAsDataURL(blob);
+            }
+          }
+        }
+      }
+    }
+  };
 
   onwheel = (e: WheelEvent) => {
 <<<<<<< HEAD
