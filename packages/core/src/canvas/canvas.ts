@@ -375,29 +375,28 @@ export class Canvas {
   pasteImg = (event: ClipboardEvent) => {
     if (event.clipboardData) {
       const clipboardData = event.clipboardData;
-      let that = this;
       if (clipboardData.items) {
         // for chrome
         const items = clipboardData.items;
         const len = items.length;
-        let blob = null;
         event.preventDefault();
         if (len == 0) {
           return;
         }
-        const { x, y } = that.mousePos;
-        for (var i = 0; i < len; i++) {
+        const { x, y } = this.mousePos;
+        for (let i = 0; i < len; i++) {
+          let blob = null;
           if (items[i].type.indexOf('image') !== -1) {
             blob = items[i].getAsFile();
             let name = items[i].type.slice(6) === 'gif' ? 'gif' : 'image';
             if (blob !== null) {
               let base64_str: any;
-              var reader = new FileReader();
-              reader.onload = function (event) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
                 base64_str = event.target.result;
                 const image = new Image();
                 image.src = base64_str;
-                image.onload = function () {
+                image.onload = () => {
                   const { width, height } = image;
                   const pen = {
                     name,
@@ -408,7 +407,8 @@ export class Canvas {
                     height,
                     image: base64_str as any,
                   };
-                  that.addPens([pen]);
+                  this.addPens([pen]);
+                  this.active([pen]);
                 };
               };
               reader.readAsDataURL(blob);
