@@ -1995,15 +1995,17 @@ export class Canvas {
           this.render();
         } else {
           // 连接连线
-          this.store.activeAnchor.x = this.store.hoverAnchor.x;
-          this.store.activeAnchor.y = this.store.hoverAnchor.y;
+          if (this.store.activeAnchor) {
+            this.store.activeAnchor.x = this.store.hoverAnchor.x;
+            this.store.activeAnchor.y = this.store.hoverAnchor.y;
 
-          connectLine(
-            this.store.hover,
-            this.store.hoverAnchor,
-            line,
-            this.store.activeAnchor
-          );
+            connectLine(
+              this.store.hover,
+              this.store.hoverAnchor,
+              line,
+              this.store.activeAnchor
+            );
+          }
         }
         if (this[line.lineName]) {
           this[line.lineName](this.store, line);
@@ -3828,6 +3830,14 @@ export class Canvas {
     let y = p2.y - p1.y;
 
     const rect = deepClone(this.initActiveRect);
+    if ((e as any).shiftKey) {
+      // if (x / y > rect.width / rect.height) {
+      //   y = (rect.height / rect.width) * x;
+      // } else {
+      //   x = (rect.width / rect.height) * y;
+      // }
+      x = (rect.width / rect.height) * y;
+    }
     // 得到最准确的 rect 即 resize 后的
     resizeRect(rect, x, y, this.resizeIndex);
     calcCenter(rect);
