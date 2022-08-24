@@ -14,7 +14,11 @@ export class CanvasImage {
   offscreen = createOffscreen();
   animateOffsScreen = createOffscreen();
 
-  constructor(public parentElement: HTMLElement, public store: TopologyStore, private isBottom?: boolean) {
+  constructor(
+    public parentElement: HTMLElement,
+    public store: TopologyStore,
+    private isBottom?: boolean
+  ) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
@@ -42,36 +46,54 @@ export class CanvasImage {
     this.animateOffsScreen.width = w;
     this.animateOffsScreen.height = h;
 
-    this.otherOffsreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.otherOffsreen
+      .getContext('2d')
+      .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.otherOffsreen.getContext('2d').textBaseline = 'middle';
 
-    this.offscreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.offscreen
+      .getContext('2d')
+      .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.offscreen.getContext('2d').textBaseline = 'middle';
 
-    this.animateOffsScreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.animateOffsScreen
+      .getContext('2d')
+      .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.animateOffsScreen.getContext('2d').textBaseline = 'middle';
 
     this.init();
   }
 
   init() {
-    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.offscreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (const pen of this.store.data.pens) {
       if (this.hasImage(pen)) {
         // 只影响本层的
         pen.calculative.imageDrawed = false;
       }
     }
-    this.store.dirtyBackground = true;
-    this.store.dirtyTop = true;
+    this.store.patchFlagsBackground = true;
+    this.store.patchFlagsTop = true;
   }
 
   clear() {
-    this.otherOffsreen.getContext('2d').clearRect(0, 0, this.otherOffsreen.width, this.otherOffsreen.height);
-    this.offscreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.animateOffsScreen.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.otherOffsreen
+      .getContext('2d')
+      .clearRect(0, 0, this.otherOffsreen.width, this.otherOffsreen.height);
+    this.offscreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.animateOffsScreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.canvas
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   hasImage(pen: Pen) {
@@ -87,23 +109,24 @@ export class CanvasImage {
   }
 
   render() {
-    let dirty = false;
-    let dirtyAnimate = false;
+    let patchFlags = false;
+    let patchFlagsAnimate = false;
     for (const pen of this.store.data.pens) {
       if (this.hasImage(pen)) {
         if (this.store.animates.has(pen)) {
-          dirtyAnimate = true;
+          patchFlagsAnimate = true;
         } else if (!pen.calculative.imageDrawed) {
-          dirty = true;
+          patchFlags = true;
         }
       }
     }
 
-    const dirtyBackground = this.store.dirtyBackground;
-    if (dirtyBackground && this.isBottom) {
+    const patchFlagsBackground = this.store.patchFlagsBackground;
+    if (patchFlagsBackground && this.isBottom) {
       const ctx = this.otherOffsreen.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      const background = this.store.data.background || this.store.options.background;
+      const background =
+        this.store.data.background || this.store.options.background;
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
@@ -113,19 +136,23 @@ export class CanvasImage {
       this.renderGrid(ctx);
     }
 
-    const dirtyTop = this.store.dirtyTop;
-    if (dirtyTop && !this.isBottom) {
+    const patchFlagsTop = this.store.patchFlagsTop;
+    if (patchFlagsTop && !this.isBottom) {
       const ctx = this.otherOffsreen.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.renderRule(ctx);
     }
 
-    if (dirty) {
+    if (patchFlags) {
       const ctx = this.offscreen.getContext('2d');
       ctx.save();
       ctx.translate(this.store.data.x, this.store.data.y);
       for (const pen of this.store.data.pens) {
-        if (!pen.calculative.hasImage || pen.calculative.imageDrawed || this.store.animates.has(pen)) {
+        if (
+          !pen.calculative.hasImage ||
+          pen.calculative.imageDrawed ||
+          this.store.animates.has(pen)
+        ) {
           continue;
         }
         pen.calculative.imageDrawed = true;
@@ -141,7 +168,7 @@ export class CanvasImage {
       }
       ctx.restore();
     }
-    if (dirtyAnimate) {
+    if (patchFlagsAnimate) {
       const ctx = this.animateOffsScreen.getContext('2d');
       ctx.save();
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -164,23 +191,54 @@ export class CanvasImage {
       ctx.restore();
     }
 
-    if (dirty || dirtyAnimate || (dirtyBackground && this.isBottom) || (dirtyTop && !this.isBottom)) {
+    if (
+      patchFlags ||
+      patchFlagsAnimate ||
+      (patchFlagsBackground && this.isBottom) ||
+      (patchFlagsTop && !this.isBottom)
+    ) {
       const ctxCanvas = this.canvas.getContext('2d');
       ctxCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
       if (this.isBottom) {
-        ctxCanvas.drawImage(this.otherOffsreen, 0, 0, this.canvas.width, this.canvas.height);
-        this.store.dirtyBackground = false;
+        ctxCanvas.drawImage(
+          this.otherOffsreen,
+          0,
+          0,
+          this.canvas.width,
+          this.canvas.height
+        );
+        this.store.patchFlagsBackground = false;
       }
-      ctxCanvas.drawImage(this.offscreen, 0, 0, this.canvas.width, this.canvas.height);
-      ctxCanvas.drawImage(this.animateOffsScreen, 0, 0, this.canvas.width, this.canvas.height);
+      ctxCanvas.drawImage(
+        this.offscreen,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
+      ctxCanvas.drawImage(
+        this.animateOffsScreen,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
       if (!this.isBottom) {
-        ctxCanvas.drawImage(this.otherOffsreen, 0, 0, this.canvas.width, this.canvas.height);
-        this.store.dirtyTop = false;
+        ctxCanvas.drawImage(
+          this.otherOffsreen,
+          0,
+          0,
+          this.canvas.width,
+          this.canvas.height
+        );
+        this.store.patchFlagsTop = false;
       }
     }
   }
 
-  renderGrid(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
+  renderGrid(
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+  ) {
     const { data, options } = this.store;
     const { grid, gridRotate, gridColor, gridSize, scale } = data;
     if (!(grid ?? options.grid)) {
@@ -212,7 +270,9 @@ export class CanvasImage {
     ctx.restore();
   }
 
-  renderRule(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
+  renderRule(
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+  ) {
     const { data, options } = this.store;
     const { rule, ruleColor, scale, origin } = data;
     if (!(rule ?? options.rule)) {

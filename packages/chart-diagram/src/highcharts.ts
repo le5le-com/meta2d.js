@@ -75,7 +75,7 @@ export function highcharts(pen: Pen): Path2D {
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
-  if (pen.calculative.dirty && highchartsList[pen.id]) {
+  if (pen.calculative.patchFlags && highchartsList[pen.id]) {
     setElemPosition(pen, highchartsList[pen.id].div);
   }
   return path;

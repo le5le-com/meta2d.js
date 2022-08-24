@@ -298,8 +298,8 @@ export class Topology {
     return await this.canvas.addPens(pens, history);
   }
 
-  render(dirty?: boolean | number) {
-    this.canvas.render(dirty);
+  render(patchFlags?: boolean | number) {
+    this.canvas.render(patchFlags);
   }
 
   setBackgroundImage(url: string) {
@@ -321,7 +321,7 @@ export class Topology {
 
   setBackgroundColor(color: string = this.store.data.background) {
     this.store.data.background = color;
-    this.store.dirtyBackground = true;
+    this.store.patchFlagsBackground = true;
   }
 
   setGrid({
@@ -339,7 +339,7 @@ export class Topology {
     this.store.data.gridColor = gridColor;
     this.store.data.gridSize = gridSize;
     this.store.data.gridRotate = gridRotate;
-    this.store.dirtyBackground = true;
+    this.store.patchFlagsBackground = true;
   }
 
   setRule({
@@ -351,7 +351,7 @@ export class Topology {
   } = {}) {
     this.store.data.rule = rule;
     this.store.data.ruleColor = ruleColor;
-    this.store.dirtyTop = true;
+    this.store.patchFlagsTop = true;
   }
 
   open(data?: TopologyData) {
@@ -370,7 +370,7 @@ export class Topology {
       }
       // // 计算区域
       // for (const pen of data.pens) {
-      //   this.canvas.dirtyPenRect(pen);
+      //   this.canvas.updatePenRect(pen);
       // }
       for (const pen of data.pens) {
         this.canvas.makePen(pen);
@@ -520,8 +520,8 @@ export class Topology {
     this.canvas.clearCanvas();
 
     // 非必要，为的是 open 时重绘 背景与网格
-    this.store.dirtyBackground = true;
-    this.store.dirtyTop = true;
+    this.store.patchFlagsBackground = true;
+    this.store.patchFlagsTop = true;
     this.setBackgroundImage(undefined);
     render && this.render();
   }

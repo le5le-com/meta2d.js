@@ -33,7 +33,7 @@ export function gif(pen: Pen): Path2D {
     };
   }
 
-  if (pen.calculative.dirty && gifsList[pen.id]) {
+  if (pen.calculative.patchFlags && gifsList[pen.id]) {
     setImagePosition(pen, gifsList[pen.id]);
   }
   return path;

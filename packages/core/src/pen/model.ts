@@ -56,7 +56,7 @@ export const needCalcTextRectProps = [
 
 export const needSetPenProps = ['x', 'y', 'width', 'height'];
 
-export const needDirtyPenRectProps = [
+export const needPatchFlagsPenRectProps = [
   'paddingTop',
   'paddingRight',
   'paddingBottom',
@@ -375,7 +375,7 @@ export interface Pen extends Rect {
     isDock?: boolean; // 是否是对齐参考画笔
     pencil?: boolean;
     activeAnchor?: Point;
-    dirty?: boolean;
+    patchFlags?: boolean;
     visible?: boolean; // TODO: visible 是否参与动画呢？
     // 仅仅内部专用
     inView?: boolean;

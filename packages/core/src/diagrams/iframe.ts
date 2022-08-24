@@ -28,7 +28,7 @@ export function iframe(pen: Pen) {
     pen.calculative.iframe = pen.iframe;
   }
 
-  if (pen.calculative.dirty) {
+  if (pen.calculative.patchFlags) {
     setElemPosition(pen, iframes[pen.id]);
   }
   return new Path2D();

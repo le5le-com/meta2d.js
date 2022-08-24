@@ -58,7 +58,7 @@ export function echarts(pen: ChartPen): Path2D {
   if (typeof pen.echarts === 'string') {
     try {
       pen.echarts = JSON.parse(pen.echarts);
-    } catch(e) {}
+    } catch (e) {}
   }
   if (!pen.echarts) {
     return;
@@ -102,7 +102,7 @@ export function echarts(pen: ChartPen): Path2D {
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
-  if (pen.calculative.dirty && echartsList[pen.id]) {
+  if (pen.calculative.patchFlags && echartsList[pen.id]) {
     setElemPosition(pen, echartsList[pen.id].div);
   }
   return path;

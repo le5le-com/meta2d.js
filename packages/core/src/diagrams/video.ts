@@ -84,7 +84,7 @@ export function video(pen: Pen) {
     pen.calculative.media.loop = pen.playLoop;
     pen.calculative.audio = pen.audio;
   }
-  if (pen.calculative.dirty) {
+  if (pen.calculative.patchFlags) {
     setElemPosition(pen, videos[pen.id]);
   }
   return new Path2D();
