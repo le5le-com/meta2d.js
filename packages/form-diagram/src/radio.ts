@@ -10,6 +10,10 @@ export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onAdd) {
 >>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onAdd = onAdd;
+    if (!pen.optionPos) {
+      pen.onAdd(pen);
+      pen.calculative.canvas.parent.active([pen]);
+    }
     pen.onMouseDown = onMousedown;
     pen.onValue = onValue;
   }

@@ -49,6 +49,7 @@ export interface formPen extends Pen {
     inputCell: Pos;
     isUpdateData: boolean;
     isHover: boolean;
+    isInput: boolean;
   } & Pen['calculative'];
   checked?: boolean;
   onColor?: string;

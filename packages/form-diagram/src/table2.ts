@@ -1,12 +1,16 @@
 import { formPen, cellData, Pos } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
-import { calcRightBottom, calcTextLines, PenType } from '@topology/core';
+import { calcRightBottom, calcTextLines } from '@topology/core';
 import { ReplaceMode } from './common';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
     pen.onAdd = onAdd;
+    if (!pen.rowPos || !pen.colPos) {
+      pen.onAdd(pen);
+      pen.calculative.canvas.parent.active([pen]);
+    }
     pen.onMouseMove = onMouseMove;
     pen.onMouseLeave = onMouseLeave;
     pen.onMouseDown = onMouseDown;
@@ -38,6 +42,9 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
 
 function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.calculative.hoverCell) {
+    return;
+  }
+  if (pen.calculative.isInput) {
     return;
   }
   if (!pen.calculative.isHover) {
@@ -370,6 +377,7 @@ function onShowInput(pen: any, e: Point) {
     return;
   }
   pen.calculative.isHover = false;
+  pen.calculative.isInput = true;
   pen.calculative.canvas.render();
   pen.calculative.inputCell = pen.calculative.hoverCell;
 
@@ -394,6 +402,7 @@ function onInput(pen: formPen, text: string) {
     pen.calculative.inputCell.col,
     text
   );
+  pen.calculative.isInput = false;
   pen.calculative.isHover = true;
   pen.calculative.canvas.render();
 }
