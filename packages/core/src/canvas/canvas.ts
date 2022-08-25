@@ -4900,7 +4900,7 @@ export class Canvas {
     }
   }
 
-  async delete(pens = this.store.active, canDelLocked = false) {
+  async delete(pens = this.store.active, canDelLocked = false, history = true) {
     if (!pens || !pens.length) {
       return;
     }
@@ -4920,7 +4920,9 @@ export class Canvas {
     this.clearHover();
     this.render();
     // TODO: 连线的删除 ，连接的 node 的 connectLines 会变化（删除 node ，line 的 anchors 类似），未记历史记录
-    this.pushHistory({ type: EditType.Delete, pens });
+    if (history) {
+      this.pushHistory({ type: EditType.Delete, pens });
+    }
     this.store.emitter.emit('delete', pens);
   }
 
