@@ -3673,7 +3673,7 @@ export class Canvas {
    */
   scale(scale: number, center = { x: 0, y: 0 }) {
     const { minScale, maxScale } = this.store.options;
-    if (scale < minScale || scale > maxScale) {
+    if (!(scale >= minScale && scale <= maxScale)) {
       return;
     }
 
