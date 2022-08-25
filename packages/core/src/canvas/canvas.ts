@@ -468,7 +468,7 @@ export class Canvas {
 
   onkeydown = (e: KeyboardEvent) => {
     if (
-      this.store.data.locked >= LockState.DisableMove ||
+      this.store.data.locked >= LockState.DisableEdit ||
       (e.target as HTMLElement).tagName === 'INPUT' ||
       (e.target as HTMLElement).tagName === 'TEXTAREA'
     ) {
