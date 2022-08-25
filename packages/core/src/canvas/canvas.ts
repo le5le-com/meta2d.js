@@ -379,7 +379,7 @@ export class Canvas {
         // for chrome
         const items = clipboardData.items;
         const len = items.length;
-        event.preventDefault();
+        // event.preventDefault();
         if (len == 0) {
           return;
         }
