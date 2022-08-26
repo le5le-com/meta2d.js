@@ -3400,7 +3400,7 @@ export class Canvas {
 
   render = (patchFlags?: number | boolean) => {
     let now: number;
-    if (patchFlags == null || patchFlags === true) {
+    if (patchFlags == null || patchFlags === true || patchFlags === Infinity) {
       now = performance.now();
       this.patchFlags = true;
     } else if (patchFlags > 1) {
@@ -3447,8 +3447,7 @@ export class Canvas {
 
     for (const pen of this.store.data.pens) {
       if (!isFinite(pen.x)) {
-        // 若不合法，即 NaN ，Infinite
-        console.warn(pen, '画笔的 x 不合法');
+        continue;
       }
 
       if (pen.calculative.inView) {
