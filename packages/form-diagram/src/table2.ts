@@ -106,7 +106,9 @@ function initRect(pen: formPen) {
       _colWidthMap[_c.col] = _c.width;
     });
   for (let i = 0; i < pen.data[0].length; i++) {
-    width += _colWidthMap[i] || pen.colWidth;
+    width +=
+      (_colWidthMap[i] || pen.colWidth) *
+      pen.calculative.canvas.store.data.scale;
     colPos.push(width);
   }
 
@@ -125,7 +127,9 @@ function initRect(pen: formPen) {
     });
   // 显示表头
   for (let j = 0; j < pen.data.length; j++) {
-    height += _rowHeightMap[j] || pen.rowHeight;
+    height +=
+      (_rowHeightMap[j] || pen.rowHeight) *
+      pen.calculative.canvas.store.data.scale;
     rowPos.push(height);
   }
 
@@ -293,6 +297,8 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
               let childrenPen = JSON.parse(JSON.stringify(_colPen[0].pens));
               childrenPen.forEach((item: formPen) => {
                 Object.assign(item, { row: i, col: j });
+                item.height *= pen.calculative.canvas.store.data.scale;
+                item.width *= pen.calculative.canvas.store.data.scale;
               });
               calcChildrenRect(pen, rect, childrenPen);
               pen.calculative.canvas.parent.pushChildren(pen, childrenPen);
@@ -533,28 +539,28 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
   let height = 0;
   let lastX = 0;
   let lastY = 0;
-
+  const scale = pen.calculative.canvas.store.data.scale;
   for (const item of children) {
-    if (lastX + item.width * scaleX + 20 * scaleX < rect.width) {
-      item.x = rect.x + lastX + 10 * scaleX;
-      item.y = rect.y + lastY + 10 * scaleY;
+    if (lastX + item.width * scaleX + 20 * scale * scaleX < rect.width) {
+      item.x = rect.x + lastX + 10 * scale * scaleX;
+      item.y = rect.y + lastY + 10 * scale * scaleY;
 
-      lastX += (item.width + 10) * scaleX;
-      height = Math.max(height, lastY + (item.height + 10) * scaleY);
+      lastX += (item.width + 10 * scale) * scaleX;
+      height = Math.max(height, lastY + (item.height + 10 * scale) * scaleY);
     } else {
       // 超出需要换行
       lastX = 0;
       lastY = height;
-      item.x = rect.x + lastX + 10 * scaleX;
-      item.y = rect.y + lastY + 10 * scaleY;
+      item.x = rect.x + lastX + 10 * scale * scaleX;
+      item.y = rect.y + lastY + 10 * scale * scaleY;
 
-      height += (item.height + 10) * scaleY;
+      height += (item.height + 10 * scale) * scaleY;
     }
   }
 
   // 垂直居中
-  if (height + 20 * scaleY < rect.height) {
-    const top = (rect.height - height - 10 * scaleY) / 2;
+  if (height + 20 * scale * scaleY < rect.height) {
+    const top = (rect.height - height - 10 * scale * scaleY) / 2;
     for (const item of children) {
       item.y += top;
     }
