@@ -134,7 +134,7 @@ export function getRectOfPoints(points: Point[]): Rect {
   let ex = -Infinity;
   let ey = -Infinity;
 
-  points.forEach((item) => {
+  points?.forEach((item) => {
     if (!isFinite(item.x) || !isFinite(item.y)) {
       return;
     }
@@ -143,9 +143,6 @@ export function getRectOfPoints(points: Point[]): Rect {
     ex = Math.max(ex, item.x);
     ey = Math.max(ey, item.y);
   });
-  if (!isFinite(x)) {
-    console.error('getRectOfPoints 非法的 points', points);
-  }
   return { x, y, ex, ey, width: ex - x, height: ey - y };
 }
 
