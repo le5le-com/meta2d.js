@@ -4734,12 +4734,25 @@ export class Canvas {
     this.pasteOffset = 10;
     // 下面使用到的场景为跨页面 复制粘贴
     const clipboardData = this.store.clipboard;
+    let page = sessionStorage.getItem('page');
+    if (!page) {
+      page = s8();
+      sessionStorage.setItem('page', page);
+    }
     localStorage.setItem(
       this.clipboardName,
-      JSON.stringify({ topology: true, data: clipboardData })
+      JSON.stringify({
+        topology: true,
+        page,
+        data: clipboardData,
+      })
     );
     navigator.clipboard?.writeText(
-      JSON.stringify({ topology: true, data: clipboardData })
+      JSON.stringify({
+        topology: true,
+        page,
+        data: clipboardData,
+      })
     );
   }
 
@@ -4760,8 +4773,13 @@ export class Canvas {
       // 再读 localStorage
       clipboardText = localStorage.getItem(this.clipboardName);
     }
+    let samePage = true;
     if (clipboardText) {
-      let clipboard: { topology: boolean; data: TopologyClipboard };
+      let clipboard: {
+        topology: boolean;
+        page: string;
+        data: TopologyClipboard;
+      };
       try {
         clipboard = JSON.parse(clipboardText);
       } catch (e) {
@@ -4770,6 +4788,10 @@ export class Canvas {
       }
       if (!clipboard || !clipboard.topology || !clipboard.data) {
         return;
+      }
+      let page = sessionStorage.getItem('page');
+      if (!page || page !== clipboard.page) {
+        samePage = false;
       }
       this.store.clipboard = clipboard.data;
     }
@@ -4785,7 +4807,7 @@ export class Canvas {
     if (this.store.clipboard) {
       const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
       for (const pen of rootPens) {
-        this.pastePen(pen, undefined, this.store.clipboard);
+        this.pastePen(pen, undefined, this.store.clipboard, samePage);
       }
 
       this.active(rootPens);
@@ -4818,7 +4840,8 @@ export class Canvas {
   private pastePen(
     pen: Pen,
     parentId: string,
-    clipboard: TopologyClipboard
+    clipboard: TopologyClipboard,
+    samePage: boolean = true
   ): Pen {
     const oldId = pen.id;
     randomId(pen);
@@ -4835,6 +4858,10 @@ export class Canvas {
       this.makePen(pen);
       if (!pen.parentId) {
         const rect = this.getPenRect(pen, clipboard.origin, clipboard.scale);
+        if (!samePage) {
+          rect.x = this.mousePos.x - rect.width / 2;
+          rect.y = this.mousePos.y - rect.height / 2;
+        }
         this.setPenRect(pen, rect, false);
       }
       const newChildren = [];
