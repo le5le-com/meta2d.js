@@ -4,6 +4,7 @@ export const gifsList: {
   [key: string]: HTMLImageElement;
 } = {};
 
+let gif_z_index = 0;
 export function gif(pen: Pen): Path2D {
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
@@ -24,6 +25,8 @@ export function gif(pen: Pen): Path2D {
     img.crossOrigin = 'anonymous';
     img.src = pen.image;
     gifsList[pen.id] = img; // 提前赋值，避免重复创建
+    gif_z_index++;
+    pen.calculative.zIndex = gif_z_index;
     img.onload = () => {
       pen.calculative.img = img;
       pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;

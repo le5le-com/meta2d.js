@@ -426,6 +426,7 @@ export interface Pen extends Rect {
     keepDecimal?: number; // undefined 显示原内容；0 显示整数；保留几位小数
     showChild?: number; // 第几个子元素展示 undefined 即展示全部
     animateDotSize?: number; // 线条原点动画，原点大小
+    zIndex?: number; //dom节点 z-index;
     // media element
     onended?: (pen: Pen) => void;
   };

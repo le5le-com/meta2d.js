@@ -250,7 +250,7 @@ export class Canvas {
     this.canvasImage = new CanvasImage(parentElement, store);
 
     this.magnifierCanvas = new MagnifierCanvas(this, parentElement, store);
-
+    this.externalElements.id = 'topology-dom';
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
     this.externalElements.style.top = '0';
@@ -373,6 +373,9 @@ export class Canvas {
   }
 
   pasteImg = (event: ClipboardEvent) => {
+    if ((event.target as any).id !== 'topology-dom') {
+      return;
+    }
     if (event.clipboardData) {
       const clipboardData = event.clipboardData;
       if (clipboardData.items) {
