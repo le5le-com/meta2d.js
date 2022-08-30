@@ -13,7 +13,6 @@ export type EventName =
   | 'dblclick'
   | 'valueUpdate';
 export interface Event {
-  condition: EventCondition;
   name: EventName;
   action: EventAction; // 事件动作
   where?: Where; // 若无条件，必须为 undefined or null，不可为空对象
@@ -21,12 +20,7 @@ export interface Event {
   params?: string;
   fn?: (pen: Pen, params: string) => void;
 }
-export type EventCondition =
-  | 'nothing'
-  | 'comparison'
-  | 'code1'
-  | 'code2'
-  | 'userDefine';
+
 export enum EventAction {
   Link,
   SetProps,
@@ -42,6 +36,7 @@ export enum EventAction {
 }
 
 export interface Where {
+  type?: string | 'comparison';
   key?: string;
   comparison?: Comparison;
   value?: unknown;
