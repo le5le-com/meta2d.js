@@ -122,7 +122,8 @@ function initRect(pen: formPen) {
 
 function calcBallRect(pen: formPen) {
   const height = pen.calculative.barRect.height * 3.5;
-  const progress = (pen.calculative.barRect.width * pen.value) / 100;
+  const progress =
+    (pen.calculative.barRect.width * (pen.value as number)) / 100;
   pen.calculative.ballRect = {
     x: progress,
     y: (pen.calculative.worldRect.height - height) / 2,
