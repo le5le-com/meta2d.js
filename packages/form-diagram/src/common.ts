@@ -32,6 +32,7 @@ export interface formPen extends Pen {
   optionPos?: number[];
   direction?: string;
   checkboxWidth?: number;
+  isForbidden?: boolean;
   options?: {
     isForbidden: boolean;
     isChecked: boolean;
@@ -51,7 +52,7 @@ export interface formPen extends Pen {
     isHover: boolean;
     isInput: boolean;
   } & Pen['calculative'];
-  checked?: boolean;
+  checked?: boolean | string;
   onColor?: string;
   disable?: boolean;
   disableOnColor?: string;
@@ -63,7 +64,7 @@ export interface formPen extends Pen {
   sliderWidth?: number;
   sliderHeight?: number;
   barHeight?: number;
-  value?: number;
+  value?: number | string;
   min?: number;
   max?: number;
   table?: {
