@@ -5162,7 +5162,7 @@ export class Canvas {
     const textRect = rect || pen.calculative.worldTextRect;
 
     //value和innerText问题
-    const preInputText = pen.calculative.tempText || pen.text || '';
+    const preInputText = pen.calculative.tempText || pen.text + '' || '';
     const textArr = preInputText.split(/[\s\n]/);
     const finalText = `${textArr.join('</div><div>')}</div>`
       .replace('</div>', '')
@@ -5575,6 +5575,9 @@ export class Canvas {
     const li = document.createElement('li');
     li.onwheel = this.stopPropagation;
     li.innerText = text;
+    li.style.overflow = 'hidden';
+    li.style.textOverflow = 'ellipsis';
+    li.title = text;
     li.onmousedown = this.stopPropagation;
     li.dataset.i = index + '';
     li.onclick = this.selectDropdown;
