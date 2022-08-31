@@ -1264,7 +1264,7 @@ export class Topology {
 
     pen.events?.forEach((event) => {
       if (this.events[event.action] && event.name === eventName) {
-        let can = !event.where;
+        let can = !event.where?.type;
         if (event.where) {
           const { fn, fnJs, comparison, key, value } = event.where;
           if (fn) {
