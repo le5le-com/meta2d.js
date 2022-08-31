@@ -1095,7 +1095,7 @@ export class Canvas {
         altKey: event.altKey,
         buttons: 1,
       });
-    } else if (len === 2) {
+    } else if (len === 2 && this.startTouches?.length === 2) {
       if (!this.touchMoving && !this.touchScaling) {
         const x1 = this.startTouches[0].pageX - touches[0].pageX;
         const x2 = this.startTouches[1].pageX - touches[1].pageX;
