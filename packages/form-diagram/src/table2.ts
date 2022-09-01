@@ -213,7 +213,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
   for (let i = 0; i < pen.rowPos.length; i++) {
     for (let j = 0; j < pen.colPos.length; j++) {
       let { value: cell, style: cellStyle } = getCell(pen, i, j);
-      let isSuccess = true;
+      let isSuccess = false;
       //样式条件成立
       if (
         (cellStyle as any).wheres &&
@@ -228,7 +228,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
           return fn(cell);
         });
       }
-      let color = pen.color;
+      let color = pen.textColor || pen.color;
       let background = null;
       if (isSuccess) {
         color = (cellStyle as any).color || pen.color;

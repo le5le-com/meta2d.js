@@ -60,7 +60,9 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
 
   //文字
   ctx.save();
-  ctx.fillStyle = pen.isForbidden ? '#00000040' : '#000000d9';
+  ctx.fillStyle = pen.isForbidden
+    ? '#00000040'
+    : pen.textColor || pen.color || '#000000d9';
   ctx.textAlign = 'start';
   ctx.textBaseline = 'middle';
   ctx.font =
