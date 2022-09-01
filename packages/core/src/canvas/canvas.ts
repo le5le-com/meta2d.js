@@ -191,6 +191,7 @@ export class Canvas {
 
   pointSize = 8 as const;
   pasteOffset = 10;
+  firstPaste?: boolean;
 
   /**
    * @deprecated 改用 beforeAddPens
@@ -4748,6 +4749,7 @@ export class Canvas {
       scale,
     };
     this.pasteOffset = 10;
+    this.firstPaste = true;
     // 下面使用到的场景为跨页面 复制粘贴
     const clipboardData = this.store.clipboard;
     let page = sessionStorage.getItem('page');
@@ -4873,11 +4875,17 @@ export class Canvas {
     if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
       this.makePen(pen);
       if (!pen.parentId) {
-        const scale = samePage ? this.store.data.scale : clipboard.scale;
-        const rect = this.getPenRect(pen, clipboard.origin, scale);
+        let scale = samePage ? this.store.data.scale : clipboard.scale;
+        let origin = this.store.data.origin;
+        if (this.firstPaste) {
+          this.firstPaste = false;
+          scale = clipboard.scale;
+          origin = clipboard.origin;
+        }
+        const rect = this.getPenRect(pen, origin, scale);
         if (!samePage) {
-          rect.x = this.mousePos.x - rect.width / 2;
-          rect.y = this.mousePos.y - rect.height / 2;
+          rect.x = this.mousePos.x - this.store.data.origin.x - rect.width / 2;
+          rect.y = this.mousePos.y - this.store.data.origin.y - rect.height / 2;
         }
         this.setPenRect(pen, rect, false);
       }
