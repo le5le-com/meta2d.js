@@ -4873,7 +4873,8 @@ export class Canvas {
     if (!this.beforeAddPen || this.beforeAddPen(pen) == true) {
       this.makePen(pen);
       if (!pen.parentId) {
-        const rect = this.getPenRect(pen, clipboard.origin, clipboard.scale);
+        const scale = samePage ? this.store.data.scale : clipboard.scale;
+        const rect = this.getPenRect(pen, clipboard.origin, scale);
         if (!samePage) {
           rect.x = this.mousePos.x - rect.width / 2;
           rect.y = this.mousePos.y - rect.height / 2;
