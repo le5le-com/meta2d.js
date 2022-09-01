@@ -49,6 +49,7 @@ import {
   getTextColor,
   getGlobalColor,
   clearLifeCycle,
+  rotatePen,
 } from '../pen';
 import {
   calcRotate,
@@ -4435,6 +4436,7 @@ export class Canvas {
           }
         }
       } else {
+        const rotate = pen.calculative.initRect.rotate - pen.calculative.rotate;
         for (const k in pen) {
           if (
             k !== 'x' &&
@@ -4442,11 +4444,20 @@ export class Canvas {
             k !== 'width' &&
             k !== 'height' &&
             k !== 'initRect' &&
+            k !== 'rotate' &&
             (typeof pen[k] !== 'object' || k === 'lineDash')
           ) {
             pen.calculative[k] = pen[k];
           }
         }
+        if (pen.children?.length) {
+          if (rotate) {
+            rotatePen(pen, rotate, pen.calculative.worldRect);
+          }
+        } else {
+          pen.calculative.rotate = pen.rotate;
+        }
+
         pen.calculative.worldRect = pen.calculative.initRect;
       }
       this.updatePenRect(pen, { worldRectIsReady: true });
@@ -4677,7 +4688,11 @@ export class Canvas {
               });
             }
           } else {
-            this.restoreNodeAnimate(pen);
+            // 避免未到绘画帧，用户点击了停止动画，产生了时间差数据
+            requestAnimationFrame(() => {
+              this.restoreNodeAnimate(pen);
+            });
+
             dels.push(pen);
             this.nextAnimate(pen);
           }

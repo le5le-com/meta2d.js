@@ -1,5 +1,5 @@
 import { LineAnimateType, LockState, Pen } from './model';
-import { getSplitAnchor, line } from '../diagrams';
+import { getLineRect, getSplitAnchor, line } from '../diagrams';
 import { Direction } from '../data';
 import {
   calcRotate,
@@ -21,7 +21,7 @@ import {
   translateRect,
 } from '../rect';
 import { globalStore, TopologyStore } from '../store';
-import { calcTextLines, calcTextDrawRect } from './text';
+import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '@topology/core';
@@ -1765,8 +1765,17 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
         pen.prevFrame[k] %= 360;
       }
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-      pen.calculative.rotate =
-        (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
+      const offsetRotate =
+        ((pen.calculative.initRect.rotate + lastVal + frame[k] * process) %
+          360) -
+        pen.calculative.rotate;
+      if (pen.children?.length) {
+        rotatePen(pen, offsetRotate, pen.calculative.initRect);
+      } else {
+        pen.calculative.rotate =
+          (pen.calculative.initRect.rotate + lastVal + frame[k] * process) %
+          360;
+      }
       pen.calculative.patchFlags = true;
     } else if (isLinear(frame[k], k, pen)) {
       if (pen.prevFrame[k] == null) {
@@ -1937,6 +1946,73 @@ export function getPensLock(pens: Pen[]): boolean {
  */
 export function getPensDisableRotate(pens: Pen[]): boolean {
   return pens.every((pen) => pen.disableRotate);
+}
+
+export function rotatePen(pen: Pen, angle: number, rect: Rect) {
+  if (pen.type) {
+    pen.calculative.worldAnchors.forEach((anchor) => {
+      rotatePoint(anchor, angle, rect.center);
+    });
+    initLineRect(pen);
+    calcPenRect(pen);
+  } else {
+    if (pen.calculative.rotate) {
+      pen.calculative.rotate += angle;
+    } else {
+      pen.calculative.rotate = angle;
+    }
+    rotatePoint(pen.calculative.worldRect.center, angle, rect.center);
+    if (pen.parentId) {
+      pen.calculative.worldRect.x =
+        pen.calculative.worldRect.center.x -
+        pen.calculative.worldRect.width / 2;
+      pen.calculative.worldRect.y =
+        pen.calculative.worldRect.center.y -
+        pen.calculative.worldRect.height / 2;
+      pen.x = (pen.calculative.worldRect.x - rect.x) / rect.width;
+      pen.y = (pen.calculative.worldRect.y - rect.y) / rect.height;
+    }
+  }
+
+  pen.children?.forEach((id) => {
+    const child = pen.calculative.canvas.store.pens[id];
+    rotatePen(child, angle, rect);
+  });
+}
+
+function initLineRect(pen: Pen) {
+  if (!pen.calculative.worldAnchors?.length) {
+    return;
+  }
+  if (!isFinite(pen.x) || !isFinite(pen.x)) {
+    return;
+  }
+  if (pen.x == null || pen.y == null) {
+    return;
+  }
+  const rect = getLineRect(pen);
+  if (!pen.parentId) {
+    Object.assign(pen, rect);
+  }
+  const { fontSize, lineHeight } = pen.calculative.canvas.store.options;
+  if (!pen.fontSize) {
+    pen.fontSize = fontSize;
+    pen.calculative.fontSize =
+      pen.fontSize * pen.calculative.canvas.store.data.scale;
+  }
+  if (!pen.lineHeight) {
+    pen.lineHeight = lineHeight;
+    pen.calculative.lineHeight = pen.lineHeight;
+  }
+  calcCenter(rect);
+  pen.calculative.worldRect = rect;
+  calcPadding(pen, rect);
+  calcTextRect(pen);
+  if (pen.calculative.worldAnchors) {
+    pen.anchors = pen.calculative.worldAnchors.map((pt) => {
+      return calcRelativePoint(pt, pen.calculative.worldRect);
+    });
+  }
 }
 
 /**
