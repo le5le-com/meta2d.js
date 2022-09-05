@@ -23,8 +23,8 @@ export function pointInRect(pt: Point, rect: Rect) {
 
   if (
     !rect.rotate ||
-    rect.width < 20 ||
-    rect.height < 20 ||
+    // rect.width < 20 ||
+    // rect.height < 20 ||
     rect.rotate % 360 === 0
   ) {
     return pt.x > rect.x && pt.x < rect.ex && pt.y > rect.y && pt.y < rect.ey;
