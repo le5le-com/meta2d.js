@@ -7,7 +7,7 @@ const selfName = ':@';
 let allRect: Rect;
 let shapeScale: number; // 图形缩小比例
 let anchorsArr = [];
-// (window as any).parseSvg = parseSvg; //  TODO: 测试
+// globalThis.parseSvg = parseSvg; //  测试
 export function parseSvg(svg: string): Pen[] {
   const parser = new XMLParser({
     ignoreAttributes: false,

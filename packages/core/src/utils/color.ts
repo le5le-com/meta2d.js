@@ -114,7 +114,7 @@ export function pSBC(p, c0, c1?, l?) {
     );
 }
 
-(window as any).pSBC = pSBC;
+globalThis.pSBC = pSBC;
 
 export function rgba(c: string, p: number) {
   const f = pSBCr(c) || { r: 0, g: 0, b: 0 };

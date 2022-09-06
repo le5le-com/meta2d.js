@@ -3,9 +3,6 @@ import { Point } from '../point';
 import { TopologyStore } from '../store';
 import type { marked as Marked } from 'marked';
 
-declare const window: any;
-declare const global: any;
-
 export class Tooltip {
   box: HTMLElement;
   text: HTMLElement;
@@ -90,12 +87,7 @@ export class Tooltip {
    */
   private setText(pen: Pen): DOMRect {
     const oldElemRect = this.box.getBoundingClientRect();
-    let marked: typeof Marked;
-    if (window) {
-      marked = window.marked;
-    } else if (global) {
-      marked = global.marked;
-    }
+    let marked: typeof Marked = globalThis.marked;
     const title = Tooltip.getTitle(pen);
     if (marked) {
       this.text.innerHTML = marked(title);

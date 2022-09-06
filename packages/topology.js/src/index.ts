@@ -12,29 +12,27 @@ import { formPens } from '../../form-diagram';
 import { ftaPens, ftaPensbyCtx, ftaAnchors } from '../../fta-diagram';
 import { chartsPens } from '../../le5le-charts';
 
-declare const window: any;
-
-window && (window.Topology = Topology);
-window &&
-  (window.registerCommonDiagram = function () {
-    if (window.topology) {
-      registerEcharts();
-      registerHighcharts();
-      registerLightningChart();
-      window.topology.register(flowPens());
-      window.topology.registerAnchors(flowAnchors());
-      window.topology.register(activityDiagram());
-      window.topology.registerCanvasDraw(activityDiagramByCtx());
-      window.topology.register(classPens());
-      window.topology.register(sequencePens());
-      window.topology.registerCanvasDraw(sequencePensbyCtx());
-      window.topology.registerCanvasDraw(formPens());
-      window.topology.registerCanvasDraw(chartsPens());
-      window.topology.register(ftaPens());
-      window.topology.registerCanvasDraw(ftaPensbyCtx());
-      window.topology.registerAnchors(ftaAnchors());
-    }
-  });
+globalThis.Topology = Topology;
+globalThis.registerCommonDiagram = function () {
+  const topology = globalThis.topology;
+  if (topology) {
+    registerEcharts();
+    registerHighcharts();
+    registerLightningChart();
+    topology.register(flowPens());
+    topology.registerAnchors(flowAnchors());
+    topology.register(activityDiagram());
+    topology.registerCanvasDraw(activityDiagramByCtx());
+    topology.register(classPens());
+    topology.register(sequencePens());
+    topology.registerCanvasDraw(sequencePensbyCtx());
+    topology.registerCanvasDraw(formPens());
+    topology.registerCanvasDraw(chartsPens());
+    topology.register(ftaPens());
+    topology.registerCanvasDraw(ftaPensbyCtx());
+    topology.registerAnchors(ftaAnchors());
+  }
+};
 
 export {
   Topology,

@@ -28,7 +28,7 @@ export enum EventAction {
   PauseAnimate,
   StopAnimate,
   Function,
-  WindowFn,
+  GlobalFn,
   Emit,
   StartVideo,
   PauseVideo,

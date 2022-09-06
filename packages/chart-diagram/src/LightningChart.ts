@@ -23,10 +23,7 @@ export function lightningCharts(pen: Pen): Path2D {
 
   const path = new Path2D();
   const worldRect = pen.calculative.worldRect;
-  let lightningChart = lightningChartsList.lightningChart;
-  if (!lightningChart && window) {
-    lightningChart = window['lcjs'];
-  }
+  let lightningChart = lightningChartsList.lightningChart || globalThis.lcjs;
   if (!(pen as any).lightningCharts || !lightningChart) {
     return;
   }
@@ -324,10 +321,7 @@ function setLightningCharts(pen: Pen) {
 
 function destory(pen: Pen) {
   lightningChartsList[pen.id].div.remove();
-  let lightningChart = lightningChartsList.lightningChart;
-  if (!lightningChart && window) {
-    lightningChart = window['lcjs'];
-  }
+  let lightningChart = lightningChartsList.lightningChart || globalThis.lcjs;
   //   lightningChartsList[pen.id].chart.dispose();
   // lightningCharts && lightningCharts.dispose(lightningChartsList[pen.id].chart);
   lightningChartsList[pen.id] = undefined;

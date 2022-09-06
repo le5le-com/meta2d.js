@@ -73,7 +73,7 @@ export class Topology {
     this.register(commonPens());
     this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
-    window && ((window as any).topology = this);
+    globalThis.topology = this;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
   }
@@ -174,7 +174,7 @@ export class Topology {
 
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
-      if (e.value && typeof e.value === 'string') {
+      if (window && e.value && typeof e.value === 'string') {
         window.open(e.value, e.params ?? '_blank');
         return;
       }
@@ -259,13 +259,13 @@ export class Topology {
       }
       e.fn?.(pen, e.params);
     };
-    this.events[EventAction.WindowFn] = (pen: Pen, e: Event) => {
+    this.events[EventAction.GlobalFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
-        console.warn('[topology] WindowFn value must be a string');
+        console.warn('[topology] GlobalFn value must be a string');
         return;
       }
-      if (window && window[e.value]) {
-        (window as any)[e.value](pen, e.params);
+      if (globalThis[e.value]) {
+        globalThis[e.value](pen, e.params);
       }
     };
     this.events[EventAction.Emit] = (pen: Pen, e: Event) => {

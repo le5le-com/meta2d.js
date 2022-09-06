@@ -24,14 +24,13 @@ export function highcharts(pen: Pen): Path2D {
     pen.onBeforeValue = beforeValue;
   }
 
-  const path = new Path2D();
-  const worldRect = pen.calculative.worldRect;
-  if (!highchartsList.Highcharts && window) {
-    highchartsList.Highcharts = window['Highcharts'];
-  }
-  if (!(pen as any).highcharts || !highchartsList.Highcharts) {
+  const Highcharts = highchartsList.Highcharts || globalThis.Highcharts;
+  if (!(pen as any).highcharts || !Highcharts) {
     return;
   }
+
+  const path = new Path2D();
+  const worldRect = pen.calculative.worldRect;
 
   if (typeof (pen as any).highcharts === 'string') {
     try {
@@ -62,7 +61,7 @@ export function highcharts(pen: Pen): Path2D {
       chart: undefined,
     };
     setTimeout(() => {
-      highchartsList[pen.id].chart = highchartsList.Highcharts.chart(
+      highchartsList[pen.id].chart = Highcharts.chart(
         pen.id,
         (pen as any).highcharts.option
       );
@@ -110,10 +109,6 @@ function value(pen: Pen) {
     return;
   }
   setElemPosition(pen, highchartsList[pen.id].div);
-  // highchartsList[pen.id].chart = highchartsList.Highcharts.chart(
-  //   pen.id,
-  //   (pen as any).highcharts.option
-  // );
 }
 
 function changeId(pen: Pen, oldId: string, newId: string) {

@@ -47,10 +47,7 @@ export function echarts(pen: ChartPen): Path2D {
 
   const path = new Path2D();
   const worldRect = pen.calculative.worldRect;
-  let echarts = echartsList.echarts;
-  if (!echarts && window) {
-    echarts = window['echarts'];
-  }
+  let echarts = echartsList.echarts || globalThis.echarts;
   if (!pen.echarts || !echarts) {
     return;
   }
@@ -110,10 +107,7 @@ export function echarts(pen: ChartPen): Path2D {
 
 function destory(pen: Pen) {
   echartsList[pen.id].div.remove();
-  let echarts = echartsList.echarts;
-  if (!echarts && window) {
-    echarts = window['echarts'];
-  }
+  let echarts = echartsList.echarts || globalThis.echarts;
   echarts && echarts.dispose(echartsList[pen.id].chart);
   echartsList[pen.id] = undefined;
 }
