@@ -5775,7 +5775,6 @@ export class Canvas {
         width: data.width ?? penRect.width,
         height: data.height ?? penRect.height,
       };
-      console.log('rect', rect);
       this.setPenRect(pen, rect, false);
       this.updateLines(pen, true);
     } else if (willPatchFlagsPenRect) {
