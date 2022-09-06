@@ -2156,7 +2156,7 @@ export class Canvas {
     }
     this.addPen({
       isRuleLine: true,
-      locked: LockState.DisableMove,
+      // locked: LockState.DisableMove,
       type: PenType.Line,
       name: 'line',
       lineName: 'line',
@@ -5767,6 +5767,7 @@ export class Canvas {
         width: data.width ?? penRect.width,
         height: data.height ?? penRect.height,
       };
+      console.log(rect.x);
       this.setPenRect(pen, rect, false);
       this.updateLines(pen, true);
     } else if (willPatchFlagsPenRect) {
@@ -5828,6 +5829,7 @@ export class Canvas {
       pen.y = origin.y + rect.y * scale;
       pen.width = rect.width * scale;
       pen.height = rect.height * scale;
+      console.log(origin.x, scale, pen.x);
     }
     this.updatePenRect(pen);
     this.execPenResize(pen);
