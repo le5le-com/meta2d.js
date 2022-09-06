@@ -1915,9 +1915,10 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   }
   elem.style.zIndex = pen.calculative.zIndex + '';
   if (
-    pen.locked === LockState.DisableEdit ||
-    pen.locked === LockState.DisableMove ||
-    store.data.locked
+    (pen.locked === LockState.DisableEdit ||
+      pen.locked === LockState.DisableMove ||
+      store.data.locked) &&
+    !pen.calculative.canvas.mouseDown
   ) {
     // gif 组合后，作为子节点可通过 lockedOnCombine 来决定自身的 locked 状态
     elem.style.userSelect = 'initial';

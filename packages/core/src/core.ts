@@ -2119,7 +2119,7 @@ export class Topology {
     fromAnchor?: Point,
     toAnchor?: Point,
     render: boolean = true
-  ) {
+  ) :Pen{
     if (!fromAnchor) {
       const _worldRect = to.calculative.worldRect;
       fromAnchor = nearestAnchor(from, {
