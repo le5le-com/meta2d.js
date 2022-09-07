@@ -440,17 +440,11 @@ export function calcRelativeRect(rect: Rect, worldRect: Rect) {
  */
 export function calcRelativePoint(pt: Point, worldRect: Rect) {
   const { x, y, width, height } = worldRect;
-  const { id, penId, connectTo, anchorId, prevNextType, hidden } = pt;
-  const point: Point = {
-    id,
-    penId,
-    connectTo,
+  const { penId, connectTo } = pt;
+  const point: Point = Object.assign({}, pt, {
     x: width ? (pt.x - x) / width : 0,
     y: height ? (pt.y - y) / height : 0,
-    anchorId,
-    prevNextType,
-    hidden,
-  };
+  });
   if (pt.prev) {
     point.prev = {
       penId,
@@ -470,12 +464,30 @@ export function calcRelativePoint(pt: Point, worldRect: Rect) {
   return point;
 }
 // 判断直线段是否与矩形区域相交(矩形顶点与线的端点和矩形区域完全包含线段都不包括在内)
-export function aabbContainsSegment (p1: {x:number,y:number}, p2:{x:number,y:number},rect: Rect) {
+export function aabbContainsSegment(
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  rect: Rect
+) {
   // Completely outside.
-  if ((p1.x <= rect.x && p2.x <= rect.x) || (p1.y <= rect.y && p2.y <= rect.y) || (p1.x >= rect.ex && p2.x >= rect.ex) || (p1.y >= rect.ey && p2.y >= rect.ey))
-      return false;
+  if (
+    (p1.x <= rect.x && p2.x <= rect.x) ||
+    (p1.y <= rect.y && p2.y <= rect.y) ||
+    (p1.x >= rect.ex && p2.x >= rect.ex) ||
+    (p1.y >= rect.ey && p2.y >= rect.ey)
+  )
+    return false;
   // Completely inside.
-  if ((p1.x >= rect.x && p1.x <= rect.ex) && (p1.y >= rect.y && p1.y <= rect.ey) && (p2.x >= rect.x && p2.x <= rect.ex) && (p2.y >= rect.y && p2.y <= rect.ey))
+  if (
+    p1.x >= rect.x &&
+    p1.x <= rect.ex &&
+    p1.y >= rect.y &&
+    p1.y <= rect.ey &&
+    p2.x >= rect.x &&
+    p2.x <= rect.ex &&
+    p2.y >= rect.y &&
+    p2.y <= rect.ey
+  )
     return false;
   const m = (p2.y - p1.y) / (p2.x - p1.x);
 
@@ -494,23 +506,24 @@ export function aabbContainsSegment (p1: {x:number,y:number}, p2:{x:number,y:num
   return false;
 }
 // 判断直线段是否与矩形区域相交(矩形顶点与线的端点也包括在内)
-export function intersectsLine(p1: {x:number,y:number}, p2:{x:number,y:number}, rect: Rect) {
+export function intersectsLine(
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  rect: Rect
+) {
   let minX = p1.x;
   let maxX = p2.x;
 
   if (p1.x > p2.x) {
-      minX = p2.x;
-      maxX = p1.x;
+    minX = p2.x;
+    maxX = p1.x;
   }
 
-  if (maxX > rect.x + rect.width)
-      maxX = rect.x + rect.width;
+  if (maxX > rect.x + rect.width) maxX = rect.x + rect.width;
 
-  if (minX < rect.x)
-      minX = rect.x;
+  if (minX < rect.x) minX = rect.x;
 
-  if (minX > maxX)
-      return false;
+  if (minX > maxX) return false;
 
   let minY = p1.y;
   let maxY = p2.y;
@@ -518,26 +531,23 @@ export function intersectsLine(p1: {x:number,y:number}, p2:{x:number,y:number}, 
   const dx = p2.x - p1.x;
 
   if (Math.abs(dx) > 0.0000001) {
-      let a = (p2.y - p1.y) / dx;
-      let b = p1.y - a * p1.x;
-      minY = a * minX + b;
-      maxY = a * maxX + b;
+    let a = (p2.y - p1.y) / dx;
+    let b = p1.y - a * p1.x;
+    minY = a * minX + b;
+    maxY = a * maxX + b;
   }
 
   if (minY > maxY) {
-      let tmp = maxY;
-      maxY = minY;
-      minY = tmp;
+    let tmp = maxY;
+    maxY = minY;
+    minY = tmp;
   }
 
-  if (maxY > rect.y + rect.height)
-      maxY = rect.y + rect.height;
+  if (maxY > rect.y + rect.height) maxY = rect.y + rect.height;
 
-  if (minY < rect.y)
-      minY = rect.y;
+  if (minY < rect.y) minY = rect.y;
 
-  if (minY > maxY)
-      return false;
+  if (minY > maxY) return false;
 
   return true;
 }
