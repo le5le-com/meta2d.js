@@ -1332,7 +1332,7 @@ export class Canvas {
           this.drawingLine?.calculative.worldAnchors.length > 1)
       ) {
         this.finishDrawline(true);
-        if (this.store.active[0].anchors[0].connectTo) {
+        if (this.store.active[0]?.anchors[0].connectTo) {
           this.drawingLineName = '';
         } else {
           this.drawingLineName = this.store.options.drawingLineName;
