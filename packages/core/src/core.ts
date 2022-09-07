@@ -412,11 +412,13 @@ export class Topology {
   }
 
   drawLine(lineName?: string) {
+    this.inactive();
     lineName && lockedError(this.store);
     this.canvas.drawingLineName = lineName;
   }
 
   drawingPencil() {
+    this.inactive();
     this.canvas.drawingPencil();
   }
 
