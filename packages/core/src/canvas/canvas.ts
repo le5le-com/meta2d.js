@@ -601,13 +601,21 @@ export class Canvas {
       case 'x':
       case 'X':
         if (e.ctrlKey || e.metaKey) {
-          this.cut();
+          if ((e.target as HTMLElement).id === 'topology-dom') {
+            this.cut();
+          } else {
+            this.store.clipboard = undefined;
+          }
         }
         break;
       case 'c':
       case 'C':
         if (e.ctrlKey || e.metaKey) {
-          this.copy();
+          if ((e.target as HTMLElement).id === 'topology-dom') {
+            this.copy();
+          } else {
+            this.store.clipboard = undefined;
+          }
         }
         break;
       case 'd':
