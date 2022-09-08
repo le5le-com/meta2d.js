@@ -4649,7 +4649,7 @@ export class Canvas {
           pen.calculative.media.currentTime = 0;
           pen.calculative.media?.play();
           pen.onStartVideo?.(pen);
-        } else if (pen.frames) {
+        } else if (pen.type || pen.frames?.length) {
           this.store.animates.add(pen);
         }
       }

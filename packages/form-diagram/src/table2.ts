@@ -148,6 +148,10 @@ function initRect(pen: formPen) {
     y: pen.y,
     height: pen.height,
     width: pen.width,
+    center: {
+      x: pen.x + pen.width / 2,
+      y: pen.y + pen.height / 2,
+    },
   };
   calcRightBottom(pen.calculative.worldRect);
   //   }
