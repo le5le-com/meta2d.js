@@ -406,8 +406,8 @@ export class Canvas {
                   const { width, height } = image;
                   const pen = {
                     name,
-                    x: x - width / 2,
-                    y: y - height / 2,
+                    x: x - 50 / 2,
+                    y: y - (height / width) * 50,
                     externElement: name === 'gif',
                     width: 100,
                     height: (height / width) * 100,
