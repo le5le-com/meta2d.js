@@ -91,6 +91,9 @@ export interface TopologyClipboard {
   pens: Pen[];
   origin: Point;
   scale: number;
+  rand: string;
+  first?: boolean;
+  center?: Point;
 }
 
 export const createStore = () => {
