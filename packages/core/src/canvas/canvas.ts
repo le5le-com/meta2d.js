@@ -250,7 +250,6 @@ export class Canvas {
     this.canvasImage = new CanvasImage(parentElement, store);
 
     this.magnifierCanvas = new MagnifierCanvas(this, parentElement, store);
-    this.externalElements.id = 'topology-dom';
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
     this.externalElements.style.top = '0';
@@ -604,7 +603,7 @@ export class Canvas {
       case 'x':
       case 'X':
         if (e.ctrlKey || e.metaKey) {
-          if ((e.target as HTMLElement).id === 'topology-dom') {
+          if (e.target === this.externalElements) {
             this.cut();
           } else {
             this.store.clipboard = undefined;
@@ -614,7 +613,7 @@ export class Canvas {
       case 'c':
       case 'C':
         if (e.ctrlKey || e.metaKey) {
-          if ((e.target as HTMLElement).id === 'topology-dom') {
+          if (e.target === this.externalElements) {
             this.copy();
           } else {
             this.store.clipboard = undefined;
@@ -4756,6 +4755,7 @@ export class Canvas {
     // 得到当前活动层的，包括子节点
     const { origin, scale } = this.store.data;
     this.store.clipboard = undefined;
+    sessionStorage.setItem('page', rand);
     const clipboard = {
       topology: true,
       pens: this.getAllByPens(deepClone(pens || this.store.active, true)),
