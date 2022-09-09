@@ -513,6 +513,7 @@ export class Canvas {
           const index = this.drawLineFns.indexOf(this.drawingLineName);
           this.drawingLineName =
             this.drawLineFns[(index + 1) % this.drawLineFns.length];
+          this.drawingLine.lineName = this.drawingLineName;
           this.drawline();
           this.patchFlags = true;
         } else if (
