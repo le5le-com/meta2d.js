@@ -4313,7 +4313,7 @@ export class Canvas {
         )
       ) {
         const pen = this.store.pens[anchor.connectTo];
-        if (pen.type) {
+        if (!pen || pen.type) {
           return;
         }
         disconnectLine(pen, getAnchor(pen, anchor.anchorId), line, anchor);
