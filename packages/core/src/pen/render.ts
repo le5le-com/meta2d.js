@@ -2046,7 +2046,7 @@ export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {
  */
 export function isShowChild(pen: Pen, store: TopologyStore) {
   let selfPen = pen;
-  while (selfPen.parentId) {
+  while (selfPen && selfPen.parentId) {
     const oldPen = selfPen;
     selfPen = store.pens[selfPen.parentId];
     const showChildIndex = selfPen?.calculative?.showChild;
