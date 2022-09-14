@@ -2917,7 +2917,9 @@ export class Canvas {
       this.doEditAction(action, true);
       step--;
     }
-    this.activeHistory();
+    if (action.type == EditType.Add || EditType.Delete) {
+      this.activeHistory();
+    }
   }
 
   redo() {
@@ -2937,7 +2939,9 @@ export class Canvas {
       this.doEditAction(action, false);
       step--;
     }
-    this.activeHistory();
+    if (action.type == EditType.Add || EditType.Delete) {
+      this.activeHistory();
+    }
   }
 
   activeHistory() {
