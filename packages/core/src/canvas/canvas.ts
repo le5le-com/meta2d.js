@@ -1220,6 +1220,7 @@ export class Canvas {
    * @param pt 需包含 penId
    */
   private createDrawingLine(pt: Point): Pen {
+    this.inactive();
     const { data, options } = this.store;
     const scale = data.scale;
     const lineWidth = data.lineWidth || 1;
