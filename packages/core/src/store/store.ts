@@ -94,6 +94,7 @@ export interface TopologyClipboard {
   scale: number;
   offset?: number;
   page: string;
+  initRect?: Point;
   pos?: Point;
 }
 

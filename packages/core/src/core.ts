@@ -518,6 +518,8 @@ export class Topology {
     this.hideInput();
     this.canvas.tooltip.hide();
     this.canvas.clearCanvas();
+    sessionStorage.removeItem('page');
+    this.store.clipboard = undefined;
 
     // 非必要，为的是 open 时重绘 背景与网格
     this.store.patchFlagsBackground = true;

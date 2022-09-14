@@ -4801,6 +4801,7 @@ export class Canvas {
       origin: deepClone(origin),
       scale,
       page,
+      initRect: deepClone(this.activeRect),
       offset: 10,
     };
 
@@ -4856,23 +4857,29 @@ export class Canvas {
       return;
     }
 
+    let offset: any;
+    let pos: any;
+    if (this.store.clipboard) {
+      offset = this.store.clipboard.offset + 10;
+      pos = this.store.clipboard.pos;
+    }
+    this.store.clipboard = deepClone(clipboard);
+
     const curPage = sessionStorage.getItem('page');
-    if (!this.store.clipboard || curPage !== clipboard.page) {
-      this.store.clipboard = deepClone(clipboard);
+    if (curPage !== clipboard.page) {
       this.store.clipboard.pos = { x: this.mousePos.x, y: this.mousePos.y };
+      this.store.clipboard.offset = 0;
     } else {
-      this.store.clipboard.offset += 10;
+      offset && (this.store.clipboard.offset = offset);
+      pos && (this.store.clipboard.pos = pos);
     }
 
     const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
-    const added = [];
     for (const pen of rootPens) {
-      const p = deepClone(pen);
-      this.pastePen(p, undefined);
-      added.push(p);
+      this.pastePen(pen, undefined);
     }
     sessionStorage.setItem('page', clipboard.page);
-    this.active(added);
+    this.active(rootPens);
     this.pushHistory({ type: EditType.Add, pens: this.store.clipboard.pens });
     this.render();
     this.store.emitter.emit('add', this.store.clipboard.pens);
@@ -4915,15 +4922,25 @@ export class Canvas {
         this.store.clipboard.scale
       );
 
+      const initRect: Rect = this.getPenRect(
+        this.store.clipboard.initRect,
+        this.store.clipboard.origin,
+        this.store.clipboard.scale
+      );
+
       const { origin, scale } = this.store.data;
       pen.x = origin.x + rect.x * scale;
       pen.y = origin.y + rect.y * scale;
       pen.width = rect.width * scale;
       pen.height = rect.height * scale;
 
+      initRect.x = origin.x + initRect.x * scale;
+      initRect.y = origin.y + initRect.y * scale;
+      calcCenter(initRect);
+
       if (this.store.clipboard.pos) {
-        pen.x += this.store.clipboard.pos.x - pen.x - pen.width / 2;
-        pen.y += this.store.clipboard.pos.y - pen.y - pen.height / 2;
+        pen.x -= initRect.center.x - this.store.clipboard.pos.x;
+        pen.y -= initRect.center.y - this.store.clipboard.pos.y;
       }
       pen.x += this.store.clipboard.offset * this.store.data.scale;
       pen.y += this.store.clipboard.offset * this.store.data.scale;
