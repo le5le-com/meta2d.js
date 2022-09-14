@@ -661,7 +661,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
  * 更改 ctx 的 lineCap 属性
  */
 export function setLineCap(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const lineCap = pen.lineCap;
+  const lineCap = pen.lineCap || 'square';
   if (lineCap) {
     ctx.lineCap = lineCap;
   } else if (pen.type) {
