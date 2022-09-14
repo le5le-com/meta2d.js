@@ -5487,7 +5487,7 @@ export class Canvas {
 >>>>>>> 076a9f4 (add_divinput)
 =======
     this.inputDiv.onmousedown = this.stopPropagation;
-    this.inputDiv.contentEditable = 'true';
+    this.inputDiv.contentEditable = 'false';
     this.inputRight.onmousedown = this.stopPropagation;
     this.dropdown.onmousedown = this.stopPropagation;
 >>>>>>> 57526f8 (perfect_merge_newInput)
