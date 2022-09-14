@@ -94,6 +94,7 @@ import {
   s8,
 } from '../utils';
 import {
+  canChangeTogether,
   defaultCursors,
   defaultDrawLineFns,
   HotkeyType,
@@ -2948,6 +2949,9 @@ export class Canvas {
     let before = this.store.histories[this.store.historyIndex];
     if (before) {
       before.pens.forEach((pen) => {
+        if (!pen.calculative) {
+          return;
+        }
         pen.calculative.canvas = this;
       });
       this.active(before.pens);
@@ -2978,6 +2982,7 @@ export class Canvas {
         break;
       case EditType.Update:
         const pens = undo ? action.initPens : action.pens;
+        const unPens = undo ? action.pens : action.initPens;
         pens.forEach((p) => {
           const pen: Pen = deepClone(p, true);
           const i = this.store.data.pens.findIndex(
@@ -2996,6 +3001,17 @@ export class Canvas {
             const rect = this.getPenRect(pen, action.origin, action.scale);
             this.setPenRect(pen, rect, false);
             this.updateLines(pen, true);
+            if (pen.name === 'combine') {
+              let unPen: Pen = unPens.find((item) => item.id === pen.id);
+              canChangeTogether.forEach((key) => {
+                if (pen[key] !== unPen[key]) {
+                  this.parent.setValue(
+                    { id: pen.id, [key]: pen[key] },
+                    { render: true, history: false }
+                  );
+                }
+              });
+            }
           }
         });
         break;
