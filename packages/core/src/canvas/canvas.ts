@@ -4833,7 +4833,9 @@ export class Canvas {
     for (const pen of rootPens) {
       this.pastePen(pen, undefined);
     }
-    this.active(rootPens);
+    setTimeout(() => {
+      this.active(rootPens);
+    }, 1);
     this.pushHistory({ type: EditType.Add, pens: this.store.clipboard.pens });
     this.render();
     this.store.emitter.emit('add', this.store.clipboard.pens);
