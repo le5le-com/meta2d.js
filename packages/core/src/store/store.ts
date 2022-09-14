@@ -88,12 +88,13 @@ export interface TopologyStore {
 }
 
 export interface TopologyClipboard {
+  topology?: boolean;
   pens: Pen[];
   origin: Point;
   scale: number;
-  rand: string;
-  first?: boolean;
-  center?: Point;
+  offset?: number;
+  page: string;
+  pos?: Point;
 }
 
 export const createStore = () => {

@@ -415,6 +415,7 @@ export class Canvas {
                   };
                   this.addPens([pen]);
                   this.active([pen]);
+                  sessionStorage.pasted = 1;
                 };
               };
               reader.readAsDataURL(blob);
@@ -658,7 +659,13 @@ export class Canvas {
       case 'v':
       case 'V':
         if (e.ctrlKey || e.metaKey) {
-          this.paste();
+          setTimeout(() => {
+            // 是否已经粘贴了本地图片
+            if (!sessionStorage.pasted) {
+              this.paste();
+            }
+            sessionStorage.removeItem('pasted');
+          }, 10);
         } else {
           if (this.drawingLineName) {
             this.finishDrawline();
@@ -3795,6 +3802,9 @@ export class Canvas {
     this.store.data.scale = scale;
     this.store.data.center = center;
 
+    if (this.store.clipboard?.pos) {
+      scalePoint(this.store.clipboard.pos, s, center);
+    }
     scalePoint(this.store.data.origin, s, center);
     this.store.data.pens.forEach((pen) => {
       if (pen.parentId) {
@@ -4780,18 +4790,18 @@ export class Canvas {
   }
 
   copy(pens?: Pen[]) {
-    const rand = s8();
+    const page = s8();
     // 得到当前活动层的，包括子节点
     const { origin, scale } = this.store.data;
     this.store.clipboard = undefined;
-    sessionStorage.setItem('page', rand);
+    sessionStorage.setItem('page', page);
     const clipboard = {
       topology: true,
       pens: this.getAllByPens(deepClone(pens || this.store.active, true)),
       origin: deepClone(origin),
       scale,
-      rand,
-      center: this.activeRect.center,
+      page,
+      offset: 10,
     };
 
     if (navigator.clipboard) {
@@ -4819,13 +4829,7 @@ export class Canvas {
       // 再读 localStorage
 =======
     let clipboardText: string;
-    let clipboard: {
-      topology: boolean;
-      pens: Pen[];
-      origin: Point;
-      scale: number;
-      rand: string;
-    };
+    let clipboard: TopologyClipboard;
 
     if (navigator.clipboard) {
       clipboardText = await navigator.clipboard?.readText();
@@ -4844,27 +4848,31 @@ export class Canvas {
         return;
       }
     }
+
     if (
       this.beforeAddPens &&
       (await this.beforeAddPens(clipboard.pens)) != true
     ) {
       return;
     }
-    const samePage = sessionStorage.getItem('page');
-    if (this.store.clipboard && samePage === this.store.clipboard?.rand) {
-      this.store.clipboard = deepClone(this.store.clipboard);
-      this.store.clipboard.first = false;
-    } else {
+
+    const curPage = sessionStorage.getItem('page');
+    if (!this.store.clipboard || curPage !== clipboard.page) {
       this.store.clipboard = deepClone(clipboard);
-      this.store.clipboard.first = true;
+      this.store.clipboard.pos = { x: this.mousePos.x, y: this.mousePos.y };
+    } else {
+      this.store.clipboard.offset += 10;
     }
+
     const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
+    const added = [];
     for (const pen of rootPens) {
-      this.pastePen(pen, undefined);
+      const p = deepClone(pen);
+      this.pastePen(p, undefined);
+      added.push(p);
     }
-    setTimeout(() => {
-      this.active(rootPens);
-    }, 1);
+    sessionStorage.setItem('page', clipboard.page);
+    this.active(added);
     this.pushHistory({ type: EditType.Add, pens: this.store.clipboard.pens });
     this.render();
     this.store.emitter.emit('add', this.store.clipboard.pens);
@@ -4889,54 +4897,49 @@ export class Canvas {
    * @param clipboard 本次复制的全部画笔，包含子节点, 以及 origin 和 scale
    * @returns 复制后的画笔
    */
-  private pastePen = async (pen: Pen, parentId?: string, offset = 10) => {
+  private pastePen = (pen: Pen, parentId?: string) => {
     const oldId = pen.id;
     randomId(pen);
     pen.parentId = parentId;
-    // 子节点无需偏移
-    !parentId &&
-      translateRect(
-        pen,
-        offset * this.store.data.scale,
-        offset * this.store.data.scale
-      );
+
     if (pen.type === PenType.Line) {
-      // TODO: 仍然存在 节点类型的 连线，此处判断需要更改
       this.changeNodeConnectedLine(oldId, pen, this.store.clipboard.pens);
     } else {
       this.changeLineAnchors(oldId, pen, this.store.clipboard.pens);
     }
-    if (!this.beforeAddPens || (await this.beforeAddPens([pen])) == true) {
-      this.makePen(pen);
-      if (!pen.parentId) {
-        let scale = this.store.data.scale;
-        let origin = this.store.data.origin;
-        if (this.store.clipboard.first) {
-          scale = this.store.clipboard.scale;
-          origin = this.store.clipboard.origin;
-        }
-        const rect = this.getPenRect(pen, origin, scale);
-        const samePage = sessionStorage.getItem('page');
-        if (samePage !== this.store.clipboard.rand) {
-          rect.x = this.mousePos.x + pen.x - this.store.clipboard.center.x;
-          rect.y = this.mousePos.y + pen.y - this.store.clipboard.center.y;
-        }
-        this.setPenRect(pen, rect, false);
+
+    if (!pen.parentId) {
+      const rect = this.getPenRect(
+        pen,
+        this.store.clipboard.origin,
+        this.store.clipboard.scale
+      );
+
+      const { origin, scale } = this.store.data;
+      pen.x = origin.x + rect.x * scale;
+      pen.y = origin.y + rect.y * scale;
+      pen.width = rect.width * scale;
+      pen.height = rect.height * scale;
+
+      if (this.store.clipboard.pos) {
+        pen.x += this.store.clipboard.pos.x - pen.x - pen.width / 2;
+        pen.y += this.store.clipboard.pos.y - pen.y - pen.height / 2;
       }
-      const newChildren = [];
-      if (Array.isArray(pen.children)) {
-        for (const childId of pen.children) {
-          const childPen = this.store.clipboard.pens.find(
-            (pen) => pen.id === childId
-          );
-          childPen &&
-            newChildren.push((await this.pastePen(childPen, pen.id)).id);
-        }
-      }
-      pen.children = newChildren;
-      return pen;
+      pen.x += this.store.clipboard.offset * this.store.data.scale;
+      pen.y += this.store.clipboard.offset * this.store.data.scale;
     }
-    return {};
+    this.makePen(pen);
+    const newChildren = [];
+    if (Array.isArray(pen.children)) {
+      for (const childId of pen.children) {
+        const childPen = this.store.clipboard.pens.find(
+          (pen) => pen.id === childId
+        );
+        childPen && newChildren.push(this.pastePen(childPen, pen.id).id);
+      }
+    }
+    pen.children = newChildren;
+    return pen;
   };
   /**
    * 修改对应连线的 anchors

@@ -153,7 +153,6 @@ function mouseDown(pen: formPen, e: Point) {
   if (value < 0 || value > 100) {
     return;
   }
-  // console.log('move', value);
   pen.value = value;
   calcBallRect(pen);
   pen.calculative.text = pen.value + pen.unit;
