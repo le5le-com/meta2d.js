@@ -1110,15 +1110,22 @@ export class Topology {
     });
   }
 
-  setValue(data: IValue, { render = true }: { render?: boolean } = {}) {
-    this._setValue(data).forEach((pen) => {
+  setValue(
+    data: IValue,
+    {
+      render = true,
+      history = true,
+    }: { render?: boolean; history?: boolean } = {}
+  ) {
+    this._setValue(data, history).forEach((pen) => {
       this.store.emitter.emit('valueUpdate', pen);
     });
 
     render && this.render();
   }
 
-  _setValue(data: IValue) {
+  _setValue(data: IValue, history = false) {
+    history = history && !this.store.data.locked;
     let pens: Pen[] = [];
     if (data.id) {
       /**
@@ -1129,6 +1136,11 @@ export class Topology {
       pen && pens.push(pen);
     } else {
       pens = this.find(data.tag);
+    }
+
+    let initPens: Pen[];
+    if (history) {
+      initPens = deepClone(pens);
     }
     pens.forEach((pen) => {
       const afterData: IValue = pen.onBeforeValue
@@ -1143,7 +1155,6 @@ export class Topology {
         }
       }
       this._setChildValue(pen, afterData);
-      // this.canvas.updateValue(pen, afterData);
       pen.onValue?.(pen);
     });
 
@@ -1154,6 +1165,14 @@ export class Topology {
     ) {
       // 移动过程中，不重算 activeRect
       this.canvas.calcActiveRect();
+    }
+
+    if (history) {
+      this.pushHistory({
+        type: EditType.Update,
+        initPens,
+        pens,
+      });
     }
 
     return pens;
@@ -2119,7 +2138,7 @@ export class Topology {
     fromAnchor?: Point,
     toAnchor?: Point,
     render: boolean = true
-  ) :Pen{
+  ): Pen {
     if (!fromAnchor) {
       const _worldRect = to.calculative.worldRect;
       fromAnchor = nearestAnchor(from, {
