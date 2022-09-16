@@ -768,21 +768,21 @@ export class Topology {
       children: [],
       showChild,
     };
-    const p = pens.find((pen) => {
-      // TODO: js 计算误差，可能导致包含着其它的 pens 的最大 pen 无法计算出来
-      return pen.width === rect.width && pen.height === rect.height;
-    });
-    // 其中一个认为是父节点
-    const oneIsParent = p && showChild == undefined;
-    if (oneIsParent) {
-      if (!p.children) {
-        p.children = [];
-      }
-      parent = p;
-    } else {
-      // 若组合为状态，那么 parent 一定是 combine
-      this.canvas.makePen(parent);
-    }
+    // const p = pens.find((pen) => {
+    //   // TODO: js 计算误差，可能导致包含着其它的 pens 的最大 pen 无法计算出来
+    //   return pen.width === rect.width && pen.height === rect.height;
+    // });
+    // // 其中一个认为是父节点
+    // const oneIsParent = p && showChild == undefined;
+    // if (oneIsParent) {
+    //   if (!p.children) {
+    //     p.children = [];
+    //   }
+    //   parent = p;
+    // } else {
+    // 若组合为状态，那么 parent 一定是 combine
+    this.canvas.makePen(parent);
+    // }
 
     pens.forEach((pen) => {
       if (pen === parent || pen.parentId === parent.id) {
@@ -797,15 +797,15 @@ export class Topology {
     });
     this.canvas.active([parent]);
     let step = 1;
-    if (!oneIsParent) {
-      step = 2;
-      this.pushHistory({
-        type: EditType.Add,
-        pens: [parent],
-        step,
-      });
-      this.store.emitter.emit('add', [parent]);
-    }
+    // if (!oneIsParent) {
+    //   step = 2;
+    //   this.pushHistory({
+    //     type: EditType.Add,
+    //     pens: [parent],
+    //     step,
+    //   });
+    //   this.store.emitter.emit('add', [parent]);
+    // }
     this.pushHistory({
       type: EditType.Update,
       initPens,
