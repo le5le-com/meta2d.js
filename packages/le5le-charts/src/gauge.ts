@@ -303,12 +303,18 @@ function onAdd(pen: leChartPen) {
       var second = date.getSeconds();
       var minute = date.getMinutes() + second / 60;
       var hour = (date.getHours() % 12) + minute / 60;
-      pen.calculative.canvas.parent.setValue({
-        id: pen.id,
-        hourvalue: hour,
-        minutevalue: minute,
-        secondvalue: second,
-      });
+      pen.calculative.canvas.parent.setValue(
+        {
+          id: pen.id,
+          hourvalue: hour,
+          minutevalue: minute,
+          secondvalue: second,
+        },
+        {
+          render: true,
+          history: false,
+        }
+      );
     }, 1000);
   } else {
     const tem = pen.value;

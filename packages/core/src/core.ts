@@ -189,7 +189,10 @@ export class Topology {
           if (value.hasOwnProperty('visible')) {
             this.setVisible(pen, value.visible);
           }
-          this._setValue({ id: pen.id, ...value });
+          this.setValue(
+            { id: pen.id, ...value },
+            { history: false, render: false }
+          );
         });
         this.render();
         return;
@@ -245,10 +248,11 @@ export class Topology {
             throw new Error('[topology] Function value must be string');
           }
           // TODO: 编译 string.replaceAll 报错
-          const value: any = e.value;
-          const fnJs = value.replaceAll
-            ? value.replaceAll('.setValue(', '._setValue(')
-            : value.replace(/.setValue\(/g, '._setValue(');
+          // const value: any = e.value;
+          // const fnJs = value.replaceAll
+          //   ? value.replaceAll('.setValue(', '._setValue(')
+          //   : value.replace(/.setValue\(/g, '._setValue(');
+          const fnJs = e.value;
           e.fn = new Function('pen', 'params', fnJs) as (
             pen: Pen,
             params: string
@@ -1065,7 +1069,11 @@ export class Topology {
       dataIdValues.length && this.setValuesByDataId(formPens, dataIdValues);
       values.forEach((value) => {
         if (!value.dataId) {
-          this.setValue(value, { render: false });
+          this.setValue(value, {
+            render: false,
+            doEvent: true,
+            history: false,
+          });
         }
       });
       this.render();
@@ -1108,7 +1116,7 @@ export class Topology {
       });
     });
     values.forEach((value) => {
-      this.setValue(value, { render: false });
+      this.setValue(value, { render: false, doEvent: true, history: false });
     });
   }
 
@@ -1117,16 +1125,9 @@ export class Topology {
     {
       render = true,
       history = true,
-    }: { render?: boolean; history?: boolean } = {}
+      doEvent = false,
+    }: { render?: boolean; history?: boolean; doEvent?: boolean } = {}
   ) {
-    this._setValue(data, history).forEach((pen) => {
-      this.store.emitter.emit('valueUpdate', pen);
-    });
-
-    render && this.render();
-  }
-
-  _setValue(data: IValue, history = false) {
     history = history && !this.store.data.locked;
     let pens: Pen[] = [];
     if (data.id) {
@@ -1176,8 +1177,15 @@ export class Topology {
         pens,
       });
     }
+    doEvent &&
+      pens.forEach((pen) => {
+        this.store.emitter.emit('valueUpdate', pen);
+      });
+    render && this.render();
+  }
 
-    return pens;
+  _setValue(data: IValue, history = false) {
+    this.setValue(data, { history, render: false });
   }
 
   _setChildValue(_pen: Pen, data: IValue) {
@@ -1512,7 +1520,10 @@ export class Topology {
     // 2. 修改其它画笔的 宽高 fontSize
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      this._setValue({ id: pen.id, width, height, ...attrs });
+      this.setValue(
+        { id: pen.id, width, height, ...attrs },
+        { render: false, history: false }
+      );
     }
     this.render();
 
@@ -1587,7 +1598,10 @@ export class Topology {
         penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
         break;
     }
-    this._setValue({ id: pen.id, ...penRect });
+    this.setValue(
+      { id: pen.id, ...penRect },
+      { render: false, history: false }
+    );
   }
 
   /**
@@ -1629,7 +1643,13 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this._setValue({ id: pen.id, ...penRect });
+      this.setValue(
+        { id: pen.id, ...penRect },
+        {
+          render: false,
+          history: false,
+        }
+      );
     }
     this.render();
     this.pushHistory({
@@ -1673,7 +1693,10 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this._setValue({ id: pen.id, ...penRect });
+      this.setValue(
+        { id: pen.id, ...penRect },
+        { render: false, history: false }
+      );
 
       if (index === pens.length - 1) {
         return;
@@ -2253,7 +2276,13 @@ export class Topology {
 
   setVisible(pen: Pen, visible: boolean, render = true) {
     this.onSizeUpdate();
-    this._setValue({ id: pen.id, visible });
+    this.setValue(
+      { id: pen.id, visible },
+      {
+        render: false,
+        history: false,
+      }
+    );
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.store.pens[childId];
