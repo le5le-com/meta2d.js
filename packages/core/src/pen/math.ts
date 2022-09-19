@@ -32,9 +32,13 @@ export function calcAnchorDock(
       if (pt === e || pt === curAnchor) {
         return;
       }
-
+      let distance =
+        (pen.calculative.worldRect.center.x - e.x) *
+          (pen.calculative.worldRect.center.x - e.x) +
+        (pen.calculative.worldRect.center.y - e.y) *
+          (pen.calculative.worldRect.center.y - e.y);
       const disX = Math.abs(pt.x - e.x);
-      if (disX > 0 && disX < size && disX < x) {
+      if (disX > 0 && disX < size && distance < x) {
         xDock = {
           x: Math.round(pt.x) + 0.5,
           y: Math.round(pt.y) + 0.5,
@@ -44,10 +48,10 @@ export function calcAnchorDock(
           },
           step: pt.x - e.x,
         };
-        x = disX;
+        x = distance;
       }
       const disY = Math.abs(pt.y - e.y);
-      if (disY > 0 && disY < size && disY < y) {
+      if (disY > 0 && disY < size && distance < y) {
         yDock = {
           x: Math.round(pt.x) + 0.5,
           y: Math.round(pt.y) + 0.5,
@@ -57,7 +61,7 @@ export function calcAnchorDock(
           },
           step: pt.y - e.y,
         };
-        y = disY;
+        y = distance;
       }
     });
   }
@@ -135,7 +139,7 @@ function calcDockByPoints(
   let yDock: Point;
   let x = Infinity;
   let y = Infinity;
-  const size = 8;
+  const size = 16;
   const paddingRect = expandRect(rect, size); // rect 扩大 size 区域
   // 过滤出本次需要计算的画笔们
   const pens = store.data.pens.filter((pen) => {
@@ -158,7 +162,18 @@ function calcDockByPoints(
         const stepY = point.y - activePoint.y;
         const absStepX = Math.abs(stepX);
         const absStepY = Math.abs(stepY);
-        if (absStepX < size && absStepX < x) {
+        if (!rect.center) {
+          rect.center = {
+            x: rect.x + rect.width / 2,
+            y: rect.y + rect.height / 2,
+          };
+        }
+        let distance =
+          (pen.calculative.worldRect.center.x - rect.center.x) *
+            (pen.calculative.worldRect.center.x - rect.center.x) +
+          (pen.calculative.worldRect.center.y - rect.center.y) *
+            (pen.calculative.worldRect.center.y - rect.center.y);
+        if (absStepX < size && distance < x) {
           xDock = {
             x: Math.round(point.x) + 0.5,
             y: Math.round(point.y) + 0.5,
@@ -169,9 +184,9 @@ function calcDockByPoints(
             },
             penId: pen.id,
           };
-          x = absStepX;
+          x = distance;
         }
-        if (absStepY < size && absStepY < y) {
+        if (absStepY < size && distance < y) {
           yDock = {
             x: Math.round(point.x) + 0.5,
             y: Math.round(point.y) + 0.5,
@@ -182,7 +197,7 @@ function calcDockByPoints(
             },
             penId: pen.id,
           };
-          y = absStepY;
+          y = distance;
         }
       }
     }

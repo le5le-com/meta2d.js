@@ -5251,7 +5251,7 @@ export class Canvas {
 
     //value和innerText问题
     const preInputText = pen.calculative.tempText || pen.text + '' || '';
-    const textArr = preInputText.split(/[\s\n]/);
+    const textArr = preInputText.replace(/\x20/g, '&nbsp;').split(/[\s\n]/);
     const finalText = `${textArr.join('</div><div>')}</div>`
       .replace('</div>', '')
       .replace(/\<div\>\<\/div\>/g, '<div><br></div>');
@@ -5469,7 +5469,8 @@ export class Canvas {
       this.inputDiv.dataset.value = this.inputDiv.innerHTML
         .replace(/\<div\>/g, '\n')
         .replace(/\<\/div\>/g, '')
-        .replace(/\<br\>/g, '');
+        .replace(/\<br\>/g, '')
+        .replace(/&nbsp;/g, ' ');
       if (pen.onInput) {
         pen.onInput(pen, this.inputDiv.dataset.value);
       } else if (pen.text !== this.inputDiv.dataset.value) {
