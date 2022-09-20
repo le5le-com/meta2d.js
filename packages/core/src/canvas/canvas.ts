@@ -261,6 +261,14 @@ export class Canvas {
     this.createInput();
 
     this.tooltip = new Tooltip(parentElement, store);
+    this.tooltip.box.onmouseleave = (e) => {
+      this.patchFlags = true;
+      this.store.lastHover && (this.store.lastHover.calculative.hover = false);
+      let hover = this.store.data.pens.find(
+        (item) => item.calculative.hover === true
+      );
+      setHover(hover, false);
+    };
     if (this.store.options.scroll) {
       this.scroll = new Scroll(this);
     }
