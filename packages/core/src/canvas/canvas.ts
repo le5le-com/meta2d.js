@@ -94,7 +94,7 @@ import {
   s8,
 } from '../utils';
 import {
-  canChangeTogether,
+  inheritanceProps,
   defaultCursors,
   defaultDrawLineFns,
   HotkeyType,
@@ -201,13 +201,13 @@ export class Canvas {
   beforeRemovePens: (pens: Pen[]) => Promise<boolean>;
   beforeRemoveAnchor: (pen: Pen, anchor: Point) => Promise<boolean>;
 
-  customeResizeDock: (
+  customResizeDock: (
     store: TopologyStore,
     rect: Rect,
     pens: Pen[],
     resizeIndex: number
   ) => { xDock: Point; yDock: Point };
-  customeMoveDock: (
+  customMoveDock: (
     store: TopologyStore,
     rect: Rect,
     pens: Pen[],
@@ -3011,7 +3011,7 @@ export class Canvas {
             this.updateLines(pen, true);
             if (pen.name === 'combine') {
               let unPen: Pen = unPens.find((item) => item.id === pen.id);
-              canChangeTogether.forEach((key) => {
+              inheritanceProps.forEach((key) => {
                 if (pen[key] !== unPen[key]) {
                   this.parent.setValue(
                     { id: pen.id, [key]: pen[key] },
@@ -3942,7 +3942,7 @@ export class Canvas {
     calcCenter(rect);
     if (!this.store.options.disableDockLine) {
       this.clearDock();
-      const resizeDock = this.customeResizeDock || calcResizeDock;
+      const resizeDock = this.customResizeDock || calcResizeDock;
       this.dock = resizeDock(
         this.store,
         rect,
@@ -4048,7 +4048,7 @@ export class Canvas {
     };
     if (!this.store.options.disableDockLine) {
       this.clearDock();
-      const moveDock = this.customeMoveDock || calcMoveDock;
+      const moveDock = this.customMoveDock || calcMoveDock;
       this.dock = moveDock(this.store, rect, this.movingPens, offset);
       const { xDock, yDock } = this.dock;
       if (xDock) {

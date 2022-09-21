@@ -47,7 +47,7 @@ export const rotatedCursors = [
 
 export const defaultDrawLineFns = ['curve', 'polyline', 'line'];
 
-export const canChangeTogether = [
+export const inheritanceProps = [
   'dash',
   'lineWidth',
   'lineCap',

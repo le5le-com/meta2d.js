@@ -1,6 +1,6 @@
-import { LineAnimateType, LockState, Pen } from './model';
+import { IValue, LineAnimateType, LockState, Pen } from './model';
 import { getLineRect, getSplitAnchor, line } from '../diagrams';
-import { Direction } from '../data';
+import { Direction, inheritanceProps } from '../data';
 import {
   calcRotate,
   distance,
@@ -1791,6 +1791,9 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       pen.calculative[k] = Math.round(current * 100) / 100;
     } else {
       pen.calculative[k] = frame[k];
+      const v: any = {};
+      v[k] = frame[k];
+      setChildValue(pen, v);
     }
 
     if (k === 'text') {
@@ -2165,4 +2168,24 @@ function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 }
+<<<<<<< HEAD
 >>>>>>> 2620d99 (registerCanvasDraw type)
+=======
+
+export function setChildValue(pen: Pen, data: IValue, inheritance = true) {
+  for (const k in data) {
+    if (!inheritance || inheritanceProps.includes(k)) {
+      pen[k] = data[k];
+      pen.calculative[k] = data[k];
+    }
+
+    if (pen.name === 'combine' && pen.showChild === undefined) {
+      const children = pen.children;
+      children?.forEach((childId) => {
+        const child = pen.calculative.canvas.store.pens[childId];
+        setChildValue(child, data, false);
+      });
+    }
+  }
+}
+>>>>>>> ea17586 (dock and animate)

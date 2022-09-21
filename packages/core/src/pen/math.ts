@@ -137,22 +137,24 @@ function calcDockByPoints(
 ): { xDock: Point; yDock: Point } {
   let xDock: Point;
   let yDock: Point;
-  let x = Infinity;
-  let y = Infinity;
-  const size = 16;
-  const paddingRect = expandRect(rect, size); // rect 扩大 size 区域
-  // 过滤出本次需要计算的画笔们
-  const pens = store.data.pens.filter((pen) => {
+  let minCloseX = Infinity;
+  let minCloseY = Infinity;
+
+  // 临近范围
+  const closeSize = 10;
+  const paddingRect = expandRect(rect, closeSize);
+  store.data.pens.forEach((pen) => {
     const { inView, worldRect, active } = pen.calculative;
-    return !(
+    if (
       inView === false ||
       (!calcActive && active) || // 如果不计算活动层，则过滤掉活动层
       rectInFourAngRect(paddingRect, worldRect) || // 水平和垂直方向 无重合
       (pen.type &&
         store.active.some((active) => isConnectLine(store, active, pen)))
-    );
-  });
-  for (const pen of pens) {
+    ) {
+      return;
+    }
+
     // 得到图形的全部点
     const points = getPointsByPen(pen);
     // 比对 points 中的点，必须找出最近的点，不可提前跳出
@@ -168,12 +170,7 @@ function calcDockByPoints(
             y: rect.y + rect.height / 2,
           };
         }
-        let distance =
-          (pen.calculative.worldRect.center.x - rect.center.x) *
-            (pen.calculative.worldRect.center.x - rect.center.x) +
-          (pen.calculative.worldRect.center.y - rect.center.y) *
-            (pen.calculative.worldRect.center.y - rect.center.y);
-        if (absStepX < size && distance < x) {
+        if (absStepX < closeSize && absStepX < minCloseX) {
           xDock = {
             x: Math.round(point.x) + 0.5,
             y: Math.round(point.y) + 0.5,
@@ -184,9 +181,9 @@ function calcDockByPoints(
             },
             penId: pen.id,
           };
-          x = distance;
+          minCloseX = absStepX;
         }
-        if (absStepY < size && distance < y) {
+        if (absStepY < closeSize && absStepY < minCloseY) {
           yDock = {
             x: Math.round(point.x) + 0.5,
             y: Math.round(point.y) + 0.5,
@@ -197,11 +194,12 @@ function calcDockByPoints(
             },
             penId: pen.id,
           };
-          y = distance;
+          minCloseY = absStepY;
         }
       }
     }
-  }
+  });
+
   return {
     xDock,
     yDock,

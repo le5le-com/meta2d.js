@@ -23,6 +23,7 @@ import {
   setElemPosition,
   connectLine,
   nearestAnchor,
+  setChildValue,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -54,7 +55,7 @@ import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
-import { canChangeTogether } from './data';
+import { inheritanceProps } from './data';
 
 export class Topology {
   store: TopologyStore;
@@ -571,7 +572,7 @@ export class Topology {
       offset: Point
     ) => { xDock: Point; yDock: Point }
   ) {
-    this.canvas.customeMoveDock = dock;
+    this.canvas.customMoveDock = dock;
   }
 
   /**
@@ -585,7 +586,7 @@ export class Topology {
       resizeIndex: number
     ) => { xDock: Point; yDock: Point }
   ) {
-    this.canvas.customeResizeDock = dock;
+    this.canvas.customResizeDock = dock;
   }
 
   find(id: string): Pen[];
@@ -1157,7 +1158,7 @@ export class Topology {
           }, 0);
         }
       }
-      this._setChildValue(pen, afterData);
+      setChildValue(pen, afterData);
       pen.onValue?.(pen);
     });
 
@@ -1184,28 +1185,11 @@ export class Topology {
     render && this.render();
   }
 
+  /**
+   * @deprecated 改用 setValue
+   */
   _setValue(data: IValue, history = false) {
     this.setValue(data, { history, render: false });
-  }
-
-  _setChildValue(_pen: Pen, data: IValue) {
-    this.canvas.updateValue(_pen, data);
-    if (_pen.name === 'combine' && _pen.showChild === undefined) {
-      const valueObj = {};
-      let keys = Object.keys(data);
-      keys.forEach((key) => {
-        if (canChangeTogether.includes(key)) {
-          valueObj[key] = data[key];
-        }
-      });
-      if (Object.keys(valueObj).length !== 0) {
-        const children = _pen.children;
-        children?.forEach((childId) => {
-          const child = this.store.pens[childId];
-          this._setChildValue(child, valueObj);
-        });
-      }
-    }
   }
 
   pushHistory(action: EditAction) {
@@ -2304,19 +2288,17 @@ export class Topology {
 
   setElemPosition = setElemPosition;
 
-  destroy(global?: boolean) {
+  destroy(onlyData?: boolean) {
     this.clear(false);
     this.closeSocket();
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
-    // Clear data.
-    globalStore[this.store.id] = undefined;
-    globalStore.path2dDraws = {};
-    // TODO: globalStore 其它资源为何不清空？
     this.canvas = undefined;
-
-    if (global) {
-      globalStore.htmlElements = {};
+    globalStore[this.store.id] = undefined;
+    if (!onlyData) {
+      for (const k in globalStore) {
+        delete globalStore[k];
+      }
     }
   }
 }
