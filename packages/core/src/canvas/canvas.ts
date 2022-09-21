@@ -370,9 +370,6 @@ export class Canvas {
         document.addEventListener('keydown', this.onkeydown);
         document.addEventListener('keyup', this.onkeyup);
         document.addEventListener('paste', this.pasteImg);
-        document.addEventListener('copy', (e) => {
-          e.clipboardData.clearData();
-        });
         // TODO: 使用 paste 事件，可以实现 复制桌面图片上画布，但存在两个问题：
         // 1. http 协议，复制桌面图片后，无法清空剪贴板
         // 2. 复制桌面图片，拿不到鼠标位置信息
