@@ -1158,7 +1158,9 @@ export class Topology {
           }, 0);
         }
       }
+
       setChildValue(pen, afterData);
+      this.canvas.updateValue(pen, afterData);
       pen.onValue?.(pen);
     });
 
