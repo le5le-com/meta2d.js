@@ -1489,7 +1489,7 @@ export class Topology {
   }
 
   /**
-   * 其它图形的部分变成第一个的
+   * 大小相同
    * @param pens 画笔们
    */
   beSameByFirst(pens: Pen[] = this.store.data.pens) {
@@ -1498,17 +1498,39 @@ export class Topology {
     // 1. 得到第一个画笔的 宽高 字体大小
     const firstPen = pens[0];
     const { width, height } = this.getPenRect(firstPen);
+    for (let i = 1; i < pens.length; i++) {
+      const pen = pens[i];
+      this.setValue(
+        { id: pen.id, width, height },
+        { render: false, history: false }
+      );
+    }
+    this.render();
+
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
+  }
+
+  /**
+   * 格式刷（样式相同，大小无需一致。）
+   * @param pens 画笔们
+   */
+  formatPainterByFirst(pens: Pen[] = this.store.data.pens) {
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
+    const firstPen = pens[0];
     // 格式刷修改的属性，除开宽高
     const attrs = {};
     formatAttrs.forEach((attr) => {
       attrs[attr] = firstPen[attr];
     });
 
-    // 2. 修改其它画笔的 宽高 fontSize
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
       this.setValue(
-        { id: pen.id, width, height, ...attrs },
+        { id: pen.id, ...attrs },
         { render: false, history: false }
       );
     }
