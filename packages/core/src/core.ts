@@ -55,7 +55,6 @@ import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
-import { inheritanceProps } from './data';
 
 export class Topology {
   store: TopologyStore;
@@ -1055,6 +1054,8 @@ export class Topology {
   }
 
   doSocket(message: string, topic = '') {
+    this.store.emitter.emit('socket', { message, topic });
+
     if (this.socketFn) {
       this.socketFn(message, topic);
       return;

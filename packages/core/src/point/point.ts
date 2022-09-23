@@ -10,6 +10,7 @@ export enum TwoWay {
   Default,
   In,
   Out,
+  Disable,
 }
 
 export interface Point {

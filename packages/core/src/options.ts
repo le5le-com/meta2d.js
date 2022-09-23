@@ -33,21 +33,13 @@ export interface Options {
   disableRotate?: boolean;
   disableSize?: boolean;
   disableAnchor?: boolean;
-  // disableWidth?: boolean;
-  // disableHeight?: boolean;
-  // alwaysAnchor?: boolean;  TODO: 该功能实现待考虑
   autoAnchor?: boolean;
   disableEmptyLine?: boolean;
   disableRepeatLine?: boolean;
   disableScale?: boolean;
   disableTranslate?: boolean;
-  // disableMoveOutParent?: boolean;
   disableDockLine?: boolean;
-  // playIcon?: string;
-  // pauseIcon?: string;
-  // fullScreenIcon?: string;
-  // loopIcon?: string;
-  // rightMouseTranslate?: boolean;  // TODO: 该功能实现待考虑
+  moveConnectedLine?: boolean; // 是否能移动被连接的连线
   minScale?: number;
   maxScale?: number;
   keydown?: KeydownType;
@@ -126,4 +118,5 @@ export const defaultOptions: Options = {
     },
   ],
   measureTextWidth: true,
+  moveConnectedLine: true,
 };

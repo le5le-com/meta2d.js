@@ -9,6 +9,7 @@ import {
   rotatePoint,
   scalePoint,
   translatePoint,
+  TwoWay,
 } from '../point';
 import {
   calcCenter,
@@ -1413,8 +1414,27 @@ export function connectLine(
   line: Pen,
   lineAnchor: Point
 ) {
-  if (!pen || !anchor || !line || !lineAnchor) {
+  if (
+    !pen ||
+    !anchor ||
+    !line ||
+    !lineAnchor ||
+    anchor.twoWay === TwoWay.Disable
+  ) {
     return;
+  }
+
+  if (anchor.twoWay === TwoWay.In) {
+    const to = getToAnchor(line);
+    if (lineAnchor.id !== to.id) {
+      return;
+    }
+  }
+  if (anchor.twoWay === TwoWay.Out) {
+    const from = getFromAnchor(line);
+    if (lineAnchor.id !== from.id) {
+      return;
+    }
   }
 
   if (lineAnchor.connectTo === pen.id && lineAnchor.anchorId === anchor.id) {
@@ -1452,6 +1472,14 @@ export function connectLine(
   if (pen.type) {
     connectLine(line, lineAnchor, pen, anchor);
   }
+
+  pen.calculative.canvas.store.emitter.emit('connectLine', {
+    line,
+    lineAnchor,
+    pen,
+    anchor,
+  });
+
   return true;
 }
 
@@ -1492,6 +1520,13 @@ export function disconnectLine(
   ) {
     disconnectLine(line, lineAnchor, pen, anchor);
   }
+
+  pen.calculative.canvas.store.emitter.emit('disconnectLine', {
+    line,
+    lineAnchor,
+    pen,
+    anchor,
+  });
 
   return true;
 }
