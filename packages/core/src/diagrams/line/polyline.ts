@@ -1,5 +1,11 @@
 import { Direction } from '../../data';
-import { deleteTempAnchor, facePen, getFromAnchor, getToAnchor, Pen } from '../../pen';
+import {
+  deleteTempAnchor,
+  facePen,
+  getFromAnchor,
+  getToAnchor,
+  Pen,
+} from '../../pen';
 import { Point } from '../../point';
 import { TopologyStore } from '../../store';
 import { s8 } from '../../utils';
@@ -27,7 +33,10 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
     dragFrom = true;
     from = to;
     to = getFromAnchor(pen);
-  } else if ((!pen.anchors || !pen.anchors.length) && from !== pen.calculative.activeAnchor) {
+  } else if (
+    (!pen.anchors || !pen.anchors.length) &&
+    from !== pen.calculative.activeAnchor
+  ) {
     from = pen.calculative.activeAnchor;
   }
 
@@ -362,7 +371,8 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
   const pts: Point[] = [];
 
   if (pen.calculative.drawlineH == null) {
-    pen.calculative.drawlineH = Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
+    pen.calculative.drawlineH =
+      Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
   }
 
   if (pen.calculative.worldAnchors.length) {
@@ -381,4 +391,224 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
   }
 
   return pts;
+}
+
+export function anchorInHorizontal(pen: Pen, anchor: Point, from = true) {
+  let anchors = pen.calculative.worldAnchors;
+  if (!from) {
+    anchors = [];
+    pen.calculative.worldAnchors.forEach((item) => {
+      anchors.unshift(item);
+    });
+  }
+  for (let i = 0; i < anchors.length; i++) {
+    if (anchors[i].id === anchor.id) {
+      break;
+    }
+
+    if (anchors[i].y !== anchor.y) {
+      return false;
+    }
+
+    if (anchors[i].x === anchors[i + 1]?.x) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function anchorInvertical(pen: Pen, anchor: Point, from = true) {
+  let anchors = pen.calculative.worldAnchors;
+  if (!from) {
+    anchors = [];
+    pen.calculative.worldAnchors.forEach((item) => {
+      anchors.unshift(item);
+    });
+  }
+  for (let i = 0; i < anchors.length; i++) {
+    if (anchors[i].id === anchor.id) {
+      break;
+    }
+
+    if (anchors[i].x !== anchor.x) {
+      return false;
+    }
+
+    if (anchors[i].y === anchors[i + 1]?.y) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function translatePolylineAnchor(
+  pen: Pen,
+  anchor: Point,
+  pt: { x: number; y: number }
+) {
+  if (!pen.calculative.worldAnchors) {
+    return;
+  }
+
+  const i = pen.calculative.worldAnchors.findIndex(
+    (item) => item.id === anchor.id
+  );
+
+  const from = getFromAnchor(pen);
+  const to = getToAnchor(pen);
+
+  let prev = pen.calculative.worldAnchors[i - 1];
+  let next = pen.calculative.worldAnchors[i + 1];
+  if (pen.calculative.h == undefined) {
+    if (from.connectTo && anchorInHorizontal(pen, anchor, true)) {
+      pen.calculative.h = true;
+    } else if (to.connectTo && anchorInHorizontal(pen, anchor, false)) {
+      pen.calculative.h = true;
+    } else if (prev) {
+      pen.calculative.h = prev.y === anchor.y;
+    } else if (next) {
+      pen.calculative.h = next.y === anchor.y;
+    }
+  }
+
+  // 水平
+  if (pen.calculative.h) {
+    anchor.x = pt.x;
+
+    if (from.connectTo && anchorInHorizontal(pen, anchor, true)) {
+      if (next && next.y !== anchor.y) {
+        next.x = anchor.x;
+      }
+
+      return;
+    }
+
+    if (to.connectTo && anchorInHorizontal(pen, anchor, false)) {
+      if (prev && prev.y !== anchor.y) {
+        prev.x = anchor.x;
+      }
+      return;
+    }
+
+    const a = pen.anchors[i];
+    let d: any;
+    for (let pos = i - 1; pos > -1; pos--) {
+      prev = pen.anchors[pos];
+      if (d == undefined) {
+        d = prev.y === a.y;
+      }
+      if (d === true) {
+        if (prev.y === a.y) {
+          pen.calculative.worldAnchors[pos].y = pt.y;
+        } else {
+          break;
+        }
+      } else {
+        if (prev.x === a.x) {
+          pen.calculative.worldAnchors[pos].x = pt.x;
+        } else {
+          break;
+        }
+      }
+    }
+
+    d = undefined;
+    for (let pos = i + 1; pos < pen.calculative.worldAnchors.length; pos++) {
+      next = pen.anchors[pos];
+      if (next) {
+        if (d == undefined) {
+          d = next.y === a.y;
+        }
+
+        if (d === true) {
+          if (next.y === a.y) {
+            pen.calculative.worldAnchors[pos].y = pt.y;
+          } else {
+            break;
+          }
+        } else {
+          if (next.x === a.x) {
+            pen.calculative.worldAnchors[pos].x = pt.x;
+          } else {
+            break;
+          }
+        }
+      } else {
+        break;
+      }
+    }
+
+    anchor.y = pt.y;
+  }
+  // 垂直
+  else {
+    anchor.y = pt.y;
+
+    if (from.connectTo && anchorInvertical(pen, anchor, true)) {
+      if (next && next.x !== anchor.x) {
+        next.y = anchor.y;
+      }
+
+      return;
+    }
+
+    if (to.connectTo && anchorInvertical(pen, anchor, false)) {
+      if (prev && prev.x !== anchor.x) {
+        prev.y = anchor.y;
+      }
+      return;
+    }
+
+    const a = pen.anchors[i];
+    let d: any;
+    for (let pos = i - 1; pos > -1; pos--) {
+      prev = pen.anchors[pos];
+      if (d == undefined) {
+        d = prev.x === a.x;
+      }
+      if (d === true) {
+        if (prev.x === a.x) {
+          pen.calculative.worldAnchors[pos].x = pt.x;
+        } else {
+          break;
+        }
+      } else {
+        if (prev.y === a.y) {
+          pen.calculative.worldAnchors[pos].y = pt.y;
+        } else {
+          break;
+        }
+      }
+    }
+
+    d = undefined;
+    for (let pos = i + 1; pos < pen.calculative.worldAnchors.length; pos++) {
+      next = pen.anchors[pos];
+      if (next) {
+        if (d == undefined) {
+          d = next.x === a.x;
+        }
+
+        if (d === true) {
+          if (next.x === a.x) {
+            pen.calculative.worldAnchors[pos].x = pt.x;
+          } else {
+            break;
+          }
+        } else {
+          if (next.y === a.y) {
+            pen.calculative.worldAnchors[pos].y = pt.y;
+          } else {
+            break;
+          }
+        }
+      } else {
+        break;
+      }
+    }
+
+    anchor.x = pt.x;
+  }
 }

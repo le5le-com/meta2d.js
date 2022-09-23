@@ -116,7 +116,7 @@ import {
   getLineR,
   lineInRect,
 } from '../diagrams';
-import { polyline } from '../diagrams/line/polyline';
+import { polyline, translatePolylineAnchor } from '../diagrams/line/polyline';
 import { Tooltip } from '../tooltip';
 import { Scroll } from '../scroll';
 import { CanvasImage } from './canvasImage';
@@ -1615,7 +1615,7 @@ export class Canvas {
           return;
         }
 
-        // 移动节点瞄点
+        // 移动节点锚点
         if (this.movingAnchor) {
           const x = e.x - this.movingAnchor.x;
           const y = e.y - this.movingAnchor.y;
@@ -2041,7 +2041,7 @@ export class Canvas {
             );
           }
         }
-        if (this[line.lineName]) {
+        if (this[line.lineName] && line.lineName !== 'polyline') {
           this[line.lineName](this.store, line);
         }
         this.store.path2dMap.set(line, globalStore.path2dDraws.line(line));
@@ -2147,6 +2147,10 @@ export class Canvas {
         this.store.pens[pen.id] = undefined;
       });
       this.movingPens = undefined;
+    }
+
+    if (this.store.active && this.store.active[0]) {
+      this.store.active[0].calculative.h = undefined;
     }
 
     this.mouseDown = undefined;
@@ -4191,12 +4195,10 @@ export class Canvas {
       );
     }
 
-    let offsetX = pt.x - this.store.activeAnchor.x;
-    let offsetY = pt.y - this.store.activeAnchor.y;
-    translatePoint(this.store.activeAnchor, offsetX, offsetY);
     const line = this.store.active[0];
     const from = getFromAnchor(line);
     const to = getToAnchor(line);
+<<<<<<< HEAD
     // 移动线锚点，折线自动计算关闭
     if (line.autoPolyline !== false && this.store.activeAnchor !== from && this.store.activeAnchor !== to) {
       line.autoPolyline = false;
@@ -4216,19 +4218,31 @@ export class Canvas {
 >>>>>>> e0ba1cb (perfect_delete)
       offsetX = this.store.hoverAnchor.x - this.store.activeAnchor.x;
       offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
+=======
+
+    if (line.lineName === 'polyline') {
+      translatePolylineAnchor(line, this.store.activeAnchor, pt);
+    } else {
+      let offsetX = pt.x - this.store.activeAnchor.x;
+      let offsetY = pt.y - this.store.activeAnchor.y;
+>>>>>>> ac0381a (polyline)
       translatePoint(this.store.activeAnchor, offsetX, offsetY);
+      if (
+        this.store.hover &&
+        this.store.hoverAnchor &&
+        this.store.hoverAnchor.penId !== this.store.activeAnchor.penId
+      ) {
+        offsetX = this.store.hoverAnchor.x - this.store.activeAnchor.x;
+        offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
+        translatePoint(this.store.activeAnchor, offsetX, offsetY);
 
-      this.store.activeAnchor.connectTo = this.store.hover.id;
-      to.prev = undefined;
-      // 重新自动计算连线
-      if (line.lineName !== 'polyline') {
-        this[line.lineName]?.(this.store, line);
+        this.store.activeAnchor.connectTo = this.store.hover.id;
+        to.prev = undefined;
+        // 重新自动计算连线
+        if (line.lineName !== 'polyline') {
+          this[line.lineName]?.(this.store, line);
+        }
       }
-    }
-
-    // 重新自动计算连线
-    if (line.autoPolyline !== false && line.lineName === 'polyline') {
-      this[line.lineName]?.(this.store, line);
     }
 
     this.patchFlagsLines.add(line);

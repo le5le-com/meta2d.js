@@ -2324,6 +2324,10 @@ export class Topology {
       for (const k in globalStore) {
         delete globalStore[k];
       }
+      globalStore.path2dDraws = {};
+      globalStore.canvasDraws = {};
+      globalStore.anchors = {};
+      globalStore.htmlElements = {};
     }
   }
 }

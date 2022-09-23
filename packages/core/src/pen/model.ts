@@ -422,6 +422,8 @@ export interface Pen extends Rect {
     flipX?: boolean;
     flipY?: boolean;
 
+    h?: boolean; // 是否水平
+
     hiddenText?: boolean; // 隐藏 text
     keepDecimal?: number; // undefined 显示原内容；0 显示整数；保留几位小数
     showChild?: number; // 第几个子元素展示 undefined 即展示全部
