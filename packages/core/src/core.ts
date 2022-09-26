@@ -865,7 +865,7 @@ export class Topology {
       child.calculative.hover = false;
       this.setVisible(child, true); // 子节点的 visible 属性已经改变，需要恢复
     });
-    const step = pen.name === 'combine' ? 3 : 2;
+    const step = this.isCombine(pen) ? 3 : 2;
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -881,12 +881,22 @@ export class Topology {
       pens: [pen],
       step,
     });
-    if (pen.name === 'combine') {
+    if (this.isCombine(pen)) {
       this.delete([pen]);
       // delete 会记录 history , 更改 step 即可
       this.store.histories[this.store.histories.length - 1].step = step;
     }
     this.inactive();
+  }
+
+  isCombine(pen: Pen) {
+    if (pen.name === 'combine') {
+      return true;
+    }
+    if (pen.children && pen.children.length > 0) {
+      return true;
+    }
+    return false;
   }
 
   active(pens: Pen[], emit = true) {

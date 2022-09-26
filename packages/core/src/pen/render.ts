@@ -1154,7 +1154,11 @@ export function calcWorldAnchors(pen: Pen) {
   }
 
   // Default anchors of node
-  if (!anchors.length && !pen.type && pen.name !== 'combine') {
+  if (
+    !anchors.length &&
+    !pen.type &&
+    !pen.calculative.canvas.parent.isCombine(pen)
+  ) {
     const { x, y, width, height } = pen.calculative.worldRect;
     anchors = store.options.defaultAnchors.map((anchor, index) => {
       return {
@@ -2221,7 +2225,10 @@ export function setChildValue(pen: Pen, data: IValue) {
       pen.calculative[k] = data[k];
     }
 
-    if (pen.name === 'combine' && pen.showChild === undefined) {
+    if (
+      pen.calculative.canvas.parent.isCombine(pen) &&
+      pen.showChild === undefined
+    ) {
       const children = pen.children;
       children?.forEach((childId) => {
         const child = pen.calculative.canvas.store.pens[childId];
