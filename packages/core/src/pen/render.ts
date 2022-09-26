@@ -1426,6 +1426,9 @@ export function connectLine(
   }
 
   if (anchor.twoWay === TwoWay.In) {
+    if (line.calculative.worldAnchors.length === 1) {
+      return;
+    }
     const to = getToAnchor(line);
     if (lineAnchor.id !== to.id) {
       return;
