@@ -465,7 +465,7 @@ export interface FormItem {
    * 单属性绑定单变量 或 绑定多变量
    * 为数组时，顺序不重要
    */
-  dataIds?: BindId | BindId[];
+  dataIds?: BindId[];
 }
 
 export type BindId = {

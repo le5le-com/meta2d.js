@@ -302,7 +302,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     // 单个饼
     if (Array.isArray(series) && series.length === 1) {
       series[0].data.forEach((item) => {
-        const { dataId: id } = (formItem.dataIds as BindId[]).find(
+        const { dataId: id } = formItem.dataIds.find(
           (dataId) => dataId.name === item.name
         );
         if (id) {
@@ -332,7 +332,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     const categoryData =
       oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
     categoryData?.forEach((category: string) => {
-      const { dataId: id } = (formItem.dataIds as BindId[]).find(
+      const { dataId: id } = formItem.dataIds.find(
         (dataId) => dataId.name === category
       );
       if (id) {
@@ -359,7 +359,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     let hasValue = false;
     series.forEach((serie, index: number) => {
       const oneDataY = [];
-      const { dataId: id } = (formItem.dataIds as BindId[]).find(
+      const { dataId: id } = formItem.dataIds.find(
         (dataId) => dataId.name === serie.name
       );
       if (id) {

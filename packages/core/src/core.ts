@@ -24,6 +24,7 @@ import {
   connectLine,
   nearestAnchor,
   setChildValue,
+  FormItem,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -189,10 +190,7 @@ export class Topology {
           if (value.hasOwnProperty('visible')) {
             this.setVisible(pen, value.visible);
           }
-          this.setValue(
-            { id: pen.id, ...value },
-            { history: false, render: false }
-          );
+          this.setValue({ id: pen.id, ...value }, { render: false });
         });
         this.render();
         return;
@@ -247,11 +245,6 @@ export class Topology {
           if (typeof e.value !== 'string') {
             throw new Error('[topology] Function value must be string');
           }
-          // TODO: 编译 string.replaceAll 报错
-          // const value: any = e.value;
-          // const fnJs = value.replaceAll
-          //   ? value.replaceAll('.setValue(', '._setValue(')
-          //   : value.replace(/.setValue\(/g, '._setValue(');
           const fnJs = e.value;
           e.fn = new Function('pen', 'params', fnJs) as (
             pen: Pen,
@@ -372,15 +365,12 @@ export class Topology {
         !pen.calculative && (pen.calculative = { canvas: this.canvas });
         this.store.pens[pen.id] = pen;
       }
-      // // 计算区域
-      // for (const pen of data.pens) {
-      //   this.canvas.updatePenRect(pen);
-      // }
       for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
     }
 
+    this.initBindDatas();
     this.render();
     this.listenSocket();
     this.connectSocket();
@@ -392,6 +382,23 @@ export class Topology {
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
       this.canvas.scroll.init();
     }
+  }
+
+  initBindDatas() {
+    this.store.bindDatas = {};
+    this.store.data.pens.forEach((pen) => {
+      pen.form?.forEach((formItem) => {
+        formItem.dataIds?.forEach((item) => {
+          if (!this.store.bindDatas[item.dataId]) {
+            this.store.bindDatas[item.dataId] = [];
+          }
+          this.store.bindDatas[item.dataId].push({
+            id: pen.id,
+            formItem,
+          });
+        });
+      });
+    });
   }
 
   connectSocket() {
@@ -1060,68 +1067,30 @@ export class Topology {
       this.socketFn(message, topic);
       return;
     }
-    this.doSocket(message, topic);
-  }
 
-  doSocket(message: string, topic = '') {
-    try {
-      const messageObj = JSON.parse(message);
-      const values: IValue[] = !Array.isArray(messageObj)
-        ? [messageObj]
-        : messageObj;
-      const formPens = this.store.data.pens.filter((pen) => pen.form);
-      const dataIdValues = values.filter((value) => value.dataId);
-      dataIdValues.length && this.setValuesByDataId(formPens, dataIdValues);
-      values.forEach((value) => {
-        if (!value.dataId) {
-          this.setValue(value, {
-            render: false,
-            doEvent: true,
-            history: false,
-          });
-        }
-      });
-      this.render();
-    } catch (error) {
-      console.warn('Invalid socket data:', error);
+    let data: any;
+    if (message.constructor === Object || message.constructor === Array) {
+      data = message;
+    } else if (typeof message === 'string') {
+      try {
+        data = JSON.parse(message);
+      } catch (error) {
+        console.warn('Invalid socket data:', data, error);
+      }
+    } else {
+      return;
     }
-  }
 
-  /**
-   * bind 变量，根据 dataId 变量值 setValue
-   * @param pens 要更新的 pens ，此处即 formPens
-   * @param dataIdValues 包含 dataId 的 values
-   */
-  private setValuesByDataId(pens: Pen[] = [], dataIdValues: IValue[]) {
-    const values: IValue[] = [];
-    pens.forEach((pen) => {
-      pen.form?.forEach((formItem) => {
-        const dataIds = formItem.dataIds;
-        if (!dataIds) {
-          return;
-        }
-        if (Array.isArray(dataIds)) {
-          // TODO: 单属性 绑定多变量 dataId
-          if (typeof pen.onBinds === 'function') {
-            values.push(...pen.onBinds(pen, dataIdValues, formItem));
-          } else {
-            console.warn('Not support onBinds for pen:', pen);
-          }
-        } else {
-          const dataIdValue = dataIdValues.find(
-            (value) => value.dataId === dataIds.dataId
-          );
-          if (dataIdValue) {
-            values.push({
-              id: pen.id,
-              [formItem.key]: dataIdValue.value,
-            } as IValue);
-          }
-        }
-      });
-    });
-    values.forEach((value) => {
-      this.setValue(value, { render: false, doEvent: true, history: false });
+    if (!data) {
+      return;
+    }
+
+    if (!Array.isArray(data)) {
+      data = [data];
+    }
+
+    data.forEach((v: any) => {
+      this.setValue(v, { render: false, doEvent: true });
     });
   }
 
@@ -1129,19 +1098,30 @@ export class Topology {
     data: IValue,
     {
       render = true,
-      history = true,
-      doEvent = false,
+      history,
+      doEvent,
     }: { render?: boolean; history?: boolean; doEvent?: boolean } = {}
   ) {
     history = history && !this.store.data.locked;
     let pens: Pen[] = [];
     if (data.id) {
-      /**
-       * 传入 id 使用 store.pens 查找
-       * TODO: 代码或许可以优化成一行
-       */
       const pen = this.store.pens[data.id];
       pen && pens.push(pen);
+    } else if (data.dataId) {
+      this.store.bindDatas[data.dataId]?.forEach(
+        (item: { id: string; formItem: FormItem }) => {
+          const pen = this.store.pens[item.id];
+          let value: IValue = {
+            id: item.id,
+            [item.formItem.key]: data.value,
+          };
+          if (typeof pen.onBinds === 'function') {
+            value = pen.onBinds(pen, [data], item.formItem);
+          }
+          this.setValue(value, { render, history, doEvent });
+        }
+      );
+      return;
     } else {
       pens = this.find(data.tag);
     }
@@ -1503,10 +1483,7 @@ export class Topology {
     const { width, height } = this.getPenRect(firstPen);
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      this.setValue(
-        { id: pen.id, width, height },
-        { render: false, history: false }
-      );
+      this.setValue({ id: pen.id, width, height }, { render: false });
     }
     this.render();
 
@@ -1532,10 +1509,7 @@ export class Topology {
 
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      this.setValue(
-        { id: pen.id, ...attrs },
-        { render: false, history: false }
-      );
+      this.setValue({ id: pen.id, ...attrs }, { render: false });
     }
     this.render();
 
@@ -1610,10 +1584,7 @@ export class Topology {
         penRect.y = rect.y + rect.height / 2 - penRect.height / 2;
         break;
     }
-    this.setValue(
-      { id: pen.id, ...penRect },
-      { render: false, history: false }
-    );
+    this.setValue({ id: pen.id, ...penRect }, { render: false });
   }
 
   /**
@@ -1655,13 +1626,7 @@ export class Topology {
       const penRect = this.getPenRect(pen);
       direction === 'width' ? (penRect.x = left) : (penRect.y = left);
       left += penRect[direction] + space;
-      this.setValue(
-        { id: pen.id, ...penRect },
-        {
-          render: false,
-          history: false,
-        }
-      );
+      this.setValue({ id: pen.id, ...penRect }, { render: false });
     }
     this.render();
     this.pushHistory({
@@ -1705,10 +1670,7 @@ export class Topology {
       penRect.x = currentX;
       penRect.y = currentY + maxHeight / 2 - penRect.height / 2;
 
-      this.setValue(
-        { id: pen.id, ...penRect },
-        { render: false, history: false }
-      );
+      this.setValue({ id: pen.id, ...penRect }, { render: false });
 
       if (index === pens.length - 1) {
         return;
@@ -2288,13 +2250,7 @@ export class Topology {
 
   setVisible(pen: Pen, visible: boolean, render = true) {
     this.onSizeUpdate();
-    this.setValue(
-      { id: pen.id, visible },
-      {
-        render: false,
-        history: false,
-      }
-    );
+    this.setValue({ id: pen.id, visible }, { render: false });
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.store.pens[childId];

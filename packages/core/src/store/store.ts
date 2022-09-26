@@ -1,6 +1,6 @@
 import { default as mitt, Emitter } from 'mitt';
 
-import { LockState, Pen } from '../pen';
+import { FormItem, LockState, Pen } from '../pen';
 import { defaultOptions, Options } from '../options';
 
 import { Point } from '../point';
@@ -68,6 +68,7 @@ export interface TopologyStore {
   histories?: EditAction[];
   historyIndex?: number;
   path2dMap: WeakMap<Pen, Path2D>;
+  bindDatas: { [key: string]: { id: string; formItem: FormItem }[] };
   active?: Pen[];
   hover?: Pen;
   lastHover?: Pen;
@@ -116,6 +117,7 @@ export const createStore = () => {
     animates: new Set(),
     options: { ...defaultOptions },
     emitter: mitt(),
+    bindDatas: {},
   } as TopologyStore;
 };
 
@@ -143,6 +145,7 @@ export const clearStore = (store: TopologyStore) => {
   store.histories = [];
   store.historyIndex = null;
   store.path2dMap = new WeakMap();
+  store.bindDatas = {};
   store.active = [];
   store.hover = undefined;
   store.lastHover = undefined;

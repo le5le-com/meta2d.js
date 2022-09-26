@@ -10,6 +10,8 @@ export enum TwoWay {
   Default,
   In,
   Out,
+  DisableConnected, // 禁止被连接
+  DisableConnectTo, // 禁止连线锚点连接其他锚点
   Disable,
 }
 
