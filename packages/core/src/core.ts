@@ -972,7 +972,7 @@ export class Topology {
       this.websocket.onmessage = (e) => {
         // TODO: 目前只支持 string 类型的数据
         // ws 本身还支持 Blob 和 ArrayBuffer 的
-        this.doSocket(e.data);
+        this.socketCallback(e.data);
       };
 
       this.websocket.onclose = () => {
@@ -1019,7 +1019,7 @@ export class Topology {
         this.store.data.mqttOptions
       );
       this.mqttClient.on('message', (topic: string, message: Buffer) => {
-        this.doSocket(message.toString(), topic);
+        this.socketCallback(message.toString(), topic);
       });
 
       if (this.store.data.mqttTopics) {
@@ -1042,7 +1042,7 @@ export class Topology {
         const res: Response = await fetch(http);
         if (res.ok) {
           const data = await res.text();
-          this.doSocket(data);
+          this.socketCallback(data);
         }
       }, httpTimeInterval || 1000);
     }
@@ -1053,14 +1053,17 @@ export class Topology {
     this.httpTimer = undefined;
   }
 
-  doSocket(message: string, topic = '') {
+  socketCallback(message: string, topic = '') {
     this.store.emitter.emit('socket', { message, topic });
 
     if (this.socketFn) {
       this.socketFn(message, topic);
       return;
     }
+    this.doSocket(message, topic);
+  }
 
+  doSocket(message: string, topic = '') {
     try {
       const messageObj = JSON.parse(message);
       const values: IValue[] = !Array.isArray(messageObj)
