@@ -312,6 +312,7 @@ function onAdd(pen: leChartPen) {
         },
         {
           render: true,
+          doEvent: false,
         }
       );
     }, 1000);

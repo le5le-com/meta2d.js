@@ -1420,7 +1420,9 @@ export function connectLine(
     !line ||
     !lineAnchor ||
     anchor.twoWay === TwoWay.DisableConnected ||
-    anchor.twoWay === TwoWay.Disable
+    anchor.twoWay === TwoWay.Disable ||
+    lineAnchor.twoWay === TwoWay.DisableConnectTo ||
+    lineAnchor.twoWay === TwoWay.Disable
   ) {
     return;
   }
@@ -1434,6 +1436,7 @@ export function connectLine(
       return;
     }
   }
+
   if (anchor.twoWay === TwoWay.Out) {
     const from = getFromAnchor(line);
     if (lineAnchor.id !== from.id) {

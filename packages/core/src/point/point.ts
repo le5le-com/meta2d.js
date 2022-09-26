@@ -12,7 +12,7 @@ export enum TwoWay {
   Out,
   DisableConnected, // 禁止被连接
   DisableConnectTo, // 禁止连线锚点连接其他锚点
-  Disable,
+  Disable = 10,
 }
 
 export interface Point {
