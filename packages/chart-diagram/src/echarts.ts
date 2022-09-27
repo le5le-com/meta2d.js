@@ -281,8 +281,7 @@ function changeId(pen: Pen, oldId: string, newId: string) {
   delete echartsList[oldId];
 }
 
-// TODO: 等测试稳定后再清除日志
-function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
+function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue {
   // 1. 拿到老的 echarts
   const echarts = pen.echarts;
   const { xAxis, yAxis } = echarts.option;
@@ -316,12 +315,10 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
         }
       });
       // console.log('单饼图 dataY', JSON.stringify(dataY));
-      return [
-        {
-          id: pen.id,
-          dataY,
-        },
-      ];
+      return {
+        id: pen.id,
+        dataY,
+      };
     } else {
       // TODO: 多个饼待考虑
     }
@@ -344,13 +341,11 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
       }
     });
     // console.log('dataX', JSON.stringify(dataX), 'dataY', JSON.stringify(dataY));
-    return [
-      {
-        id: pen.id,
-        dataY,
-        dataX,
-      },
-    ];
+    return {
+      id: pen.id,
+      dataY,
+      dataX,
+    };
   } else if (oneXAxis.type === 'time') {
     // TODO: Y 轴时间不考虑
     // x 轴时间
@@ -382,7 +377,7 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
         }
       });
     } else {
-      return [];
+      return;
     }
     // console.log(
     //   'series',
@@ -390,14 +385,12 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue[] {
     //   'dataY',
     //   JSON.stringify(dataY)
     // );
-    return [
-      {
-        id: pen.id,
-        dataY: dataY.length === 1 ? dataY[0] : dataY,
-      },
-    ];
+    return {
+      id: pen.id,
+      dataY: dataY.length === 1 ? dataY[0] : dataY,
+    };
   }
-  return [];
+  return;
 }
 
 /**

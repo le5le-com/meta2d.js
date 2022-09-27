@@ -50,7 +50,7 @@ import {
 import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction, EventName } from './event';
-import { Map } from './map';
+import { ViewMap } from './map';
 // TODO: 这种引入方式，引入 connect， webpack 5 报错
 import { MqttClient } from 'mqtt';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
@@ -65,7 +65,7 @@ export class Topology {
   mqttClient: MqttClient;
   socketFn: (e: string, topic: string) => void;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
-  map: Map;
+  map: ViewMap;
   mapTimer: NodeJS.Timeout;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
@@ -1108,20 +1108,47 @@ export class Topology {
     if (!Array.isArray(data)) {
       data = [data];
     }
-    const pens: Set<Pen> = new Set();
-    data.forEach((v: any) => {
-      this.setValue(v, {
-        render: false,
-        doEvent: false,
-        onValue: false,
-      })?.forEach((pen) => {
-        pens.add(pen);
-      });
+    this.setDatas(data);
+  }
+
+  // 绑定变量方式更新组件数据
+  setDatas(datas: { dataId: string; value: any }[]) {
+    // 把{dataId: string; value: any}转成setValue格式数据
+    const penValues: Map<Pen, IValue> = new Map();
+    datas.forEach((v: any) => {
+      this.store.bindDatas[v.dataId]?.forEach(
+        (p: { id: string; formItem: FormItem }) => {
+          const pen = this.store.pens[p.id];
+          if (!pen) {
+            return;
+          }
+
+          let penValue = penValues.get(pen);
+
+          if (typeof pen.onBinds === 'function') {
+            // 已经计算了
+            if (penValue) {
+              return;
+            }
+            penValues.set(pen, pen.onBinds(pen, datas, p.formItem));
+            return;
+          }
+
+          if (penValue) {
+            penValue[p.formItem.key] = v.value;
+          } else {
+            penValue = {
+              id: p.id,
+              [p.formItem.key]: v.value,
+            };
+            penValues.set(pen, penValue);
+          }
+        }
+      );
     });
 
-    pens.forEach((pen) => {
-      pen.onValue?.(pen);
-      this.store.emitter.emit('valueUpdate', pen);
+    penValues.forEach((value) => {
+      this.setValue(value, { render: false });
     });
     this.render();
   }
@@ -1131,12 +1158,10 @@ export class Topology {
     {
       render = true,
       doEvent = true,
-      onValue = true,
       history,
     }: {
       render?: boolean;
       doEvent?: boolean;
-      onValue?: boolean;
       history?: boolean;
     } = {}
   ) {
@@ -1156,17 +1181,8 @@ export class Topology {
           if (typeof pen.onBinds === 'function') {
             value = pen.onBinds(pen, [data], item.formItem);
           }
-
-          if (Array.isArray(value)) {
-            value.forEach((v) => {
-              pens.push(
-                ...this.setValue(v, { render, history, doEvent, onValue })
-              );
-            });
-          } else {
-            pens.push(
-              ...this.setValue(value, { render, history, doEvent, onValue })
-            );
+          if (value) {
+            pens.push(...this.setValue(value, { render, history, doEvent }));
           }
         }
       );
@@ -1197,7 +1213,7 @@ export class Topology {
 
       setChildValue(pen, afterData);
       this.canvas.updateValue(pen, afterData);
-      onValue && pen.onValue?.(pen);
+      pen.onValue?.(pen);
     });
 
     if (
@@ -1792,7 +1808,7 @@ export class Topology {
 
   showMap() {
     if (!this.map) {
-      this.map = new Map(this.canvas);
+      this.map = new ViewMap(this.canvas);
     }
     this.map.show();
   }

@@ -365,14 +365,14 @@ export class Canvas {
     };
     this.externalElements.onwheel = this.onwheel;
 
+    document.addEventListener('copy', this.onCopy);
+    document.addEventListener('cut', this.onCut);
+    document.addEventListener('paste', this.onPaste);
+
     switch (this.store.options.keydown) {
       case KeydownType.Document:
         document.addEventListener('keydown', this.onkeydown);
         document.addEventListener('keyup', this.onkeyup);
-        document.addEventListener('paste', this.pasteImg);
-        // TODO: 使用 paste 事件，可以实现 复制桌面图片上画布，但存在两个问题：
-        // 1. http 协议，复制桌面图片后，无法清空剪贴板
-        // 2. 复制桌面图片，拿不到鼠标位置信息
         break;
       case KeydownType.Canvas:
         this.externalElements.addEventListener('keydown', this.onkeydown);
@@ -381,32 +381,54 @@ export class Canvas {
     }
   }
 
-  pasteImg = (event: ClipboardEvent) => {
+  onCopy = (event: ClipboardEvent) => {
     if (event.target !== this.externalElements) {
       return;
     }
 
+    this.copy();
+  };
+
+  onCut = (event: ClipboardEvent) => {
+    if (event.target !== this.externalElements) {
+      return;
+    }
+
+    this.cut();
+  };
+
+  onPaste = (event: ClipboardEvent) => {
+    if (event.target !== this.externalElements) {
+      return;
+    }
+
+    // 是否粘贴图片
+    let hasImages: boolean;
     if (event.clipboardData) {
-      const clipboardData = event.clipboardData;
-      if (clipboardData.items) {
-        // for chrome
-        const items = clipboardData.items;
-        const len = items.length;
-        // event.preventDefault();
-        if (len == 0) {
-          return;
+      const items = event.clipboardData.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1 && items[i].getAsFile()) {
+            hasImages = true;
+            break;
+          }
         }
-        const { x, y } = this.mousePos;
-        for (let i = 0; i < len; i++) {
-          let blob = null;
-          if (items[i].type.indexOf('image') !== -1) {
-            blob = items[i].getAsFile();
+      }
+    }
+
+    if (hasImages) {
+      const items = event.clipboardData.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1 && items[i].getAsFile()) {
+            const { x, y } = this.mousePos;
+            const blob = items[i].getAsFile();
             let name = items[i].type.slice(6) === 'gif' ? 'gif' : 'image';
             if (blob !== null) {
               let base64_str: any;
               const reader = new FileReader();
-              reader.onload = (event) => {
-                base64_str = event.target.result;
+              reader.onload = (e) => {
+                base64_str = e.target.result;
                 const image = new Image();
                 image.src = base64_str;
                 image.onload = () => {
@@ -422,7 +444,8 @@ export class Canvas {
                   };
                   this.addPens([pen]);
                   this.active([pen]);
-                  sessionStorage.pasted = 1;
+                  this.copy([pen]);
+                  event.clipboardData.clearData();
                 };
               };
               reader.readAsDataURL(blob);
@@ -430,6 +453,8 @@ export class Canvas {
           }
         }
       }
+    } else {
+      this.paste();
     }
   };
 
@@ -608,26 +633,6 @@ export class Canvas {
         }
         this.translatePens(this.store.active, 0, y);
         break;
-      case 'x':
-      case 'X':
-        if (e.ctrlKey || e.metaKey) {
-          if (e.target === this.externalElements) {
-            this.cut();
-          } else {
-            this.store.clipboard = undefined;
-          }
-        }
-        break;
-      case 'c':
-      case 'C':
-        if (e.ctrlKey || e.metaKey) {
-          if (e.target === this.externalElements) {
-            this.copy();
-          } else {
-            this.store.clipboard = undefined;
-          }
-        }
-        break;
       case 'd':
       case 'D':
         if (!this.store.active[0]?.locked) {
@@ -665,15 +670,7 @@ export class Canvas {
         break;
       case 'v':
       case 'V':
-        if (e.ctrlKey || e.metaKey) {
-          setTimeout(() => {
-            // 是否已经粘贴了本地图片
-            if (!sessionStorage.pasted) {
-              this.paste();
-            }
-            sessionStorage.removeItem('pasted');
-          }, 10);
-        } else {
+        if (!e.ctrlKey && !e.metaKey) {
           if (this.drawingLineName) {
             this.finishDrawline();
             this.drawingLineName = '';
@@ -681,6 +678,7 @@ export class Canvas {
             this.drawingLineName = this.store.options.drawingLineName;
           }
         }
+
         break;
       case 'b':
       case 'B':
@@ -4896,6 +4894,7 @@ export class Canvas {
     // 得到当前活动层的，包括子节点
     const { origin, scale } = this.store.data;
     this.store.clipboard = undefined;
+    localStorage.removeItem(this.clipboardName);
     sessionStorage.setItem('page', page);
     const clipboard = {
       topology: true,
@@ -6296,6 +6295,9 @@ export class Canvas {
         this.externalElements.removeEventListener('keyup', this.onkeyup);
         break;
     }
+    document.removeEventListener('copy', this.onCopy);
+    document.removeEventListener('cut', this.onCut);
+    document.removeEventListener('paste', this.onPaste);
     window && window.removeEventListener('resize', this.onResize);
     window && window.removeEventListener('scroll', this.onScroll);
   }

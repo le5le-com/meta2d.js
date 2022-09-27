@@ -1,7 +1,7 @@
 import { Canvas } from '../canvas';
 import { calcRightBottom, getRect, translateRect } from '../rect';
 
-export class Map {
+export class ViewMap {
   box: HTMLElement;
   readonly boxWidth = 320;
   readonly boxHeight = 180;
@@ -43,14 +43,18 @@ export class Map {
       document.head.appendChild(style);
       sheet = style.sheet;
       sheet.insertRule(
-        `.topology-map{display:flex;width:${this.boxWidth + 2 * this.padding}px;height:${
-          this.boxHeight + 2 * this.padding
-        }px;padding:${
+        `.topology-map{display:flex;width:${
+          this.boxWidth + 2 * this.padding
+        }px;height:${this.boxHeight + 2 * this.padding}px;padding:${
           this.padding
         }px;background:#f4f4f4;border:1px solid #ffffff;box-shadow: 0px 0px 14px 0px rgba(0,10,38,0.30);border-radius:8px;position:absolute;z-index:20;right:0;bottom:0;justify-content:center;align-items:center;cursor:default;user-select:none;overflow: hidden;}`
       );
-      sheet.insertRule('.topology-map img{max-width:100%;max-height:100%;pointer-events: none;}');
-      sheet.insertRule('.topology-map div{pointer-events: none;border:1px solid #1890ff;position:absolute}');
+      sheet.insertRule(
+        '.topology-map img{max-width:100%;max-height:100%;pointer-events: none;}'
+      );
+      sheet.insertRule(
+        '.topology-map div{pointer-events: none;border:1px solid #1890ff;position:absolute}'
+      );
     }
   }
 
@@ -117,8 +121,10 @@ export class Map {
         top = (-rect.y + space) / rect.height;
       }
 
-      const width = canvasRect.width > rect.width ? 1 : canvasRect.width / rect.width;
-      const height = canvasRect.height > rect.height ? 1 : canvasRect.height / rect.height;
+      const width =
+        canvasRect.width > rect.width ? 1 : canvasRect.width / rect.width;
+      const height =
+        canvasRect.height > rect.height ? 1 : canvasRect.height / rect.height;
       this.view.style.left = this.padding + left * this.boxWidth + 'px';
       this.view.style.width = width * this.boxWidth + 'px';
       this.view.style.top = this.padding + top * this.boxHeight + 'px';
@@ -138,7 +144,10 @@ export class Map {
 
     if (this.isDown) {
       try {
-        this.parent.gotoView(e.offsetX / this.box.clientWidth, e.offsetY / this.box.clientHeight);
+        this.parent.gotoView(
+          e.offsetX / this.box.clientWidth,
+          e.offsetY / this.box.clientHeight
+        );
       } catch (e) {
         console.warn(e.message);
         this.isDown = false;
@@ -150,7 +159,10 @@ export class Map {
     e.preventDefault();
     e.stopPropagation();
     try {
-      this.parent.gotoView(e.offsetX / this.box.clientWidth, e.offsetY / this.box.clientHeight);
+      this.parent.gotoView(
+        e.offsetX / this.box.clientWidth,
+        e.offsetY / this.box.clientHeight
+      );
     } catch (e) {
       console.warn(e.message);
     } finally {
