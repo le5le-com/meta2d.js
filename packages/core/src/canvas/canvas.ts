@@ -3905,6 +3905,12 @@ export class Canvas {
     }
 
     this.activeRect.rotate = calcRotate(e, this.activeRect.center);
+    if (this.activeRect.rotate % 90 < 10) {
+      this.activeRect.rotate -= this.activeRect.rotate % 90;
+    }
+    if (this.activeRect.rotate % 90 > 80) {
+      this.activeRect.rotate += 90 - (this.activeRect.rotate % 90);
+    }
     if (this.store.active.length === 1) {
       this.lastRotate = this.store.active[0].rotate || 0;
     }
