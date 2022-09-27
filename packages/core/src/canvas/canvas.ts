@@ -4247,7 +4247,7 @@ export class Canvas {
         offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
         translatePoint(this.store.activeAnchor, offsetX, offsetY);
 
-        this.store.activeAnchor.connectTo = this.store.hover.id;
+        // this.store.activeAnchor.connectTo = this.store.hover.id;
         to.prev = undefined;
         // 重新自动计算连线
         if (line.lineName !== 'polyline') {
