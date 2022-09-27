@@ -1140,7 +1140,7 @@ export class Topology {
       history?: boolean;
     } = {}
   ) {
-    let pens: Pen[];
+    let pens: Pen[] = [];
     if (data.id) {
       const pen = this.store.pens[data.id];
       pen && (pens = [pen]);
