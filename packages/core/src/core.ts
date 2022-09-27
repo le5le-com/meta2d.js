@@ -1112,7 +1112,18 @@ export class Topology {
   }
 
   // 绑定变量方式更新组件数据
-  setDatas(datas: { dataId: string; value: any }[]) {
+  setDatas(
+    datas: { dataId: string; value: any }[],
+    {
+      render = true,
+      doEvent = true,
+      history,
+    }: {
+      render?: boolean;
+      doEvent?: boolean;
+      history?: boolean;
+    } = {}
+  ) {
     // 把{dataId: string; value: any}转成setValue格式数据
     const penValues: Map<Pen, IValue> = new Map();
     datas.forEach((v: any) => {
@@ -1147,10 +1158,27 @@ export class Topology {
       );
     });
 
-    penValues.forEach((value) => {
-      this.setValue(value, { render: false });
+    let initPens: Pen[];
+    let pens: Pen[];
+    if (history) {
+      initPens = [];
+    }
+    penValues.forEach((value, pen) => {
+      this.setValue(value, { render: false, doEvent, history: false });
+      if (history) {
+        initPens.push(deepClone(pen, true));
+        pens.push(pen);
+      }
     });
-    this.render();
+    render && this.render();
+
+    if (history) {
+      this.pushHistory({
+        type: EditType.Update,
+        initPens,
+        pens,
+      });
+    }
   }
 
   setValue(
@@ -1171,22 +1199,12 @@ export class Topology {
       pen && (pens = [pen]);
     } else if (data.dataId) {
       pens = [];
-      this.store.bindDatas[data.dataId]?.forEach(
-        (item: { id: string; formItem: FormItem }) => {
-          const pen = this.store.pens[item.id];
-          let value: IValue | IValue[] = {
-            id: item.id,
-            [item.formItem.key]: data.value,
-          };
-          if (typeof pen.onBinds === 'function') {
-            value = pen.onBinds(pen, [data], item.formItem);
-          }
-          if (value) {
-            pens.push(...this.setValue(value, { render, history, doEvent }));
-          }
-        }
-      );
-      return pens;
+      this.setDatas([data] as any, {
+        render,
+        doEvent,
+        history,
+      });
+      return;
     } else if (data.tag) {
       pens = this.find(data.tag);
     } else {
@@ -1237,8 +1255,6 @@ export class Topology {
         this.store.emitter.emit('valueUpdate', pen);
       });
     render && this.render();
-
-    return pens;
   }
 
   /**
