@@ -404,7 +404,7 @@ export class Canvas {
 
     // 是否粘贴图片
     let hasImages: boolean;
-    if (event.clipboardData) {
+    if (navigator.clipboard && event.clipboardData) {
       const items = event.clipboardData.items;
       if (items) {
         for (let i = 0; i < items.length; i++) {
@@ -445,7 +445,6 @@ export class Canvas {
                   this.addPens([pen]);
                   this.active([pen]);
                   this.copy([pen]);
-                  event.clipboardData.clearData();
                 };
               };
               reader.readAsDataURL(blob);
