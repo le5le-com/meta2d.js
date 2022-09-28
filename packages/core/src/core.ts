@@ -1108,7 +1108,13 @@ export class Topology {
     if (!Array.isArray(data)) {
       data = [data];
     }
-    this.setDatas(data);
+    if (data[0].dataId) {
+      this.setDatas(data);
+    } else {
+      data.forEach((_data: IValue) => {
+        this.setValue(_data);
+      });
+    }
   }
 
   // 绑定变量方式更新组件数据
