@@ -382,7 +382,11 @@ export class Canvas {
   }
 
   onCopy = (event: ClipboardEvent) => {
-    if (event.target !== this.externalElements) {
+    console.log(event.target);
+    if (
+      event.target !== this.externalElements &&
+      event.target !== document.body
+    ) {
       return;
     }
 
@@ -390,7 +394,10 @@ export class Canvas {
   };
 
   onCut = (event: ClipboardEvent) => {
-    if (event.target !== this.externalElements) {
+    if (
+      event.target !== this.externalElements &&
+      event.target !== document.body
+    ) {
       return;
     }
 
@@ -398,7 +405,10 @@ export class Canvas {
   };
 
   onPaste = (event: ClipboardEvent) => {
-    if (event.target !== this.externalElements) {
+    if (
+      event.target !== this.externalElements &&
+      event.target !== document.body
+    ) {
       return;
     }
 
