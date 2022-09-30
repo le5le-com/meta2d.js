@@ -283,6 +283,9 @@ function changeId(pen: Pen, oldId: string, newId: string) {
 }
 
 function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue {
+  if (formItem.key !== 'dataY') {
+    return;
+  }
   // 1. 拿到老的 echarts
   const echarts = pen.echarts;
   const { xAxis, yAxis } = echarts.option;
