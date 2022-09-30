@@ -43,6 +43,7 @@ export function echarts(pen: ChartPen): Path2D {
     pen.onBeforeValue = beforeValue;
     pen.onChangeId = changeId;
     pen.onBinds = binds;
+    pen.onMouseEnter = move;
   }
 
   const path = new Path2D();
