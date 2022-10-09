@@ -104,8 +104,8 @@ export function getPointsByPen(pen: Pen): Point[] {
     const outerPoints = rectToPoints(pen.calculative.worldRect);
     calcCenter(pen.calculative.worldRect);
     return [
-      ...outerPoints,
       ...pen.calculative.worldAnchors,
+      ...outerPoints,
       pen.calculative.worldRect.center,
     ];
   } else if (pen.type === PenType.Line) {
@@ -180,6 +180,8 @@ function calcDockByPoints(
               y: Math.round(activePoint.y) + 0.5,
             },
             penId: pen.id,
+            anchorId: activePoint.id,
+            dockAnchorId: point.id,
           };
           minCloseX = absStepX;
         }
@@ -193,6 +195,8 @@ function calcDockByPoints(
               y: Math.round(activePoint.y) + 0.5,
             },
             penId: pen.id,
+            anchorId: activePoint.id,
+            dockAnchorId: point.id,
           };
           minCloseY = absStepY;
         }

@@ -224,8 +224,6 @@ export class Canvas {
   tooltip: Tooltip;
   mousePos: Point = { x: 0, y: 0 };
 
-  private alreadyCopy = false;
-
   scroll: Scroll;
   movingAnchor: Point;  // 正在移动中的瞄点
 
@@ -1405,9 +1403,6 @@ export class Canvas {
           penId: to.penId,
         });
       }
-      if (this.drawingLineName === 'polyline') {
-        this.drawingLine.autoPolyline = false;
-      }
       this.drawingLine.calculative.drawlineH = undefined;
       this.drawingLineName !== 'polyline' && this.drawline();
     }
@@ -1646,7 +1641,7 @@ export class Canvas {
               this.dock?.xDock && (pt.x += this.dock.xDock.step);
               this.dock?.yDock && (pt.y += this.dock.yDock.step);
             }
-            this.moveLineAnchor(pt);
+            this.moveLineAnchor(pt, e);
             return;
           }
 
@@ -1686,10 +1681,8 @@ export class Canvas {
           if (
             e.ctrlKey &&
             !e.shiftKey &&
-            !this.alreadyCopy &&
             (Math.abs(x) >= shake || Math.abs(y) >= shake)
           ) {
-            this.alreadyCopy = true;
             this.willInactivePen = undefined;
           }
           if (this.store.active.length === 1) {
@@ -2147,10 +2140,10 @@ export class Canvas {
     }
 
     if (this.movingPens) {
-      if (!this.alreadyCopy) {
-        this.movedActivePens();
-      } else {
+      if (e.ctrlKey && !e.shiftKey) {
         this.copyMovedPens();
+      } else {
+        this.movedActivePens(e.ctrlKey && e.shiftKey);
       }
       this.getAllByPens(this.movingPens).forEach((pen) => {
         this.store.pens[pen.id] = undefined;
@@ -2221,9 +2214,11 @@ export class Canvas {
   /**
    * 拖拽结束，数据更新到 active.pens
    */
-  private movedActivePens() {
+  private movedActivePens(readyConnect?: boolean) {
     // 鼠标松手才更新，此处是更新前的值
     const initPens = deepClone(this.store.active, true);
+    const pens = deepClone(this.store.active, true);
+
     this.store.active.forEach((pen, i: number) => {
       const { x, y } = this.movingPens[i];
       Object.assign(pen, {
@@ -2253,10 +2248,60 @@ export class Canvas {
     // active 消息表示拖拽结束
     this.store.emitter.emit('active', this.store.active);
     this.initImageCanvas(this.store.active);
+
+    const { xDock, yDock } = this.dock;
+    let dockPen: Pen;
+    if (xDock) {
+      dockPen = this.store.pens[xDock.penId];
+    }
+    if (!dockPen && yDock) {
+      dockPen = this.store.pens[yDock.penId];
+    }
+
+    // 移动到连线端点，自动连线
+    if (
+      readyConnect &&
+      this.store.active.length === 1 &&
+      dockPen?.type === 1 &&
+      (xDock?.anchorId || yDock?.anchorId)
+    ) {
+      const from = getFromAnchor(dockPen);
+      const to = getToAnchor(dockPen);
+
+      if (xDock?.anchorId) {
+        const anchor = this.store.pens[
+          this.store.active[0].id + movingSuffix
+        ].calculative.worldAnchors.find((item) => item.id === xDock.anchorId);
+        if (anchor.x === from.x && anchor.y === from.y) {
+          initPens.push(deepClone(dockPen, true));
+          connectLine(this.store.active[0], anchor, dockPen, from);
+          pens.push(deepClone(dockPen, true));
+        } else if (anchor.x === to.x && anchor.y === to.y) {
+          initPens.push(deepClone(dockPen, true));
+          connectLine(this.store.active[0], anchor, dockPen, to);
+          pens.push(deepClone(dockPen, true));
+        }
+      } else if (yDock?.anchorId) {
+        const anchor = this.store.pens[
+          this.store.active[0].id + movingSuffix
+        ].calculative.worldAnchors.find((item) => item.id === yDock.anchorId);
+
+        if (anchor.x === from.x && anchor.y === from.y) {
+          initPens.push(deepClone(dockPen, true));
+          connectLine(this.store.active[0], anchor, dockPen, from);
+          pens.push(deepClone(dockPen, true));
+        } else if (anchor.x === to.x && anchor.y === to.y) {
+          initPens.push(deepClone(dockPen, true));
+          connectLine(this.store.active[0], anchor, dockPen, to);
+          pens.push(deepClone(dockPen, true));
+        }
+      }
+    }
+
     // 此处是更新后的值
     this.pushHistory({
       type: EditType.Update,
-      pens: deepClone(this.store.active, true),
+      pens,
       initPens,
     });
   }
@@ -2286,7 +2331,6 @@ export class Canvas {
     // 偏移量 0
     this.pasteOffset = 0;
     this.paste();
-    this.alreadyCopy = false;
   }
 
   /**
@@ -4103,14 +4147,15 @@ export class Canvas {
       const moveDock = this.customMoveDock || calcMoveDock;
       this.dock = moveDock(this.store, rect, this.movingPens, offset);
       const { xDock, yDock } = this.dock;
+      let dockPen: Pen;
       if (xDock) {
         offset.x += xDock.step;
-        const dockPen = this.store.pens[xDock.penId];
+        dockPen = this.store.pens[xDock.penId];
         dockPen.calculative.isDock = true;
       }
       if (yDock) {
         offset.y += yDock.step;
-        const dockPen = this.store.pens[yDock.penId];
+        dockPen = this.store.pens[yDock.penId];
         dockPen.calculative.isDock = true;
       }
     }
@@ -4197,7 +4242,10 @@ export class Canvas {
     });
   }
 
-  moveLineAnchor(pt: { x: number; y: number }) {
+  moveLineAnchor(
+    pt: { x: number; y: number },
+    keyOptions: { ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean }
+  ) {
     if (!this.activeRect || this.store.data.locked) {
       return;
     }
@@ -4240,7 +4288,7 @@ export class Canvas {
       offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
 =======
 
-    if (line.lineName === 'polyline') {
+    if (line.lineName === 'polyline' && !keyOptions.shiftKey) {
       translatePolylineAnchor(line, this.store.activeAnchor, pt);
     } else {
       let offsetX = pt.x - this.store.activeAnchor.x;
@@ -4672,14 +4720,14 @@ export class Canvas {
       if (!penAnchor) {
         return;
       }
-
       translatePoint(
         lineAnchor,
         penAnchor.x - lineAnchor.x,
         penAnchor.y - lineAnchor.y
       );
       if (
-        (line.autoPolyline ?? this.store.options.autoPolyline) &&
+        this.store.options.autoPolyline &&
+        line.autoPolyline !== false &&
         line.lineName === 'polyline'
       ) {
         let from = getFromAnchor(line);

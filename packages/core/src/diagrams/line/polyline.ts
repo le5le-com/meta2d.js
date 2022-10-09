@@ -418,7 +418,7 @@ export function anchorInHorizontal(pen: Pen, anchor: Point, from = true) {
   return true;
 }
 
-export function anchorInvertical(pen: Pen, anchor: Point, from = true) {
+export function anchorInVertical(pen: Pen, anchor: Point, from = true) {
   let anchors = pen.calculative.worldAnchors;
   if (!from) {
     anchors = [];
@@ -462,14 +462,27 @@ export function translatePolylineAnchor(
   let prev = pen.calculative.worldAnchors[i - 1];
   let next = pen.calculative.worldAnchors[i + 1];
   if (pen.calculative.h == undefined) {
-    if (from.connectTo && anchorInHorizontal(pen, anchor, true)) {
-      pen.calculative.h = true;
-    } else if (to.connectTo && anchorInHorizontal(pen, anchor, false)) {
-      pen.calculative.h = true;
-    } else if (prev) {
-      pen.calculative.h = prev.y === anchor.y;
-    } else if (next) {
-      pen.calculative.h = next.y === anchor.y;
+    if (from.connectTo) {
+      if (anchorInHorizontal(pen, anchor, true)) {
+        pen.calculative.h = true;
+      } else if (anchorInVertical(pen, anchor, true)) {
+        pen.calculative.h = false;
+      }
+    }
+    if (pen.calculative.h == undefined && to.connectTo) {
+      if (anchorInHorizontal(pen, anchor, false)) {
+        pen.calculative.h = true;
+      } else if (anchorInVertical(pen, anchor, false)) {
+        pen.calculative.h = false;
+      }
+    }
+
+    if (pen.calculative.h == undefined) {
+      if (prev) {
+        pen.calculative.h = prev.y === anchor.y;
+      } else if (next) {
+        pen.calculative.h = next.y === anchor.y;
+      }
     }
   }
 
@@ -546,7 +559,7 @@ export function translatePolylineAnchor(
   else {
     anchor.y = pt.y;
 
-    if (from.connectTo && anchorInvertical(pen, anchor, true)) {
+    if (from.connectTo && anchorInVertical(pen, anchor, true)) {
       if (next && next.x !== anchor.x) {
         next.y = anchor.y;
       }
@@ -554,7 +567,7 @@ export function translatePolylineAnchor(
       return;
     }
 
-    if (to.connectTo && anchorInvertical(pen, anchor, false)) {
+    if (to.connectTo && anchorInVertical(pen, anchor, false)) {
       if (prev && prev.x !== anchor.x) {
         prev.y = anchor.y;
       }

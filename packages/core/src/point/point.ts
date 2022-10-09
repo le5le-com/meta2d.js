@@ -39,7 +39,10 @@ export interface Point {
   hidden?: boolean;
   locked?: number;
   flag?: number;
-  isTemp?: boolean; // 临时绘制的点
+  // 临时绘制的点
+  isTemp?: boolean;
+  // 拖拽停靠的锚点
+  dockAnchorId?: string;
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
