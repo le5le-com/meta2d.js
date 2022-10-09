@@ -1748,6 +1748,7 @@ export class Canvas {
           to.x = this.store.hoverAnchor.x;
           to.y = this.store.hoverAnchor.y;
           to.connectTo = this.store.hoverAnchor.penId;
+          to.isTemp = false;
         }
 
         if (this.drawingLineName === 'line') {
