@@ -23,6 +23,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: any) {
 >>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onAdd = initRect;
     pen.onResize = initRect;
+    pen.onMove = initRect;
     pen.onMouseMove = mouseMove;
     pen.onMouseDown = mouseDown;
     pen.onValue = onValue;
