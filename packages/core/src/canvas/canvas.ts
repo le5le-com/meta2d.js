@@ -1717,7 +1717,10 @@ export class Canvas {
       pt.penId = this.drawingLine.id;
 
       // dock
-      if (!this.store.options.disableDock) {
+      if (
+        !this.store.options.disableDock &&
+        !this.store.options.disableLineDock
+      ) {
         this.clearDock();
         this.dock = calcAnchorDock(this.store, pt);
         this.dock?.xDock && (pt.x += this.dock.xDock.step);
