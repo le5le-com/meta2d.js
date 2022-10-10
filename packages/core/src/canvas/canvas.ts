@@ -2800,9 +2800,21 @@ export class Canvas {
     if (!anchor || anchor.locked > LockState.DisableEdit) {
       return HoverType.None;
     }
+
     if (this.store.options.disableAnchor || pen.disableAnchor) {
       return HoverType.None;
     }
+
+    if (this.drawingLine) {
+      if (anchor.twoWay === TwoWay.Out) {
+        return HoverType.None;
+      }
+    } else {
+      if (anchor.twoWay === TwoWay.In) {
+        return HoverType.None;
+      }
+    }
+
     if (hitPoint(pt, anchor, this.pointSize)) {
       if (anchor !== this.store.hoverAnchor) {
         this.patchFlags = true;
