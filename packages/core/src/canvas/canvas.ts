@@ -2805,7 +2805,11 @@ export class Canvas {
       return HoverType.None;
     }
 
-    if (pen.name === 'line' && anchor.connectTo) {
+    if (
+      (this.mouseDown || this.drawingLine) &&
+      pen.name === 'line' &&
+      anchor.connectTo
+    ) {
       const connectPen = this.findOne(anchor.connectTo);
       if (!connectPen.calculative.active) {
         pen = connectPen;
