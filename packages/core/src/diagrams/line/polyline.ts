@@ -39,7 +39,9 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   ) {
     from = pen.calculative.activeAnchor;
   }
-
+  if (!from || !to) {
+    return;
+  }
   from.next = undefined;
   to.prev = undefined;
   const connected = to.connectTo;
