@@ -98,8 +98,8 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
   }
 
   if (connected) {
-    const i = this.drawingLine.calculative.worldAnchors.length - 2;
-    this.drawingLine.calculative.worldAnchors[i].isTemp = false;
+    const i = pen.calculative.worldAnchors.length - 2;
+    pen.calculative.worldAnchors[i].isTemp = false;
   }
 }
 
