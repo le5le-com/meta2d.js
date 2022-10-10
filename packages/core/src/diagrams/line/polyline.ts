@@ -42,6 +42,7 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
 
   from.next = undefined;
   to.prev = undefined;
+  const connected = to.connectTo;
   deleteTempAnchor(pen);
 
   const pts: Point[] = [];
@@ -94,6 +95,11 @@ export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
 
   if (dragFrom) {
     pen.calculative.worldAnchors.reverse();
+  }
+
+  if (connected) {
+    const i = this.drawingLine.calculative.worldAnchors.length - 2;
+    this.drawingLine.calculative.worldAnchors[i].isTemp = false;
   }
 }
 
@@ -370,7 +376,7 @@ function getNextPointsOfLeft(from: Point, to: Point, toFace: Direction) {
 function getNextPoints(pen: Pen, from: Point, to: Point) {
   const pts: Point[] = [];
 
-  if (pen.calculative.drawlineH == null) {
+  if (pen.calculative.drawlineH == undefined) {
     pen.calculative.drawlineH =
       Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
   }

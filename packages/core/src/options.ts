@@ -38,7 +38,8 @@ export interface Options {
   disableRepeatLine?: boolean;
   disableScale?: boolean;
   disableTranslate?: boolean;
-  disableDockLine?: boolean;
+  disableDock?: boolean; // 禁止所有停靠辅助线
+  disableLineDock?: boolean; // 禁止移动连线时出现辅助线
   moveConnectedLine?: boolean; // 是否能移动被连接的连线
   minScale?: number;
   maxScale?: number;

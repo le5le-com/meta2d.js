@@ -1630,7 +1630,11 @@ export class Canvas {
           const pt = { x: e.x, y: e.y };
           // Move line anchor
           if (this.hoverType === HoverType.LineAnchor) {
-            if (this.dockInAnchor(e) && !this.store.options.disableDockLine) {
+            if (
+              this.dockInAnchor(e) &&
+              !this.store.options.disableDock &&
+              !this.store.options.disableLineDock
+            ) {
               this.clearDock();
 
               this.dock = calcAnchorDock(
@@ -1713,7 +1717,7 @@ export class Canvas {
       pt.penId = this.drawingLine.id;
 
       // dock
-      if (!this.store.options.disableDockLine) {
+      if (!this.store.options.disableDock) {
         this.clearDock();
         this.dock = calcAnchorDock(this.store, pt);
         this.dock?.xDock && (pt.x += this.dock.xDock.step);
@@ -1748,7 +1752,9 @@ export class Canvas {
           to.x = this.store.hoverAnchor.x;
           to.y = this.store.hoverAnchor.y;
           to.connectTo = this.store.hoverAnchor.penId;
-          to.isTemp = false;
+          if (this.drawingLineName === 'polyline') {
+            to.isTemp = false;
+          }
         }
 
         if (this.drawingLineName === 'line') {
@@ -4027,7 +4033,7 @@ export class Canvas {
     // 得到最准确的 rect 即 resize 后的
     resizeRect(rect, x, y, this.resizeIndex);
     calcCenter(rect);
-    if (!this.store.options.disableDockLine) {
+    if (!this.store.options.disableDock) {
       this.clearDock();
       const resizeDock = this.customResizeDock || calcResizeDock;
       this.dock = resizeDock(
@@ -4143,7 +4149,7 @@ export class Canvas {
       x: rect.x - this.activeRect.x,
       y: rect.y - this.activeRect.y,
     };
-    if (!this.store.options.disableDockLine) {
+    if (!this.store.options.disableDock) {
       this.clearDock();
       const moveDock = this.customMoveDock || calcMoveDock;
       this.dock = moveDock(this.store, rect, this.movingPens, offset);
