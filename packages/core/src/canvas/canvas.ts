@@ -2238,6 +2238,7 @@ export class Canvas {
       pen.onMove?.(pen);
       this.updatePenRect(pen);
       this.updateLines(pen);
+      this.store.emitter.emit('updateLines', pen);
       // TODO: mouseup 中重复执行 patchFlagsLines
       this.patchFlagsLines.forEach((pen) => {
         if (pen.type) {
