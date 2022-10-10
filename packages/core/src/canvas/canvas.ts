@@ -2810,7 +2810,8 @@ export class Canvas {
         return HoverType.None;
       }
     } else {
-      if (anchor.twoWay === TwoWay.In) {
+      if (this.mouseDown && this.hoverType === HoverType.LineAnchor) {
+      } else if (anchor.twoWay === TwoWay.In) {
         return HoverType.None;
       }
     }
