@@ -2805,6 +2805,20 @@ export class Canvas {
       return HoverType.None;
     }
 
+    if (pen.name === 'line' && anchor.connectTo) {
+      const connectPen = this.findOne(anchor.connectTo);
+      if (!connectPen.calculative.active) {
+        pen = connectPen;
+        const connectAnchor = connectPen.calculative.worldAnchors.find(
+          (item) => item.id === anchor.anchorId
+        );
+        anchor = connectAnchor;
+      }
+    }
+
+    if (anchor.twoWay === TwoWay.Disable) {
+      return HoverType.None;
+    }
     if (this.drawingLine) {
       if (anchor.twoWay === TwoWay.Out) {
         return HoverType.None;
@@ -2822,6 +2836,19 @@ export class Canvas {
       }
       this.store.hoverAnchor = anchor;
       this.store.hover = pen;
+      // if (pen.name === 'line' && anchor.connectTo) {
+      //   const connectPen = this.findOne(anchor.connectTo);
+      //   if (!connectPen.calculative.active) {
+      //     this.store.hover = connectPen;
+      //     const connectAnchor = connectPen.calculative.worldAnchors.find(
+      //       (item) => item.id === anchor.anchorId
+      //     );
+      //     this.store.hoverAnchor = connectAnchor;
+      //     console.log('hover', connectAnchor);
+      //   }
+      // }
+
+      // console.log('hover', pen, anchor);
       if (pen.type) {
         if (anchor.connectTo && !pen.calculative.active) {
           this.store.hover = this.store.pens[anchor.connectTo];
