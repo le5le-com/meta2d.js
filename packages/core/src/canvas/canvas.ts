@@ -2816,11 +2816,11 @@ export class Canvas {
         const connectAnchor = connectPen.calculative.worldAnchors.find(
           (item) => item.id === anchor.anchorId
         );
-        anchor = connectAnchor;
+        connectAnchor && (anchor = connectAnchor);
       }
     }
 
-    if (anchor.twoWay === TwoWay.Disable) {
+    if (anchor.twoWay === TwoWay.Disable && pen.name !== 'line') {
       return HoverType.None;
     }
     if (this.drawingLine) {
