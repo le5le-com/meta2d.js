@@ -418,7 +418,10 @@ export function anchorInHorizontal(pen: Pen, anchor: Point, from = true) {
       return false;
     }
 
-    if (anchors[i].x === anchors[i + 1]?.x) {
+    if (
+      anchors[i].x === anchors[i + 1]?.x &&
+      anchors[i].y !== anchors[i + 1]?.y
+    ) {
       return false;
     }
   }
@@ -443,7 +446,10 @@ export function anchorInVertical(pen: Pen, anchor: Point, from = true) {
       return false;
     }
 
-    if (anchors[i].y === anchors[i + 1]?.y) {
+    if (
+      anchors[i].y === anchors[i + 1]?.y &&
+      anchors[i].x !== anchors[i + 1]?.x
+    ) {
       return false;
     }
   }
