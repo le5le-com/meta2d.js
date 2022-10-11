@@ -1565,7 +1565,7 @@ export class Topology {
    * 大小相同
    * @param pens 画笔们
    */
-  beSameByFirst(pens: Pen[] = this.store.data.pens) {
+  beSameByFirst(pens: Pen[] = this.store.data.pens, attribute?: string) {
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
 
     // 1. 得到第一个画笔的 宽高 字体大小
@@ -1573,10 +1573,19 @@ export class Topology {
     const { width, height } = this.getPenRect(firstPen);
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
-      this.setValue(
-        { id: pen.id, width, height },
-        { render: false, doEvent: false }
-      );
+      if (attribute === 'width') {
+        this.setValue({ id: pen.id, width }, { render: false, doEvent: false });
+      } else if (attribute === 'height') {
+        this.setValue(
+          { id: pen.id, height },
+          { render: false, doEvent: false }
+        );
+      } else {
+        this.setValue(
+          { id: pen.id, width, height },
+          { render: false, doEvent: false }
+        );
+      }
     }
     this.render();
 
