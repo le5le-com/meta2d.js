@@ -133,7 +133,7 @@ function resize(pen: ChartPen) {
   setElemPosition(pen, echartsList[pen.id].div);
   let option = pen.echarts.option;
   if (!pen.beforeScale) {
-    pen.beforeScale = 1;
+    pen.beforeScale = pen.calculative.canvas.store.data.scale;
   }
   let change = false;
   let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
@@ -180,6 +180,33 @@ function resize(pen: ChartPen) {
     } else {
       option.yAxis.axisLabel && (option.yAxis.axisLabel.fontSize *= ratio);
       change = true;
+    }
+  }
+  if (option.grid) {
+    let props = ['top', 'bottom', 'left', 'right'];
+    for (let i = 0; i < props.length; i++) {
+      if (Array.isArray(option.grid)) {
+        option.grid.forEach((item) => {
+          if (!isNaN(item[props[i]])) {
+            item[props[i]] *= ratio;
+          }
+        });
+      } else {
+        if (!isNaN(option.grid[props[i]])) {
+          option.grid[props[i]] *= ratio;
+        }
+      }
+    }
+  }
+
+  if (option.dataZoom) {
+    let props = ['right', 'top', 'width', 'height', 'left', 'bottom'];
+    for (let i = 0; i < props.length; i++) {
+      option.dataZoom.forEach((item) => {
+        if (!isNaN(item[props[i]])) {
+          item[props[i]] *= ratio;
+        }
+      });
     }
   }
   // TODO: resize 执行的过于频繁时会消耗性能
