@@ -2823,6 +2823,14 @@ export class Canvas {
     if (anchor.twoWay === TwoWay.Disable && pen.name !== 'line') {
       return HoverType.None;
     }
+    if (pen.name === 'line' && anchor.connectTo) {
+      let _anchor = this.findOne(anchor.connectTo).anchors.find(
+        (item) => item.id === anchor.anchorId
+      );
+      if (_anchor && _anchor.twoWay) {
+        return HotkeyType.None;
+      }
+    }
     if (this.drawingLine) {
       if (anchor.twoWay === TwoWay.Out) {
         return HoverType.None;
