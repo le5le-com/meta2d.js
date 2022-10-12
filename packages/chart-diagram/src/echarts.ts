@@ -21,6 +21,7 @@ export interface ChartPen extends Pen {
     replaceMode: ReplaceMode; // 替换模式
     theme: string; // 主题
   };
+  beforeScale: number;
 }
 
 export const echartsList: {
@@ -44,6 +45,7 @@ export function echarts(pen: ChartPen): Path2D {
     pen.onChangeId = changeId;
     pen.onBinds = binds;
     pen.onMouseEnter = move;
+    pen.onAdd = onAdd;
   }
 
   const path = new Path2D();
@@ -106,6 +108,10 @@ export function echarts(pen: ChartPen): Path2D {
   return path;
 }
 
+function onAdd(pen: ChartPen) {
+  pen.beforeScale = pen.calculative.canvas.store.data.scale;
+}
+
 function destory(pen: Pen) {
   echartsList[pen.id].div.remove();
   let echarts = echartsList.echarts || globalThis.echarts;
@@ -120,12 +126,67 @@ function move(pen: Pen) {
   setElemPosition(pen, echartsList[pen.id].div);
 }
 
-function resize(pen: Pen) {
+function resize(pen: ChartPen) {
   if (!echartsList[pen.id]) {
     return;
   }
   setElemPosition(pen, echartsList[pen.id].div);
+  let option = pen.echarts.option;
+  if (!pen.beforeScale) {
+    pen.beforeScale = 1;
+  }
+  let change = false;
+  let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
+  if (option.textStyle) {
+    option.textStyle.fontSize *= ratio;
+    change = true;
+  }
+  if (option.title) {
+    if (Array.isArray(option.title)) {
+      option.title.forEach((item) => {
+        item.textStyle && (item.textStyle.fontSize *= ratio);
+        change = true;
+      });
+    } else {
+      option.title.textStyle && (option.title.textStyle.fontSize *= ratio);
+      change = true;
+    }
+  }
+  if (option.legend) {
+    option.legend.textStyle && (option.legend.textStyle.fontSize *= ratio);
+  }
+  if (option.tooltip) {
+    option.tooltip.textStyle && (option.tooltip.textStyle.fontSize *= ratio);
+    change = true;
+  }
+  if (option.xAxis) {
+    if (Array.isArray(option.xAxis)) {
+      option.xAxis.forEach((item) => {
+        item.axisLabel && (item.axisLabel.fontSize *= ratio);
+        change = true;
+      });
+    } else {
+      option.xAxis.axisLabel && (option.xAxis.axisLabel.fontSize *= ratio);
+      change = true;
+    }
+  }
+
+  if (option.yAxis) {
+    if (Array.isArray(option.yAxis)) {
+      option.yAxis.forEach((item) => {
+        item.axisLabel && (item.axisLabel.fontSize *= ratio);
+        change = true;
+      });
+    } else {
+      option.yAxis.axisLabel && (option.yAxis.axisLabel.fontSize *= ratio);
+      change = true;
+    }
+  }
   // TODO: resize 执行的过于频繁时会消耗性能
+  if (change) {
+    echartsList[pen.id].chart.setOption(option, true);
+  }
+  pen.beforeScale = pen.calculative.canvas.store.data.scale;
   echartsList[pen.id].chart.resize();
 }
 
