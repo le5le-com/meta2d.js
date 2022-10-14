@@ -4614,6 +4614,9 @@ export class Canvas {
       }
 
       if (pen.type === PenType.Line) {
+        if (!this.store.options.moveConnectedLine) {
+          return;
+        }
         translateLine(pen, x, y);
         this.checkDisconnect(pen, containChildPens);
         this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
