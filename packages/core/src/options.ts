@@ -66,6 +66,7 @@ export interface Options {
   ruleLineColor?: string;
   defaultAnchors?: Point[]; // 图形的默认瞄点
   measureTextWidth?: boolean; // 测量文字宽度
+  mouseRightActive?: boolean; //是否允许右键选中节点
 }
 
 export const defaultOptions: Options = {
@@ -120,4 +121,5 @@ export const defaultOptions: Options = {
   ],
   measureTextWidth: true,
   moveConnectedLine: true,
+  mouseRightActive: true,
 };

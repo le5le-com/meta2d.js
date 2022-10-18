@@ -1310,7 +1310,8 @@ export class Canvas {
     // Translate
     if (
       this.hotkeyType === HotkeyType.Translate ||
-      this.mouseRight === MouseRight.Down
+      (this.mouseRight === MouseRight.Down &&
+        !this.store.options.mouseRightActive)
     ) {
       return;
 <<<<<<< HEAD
