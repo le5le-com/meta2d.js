@@ -380,6 +380,9 @@ export class Canvas {
   }
 
   onCopy = (event: ClipboardEvent) => {
+    if (this.store.options.disableClipboard) {
+      return;
+    }
     if (
       event.target !== this.externalElements &&
       event.target !== document.body &&
@@ -392,6 +395,9 @@ export class Canvas {
   };
 
   onCut = (event: ClipboardEvent) => {
+    if (this.store.options.disableClipboard) {
+      return;
+    }
     if (
       event.target !== this.externalElements &&
       event.target !== document.body &&
@@ -404,6 +410,9 @@ export class Canvas {
   };
 
   onPaste = (event: ClipboardEvent) => {
+    if (this.store.options.disableClipboard) {
+      return;
+    }
     if (
       event.target !== this.externalElements &&
       event.target !== document.body &&
@@ -677,6 +686,18 @@ export class Canvas {
           this.splitLine(this.store.active[0], this.store.hoverAnchor);
         }
         break;
+      case 'c':
+      case 'C':
+        if (e.ctrlKey && this.store.options.disableClipboard) {
+          this.copy();
+        }
+        break;
+      case 'x':
+      case 'X':
+        if (e.ctrlKey && this.store.options.disableClipboard) {
+          this.cut();
+        }
+        break;
       case 'v':
       case 'V':
         if (!e.ctrlKey && !e.metaKey) {
@@ -686,6 +707,9 @@ export class Canvas {
           } else {
             this.drawingLineName = this.store.options.drawingLineName;
           }
+        }
+        if (e.ctrlKey && this.store.options.disableClipboard) {
+          this.paste();
         }
 
         break;
@@ -5031,7 +5055,7 @@ export class Canvas {
       offset: 10,
     };
 
-    if (navigator.clipboard) {
+    if (navigator.clipboard && !this.store.options.disableClipboard) {
       try {
         await navigator.clipboard.writeText(JSON.stringify(clipboard));
       } catch {
@@ -5062,7 +5086,7 @@ export class Canvas {
     let clipboardText: string;
     let clipboard: TopologyClipboard;
 
-    if (navigator.clipboard) {
+    if (navigator.clipboard && !this.store.options.disableClipboard) {
       try {
         clipboardText = await navigator.clipboard?.readText();
       } catch {
