@@ -688,13 +688,13 @@ export class Canvas {
         break;
       case 'c':
       case 'C':
-        if (e.ctrlKey && this.store.options.disableClipboard) {
+        if ((e.ctrlKey || e.metaKey) && this.store.options.disableClipboard) {
           this.copy();
         }
         break;
       case 'x':
       case 'X':
-        if (e.ctrlKey && this.store.options.disableClipboard) {
+        if ((e.ctrlKey || e.metaKey) && this.store.options.disableClipboard) {
           this.cut();
         }
         break;
@@ -708,7 +708,7 @@ export class Canvas {
             this.drawingLineName = this.store.options.drawingLineName;
           }
         }
-        if (e.ctrlKey && this.store.options.disableClipboard) {
+        if ((e.ctrlKey || e.metaKey) && this.store.options.disableClipboard) {
           this.paste();
         }
 
