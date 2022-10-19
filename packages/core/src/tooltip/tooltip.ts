@@ -143,8 +143,8 @@ export class Tooltip {
     this.setText(pen);
     const elemRect = this.box.getBoundingClientRect();
     const rect = pen.calculative.worldRect;
-    let x = pos.x - elemRect.width / 2;
-    let y = pos.y - elemRect.height;
+    let x = pen.calculative.canvas.store.data.x + pos.x - elemRect.width / 2;
+    let y = pen.calculative.canvas.store.data.y + pos.y - elemRect.height;
     if (!pen.type) {
       x =
         pen.calculative.canvas.store.data.x +
