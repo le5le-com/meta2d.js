@@ -557,6 +557,14 @@ export const formatAttrs: Set<string> = new Set([
   'ellipsis',
   'hiddenText',
   'keepDecimal',
+  'borderWidth',
+  'borderColor',
+  'lineWidth',
+  'lineAnimateType',
+  'frames',
+  'animateColor',
+  'animateType',
+  'animateReverse',
 ]);
 
 /**
