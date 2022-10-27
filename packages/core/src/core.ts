@@ -291,8 +291,12 @@ export class Topology {
     }
   }
 
-  async addPen(pen: Pen, history?: boolean) {
-    return await this.canvas.addPen(pen, history);
+  /**
+   *
+   * @param emit 是否发送消息
+   */
+  async addPen(pen: Pen, history?: boolean, emit = true) {
+    return await this.canvas.addPen(pen, history, emit);
   }
 
   async addPens(pens: Pen[], history?: boolean) {

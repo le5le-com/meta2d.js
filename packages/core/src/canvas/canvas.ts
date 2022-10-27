@@ -3007,7 +3007,7 @@ export class Canvas {
     this.canvasImageBottom.clear();
   }
 
-  async addPen(pen: Pen, history?: boolean): Promise<Pen> {
+  async addPen(pen: Pen, history?: boolean, emit?: boolean): Promise<Pen> {
     if (this.beforeAddPens && (await this.beforeAddPens([pen])) != true) {
       return;
     }
@@ -3019,7 +3019,7 @@ export class Canvas {
     this.makePen(pen);
     this.active([pen]);
     this.render();
-    this.store.emitter.emit('add', [pen]);
+    emit && this.store.emitter.emit('add', [pen]);
 
     if (history) {
       this.pushHistory({ type: EditType.Add, pens: [pen] });
