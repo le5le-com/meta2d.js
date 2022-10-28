@@ -1,15 +1,6 @@
 import { Pen, setElemPosition, Topology } from '@topology/core';
 
 declare const lcjs: any;
-export const lightningChartsList: {
-  lightningChart: any;
-  [key: string]: {
-    div: HTMLElement;
-    chart: any;
-  };
-} = {
-  lightningChart: undefined,
-};
 
 export function lightningCharts(pen: Pen): Path2D {
   if (!pen.onDestroy) {
@@ -18,12 +9,11 @@ export function lightningCharts(pen: Pen): Path2D {
     pen.onResize = resize;
     pen.onRotate = move;
     pen.onValue = value;
-    pen.onChangeId = changeId;
   }
 
   const path = new Path2D();
   const worldRect = pen.calculative.worldRect;
-  let lightningChart = lightningChartsList.lightningChart || globalThis.lcjs;
+  let lightningChart = globalThis.lcjs;
   if (!(pen as any).lightningCharts || !lightningChart) {
     return;
   }
@@ -37,7 +27,7 @@ export function lightningCharts(pen: Pen): Path2D {
     return;
   }
 
-  if (!lightningChartsList[pen.id] || !lightningChartsList[pen.id].div) {
+  if (!(pen.calculative as any).lightningChartDiv) {
     // 1. 创建父容器
     const div = document.createElement('div');
     div.style.position = 'absolute';
@@ -48,19 +38,13 @@ export function lightningCharts(pen: Pen): Path2D {
     div.style.height = worldRect.height + 'px';
     div.id = pen.id;
     document.body.appendChild(div);
-    // 2. 创建echart
-    lightningChartsList[pen.id] = {
-      div,
-      chart: '',
-    };
+    (pen.calculative as any).lightningChartDiv = div;
 
-    // 3. 生产预览图
-    // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
     setTimeout(() => {
       setLightningCharts(pen);
     }, 100);
 
-    // 4. 加载到div layer
+    // 加载到div layer
     setTimeout(() => {
       pen.calculative.canvas.externalElements &&
         pen.calculative.canvas.externalElements.appendChild(div);
@@ -70,8 +54,11 @@ export function lightningCharts(pen: Pen): Path2D {
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
-  if (pen.calculative.patchFlags && lightningChartsList[pen.id]) {
-    setElemPosition(pen, lightningChartsList[pen.id].div);
+  if (
+    pen.calculative.patchFlags &&
+    (pen.calculative as any).lightningChartDiv
+  ) {
+    setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
   }
 
   return path;
@@ -125,13 +112,10 @@ function setLightningCharts(pen: Pen) {
   const data = (pen as any).lightningCharts.option.data;
   const title = (pen as any).lightningCharts.option.title || 'Title';
   const theme = Themes[(pen as any).lightningCharts.option.theme || 'lightNew'];
-  //   if (lightningChartsList[pen.id].chart) {
-  //     lightningChartsList[pen.id].chart.dispose();
-  //   }
-  lightningChartsList[pen.id].chart = lightningChart();
+  (pen.calculative as any).lightningChart = lightningChart();
   switch ((pen as any).lightningCharts.option.type) {
     case 'line':
-      const charts = lightningChartsList[pen.id].chart
+      const charts = (pen.calculative as any).lightningChart
         .ChartXY({
           container: pen.id,
         })
@@ -139,10 +123,10 @@ function setLightningCharts(pen: Pen) {
       data.forEach((item) => {
         charts.addLineSeries().setName(item.name).add(item.data);
       });
-      //   lightningChartsList[pen.id].chart = charts;
+      //   (pen.calculative as any).lightningChart = charts;
       break;
     case 'bar':
-      const lc = lightningChartsList[pen.id].chart;
+      const lc = (pen.calculative as any).lightningChart;
       let barChart;
       {
         barChart = (options) => {
@@ -264,10 +248,10 @@ function setLightningCharts(pen: Pen) {
           data,
         })
       );
-      //   lightningChartsList[pen.id].chart = chart;
+      //   (pen.calculative as any).lightningChart = chart;
       break;
     case 'pie':
-      const pie = lightningChartsList[pen.id].chart
+      const pie = (pen.calculative as any).lightningChart
         .Pie({
           theme,
           container: pen.id,
@@ -286,11 +270,11 @@ function setLightningCharts(pen: Pen) {
           maxWidth: 0.3,
         })
         .add(pie);
-      //   lightningChartsList[pen.id].chart = pie;
+      //   (pen.calculative as any).lightningChart = pie;
 
       break;
     case 'gauge':
-      const gauge = lightningChartsList[pen.id].chart
+      const gauge = (pen.calculative as any).lightningChart
         .Gauge({
           theme,
           container: pen.id,
@@ -314,46 +298,34 @@ function setLightningCharts(pen: Pen) {
             color: ColorRGBA(colorArry[0], colorArry[1], colorArry[2]),
           })
         );
-      //   lightningChartsList[pen.id].chart = gauge;
+      //   (pen.calculative as any).lightningChart = gauge;
       break;
   }
 }
 
 function destory(pen: Pen) {
-  lightningChartsList[pen.id].div.remove();
-  let lightningChart = lightningChartsList.lightningChart || globalThis.lcjs;
-  //   lightningChartsList[pen.id].chart.dispose();
-  // lightningCharts && lightningCharts.dispose(lightningChartsList[pen.id].chart);
-  lightningChartsList[pen.id] = undefined;
+  (pen.calculative as any).lightningChartDiv.remove();
+  // (pen.calculative as any).lightningChart.dispose();
 }
 
 function move(pen: Pen) {
-  if (!lightningChartsList[pen.id]) {
+  if (!(pen.calculative as any).lightningChartDiv) {
     return;
   }
-  setElemPosition(pen, lightningChartsList[pen.id].div);
+  setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
 }
 
 function resize(pen: Pen) {
-  if (!lightningChartsList[pen.id]) {
+  if (!(pen.calculative as any).lightningChartDiv) {
     return;
   }
-  setElemPosition(pen, lightningChartsList[pen.id].div);
+  setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
 }
 
 function value(pen: Pen) {
-  if (!lightningChartsList[pen.id]) {
+  if (!(pen.calculative as any).lightningChartDiv) {
     return;
   }
   setLightningCharts(pen);
-  setElemPosition(pen, lightningChartsList[pen.id].div);
-}
-
-function changeId(pen: Pen, oldId: string, newId: string) {
-  if (!lightningChartsList[oldId]) {
-    return;
-  }
-  lightningChartsList[oldId].div.id = newId;
-  lightningChartsList[newId] = lightningChartsList[oldId];
-  delete lightningChartsList[oldId];
+  setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
 }

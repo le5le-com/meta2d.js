@@ -6,7 +6,7 @@ import {
   Pen,
   setElemPosition,
 } from '@topology/core';
-import type { ECharts, EChartOption } from 'echarts';
+import type { EChartOption } from 'echarts';
 
 export enum ReplaceMode {
   Add,
@@ -24,16 +24,6 @@ export interface ChartPen extends Pen {
   beforeScale: number;
 }
 
-export const echartsList: {
-  echarts: any;
-  [id: string]: {
-    div: HTMLDivElement;
-    chart: ECharts;
-  };
-} = {
-  echarts: undefined,
-};
-
 export function echarts(pen: ChartPen): Path2D {
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
@@ -42,7 +32,6 @@ export function echarts(pen: ChartPen): Path2D {
     pen.onRotate = move;
     pen.onValue = value;
     pen.onBeforeValue = beforeValue;
-    pen.onChangeId = changeId;
     pen.onBinds = binds;
     pen.onMouseEnter = move;
     pen.onAdd = onAdd;
@@ -50,7 +39,7 @@ export function echarts(pen: ChartPen): Path2D {
 
   const path = new Path2D();
   const worldRect = pen.calculative.worldRect;
-  let echarts = echartsList.echarts || globalThis.echarts;
+  let echarts = globalThis.echarts;
   if (!pen.echarts || !echarts) {
     return;
   }
@@ -64,7 +53,8 @@ export function echarts(pen: ChartPen): Path2D {
     return;
   }
 
-  if (!echartsList[pen.id] || !echartsList[pen.id].div) {
+  // @ts-ignore
+  if (!pen.calculative.echartDiv) {
     // 1. 创建父容器
     const div = document.createElement('div');
     div.style.position = 'absolute';
@@ -74,21 +64,17 @@ export function echarts(pen: ChartPen): Path2D {
     div.style.width = worldRect.width + 'px';
     div.style.height = worldRect.height + 'px';
     document.body.appendChild(div);
-
-    // 2. 创建echart
-    echartsList[pen.id] = {
-      div,
-      chart: echarts.init(div, pen.echarts.theme),
-    };
+    (pen.calculative as any).echartDiv = div;
+    (pen.calculative as any).echart = echarts.init(div, pen.echarts.theme);
 
     // 3. 生产预览图
     // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
     setTimeout(() => {
-      echartsList[pen.id].chart.setOption(pen.echarts.option, true);
-      echartsList[pen.id].chart.resize();
+      (pen.calculative as any).echart.setOption(pen.echarts.option, true);
+      (pen.calculative as any).echart.resize();
       setTimeout(() => {
         const img = new Image();
-        img.src = echartsList[pen.id].chart.getDataURL({
+        img.src = (pen.calculative as any).echart.chart.getDataURL({
           pixelRatio: 2,
         });
         pen.calculative.img = img;
@@ -102,8 +88,8 @@ export function echarts(pen: ChartPen): Path2D {
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
-  if (pen.calculative.patchFlags && echartsList[pen.id]) {
-    setElemPosition(pen, echartsList[pen.id].div);
+  if (pen.calculative.patchFlags && (pen.calculative as any).echartDiv) {
+    setElemPosition(pen, (pen.calculative as any).echartDiv);
   }
   return path;
 }
@@ -113,24 +99,21 @@ function onAdd(pen: ChartPen) {
 }
 
 function destory(pen: Pen) {
-  echartsList[pen.id].div.remove();
-  let echarts = echartsList.echarts || globalThis.echarts;
-  echarts && echarts.dispose(echartsList[pen.id].chart);
-  echartsList[pen.id] = undefined;
+  (pen.calculative as any).echartDiv.remove();
+  let echarts = globalThis.echarts;
+  echarts && echarts.dispose((pen.calculative as any).echart);
 }
 
 function move(pen: Pen) {
-  if (!echartsList[pen.id]) {
-    return;
-  }
-  setElemPosition(pen, echartsList[pen.id].div);
+  (pen.calculative as any).echartDiv &&
+    setElemPosition(pen, (pen.calculative as any).echartDiv);
 }
 
 function resize(pen: ChartPen) {
-  if (!echartsList[pen.id]) {
+  if (!(pen.calculative as any).echart) {
     return;
   }
-  setElemPosition(pen, echartsList[pen.id].div);
+  setElemPosition(pen, (pen.calculative as any).echartDiv);
   let option = pen.echarts.option;
   if (!pen.beforeScale) {
     pen.beforeScale = pen.calculative.canvas.store.data.scale;
@@ -211,18 +194,18 @@ function resize(pen: ChartPen) {
   }
   // TODO: resize 执行的过于频繁时会消耗性能
   if (change) {
-    echartsList[pen.id].chart.setOption(option, true);
+    (pen.calculative as any).echart.setOption(option, true);
   }
   pen.beforeScale = pen.calculative.canvas.store.data.scale;
-  echartsList[pen.id].chart.resize();
+  (pen.calculative as any).echart.resize();
 }
 
 function value(pen: ChartPen) {
-  if (!echartsList[pen.id]) {
+  if (!(pen.calculative as any).echart) {
     return;
   }
-  setElemPosition(pen, echartsList[pen.id].div);
-  echartsList[pen.id].chart.setOption(pen.echarts.option, true);
+  setElemPosition(pen, (pen.calculative as any).echartDiv);
+  (pen.calculative as any).echart.setOption(pen.echarts.option, true);
 }
 
 function beforeValue(pen: ChartPen, value: ChartData) {
@@ -360,14 +343,6 @@ function beforeValue(pen: ChartPen, value: ChartData) {
   delete value.dataX;
   delete value.dataY;
   return Object.assign(value, { echarts });
-}
-
-function changeId(pen: Pen, oldId: string, newId: string) {
-  if (!echartsList[oldId]) {
-    return;
-  }
-  echartsList[newId] = echartsList[oldId];
-  delete echartsList[oldId];
 }
 
 function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue {
