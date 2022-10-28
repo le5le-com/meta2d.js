@@ -1,18 +1,8 @@
-import { Pen, setElemPosition, Topology } from '@topology/core';
+import { Pen, setElemPosition } from '@topology/core';
 
 declare const lcjs: any;
 
 export function lightningCharts(pen: Pen): Path2D {
-  if (!pen.onDestroy) {
-    pen.onDestroy = destory;
-    pen.onMove = move;
-    pen.onResize = resize;
-    pen.onRotate = move;
-    pen.onValue = value;
-  }
-
-  const path = new Path2D();
-  const worldRect = pen.calculative.worldRect;
   let lightningChart = globalThis.lcjs;
   if (!(pen as any).lightningCharts || !lightningChart) {
     return;
@@ -27,7 +17,22 @@ export function lightningCharts(pen: Pen): Path2D {
     return;
   }
 
-  if (!(pen.calculative as any).lightningChartDiv) {
+  if (!pen.onDestroy) {
+    pen.onDestroy = destory;
+    pen.onMove = move;
+    pen.onResize = resize;
+    pen.onRotate = move;
+    pen.onValue = value;
+  }
+
+  const path = new Path2D();
+  const worldRect = pen.calculative.worldRect;
+
+  if (!pen.calculative.singleton) {
+    pen.calculative.singleton = {};
+  }
+
+  if (!pen.calculative.singleton.div) {
     // 1. 创建父容器
     const div = document.createElement('div');
     div.style.position = 'absolute';
@@ -38,7 +43,7 @@ export function lightningCharts(pen: Pen): Path2D {
     div.style.height = worldRect.height + 'px';
     div.id = pen.id;
     document.body.appendChild(div);
-    (pen.calculative as any).lightningChartDiv = div;
+    pen.calculative.singleton.div = div;
 
     setTimeout(() => {
       setLightningCharts(pen);
@@ -54,11 +59,8 @@ export function lightningCharts(pen: Pen): Path2D {
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
-  if (
-    pen.calculative.patchFlags &&
-    (pen.calculative as any).lightningChartDiv
-  ) {
-    setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
+  if (pen.calculative.patchFlags && pen.calculative.singleton.div) {
+    setElemPosition(pen, pen.calculative.singleton.div);
   }
 
   return path;
@@ -112,10 +114,10 @@ function setLightningCharts(pen: Pen) {
   const data = (pen as any).lightningCharts.option.data;
   const title = (pen as any).lightningCharts.option.title || 'Title';
   const theme = Themes[(pen as any).lightningCharts.option.theme || 'lightNew'];
-  (pen.calculative as any).lightningChart = lightningChart();
+  pen.calculative.singleton.lightningChart = lightningChart();
   switch ((pen as any).lightningCharts.option.type) {
     case 'line':
-      const charts = (pen.calculative as any).lightningChart
+      const charts = pen.calculative.singleton.lightningChart
         .ChartXY({
           container: pen.id,
         })
@@ -123,10 +125,10 @@ function setLightningCharts(pen: Pen) {
       data.forEach((item) => {
         charts.addLineSeries().setName(item.name).add(item.data);
       });
-      //   (pen.calculative as any).lightningChart = charts;
+      //   pen.calculative.singleton.lightningChart = charts;
       break;
     case 'bar':
-      const lc = (pen.calculative as any).lightningChart;
+      const lc = pen.calculative.singleton.lightningChart;
       let barChart;
       {
         barChart = (options) => {
@@ -248,10 +250,10 @@ function setLightningCharts(pen: Pen) {
           data,
         })
       );
-      //   (pen.calculative as any).lightningChart = chart;
+      //   pen.calculative.singleton.lightningChart = chart;
       break;
     case 'pie':
-      const pie = (pen.calculative as any).lightningChart
+      const pie = pen.calculative.singleton.lightningChart
         .Pie({
           theme,
           container: pen.id,
@@ -270,11 +272,11 @@ function setLightningCharts(pen: Pen) {
           maxWidth: 0.3,
         })
         .add(pie);
-      //   (pen.calculative as any).lightningChart = pie;
+      //   pen.calculative.singleton.lightningChart = pie;
 
       break;
     case 'gauge':
-      const gauge = (pen.calculative as any).lightningChart
+      const gauge = pen.calculative.singleton.lightningChart
         .Gauge({
           theme,
           container: pen.id,
@@ -298,34 +300,39 @@ function setLightningCharts(pen: Pen) {
             color: ColorRGBA(colorArry[0], colorArry[1], colorArry[2]),
           })
         );
-      //   (pen.calculative as any).lightningChart = gauge;
+      //   pen.calculative.singleton.lightningChart = gauge;
       break;
   }
 }
 
 function destory(pen: Pen) {
-  (pen.calculative as any).lightningChartDiv.remove();
-  // (pen.calculative as any).lightningChart.dispose();
+  if (pen.calculative.singleton && pen.calculative.singleton.div) {
+    pen.calculative.singleton.div.remove();
+    // pen.calculative.singleton.lightningChart.destory();
+
+    delete pen.calculative.singleton.div;
+    delete pen.calculative.singleton.lightningChart;
+  }
 }
 
 function move(pen: Pen) {
-  if (!(pen.calculative as any).lightningChartDiv) {
+  if (!pen.calculative.singleton.div) {
     return;
   }
-  setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
+  setElemPosition(pen, pen.calculative.singleton.div);
 }
 
 function resize(pen: Pen) {
-  if (!(pen.calculative as any).lightningChartDiv) {
+  if (!pen.calculative.singleton.div) {
     return;
   }
-  setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
+  setElemPosition(pen, pen.calculative.singleton.div);
 }
 
 function value(pen: Pen) {
-  if (!(pen.calculative as any).lightningChartDiv) {
+  if (!pen.calculative.singleton.div) {
     return;
   }
   setLightningCharts(pen);
-  setElemPosition(pen, (pen.calculative as any).lightningChartDiv);
+  setElemPosition(pen, pen.calculative.singleton.div);
 }

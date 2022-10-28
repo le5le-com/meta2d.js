@@ -25,20 +25,6 @@ export interface ChartPen extends Pen {
 }
 
 export function echarts(pen: ChartPen): Path2D {
-  if (!pen.onDestroy) {
-    pen.onDestroy = destory;
-    pen.onMove = move;
-    pen.onResize = resize;
-    pen.onRotate = move;
-    pen.onValue = value;
-    pen.onBeforeValue = beforeValue;
-    pen.onBinds = binds;
-    pen.onMouseEnter = move;
-    pen.onAdd = onAdd;
-  }
-
-  const path = new Path2D();
-  const worldRect = pen.calculative.worldRect;
   let echarts = globalThis.echarts;
   if (!pen.echarts || !echarts) {
     return;
@@ -53,8 +39,26 @@ export function echarts(pen: ChartPen): Path2D {
     return;
   }
 
-  // @ts-ignore
-  if (!pen.calculative.echartDiv) {
+  if (!pen.onDestroy) {
+    pen.onDestroy = destory;
+    pen.onMove = move;
+    pen.onResize = resize;
+    pen.onRotate = move;
+    pen.onValue = value;
+    pen.onBeforeValue = beforeValue;
+    pen.onBinds = binds;
+    pen.onMouseEnter = move;
+    pen.onAdd = onAdd;
+  }
+
+  if (!pen.calculative.singleton) {
+    pen.calculative.singleton = {};
+  }
+
+  const path = new Path2D();
+  const worldRect = pen.calculative.worldRect;
+
+  if (!pen.calculative.singleton.div) {
     // 1. 创建父容器
     const div = document.createElement('div');
     div.style.position = 'absolute';
@@ -64,17 +68,17 @@ export function echarts(pen: ChartPen): Path2D {
     div.style.width = worldRect.width + 'px';
     div.style.height = worldRect.height + 'px';
     document.body.appendChild(div);
-    (pen.calculative as any).echartDiv = div;
-    (pen.calculative as any).echart = echarts.init(div, pen.echarts.theme);
+    pen.calculative.singleton.div = div;
+    pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
 
     // 3. 生产预览图
     // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
     setTimeout(() => {
-      (pen.calculative as any).echart.setOption(pen.echarts.option, true);
-      (pen.calculative as any).echart.resize();
+      pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
+      pen.calculative.singleton.echart.resize();
       setTimeout(() => {
         const img = new Image();
-        img.src = (pen.calculative as any).echart.chart.getDataURL({
+        img.src = pen.calculative.singleton.echart.getDataURL({
           pixelRatio: 2,
         });
         pen.calculative.img = img;
@@ -84,13 +88,14 @@ export function echarts(pen: ChartPen): Path2D {
     // 4. 加载到div layer
     pen.calculative.canvas.externalElements?.appendChild(div);
     setElemPosition(pen, div);
+  } else {
+    path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
+
+    if (pen.calculative.patchFlags && pen.calculative.singleton.div) {
+      setElemPosition(pen, pen.calculative.singleton.div);
+    }
   }
 
-  path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
-
-  if (pen.calculative.patchFlags && (pen.calculative as any).echartDiv) {
-    setElemPosition(pen, (pen.calculative as any).echartDiv);
-  }
   return path;
 }
 
@@ -99,21 +104,26 @@ function onAdd(pen: ChartPen) {
 }
 
 function destory(pen: Pen) {
-  (pen.calculative as any).echartDiv.remove();
-  let echarts = globalThis.echarts;
-  echarts && echarts.dispose((pen.calculative as any).echart);
+  if (pen.calculative.singleton && pen.calculative.singleton.div) {
+    pen.calculative.singleton.div.remove();
+    let echarts = globalThis.echarts;
+    echarts && echarts.dispose(pen.calculative.singleton.echart);
+
+    delete pen.calculative.singleton.div;
+    delete pen.calculative.singleton.echart;
+  }
 }
 
 function move(pen: Pen) {
-  (pen.calculative as any).echartDiv &&
-    setElemPosition(pen, (pen.calculative as any).echartDiv);
+  pen.calculative.singleton.div &&
+    setElemPosition(pen, pen.calculative.singleton.div);
 }
 
 function resize(pen: ChartPen) {
-  if (!(pen.calculative as any).echart) {
+  if (!pen.calculative.singleton.echart) {
     return;
   }
-  setElemPosition(pen, (pen.calculative as any).echartDiv);
+  setElemPosition(pen, pen.calculative.singleton.div);
   let option = pen.echarts.option;
   if (!pen.beforeScale) {
     pen.beforeScale = pen.calculative.canvas.store.data.scale;
@@ -194,18 +204,18 @@ function resize(pen: ChartPen) {
   }
   // TODO: resize 执行的过于频繁时会消耗性能
   if (change) {
-    (pen.calculative as any).echart.setOption(option, true);
+    pen.calculative.singleton.echart.setOption(option, true);
   }
   pen.beforeScale = pen.calculative.canvas.store.data.scale;
-  (pen.calculative as any).echart.resize();
+  pen.calculative.singleton.echart.resize();
 }
 
 function value(pen: ChartPen) {
-  if (!(pen.calculative as any).echart) {
+  if (!pen.calculative.singleton.echart) {
     return;
   }
-  setElemPosition(pen, (pen.calculative as any).echartDiv);
-  (pen.calculative as any).echart.setOption(pen.echarts.option, true);
+  setElemPosition(pen, pen.calculative.singleton.div);
+  pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
 }
 
 function beforeValue(pen: ChartPen, value: ChartData) {

@@ -6,7 +6,7 @@
  */
 export function deepClone<T>(o: T, keepCalc = false): T {
   if (Array.isArray(o)) {
-    const arr = [] as (T & any[]);
+    const arr = [] as T & any[];
     o.forEach((item) => {
       arr.push(deepClone(item, keepCalc));
     });
@@ -26,6 +26,9 @@ export function deepClone<T>(o: T, keepCalc = false): T {
       ) {
         continue;
       } else if (key === 'calculative' && !keepCalc) {
+        continue;
+      } else if (key === 'singleton') {
+        _o[key] = o[key];
         continue;
       }
       _o[key] = deepClone(o[key], keepCalc);

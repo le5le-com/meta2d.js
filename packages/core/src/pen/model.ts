@@ -431,6 +431,9 @@ export interface Pen extends Rect {
     zIndex?: number; //dom节点 z-index;
     // media element
     onended?: (pen: Pen) => void;
+
+    // 不应该被deepClone多份的数据，例如外部第三方组件库挂载点，
+    singleton?: any;
   };
 
   // 前一个动画帧状态数据

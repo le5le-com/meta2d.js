@@ -3,22 +3,10 @@ import { ChartData, Pen, setElemPosition } from '@topology/core';
 // import { Chart } from 'highcharts';
 
 export function highcharts(pen: Pen): Path2D {
-  if (!pen.onDestroy) {
-    pen.onDestroy = destory;
-    pen.onMove = move;
-    pen.onResize = resize;
-    pen.onRotate = move;
-    pen.onValue = value;
-    pen.onBeforeValue = beforeValue;
-  }
-
   const Highcharts = globalThis.Highcharts;
   if (!Highcharts) {
     return;
   }
-
-  const path = new Path2D();
-  const worldRect = pen.calculative.worldRect;
 
   if (typeof (pen as any).highcharts === 'string') {
     try {
@@ -29,7 +17,23 @@ export function highcharts(pen: Pen): Path2D {
     return;
   }
 
-  if (!(pen.calculative as any).highchartDiv) {
+  if (!pen.onDestroy) {
+    pen.onDestroy = destory;
+    pen.onMove = move;
+    pen.onResize = resize;
+    pen.onRotate = move;
+    pen.onValue = value;
+    pen.onBeforeValue = beforeValue;
+  }
+
+  if (!pen.calculative.singleton) {
+    pen.calculative.singleton = {};
+  }
+
+  const path = new Path2D();
+  const worldRect = pen.calculative.worldRect;
+
+  if (!pen.calculative.singleton.div) {
     // 1. 创建父容器
     const div = document.createElement('div');
     div.style.position = 'absolute';
@@ -43,10 +47,10 @@ export function highcharts(pen: Pen): Path2D {
 
     div.id = pen.id;
     document.body.appendChild(div);
-    (pen.calculative as any).highchartDiv = div;
+    pen.calculative.singleton.div = div;
 
     setTimeout(() => {
-      (pen.calculative as any).highchart = Highcharts.chart(
+      pen.calculative.singleton.highchart = Highcharts.chart(
         pen.id,
         (pen as any).highcharts.option
       );
@@ -59,44 +63,49 @@ export function highcharts(pen: Pen): Path2D {
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
-  if (pen.calculative.patchFlags && (pen.calculative as any).highchartDiv) {
-    setElemPosition(pen, (pen.calculative as any).highchartDiv);
+  if (pen.calculative.patchFlags && pen.calculative.singleton.div) {
+    setElemPosition(pen, pen.calculative.singleton.div);
   }
   return path;
 }
 
 function destory(pen: Pen) {
-  (pen.calculative as any).highchartDiv.remove();
-  (pen.calculative as any).highchart.destroy();
+  if (pen.calculative.singleton && pen.calculative.singleton.div) {
+    pen.calculative.singleton.div.remove();
+    pen.calculative.singleton.highchart.destroy();
+
+    delete pen.calculative.singleton.div;
+    delete pen.calculative.singleton.highchart;
+  }
 }
 
 function move(pen: Pen) {
-  if (!(pen.calculative as any).highchartDiv) {
+  if (!pen.calculative.singleton.div) {
     return;
   }
-  setElemPosition(pen, (pen.calculative as any).highchartDiv);
+  setElemPosition(pen, pen.calculative.singleton.div);
 }
 
 function resize(pen: Pen) {
-  if (!(pen.calculative as any).highchartDiv) {
+  if (!pen.calculative.singleton.div) {
     return;
   }
-  setElemPosition(pen, (pen.calculative as any).highchartDiv);
+  setElemPosition(pen, pen.calculative.singleton.div);
   setTimeout(() => {
-    (pen.calculative as any).highchart.reflow();
+    pen.calculative.singleton.highchart.reflow();
   }, 100);
 }
 
 function value(pen: Pen) {
-  if (!(pen.calculative as any).highchartDiv) {
+  if (!pen.calculative.singleton.div) {
     return;
   }
-  setElemPosition(pen, (pen.calculative as any).highchartDiv);
+  setElemPosition(pen, pen.calculative.singleton.div);
 }
 
 function beforeValue(pen: Pen, value: ChartData): any {
   if ((value as any).highcharts) {
-    const chart = (pen.calculative as any).highchart;
+    const chart = pen.calculative.singleton.highchart;
     chart.update((value as any).highcharts.option);
     return value;
   } else if (!value.dataX && !value.dataY) {
@@ -158,7 +167,7 @@ function beforeValue(pen: Pen, value: ChartData): any {
       }
     }
     if (ys) {
-      const chart = (pen.calculative as any).highchart;
+      const chart = pen.calculative.singleton.highchart;
       chart.series.forEach((serie, index: number) => {
         ys[index].forEach((y, index2: number) => {
           let shift = false; // 是否扔掉第一个
@@ -196,7 +205,7 @@ function beforeValue(pen: Pen, value: ChartData): any {
       }
     }
     // 更新视图
-    const chart = (pen.calculative as any).highchart;
+    const chart = pen.calculative.singleton.highchart;
     chart.update(highcharts.option);
   }
   // 3. 设置完后，清空
