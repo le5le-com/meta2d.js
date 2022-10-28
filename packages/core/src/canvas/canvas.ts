@@ -5862,6 +5862,7 @@ export class Canvas {
     this.inputRight.style.display = 'block';
     setTimeout(() => {
       this.inputRight.style.transform = 'rotate(315deg)';
+      (this.inputRight.style as any).zoom = this.store.data.scale;
     });
     const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!pen || !pen.dropdownList) {
@@ -5917,6 +5918,7 @@ export class Canvas {
     li.style.overflow = 'hidden';
     li.style.textOverflow = 'ellipsis';
     li.title = text;
+    (li.style as any).zoom = this.store.data.scale;
     li.onmousedown = this.stopPropagation;
     li.dataset.i = index + '';
     li.onclick = this.selectDropdown;
