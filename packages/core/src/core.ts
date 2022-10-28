@@ -300,10 +300,19 @@ export class Topology {
         const _pen = e.params ? this.findOne(e.params) : pen;
         let array = [];
         for (let key in value) {
-          array.push({
+          let obj = {
             dataId: key,
             value: value[key],
-          });
+          };
+          if (!obj.value) {
+            let oneForm = _pen.form.find(
+              (_item) => (_item.dataIds as BindId).dataId === obj.dataId
+            );
+            if (oneForm) {
+              obj.value = _pen[oneForm.key];
+            }
+          }
+          array.push(obj);
         }
         this.doSendDataEvent(array);
         return;

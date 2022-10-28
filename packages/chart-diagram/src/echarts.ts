@@ -7,6 +7,7 @@ import {
   setElemPosition,
 } from '@topology/core';
 import type { EChartOption } from 'echarts';
+import { deepSetValue } from '@topology/core';
 
 export enum ReplaceMode {
   Add,
@@ -130,6 +131,7 @@ function resize(pen: ChartPen) {
   }
   let change = false;
   let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
+  /*
   if (option.textStyle) {
     option.textStyle.fontSize *= ratio;
     change = true;
@@ -175,6 +177,7 @@ function resize(pen: ChartPen) {
       change = true;
     }
   }
+  */
   if (option.grid) {
     let props = ['top', 'bottom', 'left', 'right'];
     for (let i = 0; i < props.length; i++) {
@@ -202,10 +205,8 @@ function resize(pen: ChartPen) {
       });
     }
   }
-  // TODO: resize 执行的过于频繁时会消耗性能
-  if (change) {
-    pen.calculative.singleton.echart.setOption(option, true);
-  }
+  let _option = deepSetValue(option, 'fontSize', ratio);
+  pen.calculative.singleton.echart.setOption(_option, true);
   pen.beforeScale = pen.calculative.canvas.store.data.scale;
   pen.calculative.singleton.echart.resize();
 }
