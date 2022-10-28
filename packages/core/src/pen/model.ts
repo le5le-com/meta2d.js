@@ -12,6 +12,8 @@ export enum LockState {
   None,
   DisableEdit,
   DisableMove,
+  DisableScale, //仅占位
+  DisableMoveScale,
   // DisableActive,
   Disable = 10,
 }

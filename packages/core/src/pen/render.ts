@@ -1964,14 +1964,17 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   }
   elem.style.zIndex = pen.calculative.zIndex + '';
   if (
-    (pen.locked === LockState.DisableEdit ||
-      pen.locked === LockState.DisableMove ||
-      store.data.locked) &&
-    !pen.calculative.canvas.mouseDown
+    pen.locked === LockState.DisableEdit ||
+    pen.locked === LockState.DisableMove ||
+    store.data.locked
   ) {
     // gif 组合后，作为子节点可通过 lockedOnCombine 来决定自身的 locked 状态
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
+    if (pen.name === 'gif') {
+      elem.style.userSelect = 'none';
+      elem.style.pointerEvents = 'none';
+    }
   } else {
     // pen.locked LockState.Disable 不响应鼠标
     elem.style.userSelect = 'none';

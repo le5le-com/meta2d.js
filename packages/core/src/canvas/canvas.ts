@@ -500,6 +500,8 @@ export class Canvas {
       return;
     }
     if (this.store.data.locked === LockState.Disable) return;
+    if (this.store.data.locked === LockState.DisableScale) return;
+    if (this.store.data.locked === LockState.DisableMoveScale) return;
     // 触摸板平移
     const isTouchPad = !(!e.deltaX && e.deltaY);
     const now = performance.now();
@@ -1181,7 +1183,8 @@ export class Canvas {
 
       if (this.touchMoving) {
         if (
-          this.store.data.locked >= LockState.DisableMove ||
+          (this.store.data.locked >= LockState.DisableMove &&
+            this.store.data.locked !== LockState.DisableScale) ||
           this.store.options.disableScale
         ) {
           return;
@@ -1582,6 +1585,7 @@ export class Canvas {
       // Translate
       if (
         this.store.data.locked === LockState.DisableEdit ||
+        this.store.data.locked === LockState.DisableScale ||
         this.hotkeyType === HotkeyType.Translate ||
         this.mouseRight === MouseRight.Translate
       ) {

@@ -279,6 +279,50 @@ export class Topology {
         params: e.params,
       });
     };
+    this.events[EventAction.SendPropData] = (pen: Pen, e: Event) => {
+      const value = e.value;
+      if (value && typeof value === 'object') {
+        const _pen = e.params ? this.findOne(e.params) : pen;
+        for (let key in value) {
+          if (!value[key]) {
+            value[key] = _pen[key];
+          }
+        }
+        value.id = _pen.id;
+        this.doSendDataEvent(value);
+        return;
+      }
+      console.warn('[topology] SendPropData value is not an object');
+    };
+    this.events[EventAction.SendVarData] = (pen: Pen, e: Event) => {
+      const value = e.value;
+      if (value && typeof value === 'object') {
+        const _pen = e.params ? this.findOne(e.params) : pen;
+        let array = [];
+        for (let key in value) {
+          array.push({
+            dataId: key,
+            value: value[key],
+          });
+        }
+        this.doSendDataEvent(array);
+        return;
+      }
+      console.warn('[topology] SendVarData value is not an object');
+    };
+  }
+
+  doSendDataEvent(value: any) {
+    let data = JSON.stringify(value);
+    if (this.mqttClient && this.mqttClient.connected) {
+      this.mqttClient.publish('event', data);
+    }
+    if (this.websocket && this.websocket.readyState === 1) {
+      this.websocket.send(data);
+    }
+    if (this.store.data.http) {
+      this.sendDatabyHttp(data);
+    }
   }
 
   resize(width?: number, height?: number) {
@@ -1076,6 +1120,20 @@ export class Topology {
           this.socketCallback(data);
         }
       }, httpTimeInterval || 1000);
+    }
+  }
+
+  async sendDatabyHttp(data: string) {
+    const { http } = this.store.data;
+    if (http) {
+      // 默认每一秒请求一次
+      const res: Response = await fetch(http, {
+        method: 'post',
+        body: data,
+      });
+      if (res.ok) {
+        console.info('http消息发送成功');
+      }
     }
   }
 

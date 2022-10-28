@@ -33,6 +33,8 @@ export enum EventAction {
   StartVideo,
   PauseVideo,
   StopVideo,
+  SendPropData,
+  SendVarData,
 }
 
 export interface Where {
