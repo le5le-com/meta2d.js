@@ -280,7 +280,7 @@ export class Topology {
       });
     };
     this.events[EventAction.SendPropData] = (pen: Pen, e: Event) => {
-      const value = e.value;
+      const value = deepClone(e.value);
       if (value && typeof value === 'object') {
         const _pen = e.params ? this.findOne(e.params) : pen;
         for (let key in value) {
@@ -295,7 +295,7 @@ export class Topology {
       console.warn('[topology] SendPropData value is not an object');
     };
     this.events[EventAction.SendVarData] = (pen: Pen, e: Event) => {
-      const value = e.value;
+      const value = deepClone(e.value);
       if (value && typeof value === 'object') {
         const _pen = e.params ? this.findOne(e.params) : pen;
         let array = [];
@@ -511,6 +511,14 @@ export class Topology {
     this.finishDrawLine(true);
     this.canvas.drawingLineName = '';
     this.stopPencil();
+    if (lock === 0) {
+      //恢复可选状态
+      this.store.data.pens.forEach((pen) => {
+        if (pen.name === 'echarts') {
+          pen.onMove && pen.onMove(pen);
+        }
+      });
+    }
   }
 
   // end  - 当前鼠标位置，是否作为终点

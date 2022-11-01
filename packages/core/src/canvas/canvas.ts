@@ -1577,7 +1577,7 @@ export class Canvas {
       return;
     }
 
-    if (this.mouseDown) {
+    if (this.mouseDown && !this.store.options.disableTranslate) {
       // 画布平移前提
       if (this.mouseRight === MouseRight.Down) {
         this.mouseRight = MouseRight.Translate;
