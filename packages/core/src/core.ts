@@ -1143,12 +1143,13 @@ export class Topology {
   }
 
   async sendDatabyHttp(data: string) {
-    const { http } = this.store.data;
+    const { http, httpHeaders } = this.store.data;
     if (http) {
       // 默认每一秒请求一次
       const res: Response = await fetch(http, {
         method: 'post',
         body: data,
+        headers: httpHeaders,
       });
       if (res.ok) {
         console.info('http消息发送成功');
