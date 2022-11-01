@@ -306,7 +306,9 @@ export class Topology {
           };
           if (!obj.value) {
             let oneForm = _pen.form.find(
-              (_item) => (_item.dataIds as BindId).dataId === obj.dataId
+              (_item) =>
+                (_item.dataIds as BindId) &&
+                (_item.dataIds as BindId).dataId === obj.dataId
             );
             if (oneForm) {
               obj.value = _pen[oneForm.key];
