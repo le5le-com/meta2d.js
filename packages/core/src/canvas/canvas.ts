@@ -551,6 +551,18 @@ export class Canvas {
       case 'Meta':
         break;
       case 'Shift':
+        if (
+          this.store.active.length === 1 &&
+          this.store.active[0].type &&
+          this.store.activeAnchor
+        ) {
+          this.toggleAnchorHand();
+        } else if (!this.hotkeyType) {
+          this.patchFlags = true;
+          this.hotkeyType = HotkeyType.Resize;
+        }
+        break;
+      case 'Alt':
         if (this.drawingLine) {
           const to = getToAnchor(this.drawingLine);
           if (to !== this.drawingLine.calculative.activeAnchor) {
@@ -568,18 +580,8 @@ export class Canvas {
           this.drawingLine.lineName = this.drawingLineName;
           this.drawline();
           this.patchFlags = true;
-        } else if (
-          this.store.active.length === 1 &&
-          this.store.active[0].type &&
-          this.store.activeAnchor
-        ) {
-          this.toggleAnchorHand();
-        } else if (!this.hotkeyType) {
-          this.patchFlags = true;
-          this.hotkeyType = HotkeyType.Resize;
         }
-        break;
-      case 'Alt':
+        e.preventDefault();
         break;
       case 'a':
       case 'A':
@@ -863,13 +865,13 @@ export class Canvas {
   }
 
   onkeyup = (e: KeyboardEvent) => {
-    switch (e.key) {
-      case 'Alt':
-        if (this.drawingLine) {
-          this.store.options.autoAnchor = !this.store.options.autoAnchor;
-        }
-        break;
-    }
+    // switch (e.key) {
+    //   case 'Alt':
+    //     if (this.drawingLine) {
+    //       this.store.options.autoAnchor = !this.store.options.autoAnchor;
+    //     }
+    //     break;
+    // }
 
     if (this.hotkeyType) {
       this.render();
@@ -1791,15 +1793,15 @@ export class Canvas {
 
         if (this.drawingLineName === 'line') {
           if (e.ctrlKey) {
-            to.y =
-              this.drawingLine.calculative.worldAnchors[
-                this.drawingLine.calculative.worldAnchors.length - 2
-              ].y;
-          } else if (e.altKey) {
             to.x =
               this.drawingLine.calculative.worldAnchors[
                 this.drawingLine.calculative.worldAnchors.length - 2
               ].x;
+          } else if (e.shiftKey) {
+            to.y =
+              this.drawingLine.calculative.worldAnchors[
+                this.drawingLine.calculative.worldAnchors.length - 2
+              ].y;
           }
         }
 
