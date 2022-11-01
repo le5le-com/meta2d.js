@@ -2842,7 +2842,7 @@ export class Canvas {
       anchor.connectTo
     ) {
       const connectPen = this.findOne(anchor.connectTo);
-      if (!connectPen.calculative.active) {
+      if (!connectPen?.calculative.active) {
         pen = connectPen;
         const connectAnchor = connectPen.calculative.worldAnchors.find(
           (item) => item.id === anchor.anchorId
@@ -2855,7 +2855,7 @@ export class Canvas {
       return HoverType.None;
     }
     if (pen.name === 'line' && anchor.connectTo) {
-      let _anchor = this.findOne(anchor.connectTo).anchors.find(
+      let _anchor = this.findOne(anchor.connectTo)?.anchors.find(
         (item) => item.id === anchor.anchorId
       );
       if (_anchor && _anchor.twoWay) {
