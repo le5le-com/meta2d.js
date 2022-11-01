@@ -205,8 +205,8 @@ function resize(pen: ChartPen) {
       });
     }
   }
-  let _option = deepSetValue(option, 'fontSize', ratio);
-  pen.calculative.singleton.echart.setOption(_option, true);
+  deepSetValue(option, 'fontSize', ratio);
+  pen.calculative.singleton.echart.setOption(option, true);
   pen.beforeScale = pen.calculative.canvas.store.data.scale;
   pen.calculative.singleton.echart.resize();
 }

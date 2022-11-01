@@ -39,7 +39,7 @@ export function deepClone<T>(o: T, keepCalc = false): T {
   return o;
 }
 
-export function deepSetValue<T>(o: T, keyWords: string, value: number): T {
+export function deepSetValue<T>(o: any, keyWords: string, value: number): T {
   if (Array.isArray(o)) {
     const arr = [] as T & any[];
     o.forEach((item) => {
@@ -50,15 +50,15 @@ export function deepSetValue<T>(o: T, keyWords: string, value: number): T {
     if (o === null) {
       return null;
     }
-    const _o = {} as any;
+    // const _o = {} as any;
     for (const key in o) {
       if (key === keyWords) {
-        _o[key] = Number(o[key]) * value;
+        o[key] = Number(o[key]) * value;
       } else {
-        _o[key] = deepSetValue(o[key], keyWords, value);
+        o[key] = deepSetValue(o[key], keyWords, value);
       }
     }
-    return _o;
+    return o;
   }
   return o;
 }
