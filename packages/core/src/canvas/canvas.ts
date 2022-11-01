@@ -320,6 +320,9 @@ export class Canvas {
         });
       };
       this.externalElements.onmousemove = (e) => {
+        if (e.target !== this.externalElements) {
+          return;
+        }
         this.onMouseMove({
           x: e.offsetX,
           y: e.offsetY,
@@ -1592,6 +1595,9 @@ export class Canvas {
         this.mouseRight === MouseRight.Translate
       ) {
         const { scale } = this.store.data;
+        if (Math.abs(e.x - this.mouseDown.x) > 30) {
+          return;
+        }
         this.translate(
           (e.x - this.mouseDown.x) / scale,
           (e.y - this.mouseDown.y) / scale
