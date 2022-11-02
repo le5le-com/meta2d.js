@@ -28,7 +28,11 @@ export function deepClone<T>(o: T, keepCalc = false): T {
       } else if (key === 'calculative' && !keepCalc) {
         continue;
       } else if (key === 'singleton') {
-        _o[key] = o[key];
+        if (keepCalc) {
+          _o[key] = {} as any;
+        } else {
+          _o[key] = o[key];
+        }
         continue;
       }
       _o[key] = deepClone(o[key], keepCalc);
