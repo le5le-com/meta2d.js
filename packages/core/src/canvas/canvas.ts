@@ -5751,6 +5751,9 @@ export class Canvas {
     this.inputDiv.classList.add('input-div');
     this.inputParent.appendChild(this.inputDiv);
     this.inputParent.appendChild(this.inputRight);
+    this.dropdown.onmouseleave = () => {
+      this.store.hover = null;
+    };
     this.inputParent.appendChild(this.dropdown);
     this.externalElements.appendChild(this.inputParent);
 <<<<<<< HEAD
