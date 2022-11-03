@@ -4,10 +4,12 @@
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AButton: typeof import('ant-design-vue/es')['Button']
     AModal: typeof import('ant-design-vue/es')['Modal']
     Header: typeof import('./src/components/Header.vue')['default']
     Icons: typeof import('./src/components/Icons.vue')['default']
     Topology: typeof import('./src/components/Topology.vue')['default']
+    TopologyTwo: typeof import('./src/components/TopologyTwo.vue')['default']
   }
 }
 

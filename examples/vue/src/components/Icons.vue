@@ -9,6 +9,7 @@ import { nextTick, ref } from "vue";
 import { icons } from "../utils/data";
 import axios from "axios";
 import { parseSvg } from "@topology/svg";
+import TopologyTwoVue from "./TopologyTwo.vue";
 
 const onDragStart = (e: any, data) => {
   e.dataTransfer.setData("Topology", JSON.stringify(data));
@@ -55,6 +56,7 @@ axios.get("/T型开关A -C.svg").then((res) => {
     <div class="link">
       <a href="http://topology.le5le.com/workspace/">去官网</a>
     </div>
+    <TopologyTwoVue /> 
   </div>
 </template>
 
