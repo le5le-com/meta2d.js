@@ -326,7 +326,7 @@ export class Topology {
   doSendDataEvent(value: any) {
     let data = JSON.stringify(value);
     if (this.mqttClient && this.mqttClient.connected) {
-      this.mqttClient.publish('event', data);
+      this.mqttClient.publish(this.store.data.mqttTopics, data);
     }
     if (this.websocket && this.websocket.readyState === 1) {
       this.websocket.send(data);
