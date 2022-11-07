@@ -63,7 +63,7 @@ export class Topology {
   canvas: Canvas;
   websocket: WebSocket;
   mqttClient: MqttClient;
-  socketFn: (e: string, topic: string) => void;
+  socketFn: (e: string, topic: string) => boolean;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: ViewMap;
   mapTimer: NodeJS.Timeout;
@@ -1038,13 +1038,13 @@ export class Topology {
 
   listenSocket() {
     try {
-      let socketFn: (e: string, topic: string) => void;
+      let socketFn: (e: string, topic: string) => boolean;
       const socketCbJs = this.store.data.socketCbJs;
       if (socketCbJs) {
         socketFn = new Function('e', 'topic', socketCbJs) as (
           e: string,
           topic: string
-        ) => void;
+        ) => boolean;
       }
       if (!socketFn) {
         return false;
@@ -1165,8 +1165,7 @@ export class Topology {
   socketCallback(message: string, topic = '') {
     this.store.emitter.emit('socket', { message, topic });
 
-    if (this.socketFn) {
-      this.socketFn(message, topic);
+    if (this.socketFn && !this.socketFn(message, topic)) {
       return;
     }
 
