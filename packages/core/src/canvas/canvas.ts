@@ -1598,10 +1598,11 @@ export class Canvas {
         // if (Math.abs(e.x - this.mouseDown.x) > 30) {
         //   return;
         // }
-        this.translate(
-          (e.x - this.mouseDown.x) / scale,
-          (e.y - this.mouseDown.y) / scale
-        );
+        let x = (e.x - this.mouseDown.x) / scale;
+        let y = (e.y - this.mouseDown.y) / scale;
+        e.shiftKey && !e.ctrlKey && (y = 0);
+        e.ctrlKey && (x = 0);
+        this.translate(x, y);
         return;
       }
 
@@ -4234,8 +4235,8 @@ export class Canvas {
 
     let x = e.x - this.mouseDown.x;
     let y = e.y - this.mouseDown.y;
-    e.shiftKey && !e.ctrlKey && (x = 0);
-    e.altKey && (y = 0);
+    e.shiftKey && !e.ctrlKey && (y = 0);
+    e.ctrlKey && (x = 0);
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
     const offset: Point = {
