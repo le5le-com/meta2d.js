@@ -1286,7 +1286,6 @@ export class Topology {
     let pens: Pen[] = [];
     if (data.id) {
       if (data.id === this.store.data.id) {
-        this.setOptions(data);
         this.setDatabyOptions(data);
         if (data.bkImage) {
           this.setBackgroundImage(data.bkImage);
