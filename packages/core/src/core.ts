@@ -334,6 +334,7 @@ export class Topology {
     if (this.store.data.http) {
       this.sendDatabyHttp(data);
     }
+    this.store.emitter.emit('sendData', data);
   }
 
   resize(width?: number, height?: number) {
@@ -1129,11 +1130,13 @@ export class Topology {
   httpTimer: NodeJS.Timeout;
   connectHttp() {
     this.closeHttp();
-    const { http, httpTimeInterval } = this.store.data;
+    const { http, httpTimeInterval, httpHeaders } = this.store.data;
     if (http) {
       this.httpTimer = setInterval(async () => {
         // 默认每一秒请求一次
-        const res: Response = await fetch(http);
+        const res: Response = await fetch(http, {
+          headers: httpHeaders,
+        });
         if (res.ok) {
           const data = await res.text();
           this.socketCallback(data);
@@ -1282,6 +1285,17 @@ export class Topology {
   ) {
     let pens: Pen[] = [];
     if (data.id) {
+      if (data.id === this.store.data.id) {
+        this.setOptions(data);
+        if (data.bkImage) {
+          this.setBackgroundImage(data.bkImage);
+        }
+        if (data.background) {
+          this.setBackgroundColor(data.background);
+        }
+        this.render();
+        return;
+      }
       const pen = this.store.pens[data.id];
       pen && (pens = [pen]);
     } else if (data.dataId) {

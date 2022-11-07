@@ -44,6 +44,7 @@ export interface TopologyData {
   httpTimeInterval?: number; // http 请求间隔
   httpHeaders?: HeadersInit; //请求头
   version?: string; // 版本号
+  id?: string;
 }
 
 export enum EditType {
