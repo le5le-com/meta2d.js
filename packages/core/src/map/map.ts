@@ -47,7 +47,7 @@ export class ViewMap {
           this.boxWidth + 2 * this.padding
         }px;height:${this.boxHeight + 2 * this.padding}px;padding:${
           this.padding
-        }px;background:#f4f4f4;border:1px solid #ffffff;box-shadow: 0px 0px 14px 0px rgba(0,10,38,0.30);border-radius:8px;position:absolute;z-index:20;right:0;bottom:0;justify-content:center;align-items:center;cursor:default;user-select:none;overflow: hidden;}`
+        }px;background:#f4f4f4;border:1px solid #ffffff;box-shadow: 0px 0px 14px 0px rgba(0,10,38,0.30);border-radius:8px;position:absolute;z-index:9999;right:0;bottom:0;justify-content:center;align-items:center;cursor:default;user-select:none;overflow: hidden;}`
       );
       sheet.insertRule(
         '.topology-map img{max-width:100%;max-height:100%;pointer-events: none;}'

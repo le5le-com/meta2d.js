@@ -5516,7 +5516,7 @@ export class Canvas {
       textRect.y + this.store.data.y - (pen.textTop || 0) + 'px'; //+ 5
     this.inputParent.style.width = textRect.width + (pen.textLeft || 0) + 'px'; //(textRect.width < pen.width ? 0 : 10)
     this.inputParent.style.height = textRect.height + (pen.textTop || 0) + 'px'; //   (textRect.height < pen.height ? 0 : 10)
-    this.inputParent.style.zIndex = '1000';
+    this.inputParent.style.zIndex = '9999';
     this.inputParent.style.background = background;
     if (pen.rotate % 360) {
       this.inputParent.style.transform = `rotate(${pen.rotate}deg)`;
