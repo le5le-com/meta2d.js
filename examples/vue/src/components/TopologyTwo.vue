@@ -10,7 +10,8 @@ const clickBtn = () => {
     visible.value = true;
     setTimeout(() => {
         if (!topologyTwo) {
-            topologyTwo = new Topology("topologyTwo");
+          topologyTwo = new Topology("topologyTwo");
+          (window as any).topology= (window as any).mainTopology;
         }
         topologyTwo.open(JSON.parse(JSON.stringify(data)));
         topologyTwo.centerView();

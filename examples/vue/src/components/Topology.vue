@@ -22,6 +22,7 @@ onMounted(() => {
     // vue 打开弹窗
     visible.value = true;
   });
+  (window as any).mainTopology = (window as any).topology;
 });
 
 const visible = ref(false);
