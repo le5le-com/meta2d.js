@@ -3164,6 +3164,7 @@ export class Canvas {
             this.store.pens[pen.id] = undefined;
             pen.calculative.canvas = this;
             this.store.animates.delete(pen);
+            this.store.animateMap.delete(pen);
             pen.onDestroy?.(pen);
           }
         });
@@ -4772,6 +4773,17 @@ export class Canvas {
         }
 
         pen.calculative.worldRect = pen.calculative.initRect;
+
+        //其他回到最初始状态
+        const originStatus = deepClone(this.store.animateMap.get(pen));
+        if (originStatus) {
+          originStatus.id = pen.id;
+          this.parent.setValue(originStatus, {
+            doEvent: false,
+            render: true,
+            history: false,
+          });
+        }
       }
       this.updatePenRect(pen, { worldRectIsReady: true });
       if (pen.calculative.text !== pen.text) {
@@ -4957,11 +4969,33 @@ export class Canvas {
           pen.calculative.media?.play();
           pen.onStartVideo?.(pen);
         } else if (pen.type || pen.frames?.length) {
+          //存储动画初始状态
+          if (!pen.type) {
+            this.store.animateMap.set(pen, this.getFrameProps(pen));
+          }
           this.store.animates.add(pen);
         }
       }
     });
     this.animate();
+  }
+
+  getFrameProps(pen) {
+    let initProps = {};
+    pen.frames &&
+      pen.frames.forEach((frame) => {
+        for (let key in frame) {
+          if (
+            !['duration', 'x', 'y', 'width', 'height', 'rotate'].includes(
+              key
+            ) &&
+            !initProps[key]
+          ) {
+            initProps[key] = pen[key];
+          }
+        }
+      });
+    return initProps;
   }
 
   animate() {
@@ -5040,6 +5074,7 @@ export class Canvas {
       }
       dels.forEach((pen) => {
         this.store.animates.delete(pen);
+        this.store.animateMap.delete(pen);
       });
       this.render(false);
       this.animateRendering = false;
@@ -5393,6 +5428,7 @@ export class Canvas {
       delete this.store.pens[pen.id];
     }
     this.store.animates.delete(pen);
+    this.store.animateMap.delete(pen);
     if (pen.children) {
       pen.children.forEach((id) => {
         this.delForce(this.store.pens[id]);

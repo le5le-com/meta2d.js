@@ -717,6 +717,12 @@ export class Topology {
         pen.calculative.frameEnd += d;
       } else {
         this.store.animates.add(pen);
+        if (!pen.type) {
+          this.store.animateMap.set(
+            pen,
+            pen.calculative.canvas.getFrameProps(pen)
+          );
+        }
       }
     });
     this.canvas.canvasImage.init();

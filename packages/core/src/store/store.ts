@@ -70,6 +70,7 @@ export interface TopologyStore {
   histories?: EditAction[];
   historyIndex?: number;
   path2dMap: WeakMap<Pen, Path2D>;
+  animateMap: WeakMap<Pen, Pen>;
   bindDatas: { [key: string]: { id: string; formItem: FormItem }[] };
   active?: Pen[];
   hover?: Pen;
@@ -115,6 +116,7 @@ export const createStore = () => {
     histories: [],
     pens: {},
     path2dMap: new WeakMap(),
+    animateMap: new WeakMap(),
     active: [],
     animates: new Set(),
     options: { ...defaultOptions },
@@ -147,6 +149,7 @@ export const clearStore = (store: TopologyStore) => {
   store.histories = [];
   store.historyIndex = null;
   store.path2dMap = new WeakMap();
+  store.animateMap = new WeakMap();
   store.bindDatas = {};
   store.active = [];
   store.hover = undefined;
