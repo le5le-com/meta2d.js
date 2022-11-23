@@ -2295,7 +2295,7 @@ export class Canvas {
       }
     });
     // active 消息表示拖拽结束
-    this.store.emitter.emit('active', this.store.active);
+    // this.store.emitter.emit('active', this.store.active);
     this.initImageCanvas(this.store.active);
 
     const { xDock, yDock } = this.dock;
@@ -2353,6 +2353,7 @@ export class Canvas {
       pens,
       initPens,
     });
+    this.store.emitter.emit('translatePens', pens);
   }
 
   /**
