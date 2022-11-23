@@ -5103,7 +5103,11 @@ export class Canvas {
       offset: 10,
     };
 
-    if (navigator.clipboard && !this.store.options.disableClipboard) {
+    if (
+      navigator.clipboard &&
+      !this.store.options.disableClipboard &&
+      !navigator.userAgent.includes('Firefox')
+    ) {
       try {
         await navigator.clipboard.writeText(JSON.stringify(clipboard));
       } catch {
@@ -5134,7 +5138,11 @@ export class Canvas {
     let clipboardText: string;
     let clipboard: TopologyClipboard;
 
-    if (navigator.clipboard && !this.store.options.disableClipboard) {
+    if (
+      navigator.clipboard &&
+      !this.store.options.disableClipboard &&
+      !navigator.userAgent.includes('Firefox')
+    ) {
       try {
         clipboardText = await navigator.clipboard?.readText();
       } catch {
