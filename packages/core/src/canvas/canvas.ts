@@ -3620,17 +3620,25 @@ export class Canvas {
     pen.calculative.iconWidth = pen.iconWidth * scale;
     pen.calculative.iconHeight = pen.iconHeight * scale;
     pen.calculative.iconLeft =
-      pen.iconLeft < 1 ? pen.iconLeft : pen.iconLeft * scale;
+      pen.iconLeft < 1 && pen.iconLeft > -1
+        ? pen.iconLeft
+        : pen.iconLeft * scale;
     pen.calculative.iconTop =
-      pen.iconTop < 1 ? pen.iconTop : pen.iconTop * scale;
+      pen.iconTop < 1 && pen.iconTop > -1 ? pen.iconTop : pen.iconTop * scale;
     pen.calculative.textWidth =
-      pen.textWidth < 1 ? pen.textWidth : pen.textWidth * scale;
+      pen.textWidth < 1 && pen.textWidth > -1
+        ? pen.textWidth
+        : pen.textWidth * scale;
     pen.calculative.textHeight =
-      pen.textHeight < 1 ? pen.textHeight : pen.textHeight * scale;
+      pen.textHeight < 1 && pen.textHeight > -1
+        ? pen.textHeight
+        : pen.textHeight * scale;
     pen.calculative.textLeft =
-      pen.textLeft < 1 ? pen.textLeft : pen.textLeft * scale;
+      pen.textLeft < 1 && pen.textLeft > -1
+        ? pen.textLeft
+        : pen.textLeft * scale;
     pen.calculative.textTop =
-      pen.textTop < 1 ? pen.textTop : pen.textTop * scale;
+      pen.textTop < 1 && pen.textTop > -1 ? pen.textTop : pen.textTop * scale;
 
     if (pen.type === PenType.Line && pen.borderWidth) {
       pen.calculative.borderWidth = pen.borderWidth * scale;
