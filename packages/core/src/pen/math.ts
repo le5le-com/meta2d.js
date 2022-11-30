@@ -157,6 +157,9 @@ function calcDockByPoints(
 
     // 得到图形的全部点
     const points = getPointsByPen(pen);
+    if (!points) {
+      return;
+    }
     // 比对 points 中的点，必须找出最近的点，不可提前跳出
     for (const point of points) {
       for (const activePoint of activePoints) {
