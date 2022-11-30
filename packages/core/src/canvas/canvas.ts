@@ -6302,6 +6302,18 @@ export class Canvas {
     const canvas = document.createElement('canvas');
     canvas.width = rect.width;
     canvas.height = rect.height;
+    if (
+      canvas.width > 32767 ||
+      canvas.height > 32767 ||
+      (!navigator.userAgent.includes('Firefox') &&
+        canvas.height * canvas.width > 268435456) ||
+      (navigator.userAgent.includes('Firefox') &&
+        canvas.height * canvas.width > 472907776)
+    ) {
+      throw new Error(
+        'can not to png, because the size exceeds the browser limit'
+      );
+    }
     const ctx = canvas.getContext('2d');
     ctx.textBaseline = 'middle'; // 默认垂直居中
     if (isDrawBkImg) {
