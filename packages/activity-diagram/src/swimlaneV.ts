@@ -2,7 +2,7 @@ import { Pen } from '../../core/src/pen';
 export function swimlaneV(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;
   const { x, y, width, height, ex } = pen.calculative.worldRect;
-
+  const lineTop = (pen.calculative as any).lineTop || 0.08;
   let wr = pen.calculative.borderRadius || 0,
     hr = wr;
   if (wr < 1) {
@@ -25,8 +25,8 @@ export function swimlaneV(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   path.closePath();
 
   //   40 肯定是不合理的，TODO: 该处用高度的部分值
-  path.moveTo(x, y + 0.1 * height);
-  path.lineTo(ex, y + 0.1 * height);
+  path.moveTo(x, y + lineTop * height);
+  path.lineTo(ex, y + lineTop * height);
 
   if (path instanceof Path2D) return path;
 }
