@@ -1,38 +1,10 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { formPen } from './common';
-=======
-import { formPen, cellData } from './common';
->>>>>>> b30d7d8 (add_table_beforeValue)
-import { Point } from '../../core/src/point';
-import { Rect } from '../../core/src/rect';
-<<<<<<< HEAD
-=======
-import { calcExy } from '@topology/core';
->>>>>>> d7f4457 (modify_onShowInput)
-=======
 import { formPen, cellData, Pos } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
-<<<<<<< HEAD
-import { calcExy, calcTextLines } from '@topology/core';
->>>>>>> b050489 (render)
-=======
 import { calcRightBottom, calcTextLines } from '@topology/core';
->>>>>>> 748935f (draw line and pad)
 
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
-=======
-import { calcExy } from "@topology/core";
-
-export function table(ctx: CanvasRenderingContext2D, pen: any) {
-<<<<<<< HEAD
->>>>>>> 99df05d (canvasRect not calc again; use calcExy method)
-  if (!pen.onDestroy) {
-=======
   if (!pen.onAdd) {
->>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onAdd = onAdd;
     pen.onMouseMove = onMouseMove;
     pen.onMouseLeave = onMouseLeave;

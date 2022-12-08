@@ -1,33 +1,18 @@
-<<<<<<< HEAD
 import { Pen } from '../../core/src/pen';
-<<<<<<< HEAD
-=======
 import { ChartData } from '../../core/src/pen';
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { calcExy } from '@topology/core';
->>>>>>> b30d7d8 (add_table_beforeValue)
-=======
-import { calcExy, Rect } from '@topology/core';
-=======
 import { calcRightBottom, Rect } from '@topology/core';
->>>>>>> 748935f (draw line and pad)
 
 export interface Pos {
   row: number;
   col: number;
 }
 
-<<<<<<< HEAD
->>>>>>> b050489 (render)
-=======
 export enum ReplaceMode {
   Add,
   Replace,
   ReplaceAll,
 }
->>>>>>> 7a05cf0 (perfect_table2)
 export interface formPen extends Pen {
   optionPos?: number[];
   direction?: string;
@@ -100,9 +85,6 @@ export interface formPen extends Pen {
   replaceMode?: ReplaceMode;
   timer: NodeJS.Timeout;
 }
-=======
-import { calcExy } from "@topology/core";
->>>>>>> 99df05d (canvasRect not calc again; use calcExy method)
 
 export interface cellData extends ChartData {
   row: number;

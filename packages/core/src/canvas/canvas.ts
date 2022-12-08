@@ -225,7 +225,7 @@ export class Canvas {
   mousePos: Point = { x: 0, y: 0 };
 
   scroll: Scroll;
-  movingAnchor: Point;  // 正在移动中的瞄点
+  movingAnchor: Point; // 正在移动中的瞄点
 
   canvasImage: CanvasImage;
   canvasImageBottom: CanvasImage;
@@ -480,18 +480,17 @@ export class Canvas {
   };
 
   onwheel = (e: WheelEvent) => {
-<<<<<<< HEAD
-=======
     //输入模式不允许滚动
     if (this.inputDiv.contentEditable === 'true') {
       return;
     }
-    const target = e.target as HTMLElement;
-    // TODO: 若遇到其它 dom 的滚动影响了画布缩放，需要设置 noWheel 属性
-    if (target?.dataset.noWheel) {
+    //画线过程中不允许缩放
+    if (this.drawingLine) {
       return;
     }
->>>>>>> b67120f (perfect_input)
+    if (this.pencil) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     if (this.store.options.scroll && !e.ctrlKey && !e.metaKey && this.scroll) {
@@ -941,55 +940,8 @@ export class Canvas {
       obj = Array.isArray(obj) ? obj : [obj];
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
-<<<<<<< HEAD
-      for (const pen of obj) {
-<<<<<<< HEAD
-        // 只修改 树根处的 祖先节点
-        !pen.parentId && Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, obj);
-=======
-        // 组合修改 id
-        Array.isArray(pen.children) && pen.children.length > 0 && this.randomCombineId(pen, obj);
->>>>>>> 27370d1 (onwheel)
-      }
-      for (const pen of obj) {
-        if (!pen.id) {
-          pen.id = s8();
-        }
-        !pen.calculative && (pen.calculative = { canvas: this });
-        this.store.pens[pen.id] = pen;
-      }
-      // 计算区域
-      for (const pen of obj) {
-        // 组合节点才需要提前计算
-        (Array.isArray(pen.children) && pen.children.length > 0) && this.dirtyPenRect(pen);
-      }
-      for (const pen of obj) {
-        if (!pen.parentId) {
-          pen.width *= this.store.data.scale;
-          pen.height *= this.store.data.scale;
-          pen.x = pt.x - pen.width / 2;
-          pen.y = pt.y - pen.height / 2;
-        }
-      }
-      this.addPens(obj);
-<<<<<<< HEAD
-      this.active(obj.filter(pen => !pen.parentId));
-      this.render();
-=======
-      this.active(obj.filter((pen) => !pen.parentId));
->>>>>>> 27370d1 (onwheel)
-=======
       this.dropPens(obj, pt);
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 7750889 (drop 和 click 抽取一个方法出来使用)
-    } catch {}
-=======
-    } catch(e) {}
->>>>>>> a5d70ab (catch e)
-=======
     } catch (e) {}
->>>>>>> 41e008b (video)
   };
 
   async dropPens(pens: Pen[], e: Point) {
@@ -1346,31 +1298,7 @@ export class Canvas {
         !this.store.options.mouseRightActive)
     ) {
       return;
-<<<<<<< HEAD
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    if (this.hoverType === HoverType.NodeAnchor && !this.drawingLineName) {
-=======
-    }   
-    if (this.hoverType === HoverType.NodeAnchor && !this.drawingLineName && !this.movingAnchor) {
->>>>>>> 0689a6b (g moveAnchor)
-=======
-    if (
-      this.hoverType === HoverType.NodeAnchor &&
-      !this.drawingLineName &&
-      !this.movingAnchor
-    ) {
->>>>>>> 5475d7d (modify_锁定时下拉&enter闭合连线)
-=======
-    if (this.hoverType === HoverType.NodeAnchor && !this.drawingLineName && !this.movingAnchor) {
->>>>>>> c03a35c (mouse event optimize)
-      // Start to draw a line.
-      this.drawingLineName = this.store.options.drawingLineName;
-    }
-=======
->>>>>>> 748935f (draw line and pad)
 
     // 正在连线
     if (this.drawingLine) {
@@ -1789,7 +1717,10 @@ export class Canvas {
           to = { ...pt };
           this.drawingLine.calculative.worldAnchors.push(to);
         }
-        if (this.hoverType === HoverType.NodeAnchor || this.hoverType === HoverType.LineAnchor) {
+        if (
+          this.hoverType === HoverType.NodeAnchor ||
+          this.hoverType === HoverType.LineAnchor
+        ) {
           to.x = this.store.hoverAnchor.x;
           to.y = this.store.hoverAnchor.y;
           to.connectTo = this.store.hoverAnchor.penId;
@@ -1814,133 +1745,6 @@ export class Canvas {
 
         this.drawline();
       }
-<<<<<<< HEAD
-    } else if (this.pencil) {
-      if (!this.mouseDown) {
-        return;
-      }
-
-      const pt: Point = { ...e };
-      pt.id = s8();
-      pt.penId = this.pencilLine.id;
-      this.pencilLine.calculative.worldAnchors.push(pt);
-      this.store.path2dMap.set(this.pencilLine, globalStore.path2dDraws[this.pencilLine.name](this.pencilLine));
-      this.dirty = true;
-    } else if (this.mouseDown) {
-      if (e.buttons !== 2 && !this.store.data.locked && !this.hoverType && !this.hotkeyType) {
-        this.dragRect = {
-          x: Math.min(this.mouseDown.x, e.x),
-          y: Math.min(this.mouseDown.y, e.y),
-          ex: Math.max(this.mouseDown.x, e.x),
-          ey: Math.max(this.mouseDown.y, e.y),
-          width: Math.abs(e.x - this.mouseDown.x),
-          height: Math.abs(e.y - this.mouseDown.y),
-        };
-        this.dirty = true;
-      }
-      // 移动节点瞄点
-      if (this.movingAnchor && !this.store.data.locked) {
-        const x = e.x - this.movingAnchor.x;
-        const y = e.y - this.movingAnchor.y;
-        this.translateMovingAnchor(x, y);
-        this.render(false);
-        return;
-      }
-
-      // Rotate
-      if (this.hoverType === HoverType.Rotate) {
-        this.rotatePens({ x: e.x, y: e.y });
-        return;
-      }
-
-      // Resize
-      if (this.hoverType === HoverType.Resize) {
-        this.resizePens(e);
-        return;
-      }
-
-      // Move
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        // TODO: 选中状态 ctrl 点击会失去焦点，不会执行到这里的复制操作
-<<<<<<< HEAD
-<<<<<<< HEAD
-        if (e.ctrlKey && !this.alreadyCopy) {
-=======
-        if(!this.store.data.locked && e.ctrlKey && !this.alreadyCopy) {
->>>>>>> f36b9f0 (节点与画布的 locked 控制)
-=======
-=======
->>>>>>> d5ef910 (设置 fontSize 等属性后，应该重现计算 calculative)
-        if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy) {
->>>>>>> e3ae456 (ctrl shift 同时按下时，可以选中子节点)
-=======
-=======
-      if (
-        this.hoverType === HoverType.Node ||
-        this.hoverType === HoverType.Line
-      ) {
->>>>>>> 5475d7d (modify_锁定时下拉&enter闭合连线)
-=======
-      if (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line) {
->>>>>>> c03a35c (mouse event optimize)
-        const x = e.x - this.mouseDown.x;
-        const y = e.y - this.mouseDown.y;
-        const shake = 20;
-<<<<<<< HEAD
-        if (!this.store.data.locked && e.ctrlKey && !e.shiftKey && !this.alreadyCopy && (Math.abs(x) >= shake || Math.abs(y) >= shake)) {
->>>>>>> 48fadae (ctrl + 拖拽复制的操作限制 20防抖，防误操作)
-=======
-        if (
-          !this.store.data.locked &&
-          e.ctrlKey &&
-          !e.shiftKey &&
-          !this.alreadyCopy &&
-          (Math.abs(x) >= shake || Math.abs(y) >= shake)
-        ) {
->>>>>>> 748e30c (contextmenu log)
-          this.alreadyCopy = true;
-          this.willInactivePen = undefined;
-        }
-        if (this.store.active.length === 1) {
-          const activePen = this.store.active[0];
-          if (this.store.data.locked === LockState.DisableMove || activePen.locked === LockState.DisableMove) {
-            activePen?.onMouseMove?.(activePen, this.mousePos);
-          }
-        }
-        this.movePens(e);
-        return;
-      }
-
-      if (!this.store.active[0]?.locked) {
-        // Move line anchor
-        if (this.hoverType === HoverType.LineAnchor) {
-          this.getAnchorDock(e);
-          this.moveLineAnchor(e);
-          return;
-        }
-
-        // Move line anchor prev
-        if (this.hoverType === HoverType.LineAnchorPrev) {
-          this.moveLineAnchorPrev(e);
-          return;
-        }
-
-        // Move line anchor next
-        if (this.hoverType === HoverType.LineAnchorNext) {
-          this.moveLineAnchorNext(e);
-          return;
-        }
-      }
-
-      if (!this.dragRect) {
-        return;
-      }
-=======
->>>>>>> 748935f (draw line and pad)
     }
 
     globalThis.debug && console.time('hover');
@@ -2518,6 +2322,7 @@ export class Canvas {
       this.store.active.length === 1 && this.store.active[0].type;
     if (
       !this.drawingLineName &&
+      this.hotkeyType !== HotkeyType.AddAnchor &&
       this.activeRect &&
       !activeLine &&
       !this.store.data.locked
@@ -2699,26 +2504,6 @@ export class Canvas {
           hoverType = HoverType.Node;
           this.store.pointAt = pt;
           // 锚点贴边吸附
-<<<<<<< HEAD
-          let {x,y, ex, ey, rotate, center} = this.store.hover.calculative.worldRect;
-          if (rotate) {
-            const pts: Point[] = [
-              { x, y },
-              { x: ex, y: y },
-              { x: ex, y: ey },
-              { x: x, y: ey },
-            ];
-            pts.forEach((item: Point) => {  
-              rotatePoint(item, rotate, center);
-            });
-            let last = pts[pts.length - 1];
-            for (const item of pts) {
-              if (last.y > pt.y !== item.y > pt.y) {
-                const tempx = item.x + (pt.y - item.y) * (last.x - item.x) / (last.y - item.y);
-                if (Math.abs(tempx - this.store.pointAt.x) < 7) {
-                  this.store.pointAt.x = tempx;
-                } 
-=======
           if (!(pt as any).ctrlKey) {
             let { x, y, ex, ey, rotate, center } =
               this.store.hover.calculative.worldRect;
@@ -2754,20 +2539,7 @@ export class Canvas {
                 this.store.pointAt.y = y;
               } else if (this.store.pointAt.y + 10 > ey) {
                 this.store.pointAt.y = ey;
->>>>>>> c2df768 (fix bug: line)
               }
-              last = item;
-            }
-          } else {
-            if (this.store.pointAt.x - 6 < x) {
-              this.store.pointAt.x = x;
-            } else if (this.store.pointAt.x + 5 > ex) {
-              this.store.pointAt.x = ex;
-            }
-            if (this.store.pointAt.y - 6 < y) {
-              this.store.pointAt.y = y;
-            } else if (this.store.pointAt.y + 5 > ey) {
-              this.store.pointAt.y = ey;
             }
           }
           break;
@@ -4377,34 +4149,12 @@ export class Canvas {
     const line = this.store.active[0];
     const from = getFromAnchor(line);
     const to = getToAnchor(line);
-<<<<<<< HEAD
-    // 移动线锚点，折线自动计算关闭
-    if (line.autoPolyline !== false && this.store.activeAnchor !== from && this.store.activeAnchor !== to) {
-      line.autoPolyline = false;
-    }
-
-<<<<<<< HEAD
-    if (this.store.hover && this.store.hoverAnchor && this.store.hoverAnchor.penId !== this.store.activeAnchor.penId) {
-=======
-    if (
-      this.store.hover &&
-      this.store.hoverAnchor &&
-      this.store.hoverAnchor.penId !== this.store.activeAnchor.penId
-    ) {
-      // TODO: 移动 lineAnchor , 不改变 connectTo
-      // this.store.activeAnchor.connectTo = this.store.hover.id;
-      // this.store.activeAnchor.anchorId = this.store.hoverAnchor.id;
->>>>>>> e0ba1cb (perfect_delete)
-      offsetX = this.store.hoverAnchor.x - this.store.activeAnchor.x;
-      offsetY = this.store.hoverAnchor.y - this.store.activeAnchor.y;
-=======
 
     if (line.lineName === 'polyline' && !keyOptions.shiftKey) {
       translatePolylineAnchor(line, this.store.activeAnchor, pt);
     } else {
       let offsetX = pt.x - this.store.activeAnchor.x;
       let offsetY = pt.y - this.store.activeAnchor.y;
->>>>>>> ac0381a (polyline)
       translatePoint(this.store.activeAnchor, offsetX, offsetY);
       if (
         this.store.hover &&
@@ -5133,17 +4883,6 @@ export class Canvas {
   }
 
   async paste() {
-<<<<<<< HEAD
-    // 先读剪切板
-    let clipboardText = await navigator.clipboard?.readText();
-    navigator.clipboard?.writeText('');  // 清空
-    if (!clipboardText) {
-<<<<<<< HEAD
-      navigator.clipboard?.writeText(''); // 清空
-=======
->>>>>>> 73ab2ef (echarts deal)
-      // 再读 localStorage
-=======
     let clipboardText: string;
     let clipboard: TopologyClipboard;
 
@@ -5158,7 +4897,6 @@ export class Canvas {
         clipboardText = localStorage.getItem(this.clipboardName);
       }
     } else {
->>>>>>> c9dc2b4 (perfect_paste)
       clipboardText = localStorage.getItem(this.clipboardName);
     }
     if (clipboardText) {
@@ -5400,7 +5138,6 @@ export class Canvas {
           this.delForce(pen);
         }
       }
-<<<<<<< HEAD
     });
   }
 
@@ -5455,14 +5192,6 @@ export class Canvas {
     pen.onDestroy?.(pen);
   }
 
-=======
-      this.store.animates.delete(pen);
-        this._del(pen.children);
-        pen.onDestroy?.(pen);
-    });
-  }
-  
->>>>>>> fb245f7 (add anchor)
   private delConnectedLines(pen: Pen) {
     if (pen.connectedLines) {
       for (let i = 0; i < pen.connectedLines.length; i++) {
@@ -5562,7 +5291,6 @@ export class Canvas {
     this.inputDiv.innerHTML = finalText;
     // this.inputDiv.style.fontSize = pen.calculative.fontSize + 'px';
     // this.inputDiv.style.color = getTextColor(pen, this.store);
-
     this.inputParent.style.left =
       textRect.x + this.store.data.x - (pen.textLeft || 0) + 'px'; //+ 5
     this.inputParent.style.top =
@@ -5762,7 +5490,6 @@ export class Canvas {
   };
 
   hideInput = () => {
-    console.log('hideInput');
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
       const pen = this.store.pens[this.inputDiv.dataset.penId];
@@ -5810,34 +5537,11 @@ export class Canvas {
     };
     this.inputParent.appendChild(this.dropdown);
     this.externalElements.appendChild(this.inputParent);
-<<<<<<< HEAD
-
     this.inputParent.onmousedown = this.stopPropagation;
-<<<<<<< HEAD
-    this.input.onmousedown = this.stopPropagation;
-    this.input.onmousedown = this.stopPropagation;
-    this.inputRight.onmousedown = this.stopPropagation;
-    this.dropdown.onmousedown = this.stopPropagation;
-=======
-    this.inputParent.dataset.l = '1';
-
-    //TODO input
-    // this.input.dataset.l = '1';
-    // this.input.dataset.noWheel = '1';
-
-    this.inputDiv.dataset.l = '1';
-    this.inputDiv.dataset.noWheel = '1';
-    this.inputDiv.contentEditable = 'true';
-
-    this.inputRight.dataset.l = '1';
-    this.dropdown.dataset.l = '1';
->>>>>>> 076a9f4 (add_divinput)
-=======
     this.inputDiv.onmousedown = this.stopPropagation;
     this.inputDiv.contentEditable = 'false';
     this.inputRight.onmousedown = this.stopPropagation;
     this.dropdown.onmousedown = this.stopPropagation;
->>>>>>> 57526f8 (perfect_merge_newInput)
     this.inputRight.style.transform = 'rotate(135deg)';
 
     let sheet: any;
@@ -6088,27 +5792,10 @@ export class Canvas {
     let willCalcTextRect = false;
     let willPatchFlagsPenRect = false; // 是否需要重新计算世界坐标
     let willCalcIconRect = false; // 是否需要重现计算 icon 区域
-<<<<<<< HEAD
-<<<<<<< HEAD
-    let willRenderImage = false;  // 是否重新渲染图片
-=======
->>>>>>> 6b96b90 (setValue image need render again)
     let willSetPenRect = false; // 是否重新 setPenRect
-<<<<<<< HEAD
-=======
-    let willRenderImage = false; // 是否重新渲染图片
->>>>>>> 88a6a57 (mouse right)
-=======
     let containIsBottom = false; // 是否包含 isBottom 属性修改
-<<<<<<< HEAD
->>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
-=======
     let oldRotate: number = undefined;
-<<<<<<< HEAD
->>>>>>> 9ada8b1 (updateValue rotate use rotatePen; rotatePens cancel)
-=======
     let willRenderImage = false; // 是否需要重新渲染图片
->>>>>>> c91ea01 (pen set image, next set image null, will render image canvas)
     for (const k in data) {
       if (k === 'rotate') {
         oldRotate = pen.calculative.rotate || 0;
@@ -6131,24 +5818,12 @@ export class Canvas {
       if (needCalcIconRectProps.includes(k)) {
         willCalcIconRect = true;
       }
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if ([...needRenderImageProps, ...needSetPenProps, ...needDirtyPenRectProps, ...needCalcIconRectProps].includes(k)) {
-        willRenderImage = true;
-      }
-=======
->>>>>>> 6b96b90 (setValue image need render again)
-=======
       if (k === 'isBottom') {
         containIsBottom = true;
       }
-<<<<<<< HEAD
->>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
-=======
       if (k === 'image') {
         willRenderImage = true;
       }
->>>>>>> c91ea01 (pen set image, next set image null, will render image canvas)
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次

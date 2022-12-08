@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "no-console": [true, "log"],
+    "no-construct": true,
+    "no-duplicate-imports": true,
+    "no-duplicate-variable": true,
+    "no-jasmine-focus": true,
+    "no-var-keyword": true,
+    "prefer-literal": [true, "object"],
+    "require-internal-with-underscore": true,
+    "no-toplevel-property-access": [true, "packages/**/src/"],
+    "semicolon": [true, "always", "ignore-bound-class-methods"],
+    "variable-name": [true, "ban-keywords"],
+    "no-inner-declarations": [true, "function"],
+    "no-debugger": true
+  },
+  "jsRules": {
+    "no-console": [true, "log"],
+    "no-duplicate-imports": true,
+    "no-duplicate-variable": true,
+    "no-jasmine-focus": true,
+    "require-internal-with-underscore": true,
+    "semicolon": [true, "always", "ignore-bound-class-methods"],
+    "variable-name": [true, "ban-keywords"],
+    "no-inner-declarations": [true, "function"]
+  },
+  "linterOptions": {
+    "exclude": ["**/node_modules/**/*", "./dist/**/*", "./bundle/**/*"]
+  }
+}

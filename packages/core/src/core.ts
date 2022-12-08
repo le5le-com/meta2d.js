@@ -2084,49 +2084,12 @@ export class Topology {
       return [];
     }
     const lines: Pen[] = [];
-<<<<<<< HEAD
-<<<<<<< HEAD
-    !node.connectedLines && (node.connectedLines = []);
-
-    node.connectedLines.forEach((line) => {
-<<<<<<< HEAD
-      const linePen: Pen[] = this.find(line.lineId);
-      if (linePen.length === 1) {
-        switch (type) {
-          case 'all':
-            lines.push(linePen[0]);
-            break;
-          case 'in':
-            // 进入该节点的线，即 线锚点的最后一个 connectTo 对应该节点
-<<<<<<< HEAD
-<<<<<<< HEAD
-            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo ===
-              node.id && lines.push(linePen[0]);
-=======
-            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo === node.id && lines.push(linePen[0]);
->>>>>>> 313ddd3 (socket)
-=======
-            linePen[0].anchors[linePen[0].anchors.length - 1].connectTo === node.id && lines.push(linePen[0]);
->>>>>>> 3f031a4 (fix bug: line)
-            break;
-          case 'out':
-            // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
-            linePen[0].anchors[0].connectTo === node.id && lines.push(linePen[0]);
-            break;
-        }
-=======
-      const linePen: Pen = this.store.pens[line.lineId];
-=======
-    node.connectedLines?.forEach(({lineId}) => {
-=======
     node.connectedLines?.forEach(({ lineId }) => {
->>>>>>> 2183fd3 (render优化)
       const line = this.store.pens[lineId];
       if (!line) {
         console.warn(node, 'node contain a error connectedLine');
         return;
       }
->>>>>>> 47d7ed6 (getLines connectedLines lineId not in store.pens)
       switch (type) {
         case 'all':
           lines.push(line);
@@ -2139,7 +2102,6 @@ export class Topology {
           // 从该节点出去的线，即 线锚点的第一个 connectTo 对应该节点
           getFromAnchor(line).connectTo === node.id && lines.push(line);
           break;
->>>>>>> 5ccc423 (setValue use _setValue , setProps contain visible will change son visible)
       }
     });
 
@@ -2409,9 +2371,14 @@ export class Topology {
    * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件
    * @param pens 画笔数组
    * @param showChild 是否作为状态复用（参考 combine showChild）
+   * @param anchor 是否产生默认的锚点
    * @returns 组合图形
    */
-  toComponent(pens = this.store.data.pens, showChild?: number): Pen[] {
+  toComponent(
+    pens = this.store.data.pens,
+    showChild?: number,
+    anchor?: boolean
+  ): Pen[] {
     if (pens.length === 1) {
       const pen: Pen = deepClone(pens[0]);
       pen.type = PenType.Node;
@@ -2428,6 +2395,35 @@ export class Topology {
       children: [],
       showChild,
     };
+
+    if (anchor) {
+      parent.anchors = [
+        {
+          id: '0',
+          penId: parent.id,
+          x: 0.5,
+          y: 0,
+        },
+        {
+          id: '1',
+          penId: parent.id,
+          x: 1,
+          y: 0.5,
+        },
+        {
+          id: '2',
+          penId: parent.id,
+          x: 0.5,
+          y: 1,
+        },
+        {
+          id: '3',
+          penId: parent.id,
+          x: 0,
+          y: 0.5,
+        },
+      ];
+    }
     const p = components.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });

@@ -331,11 +331,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     } else if (textAlign === 'right') {
       x = width - textLineWidth;
     }
-    ctx.fillText(
-      text,
-      drawRectX + x,
-      drawRectY + (i + y) * oneRowHeight
-    );
+    ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
   });
 
   ctx.restore();
@@ -563,7 +559,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   const store = pen.calculative.canvas.store;
 
-  InspectRect(ctx, store, pen);  // 审查 rect
+  inspectRect(ctx, store, pen); // 审查 rect
   let fill: any;
   // 该变量控制在 hover active 状态下的节点是否设置填充颜色
   let setBack = true;
@@ -1667,78 +1663,9 @@ export function setNodeAnimate(pen: Pen, now: number) {
     }
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  const frame = pen.frames[pen.calculative.frameIndex];
-  let process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
-  if (process > 0) {
-    for (const k in frame) {
-      if (k === 'duration') {
-        continue;
-      } else if (k === 'scale') {
-        pen.calculative.worldRect = deepClone(pen.calculative.initRect);
-        scaleRect(pen.calculative.worldRect, pen.lastFrame.scale, pen.calculative.worldRect.center);
-        const newScale = pen.lastFrame.scale + (frame[k] - pen.lastFrame.scale) * process;
-        scaleRect(pen.calculative.worldRect, newScale / pen.lastFrame.scale, pen.calculative.worldRect.center);
-        pen.calculative.dirty = true;
-      } else if (k === 'x') {
-        const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-        pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
-        pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
-        translateRect(pen.calculative.worldRect, frame[k] * process, 0);
-        pen.calculative.dirty = true;
-      } else if (k === 'y') {
-        const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-        pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
-        pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
-        translateRect(pen.calculative.worldRect, 0, frame[k] * process);
-        pen.calculative.dirty = true;
-      } else if (k === 'rotate') {
-        if (pen.lastFrame[k] >= 360) {
-          pen.lastFrame[k] %= 360;
-        }
-        const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
-        pen.calculative.rotate = (pen.calculative.initRect.rotate + lastVal + frame[k] * process) % 360;
-        pen.calculative.dirty = true;
-      } else if (isLinear(frame[k], k, pen)) {
-        if (pen.lastFrame[k] == null) {
-          if (k === 'globalAlpha') {
-            pen.lastFrame[k] = 1;
-          } else {
-            pen.lastFrame[k] = 0;
-          }
-        }
-
-        const current = pen.lastFrame[k] + (frame[k] - pen.lastFrame[k]) * process;
-        pen.calculative[k] = Math.round(current * 100) / 100;
-
-        console.log(123123, pen.lastFrame[k], current);
-      } else {
-        pen.calculative[k] = frame[k];
-      }
-
-      if (k === 'text') {
-        calcTextLines(pen);
-      }
-    }
-  }
-=======
-  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
-=======
   const process =
     ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
->>>>>>> e7091a7 (downloadSvg contain fromarrow toarrow; scale drawLine)
-=======
-  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
->>>>>>> 2b72d55 (fix bug: animate restore)
-=======
-  const process =
-    ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
->>>>>>> 78b7104 (fix bug: progress in animate)
   setNodeAnimateProcess(pen, process);
->>>>>>> 30150a4 (fix bug: #62)
 
   return true;
 }
@@ -2161,42 +2088,23 @@ export function calcInView(pen: Pen, calcChild = false) {
   // 更改 view 后，修改 dom 节点的显示隐藏
   pen.onMove?.(pen);
 }
-<<<<<<< HEAD
-=======
 
 /**
  * 绘制 rect ，上线后可查看 rect 位置
  */
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-function InspectRect(ctx: CanvasRenderingContext2D, store: TopologyStore, pen: Pen) {
-=======
-=======
->>>>>>> 78b7104 (fix bug: progress in animate)
 function inspectRect(
   ctx: CanvasRenderingContext2D,
   store: TopologyStore,
   pen: Pen
 ) {
-<<<<<<< HEAD
->>>>>>> e7091a7 (downloadSvg contain fromarrow toarrow; scale drawLine)
-=======
-function inspectRect(ctx: CanvasRenderingContext2D, store: TopologyStore, pen: Pen) {
->>>>>>> 2b72d55 (fix bug: animate restore)
-=======
->>>>>>> 78b7104 (fix bug: progress in animate)
   if (store.fillWorldTextRect) {
     ctx.save();
     ctx.fillStyle = '#c3deb7';
-    const {x,y,width,height} = pen.calculative.worldTextRect;
-    ctx.fillRect(x,y,width,height);
+    const { x, y, width, height } = pen.calculative.worldTextRect;
+    ctx.fillRect(x, y, width, height);
     ctx.restore();
   }
 }
-<<<<<<< HEAD
->>>>>>> 66ebea6 (text worldTextRect;whiteSpace; ellipsis)
-=======
 
 export function setGlobalAlpha(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
@@ -2207,9 +2115,6 @@ export function setGlobalAlpha(
     ctx.globalAlpha = globalAlpha;
   }
 }
-<<<<<<< HEAD
->>>>>>> f771feb (image globalAlpha)
-=======
 
 /**
  * ctx 绘制图纸，并非 Path2D
@@ -2226,9 +2131,6 @@ function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 }
-<<<<<<< HEAD
->>>>>>> 2620d99 (registerCanvasDraw type)
-=======
 
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
@@ -2249,4 +2151,3 @@ export function setChildValue(pen: Pen, data: IValue) {
     }
   }
 }
->>>>>>> ea17586 (dock and animate)

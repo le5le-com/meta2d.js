@@ -1,26 +1,9 @@
-<<<<<<< HEAD
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import { calcExy, calcTextRect } from '@topology/core';
->>>>>>> b050489 (render)
-=======
 import { calcRightBottom, calcTextRect } from '@topology/core';
->>>>>>> 748935f (draw line and pad)
 
 export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
-=======
-import { calcExy } from "@topology/core";
-
-export function slider(ctx: CanvasRenderingContext2D, pen: any) {
-<<<<<<< HEAD
->>>>>>> 99df05d (canvasRect not calc again; use calcExy method)
-  if (!pen.onDestroy) {
-=======
   if (!pen.onAdd) {
->>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onAdd = initRect;
     pen.onResize = initRect;
     pen.onMove = initRect;
@@ -123,12 +106,8 @@ function initRect(pen: formPen) {
 
 function calcBallRect(pen: formPen) {
   const height = pen.calculative.barRect.height * 3.5;
-<<<<<<< HEAD
   const progress =
     (pen.calculative.barRect.width * (pen.value as number)) / 100;
-=======
-  const progress = (pen.calculative.barRect.width *(pen.value as number)) / 100;
->>>>>>> 8c314c5 (断言pen.value)
   pen.calculative.ballRect = {
     x: progress,
     y: (pen.calculative.worldRect.height - height) / 2,

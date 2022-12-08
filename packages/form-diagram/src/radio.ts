@@ -2,13 +2,8 @@ import { getTextLength, initOptions } from './common';
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 
-<<<<<<< HEAD
 export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
-  if (!pen.onDestroy) {
-=======
-export function radio(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.onAdd) {
->>>>>>> 2620d99 (registerCanvasDraw type)
     pen.onAdd = onAdd;
     if (!pen.optionPos) {
       pen.onAdd(pen);

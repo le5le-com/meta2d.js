@@ -2,21 +2,8 @@ import { getTextLength, initOptions } from './common';
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 
-<<<<<<< HEAD
 export function checkbox(ctx: CanvasRenderingContext2D, pen: formPen) {
-<<<<<<< HEAD
-  if (!pen.onDestroy) {
-=======
-export function checkbox(ctx: CanvasRenderingContext2D, pen: any) {
-  if (!pen.onAdd) {
->>>>>>> 2620d99 (registerCanvasDraw type)
-    pen.onAdd = onAdd;
-    if (!pen.optionPos) {
-      pen.onAdd(pen);
-    }
-=======
   if (!pen.onMouseDown) {
->>>>>>> 7b21798 (perfect_form)
     pen.onMouseDown = onMousedown;
   }
   let x = pen.calculative.worldRect.x;

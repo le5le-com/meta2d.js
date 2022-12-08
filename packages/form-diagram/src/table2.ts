@@ -52,6 +52,9 @@ function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
   }
   const { row, col } = pen.calculative.hoverCell;
   const { x, y } = pen.calculative.canvas.mousePos;
+  if (!pen.data[row]) {
+    return;
+  }
   let text = pen.data[row][col];
   if (typeof text === 'object' || !text) {
     return;
