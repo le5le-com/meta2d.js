@@ -1,6 +1,6 @@
 {
   "name": "meta2d.js",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "The bundle of meta2d.",
   "main": "meta2d.js",
   "scripts": {

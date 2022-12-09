@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/activity-diagram",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "The activity library based on le5le meta2d.",
   "main": "index.js",
   "types": "index.d.ts",
