@@ -66,7 +66,7 @@ export class Meta2d {
   socketFn: (e: string, topic: string) => boolean;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: ViewMap;
-  mapTimer: NodeJS.Timeout;
+  mapTimer: any;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
@@ -1133,7 +1133,7 @@ export class Meta2d {
     this.mqttClient?.end();
   }
 
-  httpTimer: NodeJS.Timeout;
+  httpTimer: any;
   connectHttp() {
     this.closeHttp();
     const { http, httpTimeInterval, httpHeaders } = this.store.data;
