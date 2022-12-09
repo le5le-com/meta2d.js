@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/layout",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "The layout library based on le5le meta2d.",
   "main": "index.js",
   "types": "index.d.ts",

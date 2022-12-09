@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/le5le-charts",
-  "version": "1.1.27",
+  "version": "1.0.0",
   "description": "The le5le-charts library based on le5le meta2d.",
   "main": "index.ts",
   "types": "index.d.ts",
