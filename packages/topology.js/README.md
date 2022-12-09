@@ -1,6 +1,6 @@
-# topology.js
+# meta2d.js
 
-The bundle of topology.
+The bundle of meta2d.
 
 
 # Build

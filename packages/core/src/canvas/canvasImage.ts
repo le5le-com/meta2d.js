@@ -1,5 +1,5 @@
 import { ctxFlip, ctxRotate, drawImage, Pen, setGlobalAlpha } from '../pen';
-import { TopologyStore } from '../store';
+import { Meta2dStore } from '../store';
 import { rgba } from '../utils';
 import { createOffscreen } from './offscreen';
 
@@ -16,7 +16,7 @@ export class CanvasImage {
 
   constructor(
     public parentElement: HTMLElement,
-    public store: TopologyStore,
+    public store: Meta2dStore,
     private isBottom?: boolean
   ) {
     parentElement.appendChild(this.canvas);

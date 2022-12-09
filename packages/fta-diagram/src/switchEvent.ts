@@ -1,4 +1,4 @@
-import { Pen } from '@topology/core';
+import { Pen } from '@meta2d/core';
 
 export function switchEvent(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;

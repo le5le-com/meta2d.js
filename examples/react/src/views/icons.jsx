@@ -9,7 +9,7 @@ import { icons } from '../utils/data';
 
 const Icons = () => {
   const onDragStart = useCallback((e, data) => {
-    e.dataTransfer.setData('Topology', JSON.stringify(data));
+    e.dataTransfer.setData('Meta2d', JSON.stringify(data));
   }, []);
 
   return (
@@ -32,7 +32,7 @@ const Icons = () => {
         }) }
       </div>
       <div className="link" >
-        <a href = "http://topology.le5le.com/workspace/">去官网</a>
+        <a href = "http://2ds.le5le.com/">去官网</a>
       </div>
     </div>
   );

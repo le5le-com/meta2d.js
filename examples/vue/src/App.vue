@@ -3,13 +3,13 @@
 // Check out https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup
 import Header from './components/Header.vue';
 import Icons from './components/Icons.vue';
-import Topology from './components/Topology.vue';
+import Meta2d from './components/Meta2d.vue';
 </script>
 
 <template>
   <Header />
   <Icons />
-  <Topology />
+  <Meta2d />
 </template>
 
 <style>
@@ -126,7 +126,7 @@ i.iconfont {
   padding-left: 101px;
 }
 
-#topology {
+#meta2d {
   height: 100%;
 }
 </style>

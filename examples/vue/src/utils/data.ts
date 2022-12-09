@@ -1,4 +1,4 @@
-import { EventAction } from "@topology/core";
+import { EventAction } from '@meta2d/core';
 
 /*
  * @Description:
@@ -32,7 +32,7 @@ export const icons = [
           action: EventAction.Emit, // 执行动作
           value: 'showDialog',
         },
-      ]
+      ],
     },
   },
   {

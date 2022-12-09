@@ -2,7 +2,7 @@ English | [简体中文](./README.CN.md)
 
 # forms
 
-The forms library based on le5le topology.
+The forms library based on le5le meta2d.
 
 # How to Contribute
 

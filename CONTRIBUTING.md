@@ -1,6 +1,6 @@
-# Contributing to topology
+# Contributing to meta2d
 
-We would love for you to contribute to topology and help make it even better than it is
+We would love for you to contribute to meta2d and help make it even better than it is
 today! As a contributor, here are the guidelines we would like you to follow:
 
 - [Issues and Bugs](#issue)
@@ -35,7 +35,7 @@ Before you submit an issue, please search the issue tracker, maybe an issue for 
 
 We want to fix all the issues as soon as possible, but before fixing a bug we need to reproduce and confirm it. In order to reproduce bugs we will systematically ask you to provide a minimal reproduction scenario using http://plnkr.co. Having a live, reproducible scenario gives us wealth of important information without going back & forth to you with additional questions like:
 
-- version of topology used
+- version of meta2d used
 - 3rd-party libraries and their versions
 - and most importantly - a use-case that fails
 
@@ -45,13 +45,13 @@ We will be insisting on a minimal reproduce scenario in order to save maintainer
 
 Unfortunately we are not able to investigate / fix bugs without a minimal reproduction, so if we don't hear back from you we are going to close an issue that don't have enough info to be reproduced.
 
-You can file new issues by filling out our [new issue form](https://github.com/le5le-com/topology.js/issues/new).
+You can file new issues by filling out our [new issue form](https://github.com/le5le-com/meta2d.js/issues/new).
 
 ### <a name="submit-pr"></a> Submitting a Pull Request (PR)
 
 Before you submit your Pull Request (PR) consider the following guidelines:
 
-- Search [GitHub](https://github.com/le5le-com/topology.js/pulls) for an open or closed PR
+- Search [GitHub](https://github.com/le5le-com/meta2d.js/pulls) for an open or closed PR
   that relates to your submission. You don't want to duplicate effort.
 - Make your changes in a new git branch:
 
@@ -61,7 +61,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 
 - Create your patch, **including appropriate test cases**.
 - Follow our [Coding Rules](#rules).
-- Run the full topology test suite <!-- , as described in the [developer documentation][dev-doc] -->, and ensure that all tests pass.
+- Run the full meta2d test suite <!-- , as described in the [developer documentation][dev-doc] -->, and ensure that all tests pass.
 - Commit your changes using a descriptive commit message that follows our
   [commit message conventions](#commit). Adherence to these conventions
   is necessary because release notes are automatically generated from these messages.
@@ -78,11 +78,11 @@ Before you submit your Pull Request (PR) consider the following guidelines:
   git push origin my-fix-branch
   ```
 
-- In GitHub, send a pull request to `topology:master`.
+- In GitHub, send a pull request to `meta2d:master`.
 - If we suggest changes then:
 
   - Make the required updates.
-  - Re-run the topology test suites to ensure tests are still passing.
+  - Re-run the meta2d test suites to ensure tests are still passing.
   - Rebase your branch and force push to your GitHub repository (this will update your Pull Request):
 
     ```shell
@@ -132,7 +132,7 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 
 We have very precise rules over how our git commit messages can be formatted. This leads to **more
 readable messages** that are easy to follow when looking through the **project history**. But also,
-we use the git commit messages to **generate the topology change log**.
+we use the git commit messages to **generate the meta2d change log**.
 
 ### Commit Message Format
 
@@ -154,7 +154,7 @@ to read on GitHub as well as in various git tools.
 
 Footer should contain a [closing reference to an issue](https://help.github.com/articles/closing-issues-via-commit-messages/) if any.
 
-Samples: (even more [samples](https://github.com/le5le-com/topology.js/commits/master))
+Samples: (even more [samples](https://github.com/le5le-com/meta2d.js/commits/master))
 
 ```
 docs(changelog): update change log to beta.5
@@ -207,5 +207,5 @@ reference GitHub issues that this commit **Closes**.
 A detailed explanation can be found in this [document][commit-message-format].
 
 [commit-message-format]: https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit#
-[github]: https://github.com/le5le-com/topology
+[github]: https://github.com/le5le-com/meta2d.js
 [plunker]: http://plnkr.co/edit

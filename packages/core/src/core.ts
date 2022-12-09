@@ -36,8 +36,8 @@ import {
   register,
   registerAnchors,
   registerCanvasDraw,
-  TopologyData,
-  TopologyStore,
+  Meta2dData,
+  Meta2dStore,
   useStore,
 } from './store';
 import {
@@ -58,8 +58,8 @@ import * as mqtt from 'mqtt/dist/mqtt.min.js';
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
 
-export class Topology {
-  store: TopologyStore;
+export class Meta2d {
+  store: Meta2dStore;
   canvas: Canvas;
   websocket: WebSocket;
   mqttClient: MqttClient;
@@ -75,7 +75,7 @@ export class Topology {
     this.register(commonPens());
     this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
-    globalThis.topology = this;
+    globalThis.meta2d = this;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
   }
@@ -180,7 +180,7 @@ export class Topology {
         window.open(e.value, e.params ?? '_blank');
         return;
       }
-      console.warn('[topology] Link param is not a string');
+      console.warn('[meta2d] Link param is not a string');
     };
     this.events[EventAction.SetProps] = (pen: Pen, e: Event) => {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
@@ -199,55 +199,55 @@ export class Topology {
         this.render();
         return;
       }
-      console.warn('[topology] SetProps value is not an object');
+      console.warn('[meta2d] SetProps value is not an object');
     };
     this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
         this.startAnimate((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] StartAnimate value is not a string');
+      console.warn('[meta2d] StartAnimate value is not a string');
     };
     this.events[EventAction.PauseAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
         this.pauseAnimate((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] PauseAnimate value is not a string');
+      console.warn('[meta2d] PauseAnimate value is not a string');
     };
     this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
         this.stopAnimate((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] StopAnimate event value is not a string');
+      console.warn('[meta2d] StopAnimate event value is not a string');
     };
     this.events[EventAction.StartVideo] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
         this.startVideo((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] StartVideo value is not a string');
+      console.warn('[meta2d] StartVideo value is not a string');
     };
     this.events[EventAction.PauseVideo] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
         this.pauseVideo((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] PauseVideo value is not a string');
+      console.warn('[meta2d] PauseVideo value is not a string');
     };
     this.events[EventAction.StopVideo] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
         this.stopVideo((e.value as string) || [pen]);
         return;
       }
-      console.warn('[topology] StopVideo event value is not a string');
+      console.warn('[meta2d] StopVideo event value is not a string');
     };
     this.events[EventAction.Function] = (pen: Pen, e: Event) => {
       if (e.value && !e.fn) {
         try {
           if (typeof e.value !== 'string') {
-            throw new Error('[topology] Function value must be string');
+            throw new Error('[meta2d] Function value must be string');
           }
           const fnJs = e.value;
           e.fn = new Function('pen', 'params', fnJs) as (
@@ -255,14 +255,14 @@ export class Topology {
             params: string
           ) => void;
         } catch (err) {
-          console.error('[topology]: Error on make a function:', err);
+          console.error('[meta2d]: Error on make a function:', err);
         }
       }
       e.fn?.(pen, e.params);
     };
     this.events[EventAction.GlobalFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
-        console.warn('[topology] GlobalFn value must be a string');
+        console.warn('[meta2d] GlobalFn value must be a string');
         return;
       }
       if (globalThis[e.value]) {
@@ -271,7 +271,7 @@ export class Topology {
     };
     this.events[EventAction.Emit] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
-        console.warn('[topology] Emit value must be a string');
+        console.warn('[meta2d] Emit value must be a string');
         return;
       }
       this.store.emitter.emit(e.value, {
@@ -292,7 +292,7 @@ export class Topology {
         this.doSendDataEvent(value);
         return;
       }
-      console.warn('[topology] SendPropData value is not an object');
+      console.warn('[meta2d] SendPropData value is not an object');
     };
     this.events[EventAction.SendVarData] = (pen: Pen, e: Event) => {
       const value = deepClone(e.value);
@@ -319,7 +319,7 @@ export class Topology {
         this.doSendDataEvent(array);
         return;
       }
-      console.warn('[topology] SendVarData value is not an object');
+      console.warn('[meta2d] SendVarData value is not an object');
     };
   }
 
@@ -415,7 +415,7 @@ export class Topology {
     this.store.patchFlagsTop = true;
   }
 
-  open(data?: TopologyData) {
+  open(data?: Meta2dData) {
     this.clear(false);
     if (data) {
       this.setBackgroundImage(data.bkImage);
@@ -652,7 +652,7 @@ export class Topology {
   // penId - 参考线的笔
   registerMoveDock(
     dock: (
-      store: TopologyStore,
+      store: Meta2dStore,
       rect: Rect,
       pens: Pen[],
       offset: Point
@@ -666,7 +666,7 @@ export class Topology {
    */
   registerResizeDock(
     dock: (
-      store: TopologyStore,
+      store: Meta2dStore,
       rect: Rect,
       pens: Pen[],
       resizeIndex: number
@@ -1006,8 +1006,8 @@ export class Topology {
     return getParent(pen, root);
   }
 
-  data(): TopologyData {
-    const data: TopologyData = deepClone(this.store.data);
+  data(): Meta2dData {
+    const data: Meta2dData = deepClone(this.store.data);
     const { pens, paths } = this.store.data;
     data.version = pkg.version;
     // TODO: 未在 delete 时清除，避免撤销等操作。
@@ -1580,7 +1580,7 @@ export class Topology {
    */
   downloadPng(name?: string, padding?: Padding) {
     const a = document.createElement('a');
-    a.setAttribute('download', name || 'le5le.topology.png');
+    a.setAttribute('download', name || 'le5le.meta2d.png');
     a.setAttribute('href', this.toPng(padding, undefined, true));
     const evt = document.createEvent('MouseEvents');
     evt.initEvent('click', true, true);

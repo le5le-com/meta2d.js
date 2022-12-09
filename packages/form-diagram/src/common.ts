@@ -1,7 +1,7 @@
 import { Pen } from '../../core/src/pen';
 import { ChartData } from '../../core/src/pen';
 
-import { calcRightBottom, Rect } from '@topology/core';
+import { calcRightBottom, Rect } from '@meta2d/core';
 
 export interface Pos {
   row: number;

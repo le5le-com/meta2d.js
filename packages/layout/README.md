@@ -1,6 +1,6 @@
-# topology-layout
+# meta2d-layout
 
-Topology-layout is a lib for layout nodes.
+Meta2d-layout is a lib for layout nodes.
 
 # How to Contribute
 

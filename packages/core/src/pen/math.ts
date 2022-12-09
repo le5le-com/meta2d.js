@@ -7,12 +7,12 @@ import {
   rectInFourAngRect,
   rectToPoints,
 } from '../rect';
-import { TopologyStore } from '../store';
+import { Meta2dStore } from '../store';
 import { deepClone } from '../utils';
 import { Pen } from './model';
 
 export function calcAnchorDock(
-  store: TopologyStore,
+  store: Meta2dStore,
   e: Point,
   curAnchor?: Point
 ) {
@@ -73,7 +73,7 @@ export function calcAnchorDock(
 }
 
 export function calcMoveDock(
-  store: TopologyStore,
+  store: Meta2dStore,
   rect: Rect,
   pens: Pen[],
   offset: Point
@@ -114,7 +114,7 @@ export function getPointsByPen(pen: Pen): Point[] {
 }
 
 export function calcResizeDock(
-  store: TopologyStore,
+  store: Meta2dStore,
   rect: Rect,
   pens: Pen[],
   resizeIndex: number
@@ -130,7 +130,7 @@ export function calcResizeDock(
  * @param calcActive 是否与 活动层画笔 的点进行计算
  */
 function calcDockByPoints(
-  store: TopologyStore,
+  store: Meta2dStore,
   activePoints: Point[],
   rect: Rect,
   calcActive = false
@@ -220,7 +220,7 @@ function calcDockByPoints(
  * @param line 连线
  * @returns
  */
-function isConnectLine(store: TopologyStore, active: Pen, line: Pen) {
+function isConnectLine(store: Meta2dStore, active: Pen, line: Pen) {
   if (!line.type) {
     return false;
   }

@@ -2,7 +2,7 @@ English | [简体中文](./README.CN.md)
 
 # class-diagram
 
-The class library based on le5le topology.
+The class library based on le5le meta2d.
 
 # How to Contribute
 

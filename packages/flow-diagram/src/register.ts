@@ -1,4 +1,4 @@
-import { Pen } from '@topology/core';
+import { Pen } from '@meta2d/core';
 import { flowComment, flowCommentAnchors } from './comment';
 import { flowData } from './data';
 import { flowDb } from './db';

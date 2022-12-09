@@ -2,7 +2,7 @@
 
 # svg
 
-将 svg 字符串转换成 le5le topology 可识别的 Pen[]
+将 svg 字符串转换成 le5le meta2d 可识别的 Pen[]
 
 # 使用
 

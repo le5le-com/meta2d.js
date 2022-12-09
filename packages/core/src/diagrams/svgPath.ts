@@ -1,10 +1,16 @@
-import { TopologyStore } from './../store/store';
+import { Meta2dStore } from './../store/store';
 import { Pen } from '../pen';
 import { calcCenter } from '../rect';
-import { getRect, parseSvgPath, pathToString, scalePath, translatePath } from './svg/parse';
+import {
+  getRect,
+  parseSvgPath,
+  pathToString,
+  scalePath,
+  translatePath,
+} from './svg/parse';
 
 export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
-  const store: TopologyStore = pen.calculative.canvas.store;
+  const store: Meta2dStore = pen.calculative.canvas.store;
   const pathText = store.data.paths[pen.pathId];
   if (!pathText) {
     return new Path2D();
@@ -27,7 +33,11 @@ export function svgPath(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
 
   const rect = getRect(path);
   calcCenter(rect);
-  translatePath(path, pen.calculative.worldRect.x - rect.x, pen.calculative.worldRect.y - rect.y);
+  translatePath(
+    path,
+    pen.calculative.worldRect.x - rect.x,
+    pen.calculative.worldRect.y - rect.y
+  );
 
   const pathStr = pathToString(path);
   if (ctx) {

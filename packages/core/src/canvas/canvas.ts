@@ -81,8 +81,8 @@ import {
   EditAction,
   EditType,
   globalStore,
-  TopologyClipboard,
-  TopologyStore,
+  Meta2dClipboard,
+  Meta2dStore,
 } from '../store';
 import {
   deepClone,
@@ -122,7 +122,7 @@ import { Scroll } from '../scroll';
 import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
 import { lockedError } from '../utils/error';
-import { Topology } from '../core';
+import { Meta2d } from '../core';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -203,13 +203,13 @@ export class Canvas {
   beforeRemoveAnchor: (pen: Pen, anchor: Point) => Promise<boolean>;
 
   customResizeDock: (
-    store: TopologyStore,
+    store: Meta2dStore,
     rect: Rect,
     pens: Pen[],
     resizeIndex: number
   ) => { xDock: Point; yDock: Point };
   customMoveDock: (
-    store: TopologyStore,
+    store: Meta2dStore,
     rect: Rect,
     pens: Pen[],
     offset: Point
@@ -236,9 +236,9 @@ export class Canvas {
   };
 
   constructor(
-    public parent: Topology,
+    public parent: Meta2d,
     public parentElement: HTMLElement,
-    public store: TopologyStore
+    public store: Meta2dStore
   ) {
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
 
@@ -925,7 +925,7 @@ export class Canvas {
       event.preventDefault();
       event.stopPropagation();
       const json =
-        event.dataTransfer.getData('Topology') ||
+        event.dataTransfer.getData('Meta2d') ||
         event.dataTransfer.getData('Text');
       let obj = null;
       if (!json) {
@@ -4842,7 +4842,7 @@ export class Canvas {
   }
 
   get clipboardName(): string {
-    return 'topology-clipboard';
+    return 'meta2d-clipboard';
   }
 
   async copy(pens?: Pen[]) {
@@ -4853,7 +4853,7 @@ export class Canvas {
     localStorage.removeItem(this.clipboardName);
     sessionStorage.setItem('page', page);
     const clipboard = {
-      topology: true,
+      meta2d: true,
       pens: this.getAllByPens(deepClone(pens || this.store.active, true)),
       origin: deepClone(origin),
       scale,
@@ -4884,7 +4884,7 @@ export class Canvas {
 
   async paste() {
     let clipboardText: string;
-    let clipboard: TopologyClipboard;
+    let clipboard: Meta2dClipboard;
 
     if (
       navigator.clipboard &&
@@ -4906,7 +4906,7 @@ export class Canvas {
         console.warn('剪切板数据不是json', e.message);
         return;
       }
-      if (!clipboard || !clipboard.topology) {
+      if (!clipboard || !clipboard.meta2d) {
         return;
       }
     } else {
@@ -5480,13 +5480,13 @@ export class Canvas {
     sheet.deleteRule(0);
     sheet.deleteRule(0);
     sheet.insertRule(
-      `.topology-input
+      `.meta2d-input
       .input-div{
         resize:none;border:none;outline:none;background:transparent;position:absolute;flex-grow:1;height:100%;width: 100%;position:absolute;left:0;top:0;display:flex;flex-direction: column;cursor: text;${style}}`
     );
     sheet.insertRule(`.input-div div{${div_style}}`);
 
-    // sheet.insertRule(`.topology-input .input-div-font{${style_font}}`);
+    // sheet.insertRule(`.meta2d-input .input-div-font{${style_font}}`);
   };
 
   hideInput = () => {
@@ -5527,7 +5527,7 @@ export class Canvas {
   };
 
   private createInput() {
-    this.inputParent.classList.add('topology-input');
+    this.inputParent.classList.add('meta2d-input');
     this.inputRight.classList.add('right');
     this.inputDiv.classList.add('input-div');
     this.inputParent.appendChild(this.inputDiv);
@@ -5556,24 +5556,24 @@ export class Canvas {
       document.head.appendChild(style);
       sheet = style.sheet;
       sheet.insertRule(
-        '.topology-input{display:none;position:absolute;outline:none;align-items: center;}'
+        '.meta2d-input{display:none;position:absolute;outline:none;align-items: center;}'
       );
       sheet.insertRule(
-        '.topology-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
+        '.meta2d-input textarea{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;left:0;top:0}'
       );
       sheet.insertRule(
-        '.topology-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);position:absolute;right:1px;}'
+        '.meta2d-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);position:absolute;right:1px;}'
       );
       sheet.insertRule(
-        '.topology-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;max-height: 105px;overflow-y: auto;}'
+        '.meta2d-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;max-height: 105px;overflow-y: auto;}'
       );
       sheet.insertRule(
-        '.topology-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
+        '.meta2d-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
       );
-      sheet.insertRule('.topology-input ul li:hover{background: #eeeeee;}');
+      sheet.insertRule('.meta2d-input ul li:hover{background: #eeeeee;}');
       sheet.insertRule(`.input-div::-webkit-scrollbar {display:none}`);
       sheet.insertRule(
-        '.topology-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
+        '.meta2d-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
       );
       sheet.insertRule(`.input-div div{}`);
     }

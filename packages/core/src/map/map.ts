@@ -20,7 +20,7 @@ export class ViewMap {
     this.box.appendChild(this.view);
     this.parent.externalElements.appendChild(this.box);
 
-    this.box.className = 'topology-map';
+    this.box.className = 'meta2d-map';
     this.box.onmousedown = this.onMouseDown;
     this.box.onmousemove = this.onMouseMove;
     this.box.onmouseup = this.onMouseUp;
@@ -43,17 +43,17 @@ export class ViewMap {
       document.head.appendChild(style);
       sheet = style.sheet;
       sheet.insertRule(
-        `.topology-map{display:flex;width:${
+        `.meta2d-map{display:flex;width:${
           this.boxWidth + 2 * this.padding
         }px;height:${this.boxHeight + 2 * this.padding}px;padding:${
           this.padding
         }px;background:#f4f4f4;border:1px solid #ffffff;box-shadow: 0px 0px 14px 0px rgba(0,10,38,0.30);border-radius:8px;position:absolute;z-index:9999;right:0;bottom:0;justify-content:center;align-items:center;cursor:default;user-select:none;overflow: hidden;}`
       );
       sheet.insertRule(
-        '.topology-map img{max-width:100%;max-height:100%;pointer-events: none;}'
+        '.meta2d-map img{max-width:100%;max-height:100%;pointer-events: none;}'
       );
       sheet.insertRule(
-        '.topology-map div{pointer-events: none;border:1px solid #1890ff;position:absolute}'
+        '.meta2d-map div{pointer-events: none;border:1px solid #1890ff;position:absolute}'
       );
     }
   }

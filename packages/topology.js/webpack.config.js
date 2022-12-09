@@ -6,7 +6,7 @@ module.exports = {
   entry: './src',
   output: {
     path: path.resolve(__dirname, '.'),
-    filename: '../../dist/topology/topology.js',
+    filename: '../../dist/meta2d/meta2d.js',
     library: 'Le5le',
     libraryTarget: 'umd',
   },

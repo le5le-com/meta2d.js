@@ -2,7 +2,7 @@ English | [简体中文](./README.CN.md)
 
 # chart-diagram
 
-The charting library based on le5le topology and echarts/highcharts.
+The charting library based on le5le meta2d and echarts/highcharts.
 
 # How to Contribute
 

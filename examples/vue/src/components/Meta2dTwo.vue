@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { Pen, Topology } from "@topology/core";
+import { Pen, Meta2d } from "@meta2d/core";
 import data from "../assets/data/子画布.json";
-let topologyTwo: Topology;
+let meta2dTwo: Meta2d;
 
 const visible = ref(false);
 const currentPen = ref<Pen>({});
 const clickBtn = () => {
     visible.value = true;
     setTimeout(() => {
-        if (!topologyTwo) {
-          topologyTwo = new Topology("topologyTwo");
-          (window as any).topology= (window as any).mainTopology;
+        if (!meta2dTwo) {
+          meta2dTwo = new Meta2d("meta2dTwo");
+          (window as any).meta2d= (window as any).mainMeta2d;
         }
-        topologyTwo.open(JSON.parse(JSON.stringify(data)));
-        topologyTwo.centerView();
+        meta2dTwo.open(JSON.parse(JSON.stringify(data)));
+        meta2dTwo.centerView();
     },1000);
 
 }
@@ -26,8 +26,8 @@ const clickBtn = () => {
   </div>
 
   <a-modal v-model:visible="visible"  width="698px" :title="currentPen.text">
-    <div class="topology-main">
-      <div id="topologyTwo"></div>
+    <div class="meta2d-main">
+      <div id="meta2dTwo"></div>
     </div>
   </a-modal>
 </template>
@@ -37,12 +37,12 @@ const clickBtn = () => {
     width: 100%;
     text-align: center;
 }
-.topology-main{
+.meta2d-main{
     width: 650px;
     height: 500px;
    
 }
-#topologyTwo{
+#meta2dTwo{
 height: 100%;
 width: 100%;
 }

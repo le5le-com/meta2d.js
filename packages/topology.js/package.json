@@ -1,14 +1,14 @@
 {
-  "name": "topology.js",
+  "name": "meta2d.js",
   "version": "1.1.0",
-  "description": "The bundle of topology.",
-  "main": "topology.js",
+  "description": "The bundle of meta2d.",
+  "main": "meta2d.js",
   "scripts": {
-    "copy": "copyfiles package.json ../../dist/topology/ ",
+    "copy": "copyfiles package.json ../../dist/meta2d/ ",
     "build": "webpack && npm run copy "
   },
   "keywords": [
-    "topology"
+    "meta2d"
   ],
   "author": "alsmile123@qq.com",
   "license": "MIT",

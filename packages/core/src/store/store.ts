@@ -6,7 +6,7 @@ import { defaultOptions, Options } from '../options';
 import { Point } from '../point';
 import { globalStore } from './global';
 
-export interface TopologyData {
+export interface Meta2dData {
   pens: Pen[];
   x: number;
   y: number;
@@ -62,9 +62,9 @@ export interface EditAction {
   scale?: number;
 }
 
-export interface TopologyStore {
+export interface Meta2dStore {
   id: string;
-  data: TopologyData;
+  data: Meta2dData;
   pens: { [key: string]: Pen };
 
   histories?: EditAction[];
@@ -83,7 +83,7 @@ export interface TopologyStore {
   options: Options;
   emitter: Emitter;
   dpiRatio?: number;
-  clipboard?: TopologyClipboard;
+  clipboard?: Meta2dClipboard;
   patchFlagsBackground?: boolean; // 是否需要重绘背景，包含网格
   patchFlagsTop?: boolean; // 是否需要重绘标尺
   bkImg: HTMLImageElement;
@@ -91,8 +91,8 @@ export interface TopologyStore {
   fillWorldTextRect?: boolean; // 填充文本区域
 }
 
-export interface TopologyClipboard {
-  topology?: boolean;
+export interface Meta2dClipboard {
+  meta2d?: boolean;
   pens: Pen[];
   origin: Point;
   scale: number;
@@ -122,11 +122,11 @@ export const createStore = () => {
     options: { ...defaultOptions },
     emitter: mitt(),
     bindDatas: {},
-  } as TopologyStore;
+  } as Meta2dStore;
 };
 
 // Return a data store, if not exists will create a store.
-export const useStore = (id = 'default'): TopologyStore => {
+export const useStore = (id = 'default'): Meta2dStore => {
   if (!globalStore[id]) {
     globalStore[id] = createStore();
     globalStore[id].id = id;
@@ -135,7 +135,7 @@ export const useStore = (id = 'default'): TopologyStore => {
   return globalStore[id];
 };
 
-export const clearStore = (store: TopologyStore) => {
+export const clearStore = (store: Meta2dStore) => {
   store.data = {
     x: 0,
     y: 0,

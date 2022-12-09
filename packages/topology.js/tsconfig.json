@@ -9,14 +9,14 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports":true,
     "paths": {
-      "@topology/core": ["../packages/core"],
-      "@topology/core/*": ["../packages/core/src/*"],
-      "@topology/flow-diagram": ["../packages/flow-diagram"],
-      "@topology/activity-diagram": ["../packages/activity-diagram"],
-      "@topology/class-diagram": ["../packages/class-diagram"],
-      "@topology/sequence-diagram": ["../packages/sequence-diagram"],
-      "@topology/chart-diagram": ["../packages/chart-diagram"],
-      "@topology/layout": ["../packages/layout"]
+      "@meta2d/core": ["../packages/core"],
+      "@meta2d/core/*": ["../packages/core/src/*"],
+      "@meta2d/flow-diagram": ["../packages/flow-diagram"],
+      "@meta2d/activity-diagram": ["../packages/activity-diagram"],
+      "@meta2d/class-diagram": ["../packages/class-diagram"],
+      "@meta2d/sequence-diagram": ["../packages/sequence-diagram"],
+      "@meta2d/chart-diagram": ["../packages/chart-diagram"],
+      "@meta2d/layout": ["../packages/layout"]
     }
   },
   "include": ["src/**/*.ts"],

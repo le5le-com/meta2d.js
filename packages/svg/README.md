@@ -2,7 +2,7 @@ English | [简体中文](./README.CN.md)
 
 # svg
 
-parse svg string to le5le topology pens.
+parse svg string to le5le meta2d pens.
 
 # How to Contribute
 

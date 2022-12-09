@@ -2,7 +2,7 @@
 
 # activity-diagram
 
-activity-diagram 是基于 le5le topology 开发的图形库。
+activity-diagram 是基于 le5le meta2d 开发的图形库。
 
 # 使用
 

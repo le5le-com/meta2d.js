@@ -1,5 +1,5 @@
-import { getRectOfPoints, Pen, Rect, s8 } from '@topology/core';
-import { getRect, parseSvgPath } from '@topology/core/src/diagrams/svg/parse';
+import { getRectOfPoints, Pen, Rect, s8 } from '@meta2d/core';
+import { getRect, parseSvgPath } from '@meta2d/core/src/diagrams/svg/parse';
 import { XMLParser } from 'fast-xml-parser/src/fxp';
 
 const selfName = ':@';
@@ -409,7 +409,7 @@ function transformNormalShape(
         y = Number(offsetY) || 0;
       }
       if (type === 'rotate') {
-        // TODO: transform 中的 rotate 圆心与 topology.js 圆心不一致，处理过程中默认把 translate 干掉
+        // TODO: transform 中的 rotate 圆心与 meta2d.js 圆心不一致，处理过程中默认把 translate 干掉
         // 旋转
         rotate = parseFloat(value);
         x = 0;

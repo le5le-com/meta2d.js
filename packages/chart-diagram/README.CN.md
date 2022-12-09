@@ -2,7 +2,7 @@
 
 # chart-diagram
 
-chart-diagram 在 le5le topology 中使用的第三方 chart 的工具
+chart-diagram 在 le5le meta2d 中使用的第三方 chart 的工具
 
 # 使用
 
@@ -44,7 +44,7 @@ chart-diagram 在 le5le topology 中使用的第三方 chart 的工具
 ```
 // register.ts
 
-import { registerNode, loadJS} from '@topology/core';
+import { registerNode, loadJS} from '@meta2d/core';
 import {
   echarts
 } from './echarts';

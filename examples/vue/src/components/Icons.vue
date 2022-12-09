@@ -8,18 +8,18 @@
 import { nextTick, ref } from "vue";
 import { icons } from "../utils/data";
 import axios from "axios";
-import { parseSvg } from "@topology/svg";
-import TopologyTwoVue from "./TopologyTwo.vue";
+import { parseSvg } from "@meta2d/svg";
+import Meta2dTwoVue from "./Meta2dTwo.vue";
 
 const onDragStart = (e: any, data) => {
-  e.dataTransfer.setData("Topology", JSON.stringify(data));
+  e.dataTransfer.setData("Meta2d", JSON.stringify(data));
 };
 
 nextTick(() => {
   // 此处只注册，未将数据放置到工具栏
   // data.ts 中配置的最后一项即为该图形库中的内容
   (window as any).registerToolsNew();
-  (window as any).topologyTools = undefined;
+  (window as any).meta2dTools = undefined;
 });
 
 const rIcons = ref(icons);
@@ -54,9 +54,9 @@ axios.get("/T型开关A -C.svg").then((res) => {
       </div>
     </div>
     <div class="link">
-      <a href="http://topology.le5le.com/workspace/">去官网</a>
+      <a href="http://2ds.le5le.com/">去官网</a>
     </div>
-    <TopologyTwoVue /> 
+    <Meta2dTwoVue /> 
   </div>
 </template>
 

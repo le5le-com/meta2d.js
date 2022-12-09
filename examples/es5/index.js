@@ -4,7 +4,7 @@
  * @Date: 2021-09-30 14:12:46
  * @LastEditTime: 2021-10-14 13:42:00
  */
-const topology = new Topology('topology');
+const meta2d = new Meta2d('meta2d');
 
 const iconListDOM = document.querySelector('.icon-list');
 getIconList().forEach((icon) => {
@@ -15,7 +15,7 @@ getIconList().forEach((icon) => {
   i.draggable = true;
   i.title = title;
   i.ondragstart = (e) => {
-    e.dataTransfer.setData('Topology', JSON.stringify(data));
+    e.dataTransfer.setData('Meta2d', JSON.stringify(data));
   };
   div.appendChild(i);
   iconListDOM.appendChild(div);
@@ -23,7 +23,7 @@ getIconList().forEach((icon) => {
 
 const createBtn = document.querySelector('#create');
 createBtn.onclick = () => {
-  topology.open();
+  meta2d.open();
 };
 
 const openInput = document.querySelector('#open-input');
@@ -36,7 +36,7 @@ openInput.onchange = (e) => {
   reader.onload = (event) => {
     try {
       const json = JSON.parse(event.target.result);
-      topology.open(json);
+      meta2d.open(json);
     } catch(e) {
       console.log('读取文件失败，请检查数据格式');
     }
@@ -47,7 +47,7 @@ openInput.onchange = (e) => {
 const saveBtn = document.querySelector('#save');
 saveBtn.onclick = () => {
   const filename = '测试数据.json';
-  const data = topology.data();
+  const data = meta2d.data();
   const json = JSON.stringify(data, undefined, 4);
   const blob = new Blob([json], { type: 'text/json' });
   const a = document.createElement('a');
@@ -60,9 +60,9 @@ saveBtn.onclick = () => {
 const penBtn = document.querySelector('#pen');
 penBtn.onclick = () => {
   pencilBtn.className = '';
-  topology.finishPencil();
+  meta2d.finishPencil();
   penBtn.className = 'active';
-  topology.drawLine('curve');
+  meta2d.drawLine('curve');
 };
 
 const pencilBtn = document.querySelector('#pencil');
@@ -72,10 +72,10 @@ pencilBtn.onclick = () => {
   }
   if (pencilBtn.className === 'active') {
     pencilBtn.className = '';
-    topology.finishPencil();
+    meta2d.finishPencil();
   } else {
     pencilBtn.className = 'active';
-    topology.drawingPencil();
+    meta2d.drawingPencil();
   }
 };
 
@@ -83,10 +83,10 @@ const magnifierBtn = document.querySelector('#magnifier');
 magnifierBtn.onclick = () => {
   if (magnifierBtn.className === 'active') {
     magnifierBtn.className = '';
-    topology.hideMagnifier();
+    meta2d.hideMagnifier();
   } else {
     magnifierBtn.className = 'active';
-    topology.showMagnifier();
+    meta2d.showMagnifier();
   }
 };
 
@@ -94,10 +94,10 @@ const minimapBtn = document.querySelector('#minimap');
 minimapBtn.onclick = () => {
   if (minimapBtn.className === 'active') {
     minimapBtn.className = '';
-    topology.hideMap();
+    meta2d.hideMap();
   } else {
     minimapBtn.className = 'active';
-    topology.showMap();
+    meta2d.showMap();
   }
 };
 
@@ -110,7 +110,7 @@ window.addEventListener('keydown', (e) => {
   switch (e.key) {
     case 'b':
     case 'B':
-      if (topology.canvas.pencil) {
+      if (meta2d.canvas.pencil) {
         pencilBtn.className = 'active';
       } else {
         pencilBtn.className = '';
@@ -121,7 +121,7 @@ window.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey) {
         return;
       } else {
-        if (topology.canvas.drawingLineName) {
+        if (meta2d.canvas.drawingLineName) {
           penBtn.className = 'active';
         } else {
           penBtn.className = '';
@@ -130,7 +130,7 @@ window.addEventListener('keydown', (e) => {
       break;
     case 'm':
     case 'M':
-      if (topology.canvas.magnifier) {
+      if (meta2d.canvas.magnifier) {
         minimapBtn.className = 'active';
       } else {
         minimapBtn.className = '';
