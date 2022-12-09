@@ -83,7 +83,7 @@ export interface formPen extends Pen {
   data: any;
   isFirstTime: boolean;
   replaceMode?: ReplaceMode;
-  timer: NodeJS.Timeout;
+  timer: any;
 }
 
 export interface cellData extends ChartData {

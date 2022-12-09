@@ -3368,7 +3368,7 @@ export class Canvas {
       pen.calculative.strokeImage = pen.strokeImage;
     }
   }
-  private imageTimer: NodeJS.Timeout;
+  private imageTimer: any;
   // 避免初始化图片加载重复调用 render，此处防抖
   imageLoaded() {
     this.imageTimer && clearTimeout(this.imageTimer);
