@@ -113,22 +113,22 @@
     core-js "^3.15.1"
     nanopop "^2.1.0"
 
-"@topology/chart-diagram@^1.0.2":
+"@meta2d/chart-diagram@^1.0.2":
   version "1.0.2"
-  resolved "https://registry.npmmirror.com/@topology/chart-diagram/-/chart-diagram-1.0.2.tgz#974c127062aa3c01ff24be752f6161cce1561739"
+  resolved "https://registry.npmmirror.com/@meta2d/chart-diagram/-/chart-diagram-1.0.2.tgz#974c127062aa3c01ff24be752f6161cce1561739"
   integrity sha512-zwuz7TJGiTlDrKXdIuMfYLxTpOLl9CquRlX8INTp2nK4w970GnbcET0ununS1XZaZYdCRZks4K7ZDX0SqC2cLg==
 
-"@topology/core@1.1.32":
+"@meta2d/core@1.1.32":
   version "1.1.32"
-  resolved "https://registry.npmmirror.com/@topology/core/-/core-1.1.32.tgz#e0f9b315ff310de47cadc9005ddc64962c1f1e68"
+  resolved "https://registry.npmmirror.com/@meta2d/core/-/core-1.1.32.tgz#e0f9b315ff310de47cadc9005ddc64962c1f1e68"
   integrity sha512-ZpRzW0ERxBMFcdujT7VpZVY8t7B+OEMXVhuY+vQ8a++LTG/SIWT3ib8EhYw4cJM4BaIUtOOyDPYHpFk4SOl0KA==
   dependencies:
     mitt "^2.1.0"
     mqtt "^4.2.6"
 
-"@topology/svg@^1.0.2":
+"@meta2d/svg@^1.0.2":
   version "1.0.2"
-  resolved "https://registry.npmmirror.com/@topology/svg/-/svg-1.0.2.tgz#7735c0170ac1ff0925e4ae6044db244c97cf2e3b"
+  resolved "https://registry.npmmirror.com/@meta2d/svg/-/svg-1.0.2.tgz#7735c0170ac1ff0925e4ae6044db244c97cf2e3b"
   integrity sha512-ckAve7y3Lmw1wuOHorz2EhQfmb32BW69IrMEF+xqXYSXajJnLJu56VnJ0DklHpkfcH6UXmq6VeK3rUroXtfnxQ==
   dependencies:
     fast-xml-parser "^4.0.1"

@@ -1,4 +1,4 @@
-import { Point } from '@topology/core';
+import { Point } from '@meta2d/core';
 import { Pen } from '../../core/src/pen';
 export function flowParallel(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;

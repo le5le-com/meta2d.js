@@ -10,7 +10,7 @@ div.innerHTML = dialog;
 document.body.appendChild(div);
 
 // 监听消息
-topology.on('showDialog', function (e) {
+meta2d.on('showDialog', function (e) {
   // 原生 js 展示弹窗
   const div = document.getElementsByClassName('test-dialog')[0];
   div.style.display = 'block';

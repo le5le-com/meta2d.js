@@ -85,7 +85,7 @@ function changeId(pen: Pen, oldId: string, newId: string) {
  * @param elem 图片 dom
  */
 function setImagePosition(pen: Pen, elem: HTMLImageElement) {
-  // topology canvas 绘制图片 drawImage 保持比例，是短边填充
+  // meta2d canvas 绘制图片 drawImage 保持比例，是短边填充
   elem.style.objectFit = pen.imageRatio ? 'contain' : 'fill';
   setElemPosition(pen, elem);
 }

@@ -1,4 +1,4 @@
-import { calcWorldAnchors, Pen, Point } from '@topology/core';
+import { calcWorldAnchors, Pen, Point } from '@meta2d/core';
 import { rectangle } from '.';
 
 export function mindNode(pen: Pen, ctx?: CanvasRenderingContext2D) {
@@ -21,7 +21,7 @@ function value(pen: Pen) {
   resize(pen);
   calcWorldAnchors(pen);
 }
- 
+
 export function mindNodeAnchors(pen: Pen) {
   // TODO: 组合状态下的 width height 成了固定的百分比
   const anchors: Point[] = [];

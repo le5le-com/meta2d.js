@@ -1,7 +1,7 @@
 {
-  "name": "@topology/svg",
+  "name": "@meta2d/svg",
   "version": "1.0.0",
-  "description": "parse svg string to le5le topology pens.",
+  "description": "parse svg string to le5le meta2d pens.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "tsc && npm run copy"
   },
   "keywords": [
-    "topology",
+    "meta2d",
     "svg",
     "canvas"
   ],
@@ -17,14 +17,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/le5le-com/topology.js.git"
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
   },
   "bugs": {
-    "url": "https://github.com/le5le-com/topology.js/issues"
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
   },
-  "homepage": "https://github.com/le5le-com/topology.js#readme",
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
   "peerDependencies": {
-    "@topology/core": "^1.0.0"
+    "@meta2d/core": "^1.0.0"
   },
   "dependencies": {
     "fast-xml-parser": "^4.0.1"

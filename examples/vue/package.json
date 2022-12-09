@@ -7,9 +7,9 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@topology/chart-diagram": "^1.0.2",
-    "@topology/core": "1.1.32",
-    "@topology/svg": "^1.0.2",
+    "@meta2d/chart-diagram": "^1.0.0",
+    "@meta2d/core": "1.0.0",
+    "@meta2d/svg": "^1.0.0",
     "ant-design-vue": "^3.1.0-rc.6",
     "axios": "^0.26.0",
     "vue": "^3.2.16"

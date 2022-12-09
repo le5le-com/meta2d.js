@@ -2,7 +2,7 @@ English | [简体中文](./README.CN.md)
 
 # fta
 
-The fta library based on le5le topology.
+The fta library based on le5le meta2d.
 
 # How to Contribute
 

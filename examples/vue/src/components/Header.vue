@@ -6,7 +6,7 @@ const isMagnifierActive = ref(false);
 const isMinimapActive = ref(false);
 
 const onCreate = () => {
-  window.topology.open();
+  window.meta2d.open();
 };
 const onOpen = (e) => {
   const file = e.target.files[0];
@@ -17,7 +17,7 @@ const onOpen = (e) => {
   reader.onload = (event) => {
     try {
       const json = JSON.parse(event.target.result);
-      window.topology.open(json);
+      window.meta2d.open(json);
     } catch(e) {
       console.log("读取文件失败，请检查数据格式");
     }
@@ -26,7 +26,7 @@ const onOpen = (e) => {
 };
 const onSave = () => {
   const filename = "测试数据.json";
-  const data = window.topology.data();
+  const data = window.meta2d.data();
   const json = JSON.stringify(data, undefined, 4);
   const blob = new Blob([json], { type: "text/json" });
   const a = document.createElement("a");
@@ -37,9 +37,9 @@ const onSave = () => {
 };
 const onTogglePen = () => {
   isPencilActive.value = false;
-  window.topology.finishPencil();
+  window.meta2d.finishPencil();
   isPenActive.value = true;
-  window.topology.drawLine("curve");
+  window.meta2d.drawLine("curve");
 };
 const onTogglePencil = () => {
   if (isPenActive.value === true) {
@@ -47,28 +47,28 @@ const onTogglePencil = () => {
   }
   if (isPencilActive.value === true) {
     isPencilActive.value = false;
-    window.topology.stopPencil();
+    window.meta2d.stopPencil();
   } else {
     isPencilActive.value = true;
-    window.topology.drawingPencil();
+    window.meta2d.drawingPencil();
   }
 };
 const onToggleMagnifier = () => {
   if (isMagnifierActive.value === true) {
     isMagnifierActive.value = false;
-    window.topology.hideMagnifier();
+    window.meta2d.hideMagnifier();
   } else {
     isMagnifierActive.value = true;
-    window.topology.showMagnifier();
+    window.meta2d.showMagnifier();
   }
 };
 const onToggleMinimap = () => {
   if (isMinimapActive.value === true) {
     isMinimapActive.value = false;
-    window.topology.hideMap();
+    window.meta2d.hideMap();
   } else {
     isMinimapActive.value = true;
-    window.topology.showMap();
+    window.meta2d.showMap();
   }
 };
 const onHelp = () => {
@@ -79,7 +79,7 @@ const onKeyDown = (e) => {
   switch (e.key) {
     case "b":
     case "B":
-      if (window.topology.canvas.pencil) {
+      if (window.meta2d.canvas.pencil) {
         isPencilActive.value = true;
       } else {
         isPencilActive.value = false;
@@ -90,7 +90,7 @@ const onKeyDown = (e) => {
       if (e.ctrlKey || e.metaKey) {
         return;
       } else {
-        if (window.topology.canvas.drawingLineName) {
+        if (window.meta2d.canvas.drawingLineName) {
           isPenActive.value = true;
         } else {
           isPenActive.value = false;
@@ -99,7 +99,7 @@ const onKeyDown = (e) => {
       break;
     case "m":
     case "M":
-      if (window.topology.canvas.magnifier) {
+      if (window.meta2d.canvas.magnifier) {
         isMinimapActive.value = true;
       } else {
         isMinimapActive.value = false;

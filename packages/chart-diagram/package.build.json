@@ -1,26 +1,31 @@
 {
-  "name": "@topology/chart-diagram",
+  "name": "@meta2d/chart-diagram",
   "version": "1.0.2",
-  "description": "The charting library based on le5le topology and echarts/highcharts.",
+  "description": "The charting library based on le5le meta2d and echarts/highcharts.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "copy": "copyfiles  package.json ../../dist/chart-diagram/",
     "build": "tsc && npm run copy"
   },
-  "keywords": ["topology", "echarts", "canvas", "highcharts"],
+  "keywords": [
+    "meta2d",
+    "echarts",
+    "canvas",
+    "highcharts"
+  ],
   "author": "alsmile123@qq.com",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/le5le-com/topology.js.git"
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
   },
   "bugs": {
-    "url": "https://github.com/le5le-com/topology.js/issues"
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
   },
-  "homepage": "https://github.com/le5le-com/topology.js#readme",
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
   "peerDependencies": {
-    "@topology/core": "^1.0.0"
+    "@meta2d/core": "^1.0.0"
   },
   "publishConfig": {
     "access": "public"

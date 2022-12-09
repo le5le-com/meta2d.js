@@ -1,4 +1,4 @@
-import { Pen, setElemPosition } from '@topology/core';
+import { Pen, setElemPosition } from '@meta2d/core';
 
 declare const lcjs: any;
 

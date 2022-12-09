@@ -7,11 +7,11 @@ import {
   Pen,
 } from '../../pen';
 import { Point } from '../../point';
-import { TopologyStore } from '../../store';
+import { Meta2dStore } from '../../store';
 import { s8 } from '../../utils';
 
 const faceSpace = 30;
-export function polyline(store: TopologyStore, pen: Pen, mousedwon?: Point) {
+export function polyline(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }

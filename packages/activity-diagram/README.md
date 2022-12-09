@@ -2,7 +2,7 @@ English | [简体中文](./README.CN.md)
 
 # activity-diagram
 
-The activity library based on le5le topology.
+The activity library based on le5le meta2d.
 
 # How to Contribute
 

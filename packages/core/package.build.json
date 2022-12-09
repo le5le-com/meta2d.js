@@ -1,7 +1,7 @@
 {
-  "name": "@topology/core",
+  "name": "@meta2d/core",
   "version": "1.1.5",
-  "description": "@topology/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
+  "description": "@meta2d/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "tsc && npm run copy"
   },
   "keywords": [
-    "topology",
+    "meta2d",
     "diagram",
     "2D",
     "canvas"
@@ -18,12 +18,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/le5le-com/topology.js.git"
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
   },
   "bugs": {
-    "url": "https://github.com/le5le-com/topology.js/issues"
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
   },
-  "homepage": "https://github.com/le5le-com/topology.js#readme",
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
   "devDependencies": {
     "@types/marked": "^4.0.3",
     "@types/offscreencanvas": "latest"

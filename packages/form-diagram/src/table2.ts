@@ -1,7 +1,7 @@
 import { formPen, cellData, Pos } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
-import { calcRightBottom, calcTextLines } from '@topology/core';
+import { calcRightBottom, calcTextLines } from '@meta2d/core';
 import { ReplaceMode } from './common';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {

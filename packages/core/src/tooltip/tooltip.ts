@@ -1,6 +1,6 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
-import { TopologyStore } from '../store';
+import { Meta2dStore } from '../store';
 import type { marked as Marked } from 'marked';
 
 export class Tooltip {
@@ -11,13 +11,13 @@ export class Tooltip {
   x: number;
   y: number;
   private currentPen: Pen; // 本次 tooltip 在哪个画笔上
-  constructor(public parentElement: HTMLElement, private store: TopologyStore) {
+  constructor(public parentElement: HTMLElement, private store: Meta2dStore) {
     this.box = document.createElement('div');
     this.text = document.createElement('div');
     this.arrowUp = document.createElement('div');
     this.arrowDown = document.createElement('div');
 
-    this.box.className = 'topology-tooltip';
+    this.box.className = 'meta2d-tooltip';
     this.text.className = 'text';
     this.arrowUp.className = 'arrow';
     this.arrowDown.className = 'arrow down';
@@ -50,16 +50,16 @@ export class Tooltip {
       document.head.appendChild(style);
       sheet = style.sheet;
       sheet.insertRule(
-        '.topology-tooltip{position:absolute;padding:8px 0;z-index:10;left: -9999px;top: -9999px;}'
+        '.meta2d-tooltip{position:absolute;padding:8px 0;z-index:10;left: -9999px;top: -9999px;}'
       );
       sheet.insertRule(
-        '.topology-tooltip .text{max-width:320px;min-height:30px;max-height:400px;outline:none;padding:8px 16px;border-radius:4px;background:#777777;color:#ffffff;line-height:1.8;overflow-y:auto;}'
+        '.meta2d-tooltip .text{max-width:320px;min-height:30px;max-height:400px;outline:none;padding:8px 16px;border-radius:4px;background:#777777;color:#ffffff;line-height:1.8;overflow-y:auto;}'
       );
       sheet.insertRule(
-        '.topology-tooltip .arrow{position:absolute;border:6px solid transparent;background:transparent;top:-4px;left:50%;transform:translateX(-50%)}'
+        '.meta2d-tooltip .arrow{position:absolute;border:6px solid transparent;background:transparent;top:-4px;left:50%;transform:translateX(-50%)}'
       );
       sheet.insertRule(
-        '.topology-tooltip .arrow.down{top:initial;bottom: 1.5px;}'
+        '.meta2d-tooltip .arrow.down{top:initial;bottom: 1.5px;}'
       );
     }
   }

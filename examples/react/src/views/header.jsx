@@ -13,7 +13,7 @@ const Header = () => {
   const minimapBtn = useRef(null);
 
   const onCreate = useCallback(() => {
-    window.topology.open();
+    window.meta2d.open();
   }, []);
 
   const onOpen = useCallback((e) => {
@@ -25,7 +25,7 @@ const Header = () => {
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target.result);
-        window.topology.open(json);
+        window.meta2d.open(json);
       } catch(e) {
         console.log('读取文件失败，请检查数据格式');
       }
@@ -35,7 +35,7 @@ const Header = () => {
 
   const onSave = useCallback(() => {
     const filename = '测试数据.json';
-    const data = window.topology.data();
+    const data = window.meta2d.data();
     const json = JSON.stringify(data, undefined, 4);
     const blob = new Blob([ json ], { type: 'text/json' });
     const a = document.createElement('a');
@@ -47,9 +47,9 @@ const Header = () => {
 
   const onTogglePen = useCallback(() => {
     pencilBtn.current.className = '';
-    window.topology.finishPencil();
+    window.meta2d.finishPencil();
     penBtn.current.className = 'active';
-    window.topology.drawLine('curve');
+    window.meta2d.drawLine('curve');
   }, []);
 
   const onTogglePencil = useCallback(() => {
@@ -58,30 +58,30 @@ const Header = () => {
     }
     if (pencilBtn.current.className === 'active') {
       pencilBtn.current.className = '';
-      window.topology.finishPencil();
+      window.meta2d.finishPencil();
     } else {
       pencilBtn.current.className = 'active';
-      window.topology.drawingPencil();
+      window.meta2d.drawingPencil();
     }
   }, []);
 
   const onToggleMagnifier = useCallback(() => {
     if (magnifierBtn.current.className === 'active') {
       magnifierBtn.current.className = '';
-      window.topology.hideMagnifier();
+      window.meta2d.hideMagnifier();
     } else {
       magnifierBtn.current.className = 'active';
-      window.topology.showMagnifier();
+      window.meta2d.showMagnifier();
     }
   }, []);
 
   const onToggleMinimap = useCallback(() => {
     if (minimapBtn.current.className === 'active') {
       minimapBtn.current.className = '';
-      window.topology.hideMap();
+      window.meta2d.hideMap();
     } else {
       minimapBtn.current.className = 'active';
-      window.topology.showMap();
+      window.meta2d.showMap();
     }
   }, []);
 
@@ -93,7 +93,7 @@ const Header = () => {
     switch (e.key) {
       case 'b':
       case 'B':
-        if (window.topology.canvas.pencil) {
+        if (window.meta2d.canvas.pencil) {
           pencilBtn.current.className = 'active';
         } else {
           pencilBtn.current.className = '';
@@ -104,7 +104,7 @@ const Header = () => {
         if (e.ctrlKey || e.metaKey) {
           return;
         } else {
-          if (window.topology.canvas.drawingLineName) {
+          if (window.meta2d.canvas.drawingLineName) {
             penBtn.current.className = 'active';
           } else {
             penBtn.current.className = '';
@@ -113,7 +113,7 @@ const Header = () => {
         break;
       case 'm':
       case 'M':
-        if (window.topology.canvas.magnifier) {
+        if (window.meta2d.canvas.magnifier) {
           minimapBtn.current.className = 'active';
         } else {
           minimapBtn.current.className = '';

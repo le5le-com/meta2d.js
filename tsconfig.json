@@ -18,9 +18,9 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports":true,
     "paths": {
-      "@topology/*": ["packages/*"],
+      "@meta2d/*": ["packages/*"],
     }
   },
   "include": ["packages/**/*"],
-  "exclude": ["node_modules", "dist","topology.js", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist","meta2d.js", "**/*.spec.ts"]
 }

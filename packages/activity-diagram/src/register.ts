@@ -1,5 +1,5 @@
-import { Pen } from '@topology/core';
-import { rectangle } from '@topology/core/src/diagrams';
+import { Pen } from '@meta2d/core';
+import { rectangle } from '@meta2d/core/src/diagrams';
 import { activityFinal } from './final';
 import { swimlaneH } from './swimlaneH';
 import { swimlaneV } from './swimlaneV';

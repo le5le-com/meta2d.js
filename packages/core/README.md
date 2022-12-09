@@ -1,6 +1,6 @@
 # core
 
-The core of topology.
+The core of meta2d.
 
 # How to Contribute
 

@@ -991,9 +991,9 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@topology/core@^1.0.2":
+"@meta2d/core@^1.0.2":
   version "1.0.2"
-  resolved "https://registry.npmmirror.com/@topology/core/-/core-1.0.2.tgz#007b97c3951437386e5da756b6cca78eb9317bc0"
+  resolved "https://registry.npmmirror.com/@meta2d/core/-/core-1.0.2.tgz#007b97c3951437386e5da756b6cca78eb9317bc0"
   integrity sha512-/YymuMw7nHoZ/0RwrI3w4yCuGMtl8D+7IghmiSQbquAXuub68PPldXiZ/cMStRoc1e1l95PqyDPtPT78fhzItA==
   dependencies:
     mitt "^2.1.0"

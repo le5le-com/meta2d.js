@@ -1,4 +1,4 @@
-import { Pen } from '@topology/core';
+import { Pen } from '@meta2d/core';
 import { focus } from './focus';
 import { lifeline } from './lifeline';
 

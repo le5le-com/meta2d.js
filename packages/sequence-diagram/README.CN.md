@@ -2,7 +2,7 @@
 
 # sequence-diagram
 
-sequence-diagram 是基于 le5le topology 而开发的图形库
+sequence-diagram 是基于 le5le meta2d 而开发的图形库
 
 # 使用
 

@@ -7,14 +7,14 @@
 import React from 'react';
 import Icons from './icons';
 import Header from './header';
-import TopologyContainer from './topology';
+import Meta2dContainer from './meta2d';
 
 const App = () => {
   return (
     <>
       <Header />
       <Icons />
-      <TopologyContainer />
+      <Meta2dContainer />
     </>
   );
 };

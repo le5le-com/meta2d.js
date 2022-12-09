@@ -1,4 +1,4 @@
-import { TopologyStore } from '../store';
+import { Meta2dStore } from '../store';
 import { Canvas } from './canvas';
 import { createOffscreen } from './offscreen';
 
@@ -12,7 +12,7 @@ export class MagnifierCanvas {
   constructor(
     public parentCanvas: Canvas,
     public parentElement: HTMLElement,
-    public store: TopologyStore
+    public store: Meta2dStore
   ) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';

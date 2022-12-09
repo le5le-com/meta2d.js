@@ -1,6 +1,6 @@
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
-import { calcRightBottom, calcTextRect } from '@topology/core';
+import { calcRightBottom, calcTextRect } from '@meta2d/core';
 
 export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {

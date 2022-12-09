@@ -21,11 +21,11 @@ import {
   scaleRect,
   translateRect,
 } from '../rect';
-import { globalStore, TopologyStore } from '../store';
+import { globalStore, Meta2dStore } from '../store';
 import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
-import { Gradient, isEqual, PenType } from '@topology/core';
+import { Gradient, isEqual, PenType } from '@meta2d/core';
 import { rgba } from '../utils';
 import { Canvas } from '../canvas';
 
@@ -42,7 +42,7 @@ export function getParent(pen: Pen, root?: boolean): Pen {
   return getParent(parent, root) || parent;
 }
 
-export function getAllChildren(pen: Pen, store: TopologyStore): Pen[] {
+export function getAllChildren(pen: Pen, store: Meta2dStore): Pen[] {
   if (!pen || !pen.children) {
     return [];
   }
@@ -160,7 +160,7 @@ function linearGradient(
     rotatePoint(to, angle, worldRect.center);
   }
 
-  // contributor: https://github.com/sunnyguohua/topology
+  // contributor: https://github.com/sunnyguohua/meta2d
   const grd = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
   grd.addColorStop(0, fromColor);
   grd.addColorStop(1, toColor);
@@ -261,7 +261,7 @@ export function drawImage(
 /**
  * 获取文字颜色， textColor 优先其次 color
  */
-export function getTextColor(pen: Pen, store: TopologyStore) {
+export function getTextColor(pen: Pen, store: Meta2dStore) {
   const { textColor, color } = pen.calculative;
   const { data, options } = store;
   return textColor || color || data.color || options.textColor || options.color;
@@ -828,7 +828,7 @@ export function ctxDrawPath(
   canUsePath = true,
   ctx: CanvasRenderingContext2D,
   pen: Pen,
-  store: TopologyStore,
+  store: Meta2dStore,
   fill: boolean
 ) {
   const path = canUsePath
@@ -923,7 +923,7 @@ export function ctxDrawPath(
 export function setCtxLineAnimate(
   ctx: CanvasRenderingContext2D,
   pen: Pen,
-  store: TopologyStore
+  store: Meta2dStore
 ) {
   ctx.strokeStyle = pen.animateColor || store.options.animateColor;
   let len = 0;
@@ -977,7 +977,7 @@ export function setCtxLineAnimate(
 /**
  * 全局 color
  */
-export function getGlobalColor(store: TopologyStore) {
+export function getGlobalColor(store: Meta2dStore) {
   const { data, options } = store;
   return data.color || options.color;
 }
@@ -1066,7 +1066,7 @@ export function renderAnchor(
 }
 
 export function calcWorldRects(pen: Pen) {
-  const store: TopologyStore = pen.calculative.canvas.store;
+  const store: Meta2dStore = pen.calculative.canvas.store;
 
   let rect: Rect = {
     x: pen.x,
@@ -1141,7 +1141,7 @@ export function calcPenRect(pen: Pen) {
 }
 
 export function calcWorldAnchors(pen: Pen) {
-  const store: TopologyStore = pen.calculative.canvas.store;
+  const store: Meta2dStore = pen.calculative.canvas.store;
   let anchors: Point[] = [];
   if (pen.anchors) {
     pen.anchors.forEach((anchor) => {
@@ -2032,7 +2032,7 @@ export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {
 /**
  * 判断该画笔 是否是组合为状态中 展示的画笔
  */
-export function isShowChild(pen: Pen, store: TopologyStore) {
+export function isShowChild(pen: Pen, store: Meta2dStore) {
   let selfPen = pen;
   while (selfPen && selfPen.parentId) {
     const oldPen = selfPen;
@@ -2094,7 +2094,7 @@ export function calcInView(pen: Pen, calcChild = false) {
  */
 function inspectRect(
   ctx: CanvasRenderingContext2D,
-  store: TopologyStore,
+  store: Meta2dStore,
   pen: Pen
 ) {
   if (store.fillWorldTextRect) {

@@ -1,4 +1,4 @@
-import { s8 } from '@topology/core';
+import { s8 } from '@meta2d/core';
 import { Pen } from './model';
 
 export function randomId(pen: Pen) {
@@ -11,7 +11,7 @@ export function randomId(pen: Pen) {
         pen.type && (pt.prev.id = s8());
         pt.prev.penId = pen.id;
       }
-  
+
       if (pt.next) {
         pen.type && (pt.next.id = s8());
         pt.next.penId = pen.id;

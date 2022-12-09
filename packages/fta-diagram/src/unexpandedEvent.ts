@@ -1,4 +1,4 @@
-import { Pen, Point } from '@topology/core';
+import { Pen, Point } from '@meta2d/core';
 
 export function unexpandedEvent(
   pen: Pen,

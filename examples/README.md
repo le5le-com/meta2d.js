@@ -11,11 +11,11 @@ npm i 或 yarn
 凡是有 package.json 的地方都需要安装依赖。
 npm i 或 yarn
 
-## 2. 打包 topology.js
+## 2. 打包 meta2d.js
 执行最外层 package.json 中的 bulid 命令。
 cd 到最外层， npm run build or yarn build
 若报错，可能是 node 版本问题，推荐将版本升级到 16
-确保执行后 dist/topology/topology.js 存在
+确保执行后 dist/meta2d/meta2d.js 存在
 
 
 ## 3. 运行示例项目

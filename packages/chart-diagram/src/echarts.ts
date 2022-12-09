@@ -5,9 +5,9 @@ import {
   IValue,
   Pen,
   setElemPosition,
-} from '@topology/core';
+} from '@meta2d/core';
 import type { EChartOption } from 'echarts';
-import { deepSetValue } from '@topology/core';
+import { deepSetValue } from '@meta2d/core';
 
 export enum ReplaceMode {
   Add,
@@ -541,6 +541,6 @@ export function setEchartsOption(
       echarts.replaceMode = ReplaceMode.Replace; // 替换
     }
   }
-  const topology = pen.calculative.canvas.parent;
-  topology.setValue({ id: pen.id, echarts }, { render: false, doEvent: false });
+  const meta2d = pen.calculative.canvas.parent;
+  meta2d.setValue({ id: pen.id, echarts }, { render: false, doEvent: false });
 }

@@ -1,22 +1,37 @@
 import { Direction } from '../../data';
 import { facePen, getToAnchor, Pen } from '../../pen';
 import { distance, Point, PrevNextType, rotatePoint } from '../../point';
-import { TopologyStore } from '../../store';
+import { Meta2dStore } from '../../store';
 import { s8 } from '../../utils';
 
-export function curve(store: TopologyStore, pen: Pen, mousedwon?: Point) {
+export function curve(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }
 
   if (mousedwon) {
     if (pen.calculative.activeAnchor) {
-      pen.calculative.activeAnchor.next = { penId: pen.id, x: mousedwon.x, y: mousedwon.y };
-      if (distance(pen.calculative.activeAnchor.next, pen.calculative.activeAnchor) < 5) {
+      pen.calculative.activeAnchor.next = {
+        penId: pen.id,
+        x: mousedwon.x,
+        y: mousedwon.y,
+      };
+      if (
+        distance(
+          pen.calculative.activeAnchor.next,
+          pen.calculative.activeAnchor
+        ) < 5
+      ) {
         pen.calculative.activeAnchor.next = undefined;
       } else {
-        pen.calculative.activeAnchor.prev = { ...pen.calculative.activeAnchor.next };
-        rotatePoint(pen.calculative.activeAnchor.prev, 180, pen.calculative.activeAnchor);
+        pen.calculative.activeAnchor.prev = {
+          ...pen.calculative.activeAnchor.next,
+        };
+        rotatePoint(
+          pen.calculative.activeAnchor.prev,
+          180,
+          pen.calculative.activeAnchor
+        );
       }
     }
   } else {
@@ -27,7 +42,8 @@ export function curve(store: TopologyStore, pen: Pen, mousedwon?: Point) {
       from.prev = undefined;
     }
 
-    const to = pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
+    const to =
+      pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
     if (to && to !== from && !to.prev) {
       const toFace = facePen(to, store.pens[to.connectTo]);
       calcCurveCP(to, toFace, -50);
@@ -91,7 +107,12 @@ function calcCurveCP(pt: Point, d: Direction, dis: number) {
 
 // Get a point in quadratic.
 // pos - The position of point in quadratic. It is expressed as a percentage(0 - 1).
-export function getQuadraticPoint(step: number, from: Point, cp: Point, to: Point) {
+export function getQuadraticPoint(
+  step: number,
+  from: Point,
+  cp: Point,
+  to: Point
+) {
   const pos = 1 - step;
   const x = pos * pos * from.x + 2 * pos * step * cp.x + step * step * to.x;
   const y = pos * pos * from.y + 2 * pos * step * cp.y + step * step * to.y;
@@ -100,15 +121,29 @@ export function getQuadraticPoint(step: number, from: Point, cp: Point, to: Poin
 
 // Get a point in bezier.
 // pos - The position of point in bezier. It is expressed as a percentage(0 - 1).
-export function getBezierPoint(step: number, from: Point, cp1: Point, cp2: Point, to: Point) {
+export function getBezierPoint(
+  step: number,
+  from: Point,
+  cp1: Point,
+  cp2: Point,
+  to: Point
+) {
   const { x: x1, y: y1 } = from;
   const { x: x2, y: y2 } = to;
   const { x: cx1, y: cy1 } = cp1;
   const { x: cx2, y: cy2 } = cp2;
 
   const pos = 1 - step;
-  const x = x1 * pos * pos * pos + 3 * cx1 * step * pos * pos + 3 * cx2 * step * step * pos + x2 * step * step * step;
-  const y = y1 * pos * pos * pos + 3 * cy1 * step * pos * pos + 3 * cy2 * step * step * pos + y2 * step * step * step;
+  const x =
+    x1 * pos * pos * pos +
+    3 * cx1 * step * pos * pos +
+    3 * cx2 * step * step * pos +
+    x2 * step * step * step;
+  const y =
+    y1 * pos * pos * pos +
+    3 * cy1 * step * pos * pos +
+    3 * cy2 * step * step * pos +
+    y2 * step * step * step;
   return { x, y, step };
 }
 
@@ -144,7 +179,7 @@ export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
     from.next.y = p4.y;
     to.prev.x = p6.x;
     to.prev.y = p6.y;
-  } else if (from.next || to.prev){
+  } else if (from.next || to.prev) {
     const p0 = from;
     const p1 = from.next || to.prev;
     const p2 = to;
@@ -168,7 +203,7 @@ export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
   return anchor;
 }
 
-export function mind(store: TopologyStore, pen: Pen, mousedwon?: Point) {
+export function mind(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];
   }
@@ -194,7 +229,13 @@ export function mind(store: TopologyStore, pen: Pen, mousedwon?: Point) {
       fromFace = Direction.Left;
     }
   }
-  from.next = { id: s8(), penId: pen.id, x: from.x, y: from.y, prevNextType: 2 };
+  from.next = {
+    id: s8(),
+    penId: pen.id,
+    x: from.x,
+    y: from.y,
+    prevNextType: 2,
+  };
   to.prev = { id: s8(), penId: pen.id, x: to.x, y: to.y, prevNextType: 2 };
   switch (fromFace) {
     case Direction.Up:
