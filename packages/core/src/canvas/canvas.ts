@@ -3898,12 +3898,10 @@ export class Canvas {
     let y = p2.y - p1.y;
 
     const rect = deepClone(this.initActiveRect);
-    if ((e as any).shiftKey) {
-      // if (x / y > rect.width / rect.height) {
-      //   y = (rect.height / rect.width) * x;
-      // } else {
-      //   x = (rect.width / rect.height) * y;
-      // }
+    if (
+      (e as any).shiftKey ||
+      (this.initPens.length == 1 && this.initPens[0].ratio)
+    ) {
       x = (rect.width / rect.height) * y;
     }
     // 得到最准确的 rect 即 resize 后的

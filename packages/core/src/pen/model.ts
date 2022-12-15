@@ -284,6 +284,7 @@ export interface Pen extends Rect {
   isBottom?: boolean; // 是否是底部图片
   form?: FormItem[]; // 业务表单
   lockedOnCombine?: LockState; // 组合成 combine ，该节点的 locked 值
+  ratio?: boolean; //宽高比锁定
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
