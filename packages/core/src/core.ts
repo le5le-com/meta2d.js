@@ -766,6 +766,7 @@ export class Meta2d {
       pen.calculative.animatePos = 0;
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
+      this.canvas.updateLines(pen);
     });
     this.initImageCanvas(pens);
     setTimeout(() => {
