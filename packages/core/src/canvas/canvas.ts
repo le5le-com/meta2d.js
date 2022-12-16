@@ -784,6 +784,14 @@ export class Canvas {
           this.patchFlags = true;
         }
         break;
+      case 'E':
+      case 'e':
+        this.store.options.disableAnchor = !this.store.options.disableAnchor;
+        this.store.emitter.emit(
+          'disableAnchor',
+          this.store.options.disableAnchor
+        );
+        break;
     }
 
     this.render(false);
