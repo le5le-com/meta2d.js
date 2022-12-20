@@ -5105,7 +5105,7 @@ export class Canvas {
     }
     const deletePens: Pen[] = [];
     this._del(pens, deletePens);
-    this.initImageCanvas(pens);
+    this.initImageCanvas(deletePens);
     this.inactive();
     this.clearHover();
     this.render();
