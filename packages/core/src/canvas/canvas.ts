@@ -2183,6 +2183,7 @@ export class Canvas {
          * 所以 patchFlagsLines 需要放到 copyMovedPens 前
          * */
         const { x, y } = this.movingPens[i];
+        this.updateLines(pen); //复制前更新被复制节点的连接关系
         return {
           ...pen,
           x,
