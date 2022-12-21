@@ -1743,7 +1743,11 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
           360) -
         pen.calculative.rotate;
       if (pen.children?.length) {
-        rotatePen(pen, offsetRotate, pen.calculative.initRect);
+        pen.calculative.canvas.rotatePen(
+          pen,
+          offsetRotate,
+          pen.calculative.initRect
+        );
       } else {
         pen.calculative.rotate =
           (pen.calculative.initRect.rotate + lastVal + frame[k] * process) %
