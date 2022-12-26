@@ -2000,7 +2000,7 @@ export class Canvas {
     }
 
     if (this.movingPens) {
-      if (e.ctrlKey && !e.shiftKey) {
+      if (e.altKey && !e.shiftKey) {
         this.copyMovedPens();
       } else {
         this.movedActivePens(e.ctrlKey && e.shiftKey);
