@@ -4219,7 +4219,8 @@ export class Canvas {
         this.store.activeAnchor.next.y = e.y;
         rotatePoint(this.store.activeAnchor.next, 180, this.store.activeAnchor);
       } else if (
-        this.store.activeAnchor.prevNextType === PrevNextType.Bilateral
+        this.store.activeAnchor.prevNextType === PrevNextType.Bilateral &&
+        this.prevAnchor
       ) {
         const rotate = calcRotate(e, this.store.activeAnchor);
         const prevRotate = calcRotate(this.prevAnchor, this.store.activeAnchor);
@@ -4267,7 +4268,8 @@ export class Canvas {
         this.store.activeAnchor.prev.y = e.y;
         rotatePoint(this.store.activeAnchor.prev, 180, this.store.activeAnchor);
       } else if (
-        this.store.activeAnchor.prevNextType === PrevNextType.Bilateral
+        this.store.activeAnchor.prevNextType === PrevNextType.Bilateral &&
+        this.nextAnchor
       ) {
         const rotate = calcRotate(e, this.store.activeAnchor);
         const nextRotate = calcRotate(this.nextAnchor, this.store.activeAnchor);
