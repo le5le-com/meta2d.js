@@ -1299,6 +1299,26 @@ export class Canvas {
       return;
     }
 
+    //shift 快捷添加锚点并连线
+    if (!this.store.options.autoAnchor && !this.drawingLine) {
+      if (e.shiftKey) {
+        this.setAnchor(this.store.pointAt);
+        this.drawingLineName = this.store.options.drawingLineName;
+        const anchor = this.store.activeAnchor;
+        const pt: Point = {
+          id: s8(),
+          x: anchor.x,
+          y: anchor.y,
+        };
+        this.drawingLine = this.createDrawingLine(pt);
+        let _pt = getFromAnchor(this.drawingLine);
+        this.drawingLine.calculative.activeAnchor = _pt;
+        connectLine(this.store.hover, anchor, this.drawingLine, pt);
+        this.drawline();
+        return;
+      }
+    }
+
     // Translate
     if (
       this.hotkeyType === HotkeyType.Translate ||
@@ -1324,6 +1344,21 @@ export class Canvas {
         this.drawline();
         this.finishDrawline(true);
         return;
+      }
+
+      //shift快捷添加锚点并完成连线
+      if (!this.store.options.autoAnchor) {
+        if (e.shiftKey) {
+          this.setAnchor(this.store.pointAt);
+          const to = getToAnchor(this.drawingLine);
+          const anchor = this.store.activeAnchor;
+          to.x = anchor.x;
+          to.y = anchor.y;
+          connectLine(this.store.hover, anchor, this.drawingLine, to);
+          this.drawline();
+          this.finishDrawline(true);
+          return;
+        }
       }
 
       // 右键，完成绘画
