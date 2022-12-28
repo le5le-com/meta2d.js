@@ -47,7 +47,7 @@ function onAdd(pen: Pen) {
     y: y + 0.2 * height,
     width,
     height: 0.4 * height,
-    text: list[0].text,
+    // text: list[0].text,
     textAlign: 'left',
     textBaseline: 'top',
     textLeft: 10,
@@ -59,12 +59,14 @@ function onAdd(pen: Pen) {
     y: y + 0.6 * height,
     width,
     height: 0.4 * height,
-    text: list[1].text,
+    // text: list[1].text,
     textAlign: 'left',
     textBaseline: 'top',
     textLeft: 10,
     textTop: 10,
   };
+  Object.assign(childPen, list[0]);
+  Object.assign(childPen1, list[1]);
   pen.calculative.canvas.makePen(childPen);
   pen.calculative.canvas.makePen(childPen1);
   pen.calculative.canvas.parent.pushChildren(pen, [childPen]);

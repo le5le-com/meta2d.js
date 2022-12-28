@@ -41,12 +41,13 @@ function onAdd(pen: Pen) {
     y: y + 0.2 * height,
     width,
     height: 0.8 * height,
-    text: list[0].text,
+    // text: list[0].text,
     textAlign: 'left',
     textBaseline: 'top',
     textLeft: 10,
     textTop: 10,
   };
+  Object.assign(childPen, list[0]);
   pen.calculative.canvas.makePen(childPen);
   pen.calculative.canvas.parent.pushChildren(pen, [childPen]);
 }
