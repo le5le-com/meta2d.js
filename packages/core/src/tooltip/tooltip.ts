@@ -2,6 +2,7 @@ import { Pen } from '../pen';
 import { Point } from '../point';
 import { Meta2dStore } from '../store';
 import type { marked as Marked } from 'marked';
+import { getParent } from '../pen';
 
 export class Tooltip {
   box: HTMLElement;
@@ -137,6 +138,10 @@ export class Tooltip {
   show(pen: Pen, pos: Point) {
     this.currentPen = pen;
     if (Tooltip.titleEmpty(pen)) {
+      let parent = getParent(pen, true);
+      if (parent) {
+        this.show(parent, pos);
+      }
       return;
     }
 
