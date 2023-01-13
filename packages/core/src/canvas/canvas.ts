@@ -1773,16 +1773,69 @@ export class Canvas {
         }
 
         if (this.drawingLineName === 'line') {
-          if (e.ctrlKey) {
+          if (e.ctrlKey && !e.shiftKey) {
             to.x =
               this.drawingLine.calculative.worldAnchors[
                 this.drawingLine.calculative.worldAnchors.length - 2
               ].x;
-          } else if (e.shiftKey) {
+          } else if (e.shiftKey && !e.ctrlKey) {
             to.y =
               this.drawingLine.calculative.worldAnchors[
                 this.drawingLine.calculative.worldAnchors.length - 2
               ].y;
+          } else if (e.shiftKey && e.ctrlKey) {
+            //快捷定位到特殊角度
+            let last =
+              this.drawingLine.calculative.worldAnchors[
+                this.drawingLine.calculative.worldAnchors.length - 2
+              ];
+            let angle = 0;
+            let angleArr = [0, 30, 45, 60, 90, 120, 150, 135, 180];
+            //获取实际角度
+            if (to.x - last.x !== 0) {
+              angle =
+                (Math.atan((last.y - to.y) / (to.x - last.x)) * 180) / Math.PI;
+              if (to.x < last.x) {
+                if (angle > 0) {
+                  angle -= 180;
+                } else {
+                  angle += 180;
+                }
+              }
+            } else {
+              if (last.y > to.y) {
+                angle = 90;
+              } else if (last.y < to.y) {
+                angle = -90;
+              }
+            }
+            //取最近角度
+            let _min = 999;
+            let index = -1;
+            for (let i = 0; i < angleArr.length; i++) {
+              if (angle < 0) {
+                if (Math.abs(angle + angleArr[i]) < _min) {
+                  index = i;
+                  _min = Math.abs(angle + angleArr[i]);
+                }
+              } else {
+                if (Math.abs(angle - angleArr[i]) < _min) {
+                  index = i;
+                  _min = Math.abs(angle - angleArr[i]);
+                }
+              }
+            }
+            if (angle < 0) {
+              angle = -angleArr[index];
+            } else {
+              angle = angleArr[index];
+            }
+            let length = Math.sqrt(
+              (last.x - to.x) * (last.x - to.x) +
+                (last.y - to.y) * (last.y - to.y)
+            );
+            to.x = last.x + Math.cos((angle / 180) * Math.PI) * length;
+            to.y = last.y - Math.sin((angle / 180) * Math.PI) * length;
           }
         }
 
