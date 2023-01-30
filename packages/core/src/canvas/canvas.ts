@@ -507,8 +507,16 @@ export class Canvas {
     // 触摸板平移
     const isTouchPad = !(!e.deltaX && e.deltaY);
     const now = performance.now();
+    let _scale = 0.1;
     if (now - this.touchStart < 50) {
       return;
+    }
+    if (now - this.touchStart < 100) {
+      _scale = 0.5;
+    } else if (now - this.touchStart < 200) {
+      _scale = 0.3;
+    } else {
+      _scale = 0.1;
     }
 
     this.touchStart = now;
@@ -519,9 +527,9 @@ export class Canvas {
       this.translate(e.deltaX, e.deltaY);
     } else {
       if (e.deltaY < 0) {
-        this.scale(this.store.data.scale + 0.1, { x, y });
+        this.scale(this.store.data.scale + _scale, { x, y });
       } else {
-        this.scale(this.store.data.scale - 0.1, { x, y });
+        this.scale(this.store.data.scale - _scale, { x, y });
       }
     }
     this.externalElements.focus(); // 聚焦
