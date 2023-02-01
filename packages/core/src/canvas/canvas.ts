@@ -3771,6 +3771,30 @@ export class Canvas {
           } else if (anchor.color || anchor.background) {
             ctx.restore();
           }
+          //根父节点
+          if (
+            !this.store.hover.parentId &&
+            this.store.hover.children &&
+            this.store.hover.children.length > 0
+          ) {
+            if (anchor === this.store.hoverAnchor) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.lineWidth = 3;
+              const hoverAnchorColor =
+                this.store.hover.hoverAnchorColor ||
+                this.store.options.hoverAnchorColor;
+              if ((globalThis as any).pSBC) {
+                ctx.strokeStyle = (globalThis as any).pSBC(
+                  0.5,
+                  hoverAnchorColor
+                );
+              }
+              ctx.arc(anchor.x, anchor.y, size + 1.5, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
         });
       }
     }
