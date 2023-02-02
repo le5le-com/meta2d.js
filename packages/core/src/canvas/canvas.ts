@@ -5630,7 +5630,8 @@ export class Canvas {
         .replace(/\<div\>/g, '\n')
         .replace(/\<\/div\>/g, '')
         .replace(/\<br\>/g, '')
-        .replace(/&nbsp;/g, ' ');
+        .replace(/&nbsp;/g, ' ')
+        .replace(/(<([^>]+)>)/gi, '');
       if (pen.onInput) {
         pen.onInput(pen, this.inputDiv.dataset.value);
       } else if (pen.text !== this.inputDiv.dataset.value) {
