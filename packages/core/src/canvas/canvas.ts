@@ -699,6 +699,8 @@ export class Canvas {
         ) {
           this.splitLine(this.store.active[0], this.store.hoverAnchor);
         }
+        // TODO: 保存，可以测一下苹果电脑，是否要用 metaKey
+        e.ctrlKey && this.store.emitter.emit('save', { event: e });
         break;
       case 'c':
       case 'C':
