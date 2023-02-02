@@ -1376,7 +1376,10 @@ export class Canvas {
       if (
         e.buttons === 2 ||
         (this.drawingLineName === 'mind' &&
-          this.drawingLine?.calculative.worldAnchors.length > 1)
+          this.drawingLine?.calculative.worldAnchors.length > 1) ||
+        (this.store.options.drawingLineLength &&
+          this.drawingLine?.calculative.worldAnchors.length >
+            this.store.options.drawingLineLength)
       ) {
         this.finishDrawline(true);
         if (this.store.active[0]?.anchors[0].connectTo) {

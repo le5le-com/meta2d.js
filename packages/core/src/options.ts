@@ -68,6 +68,7 @@ export interface Options {
   measureTextWidth?: boolean; // 测量文字宽度
   mouseRightActive?: boolean; //是否允许右键选中节点
   disableClipboard?: boolean; //是否禁止系统剪切板
+  drawingLineLength: number; //绘制过程中允许的最大长度，0表示不限
 }
 
 export const defaultOptions: Options = {
@@ -124,4 +125,5 @@ export const defaultOptions: Options = {
   moveConnectedLine: true,
   mouseRightActive: true,
   disableClipboard: false,
+  drawingLineLength: 0,
 };
