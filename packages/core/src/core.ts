@@ -1,5 +1,5 @@
 import { commonAnchors, commonPens, cube } from './diagrams';
-import { EventType, Handler } from 'mitt';
+import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options } from './options';
 import {
@@ -619,17 +619,23 @@ export class Meta2d {
     render && this.render();
   }
 
-  emit(eventType: EventType, data: unknown) {
-    this.store.emitter.emit(eventType, data);
+  emit<T = any>(type: EventType, event?: T): void;
+  emit(type: '*', event?: any): void;
+  emit(type: EventType | '*', event: unknown) {
+    this.store.emitter.emit(type, event);
   }
 
-  on(eventType: EventType, handler: Handler) {
-    this.store.emitter.on(eventType, handler);
+  on<T = any>(type: EventType, handler: Handler<T>): Meta2d;
+  on(type: '*', handler: WildcardHandler): Meta2d;
+  on(type: EventType | '*', handler: WildcardHandler | Handler) {
+    this.store.emitter.on(type, handler);
     return this;
   }
 
-  off(eventType: EventType, handler: Handler) {
-    this.store.emitter.off(eventType, handler);
+  off<T = any>(type: EventType, handler: Handler<T>): Meta2d;
+  off(type: '*', handler: WildcardHandler): Meta2d;
+  off(type: EventType | '*', handler: WildcardHandler | Handler) {
+    this.store.emitter.off(type, handler);
     return this;
   }
 
