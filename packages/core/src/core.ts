@@ -363,18 +363,26 @@ export class Meta2d {
     this.canvas.render(patchFlags);
   }
 
-  setBackgroundImage(url: string) {
+  async setBackgroundImage(url: string) {
+    async function loadImage(url: string) {
+      return new Promise<HTMLImageElement>((resolve) => {
+        const img = new Image();
+        img.src = url;
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          resolve(img);
+        };
+      });
+    }
+
     this.store.data.bkImage = url;
     this.canvas.canvasImageBottom.canvas.style.backgroundImage = url
       ? `url(${url})`
       : '';
     if (url) {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        // 用作 toPng 的绘制
-        this.store.bkImg = img;
-      };
+      const img = await loadImage(url);
+      // 用作 toPng 的绘制
+      this.store.bkImg = img;
     } else {
       this.store.bkImg = null;
     }
