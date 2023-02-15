@@ -571,6 +571,7 @@ export const formatAttrs: Set<string> = new Set([
   'animateColor',
   'animateType',
   'animateReverse',
+  'background',
 ]);
 
 /**
