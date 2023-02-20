@@ -3749,7 +3749,11 @@ export class Canvas {
             anchor.radius ||
             this.store.hover.anchorRadius ||
             this.store.options.anchorRadius;
-          if (this.store.hover.type) {
+          if (
+            this.store.hover.type &&
+            !anchor.radius &&
+            !this.store.hover.anchorRadius
+          ) {
             size = 3;
             if (this.store.hover.calculative.lineWidth > 3) {
               size = this.store.hover.calculative.lineWidth;

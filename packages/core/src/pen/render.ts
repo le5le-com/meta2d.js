@@ -1008,7 +1008,12 @@ export function renderAnchor(
   if (pen.calculative.lineWidth > 3) {
     r = pen.calculative.lineWidth;
   }
-
+  if (pen.anchorRadius) {
+    r = pen.anchorRadius;
+  }
+  if (pt.radius) {
+    r = pt.radius;
+  }
   if (active) {
     if (pt.prev) {
       ctx.save();
