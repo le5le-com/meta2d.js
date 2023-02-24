@@ -21,8 +21,17 @@ export function calcTextRect(pen: Pen) {
   if (textTop && Math.abs(textTop) < 1) {
     textTop *= worldRect.height;
   }
-  const width = worldRect.width - paddingLeft - paddingRight - (textLeft || 0);
-  const height = worldRect.height - paddingTop - paddingBottom - (textTop || 0);
+
+  const width =
+    worldRect.width -
+    paddingLeft -
+    paddingRight -
+    ((pen.textAlign === 'right' ? -textLeft : textLeft) || 0);
+  const height =
+    worldRect.height -
+    paddingTop -
+    paddingBottom -
+    ((pen.textBaseline === 'bottom' ? -textTop : textTop) || 0);
   if (textWidth && textWidth < 1) {
     textWidth *= worldRect.width;
   }

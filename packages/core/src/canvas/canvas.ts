@@ -5434,7 +5434,8 @@ export class Canvas {
       textRect.x + this.store.data.x - (pen.textLeft || 0) + 'px'; //+ 5
     this.inputParent.style.top =
       textRect.y + this.store.data.y - (pen.textTop || 0) + 'px'; //+ 5
-    this.inputParent.style.width = textRect.width + (pen.textLeft || 0) + 'px'; //(textRect.width < pen.width ? 0 : 10)
+    let _width = textRect.width + (pen.textLeft || 0);
+    this.inputParent.style.width = (_width < 0 ? 12 : _width) + 'px'; //(textRect.width < pen.width ? 0 : 10)
     this.inputParent.style.height = textRect.height + (pen.textTop || 0) + 'px'; //   (textRect.height < pen.height ? 0 : 10)
     this.inputParent.style.zIndex = '9999';
     this.inputParent.style.background = background;
@@ -5581,7 +5582,7 @@ export class Canvas {
       }
     } else {
       if (pen.whiteSpace === undefined || pen.whiteSpace === 'break-all') {
-        let tem = pen.width / scale - (pen.textLeft || 0);
+        let tem = (pen.calculative.worldTextRect.width || 12) / scale; //pen.width / scale - ( pen.textLeft || 0);
         if (tem < 0) {
           tem = 0;
         }
