@@ -1,4 +1,11 @@
-import { ctxFlip, ctxRotate, drawImage, Pen, setGlobalAlpha } from '../pen';
+import {
+  ctxFlip,
+  ctxRotate,
+  drawImage,
+  Pen,
+  setGlobalAlpha,
+  getParent,
+} from '../pen';
 import { Meta2dStore } from '../store';
 import { rgba } from '../utils';
 import { createOffscreen } from './offscreen';
@@ -118,6 +125,9 @@ export class CanvasImage {
         } else if (!pen.calculative.imageDrawed) {
           patchFlags = true;
         }
+        if (pen.parentId && this.store.animates.has(getParent(pen, true))) {
+          patchFlagsAnimate = true;
+        }
       }
     }
 
@@ -151,7 +161,8 @@ export class CanvasImage {
         if (
           !pen.calculative.hasImage ||
           pen.calculative.imageDrawed ||
-          this.store.animates.has(pen)
+          this.store.animates.has(pen) ||
+          this.store.animates.has(getParent(pen, true))
         ) {
           continue;
         }
@@ -187,6 +198,24 @@ export class CanvasImage {
         setGlobalAlpha(ctx, pen);
         drawImage(ctx, pen);
         ctx.restore();
+      }
+      //图片组合节点 动画
+      for (const pen of this.store.data.pens) {
+        if (!pen.calculative.hasImage || !pen.parentId) {
+          continue;
+        }
+        if (this.store.animates.has(getParent(pen, true))) {
+          pen.calculative.imageDrawed = true;
+          ctx.save();
+          ctxFlip(ctx, pen);
+          if (pen.calculative.rotate) {
+            ctxRotate(ctx, pen);
+          }
+
+          setGlobalAlpha(ctx, pen);
+          drawImage(ctx, pen);
+          ctx.restore();
+        }
       }
       ctx.restore();
     }
