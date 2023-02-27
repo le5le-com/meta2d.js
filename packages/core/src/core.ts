@@ -1149,20 +1149,39 @@ export class Meta2d {
   }
 
   httpTimer: any;
+  httpTimerList: any[] = [];
   connectHttp() {
     this.closeHttp();
-    const { http, httpTimeInterval, httpHeaders } = this.store.data;
-    if (http) {
-      this.httpTimer = setInterval(async () => {
-        // 默认每一秒请求一次
-        const res: Response = await fetch(http, {
-          headers: httpHeaders,
-        });
-        if (res.ok) {
-          const data = await res.text();
-          this.socketCallback(data);
+    const { https } = this.store.data;
+    if (https) {
+      https.forEach((item, index) => {
+        if (item.http) {
+          this.httpTimerList[index] = setInterval(async () => {
+            // 默认每一秒请求一次
+            const res: Response = await fetch(item.http, {
+              headers: item.httpHeaders,
+            });
+            if (res.ok) {
+              const data = await res.text();
+              this.socketCallback(data);
+            }
+          }, item.httpTimeInterval || 1000);
         }
-      }, httpTimeInterval || 1000);
+      });
+    } else {
+      const { http, httpTimeInterval, httpHeaders } = this.store.data;
+      if (http) {
+        this.httpTimer = setInterval(async () => {
+          // 默认每一秒请求一次
+          const res: Response = await fetch(http, {
+            headers: httpHeaders,
+          });
+          if (res.ok) {
+            const data = await res.text();
+            this.socketCallback(data);
+          }
+        }, httpTimeInterval || 1000);
+      }
     }
   }
 
@@ -1184,6 +1203,11 @@ export class Meta2d {
   closeHttp() {
     clearInterval(this.httpTimer);
     this.httpTimer = undefined;
+    this.httpTimerList &&
+      this.httpTimerList.forEach((_httpTimer) => {
+        clearInterval(_httpTimer);
+        _httpTimer = undefined;
+      });
   }
 
   socketCallback(message: string, topic = '') {

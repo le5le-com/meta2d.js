@@ -45,6 +45,13 @@ export interface Meta2dData {
   httpHeaders?: HeadersInit; //请求头
   version?: string; // 版本号
   id?: string;
+  https?: HttpOptions[];
+}
+
+export interface HttpOptions {
+  http?: string; // http 请求 Url
+  httpTimeInterval?: number; // http 请求间隔
+  httpHeaders?: HeadersInit; //请求头
 }
 
 export enum EditType {
