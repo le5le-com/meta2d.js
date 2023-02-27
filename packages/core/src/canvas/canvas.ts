@@ -2179,7 +2179,7 @@ export class Canvas {
   private movedActivePens(readyConnect?: boolean) {
     // 鼠标松手才更新，此处是更新前的值
     const initPens = deepClone(this.store.active, true);
-    const pens = deepClone(this.store.active, true);
+    // const pens = deepClone(this.store.active, true);
 
     this.store.active.forEach((pen, i: number) => {
       const { x, y } = this.movingPens[i];
@@ -2220,7 +2220,7 @@ export class Canvas {
     if (!dockPen && yDock) {
       dockPen = this.store.pens[yDock.penId];
     }
-
+    const pens = deepClone(this.store.active, true);
     // 移动到连线端点，自动连线
     if (
       readyConnect &&
