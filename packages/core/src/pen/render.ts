@@ -701,8 +701,8 @@ export function renderPenRaw(
   if (pen.calculative.flipX) {
     if (rect) {
       ctx.translate(
-        pen.calculative.worldRect.x + pen.calculative.worldRect.ex - rect.x,
-        -rect.y
+        pen.calculative.worldRect.x + pen.calculative.worldRect.ex,
+        0
       );
     } else {
       ctx.translate(
@@ -715,8 +715,8 @@ export function renderPenRaw(
   if (pen.calculative.flipY) {
     if (rect) {
       ctx.translate(
-        -rect.x,
-        pen.calculative.worldRect.y + pen.calculative.worldRect.ey - rect.x
+        0,
+        pen.calculative.worldRect.y + pen.calculative.worldRect.ey
       );
     } else {
       ctx.translate(
