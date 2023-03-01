@@ -4669,9 +4669,6 @@ export class Canvas {
         } else {
           pen.calculative.rotate = pen.rotate;
         }
-
-        pen.calculative.worldRect = pen.calculative.initRect;
-
         //其他回到最初始状态
         const originStatus = deepClone(this.store.animateMap.get(pen));
         if (originStatus) {
@@ -4682,6 +4679,7 @@ export class Canvas {
             history: false,
           });
         }
+        pen.calculative.worldRect = pen.calculative.initRect;
       }
       this.updatePenRect(pen, { worldRectIsReady: true });
       if (pen.calculative.text !== pen.text) {
