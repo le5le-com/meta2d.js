@@ -3020,7 +3020,7 @@ export class Canvas {
 
   activeHistory() {
     let before = this.store.histories[this.store.historyIndex];
-    if (before) {
+    if (before && before.type === EditType.Add) {
       before.pens.forEach((pen) => {
         if (!pen.calculative) {
           return;
