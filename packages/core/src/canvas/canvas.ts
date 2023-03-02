@@ -2733,7 +2733,7 @@ export class Canvas {
       anchor.connectTo
     ) {
       const connectPen = this.findOne(anchor.connectTo);
-      if (!connectPen?.calculative.active) {
+      if (connectPen?.calculative && !connectPen?.calculative.active) {
         pen = connectPen;
         const connectAnchor = connectPen.calculative.worldAnchors.find(
           (item) => item.id === anchor.anchorId
@@ -4281,6 +4281,21 @@ export class Canvas {
         this.store.pens[this.store.activeAnchor.penId],
         this.store.activeAnchor
       );
+    }
+    let anchorId = this.store.activeAnchor.id;
+    let connectedLine = this.store.pens[
+      this.store.activeAnchor.penId
+    ].connectedLines?.filter((item) => item.anchor === anchorId);
+    if (connectedLine && connectedLine.length > 0) {
+      connectedLine.forEach((connected) => {
+        const pen = this.store.pens[connected.lineId];
+        disconnectLine(
+          this.store.pens[this.store.activeAnchor.penId],
+          this.store.activeAnchor,
+          pen,
+          getAnchor(pen, connected.lineAnchor)
+        );
+      });
     }
 
     const line = this.store.active[0];
