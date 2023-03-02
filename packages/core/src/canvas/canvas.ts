@@ -4556,7 +4556,7 @@ export class Canvas {
       return;
     }
     const initPens = !doing && deepClone(pens, true);
-    translateRect(this.activeRect, x, y);
+    this.activeRect && translateRect(this.activeRect, x, y);
 
     const containChildPens = this.getAllByPens(pens);
     pens.forEach((pen) => {
@@ -4595,7 +4595,7 @@ export class Canvas {
       this.updateLines(pen);
       pen.onMove?.(pen);
     });
-    this.getSizeCPs();
+    this.activeRect && this.getSizeCPs();
     this.render();
     this.tooltip.translate(x, y);
 
