@@ -1,11 +1,11 @@
 import { getValidValue, leChartPen } from './common';
 
 //仪表全盘
-let clockInterval: any;
 export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   if (!pen.onAdd) {
     pen.onAdd = onAdd;
     pen.onDestroy = onDestroy;
+    pen.onClick = onclick;
   }
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
@@ -298,7 +298,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
 
 function onAdd(pen: leChartPen) {
   if (pen.isClock) {
-    clockInterval = setInterval(() => {
+    pen.clockInterval = setInterval(() => {
       var date = new Date();
       var second = date.getSeconds();
       var minute = date.getMinutes() + second / 60;
@@ -333,5 +333,15 @@ function onAdd(pen: leChartPen) {
 }
 
 function onDestroy(pen: any) {
-  clearInterval(clockInterval);
+  if (pen.clockInterval) {
+    clearInterval(pen.clockInterval);
+    pen.clockInterval = undefined;
+  }
+}
+
+function onclick(pen: any) {
+  if (pen.isClock) {
+    pen.onDestroy(pen);
+    pen.onAdd(pen);
+  }
 }

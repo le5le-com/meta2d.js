@@ -48,4 +48,5 @@ export interface leChartPen extends Pen {
   frames?: leChartPen[];
   xAxisData?: string[];
   replaceMode?: ReplaceMode;
+  clockInterval?: NodeJS.Timer;
 }
