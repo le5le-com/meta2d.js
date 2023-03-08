@@ -5612,7 +5612,7 @@ export class Canvas {
           : pen.textHeight * font_scale
       }px;`;
     } else {
-      let tem = pen.height / scale - (pen.textTop || 0);
+      let tem = pen.calculative.worldRect.height / scale - (pen.textTop || 0);
       if (tem < 0) {
         tem = 0;
       }
@@ -5663,8 +5663,12 @@ export class Canvas {
     if (pen.whiteSpace !== 'nowrap') {
       let textWidth = pen.fontSize * 1.2 * pen.text.length;
       let contentWidth =
-        (pen.textWidth || pen.width / scale) *
-        Math.floor(pen.height / scale / (pen.lineHeight * pen.fontSize));
+        (pen.textWidth || pen.calculative.worldRect.width / scale) *
+        Math.floor(
+          pen.calculative.worldRect.height /
+            scale /
+            (pen.lineHeight * pen.fontSize)
+        );
       if (textWidth > contentWidth) {
         style += 'justify-content: start;';
       }
