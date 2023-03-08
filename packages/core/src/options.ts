@@ -69,6 +69,7 @@ export interface Options {
   mouseRightActive?: boolean; //是否允许右键选中节点
   disableClipboard?: boolean; //是否禁止系统剪切板
   drawingLineLength?: number; //绘制过程中允许的最大长度，0表示不限
+  disableTouchPadScale?: boolean; //是否禁止触控板缩放
 }
 
 export const defaultOptions: Options = {
@@ -126,4 +127,5 @@ export const defaultOptions: Options = {
   mouseRightActive: true,
   disableClipboard: false,
   drawingLineLength: 0,
+  disableTouchPadScale: false,
 };

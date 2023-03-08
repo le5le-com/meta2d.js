@@ -493,6 +493,31 @@ export class Canvas {
     }
     e.preventDefault();
     e.stopPropagation();
+
+    //禁止触摸屏双指缩放操作
+    if (
+      this.store.options.disableTouchPadScale &&
+      e.ctrlKey &&
+      e.deltaY !== 0
+    ) {
+      return;
+    }
+
+    //window触控板只允许平移
+    let isWin = navigator.userAgent.indexOf('Win') !== -1;
+    if (isWin && !e.ctrlKey && Math.abs(e.deltaY) !== 125) {
+      this.translate(e.deltaX, e.deltaY);
+      return;
+    }
+
+    //mac触控板只允许平移（排除普通鼠标的情况）
+    let isMac =
+      /macintosh|mac os x/i.test(navigator.userAgent) ||
+      navigator.platform.indexOf('Mac') !== -1;
+    if (isMac && !e.ctrlKey && (e as any).wheelDeltaY % 240 !== 0) {
+      this.translate(e.deltaX, e.deltaY);
+      return;
+    }
     if (this.store.options.scroll && !e.ctrlKey && !e.metaKey && this.scroll) {
       this.scroll.wheel(e.deltaY < 0);
       return;
@@ -802,6 +827,20 @@ export class Canvas {
           'disableAnchor',
           this.store.options.disableAnchor
         );
+        break;
+      case '=':
+        if (e.ctrlKey || e.metaKey) {
+          this.scale(this.store.data.scale + 0.1);
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        break;
+      case '-':
+        if (e.ctrlKey || e.metaKey) {
+          this.scale(this.store.data.scale - 0.1);
+          e.preventDefault();
+          e.stopPropagation();
+        }
         break;
     }
 
