@@ -1781,6 +1781,15 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
         pen.prevFrame[k] + (frame[k] - pen.prevFrame[k]) * process;
       pen.calculative[k] = Math.round(current * 100) / 100;
     } else {
+      if (k === 'visible') {
+        if (pen.calculative.image) {
+          if (pen.isBottom) {
+            pen.calculative.canvas.canvasImageBottom.init();
+          } else {
+            pen.calculative.canvas.canvasImage.init();
+          }
+        }
+      }
       pen.calculative[k] = frame[k];
       const v: any = {};
       v[k] = frame[k];
