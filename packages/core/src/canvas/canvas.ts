@@ -1312,7 +1312,7 @@ export class Canvas {
 
     //shift 快捷添加锚点并连线
     if (!this.store.options.autoAnchor && !this.drawingLine) {
-      if (e.shiftKey) {
+      if (e.shiftKey && !e.ctrlKey) {
         this.setAnchor(this.store.pointAt);
         this.drawingLineName = this.store.options.drawingLineName;
         const anchor = this.store.activeAnchor;
