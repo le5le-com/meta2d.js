@@ -503,9 +503,9 @@ export class Canvas {
       return;
     }
 
-    //window触控板只允许平移
+    //window触控板只允许平移 触摸屏一般不超过100
     let isWin = navigator.userAgent.indexOf('Win') !== -1;
-    if (isWin && !e.ctrlKey && Math.abs(e.deltaY) !== 125) {
+    if (isWin && !e.ctrlKey && Math.abs(e.deltaY) < 100) {
       this.translate(e.deltaX, e.deltaY);
       return;
     }
