@@ -506,7 +506,7 @@ export class Canvas {
     //window触控板只允许平移 触摸屏一般不超过100
     let isWin = navigator.userAgent.indexOf('Win') !== -1;
     if (isWin && !e.ctrlKey && Math.abs(e.deltaY) < 100) {
-      this.translate(e.deltaX, e.deltaY);
+      this.translate(-e.deltaX, -e.deltaY);
       return;
     }
 
@@ -515,7 +515,7 @@ export class Canvas {
       /macintosh|mac os x/i.test(navigator.userAgent) ||
       navigator.platform.indexOf('Mac') !== -1;
     if (isMac && !e.ctrlKey && (e as any).wheelDeltaY % 240 !== 0) {
-      this.translate(e.deltaX, e.deltaY);
+      this.translate(-e.deltaX, -e.deltaY);
       return;
     }
     if (this.store.options.scroll && !e.ctrlKey && !e.metaKey && this.scroll) {
