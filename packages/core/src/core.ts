@@ -930,6 +930,7 @@ export class Meta2d {
       });
       this.initImageCanvas([parent]);
     }
+    this.store.emitter.emit('combine', [parent]);
     this.render();
   }
 
