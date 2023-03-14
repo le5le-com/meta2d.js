@@ -5620,15 +5620,20 @@ export class Canvas {
         pen.fontSize * scale < 12 ? tem * font_scale : tem * scale * font_scale
       }px;`;
     }
+    let _textWidth = null;
     if (pen.textWidth) {
+      _textWidth =
+        (pen.textWidth < 1 && pen.textWidth) > -1
+          ? pen.textWidth * pen.calculative.worldRect.width
+          : pen.textWidth;
       if (pen.whiteSpace !== 'pre-line') {
-        if (pen.textWidth < pen.fontSize) {
+        if (_textWidth < pen.fontSize) {
           style += `width:${pen.fontSize * 1.2 * font_scale}px;`;
         } else {
           style += `width:${
             scale > 1
-              ? pen.textWidth * font_scale * scale
-              : pen.textWidth * font_scale
+              ? _textWidth * font_scale * scale
+              : _textWidth * font_scale
           }px;`;
         }
       }
@@ -5663,7 +5668,7 @@ export class Canvas {
     if (pen.whiteSpace !== 'nowrap') {
       let textWidth = pen.fontSize * 1.2 * pen.text.length;
       let contentWidth =
-        (pen.textWidth || pen.calculative.worldRect.width / scale) *
+        (_textWidth || pen.calculative.worldRect.width / scale) *
         Math.floor(
           pen.calculative.worldRect.height /
             scale /
