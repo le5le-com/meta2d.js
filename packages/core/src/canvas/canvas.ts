@@ -4176,9 +4176,9 @@ export class Canvas {
     if (
       !this.store.options.moveConnectedLine &&
       this.store.active.length === 1 &&
-      (this.store.active[0].anchors[0].connectTo ||
+      (this.store.active[0].anchors[0]?.connectTo ||
         this.store.active[0].anchors[this.store.active[0].anchors.length - 1]
-          .connectTo)
+          ?.connectTo)
     ) {
       return;
     }
@@ -4266,8 +4266,8 @@ export class Canvas {
       for (let i = 0; i < this.store.active.length; i++) {
         const pen = this.store.active[i];
         if (
-          pen.anchors[0].connectTo ||
-          pen.anchors[pen.anchors.length - 1].connectTo
+          pen.anchors[0]?.connectTo ||
+          pen.anchors[pen.anchors.length - 1]?.connectTo
         ) {
           this.store.active.splice(i, 1);
           pen.calculative.active = undefined;
