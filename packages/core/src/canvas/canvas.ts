@@ -494,6 +494,13 @@ export class Canvas {
     e.preventDefault();
     e.stopPropagation();
 
+    if (this.store.options.disableScale) {
+      return;
+    }
+    if (this.store.data.locked === LockState.Disable) return;
+    if (this.store.data.locked === LockState.DisableScale) return;
+    if (this.store.data.locked === LockState.DisableMoveScale) return;
+
     //禁止触摸屏双指缩放操作
     if (
       this.store.options.disableTouchPadScale &&
@@ -522,13 +529,6 @@ export class Canvas {
       this.scroll.wheel(e.deltaY < 0);
       return;
     }
-
-    if (this.store.options.disableScale) {
-      return;
-    }
-    if (this.store.data.locked === LockState.Disable) return;
-    if (this.store.data.locked === LockState.DisableScale) return;
-    if (this.store.data.locked === LockState.DisableMoveScale) return;
     // 触摸板平移
     const isTouchPad = !(!e.deltaX && e.deltaY);
     const now = performance.now();
