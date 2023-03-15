@@ -3060,13 +3060,11 @@ export class Canvas {
   activeHistory() {
     let before = this.store.histories[this.store.historyIndex];
     if (before && before.type === EditType.Add) {
+      const pens = [];
       before.pens.forEach((pen) => {
-        if (!pen.calculative) {
-          return;
-        }
-        pen.calculative.canvas = this;
+        pens.push(this.store.pens[pen.id]);
       });
-      this.active(before.pens);
+      this.active(pens);
     }
   }
 
