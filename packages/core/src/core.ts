@@ -340,7 +340,7 @@ export class Meta2d {
     if (this.websocket && this.websocket.readyState === 1) {
       this.websocket.send(data);
     }
-    if (this.store.data.http) {
+    if (this.store.data.https || this.store.data.http) {
       this.sendDatabyHttp(data);
     }
     this.store.emitter.emit('sendData', data);
