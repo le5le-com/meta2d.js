@@ -1,4 +1,4 @@
-import { IValue, LineAnimateType, LockState, Pen } from './model';
+import { ColorStop, IValue, LineAnimateType, LockState, Pen } from './model';
 import { getLineRect, getSplitAnchor, line } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
@@ -101,6 +101,215 @@ function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   grd.addColorStop(1, gradientToColor);
 
   return grd;
+}
+
+function getLinearGradientPoints(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  r: number
+) {
+  let slantAngle = 0;
+  slantAngle = Math.PI / 2 - Math.atan2(y2 - y1, x2 - x1);
+  const originX = (x1 + x2) / 2;
+  const originY = (y1 + y2) / 2;
+
+  const perpX1 = originX + r * Math.sin((90 * Math.PI) / 180 - slantAngle);
+  const perpY1 = originY + r * -Math.cos((90 * Math.PI) / 180 - slantAngle);
+
+  const perpX2 = originX + r * Math.sin((270 * Math.PI) / 180 - slantAngle);
+  const perpY2 = originY + r * -Math.cos((270 * Math.PI) / 180 - slantAngle);
+
+  return [perpX1, perpY1, perpX2, perpY2];
+}
+
+function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { worldRect, gradientColors, gradientRadius } = pen.calculative;
+  if (!gradientColors) {
+    return;
+  }
+
+  const { width, height, center } = worldRect;
+  const { x: centerX, y: centerY } = center;
+  let r = width;
+  if (r < height) {
+    r = height;
+  }
+  r *= 0.5;
+  const { colors } = formatGradient(gradientColors);
+  const grd = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    r * (gradientRadius || 0),
+    centerX,
+    centerY,
+    r
+  );
+  colors.forEach((stop) => {
+    grd.addColorStop(stop.i, stop.color);
+  });
+
+  return grd;
+}
+
+function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  let points = [
+    { x: ex, y: y + height / 2 },
+    { x: x, y: y + height / 2 },
+  ];
+  let r = width / 2;
+  if (width > height) {
+    r = height / 2;
+  }
+  const { angle, colors } = formatGradient(pen.calculative.gradientColors);
+  points.forEach((point) => {
+    rotatePoint(point, angle, center);
+  });
+  return getLinearGradient(ctx, points, colors, r);
+}
+
+function formatGradient(color: string) {
+  if (typeof color == 'string' && color.startsWith('linear-gradient')) {
+    let arr = color.slice(16, -2).split('deg,');
+    if (arr.length > 1) {
+      let _arr = arr[1].split('%,');
+      const colors = [];
+      _arr.forEach((stap) => {
+        let _arr = stap.split(') ');
+        colors.push({
+          color: rgbaToHex(_arr[0] + ')'),
+          i: parseFloat(_arr[1]) / 100,
+        });
+      });
+      return {
+        angle: parseFloat(arr[0]),
+        colors,
+      };
+    } else {
+      return {
+        angle: parseFloat(arr[0]),
+        colors: [],
+      };
+    }
+  } else {
+    return {
+      angle: 0,
+      colors: [],
+    };
+  }
+}
+
+function rgbaToHex(value) {
+  if (/rgba?/.test(value)) {
+    let array = value.split(',');
+    //不符合rgb或rgb规则直接return
+    if (array.length < 3) return '';
+    value = '#';
+    for (let i = 0, color; (color = array[i++]); ) {
+      if (i < 4) {
+        //前三位转换成16进制
+        color = parseInt(color.replace(/[^\d]/gi, ''), 10).toString(16);
+        value += color.length == 1 ? '0' + color : color;
+      } else {
+        //rgba的透明度转换成16进制
+        color = color.replace(')', '');
+        let colorA = parseInt(color * 255 + '');
+        let colorAHex = colorA.toString(16);
+        value += colorAHex;
+      }
+    }
+    value = value.toUpperCase();
+  }
+  return value;
+}
+
+function getLineGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  let points = [
+    { x: ex, y: y + height / 2 },
+    { x: x, y: y + height / 2 },
+  ];
+  let r = width / 2;
+  if (width > height) {
+    r = height / 2;
+  }
+  const { angle, colors } = formatGradient(pen.calculative.lineGradientColors);
+
+  points.forEach((point) => {
+    rotatePoint(point, angle, center);
+  });
+  return getLinearGradient(ctx, points, colors, r);
+}
+
+function getLinearGradient(
+  ctx: CanvasRenderingContext2D,
+  points: Point[],
+  colors: ColorStop[],
+  radius: number
+): CanvasGradient {
+  let arr = getLinearGradientPoints(
+    points[0].x,
+    points[0].y,
+    points[1].x,
+    points[1].y,
+    radius
+  );
+  let gradient = ctx.createLinearGradient(arr[0], arr[1], arr[2], arr[3]);
+  colors.forEach((stop) => {
+    gradient.addColorStop(stop.i, stop.color);
+  });
+  return gradient;
+}
+
+function drawLinearGradientLine(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  points: Point[]
+) {
+  let colors = [];
+  if (pen.calculative.gradientColorStop) {
+    colors = pen.calculative.gradientColorStop;
+  } else {
+    colors = formatGradient(pen.calculative.lineGradientColors).colors;
+    pen.calculative.gradientColorStop = colors;
+  }
+  ctx.strokeStyle = getLinearGradient(
+    ctx,
+    points,
+    colors,
+    pen.calculative.lineWidth / 2
+  );
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  ctx.lineTo(points[1].x, points[1].y);
+  ctx.stroke();
+}
+
+function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const anchors = pen.calculative.worldAnchors;
+  for (let i = 0; i < anchors.length - 1; i++) {
+    if (
+      (pen.lineName === 'curve' || pen.lineName === 'mind') &&
+      anchors[i].curvePoints
+    ) {
+      drawLinearGradientLine(ctx, pen, [anchors[i], anchors[i].curvePoints[0]]);
+      for (let j = 0; j < anchors[i].curvePoints.length - 1; j++) {
+        drawLinearGradientLine(ctx, pen, [
+          anchors[i].curvePoints[j],
+          anchors[i].curvePoints[j + 1],
+        ]);
+      }
+      let index = anchors[i].curvePoints.length - 1;
+      drawLinearGradientLine(ctx, pen, [
+        anchors[i].curvePoints[index],
+        anchors[i + 1],
+      ]);
+    } else {
+      drawLinearGradientLine(ctx, pen, [anchors[i], anchors[i + 1]]);
+    }
+  }
 }
 
 function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
@@ -563,6 +772,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   let fill: any;
   // 该变量控制在 hover active 状态下的节点是否设置填充颜色
   let setBack = true;
+  let lineGradientFlag = false;
   if (pen.calculative.hover) {
     ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
@@ -590,7 +800,20 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       let stroke: string | CanvasGradient | CanvasPattern;
       // TODO: 线只有线性渐变
       if (pen.calculative.strokeType === Gradient.Linear) {
-        stroke = strokeLinearGradient(ctx, pen);
+        if (pen.calculative.lineGradientColors) {
+          if (pen.name === 'line') {
+            lineGradientFlag = true;
+          } else {
+            if (pen.calculative.lineGradient) {
+              stroke = pen.calculative.lineGradient;
+            } else {
+              stroke = getLineGradient(ctx, pen);
+              pen.calculative.lineGradient = stroke;
+            }
+          }
+        } else {
+          stroke = strokeLinearGradient(ctx, pen);
+        }
       } else {
         stroke = pen.calculative.color;
       }
@@ -605,9 +828,31 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     } else {
       let back: string | CanvasGradient | CanvasPattern;
       if (pen.calculative.bkType === Gradient.Linear) {
-        back = drawBkLinearGradient(ctx, pen);
+        if (pen.calculative.gradientColors) {
+          if (pen.name !== 'line') {
+            //连线不考虑渐进背景
+            if (pen.calculative.gradient) {
+              //位置变化/放大缩小操作不会触发重新计算
+              back = pen.calculative.gradient;
+            } else {
+              back = getBkGradient(ctx, pen);
+              pen.calculative.gradient = back;
+            }
+          }
+        } else {
+          back = drawBkLinearGradient(ctx, pen);
+        }
       } else if (pen.calculative.bkType === Gradient.Radial) {
-        back = drawBkRadialGradient(ctx, pen);
+        if (pen.calculative.gradientColors) {
+          if (pen.calculative.radialGradient) {
+            back = pen.calculative.radialGradient;
+          } else {
+            back = getBkRadialGradient(ctx, pen);
+            pen.calculative.radialGradient = back;
+          }
+        } else {
+          back = drawBkRadialGradient(ctx, pen);
+        }
       } else {
         back = pen.calculative.background || store.data.penBackground;
       }
@@ -634,11 +879,13 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.shadowOffsetY = pen.calculative.shadowOffsetY;
     ctx.shadowBlur = pen.calculative.shadowBlur;
   }
+  if (lineGradientFlag) {
+    ctxDrawLinearGradientPath(ctx, pen);
+  } else {
+    ctxDrawPath(true, ctx, pen, store, fill);
 
-  ctxDrawPath(true, ctx, pen, store, fill);
-
-  ctxDrawCanvas(ctx, pen);
-
+    ctxDrawCanvas(ctx, pen);
+  }
   if (!(pen.image && pen.calculative.img) && pen.calculative.icon) {
     drawIcon(ctx, pen);
   }

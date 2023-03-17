@@ -94,6 +94,12 @@ export enum LineAnimateType {
   Beads, // 水珠流动
   Dot, // 圆点
 }
+
+export interface ColorStop {
+  i: number; //取值0-1,色标位置
+  color: string;
+}
+
 export interface Pen extends Rect {
   id?: string;
   tags?: string[];
@@ -131,17 +137,37 @@ export interface Pen extends Rect {
   activeColor?: string;
   activeBackground?: string;
   bkType?: Gradient;
+  /**
+   * @deprecated 改用 gradientColors
+   */
   gradientFromColor?: string;
+  /**
+   * @deprecated 改用 gradientColors
+   */
   gradientToColor?: string;
+  /**
+   * @deprecated 改用 gradientColors
+   */
   gradientAngle?: number;
   gradientRadius?: number;
 
   // TODO: stroke 尚无径向渐变
   strokeType?: Gradient;
+  /**
+   * @deprecated 改用 lineGradientColors
+   */
   lineGradientFromColor?: string;
+  /**
+   * @deprecated 改用 lineGradientColors
+   */
   lineGradientToColor?: string;
+  /**
+   * @deprecated 改用 lineGradientColors
+   */
   lineGradientAngle?: number;
 
+  gradientColors?: string;
+  lineGradientColors?: string;
   lineCap?: CanvasLineCap;
   lineJoin?: CanvasLineJoin;
   shadowColor?: string;
@@ -317,15 +343,33 @@ export interface Pen extends Rect {
     background?: string;
     // anchorColor?: string;    // TODO: 锚点颜色动画，应该不需要
     bkType?: number;
+    /**
+     * @deprecated 改用 gradientColors
+     */
     gradientFromColor?: string;
+    /**
+     * @deprecated 改用 gradientColors
+     */
     gradientToColor?: string;
+    /**
+     * @deprecated 改用 gradientColors
+     */
     gradientAngle?: number;
     gradientRadius?: number;
 
     // TODO: stroke 尚无径向渐变
     strokeType?: Gradient;
+    /**
+     * @deprecated 改用 lineGradientColors
+     */
     lineGradientFromColor?: string;
+    /**
+     * @deprecated 改用 lineGradientColors
+     */
     lineGradientToColor?: string;
+    /**
+     * @deprecated 改用 lineGradientColors
+     */
     lineGradientAngle?: number;
     shadowColor?: string;
     shadowBlur?: number;
@@ -437,6 +481,13 @@ export interface Pen extends Rect {
 
     // 不应该被deepClone多份的数据，例如外部第三方组件库挂载点，
     singleton?: any;
+    gradientColors?: string;
+    lineGradientColors?: string;
+    gradient?: CanvasGradient; //临时渐进色 防止每次都计算
+    lineGradient?: CanvasGradient;
+    radialGradient?: CanvasGradient;
+    gradientColorStop?: ColorStop[]; //临时 连线ColorStop
+    gradientTimer?: any;
   };
 
   // 前一个动画帧状态数据
@@ -572,6 +623,8 @@ export const formatAttrs: Set<string> = new Set([
   'animateType',
   'animateReverse',
   'background',
+  'gradientColors',
+  'lineGradientColors',
 ]);
 
 /**
