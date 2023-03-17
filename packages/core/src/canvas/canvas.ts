@@ -4338,7 +4338,7 @@ export class Canvas {
     let anchorId = this.store.activeAnchor.id;
     let connectedLine = this.store.pens[
       this.store.activeAnchor.penId
-    ].connectedLines?.filter((item) => item.anchor === anchorId);
+    ]?.connectedLines?.filter((item) => item.anchor === anchorId);
     if (connectedLine && connectedLine.length > 0) {
       connectedLine.forEach((connected) => {
         const pen = this.store.pens[connected.lineId];
