@@ -494,6 +494,13 @@ export class Canvas {
     e.preventDefault();
     e.stopPropagation();
 
+    if (this.store.options.disableScale) {
+      return;
+    }
+    if (this.store.data.locked === LockState.Disable) return;
+    if (this.store.data.locked === LockState.DisableScale) return;
+    if (this.store.data.locked === LockState.DisableMoveScale) return;
+
     //禁止触摸屏双指缩放操作
     if (
       this.store.options.disableTouchPadScale &&
@@ -522,13 +529,6 @@ export class Canvas {
       this.scroll.wheel(e.deltaY < 0);
       return;
     }
-
-    if (this.store.options.disableScale) {
-      return;
-    }
-    if (this.store.data.locked === LockState.Disable) return;
-    if (this.store.data.locked === LockState.DisableScale) return;
-    if (this.store.data.locked === LockState.DisableMoveScale) return;
     // 触摸板平移
     const isTouchPad = !(!e.deltaX && e.deltaY);
     const now = performance.now();
@@ -3060,13 +3060,11 @@ export class Canvas {
   activeHistory() {
     let before = this.store.histories[this.store.historyIndex];
     if (before && before.type === EditType.Add) {
+      const pens = [];
       before.pens.forEach((pen) => {
-        if (!pen.calculative) {
-          return;
-        }
-        pen.calculative.canvas = this;
+        pens.push(this.store.pens[pen.id]);
       });
-      this.active(before.pens);
+      this.active(pens);
     }
   }
 
@@ -4192,9 +4190,9 @@ export class Canvas {
     if (
       !this.store.options.moveConnectedLine &&
       this.store.active.length === 1 &&
-      (this.store.active[0].anchors[0].connectTo ||
+      (this.store.active[0].anchors[0]?.connectTo ||
         this.store.active[0].anchors[this.store.active[0].anchors.length - 1]
-          .connectTo)
+          ?.connectTo)
     ) {
       return;
     }
@@ -4282,8 +4280,8 @@ export class Canvas {
       for (let i = 0; i < this.store.active.length; i++) {
         const pen = this.store.active[i];
         if (
-          pen.anchors[0].connectTo ||
-          pen.anchors[pen.anchors.length - 1].connectTo
+          pen.anchors[0]?.connectTo ||
+          pen.anchors[pen.anchors.length - 1]?.connectTo
         ) {
           this.store.active.splice(i, 1);
           pen.calculative.active = undefined;
@@ -5636,15 +5634,20 @@ export class Canvas {
         pen.fontSize * scale < 12 ? tem * font_scale : tem * scale * font_scale
       }px;`;
     }
+    let _textWidth = null;
     if (pen.textWidth) {
+      _textWidth =
+        (pen.textWidth < 1 && pen.textWidth) > -1
+          ? pen.textWidth * pen.calculative.worldRect.width
+          : pen.textWidth;
       if (pen.whiteSpace !== 'pre-line') {
-        if (pen.textWidth < pen.fontSize) {
+        if (_textWidth < pen.fontSize) {
           style += `width:${pen.fontSize * 1.2 * font_scale}px;`;
         } else {
           style += `width:${
             scale > 1
-              ? pen.textWidth * font_scale * scale
-              : pen.textWidth * font_scale
+              ? _textWidth * font_scale * scale
+              : _textWidth * font_scale
           }px;`;
         }
       }
@@ -5679,7 +5682,7 @@ export class Canvas {
     if (pen.whiteSpace !== 'nowrap') {
       let textWidth = pen.fontSize * 1.2 * pen.text.length;
       let contentWidth =
-        (pen.textWidth || pen.calculative.worldRect.width / scale) *
+        (_textWidth || pen.calculative.worldRect.width / scale) *
         Math.floor(
           pen.calculative.worldRect.height /
             scale /
