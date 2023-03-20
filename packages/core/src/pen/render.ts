@@ -177,11 +177,19 @@ function formatGradient(color: string) {
       let _arr = arr[1].split('%,');
       const colors = [];
       _arr.forEach((stap) => {
-        let _arr = stap.split(') ');
-        colors.push({
-          color: rgbaToHex(_arr[0] + ')'),
-          i: parseFloat(_arr[1]) / 100,
-        });
+        if (/rgba?/.test(stap)) {
+          let _arr = stap.split(') ');
+          colors.push({
+            color: rgbaToHex(_arr[0] + ')'),
+            i: parseFloat(_arr[1]) / 100,
+          });
+        } else {
+          let _arr = stap.split(' ');
+          colors.push({
+            color: _arr[0],
+            i: parseFloat(_arr[1]) / 100,
+          });
+        }
       });
       return {
         angle: parseFloat(arr[0]),
