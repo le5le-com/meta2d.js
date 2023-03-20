@@ -790,6 +790,7 @@ export class Meta2d {
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
       this.canvas.updateLines(pen);
+      this.store.animateMap.delete(pen);
     });
     this.initImageCanvas(pens);
     setTimeout(() => {

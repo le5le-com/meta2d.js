@@ -5038,7 +5038,6 @@ export class Canvas {
       }
       dels.forEach((pen) => {
         this.store.animates.delete(pen);
-        this.store.animateMap.delete(pen);
       });
       this.render(false);
       this.animateRendering = false;
