@@ -889,6 +889,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
   if (lineGradientFlag) {
     ctxDrawLinearGradientPath(ctx, pen);
+    ctxDrawLinePath(true, ctx, pen, store);
   } else {
     ctxDrawPath(true, ctx, pen, store, fill);
 
@@ -1173,6 +1174,42 @@ export function ctxDrawPath(
 }
 
 /**
+ * 连线配置线条渐进后，动画效果、起始点、终点的绘制
+ */
+export function ctxDrawLinePath(
+  canUsePath = true,
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  store: Meta2dStore
+) {
+  const path = canUsePath
+    ? store.path2dMap.get(pen)
+    : globalStore.path2dDraws[pen.name];
+  if (path) {
+    if (pen.type) {
+      if (pen.calculative.animatePos) {
+        ctx.save();
+        setCtxLineAnimate(ctx, pen, store);
+        if (path instanceof Path2D) {
+          ctx.stroke(path);
+        } else {
+          path(pen, ctx);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      pen.fromArrow && renderFromArrow(ctx, pen, store);
+      pen.toArrow && renderToArrow(ctx, pen, store);
+      //TODO 锚点处渐进色的过渡
+      if (pen.calculative.active && !pen.calculative.pencil) {
+        renderLineAnchors(ctx, pen);
+      }
+    }
+  }
+}
+
+/**
  * 设置线条动画，ctx 的 strokeStyle lineDash 等属性更改
  */
 export function setCtxLineAnimate(
@@ -1181,6 +1218,8 @@ export function setCtxLineAnimate(
   store: Meta2dStore
 ) {
   ctx.strokeStyle = pen.animateColor || store.options.animateColor;
+  pen.calculative.animateLineWidth &&
+    (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);
   let len = 0;
   switch (pen.lineAnimateType) {
     case LineAnimateType.Beads:
@@ -1209,7 +1248,8 @@ export function setCtxLineAnimate(
       if (len < 6) {
         len = 6;
       }
-      ctx.lineWidth = len;
+      ctx.lineWidth =
+        (pen.calculative.animateLineWidth || len) * store.data.scale;
       ctx.setLineDash([0.1, pen.length]);
       break;
     default:
