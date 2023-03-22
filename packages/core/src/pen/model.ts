@@ -312,6 +312,7 @@ export interface Pen extends Rect {
   lockedOnCombine?: LockState; // 组合成 combine ，该节点的 locked 值
   ratio?: boolean; //宽高比锁定
   animateLineWidth?: number; //连线动画线宽
+  gradientSmooth?: number; //渐进色平滑度
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -490,6 +491,7 @@ export interface Pen extends Rect {
     gradientColorStop?: ColorStop[]; //临时 连线ColorStop
     gradientTimer?: any;
     animateLineWidth?: number;
+    gradientSmooth?: number; //渐进色平滑度
   };
 
   // 前一个动画帧状态数据

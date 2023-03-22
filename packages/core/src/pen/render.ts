@@ -297,27 +297,238 @@ function drawLinearGradientLine(
 
 function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
+  let smoothLenth =
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 1);
   for (let i = 0; i < anchors.length - 1; i++) {
     if (
       (pen.lineName === 'curve' || pen.lineName === 'mind') &&
       anchors[i].curvePoints
     ) {
-      drawLinearGradientLine(ctx, pen, [anchors[i], anchors[i].curvePoints[0]]);
-      for (let j = 0; j < anchors[i].curvePoints.length - 1; j++) {
+      if (i > 0) {
+        let lastCurvePoints = anchors[i - 1].curvePoints;
+        if (lastCurvePoints) {
+          //上一个存在锚点
+          smoothTransition(
+            ctx,
+            pen,
+            lastCurvePoints[lastCurvePoints.length - 1],
+            anchors[i],
+            anchors[i].curvePoints[0]
+          );
+        } else {
+          smoothTransition(
+            ctx,
+            pen,
+            anchors[i - 1],
+            anchors[i],
+            anchors[i].curvePoints[0]
+          );
+        }
+        //获取当前相对于0的位置
+        let next = getSmoothAdjacent(
+          smoothLenth,
+          anchors[i],
+          anchors[i].curvePoints[0]
+        );
+        drawLinearGradientLine(ctx, pen, [next, anchors[i].curvePoints[1]]);
+      } else {
+        drawLinearGradientLine(ctx, pen, [
+          anchors[i].curvePoints[0],
+          anchors[i].curvePoints[1],
+        ]);
+      }
+      let len = anchors[i].curvePoints.length - 1;
+      for (let j = 1; j < len; j++) {
         drawLinearGradientLine(ctx, pen, [
           anchors[i].curvePoints[j],
           anchors[i].curvePoints[j + 1],
         ]);
       }
-      let index = anchors[i].curvePoints.length - 1;
-      drawLinearGradientLine(ctx, pen, [
-        anchors[i].curvePoints[index],
+      let last = getSmoothAdjacent(
+        smoothLenth,
         anchors[i + 1],
-      ]);
+        anchors[i].curvePoints[len]
+      );
+      drawLinearGradientLine(ctx, pen, [anchors[i].curvePoints[len], last]);
     } else {
-      drawLinearGradientLine(ctx, pen, [anchors[i], anchors[i + 1]]);
+      let _next = anchors[i];
+      let _last = anchors[i + 1];
+      if (i > 0 && i < anchors.length - 1) {
+        //有突兀的地方
+        let lastCurvePoints = anchors[i - 1].curvePoints;
+        if (lastCurvePoints) {
+          smoothTransition(
+            ctx,
+            pen,
+            lastCurvePoints[lastCurvePoints.length - 1],
+            anchors[i],
+            anchors[i + 1]
+          );
+        } else {
+          smoothTransition(
+            ctx,
+            pen,
+            anchors[i - 1],
+            anchors[i],
+            anchors[i + 1]
+          );
+        }
+      }
+      if (i > 0 && i < anchors.length - 1) {
+        _next = getSmoothAdjacent(smoothLenth, anchors[i], anchors[i + 1]);
+      }
+      if (i < anchors.length - 2) {
+        _last = getSmoothAdjacent(smoothLenth, anchors[i + 1], anchors[i]);
+      }
+      drawLinearGradientLine(ctx, pen, [_next, _last]);
     }
   }
+}
+
+function getSmoothAdjacent(smoothLenth: number, p1: Point, p2: Point) {
+  let nexLength = Math.sqrt(
+    (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
+  );
+  if (smoothLenth < nexLength) {
+    return {
+      x: p1.x + ((p2.x - p1.x) * smoothLenth) / nexLength,
+      y: p1.y + ((p2.y - p1.y) * smoothLenth) / nexLength,
+    };
+  } else {
+    return {
+      x: p1.x + (p2.x - p1.x) / nexLength / 2,
+      y: p1.y + (p2.y - p1.y) / nexLength / 2,
+    };
+  }
+}
+
+function smoothTransition(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  p1: Point,
+  p2: Point,
+  p3: Point
+) {
+  let smoothLenth =
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 1);
+  let last = getSmoothAdjacent(smoothLenth, p2, p1);
+  let next = getSmoothAdjacent(smoothLenth, p2, p3);
+  let contrlPoint = { x: p2.x, y: p2.y };
+
+  let points = getBezierPoints(100, last, contrlPoint, next);
+  for (let k = 0; k < points.length - 1; k++) {
+    drawLinearGradientLine(ctx, pen, [
+      {
+        x: points[k].x,
+        y: points[k].y,
+      },
+      {
+        x: points[k + 1].x,
+        y: points[k + 1].y,
+      },
+    ]);
+  }
+}
+
+function getAngle(p1: Point, p2: Point, p3: Point) {
+  let a = { x: 0, y: 0 },
+    b = { x: 0, y: 0 };
+  a.x = p1.x - p2.x;
+  a.y = p1.y - p2.y;
+  b.x = p3.x - p2.x;
+  b.y = p3.y - p2.y;
+
+  return (
+    (Math.acos(
+      (a.x * b.x + a.y * b.y) /
+        (Math.sqrt(a.x * a.x + a.y * a.y) * Math.sqrt(b.x * b.x + b.y * b.y))
+    ) /
+      Math.PI) *
+    180
+  );
+}
+
+function getBezierPoints(
+  num = 100,
+  p1?: Point,
+  p2?: Point,
+  p3?: Point,
+  p4?: Point
+) {
+  let func = null;
+  const points = [];
+  if (!p3 && !p4) {
+    func = oneBezier;
+  } else if (p3 && !p4) {
+    func = twoBezier;
+  } else if (p3 && p4) {
+    func = threeBezier;
+  }
+  for (let i = 0; i < num; i++) {
+    points.push(func(i / num, p1, p2, p3, p4));
+  }
+  if (p4) {
+    points.push(p4);
+  } else if (p3) {
+    points.push(p3);
+  }
+  return points;
+}
+
+/**
+ * @desc 一阶贝塞尔
+ * @param  t 当前百分比
+ * @param  p1 起点坐标
+ * @param  p2 终点坐标
+ */
+function oneBezier(t: number, p1: Point, p2: Point) {
+  const { x: x1, y: y1 } = p1;
+  const { x: x2, y: y2 } = p2;
+  let x = x1 + (x2 - x1) * t;
+  let y = y1 + (y2 - y1) * t;
+  return { x, y };
+}
+
+/**
+ * @desc 二阶贝塞尔
+ * @param  t 当前百分比
+ * @param  p1 起点坐标
+ * @param  p2 终点坐标
+ * @param  cp 控制点
+ */
+function twoBezier(t: number, p1: Point, cp: Point, p2: Point) {
+  const { x: x1, y: y1 } = p1;
+  const { x: cx, y: cy } = cp;
+  const { x: x2, y: y2 } = p2;
+  let x = (1 - t) * (1 - t) * x1 + 2 * t * (1 - t) * cx + t * t * x2;
+  let y = (1 - t) * (1 - t) * y1 + 2 * t * (1 - t) * cy + t * t * y2;
+  return { x, y };
+}
+
+/**
+ * @desc 三阶贝塞尔
+ * @param  t 当前百分比
+ * @param  p1 起点坐标
+ * @param  p2 终点坐标
+ * @param  cp1 控制点1
+ * @param  cp2 控制点2
+ */
+function threeBezier(t: number, p1: Point, cp1: Point, cp2: Point, p2: Point) {
+  const { x: x1, y: y1 } = p1;
+  const { x: x2, y: y2 } = p2;
+  const { x: cx1, y: cy1 } = cp1;
+  const { x: cx2, y: cy2 } = cp2;
+  let x =
+    x1 * (1 - t) * (1 - t) * (1 - t) +
+    3 * cx1 * t * (1 - t) * (1 - t) +
+    3 * cx2 * t * t * (1 - t) +
+    x2 * t * t * t;
+  let y =
+    y1 * (1 - t) * (1 - t) * (1 - t) +
+    3 * cy1 * t * (1 - t) * (1 - t) +
+    3 * cy2 * t * t * (1 - t) +
+    y2 * t * t * t;
+  return { x, y };
 }
 
 function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {

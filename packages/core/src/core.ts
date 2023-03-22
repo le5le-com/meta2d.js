@@ -532,7 +532,7 @@ export class Meta2d {
     if (lock === 0) {
       //恢复可选状态
       this.store.data.pens.forEach((pen) => {
-        if (pen.name === 'echarts') {
+        if (pen.externElement === true) {
           pen.onMove && pen.onMove(pen);
         }
       });
