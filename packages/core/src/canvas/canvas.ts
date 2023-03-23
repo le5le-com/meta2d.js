@@ -6081,6 +6081,20 @@ export class Canvas {
       pen.calculative.strokeImage = undefined;
       this.loadImage(pen);
     }
+    if (data.lineGradientColors) {
+      pen.calculative.lineGradient = undefined;
+      pen.calculative.gradientColorStop = undefined;
+    }
+    if (data.gradientColors) {
+      pen.calculative.gradient = undefined;
+      pen.calculative.radialGradient = undefined;
+    }
+    if (data.animateLineWidth) {
+      pen.calculative.gradientAnimatePath = undefined;
+    }
+    if (data.gradientSmooth) {
+      pen.calculative.gradientAnimatePath = undefined;
+    }
     if (containIsBottom) {
       this.canvasImage.init();
       this.canvasImageBottom.init();

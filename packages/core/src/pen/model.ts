@@ -630,6 +630,8 @@ export const formatAttrs: Set<string> = new Set([
   'background',
   'gradientColors',
   'lineGradientColors',
+  'animateLineWidth',
+  'gradientSmooth',
 ]);
 
 /**
