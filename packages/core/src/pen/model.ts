@@ -492,6 +492,7 @@ export interface Pen extends Rect {
     gradientTimer?: any;
     animateLineWidth?: number;
     gradientSmooth?: number; //渐进色平滑度
+    gradientAnimatePath?: Path2D;
   };
 
   // 前一个动画帧状态数据

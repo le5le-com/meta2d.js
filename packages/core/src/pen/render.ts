@@ -437,6 +437,52 @@ function smoothTransition(
   }
 }
 
+function smoothAnimateTransition(
+  ctx: Path2D,
+  smoothLenth: number,
+  p2: Point,
+  p3: Point
+) {
+  let next = getSmoothAdjacent(smoothLenth, p2, p3);
+  let contrlPoint = { x: p2.x, y: p2.y };
+
+  ctx.quadraticCurveTo(contrlPoint.x, contrlPoint.y, next.x, next.y);
+}
+
+function getGradientAnimatePath(pen: Pen) {
+  const anchors = pen.calculative.worldAnchors;
+  let smoothLenth =
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 0);
+  //只创建一次
+  const _path = new Path2D();
+  for (let i = 0; i < anchors.length - 1; i++) {
+    let _next = anchors[i];
+    let _last = anchors[i + 1];
+    if (i == 0) {
+      _path.moveTo(anchors[i].x, anchors[i].y);
+    }
+    if (i > 0 && i < anchors.length - 1) {
+      //有突兀的地方
+      let lastCurvePoints = anchors[i - 1].curvePoints;
+      // const path = new Path2D();
+      if (lastCurvePoints) {
+        smoothAnimateTransition(_path, smoothLenth, anchors[i], anchors[i + 1]);
+      } else {
+        smoothAnimateTransition(_path, smoothLenth, anchors[i], anchors[i + 1]);
+      }
+    }
+    if (i > 0 && i < anchors.length - 1) {
+      _next = getSmoothAdjacent(smoothLenth, anchors[i], anchors[i + 1]);
+    }
+    if (i < anchors.length - 2) {
+      _last = getSmoothAdjacent(smoothLenth, anchors[i + 1], anchors[i]);
+    }
+    _path.lineTo(_last.x, _last.y);
+  }
+
+  return _path;
+}
+
 function getAngle(p1: Point, p2: Point, p3: Point) {
   let a = { x: 0, y: 0 },
     b = { x: 0, y: 0 };
@@ -1408,9 +1454,20 @@ export function ctxDrawLinePath(
       if (pen.calculative.animatePos) {
         ctx.save();
         setCtxLineAnimate(ctx, pen, store);
+        ctx.beginPath();
         if (path instanceof Path2D) {
           //是否设置了平滑度
-          ctx.stroke(path);
+          if (
+            pen.calculative.gradientSmooth &&
+            (pen.lineName === 'polyline' || pen.lineName === 'line')
+          ) {
+            if (!pen.calculative.gradientAnimatePath) {
+              pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
+            }
+            ctx.stroke(pen.calculative.gradientAnimatePath);
+          } else {
+            ctx.stroke(path);
+          }
         } else {
           path(pen, ctx);
           ctx.stroke();
@@ -1704,6 +1761,8 @@ export function calcWorldAnchors(pen: Pen) {
       a.id === pen.calculative.activeAnchor.id;
     });
   }
+
+  pen.calculative.gradientAnimatePath = undefined;
 }
 
 export function calcWorldPointOfPen(pen: Pen, pt: Point) {

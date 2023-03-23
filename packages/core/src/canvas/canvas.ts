@@ -4381,6 +4381,8 @@ export class Canvas {
     this.patchFlagsLines.add(line);
     this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
     this.render();
+    this.store.active[0].calculative &&
+      (this.store.active[0].calculative.gradientAnimatePath = undefined);
 
     if (this.timer) {
       clearTimeout(this.timer);
