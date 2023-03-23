@@ -298,7 +298,7 @@ function drawLinearGradientLine(
 function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
   let smoothLenth =
-    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 1);
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 0);
   for (let i = 0; i < anchors.length - 1; i++) {
     if (
       (pen.lineName === 'curve' || pen.lineName === 'mind') &&
@@ -311,6 +311,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
           smoothTransition(
             ctx,
             pen,
+            smoothLenth,
             lastCurvePoints[lastCurvePoints.length - 1],
             anchors[i],
             anchors[i].curvePoints[0]
@@ -319,6 +320,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
           smoothTransition(
             ctx,
             pen,
+            smoothLenth,
             anchors[i - 1],
             anchors[i],
             anchors[i].curvePoints[0]
@@ -332,6 +334,10 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
         );
         drawLinearGradientLine(ctx, pen, [next, anchors[i].curvePoints[1]]);
       } else {
+        drawLinearGradientLine(ctx, pen, [
+          anchors[i],
+          anchors[i].curvePoints[0],
+        ]);
         drawLinearGradientLine(ctx, pen, [
           anchors[i].curvePoints[0],
           anchors[i].curvePoints[1],
@@ -360,6 +366,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
           smoothTransition(
             ctx,
             pen,
+            smoothLenth,
             lastCurvePoints[lastCurvePoints.length - 1],
             anchors[i],
             anchors[i + 1]
@@ -368,6 +375,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
           smoothTransition(
             ctx,
             pen,
+            smoothLenth,
             anchors[i - 1],
             anchors[i],
             anchors[i + 1]
@@ -405,12 +413,11 @@ function getSmoothAdjacent(smoothLenth: number, p1: Point, p2: Point) {
 function smoothTransition(
   ctx: CanvasRenderingContext2D,
   pen: Pen,
+  smoothLenth: number,
   p1: Point,
   p2: Point,
   p3: Point
 ) {
-  let smoothLenth =
-    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 1);
   let last = getSmoothAdjacent(smoothLenth, p2, p1);
   let next = getSmoothAdjacent(smoothLenth, p2, p3);
   let contrlPoint = { x: p2.x, y: p2.y };
@@ -1402,6 +1409,7 @@ export function ctxDrawLinePath(
         ctx.save();
         setCtxLineAnimate(ctx, pen, store);
         if (path instanceof Path2D) {
+          //是否设置了平滑度
           ctx.stroke(path);
         } else {
           path(pen, ctx);
