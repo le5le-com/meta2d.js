@@ -52,7 +52,7 @@ export function parseSvg(svg: string): Pen[] {
 function setAnchor(pen: Pen) {
   anchorsArr = anchorsArr.map((item, index) => {
     return {
-      id: index,
+      id: index + '',
       penId: pen.id,
       x: item.x,
       y: item.y,

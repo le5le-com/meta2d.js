@@ -4204,6 +4204,9 @@ export class Canvas {
       });
       this.store.hover = undefined;
     }
+    if (!this.mouseDown) {
+      return;
+    }
 
     let x = e.x - this.mouseDown.x;
     let y = e.y - this.mouseDown.y;
