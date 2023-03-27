@@ -5017,14 +5017,25 @@ export class Canvas {
                   continue;
                 }
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
-                  pen[k] = pen.calculative[k];
+                  if (k === 'lineWidth') {
+                    pen[k] =
+                      pen.calculative[k] /
+                      pen.calculative.canvas.store.data.scale;
+                  } else {
+                    pen[k] = pen.calculative[k];
+                  }
                 }
               }
               calcPenRect(pen);
             } else {
               for (const k in pen) {
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
-                  pen.calculative[k] = pen[k];
+                  if (k === 'lineWidth') {
+                    pen.calculative[k] =
+                      pen[k] * pen.calculative.canvas.store.data.scale;
+                  } else {
+                    pen.calculative[k] = pen[k];
+                  }
                 }
               }
             }
