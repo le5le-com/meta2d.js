@@ -1,4 +1,4 @@
-import { IValue, LineAnimateType, LockState, Pen } from './model';
+import { ColorStop, IValue, LineAnimateType, LockState, Pen } from './model';
 import { getLineRect, getSplitAnchor, line } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
@@ -101,6 +101,487 @@ function drawBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   grd.addColorStop(1, gradientToColor);
 
   return grd;
+}
+
+function getLinearGradientPoints(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  r: number
+) {
+  let slantAngle = 0;
+  slantAngle = Math.PI / 2 - Math.atan2(y2 - y1, x2 - x1);
+  const originX = (x1 + x2) / 2;
+  const originY = (y1 + y2) / 2;
+
+  const perpX1 = originX + r * Math.sin((90 * Math.PI) / 180 - slantAngle);
+  const perpY1 = originY + r * -Math.cos((90 * Math.PI) / 180 - slantAngle);
+
+  const perpX2 = originX + r * Math.sin((270 * Math.PI) / 180 - slantAngle);
+  const perpY2 = originY + r * -Math.cos((270 * Math.PI) / 180 - slantAngle);
+
+  return [perpX1, perpY1, perpX2, perpY2];
+}
+
+function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { worldRect, gradientColors, gradientRadius } = pen.calculative;
+  if (!gradientColors) {
+    return;
+  }
+
+  const { width, height, center } = worldRect;
+  const { x: centerX, y: centerY } = center;
+  let r = width;
+  if (r < height) {
+    r = height;
+  }
+  r *= 0.5;
+  const { colors } = formatGradient(gradientColors);
+  const grd = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    r * (gradientRadius || 0),
+    centerX,
+    centerY,
+    r
+  );
+  colors.forEach((stop) => {
+    grd.addColorStop(stop.i, stop.color);
+  });
+
+  return grd;
+}
+
+function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  let points = [
+    { x: ex, y: y + height / 2 },
+    { x: x, y: y + height / 2 },
+  ];
+  let r = width / 2;
+  if (width > height) {
+    r = height / 2;
+  }
+  const { angle, colors } = formatGradient(pen.calculative.gradientColors);
+  points.forEach((point) => {
+    rotatePoint(point, angle, center);
+  });
+  return getLinearGradient(ctx, points, colors, r);
+}
+
+function formatGradient(color: string) {
+  if (typeof color == 'string' && color.startsWith('linear-gradient')) {
+    let arr = color.slice(16, -2).split('deg,');
+    if (arr.length > 1) {
+      let _arr = arr[1].split('%,');
+      const colors = [];
+      _arr.forEach((stap) => {
+        if (/rgba?/.test(stap)) {
+          let _arr = stap.split(') ');
+          colors.push({
+            color: rgbaToHex(_arr[0] + ')'),
+            i: parseFloat(_arr[1]) / 100,
+          });
+        } else {
+          let _arr = stap.split(' ');
+          colors.push({
+            color: _arr[0],
+            i: parseFloat(_arr[1]) / 100,
+          });
+        }
+      });
+      return {
+        angle: parseFloat(arr[0]),
+        colors,
+      };
+    } else {
+      return {
+        angle: parseFloat(arr[0]),
+        colors: [],
+      };
+    }
+  } else {
+    return {
+      angle: 0,
+      colors: [],
+    };
+  }
+}
+
+function rgbaToHex(value) {
+  if (/rgba?/.test(value)) {
+    let array = value.split(',');
+    //不符合rgb或rgb规则直接return
+    if (array.length < 3) return '';
+    value = '#';
+    for (let i = 0, color; (color = array[i++]); ) {
+      if (i < 4) {
+        //前三位转换成16进制
+        color = parseInt(color.replace(/[^\d]/gi, ''), 10).toString(16);
+        value += color.length == 1 ? '0' + color : color;
+      } else {
+        //rgba的透明度转换成16进制
+        color = color.replace(')', '');
+        let colorA = parseInt(color * 255 + '');
+        let colorAHex = colorA.toString(16);
+        value += colorAHex;
+      }
+    }
+    value = value.toUpperCase();
+  }
+  return value;
+}
+
+function getLineGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  let points = [
+    { x: ex, y: y + height / 2 },
+    { x: x, y: y + height / 2 },
+  ];
+  let r = width / 2;
+  if (width > height) {
+    r = height / 2;
+  }
+  const { angle, colors } = formatGradient(pen.calculative.lineGradientColors);
+
+  points.forEach((point) => {
+    rotatePoint(point, angle, center);
+  });
+  return getLinearGradient(ctx, points, colors, r);
+}
+
+function getLinearGradient(
+  ctx: CanvasRenderingContext2D,
+  points: Point[],
+  colors: ColorStop[],
+  radius: number
+): CanvasGradient {
+  let arr = getLinearGradientPoints(
+    points[0].x,
+    points[0].y,
+    points[1].x,
+    points[1].y,
+    radius
+  );
+  let gradient = ctx.createLinearGradient(arr[0], arr[1], arr[2], arr[3]);
+  colors.forEach((stop) => {
+    gradient.addColorStop(stop.i, stop.color);
+  });
+  return gradient;
+}
+
+function drawLinearGradientLine(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  points: Point[]
+) {
+  let colors = [];
+  if (pen.calculative.gradientColorStop) {
+    colors = pen.calculative.gradientColorStop;
+  } else {
+    colors = formatGradient(pen.calculative.lineGradientColors).colors;
+    pen.calculative.gradientColorStop = colors;
+  }
+  ctx.strokeStyle = getLinearGradient(
+    ctx,
+    points,
+    colors,
+    pen.calculative.lineWidth / 2
+  );
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  ctx.lineTo(points[1].x, points[1].y);
+  ctx.stroke();
+}
+
+function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const anchors = pen.calculative.worldAnchors;
+  let smoothLenth =
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 0);
+  for (let i = 0; i < anchors.length - 1; i++) {
+    if (
+      (pen.lineName === 'curve' || pen.lineName === 'mind') &&
+      anchors[i].curvePoints
+    ) {
+      if (i > 0) {
+        let lastCurvePoints = anchors[i - 1].curvePoints;
+        if (lastCurvePoints) {
+          //上一个存在锚点
+          smoothTransition(
+            ctx,
+            pen,
+            smoothLenth,
+            lastCurvePoints[lastCurvePoints.length - 1],
+            anchors[i],
+            anchors[i].curvePoints[0]
+          );
+        } else {
+          smoothTransition(
+            ctx,
+            pen,
+            smoothLenth,
+            anchors[i - 1],
+            anchors[i],
+            anchors[i].curvePoints[0]
+          );
+        }
+        //获取当前相对于0的位置
+        let next = getSmoothAdjacent(
+          smoothLenth,
+          anchors[i],
+          anchors[i].curvePoints[0]
+        );
+        drawLinearGradientLine(ctx, pen, [next, anchors[i].curvePoints[1]]);
+      } else {
+        drawLinearGradientLine(ctx, pen, [
+          anchors[i],
+          anchors[i].curvePoints[0],
+        ]);
+        drawLinearGradientLine(ctx, pen, [
+          anchors[i].curvePoints[0],
+          anchors[i].curvePoints[1],
+        ]);
+      }
+      let len = anchors[i].curvePoints.length - 1;
+      for (let j = 1; j < len; j++) {
+        drawLinearGradientLine(ctx, pen, [
+          anchors[i].curvePoints[j],
+          anchors[i].curvePoints[j + 1],
+        ]);
+      }
+      let last = getSmoothAdjacent(
+        smoothLenth,
+        anchors[i + 1],
+        anchors[i].curvePoints[len]
+      );
+      drawLinearGradientLine(ctx, pen, [anchors[i].curvePoints[len], last]);
+    } else {
+      let _next = anchors[i];
+      let _last = anchors[i + 1];
+      if (i > 0 && i < anchors.length - 1) {
+        //有突兀的地方
+        let lastCurvePoints = anchors[i - 1].curvePoints;
+        if (lastCurvePoints) {
+          smoothTransition(
+            ctx,
+            pen,
+            smoothLenth,
+            lastCurvePoints[lastCurvePoints.length - 1],
+            anchors[i],
+            anchors[i + 1]
+          );
+        } else {
+          smoothTransition(
+            ctx,
+            pen,
+            smoothLenth,
+            anchors[i - 1],
+            anchors[i],
+            anchors[i + 1]
+          );
+        }
+      }
+      if (i > 0 && i < anchors.length - 1) {
+        _next = getSmoothAdjacent(smoothLenth, anchors[i], anchors[i + 1]);
+      }
+      if (i < anchors.length - 2) {
+        _last = getSmoothAdjacent(smoothLenth, anchors[i + 1], anchors[i]);
+      }
+      drawLinearGradientLine(ctx, pen, [_next, _last]);
+    }
+  }
+}
+
+function getSmoothAdjacent(smoothLenth: number, p1: Point, p2: Point) {
+  let nexLength = Math.sqrt(
+    (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
+  );
+  if (smoothLenth < nexLength) {
+    return {
+      x: p1.x + ((p2.x - p1.x) * smoothLenth) / nexLength,
+      y: p1.y + ((p2.y - p1.y) * smoothLenth) / nexLength,
+    };
+  } else {
+    return {
+      x: p1.x + (p2.x - p1.x) / nexLength / 2,
+      y: p1.y + (p2.y - p1.y) / nexLength / 2,
+    };
+  }
+}
+
+function smoothTransition(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  smoothLenth: number,
+  p1: Point,
+  p2: Point,
+  p3: Point
+) {
+  let last = getSmoothAdjacent(smoothLenth, p2, p1);
+  let next = getSmoothAdjacent(smoothLenth, p2, p3);
+  let contrlPoint = { x: p2.x, y: p2.y };
+
+  let points = getBezierPoints(100, last, contrlPoint, next);
+  for (let k = 0; k < points.length - 1; k++) {
+    drawLinearGradientLine(ctx, pen, [
+      {
+        x: points[k].x,
+        y: points[k].y,
+      },
+      {
+        x: points[k + 1].x,
+        y: points[k + 1].y,
+      },
+    ]);
+  }
+}
+
+function smoothAnimateTransition(
+  ctx: Path2D,
+  smoothLenth: number,
+  p2: Point,
+  p3: Point
+) {
+  let next = getSmoothAdjacent(smoothLenth, p2, p3);
+  let contrlPoint = { x: p2.x, y: p2.y };
+
+  ctx.quadraticCurveTo(contrlPoint.x, contrlPoint.y, next.x, next.y);
+}
+
+function getGradientAnimatePath(pen: Pen) {
+  const anchors = pen.calculative.worldAnchors;
+  let smoothLenth =
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 0);
+  //只创建一次
+  const _path = new Path2D();
+  for (let i = 0; i < anchors.length - 1; i++) {
+    let _next = anchors[i];
+    let _last = anchors[i + 1];
+    if (i == 0) {
+      _path.moveTo(anchors[i].x, anchors[i].y);
+    }
+    if (i > 0 && i < anchors.length - 1) {
+      //有突兀的地方
+      let lastCurvePoints = anchors[i - 1].curvePoints;
+      // const path = new Path2D();
+      if (lastCurvePoints) {
+        smoothAnimateTransition(_path, smoothLenth, anchors[i], anchors[i + 1]);
+      } else {
+        smoothAnimateTransition(_path, smoothLenth, anchors[i], anchors[i + 1]);
+      }
+    }
+    if (i > 0 && i < anchors.length - 1) {
+      _next = getSmoothAdjacent(smoothLenth, anchors[i], anchors[i + 1]);
+    }
+    if (i < anchors.length - 2) {
+      _last = getSmoothAdjacent(smoothLenth, anchors[i + 1], anchors[i]);
+    }
+    _path.lineTo(_last.x, _last.y);
+  }
+
+  return _path;
+}
+
+function getAngle(p1: Point, p2: Point, p3: Point) {
+  let a = { x: 0, y: 0 },
+    b = { x: 0, y: 0 };
+  a.x = p1.x - p2.x;
+  a.y = p1.y - p2.y;
+  b.x = p3.x - p2.x;
+  b.y = p3.y - p2.y;
+
+  return (
+    (Math.acos(
+      (a.x * b.x + a.y * b.y) /
+        (Math.sqrt(a.x * a.x + a.y * a.y) * Math.sqrt(b.x * b.x + b.y * b.y))
+    ) /
+      Math.PI) *
+    180
+  );
+}
+
+function getBezierPoints(
+  num = 100,
+  p1?: Point,
+  p2?: Point,
+  p3?: Point,
+  p4?: Point
+) {
+  let func = null;
+  const points = [];
+  if (!p3 && !p4) {
+    func = oneBezier;
+  } else if (p3 && !p4) {
+    func = twoBezier;
+  } else if (p3 && p4) {
+    func = threeBezier;
+  }
+  for (let i = 0; i < num; i++) {
+    points.push(func(i / num, p1, p2, p3, p4));
+  }
+  if (p4) {
+    points.push(p4);
+  } else if (p3) {
+    points.push(p3);
+  }
+  return points;
+}
+
+/**
+ * @desc 一阶贝塞尔
+ * @param  t 当前百分比
+ * @param  p1 起点坐标
+ * @param  p2 终点坐标
+ */
+function oneBezier(t: number, p1: Point, p2: Point) {
+  const { x: x1, y: y1 } = p1;
+  const { x: x2, y: y2 } = p2;
+  let x = x1 + (x2 - x1) * t;
+  let y = y1 + (y2 - y1) * t;
+  return { x, y };
+}
+
+/**
+ * @desc 二阶贝塞尔
+ * @param  t 当前百分比
+ * @param  p1 起点坐标
+ * @param  p2 终点坐标
+ * @param  cp 控制点
+ */
+function twoBezier(t: number, p1: Point, cp: Point, p2: Point) {
+  const { x: x1, y: y1 } = p1;
+  const { x: cx, y: cy } = cp;
+  const { x: x2, y: y2 } = p2;
+  let x = (1 - t) * (1 - t) * x1 + 2 * t * (1 - t) * cx + t * t * x2;
+  let y = (1 - t) * (1 - t) * y1 + 2 * t * (1 - t) * cy + t * t * y2;
+  return { x, y };
+}
+
+/**
+ * @desc 三阶贝塞尔
+ * @param  t 当前百分比
+ * @param  p1 起点坐标
+ * @param  p2 终点坐标
+ * @param  cp1 控制点1
+ * @param  cp2 控制点2
+ */
+function threeBezier(t: number, p1: Point, cp1: Point, cp2: Point, p2: Point) {
+  const { x: x1, y: y1 } = p1;
+  const { x: x2, y: y2 } = p2;
+  const { x: cx1, y: cy1 } = cp1;
+  const { x: cx2, y: cy2 } = cp2;
+  let x =
+    x1 * (1 - t) * (1 - t) * (1 - t) +
+    3 * cx1 * t * (1 - t) * (1 - t) +
+    3 * cx2 * t * t * (1 - t) +
+    x2 * t * t * t;
+  let y =
+    y1 * (1 - t) * (1 - t) * (1 - t) +
+    3 * cy1 * t * (1 - t) * (1 - t) +
+    3 * cy2 * t * t * (1 - t) +
+    y2 * t * t * t;
+  return { x, y };
 }
 
 function strokeLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
@@ -563,6 +1044,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   let fill: any;
   // 该变量控制在 hover active 状态下的节点是否设置填充颜色
   let setBack = true;
+  let lineGradientFlag = false;
   if (pen.calculative.hover) {
     ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
@@ -590,7 +1072,20 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
       let stroke: string | CanvasGradient | CanvasPattern;
       // TODO: 线只有线性渐变
       if (pen.calculative.strokeType === Gradient.Linear) {
-        stroke = strokeLinearGradient(ctx, pen);
+        if (pen.calculative.lineGradientColors) {
+          if (pen.name === 'line') {
+            lineGradientFlag = true;
+          } else {
+            if (pen.calculative.lineGradient) {
+              stroke = pen.calculative.lineGradient;
+            } else {
+              stroke = getLineGradient(ctx, pen);
+              pen.calculative.lineGradient = stroke;
+            }
+          }
+        } else {
+          stroke = strokeLinearGradient(ctx, pen);
+        }
       } else {
         stroke = pen.calculative.color;
       }
@@ -605,9 +1100,31 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     } else {
       let back: string | CanvasGradient | CanvasPattern;
       if (pen.calculative.bkType === Gradient.Linear) {
-        back = drawBkLinearGradient(ctx, pen);
+        if (pen.calculative.gradientColors) {
+          if (pen.name !== 'line') {
+            //连线不考虑渐进背景
+            if (pen.calculative.gradient) {
+              //位置变化/放大缩小操作不会触发重新计算
+              back = pen.calculative.gradient;
+            } else {
+              back = getBkGradient(ctx, pen);
+              pen.calculative.gradient = back;
+            }
+          }
+        } else {
+          back = drawBkLinearGradient(ctx, pen);
+        }
       } else if (pen.calculative.bkType === Gradient.Radial) {
-        back = drawBkRadialGradient(ctx, pen);
+        if (pen.calculative.gradientColors) {
+          if (pen.calculative.radialGradient) {
+            back = pen.calculative.radialGradient;
+          } else {
+            back = getBkRadialGradient(ctx, pen);
+            pen.calculative.radialGradient = back;
+          }
+        } else {
+          back = drawBkRadialGradient(ctx, pen);
+        }
       } else {
         back = pen.calculative.background || store.data.penBackground;
       }
@@ -634,11 +1151,14 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.shadowOffsetY = pen.calculative.shadowOffsetY;
     ctx.shadowBlur = pen.calculative.shadowBlur;
   }
+  if (lineGradientFlag) {
+    ctxDrawLinearGradientPath(ctx, pen);
+    ctxDrawLinePath(true, ctx, pen, store);
+  } else {
+    ctxDrawPath(true, ctx, pen, store, fill);
 
-  ctxDrawPath(true, ctx, pen, store, fill);
-
-  ctxDrawCanvas(ctx, pen);
-
+    ctxDrawCanvas(ctx, pen);
+  }
   if (!(pen.image && pen.calculative.img) && pen.calculative.icon) {
     drawIcon(ctx, pen);
   }
@@ -918,6 +1438,54 @@ export function ctxDrawPath(
 }
 
 /**
+ * 连线配置线条渐进后，动画效果、起始点、终点的绘制
+ */
+export function ctxDrawLinePath(
+  canUsePath = true,
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  store: Meta2dStore
+) {
+  const path = canUsePath
+    ? store.path2dMap.get(pen)
+    : globalStore.path2dDraws[pen.name];
+  if (path) {
+    if (pen.type) {
+      if (pen.calculative.animatePos) {
+        ctx.save();
+        setCtxLineAnimate(ctx, pen, store);
+        ctx.beginPath();
+        if (path instanceof Path2D) {
+          //是否设置了平滑度
+          if (
+            pen.calculative.gradientSmooth &&
+            (pen.lineName === 'polyline' || pen.lineName === 'line')
+          ) {
+            if (!pen.calculative.gradientAnimatePath) {
+              pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
+            }
+            ctx.stroke(pen.calculative.gradientAnimatePath);
+          } else {
+            ctx.stroke(path);
+          }
+        } else {
+          path(pen, ctx);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      pen.fromArrow && renderFromArrow(ctx, pen, store);
+      pen.toArrow && renderToArrow(ctx, pen, store);
+      //TODO 锚点处渐进色的过渡
+      if (pen.calculative.active && !pen.calculative.pencil) {
+        renderLineAnchors(ctx, pen);
+      }
+    }
+  }
+}
+
+/**
  * 设置线条动画，ctx 的 strokeStyle lineDash 等属性更改
  */
 export function setCtxLineAnimate(
@@ -926,6 +1494,8 @@ export function setCtxLineAnimate(
   store: Meta2dStore
 ) {
   ctx.strokeStyle = pen.animateColor || store.options.animateColor;
+  pen.calculative.animateLineWidth &&
+    (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);
   let len = 0;
   switch (pen.lineAnimateType) {
     case LineAnimateType.Beads:
@@ -954,7 +1524,8 @@ export function setCtxLineAnimate(
       if (len < 6) {
         len = 6;
       }
-      ctx.lineWidth = len;
+      ctx.lineWidth =
+        (pen.calculative.animateLineWidth || len) * store.data.scale;
       ctx.setLineDash([0.1, pen.length]);
       break;
     default:
@@ -1190,6 +1761,8 @@ export function calcWorldAnchors(pen: Pen) {
       a.id === pen.calculative.activeAnchor.id;
     });
   }
+
+  pen.calculative.gradientAnimatePath = undefined;
 }
 
 export function calcWorldPointOfPen(pen: Pen, pt: Point) {

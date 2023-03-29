@@ -289,7 +289,7 @@ export class Meta2d {
           }
         }
         value.id = _pen.id;
-        this.doSendDataEvent(value);
+        this.doSendDataEvent(value, e.extend);
         return;
       }
       console.warn('[meta2d] SendPropData value is not an object');
@@ -316,22 +316,31 @@ export class Meta2d {
           }
           array.push(obj);
         }
-        this.doSendDataEvent(array);
+        this.doSendDataEvent(array, e.extend);
         return;
       }
       console.warn('[meta2d] SendVarData value is not an object');
     };
   }
 
-  doSendDataEvent(value: any) {
+  doSendDataEvent(value: any, topics?: string) {
     let data = JSON.stringify(value);
     if (this.mqttClient && this.mqttClient.connected) {
-      this.mqttClient.publish(this.store.data.mqttTopics, data);
+      if (topics) {
+        topics.split(',').forEach((topic) => {
+          this.mqttClient.publish(topic, data);
+        });
+      } else {
+        this.store.data.mqttTopics &&
+          this.store.data.mqttTopics.split(',').forEach((topic) => {
+            this.mqttClient.publish(topic, data);
+          });
+      }
     }
     if (this.websocket && this.websocket.readyState === 1) {
       this.websocket.send(data);
     }
-    if (this.store.data.http) {
+    if (this.store.data.https || this.store.data.http) {
       this.sendDatabyHttp(data);
     }
     this.store.emitter.emit('sendData', data);
@@ -523,7 +532,7 @@ export class Meta2d {
     if (lock === 0) {
       //恢复可选状态
       this.store.data.pens.forEach((pen) => {
-        if (pen.name === 'echarts') {
+        if (pen.externElement === true) {
           pen.onMove && pen.onMove(pen);
         }
       });
@@ -781,6 +790,7 @@ export class Meta2d {
       this.store.animates.delete(pen);
       this.canvas.restoreNodeAnimate(pen);
       this.canvas.updateLines(pen);
+      this.store.animateMap.delete(pen);
     });
     this.initImageCanvas(pens);
     setTimeout(() => {
@@ -1187,16 +1197,32 @@ export class Meta2d {
   }
 
   async sendDatabyHttp(data: string) {
-    const { http, httpHeaders } = this.store.data;
-    if (http) {
-      // 默认每一秒请求一次
-      const res: Response = await fetch(http, {
-        method: 'post',
-        body: data,
-        headers: httpHeaders,
+    const { https } = this.store.data;
+    if (https) {
+      https.forEach(async (item) => {
+        if (item.http) {
+          const res: Response = await fetch(item.http, {
+            method: 'post',
+            body: data,
+            headers: item.httpHeaders,
+          });
+          if (res.ok) {
+            console.info('http消息发送成功');
+          }
+        }
       });
-      if (res.ok) {
-        console.info('http消息发送成功');
+    } else {
+      const { http, httpHeaders } = this.store.data;
+      if (http) {
+        // 默认每一秒请求一次
+        const res: Response = await fetch(http, {
+          method: 'post',
+          body: data,
+          headers: httpHeaders,
+        });
+        if (res.ok) {
+          console.info('http消息发送成功');
+        }
       }
     }
   }

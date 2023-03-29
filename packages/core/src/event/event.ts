@@ -18,6 +18,7 @@ export interface Event {
   where?: Where; // 若无条件，必须为 undefined or null，不可为空对象
   value?: EventValue; // 不同 action 下，该值含义不同，例如：动画相关的，即为 节点 tag; Function 类型即为 字符串函数
   params?: string;
+  extend?: string;
   fn?: (pen: Pen, params: string) => void;
 }
 
