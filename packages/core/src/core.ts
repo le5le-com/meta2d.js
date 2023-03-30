@@ -243,7 +243,7 @@ export class Meta2d {
       }
       console.warn('[meta2d] StopVideo event value is not a string');
     };
-    this.events[EventAction.Function] = (pen: Pen, e: Event) => {
+    this.events[EventAction.JS] = (pen: Pen, e: Event) => {
       if (e.value && !e.fn) {
         try {
           if (typeof e.value !== 'string') {

@@ -28,7 +28,7 @@ export enum EventAction {
   StartAnimate,
   PauseAnimate,
   StopAnimate,
-  Function,
+  JS, //Function
   GlobalFn,
   Emit,
   StartVideo,
