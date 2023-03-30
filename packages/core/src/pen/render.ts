@@ -185,10 +185,17 @@ function formatGradient(color: string) {
           });
         } else {
           let _arr = stap.split(' ');
-          colors.push({
-            color: _arr[0],
-            i: parseFloat(_arr[1]) / 100,
-          });
+          if (_arr.length > 2) {
+            colors.push({
+              color: _arr[1],
+              i: parseFloat(_arr[2]) / 100,
+            });
+          } else {
+            colors.push({
+              color: _arr[0],
+              i: parseFloat(_arr[1]) / 100,
+            });
+          }
         }
       });
       return {
