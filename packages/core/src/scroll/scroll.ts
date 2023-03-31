@@ -236,6 +236,8 @@ export class Scroll {
       (y * this.rect.height) / this.parent.parentElement.clientHeight;
 
     this.parent.onMovePens();
+    this.parent.canvasImage.init();
+    this.parent.canvasImageBottom.init();
     this.parent.render();
   }
 
