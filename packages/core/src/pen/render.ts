@@ -1094,7 +1094,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
           stroke = strokeLinearGradient(ctx, pen);
         }
       } else {
-        stroke = pen.calculative.color;
+        stroke = pen.calculative.color || getGlobalColor(store);
       }
       ctx.strokeStyle = stroke;
     }
