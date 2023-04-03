@@ -1691,6 +1691,46 @@ export class Meta2d {
     this.centerView();
   }
 
+  /**
+   * 宽度放大到屏幕尺寸，并滚动到最顶部
+   *
+   */
+  scrollView(viewPadding: Padding = 10) {
+    if (!this.hasView()) return;
+    //滚动状态下
+    if (!this.canvas.scroll) {
+      return;
+    }
+    const { canvas } = this.canvas;
+    const { offsetWidth: width, offsetHeight: height } = canvas;
+    this.resize(width, height);
+    const padding = formatPadding(viewPadding);
+    const rect = this.getRect();
+    const ratio = (width - padding[1] - padding[3]) / rect.width;
+    this.scale(ratio * this.store.data.scale);
+
+    this.topView(padding[0]);
+  }
+
+  topView(paddingTop: number = 10) {
+    if (!this.hasView()) return;
+    const rect = this.getRect();
+    const viewCenter = this.getViewCenter();
+    const pensRect: Rect = this.getPenRect(rect);
+    calcCenter(pensRect);
+    const { center } = pensRect;
+    const { scale, origin, x: dataX, y: dataY } = this.store.data;
+
+    this.translate(
+      (viewCenter.x - origin.x) / scale - center.x - dataX / scale,
+      (paddingTop - origin.y) / scale - pensRect.y - dataY / scale
+    );
+    const { canvas } = this.canvas;
+    const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
+    const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
+    canvas.scrollTo(x, y);
+  }
+
   centerView() {
     if (!this.hasView()) return;
     const rect = this.getRect();
