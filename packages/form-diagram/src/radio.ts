@@ -166,7 +166,7 @@ function onAdd(pen: formPen) {
 
 function onMousedown(pen: formPen, e: Point) {
   if (pen.direction == 'horizontal') {
-    let checkedIndex = -1;
+    // let checkedIndex = -1;
     for (let i = 0; i < pen.optionPos.length; i++) {
       if (
         !pen.options[i].isForbidden &&
@@ -183,7 +183,8 @@ function onMousedown(pen: formPen, e: Point) {
       ) {
         // pen.options[i].isChecked = true;
         pen.checked = pen.options[i].text;
-        checkedIndex = i;
+        // checkedIndex = i;
+        pen.calculative.canvas.store.emitter.emit('valueUpdate', pen);
       }
     }
     // if (checkedIndex !== -1) {
@@ -195,7 +196,7 @@ function onMousedown(pen: formPen, e: Point) {
     // }
   } else if (pen.direction == 'vertical') {
     const scaleY = pen.calculative.worldRect.height / pen.checkboxHeight;
-    let checkedIndex = -1;
+    // let checkedIndex = -1;
     for (let i = 0; i < pen.optionPos.length; i++) {
       if (
         !pen.options[i].isForbidden &&
@@ -206,7 +207,8 @@ function onMousedown(pen: formPen, e: Point) {
       ) {
         // pen.options[i].isChecked = true;
         pen.checked = pen.options[i].text;
-        checkedIndex = i;
+        // checkedIndex = i;
+        pen.calculative.canvas.store.emitter.emit('valueUpdate', pen);
       }
     }
 
