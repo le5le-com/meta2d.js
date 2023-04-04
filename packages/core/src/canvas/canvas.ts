@@ -5336,6 +5336,7 @@ export class Canvas {
     pens.forEach((pen) => {
       if (!pen.parentId) {
         if (pen.locked) {
+          // TODO: canDelLocked 是 true ， locked 仍然删不掉
           return;
         } else {
           if (delPens) {
@@ -5349,7 +5350,7 @@ export class Canvas {
           console.warn('父节点锁定');
           return;
         } else {
-          const parentPen = this.store.data.pens[pen.parentId];
+          const parentPen = getParent(pen);
           const _index = parentPen.children.indexOf(pen.id);
           parentPen.children.splice(_index, 1);
           if (delPens) {

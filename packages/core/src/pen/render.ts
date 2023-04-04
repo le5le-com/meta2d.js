@@ -29,6 +29,25 @@ import { Gradient, isEqual, PenType } from '@meta2d/core';
 import { rgba } from '../utils';
 import { Canvas } from '../canvas';
 
+/**
+ * ancestor 是否是 pen 的祖先
+ * @param pen 当前画笔
+ * @param ancestor 祖先画笔
+ */
+export function isAncestor(pen: Pen, ancestor: Pen) {
+  if (!pen || !ancestor) {
+    return false;
+  }
+  let parent = getParent(pen);
+  while (parent) {
+    if (parent.id === ancestor.id) {
+      return true;
+    }
+    parent = getParent(parent);
+  }
+  return false;
+}
+
 export function getParent(pen: Pen, root?: boolean): Pen {
   if (!pen || !pen.parentId || !pen.calculative) {
     return undefined;
