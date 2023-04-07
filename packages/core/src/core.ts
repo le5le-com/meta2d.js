@@ -26,6 +26,7 @@ import {
   setChildValue,
   FormItem,
   BindId,
+  isAncestor,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -47,7 +48,13 @@ import {
   valueInArray,
   valueInRange,
 } from './utils';
-import { calcCenter, calcRelativeRect, getRect, Rect } from './rect';
+import {
+  calcCenter,
+  calcRelativeRect,
+  getRect,
+  Rect,
+  rectInRect,
+} from './rect';
 import { deepClone } from './utils/clone';
 import { Event, EventAction, EventName } from './event';
 import { ViewMap } from './map';
@@ -2132,6 +2139,62 @@ export class Meta2d {
         this.initImageCanvas([pen]);
       }
     }
+  }
+
+  /**
+   * data.pens 决定了绘制顺序，即越后面的越在上层
+   * 该方法通过区域重叠计算，找出该画笔之后第一个与其重叠的画笔，然后把该画笔放到找出的画笔之后
+   * @param pen 画笔
+   */
+  upByArea(pen: Pen) {
+    const index = this.store.data.pens.findIndex((p) => p.id === pen.id);
+    if (index === -1) {
+      // 画笔不在画布上，不处理
+      console.warn('upByArea: pen not in canvas');
+      return;
+    }
+    const allPens = [pen, ...getAllChildren(pen, this.store)];
+    let allIndexs = allPens.map((p) =>
+      this.store.data.pens.findIndex((p2) => p2.id === p.id)
+    );
+
+    if (allIndexs.includes(-1)) {
+      // 画笔不在画布上，脏数据
+      console.warn('upByArea: pen children not in canvas');
+      allIndexs = allIndexs.filter((i) => i !== -1);
+    }
+
+    const minIndex = Math.min(...allIndexs);
+    const penRect = pen.calculative.worldRect;
+    const nextHitIndex = this.store.data.pens.findIndex((p, i) => {
+      if (i <= minIndex) {
+        // 不考虑前面的
+        return false;
+      }
+      if (p.id === pen.id || isAncestor(p, pen)) {
+        // 不考虑后代和自身
+        return false;
+      }
+      const currentRect = p.calculative.worldRect;
+      return rectInRect(penRect, currentRect);
+    });
+
+    if (nextHitIndex === -1) {
+      this.up(pen);
+      return;
+    }
+
+    this.store.data.pens.splice(nextHitIndex + 1, 0, ...allPens);
+
+    // 删除靠前的 allPens
+    for (const pen of allPens) {
+      const index = this.store.data.pens.findIndex((p) => p.id === pen.id);
+      if (index > -1) {
+        this.store.data.pens.splice(index, 1);
+      }
+    }
+
+    this.initImageCanvas([pen]);
   }
 
   /**
