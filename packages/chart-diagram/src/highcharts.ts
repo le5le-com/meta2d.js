@@ -54,6 +54,12 @@ export function highcharts(pen: Pen): Path2D {
         pen.id,
         (pen as any).highcharts.option
       );
+      //TODO 只有第一次的时候的资源
+      const xml = pen.calculative.singleton.highchart.getSVG();
+      const image = new Image();
+      image.src =
+        'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
+      pen.calculative.img = image;
     });
 
     // 4. 加载到div layer
