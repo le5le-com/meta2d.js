@@ -54,7 +54,10 @@ export function lightningCharts(pen: Pen): Path2D {
       pen.calculative.canvas.externalElements &&
         pen.calculative.canvas.externalElements.appendChild(div);
       setElemPosition(pen, div);
-    }, 200);
+      const img = new Image();
+      img.src = pen.calculative.singleton.div.children[0].toDataURL();
+      pen.calculative.img = img;
+    }, 400);
   }
 
   path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
