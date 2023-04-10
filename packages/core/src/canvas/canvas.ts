@@ -1355,6 +1355,9 @@ export class Canvas {
         this.setAnchor(this.store.pointAt);
         this.drawingLineName = this.store.options.drawingLineName;
         const anchor = this.store.activeAnchor;
+        if (!anchor) {
+          return;
+        }
         const pt: Point = {
           id: s8(),
           x: anchor.x,
@@ -1402,6 +1405,9 @@ export class Canvas {
           this.setAnchor(this.store.pointAt);
           const to = getToAnchor(this.drawingLine);
           const anchor = this.store.activeAnchor;
+          if (!anchor) {
+            return;
+          }
           to.x = anchor.x;
           to.y = anchor.y;
           connectLine(this.store.hover, anchor, this.drawingLine, to);
@@ -4554,12 +4560,13 @@ export class Canvas {
     }
     this.hotkeyType = HotkeyType.None;
     this.render();
-
-    this.pushHistory({
-      type: EditType.Update,
-      pens: [deepClone(hoverPen, true)],
-      initPens,
-    });
+    if (hoverPen) {
+      this.pushHistory({
+        type: EditType.Update,
+        pens: [deepClone(hoverPen, true)],
+        initPens,
+      });
+    }
   }
 
   /**
