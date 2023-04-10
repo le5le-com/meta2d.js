@@ -598,7 +598,7 @@ export class Canvas {
         }
         break;
       case 'Alt':
-        if (this.drawingLine) {
+        if (!e.ctrlKey && !e.shiftKey && this.drawingLine) {
           const to = getToAnchor(this.drawingLine);
           if (to !== this.drawingLine.calculative.activeAnchor) {
             deleteTempAnchor(this.drawingLine);
@@ -1351,7 +1351,7 @@ export class Canvas {
 
     //shift 快捷添加锚点并连线
     if (!this.store.options.autoAnchor && !this.drawingLine) {
-      if (e.shiftKey && !e.ctrlKey) {
+      if (e.shiftKey && e.ctrlKey && e.altKey) {
         this.setAnchor(this.store.pointAt);
         this.drawingLineName = this.store.options.drawingLineName;
         const anchor = this.store.activeAnchor;
@@ -1398,7 +1398,7 @@ export class Canvas {
 
       //shift快捷添加锚点并完成连线
       if (!this.store.options.autoAnchor) {
-        if (e.shiftKey) {
+        if (e.shiftKey && e.altKey && e.ctrlKey) {
           this.setAnchor(this.store.pointAt);
           const to = getToAnchor(this.drawingLine);
           const anchor = this.store.activeAnchor;
