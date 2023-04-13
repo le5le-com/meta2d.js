@@ -3188,7 +3188,7 @@ export class Canvas {
     if (!pen.lineHeight) {
       pen.lineHeight = lineHeight;
     }
-    pen.calculative = { canvas: this };
+    pen.calculative = { canvas: this, singleton: pen.calculative?.singleton };
     if (pen.video || pen.audio) {
       pen.calculative.onended = (pen: Pen) => {
         this.nextAnimate(pen);
