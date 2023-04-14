@@ -19,7 +19,7 @@
     "lerna": "latest",
     "typedoc": "latest",
     "tslint": "latest",
-    "typescript": "latest",
+    "typescript": "4",
     "stats.js": "latest"
   }
 }
