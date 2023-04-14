@@ -19,23 +19,23 @@ export interface formPen extends Pen {
   checkboxWidth?: number;
   isForbidden?: boolean;
   options?: {
-    isForbidden: boolean;
-    isChecked: boolean;
-    background: string;
-    text: string;
+    isForbidden?: boolean;
+    isChecked?: boolean;
+    background?: string;
+    text?: string;
   }[];
   optionHeight?: number;
   checkboxHeight?: number;
   calculative?: {
-    barRect: Rect;
-    ballRect: Rect;
-    texts: any[];
-    activeCell: Pos;
-    hoverCell: Pos;
-    inputCell: Pos;
-    isUpdateData: boolean;
-    isHover: boolean;
-    isInput: boolean;
+    barRect?: Rect;
+    ballRect?: Rect;
+    texts?: any[];
+    activeCell?: Pos;
+    hoverCell?: Pos;
+    inputCell?: Pos;
+    isUpdateData?: boolean;
+    isHover?: boolean;
+    isInput?: boolean;
   } & Pen['calculative'];
   checked?: boolean | string;
   onColor?: string;
@@ -53,37 +53,37 @@ export interface formPen extends Pen {
   min?: number;
   max?: number;
   table?: {
-    rowHeight: number;
-    colWidth: number;
-    header: {
-      data: any;
-      show: boolean;
-      height: number;
-      fontWeight: number;
+    rowHeight?: number;
+    colWidth?: number;
+    header?: {
+      data?: any;
+      show?: boolean;
+      height?: number;
+      fontWeight?: number;
     };
-    data: any[];
+    data?: any[];
   };
-  colPos: number[];
-  rowPos: number[];
-  tableWidth: number;
-  tableHeight: number;
-  isInit: boolean;
-  rowHeight: number;
-  colWidth: number;
-  styles: {
-    row: number;
-    col: number;
-    color: string;
-    background: string;
-    width: number;
-    height: number;
-    wheres: { comparison: string; key: string; value: string }[];
-    pens: formPen[];
+  colPos?: number[];
+  rowPos?: number[];
+  tableWidth?: number;
+  tableHeight?: number;
+  isInit?: boolean;
+  rowHeight?: number;
+  colWidth?: number;
+  styles?: {
+    row?: number;
+    col?: number;
+    color?: string;
+    background?: string;
+    width?: number;
+    height?: number;
+    wheres?: { comparison?: string; key?: string; value?: string }[];
+    pens?: formPen[];
   }[];
-  data: any;
-  isFirstTime: boolean;
+  data?: any;
+  isFirstTime?: boolean;
   replaceMode?: ReplaceMode;
-  timer: any;
+  timer?: any;
 }
 
 export interface cellData extends ChartData {
