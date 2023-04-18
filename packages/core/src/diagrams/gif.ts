@@ -24,6 +24,12 @@ export function gif(pen: Pen): Path2D {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = pen.image;
+    if (
+      pen.calculative.canvas.parent.store.options.cdn &&
+      !(pen.image.startsWith('http') || pen.image.startsWith('//'))
+    ) {
+      img.src = pen.calculative.canvas.parent.store.options.cdn + pen.image;
+    }
     gifsList[pen.id] = img; // 提前赋值，避免重复创建
     gif_z_index++;
     pen.calculative.zIndex = gif_z_index;

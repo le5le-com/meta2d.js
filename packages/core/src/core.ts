@@ -384,6 +384,12 @@ export class Meta2d {
       return new Promise<HTMLImageElement>((resolve) => {
         const img = new Image();
         img.src = url;
+        if (
+          this.store.options.cdn &&
+          !(url.startsWith('http') || url.startsWith('//'))
+        ) {
+          img.src = this.store.options.cdn + url;
+        }
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           resolve(img);

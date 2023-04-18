@@ -3467,6 +3467,12 @@ export class Canvas {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.src = pen.image;
+            if (
+              this.store.options.cdn &&
+              !(pen.image.startsWith('http') || pen.image.startsWith('//'))
+            ) {
+              img.src = this.store.options.cdn + pen.image;
+            }
             img.onload = () => {
               pen.calculative.img = img;
               pen.calculative.imgNaturalWidth =
@@ -3492,6 +3498,15 @@ export class Canvas {
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.src = pen.backgroundImage;
+          if (
+            this.store.options.cdn &&
+            !(
+              pen.backgroundImage.startsWith('http') ||
+              pen.backgroundImage.startsWith('//')
+            )
+          ) {
+            img.src = this.store.options.cdn + pen.backgroundImage;
+          }
           img.onload = () => {
             pen.calculative.backgroundImg = img;
             globalStore.htmlElements[pen.backgroundImage] = img;
@@ -3512,6 +3527,15 @@ export class Canvas {
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.src = pen.strokeImage;
+          if (
+            this.store.options.cdn &&
+            !(
+              pen.strokeImage.startsWith('http') ||
+              pen.strokeImage.startsWith('//')
+            )
+          ) {
+            img.src = this.store.options.cdn+ pen.strokeImage;
+          }
           img.onload = () => {
             pen.calculative.strokeImg = img;
             globalStore.htmlElements[pen.strokeImage] = img;
