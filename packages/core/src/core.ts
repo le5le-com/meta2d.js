@@ -386,7 +386,11 @@ export class Meta2d {
         img.src = url;
         if (
           this.store.options.cdn &&
-          !(url.startsWith('http') || url.startsWith('//'))
+          !(
+            url.startsWith('http') ||
+            url.startsWith('//') ||
+            url.startsWith('data:image')
+          )
         ) {
           img.src = this.store.options.cdn + url;
         }

@@ -26,7 +26,11 @@ export function gif(pen: Pen): Path2D {
     img.src = pen.image;
     if (
       pen.calculative.canvas.parent.store.options.cdn &&
-      !(pen.image.startsWith('http') || pen.image.startsWith('//'))
+      !(
+        pen.image.startsWith('http') ||
+        pen.image.startsWith('//') ||
+        pen.image.startsWith('data:image')
+      )
     ) {
       img.src = pen.calculative.canvas.parent.store.options.cdn + pen.image;
     }

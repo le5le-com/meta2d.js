@@ -3469,7 +3469,11 @@ export class Canvas {
             img.src = pen.image;
             if (
               this.store.options.cdn &&
-              !(pen.image.startsWith('http') || pen.image.startsWith('//'))
+              !(
+                pen.image.startsWith('http') ||
+                pen.image.startsWith('//') ||
+                pen.image.startsWith('data:image')
+              )
             ) {
               img.src = this.store.options.cdn + pen.image;
             }
@@ -3502,7 +3506,8 @@ export class Canvas {
             this.store.options.cdn &&
             !(
               pen.backgroundImage.startsWith('http') ||
-              pen.backgroundImage.startsWith('//')
+              pen.backgroundImage.startsWith('//') ||
+              pen.backgroundImage.startsWith('data:image')
             )
           ) {
             img.src = this.store.options.cdn + pen.backgroundImage;
@@ -3531,10 +3536,11 @@ export class Canvas {
             this.store.options.cdn &&
             !(
               pen.strokeImage.startsWith('http') ||
-              pen.strokeImage.startsWith('//')
+              pen.strokeImage.startsWith('//') ||
+              pen.strokeImage.startsWith('data:image')
             )
           ) {
-            img.src = this.store.options.cdn+ pen.strokeImage;
+            img.src = this.store.options.cdn + pen.strokeImage;
           }
           img.onload = () => {
             pen.calculative.strokeImg = img;
