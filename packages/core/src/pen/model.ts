@@ -557,6 +557,8 @@ export const isDomShapes = [
   'echarts',
   'highcharts',
   'lightningCharts',
+  'le5leInput',
+  'sideNavMenu',
 ];
 
 // 格式刷同步的属性
