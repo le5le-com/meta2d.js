@@ -46,6 +46,8 @@ export interface Meta2dData {
   version?: string; // 版本号
   id?: string;
   https?: HttpOptions[];
+  width?: number;
+  height?: number;
 }
 
 export interface HttpOptions {

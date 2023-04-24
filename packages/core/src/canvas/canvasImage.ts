@@ -135,12 +135,32 @@ export class CanvasImage {
     if (patchFlagsBackground && this.isBottom) {
       const ctx = this.otherOffsreen.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      if (this.store.data.width && this.store.data.height && this.store.bkImg) {
+        ctx.save();
+        ctx.drawImage(
+          this.store.bkImg,
+          this.store.data.origin.x + this.store.data.x,
+          this.store.data.origin.y + this.store.data.y,
+          this.store.data.width * this.store.data.scale,
+          this.store.data.height * this.store.data.scale
+        );
+        ctx.restore();
+      }
       const background =
         this.store.data.background || this.store.options.background;
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.store.data.width && this.store.data.height) {
+          ctx.fillRect(
+            this.store.data.origin.x + this.store.data.x,
+            this.store.data.origin.y + this.store.data.y,
+            this.store.data.width * this.store.data.scale,
+            this.store.data.height * this.store.data.scale
+          );
+        } else {
+          ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
         ctx.restore();
       }
       this.renderGrid(ctx);

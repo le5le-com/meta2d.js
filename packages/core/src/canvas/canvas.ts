@@ -3467,6 +3467,16 @@ export class Canvas {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.src = pen.image;
+            if (
+              this.store.options.cdn &&
+              !(
+                pen.image.startsWith('http') ||
+                pen.image.startsWith('//') ||
+                pen.image.startsWith('data:image')
+              )
+            ) {
+              img.src = this.store.options.cdn + pen.image;
+            }
             img.onload = () => {
               pen.calculative.img = img;
               pen.calculative.imgNaturalWidth =
@@ -3492,6 +3502,16 @@ export class Canvas {
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.src = pen.backgroundImage;
+          if (
+            this.store.options.cdn &&
+            !(
+              pen.backgroundImage.startsWith('http') ||
+              pen.backgroundImage.startsWith('//') ||
+              pen.backgroundImage.startsWith('data:image')
+            )
+          ) {
+            img.src = this.store.options.cdn + pen.backgroundImage;
+          }
           img.onload = () => {
             pen.calculative.backgroundImg = img;
             globalStore.htmlElements[pen.backgroundImage] = img;
@@ -3512,6 +3532,16 @@ export class Canvas {
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.src = pen.strokeImage;
+          if (
+            this.store.options.cdn &&
+            !(
+              pen.strokeImage.startsWith('http') ||
+              pen.strokeImage.startsWith('//') ||
+              pen.strokeImage.startsWith('data:image')
+            )
+          ) {
+            img.src = this.store.options.cdn + pen.strokeImage;
+          }
           img.onload = () => {
             pen.calculative.strokeImg = img;
             globalStore.htmlElements[pen.strokeImage] = img;
@@ -4096,12 +4126,6 @@ export class Canvas {
     let y = p2.y - p1.y;
 
     const rect = deepClone(this.initActiveRect);
-    if (
-      (e as any).shiftKey ||
-      (this.initPens.length == 1 && this.initPens[0].ratio)
-    ) {
-      x = (rect.width / rect.height) * y;
-    }
     // 得到最准确的 rect 即 resize 后的
     resizeRect(rect, x, y, this.resizeIndex);
     calcCenter(rect);
@@ -4133,7 +4157,10 @@ export class Canvas {
     let offsetY = y - this.lastOffsetY;
     this.lastOffsetX = x;
     this.lastOffsetY = y;
-    if ((e as any).ctrlKey) {
+    if (
+      (e as any).ctrlKey ||
+      (this.initPens.length === 1 && this.initPens[0].ratio)
+    ) {
       // 1，3 是右上角和左上角的点，此时的 offsetY 符号与 offsetX 是相反的
       const sign = [1, 3].includes(this.resizeIndex) ? -1 : 1;
       offsetY = (sign * (offsetX * h)) / w;

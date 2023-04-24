@@ -10,7 +10,7 @@ import { Point } from '../../point';
 import { Meta2dStore } from '../../store';
 import { s8 } from '../../utils';
 
-const faceSpace = 30;
+const faceSpace = 0;
 export function polyline(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
   if (!pen.calculative.worldAnchors) {
     pen.calculative.worldAnchors = [];

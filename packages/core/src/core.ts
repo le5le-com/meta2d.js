@@ -380,10 +380,21 @@ export class Meta2d {
   }
 
   async setBackgroundImage(url: string) {
+    let that = this;
     async function loadImage(url: string) {
       return new Promise<HTMLImageElement>((resolve) => {
         const img = new Image();
         img.src = url;
+        if (
+          that.store.options.cdn &&
+          !(
+            url.startsWith('http') ||
+            url.startsWith('//') ||
+            url.startsWith('data:image')
+          )
+        ) {
+          img.src = that.store.options.cdn + url;
+        }
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           resolve(img);
