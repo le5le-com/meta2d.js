@@ -2411,7 +2411,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
 function isLinear(value: unknown, key: string, pen: Pen): boolean {
   // 不线性变化的属性
   const noLinear = ['strokeType', 'bkType', 'showChild'] as const;
-  type NoLinear = typeof noLinear[number];
+  type NoLinear = (typeof noLinear)[number];
   return (
     typeof value === 'number' &&
     pen.linear !== false &&
@@ -2501,7 +2501,10 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   elem.style.top = worldRect.y + store.data.y + 'px';
   elem.style.width = worldRect.width + 'px';
   elem.style.height = worldRect.height + 'px';
-  elem.style.display = pen.calculative.inView != false ? 'inline' : 'none'; // 是否隐藏元素
+  elem.style.display =
+    pen.calculative.inView != false
+      ? pen.calculative.cssDisplay || 'inline'
+      : 'none'; // 是否隐藏元素
   !pen.calculative.rotate && (pen.calculative.rotate = 0);
   elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
   if (!pen.calculative.rotate) {

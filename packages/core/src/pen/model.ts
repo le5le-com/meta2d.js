@@ -493,6 +493,7 @@ export interface Pen extends Rect {
     animateLineWidth?: number;
     gradientSmooth?: number; //渐进色平滑度
     gradientAnimatePath?: Path2D;
+    cssDisplay: string; //css display
   };
 
   // 前一个动画帧状态数据
@@ -557,6 +558,11 @@ export const isDomShapes = [
   'echarts',
   'highcharts',
   'lightningCharts',
+  'leInput',
+  'leSelect',
+  'leMenu',
+  'leHeadMenu',
+  'leSliderVerify',
 ];
 
 // 格式刷同步的属性
