@@ -71,6 +71,10 @@ export interface Options {
   drawingLineLength?: number; //绘制过程中允许的最大长度，0表示不限
   disableTouchPadScale?: boolean; //是否禁止触控板缩放
   cdn?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }
 
 export const defaultOptions: Options = {
