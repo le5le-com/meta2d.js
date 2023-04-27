@@ -75,6 +75,7 @@ export interface Options {
   y?: number;
   width?: number;
   height?: number;
+  polylineSpace?: number;
 }
 
 export const defaultOptions: Options = {
@@ -134,4 +135,5 @@ export const defaultOptions: Options = {
   drawingLineLength: 0,
   disableTouchPadScale: false,
   cdn: '',
+  polylineSpace: 10,
 };
