@@ -1,4 +1,4 @@
-import { TextAlign, TextBaseline } from './pen';
+import { TextAlign, TextBaseline, Pen } from './pen';
 import { Point } from './point';
 
 export enum KeydownType {
@@ -76,6 +76,7 @@ export interface Options {
   width?: number;
   height?: number;
   polylineSpace?: number;
+  defaultFormat?: Pen; //默认格式刷
 }
 
 export const defaultOptions: Options = {
