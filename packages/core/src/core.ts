@@ -1850,6 +1850,62 @@ export class Meta2d {
     });
   }
 
+  setFormatPainter() {
+    const pens = this.store.active;
+    const attrs = {};
+    if (pens.length > 0) {
+      const firstPen = pens[0];
+      formatAttrs.forEach((attr) => {
+        attrs[attr] =
+          firstPen[attr] ||
+          this.store.options.defaultFormat[attr] ||
+          this.store.options[attr];
+      });
+    } else {
+      //默认值
+      const attrs = {};
+      formatAttrs.forEach((attr) => {
+        attrs[attr] =
+          this.store.options.defaultFormat[attr] ||
+          this.store.options[attr] ||
+          undefined;
+      });
+    }
+    localStorage.setItem('meta2d-formatPainter', JSON.stringify(attrs));
+  }
+
+  formatPainter() {
+    const pens = this.store.active;
+    const initPens = deepClone(pens);
+    const attrs = JSON.parse(localStorage.getItem('meta2d-formatPainter'));
+    for (let i = 0; i < pens.length; i++) {
+      const pen = pens[i];
+      this.setValue(
+        { id: pen.id, ...attrs },
+        { render: false, doEvent: false }
+      );
+    }
+    this.render();
+
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
+  }
+
+  clearFormatPainter() {
+    const attrs = {};
+    formatAttrs.forEach((attr) => {
+      attrs[attr] =
+        this.store.options.defaultFormat[attr] ||
+        this.store.options[attr] ||
+        undefined;
+    });
+    localStorage.setItem('meta2d-formatPainter', JSON.stringify(attrs));
+    this.formatPainter();
+  }
+
   alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect) {
     !rect && (rect = this.getPenRect(this.getRect(pens)));
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
