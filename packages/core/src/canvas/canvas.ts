@@ -5754,6 +5754,13 @@ export class Canvas {
     // sheet.insertRule(`.meta2d-input .input-div-font{${style_font}}`);
   };
 
+  convertSpecialCharacter(str) {
+    var arrEntities = { lt: '<', gt: '>', nbsp: ' ', amp: '&', quot: '"' };
+    return str.replace(/&(lt|gt|nbsp|amp|quot);/gi, function (all, t) {
+      return arrEntities[t];
+    });
+  }
+
   hideInput = () => {
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
@@ -5768,6 +5775,9 @@ export class Canvas {
         .replace(/\<br\>/g, '')
         .replace(/&nbsp;/g, ' ')
         .replace(/(<([^>]+)>)/gi, '');
+      this.inputDiv.dataset.value = this.convertSpecialCharacter(
+        this.inputDiv.dataset.value
+      );
       if (pen.onInput) {
         pen.onInput(pen, this.inputDiv.dataset.value);
       } else if (pen.text !== this.inputDiv.dataset.value) {
