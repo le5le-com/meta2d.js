@@ -1709,6 +1709,64 @@ export class Meta2d {
     this.centerView();
   }
 
+  fitSizeView(fit: boolean = true, viewPadding: Padding = 10) {
+    // 默认垂直填充，两边留白
+    if (!this.hasView()) return;
+    // 1. 重置画布尺寸为容器尺寸
+    const { canvas } = this.canvas;
+    const { offsetWidth: width, offsetHeight: height } = canvas;
+    this.resize(width, height);
+    // 2. 获取设置的留白值
+    const padding = formatPadding(viewPadding);
+
+    const _width =
+      (this.store.data.width || this.store.options.width) *
+      this.store.data.scale;
+    const _height =
+      (this.store.data.height || this.store.options.height) *
+      this.store.data.scale;
+    // 4. 计算缩放比例
+    const w = (width - padding[1] - padding[3]) / _width;
+    const h = (height - padding[0] - padding[2]) / _height;
+    let ratio = w;
+    if (fit) {
+      // 完整显示取小的
+      ratio = w > h ? h : w;
+    } else {
+      ratio = w > h ? w : h;
+    }
+    // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
+    this.scale(ratio * this.store.data.scale);
+
+    // 5. 居中
+    this.centerSizeView();
+  }
+
+  centerSizeView() {
+    if (!this.hasView()) return;
+    const viewCenter = this.getViewCenter();
+    //根据画布尺寸居中对齐
+    const _width = this.store.data.width || this.store.options.width;
+    const _height = this.store.data.height || this.store.options.height;
+    const pensRect: any = {
+      x: 0,
+      y: 0,
+      width: _width,
+      height: _height,
+    };
+    calcCenter(pensRect);
+    const { center } = pensRect;
+    const { scale, origin, x: dataX, y: dataY } = this.store.data;
+    this.translate(
+      (viewCenter.x - origin.x) / scale - center.x - dataX / scale,
+      (viewCenter.y - origin.y) / scale - center.y - dataY / scale
+    );
+    const { canvas } = this.canvas;
+    const x = (canvas.scrollWidth - canvas.offsetWidth) / 2;
+    const y = (canvas.scrollHeight - canvas.offsetHeight) / 2;
+    canvas.scrollTo(x, y);
+  }
+
   /**
    * 宽度放大到屏幕尺寸，并滚动到最顶部
    *
