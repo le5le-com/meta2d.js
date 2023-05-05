@@ -947,6 +947,11 @@ export class Meta2d {
     //   this.store.emitter.emit('add', [parent]);
     // }
     this.pushHistory({
+      type: EditType.Add,
+      pens: [parent],
+      step,
+    });
+    this.pushHistory({
       type: EditType.Update,
       initPens,
       pens,
