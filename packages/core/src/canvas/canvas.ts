@@ -2408,6 +2408,7 @@ export class Canvas {
       setChildrenActive(pen);
     });
     this.store.active.push(...pens);
+    this.activeRect = undefined;
     this.calcActiveRect();
     this.patchFlags = true;
     emit && this.store.emitter.emit('active', this.store.active);
