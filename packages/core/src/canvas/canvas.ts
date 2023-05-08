@@ -2361,6 +2361,7 @@ export class Canvas {
       setChildrenActive(pen);
     });
     this.store.active.push(...pens);
+    this.activeRect = undefined;
     this.calcActiveRect();
     this.patchFlags = true;
     emit && this.store.emitter.emit('active', this.store.active);
@@ -3091,6 +3092,9 @@ export class Canvas {
           if (i > -1) {
             this.store.data.pens.splice(i, 1);
             this.store.pens[pen.id] = undefined;
+            if (!pen.calculative) {
+              pen.calculative = {};
+            }
             pen.calculative.canvas = this;
             this.store.animates.delete(pen);
             this.store.animateMap.delete(pen);
@@ -3137,7 +3141,10 @@ export class Canvas {
       case EditType.Delete:
         action.pens.forEach((aPen) => {
           const pen = deepClone(aPen, true);
-          this.store.data.pens.splice(pen.calculative.layer, 0, pen);
+          if (!pen.calculative) {
+            pen.calculative = {};
+          }
+          this.store.data.pens.splice(pen.calculative?.layer, 0, pen);
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
           pen.calculative.canvas = this;

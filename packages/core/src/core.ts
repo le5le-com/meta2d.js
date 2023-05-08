@@ -923,7 +923,7 @@ export class Meta2d {
     // 若组合为状态，那么 parent 一定是 combine
     this.canvas.makePen(parent);
     // }
-
+    const initParent = deepClone(parent);
     pens.forEach((pen) => {
       if (pen === parent || pen.parentId === parent.id) {
         return;
@@ -947,10 +947,21 @@ export class Meta2d {
     //   this.store.emitter.emit('add', [parent]);
     // }
     this.pushHistory({
+      type: EditType.Add,
+      pens: [initParent],
+      step: 3,
+    });
+    this.pushHistory({
+      type: EditType.Update,
+      initPens: [initParent],
+      pens: [parent],
+      step: 3,
+    });
+    this.pushHistory({
       type: EditType.Update,
       initPens,
       pens,
-      step,
+      step: 3,
     });
     if (showChild != undefined) {
       pens.forEach((pen) => {
