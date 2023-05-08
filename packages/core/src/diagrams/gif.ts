@@ -97,5 +97,6 @@ function changeId(pen: Pen, oldId: string, newId: string) {
 function setImagePosition(pen: Pen, elem: HTMLImageElement) {
   // meta2d canvas 绘制图片 drawImage 保持比例，是短边填充
   elem.style.objectFit = pen.imageRatio ? 'contain' : 'fill';
+  elem.style.opacity = pen.globalAlpha + '';
   setElemPosition(pen, elem);
 }
