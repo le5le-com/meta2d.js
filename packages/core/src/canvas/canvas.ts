@@ -6199,6 +6199,10 @@ export class Canvas {
       pen.calculative.gradient = undefined;
       pen.calculative.radialGradient = undefined;
     }
+    if (data.gradientRadius) {
+      pen.calculative.gradient = undefined;
+      pen.calculative.radialGradient = undefined;
+    }
     if (data.animateLineWidth) {
       pen.calculative.gradientAnimatePath = undefined;
     }
