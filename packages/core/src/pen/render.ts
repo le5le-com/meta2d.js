@@ -1097,7 +1097,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     } else {
       let stroke: string | CanvasGradient | CanvasPattern;
       // TODO: 线只有线性渐变
-      if (pen.calculative.strokeType === Gradient.Linear) {
+      if (pen.calculative.strokeType) {
         if (pen.calculative.lineGradientColors) {
           if (pen.name === 'line') {
             lineGradientFlag = true;
