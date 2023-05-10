@@ -2771,7 +2771,11 @@ export class Canvas {
       return HoverType.None;
     }
 
-    if (this.store.options.disableAnchor || pen.disableAnchor) {
+    if (
+      (!(pen.type && pen.calculative.active) &&
+        this.store.options.disableAnchor) ||
+      pen.disableAnchor
+    ) {
       return HoverType.None;
     }
 
