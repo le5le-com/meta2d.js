@@ -4049,6 +4049,7 @@ export class Canvas {
         return;
       }
       scalePen(pen, s, center);
+      pen.onScale && pen.onScale(pen);
       if (pen.isRuleLine) {
         // 扩大线的比例，若是放大，即不缩小，若是缩小，会放大
         const lineScale = s > 1 ? 1 : 1 / s / s;
