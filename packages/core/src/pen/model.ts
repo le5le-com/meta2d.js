@@ -313,6 +313,7 @@ export interface Pen extends Rect {
   ratio?: boolean; //宽高比锁定
   animateLineWidth?: number; //连线动画线宽
   gradientSmooth?: number; //渐进色平滑度
+  scrolling?: string; //iframe scrolling属性
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;

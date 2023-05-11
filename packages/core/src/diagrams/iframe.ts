@@ -16,7 +16,7 @@ export function iframe(pen: Pen) {
 
   if (!iframes[pen.id]) {
     const iframe = document.createElement('iframe');
-    iframe.scrolling = 'no';
+    iframe.scrolling = pen.scrolling || 'no';
     iframe.frameBorder = '0';
     iframe.src = pen.iframe;
     iframes[pen.id] = iframe;
