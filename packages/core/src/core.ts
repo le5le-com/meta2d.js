@@ -765,6 +765,7 @@ export class Meta2d {
         ) {
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
+          animate.currentAnimation = index;
           if (!pen.type && animate.frames) {
             animate.showDuration = this.calcAnimateDuration(animate);
           }
@@ -824,6 +825,7 @@ export class Meta2d {
       pens = idOrTagOrPens;
     }
     pens.forEach((pen) => {
+      pen.currentAnimation = undefined;
       pen.calculative.pause = undefined;
       pen.calculative.start = undefined;
       pen.calculative.duration = undefined;
