@@ -1485,6 +1485,24 @@ export class Canvas {
           this.inactive();
           this.hoverType = HoverType.None;
         }
+      } else if (this.hoverType === HoverType.NodeAnchor) {
+        //钢笔模式下 可以连节点锚点
+        this.drawingLineName = this.store.options.drawingLineName;
+        const pt: Point = {
+          id: s8(),
+          x: this.store.hoverAnchor.x,
+          y: this.store.hoverAnchor.y,
+        };
+        this.drawingLine = this.createDrawingLine(pt);
+        this.drawingLine.calculative.activeAnchor = pt;
+        connectLine(
+          this.store.hover,
+          this.store.hoverAnchor,
+          this.drawingLine,
+          pt
+        );
+
+        // this.drawline();
       } else if (!this.drawingLine && this.drawingLineName !== 'curve') {
         this.inactive(true);
         const pt: Point = { id: s8(), x: e.x, y: e.y };
