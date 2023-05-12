@@ -568,6 +568,7 @@ export const isDomShapes = [
   'leMenu',
   'leHeadMenu',
   'leSliderVerify',
+  'leDropDown',
 ];
 
 // 格式刷同步的属性
