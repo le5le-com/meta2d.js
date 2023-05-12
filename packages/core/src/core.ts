@@ -739,7 +739,8 @@ export class Meta2d {
     this.canvas.setPenRect(pen, rect, render);
   }
 
-  startAnimate(idOrTagOrPens?: string | Pen[]): void {
+  startAnimate(idOrTagOrPens?: string | Pen[], index?: number): void {
+    this.stopAnimate(idOrTagOrPens);
     let pens: Pen[];
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
@@ -757,6 +758,28 @@ export class Meta2d {
         pen.calculative.frameStart += d;
         pen.calculative.frameEnd += d;
       } else {
+        if (
+          index !== undefined &&
+          pen.animations &&
+          pen.animations.length > index
+        ) {
+          const animate = deepClone(pen.animations[index]);
+          delete animate.name;
+          if (!pen.type && animate.frames) {
+            animate.showDuration = this.calcAnimateDuration(animate);
+          }
+          //animations成立
+          this.setValue(
+            {
+              id: pen.id,
+              ...animate,
+            },
+            {
+              doEvent: false,
+              history: false,
+            }
+          );
+        }
         this.store.animates.add(pen);
         if (!pen.type) {
           this.store.animateMap.set(

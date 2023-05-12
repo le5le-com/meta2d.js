@@ -314,6 +314,7 @@ export interface Pen extends Rect {
   animateLineWidth?: number; //连线动画线宽
   gradientSmooth?: number; //渐进色平滑度
   scrolling?: string; //iframe scrolling属性
+  animations?: any[]; //动画数组
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -495,6 +496,7 @@ export interface Pen extends Rect {
     gradientSmooth?: number; //渐进色平滑度
     gradientAnimatePath?: Path2D;
     cssDisplay?: string; //css display
+    animations?: any[];
   };
 
   // 前一个动画帧状态数据
