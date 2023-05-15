@@ -1,6 +1,7 @@
 import { getTextLength, initOptions } from './common';
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
+import { getTextColor, getFont } from '../../core';
 
 export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -19,6 +20,9 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.optionPos) {
     return;
   }
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } =
+    pen.calculative;
+
   if (pen.direction == 'horizontal') {
     // const optionHeight = (pen.optionHeight * h) / pen.checkboxHeight;
     for (let i = 0; i < pen.optionPos.length; i++) {
@@ -61,19 +65,19 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.save();
       ctx.fillStyle = isForbidden
         ? '#00000040'
-        : pen.textColor || pen.color || '#000000d9';
+        : getTextColor(pen, pen.calculative.canvas.parent.store) || '#000000d9';
       const textScale = (pen.calculative.worldRect.height * 14) / 16;
 
       ctx.textAlign = 'start';
       ctx.textBaseline = 'middle';
-      ctx.font =
-        (pen.calculative.fontStyle || '') +
-        ' normal ' +
-        (pen.calculative.fontWeight || '') +
-        ' ' +
-        textScale +
-        'px ' +
-        pen.calculative.fontFamily;
+      ctx.font = getFont({
+        fontStyle,
+        fontWeight,
+        fontFamily:
+          fontFamily || pen.calculative.canvas.parent.store.options.fontFamily,
+        fontSize: textScale,
+        lineHeight,
+      });
       ctx.fillText(
         pen.options[i].text,
         x + h + gap + (10 / pen.checkboxWidth) * w,
@@ -137,19 +141,29 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
 
       //文字
       ctx.save();
-      ctx.fillStyle = isForbidden ? '#00000040' : '#000000d9';
+      ctx.fillStyle = isForbidden
+        ? '#00000040'
+        : getTextColor(pen, pen.calculative.canvas.parent.store) || '#000000d9';
       const textScale =
         (14 * pen.calculative.worldRect.height) / pen.checkboxHeight;
       ctx.textAlign = 'start';
       ctx.textBaseline = 'middle';
-      ctx.font =
-        (pen.calculative.fontStyle || '') +
-        ' normal ' +
-        (pen.calculative.fontWeight || '') +
-        ' ' +
-        textScale +
-        'px ' +
-        pen.calculative.fontFamily;
+      // ctx.font =
+      //   (pen.calculative.fontStyle || '') +
+      //   ' normal ' +
+      //   (pen.calculative.fontWeight || '') +
+      //   ' ' +
+      //   textScale +
+      //   'px ' +
+      //   pen.calculative.fontFamily;
+      ctx.font = getFont({
+        fontStyle,
+        fontWeight,
+        fontFamily:
+          fontFamily || pen.calculative.canvas.parent.store.options.fontFamily,
+        fontSize: textScale,
+        lineHeight,
+      });
       ctx.fillText(
         pen.options[i].text,
         x + optionHeight + 10,
