@@ -63,7 +63,7 @@ export function highcharts(pen: Pen): Path2D {
     });
 
     // 4. 加载到div layer
-    pen.calculative.canvas.externalElements?.appendChild(div);
+    pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
     setElemPosition(pen, div);
   }
 

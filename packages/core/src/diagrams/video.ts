@@ -52,7 +52,7 @@ export function video(pen: Pen) {
     media.style.height = '100%';
     player.appendChild(media);
     videos[pen.id] = player;
-    pen.calculative.canvas.externalElements?.appendChild(player);
+    pen.calculative.canvas.externalElements?.parentElement.appendChild(player);
     setElemPosition(pen, player);
     if (pen.autoPlay) {
       media.autoplay = true;

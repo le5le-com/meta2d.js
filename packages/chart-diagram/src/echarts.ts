@@ -87,7 +87,8 @@ export function echarts(pen: ChartPen): Path2D {
     });
 
     // 4. 加载到div layer
-    pen.calculative.canvas.externalElements?.appendChild(div);
+    // pen.calculative.canvas.externalElements?.appendChild(div);
+    pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
     setElemPosition(pen, div);
   } else {
     path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);

@@ -2527,7 +2527,9 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
       elem.style.transform = `rotateZ(180deg)`;
     }
   }
-  elem.style.zIndex = pen.calculative.zIndex + '';
+  elem.style.zIndex = pen.calculative.zIndex
+    ? pen.calculative.zIndex + ''
+    : '3';
   if (
     pen.locked === LockState.DisableEdit ||
     pen.locked === LockState.DisableMove ||
