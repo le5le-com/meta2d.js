@@ -771,7 +771,14 @@ export function drawImage(
 export function getTextColor(pen: Pen, store: Meta2dStore) {
   const { textColor, color } = pen.calculative;
   const { data, options } = store;
-  return textColor || color || data.color || options.textColor || options.color;
+  return (
+    textColor ||
+    color ||
+    data.textColor ||
+    data.color ||
+    options.textColor ||
+    options.color
+  );
 }
 
 function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {

@@ -150,6 +150,7 @@ export class Meta2d {
       toArrow,
       rule,
       ruleColor,
+      textColor,
     } = options;
     this.setRule({ rule, ruleColor });
     this.setGrid({
@@ -158,6 +159,7 @@ export class Meta2d {
       gridSize,
     });
     this.store.data = Object.assign(this.store.data, {
+      textColor,
       color,
       activeColor,
       activeBackground,

@@ -37,6 +37,7 @@ export interface Meta2dData {
   toArrow?: string;
   lineWidth?: number;
   color?: string; // 画笔默认 color 优先级高于 options.color
+  textColor?: string; // 画笔文字颜色
   penBackground?: string; // 画笔默认背景色
   paths?: { [key: string]: string }; // paths 该图纸使用到的 svgPath ，打开后需要保存到 globalStore.paths
   bkImage?: string; // 背景图片
