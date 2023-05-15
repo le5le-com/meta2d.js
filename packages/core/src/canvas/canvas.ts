@@ -260,7 +260,7 @@ export class Canvas {
     this.externalElements.style.top = '0';
     this.externalElements.style.outline = 'none';
     this.externalElements.style.background = 'transparent';
-    this.externalElements.style.zIndex = '5';
+    this.externalElements.style.zIndex = '4';
     parentElement.style.position = 'relative';
     parentElement.appendChild(this.externalElements);
     this.createInput();

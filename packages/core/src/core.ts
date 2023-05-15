@@ -549,14 +549,12 @@ export class Meta2d {
     this.finishDrawLine(true);
     this.canvas.drawingLineName = '';
     this.stopPencil();
-    if (lock === 0) {
-      //恢复可选状态
-      this.store.data.pens.forEach((pen) => {
-        if (pen.externElement === true) {
-          pen.onMove && pen.onMove(pen);
-        }
-      });
-    }
+    //恢复可选状态
+    this.store.data.pens.forEach((pen) => {
+      if (pen.externElement === true) {
+        pen.onMove && pen.onMove(pen);
+      }
+    });
   }
 
   // end  - 当前鼠标位置，是否作为终点
