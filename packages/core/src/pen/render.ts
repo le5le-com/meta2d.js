@@ -2216,6 +2216,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
     );
     // 播放结束
     if (cycleIndex > pen.animateCycle) {
+      pen.currentAnimation = undefined;
       pen.calculative.start = undefined;
       setNodeAnimateProcess(pen, 1);
       return 0;
@@ -2453,6 +2454,7 @@ export function setLineAnimate(pen: Pen, now: number) {
 
     // 播放结束
     if (pen.calculative.cycleIndex > pen.animateCycle) {
+      pen.currentAnimation = undefined;
       pen.calculative.start = undefined;
       return 0;
     }
