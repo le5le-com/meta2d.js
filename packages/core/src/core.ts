@@ -949,7 +949,14 @@ export class Meta2d {
     this.canvas.makePen(parent);
     // }
     const initParent = deepClone(parent);
+    let minIndex = Infinity;
     pens.forEach((pen) => {
+      const index = this.store.data.pens.findIndex(
+        (_pen) => _pen.id === pen.id
+      );
+      if (index < minIndex) {
+        minIndex = index;
+      }
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
@@ -960,6 +967,9 @@ export class Meta2d {
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
     });
+    //将组合后的父节点置底
+    this.store.data.pens.splice(minIndex, 0, parent);
+    this.store.data.pens.pop();
     this.canvas.active([parent]);
     let step = 1;
     // if (!oneIsParent) {

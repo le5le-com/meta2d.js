@@ -5186,9 +5186,25 @@ export class Canvas {
     this.store.clipboard = undefined;
     localStorage.removeItem(this.clipboardName);
     sessionStorage.setItem('page', page);
+
+    let copyPens: Pen[] = this.getAllByPens(
+      deepClone(pens || this.store.active, true)
+    );
+    //根据pens顺序复制
+    copyPens.forEach((activePen: any) => {
+      activePen.copyIndex = this.store.data.pens.findIndex(
+        (pen) => pen.id === activePen.id
+      );
+    });
+    copyPens.sort((a: any, b: any) => {
+      return a.copyIndex - b.copyIndex;
+    });
+    copyPens.forEach((activePen: any) => {
+      delete activePen.copyIndex;
+    });
     const clipboard = {
       meta2d: true,
-      pens: this.getAllByPens(deepClone(pens || this.store.active, true)),
+      pens: copyPens,
       origin: deepClone(origin),
       scale,
       page,
