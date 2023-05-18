@@ -150,6 +150,7 @@ export class Meta2d {
       toArrow,
       rule,
       ruleColor,
+      textColor,
     } = options;
     this.setRule({ rule, ruleColor });
     this.setGrid({
@@ -158,6 +159,7 @@ export class Meta2d {
       gridSize,
     });
     this.store.data = Object.assign(this.store.data, {
+      textColor,
       color,
       activeColor,
       activeBackground,
@@ -547,14 +549,12 @@ export class Meta2d {
     this.finishDrawLine(true);
     this.canvas.drawingLineName = '';
     this.stopPencil();
-    if (lock === 0) {
-      //恢复可选状态
-      this.store.data.pens.forEach((pen) => {
-        if (pen.externElement === true) {
-          pen.onMove && pen.onMove(pen);
-        }
-      });
-    }
+    //恢复可选状态
+    this.store.data.pens.forEach((pen) => {
+      if (pen.externElement === true) {
+        pen.onMove && pen.onMove(pen);
+      }
+    });
   }
 
   // end  - 当前鼠标位置，是否作为终点
@@ -949,7 +949,14 @@ export class Meta2d {
     this.canvas.makePen(parent);
     // }
     const initParent = deepClone(parent);
+    let minIndex = Infinity;
     pens.forEach((pen) => {
+      const index = this.store.data.pens.findIndex(
+        (_pen) => _pen.id === pen.id
+      );
+      if (index < minIndex) {
+        minIndex = index;
+      }
       if (pen === parent || pen.parentId === parent.id) {
         return;
       }
@@ -960,6 +967,9 @@ export class Meta2d {
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
     });
+    //将组合后的父节点置底
+    this.store.data.pens.splice(minIndex, 0, parent);
+    this.store.data.pens.pop();
     this.canvas.active([parent]);
     let step = 1;
     // if (!oneIsParent) {

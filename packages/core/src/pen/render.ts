@@ -178,15 +178,43 @@ function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
   ];
-  let r = width / 2;
-  if (width > height) {
-    r = height / 2;
-  }
   const { angle, colors } = formatGradient(pen.calculative.gradientColors);
+  let r = getGradientR(angle, width, height);
   points.forEach((point) => {
     rotatePoint(point, angle, center);
   });
   return getLinearGradient(ctx, points, colors, r);
+}
+
+function getGradientR(angle: number, width: number, height: number) {
+  const dividAngle = (Math.atan(height / width) / Math.PI) * 180;
+  let calculateAngle = (angle - 90) % 360;
+  let r = 0;
+  if (
+    (calculateAngle > dividAngle && calculateAngle < 180 - dividAngle) ||
+    (calculateAngle > 180 + dividAngle && calculateAngle < 360 - dividAngle)
+  ) {
+    //根据高计算
+    if (calculateAngle > 270) {
+      calculateAngle = 360 - calculateAngle;
+    } else if (calculateAngle > 180) {
+      calculateAngle = calculateAngle - 180;
+    } else if (calculateAngle > 90) {
+      calculateAngle = 180 - calculateAngle;
+    }
+    r = Math.abs(height / Math.sin((calculateAngle / 180) * Math.PI) / 2);
+  } else {
+    //根据宽计算
+    if (calculateAngle > 270) {
+      calculateAngle = 360 - calculateAngle;
+    } else if (calculateAngle > 180) {
+      calculateAngle = calculateAngle - 180;
+    } else if (calculateAngle > 90) {
+      calculateAngle = 180 - calculateAngle;
+    }
+    r = Math.abs(width / Math.cos((calculateAngle / 180) * Math.PI) / 2);
+  }
+  return r;
 }
 
 function formatGradient(color: string) {
@@ -265,11 +293,9 @@ function getLineGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
   ];
-  let r = width / 2;
-  if (width > height) {
-    r = height / 2;
-  }
+
   const { angle, colors } = formatGradient(pen.calculative.lineGradientColors);
+  let r = getGradientR(angle, width, height);
 
   points.forEach((point) => {
     rotatePoint(point, angle, center);
@@ -771,7 +797,14 @@ export function drawImage(
 export function getTextColor(pen: Pen, store: Meta2dStore) {
   const { textColor, color } = pen.calculative;
   const { data, options } = store;
-  return textColor || color || data.color || options.textColor || options.color;
+  return (
+    textColor ||
+    color ||
+    data.textColor ||
+    data.color ||
+    options.textColor ||
+    options.color
+  );
 }
 
 function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
@@ -2520,7 +2553,12 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
       elem.style.transform = `rotateZ(180deg)`;
     }
   }
-  elem.style.zIndex = pen.calculative.zIndex + '';
+  elem.style.zIndex =
+    pen.locked || store.data.locked
+      ? '999'
+      : pen.calculative.zIndex
+      ? pen.calculative.zIndex + ''
+      : '3';
   if (
     pen.locked === LockState.DisableEdit ||
     pen.locked === LockState.DisableMove ||

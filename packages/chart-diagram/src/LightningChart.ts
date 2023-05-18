@@ -52,7 +52,7 @@ export function lightningCharts(pen: Pen): Path2D {
     // 加载到div layer
     setTimeout(() => {
       pen.calculative.canvas.externalElements &&
-        pen.calculative.canvas.externalElements.appendChild(div);
+        pen.calculative.canvas.externalElements.parentElement.appendChild(div);
       setElemPosition(pen, div);
       const img = new Image();
       img.src = pen.calculative.singleton.div.children[0].toDataURL();

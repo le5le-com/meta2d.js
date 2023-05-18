@@ -241,20 +241,26 @@ export class Canvas {
     public store: Meta2dStore
   ) {
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
+    this.canvasImageBottom.canvas.style.zIndex = '1';
 
     parentElement.appendChild(this.canvas);
     this.canvas.style.position = 'absolute';
     this.canvas.style.backgroundRepeat = 'no-repeat';
     this.canvas.style.backgroundSize = '100% 100%';
+    this.canvas.style.zIndex = '2';
 
     this.canvasImage = new CanvasImage(parentElement, store);
+    this.canvasImage.canvas.style.zIndex = '3';
 
     this.magnifierCanvas = new MagnifierCanvas(this, parentElement, store);
+    this.magnifierCanvas.canvas.style.zIndex = '4';
+
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
     this.externalElements.style.top = '0';
     this.externalElements.style.outline = 'none';
     this.externalElements.style.background = 'transparent';
+    this.externalElements.style.zIndex = '4';
     parentElement.style.position = 'relative';
     parentElement.appendChild(this.externalElements);
     this.createInput();
@@ -5180,9 +5186,25 @@ export class Canvas {
     this.store.clipboard = undefined;
     localStorage.removeItem(this.clipboardName);
     sessionStorage.setItem('page', page);
+
+    let copyPens: Pen[] = this.getAllByPens(
+      deepClone(pens || this.store.active, true)
+    );
+    //根据pens顺序复制
+    copyPens.forEach((activePen: any) => {
+      activePen.copyIndex = this.store.data.pens.findIndex(
+        (pen) => pen.id === activePen.id
+      );
+    });
+    copyPens.sort((a: any, b: any) => {
+      return a.copyIndex - b.copyIndex;
+    });
+    copyPens.forEach((activePen: any) => {
+      delete activePen.copyIndex;
+    });
     const clipboard = {
       meta2d: true,
-      pens: this.getAllByPens(deepClone(pens || this.store.active, true)),
+      pens: copyPens,
       origin: deepClone(origin),
       scale,
       page,

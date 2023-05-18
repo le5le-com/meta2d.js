@@ -4,7 +4,6 @@ export const gifsList: {
   [key: string]: HTMLImageElement;
 } = {};
 
-let gif_z_index = 0;
 export function gif(pen: Pen): Path2D {
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
@@ -35,13 +34,12 @@ export function gif(pen: Pen): Path2D {
       img.src = pen.calculative.canvas.parent.store.options.cdn + pen.image;
     }
     gifsList[pen.id] = img; // 提前赋值，避免重复创建
-    gif_z_index++;
-    pen.calculative.zIndex = gif_z_index;
     img.onload = () => {
       pen.calculative.img = img;
       pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
       pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
-      pen.calculative.canvas.externalElements?.appendChild(img);
+      // pen.calculative.canvas.externalElements?.appendChild(img);
+      pen.calculative.canvas.externalElements?.parentElement.appendChild(img);
       setImagePosition(pen, img);
     };
   }
