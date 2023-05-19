@@ -24,6 +24,21 @@ export interface Meta2dData {
     customClientId?: boolean;
   };
   mqttTopics?: string;
+  websocketProtocols?: string | string[];
+  websockets?: {
+    url?: string;
+    protocols?: string | string[];
+  }[];
+  mqtts?: {
+    url?: string;
+    options?: {
+      clientId?: string;
+      username?: string;
+      password?: string;
+      customClientId?: boolean;
+    };
+    topics?: string;
+  }[];
   background?: string;
   socketCbJs?: string;
   initJs?: string;
@@ -55,6 +70,8 @@ export interface HttpOptions {
   http?: string; // http 请求 Url
   httpTimeInterval?: number; // http 请求间隔
   httpHeaders?: HeadersInit; //请求头
+  method?: string;
+  body?: BodyInit | null;
 }
 
 export enum EditType {

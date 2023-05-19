@@ -70,6 +70,8 @@ export class Meta2d {
   canvas: Canvas;
   websocket: WebSocket;
   mqttClient: MqttClient;
+  websockets: WebSocket[];
+  mqttClients: MqttClient[];
   socketFn: (e: string, topic: string) => boolean;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: ViewMap;
@@ -1160,8 +1162,26 @@ export class Meta2d {
     if (websocket) {
       this.store.data.websocket = websocket;
     }
-    if (this.store.data.websocket) {
-      this.websocket = new WebSocket(this.store.data.websocket);
+    if (this.store.data.websockets) {
+      this.websockets = [];
+      this.store.data.websockets.forEach((websocket, index) => {
+        this.websockets[index] = new WebSocket(
+          websocket.url,
+          websocket.protocols
+        );
+        this.websockets[index].onmessage = (e) => {
+          this.socketCallback(e.data);
+        };
+        this.websockets[index].onclose = () => {
+          console.info('Canvas websocket closed and reconneting...');
+          this.connectWebsocket();
+        };
+      });
+    } else if (this.store.data.websocket) {
+      this.websocket = new WebSocket(
+        this.store.data.websocket,
+        this.store.data.websocketProtocols
+      );
       this.websocket.onmessage = (e) => {
         this.socketCallback(e.data);
       };
@@ -1178,6 +1198,13 @@ export class Meta2d {
       this.websocket.onclose = undefined;
       this.websocket.close();
       this.websocket = undefined;
+    }
+    if (this.websockets) {
+      this.websockets.forEach((websocket) => {
+        websocket.onclose = undefined;
+        websocket.close();
+        websocket = undefined;
+      });
     }
   }
 
@@ -1197,7 +1224,26 @@ export class Meta2d {
       this.store.data.mqttTopics = params.mqttTopics;
       this.store.data.mqttOptions = params.mqttOptions;
     }
-    if (this.store.data.mqtt) {
+    if (this.store.data.mqtts) {
+      this.mqttClients = [];
+      this.store.data.mqtts.forEach((_mqtt, index) => {
+        if (_mqtt.options.clientId && !_mqtt.options.customClientId) {
+          _mqtt.options.clientId = s8();
+        }
+
+        this.mqttClients[index] = mqtt.connect(_mqtt.url, _mqtt.options);
+        this.mqttClients[index].on(
+          'message',
+          (topic: string, message: Buffer) => {
+            this.socketCallback(message.toString(), topic);
+          }
+        );
+
+        if (_mqtt.topics) {
+          this.mqttClients[index].subscribe(_mqtt.topics.split(','));
+        }
+      });
+    } else if (this.store.data.mqtt) {
       if (
         this.store.data.mqttOptions.clientId &&
         !this.store.data.mqttOptions.customClientId
@@ -1221,6 +1267,10 @@ export class Meta2d {
 
   closeMqtt() {
     this.mqttClient?.end();
+    this.mqttClients &&
+      this.mqttClients.forEach((mqttClient) => {
+        mqttClient?.end();
+      });
   }
 
   httpTimer: any;
