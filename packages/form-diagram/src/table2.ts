@@ -220,7 +220,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
   for (let i = 0; i < pen.rowPos.length; i++) {
     for (let j = 0; j < pen.colPos.length; j++) {
       let { value: cell, style: cellStyle } = getCell(pen, i, j);
-      let isSuccess = false;
+      let isSuccess = true;
       //样式条件成立
       if (
         (cellStyle as any).wheres &&
