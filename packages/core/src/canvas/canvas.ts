@@ -975,6 +975,7 @@ export class Canvas {
       img.onerror = (e) => {
         reject(e);
       };
+      img.crossOrigin = 'anonymous';
       img.src = url;
     });
   }
