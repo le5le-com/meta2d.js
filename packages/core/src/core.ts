@@ -64,6 +64,7 @@ import * as mqtt from 'mqtt/dist/mqtt.min.js';
 
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
+import { Scroll } from './scroll';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -132,6 +133,14 @@ export class Meta2d {
 
   setOptions(opts: Options = {}) {
     this.store.options = Object.assign(this.store.options, opts);
+    if (this.canvas && opts.scroll !== undefined) {
+      if (opts.scroll) {
+        !this.canvas.scroll && (this.canvas.scroll = new Scroll(this.canvas));
+        this.canvas.scroll.show();
+      } else {
+        this.canvas.scroll.hide();
+      }
+    }
   }
 
   getOptions() {
@@ -1817,7 +1826,7 @@ export class Meta2d {
    * 宽度放大到屏幕尺寸，并滚动到最顶部
    *
    */
-  scrollView(viewPadding: Padding = 10) {
+  scrollView(viewPadding: Padding = 10, pageMode: boolean = false) {
     if (!this.hasView()) return;
     //滚动状态下
     if (!this.canvas.scroll) {
@@ -1832,6 +1841,9 @@ export class Meta2d {
     this.scale(ratio * this.store.data.scale);
 
     this.topView(padding[0]);
+    if (pageMode) {
+      this.canvas.scroll.changeMode();
+    }
   }
 
   topView(paddingTop: number = 10) {

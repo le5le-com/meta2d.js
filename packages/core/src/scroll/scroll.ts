@@ -17,6 +17,7 @@ export class Scroll {
   lastScrollY: number;
   rect: Rect;
   isShow: boolean;
+  pageMode: boolean; //页面模式
   constructor(public parent: Canvas) {
     this.h = document.createElement('div');
     this.v = document.createElement('div');
@@ -100,6 +101,9 @@ export class Scroll {
 
     if (this.isDownV) {
       const y = e.y - this.isDownV;
+      if (this.pageMode && this.canMouseMove(y)) {
+        return;
+      }
       this.scrollY = this.lastScrollY + y;
       this.v.style.top = `${this.scrollY}px`;
       this.parent.store.data.y =
@@ -147,6 +151,26 @@ export class Scroll {
 
     this.resize();
   };
+
+  canMouseMove(y: number) {
+    const rect = this.parent.parent.getRect();
+    if (y < 0 && rect.y + this.parent.store.data.y >= 0) {
+      return true;
+    }
+    if (y > 0 && rect.ey - this.parent.height + this.parent.store.data.y <= 0) {
+      return true;
+    }
+    return false;
+  }
+
+  changeMode() {
+    this.pageMode = true;
+    this.h.style.display = `none`;
+    const rect = this.parent.parent.getRect();
+    if (rect.height < this.parent.height) {
+      this.v.style.display = `none`;
+    }
+  }
 
   initPos() {
     this.scrollX = (this.parent.parentElement.clientWidth - this.hSize) / 2;
@@ -228,6 +252,10 @@ export class Scroll {
     let y = 10;
     if (up) {
       y = -10;
+    }
+
+    if (this.pageMode && this.canMouseMove(y)) {
+      return;
     }
 
     this.scrollY += y;
