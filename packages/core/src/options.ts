@@ -77,6 +77,7 @@ export interface Options {
   height?: number;
   polylineSpace?: number;
   defaultFormat?: Pen; //默认格式刷
+  domShapes?: string[]; //扩展的dom节点
 }
 
 export const defaultOptions: Options = {
@@ -137,4 +138,5 @@ export const defaultOptions: Options = {
   disableTouchPadScale: false,
   cdn: '',
   polylineSpace: 10,
+  domShapes: [],
 };

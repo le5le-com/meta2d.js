@@ -4380,7 +4380,11 @@ export class Canvas {
       // 线宽为 0 ，看不到外边框，拖动过程中给个外边框
       pen.lineWidth === 0 && (value.lineWidth = 1);
       // TODO: 例如 pen.name = 'triangle' 的情况，但有图片，是否还需要变成矩形呢？
-      if (isDomShapes.includes(pen.name) || pen.image) {
+      if (
+        isDomShapes.includes(pen.name) ||
+        this.store.options.domShapes.includes(pen.name) ||
+        pen.image
+      ) {
         // 修改名称会执行 onDestroy ，清空它
         value.name = 'rectangle';
         value.onDestroy = undefined;
