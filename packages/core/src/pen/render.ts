@@ -2578,6 +2578,20 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   }
 }
 
+export function setElemImg(pen: Pen, elem: HTMLElement) {
+  if (!elem) {
+    return;
+  }
+  //https://github.com/niklasvh/html2canvas
+  globalThis.html2canvas &&
+    globalThis.html2canvas(elem).then(function (canvas) {
+      // document.body.appendChild(canvas);
+      const img = new Image();
+      img.src = canvas.toDataURL('image/png');
+      pen.calculative.img = img;
+    });
+}
+
 /**
  * 每个画笔 locked
  * @param pens 画笔
