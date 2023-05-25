@@ -1896,6 +1896,23 @@ export class Meta2d {
     }
   }
 
+  screenView(viewPadding: Padding = 10, WorH: boolean = true) {
+    if (!this.hasView()) return;
+    const { canvas } = this.canvas;
+    const { offsetWidth: width, offsetHeight: height } = canvas;
+    this.resize(width, height);
+    const padding = formatPadding(viewPadding);
+    const rect = this.getRect();
+    //默认宽度充满
+    let ratio = (width - padding[1] - padding[3]) / rect.width;
+    if (!WorH) {
+      ratio = (height - padding[0] - padding[2]) / rect.height;
+    }
+    this.scale(ratio * this.store.data.scale);
+    //height充满时是居中
+    this.topView(padding[0]);
+  }
+
   topView(paddingTop: number = 10) {
     if (!this.hasView()) return;
     const rect = this.getRect();
