@@ -192,7 +192,8 @@ function getGradientR(angle: number, width: number, height: number) {
   let r = 0;
   if (
     (calculateAngle > dividAngle && calculateAngle < 180 - dividAngle) ||
-    (calculateAngle > 180 + dividAngle && calculateAngle < 360 - dividAngle)
+    (calculateAngle > 180 + dividAngle && calculateAngle < 360 - dividAngle) ||
+    calculateAngle < 0
   ) {
     //根据高计算
     if (calculateAngle > 270) {
