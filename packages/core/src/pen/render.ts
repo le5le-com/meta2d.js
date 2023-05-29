@@ -2556,7 +2556,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   }
   elem.style.zIndex =
     pen.locked || store.data.locked
-      ? '999'
+      ? `${999 + (pen.calculative.zIndex || 0)}`
       : pen.calculative.zIndex
       ? pen.calculative.zIndex + ''
       : '3';

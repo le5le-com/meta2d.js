@@ -73,7 +73,13 @@ export class Meta2d {
   mqttClient: MqttClient;
   websockets: WebSocket[];
   mqttClients: MqttClient[];
-  socketFn: (e: string, topic: string) => boolean;
+  socketFn: (
+    e: string,
+    topic: string,
+    context?: {
+      meta2d: Meta2d;
+    }
+  ) => boolean;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: ViewMap;
   mapTimer: any;
@@ -270,7 +276,7 @@ export class Meta2d {
             throw new Error('[meta2d] Function value must be string');
           }
           const fnJs = e.value;
-          e.fn = new Function('pen', 'params', fnJs) as (
+          e.fn = new Function('pen', 'params', 'context', fnJs) as (
             pen: Pen,
             params: string
           ) => void;
@@ -278,7 +284,7 @@ export class Meta2d {
           console.error('[meta2d]: Error on make a function:', err);
         }
       }
-      e.fn?.(pen, e.params);
+      e.fn?.(pen, e.params, { meta2d: this });
     };
     this.events[EventAction.GlobalFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
@@ -534,8 +540,10 @@ export class Meta2d {
     const initJs = this.store.data.initJs;
     if (initJs && initJs.trim()) {
       try {
-        const fn = new Function(initJs) as () => void;
-        fn();
+        const fn = new Function('context', initJs) as (context?: {
+          meta2d: Meta2d;
+        }) => void;
+        fn({ meta2d: this });
       } catch (e) {
         console.warn('initJs error', e);
       }
@@ -1149,9 +1157,12 @@ export class Meta2d {
       let socketFn: (e: string, topic: string) => boolean;
       const socketCbJs = this.store.data.socketCbJs;
       if (socketCbJs) {
-        socketFn = new Function('e', 'topic', socketCbJs) as (
+        socketFn = new Function('e', 'topic', 'context', socketCbJs) as (
           e: string,
-          topic: string
+          topic: string,
+          context?: {
+            meta2d: Meta2d;
+          }
         ) => boolean;
       }
       if (!socketFn) {
@@ -1363,7 +1374,7 @@ export class Meta2d {
   socketCallback(message: string, topic = '') {
     this.store.emitter.emit('socket', { message, topic });
 
-    if (this.socketFn && !this.socketFn(message, topic)) {
+    if (this.socketFn && !this.socketFn(message, topic, { meta2d: this })) {
       return;
     }
 
@@ -1650,14 +1661,17 @@ export class Meta2d {
             can = fn(pen);
           } else if (fnJs) {
             try {
-              event.where.fn = new Function('pen', fnJs) as (
-                pen: Pen
+              event.where.fn = new Function('pen', 'context', fnJs) as (
+                pen: Pen,
+                context?: {
+                  meta2d: Meta2d;
+                }
               ) => boolean;
             } catch (err) {
               console.error('Error: make function:', err);
             }
             if (event.where.fn) {
-              can = event.where.fn(pen);
+              can = event.where.fn(pen, { meta2d: this });
             }
           } else {
             switch (comparison) {

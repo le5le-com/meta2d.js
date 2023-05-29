@@ -1,3 +1,4 @@
+import { Meta2d } from '../core';
 import { IValue, Pen } from '../pen';
 
 export type EventValue = string | IValue | undefined | null;
@@ -19,7 +20,7 @@ export interface Event {
   value?: EventValue; // 不同 action 下，该值含义不同，例如：动画相关的，即为 节点 tag; Function 类型即为 字符串函数
   params?: string;
   extend?: string;
-  fn?: (pen: Pen, params: string) => void;
+  fn?: (pen: Pen, params: string, context?: { meta2d: Meta2d }) => void;
 }
 
 export enum EventAction {
@@ -43,7 +44,12 @@ export interface Where {
   key?: string;
   comparison?: Comparison;
   value?: unknown;
-  fn?: (pen: Pen) => boolean;
+  fn?: (
+    pen: Pen,
+    context?: {
+      meta2d: Meta2d;
+    }
+  ) => boolean;
   fnJs?: string;
 }
 
