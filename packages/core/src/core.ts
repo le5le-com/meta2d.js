@@ -40,6 +40,7 @@ import {
   Meta2dData,
   Meta2dStore,
   useStore,
+  Network,
 } from './store';
 import {
   formatPadding,
@@ -1182,22 +1183,7 @@ export class Meta2d {
     if (websocket) {
       this.store.data.websocket = websocket;
     }
-    if (this.store.data.websockets) {
-      this.websockets = [];
-      this.store.data.websockets.forEach((websocket, index) => {
-        this.websockets[index] = new WebSocket(
-          websocket.url,
-          websocket.protocols
-        );
-        this.websockets[index].onmessage = (e) => {
-          this.socketCallback(e.data);
-        };
-        this.websockets[index].onclose = () => {
-          console.info('Canvas websocket closed and reconneting...');
-          this.connectWebsocket();
-        };
-      });
-    } else if (this.store.data.websocket) {
+    if (this.store.data.websocket) {
       this.websocket = new WebSocket(
         this.store.data.websocket,
         this.store.data.websocketProtocols
@@ -1219,13 +1205,6 @@ export class Meta2d {
       this.websocket.close();
       this.websocket = undefined;
     }
-    if (this.websockets) {
-      this.websockets.forEach((websocket) => {
-        websocket.onclose = undefined;
-        websocket.close();
-        websocket = undefined;
-      });
-    }
   }
 
   connectMqtt(params?: {
@@ -1244,26 +1223,7 @@ export class Meta2d {
       this.store.data.mqttTopics = params.mqttTopics;
       this.store.data.mqttOptions = params.mqttOptions;
     }
-    if (this.store.data.mqtts) {
-      this.mqttClients = [];
-      this.store.data.mqtts.forEach((_mqtt, index) => {
-        if (_mqtt.options.clientId && !_mqtt.options.customClientId) {
-          _mqtt.options.clientId = s8();
-        }
-
-        this.mqttClients[index] = mqtt.connect(_mqtt.url, _mqtt.options);
-        this.mqttClients[index].on(
-          'message',
-          (topic: string, message: Buffer) => {
-            this.socketCallback(message.toString(), topic);
-          }
-        );
-
-        if (_mqtt.topics) {
-          this.mqttClients[index].subscribe(_mqtt.topics.split(','));
-        }
-      });
-    } else if (this.store.data.mqtt) {
+    if (this.store.data.mqtt) {
       if (
         this.store.data.mqttOptions.clientId &&
         !this.store.data.mqttOptions.customClientId
@@ -1287,10 +1247,6 @@ export class Meta2d {
 
   closeMqtt() {
     this.mqttClient?.end();
-    this.mqttClients &&
-      this.mqttClients.forEach((mqttClient) => {
-        mqttClient?.end();
-      });
   }
 
   httpTimer: any;
@@ -1369,6 +1325,88 @@ export class Meta2d {
         clearInterval(_httpTimer);
         _httpTimer = undefined;
       });
+  }
+
+  networkTimer: any;
+  connectNetwork() {
+    this.closeNetwork();
+    const { networks } = this.store.data;
+    if (networks) {
+      let mqttIndex = 0;
+      this.mqttClients = [];
+      let websocketIndex = 0;
+      this.websockets = [];
+      const https = [];
+      networks.forEach((net) => {
+        if (net.type === 'mqtt') {
+          if (net.options.clientId && !net.options.customClientId) {
+            net.options.clientId = s8();
+          }
+          this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
+          this.mqttClients[mqttIndex].on(
+            'message',
+            (topic: string, message: Buffer) => {
+              this.socketCallback(message.toString(), topic);
+            }
+          );
+
+          if (net.topics) {
+            this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
+          }
+          mqttIndex += 1;
+        } else if (net.type === 'websocket') {
+          this.websockets[websocketIndex] = new WebSocket(
+            net.url,
+            net.protocols
+          );
+          this.websockets[websocketIndex].onmessage = (e) => {
+            this.socketCallback(e.data);
+          };
+          websocketIndex += 1;
+        } else {
+          https.push(net);
+        }
+      });
+
+      this.onNetworkConnect(https);
+    }
+  }
+
+  onNetworkConnect(https: Network[]) {
+    this.networkTimer = setInterval(() => {
+      https.forEach(async (item) => {
+        if (item.url) {
+          // 默认每一秒请求一次
+          const res: Response = await fetch(item.url, {
+            headers: item.headers,
+            method: item.method,
+            body: item.body,
+          });
+          if (res.ok) {
+            const data = await res.text();
+            this.socketCallback(data);
+          }
+        }
+      });
+
+      //模拟数据
+      this.store.data.mockData && this.store.data.mockData();
+    }, this.store.data.networkInterval || 1000);
+  }
+
+  closeNetwork() {
+    this.mqttClients &&
+      this.mqttClients.forEach((mqttClient) => {
+        mqttClient.end();
+      });
+    this.websockets &&
+      this.websockets.forEach((websocket) => {
+        websocket.close();
+      });
+    this.mqttClients = undefined;
+    this.websockets = undefined;
+    clearInterval(this.networkTimer);
+    this.networkTimer = undefined;
   }
 
   socketCallback(message: string, topic = '') {

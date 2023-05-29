@@ -25,20 +25,6 @@ export interface Meta2dData {
   };
   mqttTopics?: string;
   websocketProtocols?: string | string[];
-  websockets?: {
-    url?: string;
-    protocols?: string | string[];
-  }[];
-  mqtts?: {
-    url?: string;
-    options?: {
-      clientId?: string;
-      username?: string;
-      password?: string;
-      customClientId?: boolean;
-    };
-    topics?: string;
-  }[];
   background?: string;
   socketCbJs?: string;
   initJs?: string;
@@ -64,6 +50,29 @@ export interface Meta2dData {
   https?: HttpOptions[];
   width?: number;
   height?: number;
+  networkInterval?: number;
+  networks?: Network[];
+  mockData?: Function;
+}
+
+export interface Network {
+  name?: string;
+  type: 'mqtt' | 'websocket' | 'http';
+  url?: string;
+  //websocket
+  protocols?: string;
+  //mqtt
+  topics?: string;
+  options?: {
+    clientId?: string;
+    username?: string;
+    password?: string;
+    customClientId?: boolean;
+  };
+  //http
+  headers?: HeadersInit; //请求头
+  method?: string;
+  body?: any;
 }
 
 export interface HttpOptions {
