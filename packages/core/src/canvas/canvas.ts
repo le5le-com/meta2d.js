@@ -123,6 +123,7 @@ import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
 import { lockedError } from '../utils/error';
 import { Meta2d } from '../core';
+import { Dialog } from '../dialog';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -230,6 +231,7 @@ export class Canvas {
   canvasImage: CanvasImage;
   canvasImageBottom: CanvasImage;
   magnifierCanvas: MagnifierCanvas;
+  dialog: Dialog;
 
   stopPropagation = (e: MouseEvent) => {
     e.stopPropagation();
@@ -274,6 +276,9 @@ export class Canvas {
       );
       setHover(hover, false);
     };
+
+    this.dialog = new Dialog(parentElement);
+
     if (this.store.options.scroll) {
       this.scroll = new Scroll(this);
     }
@@ -6575,6 +6580,7 @@ export class Canvas {
   destroy() {
     this.scroll && this.scroll.destroy();
     this.tooltip?.destroy();
+    this.dialog?.destroy();
 
     // ios
     this.externalElements.removeEventListener(

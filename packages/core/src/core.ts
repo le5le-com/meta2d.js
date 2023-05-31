@@ -57,7 +57,7 @@ import {
   rectInRect,
 } from './rect';
 import { deepClone } from './utils/clone';
-import { Event, EventAction, EventName } from './event';
+import { Event, EventAction, EventName, TriggerCondition } from './event';
 import { ViewMap } from './map';
 // TODO: 这种引入方式，引入 connect， webpack 5 报错
 import { MqttClient } from 'mqtt';
@@ -229,6 +229,10 @@ export class Meta2d {
       console.warn('[meta2d] SetProps value is not an object');
     };
     this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
+      if (e.targetType && e.params) {
+        this.startAnimate((e.value as string) || [pen], e.params);
+        return;
+      }
       if (!e.value || typeof e.value === 'string') {
         this.startAnimate((e.value as string) || [pen]);
         return;
@@ -348,6 +352,53 @@ export class Meta2d {
       }
       console.warn('[meta2d] SendVarData value is not an object');
     };
+    this.events[EventAction.Navigator] = (pen: Pen, e: Event) => {
+      if (e.value && typeof e.value === 'string') {
+        this.navigatorTo(e.value);
+      }
+    };
+    this.events[EventAction.Dialog] = (pen: Pen, e: Event) => {
+      if (
+        e.params &&
+        typeof e.params === 'string' &&
+        e.value &&
+        typeof e.value === 'string'
+      ) {
+        this.canvas.dialog.show(e.value, e.params);
+      }
+    };
+    this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
+      const value = deepClone(e.value);
+      if (value && typeof value === 'object') {
+        if (e.targetType === 'action') {
+          const _pen = e.params ? this.findOne(e.params) : pen;
+          for (let key in value) {
+            if (!value[key]) {
+              value[key] = _pen[key];
+            }
+          }
+          value.id = _pen.id;
+          this.sendDataToNetWork(value, e.network);
+          return;
+        }
+      }
+    };
+  }
+
+  navigatorTo(id: string) {
+    if (!id) {
+      return;
+    }
+    let href = window.location.href;
+    let arr: string[] = href.split('id=');
+    if (arr.length > 1) {
+      let idx = arr[1].indexOf('&');
+      if (idx === -1) {
+        window.location.href = arr[0] + 'id=' + id;
+      } else {
+        window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx + 1);
+      }
+    }
   }
 
   doSendDataEvent(value: any, topics?: string) {
@@ -371,6 +422,62 @@ export class Meta2d {
       this.sendDatabyHttp(data);
     }
     this.store.emitter.emit('sendData', data);
+  }
+
+  async sendDataToNetWork(value: any, network: Network) {
+    if (!network.url) {
+      return;
+    }
+    if (network.type === 'http') {
+      const res: Response = await fetch(network.url, {
+        headers: network.headers,
+        method: network.method,
+        body: value,
+      });
+      if (res.ok) {
+        console.info('http消息发送成功');
+      }
+    } else if (network.type === 'mqtt') {
+      const clients = this.mqttClients.filter(
+        (client) => (client.options as any).href === network.url
+      );
+      if (clients && clients.length) {
+        if (clients[0].connected) {
+          network.topics.split(',').forEach((topic) => {
+            clients[0].publish(topic, value);
+          });
+        }
+      } else {
+        //临时建立连接
+        let mqttClient = mqtt.connect(network.url, network.options);
+        mqttClient.on('connect', () => {
+          console.info('mqtt连接成功');
+          network.topics.split(',').forEach((topic) => {
+            mqttClient.publish(topic, value);
+            mqttClient?.end();
+          });
+        });
+      }
+    } else if (network.type === 'websocket') {
+      const websockets = this.websockets.filter(
+        (socket) => socket.url === network.url
+      );
+      if (websockets && websockets.length) {
+        if (websockets[0].readyState === 1) {
+          websockets[0].send(value);
+        }
+      } else {
+        //临时建立连接
+        let websocket = new WebSocket(network.url, network.protocols);
+        websocket.onopen = function () {
+          console.info('websocket连接成功');
+          websocket.send(value);
+          setTimeout(() => {
+            websocket.close();
+          }, 100);
+        };
+      }
+    }
   }
 
   resize(width?: number, height?: number) {
@@ -759,7 +866,7 @@ export class Meta2d {
     this.canvas.setPenRect(pen, rect, render);
   }
 
-  startAnimate(idOrTagOrPens?: string | Pen[], index?: number): void {
+  startAnimate(idOrTagOrPens?: string | Pen[], params?: number | string): void {
     this.stopAnimate(idOrTagOrPens);
     let pens: Pen[];
     if (!idOrTagOrPens) {
@@ -778,11 +885,22 @@ export class Meta2d {
         pen.calculative.frameStart += d;
         pen.calculative.frameEnd += d;
       } else {
-        if (
-          index !== undefined &&
-          pen.animations &&
-          pen.animations.length > index
-        ) {
+        if (params !== undefined && pen.animations) {
+          let index = -1;
+          if (typeof params === 'string') {
+            index = pen.animations.findIndex(
+              (animation) => animation.name === params
+            );
+            if (index === -1) {
+              return;
+            }
+          } else if (typeof params === 'number') {
+            if (pen.animations.length > params) {
+              index = params;
+            } else {
+              return;
+            }
+          }
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
           animate.currentAnimation = index;
@@ -1696,7 +1814,7 @@ export class Meta2d {
         if (event.where) {
           const { fn, fnJs, comparison, key, value } = event.where;
           if (fn) {
-            can = fn(pen);
+            can = fn(pen, { meta2d: this });
           } else if (fnJs) {
             try {
               event.where.fn = new Function('pen', 'context', fnJs) as (
@@ -1750,9 +1868,95 @@ export class Meta2d {
         can && this.events[event.action](pen, event);
       }
     });
+
+    pen.realTimes?.forEach((realTime) => {
+      realTime.triggers?.forEach((trigger) => {
+        let flag = false;
+        if (trigger.conditionType === 'and') {
+          flag = trigger.conditions.every((condition) => {
+            return this.judgeCondition(pen, realTime.key, condition);
+          });
+        } else if (trigger.conditionType === 'or') {
+          flag = trigger.conditions.some((condition) => {
+            return this.judgeCondition(pen, realTime.key, condition);
+          });
+        }
+        if (flag) {
+          trigger.actions?.forEach((event) => {
+            this.events[event.action](pen, event);
+          });
+        }
+      });
+    });
+
     // 事件冒泡，子执行完，父执行
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
+
+  judgeCondition(pen: Pen, key: string, condition: TriggerCondition) {
+    const { type, target, fnJs, fn, operator, valueType } = condition;
+    let can = false;
+    if (type === 'fn') {
+      //方法
+      if (fn) {
+        can = fn(pen, { meta2d: this });
+      } else if (fnJs) {
+        try {
+          condition.fn = new Function('pen', 'context', fnJs) as (
+            pen: Pen,
+            context?: {
+              meta2d: Meta2d;
+            }
+          ) => boolean;
+        } catch (err) {
+          console.error('Error: make function:', err);
+        }
+        if (condition.fn) {
+          can = condition.fn(pen, { meta2d: this });
+        }
+      }
+    } else {
+      //TODO boolean类型 数字类型
+      let value = condition.value;
+      if (valueType === 'prop') {
+        value = this.store.pens[target][condition.value];
+      }
+      switch (operator) {
+        case '>':
+          can = pen[key] > +value;
+          break;
+        case '>=':
+          can = pen[key] >= +value;
+          break;
+        case '<':
+          can = pen[key] < +value;
+          break;
+        case '<=':
+          can = pen[key] <= +value;
+          break;
+        case '=':
+        case '==':
+          can = pen[key] == value;
+          break;
+        case '!=':
+          can = pen[key] != value;
+          break;
+        case '[)':
+          can = valueInRange(+pen[key], value);
+          break;
+        case '![)':
+          can = !valueInRange(+pen[key], value);
+          break;
+        case '[]':
+          can = valueInArray(+pen[key], value);
+          break;
+        case '![]':
+          can = !valueInArray(+pen[key], value);
+          break;
+      }
+    }
+    return can;
+  }
 
   pushChildren(parent: Pen, children: Pen[]) {
     const initUpdatePens: Pen[] = [deepClone(parent, true)];

@@ -1,5 +1,6 @@
 import { Meta2d } from '../core';
 import { IValue, Pen } from '../pen';
+import { Network } from '../store';
 
 export type EventValue = string | IValue | undefined | null;
 // 事件行为
@@ -21,6 +22,8 @@ export interface Event {
   params?: string;
   extend?: string;
   fn?: (pen: Pen, params: string, context?: { meta2d: Meta2d }) => void;
+  targetType?: string;
+  network?: Network;
 }
 
 export enum EventAction {
@@ -37,6 +40,9 @@ export enum EventAction {
   StopVideo,
   SendPropData,
   SendVarData,
+  Navigator,
+  Dialog,
+  SendData, //数据源选择
 }
 
 export interface Where {
@@ -74,3 +80,42 @@ export type Comparison =
    */
   | '[]'
   | '![]'; // 非属于，与上一个相反
+
+export interface TriggerCondition {
+  type?: string; //'fn'|''
+  operator?: Comparison;
+  valueType?: string; //'prop'|''
+  value?: string;
+  target?: string;
+  label?: string;
+  fnJs?: string;
+  fn?: (
+    pen: Pen,
+    context?: {
+      meta2d: Meta2d;
+    }
+  ) => boolean;
+}
+
+export interface Trigger {
+  name?: string;
+  conditionType?: string; //'and'/'or'
+  conditions?: TriggerCondition[];
+  actions?: Event[];
+}
+
+export interface Bind {
+  case?: string;
+  id?: string;
+  label?: string;
+}
+
+export interface RealTime {
+  label?: string;
+  key?: string;
+  type?: string;
+  keywords?: true;
+  triggers?: Trigger[];
+  binds?: Bind[];
+  value?: string;
+}

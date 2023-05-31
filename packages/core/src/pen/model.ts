@@ -1,6 +1,6 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
-import { Event } from '../event';
+import { Event, RealTime } from '../event';
 import { Canvas } from '../canvas';
 
 export enum PenType {
@@ -316,6 +316,7 @@ export interface Pen extends Rect {
   scrolling?: string; //iframe scrolling属性
   animations?: any[]; //动画数组
   currentAnimation?: number; //当前动画索引
+  realTimes?: RealTime[];
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
