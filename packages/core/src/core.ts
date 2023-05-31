@@ -1809,63 +1809,71 @@ export class Meta2d {
     }
 
     pen.events?.forEach((event) => {
-      if (this.events[event.action] && event.name === eventName) {
-        let can = !event.where?.type;
-        if (event.where) {
-          const { fn, fnJs, comparison, key, value } = event.where;
-          if (fn) {
-            can = fn(pen, { meta2d: this });
-          } else if (fnJs) {
-            try {
-              event.where.fn = new Function('pen', 'context', fnJs) as (
-                pen: Pen,
-                context?: {
-                  meta2d: Meta2d;
-                }
-              ) => boolean;
-            } catch (err) {
-              console.error('Error: make function:', err);
-            }
-            if (event.where.fn) {
-              can = event.where.fn(pen, { meta2d: this });
-            }
-          } else {
-            switch (comparison) {
-              case '>':
-                can = pen[key] > +value;
-                break;
-              case '>=':
-                can = pen[key] >= +value;
-                break;
-              case '<':
-                can = pen[key] < +value;
-                break;
-              case '<=':
-                can = pen[key] <= +value;
-                break;
-              case '=':
-              case '==':
-                can = pen[key] == value;
-                break;
-              case '!=':
-                can = pen[key] != value;
-                break;
-              case '[)':
-                can = valueInRange(+pen[key], value);
-                break;
-              case '![)':
-                can = !valueInRange(+pen[key], value);
-                break;
-              case '[]':
-                can = valueInArray(+pen[key], value);
-                break;
-              case '![]':
-                can = !valueInArray(+pen[key], value);
-                break;
+      if (event.actions && event.actions.length) {
+        event.actions.forEach((action) => {
+          if (this.events[action.action] && event.name === eventName) {
+            this.events[action.action](pen, action);
+          }
+        });
+      } else {
+        if (this.events[event.action] && event.name === eventName) {
+          let can = !event.where?.type;
+          if (event.where) {
+            const { fn, fnJs, comparison, key, value } = event.where;
+            if (fn) {
+              can = fn(pen, { meta2d: this });
+            } else if (fnJs) {
+              try {
+                event.where.fn = new Function('pen', 'context', fnJs) as (
+                  pen: Pen,
+                  context?: {
+                    meta2d: Meta2d;
+                  }
+                ) => boolean;
+              } catch (err) {
+                console.error('Error: make function:', err);
+              }
+              if (event.where.fn) {
+                can = event.where.fn(pen, { meta2d: this });
+              }
+            } else {
+              switch (comparison) {
+                case '>':
+                  can = pen[key] > +value;
+                  break;
+                case '>=':
+                  can = pen[key] >= +value;
+                  break;
+                case '<':
+                  can = pen[key] < +value;
+                  break;
+                case '<=':
+                  can = pen[key] <= +value;
+                  break;
+                case '=':
+                case '==':
+                  can = pen[key] == value;
+                  break;
+                case '!=':
+                  can = pen[key] != value;
+                  break;
+                case '[)':
+                  can = valueInRange(+pen[key], value);
+                  break;
+                case '![)':
+                  can = !valueInRange(+pen[key], value);
+                  break;
+                case '[]':
+                  can = valueInArray(+pen[key], value);
+                  break;
+                case '![]':
+                  can = !valueInArray(+pen[key], value);
+                  break;
+              }
             }
           }
+          can && this.events[event.action](pen, event);
         }
-        can && this.events[event.action](pen, event);
       }
     });
 

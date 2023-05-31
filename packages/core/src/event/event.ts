@@ -24,6 +24,7 @@ export interface Event {
   fn?: (pen: Pen, params: string, context?: { meta2d: Meta2d }) => void;
   targetType?: string;
   network?: Network;
+  actions?: Event[];
 }
 
 export enum EventAction {
