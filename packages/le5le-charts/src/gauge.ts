@@ -6,6 +6,10 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
     pen.onAdd = onAdd;
     pen.onDestroy = onDestroy;
     pen.onClick = onclick;
+    if (pen.clockInterval) {
+      pen.onDestroy(pen);
+      pen.onAdd(pen);
+    }
   }
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
