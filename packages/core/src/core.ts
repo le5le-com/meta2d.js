@@ -1211,6 +1211,15 @@ export class Meta2d {
     this.canvas.inactive();
   }
 
+  activeAll() {
+    this.canvas.active(
+      this.store.data.pens.filter(
+        (pen) => !pen.parentId && pen.locked !== LockState.Disable
+      )
+    );
+    this.render();
+  }
+
   /**
    * 删除画笔
    * @param pens 需要删除的画笔们
