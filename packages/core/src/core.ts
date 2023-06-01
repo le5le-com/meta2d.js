@@ -283,13 +283,14 @@ export class Meta2d {
           const fnJs = e.value;
           e.fn = new Function('pen', 'params', 'context', fnJs) as (
             pen: Pen,
-            params: string
+            params: string,
+            context?: { meta2d: Meta2d; eventName: string }
           ) => void;
         } catch (err) {
           console.error('[meta2d]: Error on make a function:', err);
         }
       }
-      e.fn?.(pen, e.params, { meta2d: this });
+      e.fn?.(pen, e.params, { meta2d: this, eventName: e.name });
     };
     this.events[EventAction.GlobalFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
@@ -308,6 +309,7 @@ export class Meta2d {
       this.store.emitter.emit(e.value, {
         pen,
         params: e.params,
+        eventName: e.name,
       });
     };
     this.events[EventAction.SendPropData] = (pen: Pen, e: Event) => {
@@ -2240,7 +2242,7 @@ export class Meta2d {
   beSameByFirst(pens: Pen[] = this.store.data.pens, attribute?: string) {
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
 
-    // 1. 得到第一个画笔的 宽高 字体大小
+    // 1. 得到第一个画笔的 宽高
     const firstPen = pens[0];
     const { width, height } = this.getPenRect(firstPen);
     for (let i = 1; i < pens.length; i++) {
@@ -2268,6 +2270,40 @@ export class Meta2d {
     });
   }
 
+  /**
+   * 大小相同
+   * @param pens 画笔们
+   */
+  beSameByLast(pens: Pen[] = this.store.data.pens, attribute?: string) {
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
+
+    // 1. 得到最后一个画笔的 宽高
+    const lastPen = pens[pens.length - 1];
+    const { width, height } = this.getPenRect(lastPen);
+    for (let i = 0; i < pens.length - 1; i++) {
+      const pen = pens[i];
+      if (attribute === 'width') {
+        this.setValue({ id: pen.id, width }, { render: false, doEvent: false });
+      } else if (attribute === 'height') {
+        this.setValue(
+          { id: pen.id, height },
+          { render: false, doEvent: false }
+        );
+      } else {
+        this.setValue(
+          { id: pen.id, width, height },
+          { render: false, doEvent: false }
+        );
+      }
+    }
+    this.render();
+
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
+  }
   /**
    * 格式刷（样式相同，大小无需一致。）
    * @param pens 画笔们
@@ -2377,6 +2413,27 @@ export class Meta2d {
     const firstPen = pens[0];
     const rect = this.getPenRect(firstPen);
     for (let i = 1; i < pens.length; i++) {
+      const pen = pens[i];
+      this.alignPen(align, pen, rect);
+    }
+    this.render();
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
+  }
+
+  /**
+   * 对齐画笔，基于最后选中的画笔
+   * @param align 左对齐，右对齐，上对齐，下对齐，居中对齐
+   * @param pens
+   */
+  alignNodesByLast(align: string, pens: Pen[] = this.store.data.pens) {
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
+    const lastPen = pens[pens.length - 1];
+    const rect = this.getPenRect(lastPen);
+    for (let i = 0; i < pens.length - 1; i++) {
       const pen = pens[i];
       this.alignPen(align, pen, rect);
     }
