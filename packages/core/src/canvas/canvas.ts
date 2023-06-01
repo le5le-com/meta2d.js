@@ -4018,9 +4018,11 @@ export class Canvas {
     this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
-    this.canvasImage.init();
-    this.canvasImageBottom.init();
-    this.render();
+    setTimeout(() => {
+      this.canvasImage.init();
+      this.canvasImageBottom.init();
+      this.render();
+    });
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
       y: this.store.data.y,
@@ -4097,14 +4099,16 @@ export class Canvas {
       this.execPenResize(pen);
     });
     this.calcActiveRect();
-    this.canvasImage.init();
-    this.canvasImageBottom.init();
-    const map = this.parent.map;
-    if (map && map.isShow) {
-      map.setView();
-    }
-    this.render();
-    this.store.emitter.emit('scale', this.store.data.scale);
+    setTimeout(() => {
+      this.canvasImage.init();
+      this.canvasImageBottom.init();
+      const map = this.parent.map;
+      if (map && map.isShow) {
+        map.setView();
+      }
+      this.render();
+      this.store.emitter.emit('scale', this.store.data.scale);
+    });
   }
 
   rotatePens(e: Point) {
