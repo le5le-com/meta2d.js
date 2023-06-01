@@ -21,7 +21,11 @@ export interface Event {
   value?: EventValue; // 不同 action 下，该值含义不同，例如：动画相关的，即为 节点 tag; Function 类型即为 字符串函数
   params?: string;
   extend?: string;
-  fn?: (pen: Pen, params: string, context?: { meta2d: Meta2d }) => void;
+  fn?: (
+    pen: Pen,
+    params: string,
+    context?: { meta2d: Meta2d; eventName: string }
+  ) => void;
   targetType?: string;
   network?: Network;
   actions?: Event[];
