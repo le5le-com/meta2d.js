@@ -2677,9 +2677,9 @@ export class Meta2d {
   /**
    * 将该画笔置顶，即放到数组最后，最后绘制即在顶部
    * @param pen pen 置顶的画笔
-   * @param pens 画笔们，注意 pen 必须在该数组内才有效
    */
-  top(pen: Pen, pens: Pen[] = this.store.data.pens) {
+  top(pen: Pen) {
+    const pens = this.store.data.pens;
     // 获取它包含它的子节点
     const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
     const allPens = pens.filter((p) => allIds.includes(p.id));
@@ -2706,7 +2706,8 @@ export class Meta2d {
    * 该画笔置底，即放到数组最前，最后绘制即在底部
    * @param pens 画笔们，注意 pen 必须在该数组内才有效
    */
-  bottom(pen: Pen, pens: Pen[] = this.store.data.pens) {
+  bottom(pen: Pen) {
+    const pens = this.store.data.pens;
     const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
     const allPens = pens.filter((p) => allIds.includes(p.id));
     // 从后往前，保证 allPens 顺序不变
@@ -2779,28 +2780,80 @@ export class Meta2d {
 
   /**
    * 该画笔上移，即把该画笔在数组中的位置向后移动一个
-   * @param pens 画笔们，注意 pen 必须在该数组内才有效
+   * @param pen 画笔
    */
-  up(pen: Pen, pens: Pen[] = this.store.data.pens) {
-    const index = pens.findIndex((p: Pen) => p.id === pen.id);
+  up(pen: Pen) {
+    const pens = this.store.data.pens;
+    if (pen.children) {
+      //组合图元
+      const preMovePens = [...getAllChildren(pen, this.store), pen];
+      //先保证组合图元的顺序正确。
+      const orderPens = [];
+      for (let index = 0; index < pens.length; index++) {
+        const _pen: any = pens[index];
+        if (preMovePens.findIndex((p: Pen) => p.id === _pen.id) !== -1) {
+          _pen.temIndex = index;
+          orderPens.push(_pen);
+        }
+      }
+      let lastIndex = -1;
+      let offset = 0;
+      orderPens.forEach((_pen: any) => {
+        _pen.temIndex -= offset;
+        pens.splice(_pen.temIndex, 1);
+        offset += 1;
+        lastIndex = _pen.temIndex;
+        delete _pen.temIndex;
+      });
+      pens.splice(lastIndex + 1, 0, ...preMovePens);
+    } else {
+      const index = pens.findIndex((p: Pen) => p.id === pen.id);
 
-    if (index > -1 && index !== pens.length - 1) {
-      pens.splice(index + 2, 0, pens[index]);
-      pens.splice(index, 1);
-      this.initImageCanvas([pen]);
+      if (index > -1 && index !== pens.length - 1) {
+        pens.splice(index + 2, 0, pens[index]);
+        pens.splice(index, 1);
+        this.initImageCanvas([pen]);
+      }
     }
   }
 
   /**
    * 该画笔下移，即把该画笔在该数组中的位置前移一个
-   * @param pens 画笔们，注意 pen 必须在该数组内才有效
+   * @param pen 画笔
    */
-  down(pen: Pen, pens: Pen[] = this.store.data.pens) {
-    const index = pens.findIndex((p: Pen) => p.id === pen.id);
-    if (index > -1 && index !== 0) {
-      pens.splice(index - 1, 0, pens[index]);
-      pens.splice(index + 1, 1);
-      this.initImageCanvas([pen]);
+  down(pen: Pen) {
+    const pens = this.store.data.pens;
+    if (pen.children) {
+      //组合图元
+      const preMovePens = [...getAllChildren(pen, this.store), pen];
+      //先保证组合图元的顺序正确。
+      const orderPens = [];
+      for (let index = 0; index < pens.length; index++) {
+        const _pen: any = pens[index];
+        if (preMovePens.findIndex((p: Pen) => p.id === _pen.id) !== -1) {
+          _pen.temIndex = index;
+          orderPens.push(_pen);
+        }
+      }
+      let firstIndex = -1;
+      let offset = 0;
+      orderPens.forEach((_pen: any, index) => {
+        _pen.temIndex -= offset;
+        pens.splice(_pen.temIndex, 1);
+        offset += 1;
+        if (index === 0) {
+          firstIndex = _pen.temIndex;
+        }
+        delete _pen.temIndex;
+      });
+      pens.splice(firstIndex - 1, 0, ...preMovePens);
+    } else {
+      const index = pens.findIndex((p: Pen) => p.id === pen.id);
+      if (index > -1 && index !== 0) {
+        pens.splice(index - 1, 0, pens[index]);
+        pens.splice(index + 1, 1);
+        this.initImageCanvas([pen]);
+      }
     }
   }
 
