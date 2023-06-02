@@ -2585,8 +2585,10 @@ export function setElemImg(pen: Pen, elem: HTMLElement) {
     globalThis.html2canvas(elem).then(function (canvas) {
       // document.body.appendChild(canvas);
       const img = new Image();
-      img.src = canvas.toDataURL('image/png');
-      pen.calculative.img = img;
+      img.src = canvas.toDataURL('image/png', 0.1);
+      if (img.src.length > 10) {
+        pen.calculative.img = img;
+      }
     });
 }
 
