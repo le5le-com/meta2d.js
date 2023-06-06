@@ -57,9 +57,11 @@ export class Tooltip {
         '.meta2d-tooltip .text{max-width:320px;min-height:30px;max-height:400px;outline:none;padding:8px 16px;border-radius:4px;background:#777777;color:#ffffff;line-height:1.8;overflow-y:auto;}'
       );
       sheet.insertRule(
-        '.meta2d-tooltip .arrow{position:absolute;border:6px solid transparent;background:transparent;top:-2.5px;left:50%;transform:translateX(-50%)}'
+        '.meta2d-tooltip .arrow{position:absolute;border:10px solid transparent;background:transparent;top:-5px;left:50%;transform:translateX(-50%)}'
       );
-      sheet.insertRule('.meta2d-tooltip .arrow.down{top:initial;bottom: 2px;}');
+      sheet.insertRule(
+        '.meta2d-tooltip .arrow.down{top:initial;bottom: -1px;}'
+      );
     }
   }
 
