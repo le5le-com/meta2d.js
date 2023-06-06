@@ -1040,6 +1040,37 @@ export class Canvas {
         pen.y = e.y - pen.height / 2;
       }
     }
+    //大屏区域
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (width && height) {
+      let rect = {
+        x: this.store.data.origin.x,
+        y: this.store.data.origin.y,
+        width: width * this.store.data.scale,
+        height: height * this.store.data.scale,
+      };
+      let flag = true;
+      for (const pen of pens) {
+        if (!pen.parentId) {
+          let points = [
+            { x: pen.x, y: pen.y },
+            { x: pen.x + pen.width, y: pen.y },
+            { x: pen.x, y: pen.y + pen.height },
+            { x: pen.x + pen.width, y: pen.y + pen.height },
+          ];
+          if (points.some((point) => pointInRect(point, rect))) {
+            flag = false;
+            break;
+          }
+        }
+      }
+      if (flag) {
+        console.info('画笔在大屏范围外');
+        return;
+      }
+    }
+
     await this.addPens(pens, true);
     this.active(pens.filter((pen) => !pen.parentId));
     this.render();
