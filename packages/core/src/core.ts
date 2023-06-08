@@ -1456,7 +1456,7 @@ export class Meta2d {
       });
   }
 
-  networkTimer: any;
+  updateTimer: any;
   connectNetwork() {
     this.closeNetwork();
     const { networks } = this.store.data;
@@ -1501,8 +1501,87 @@ export class Meta2d {
     }
   }
 
+  randomString(e: number) {
+    e = e || 32;
+    let t = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678',
+      a = t.length,
+      n = '';
+    for (let i = 0; i < e; i++) {
+      n += t.charAt(Math.floor(Math.random() * a));
+    }
+    return n;
+  }
+
+  setMockData(pen: Pen) {
+    if (pen.realTimes) {
+      let _d: any = {};
+      pen.realTimes.forEach((realTime) => {
+        if (!realTime.binds || !realTime.binds.length) {
+          if (realTime.type === 'number') {
+            if (realTime.value && realTime.value.indexOf(',') !== -1) {
+              let arr = realTime.value.split(',');
+              let rai = Math.floor(Math.random() * arr.length);
+              _d[realTime.key] = parseFloat(arr[rai]);
+            } else if (realTime.value && realTime.value.indexOf('-') !== -1) {
+              let arr = realTime.value.split('-');
+              let max = parseFloat(arr[1]);
+              let min = parseFloat(arr[0]);
+              _d[realTime.key] = Math.random() * (max - min) + min;
+            } else {
+              _d[realTime.key] = parseFloat(realTime.value);
+            }
+          } else if (realTime.type === 'bool') {
+            if (typeof realTime.value === 'boolean') {
+              _d[realTime.key] = realTime.value;
+            } else if ('true' === realTime.value) {
+              _d[realTime.key] = true;
+            } else if ('false' === realTime.value) {
+              _d[realTime.key] = false;
+            } else {
+              _d[realTime.key] = Math.random() < 0.5;
+            }
+          } else if (realTime.type === 'object' || realTime.type === 'array') {
+            _d[realTime.key] = realTime.value;
+          } else {
+            //if (realTime.type === 'string')
+            if (
+              realTime.value &&
+              realTime.value.startsWith('{') &&
+              realTime.value.endsWith('}')
+            ) {
+              let str = realTime.value.substring(1, realTime.value.length - 1);
+              let arr = str.split(',');
+              let rai = Math.floor(Math.random() * arr.length);
+              _d[realTime.key] = arr[rai];
+            } else if (
+              realTime.value &&
+              realTime.value.startsWith('[') &&
+              realTime.value.endsWith(']')
+            ) {
+              let len = parseInt(
+                realTime.value.substring(1, realTime.value.length - 1)
+              );
+              _d[realTime.key] = this.randomString(len);
+            } else {
+              _d[realTime.key] = realTime.value;
+            }
+          }
+        }
+      });
+      if (Object.keys(_d).length) {
+        this.canvas.updateValue(pen, _d);
+        this.store.emitter.emit('valueUpdate', pen);
+      }
+    }
+  }
+
   onNetworkConnect(https: Network[]) {
-    this.networkTimer = setInterval(() => {
+    this.updateTimer = setInterval(() => {
+      //模拟数据
+      this.store.data.pens.forEach((pen) => {
+        this.setMockData(pen);
+      });
+
       https.forEach(async (item) => {
         if (item.url) {
           // 默认每一秒请求一次
@@ -1517,9 +1596,7 @@ export class Meta2d {
           }
         }
       });
-
-      //模拟数据
-      this.store.data.mockData && this.store.data.mockData();
+      this.render();
     }, this.store.data.networkInterval || 1000);
   }
 
@@ -1534,8 +1611,8 @@ export class Meta2d {
       });
     this.mqttClients = undefined;
     this.websockets = undefined;
-    clearInterval(this.networkTimer);
-    this.networkTimer = undefined;
+    clearInterval(this.updateTimer);
+    this.updateTimer = undefined;
   }
 
   socketCallback(message: string, topic = '') {
