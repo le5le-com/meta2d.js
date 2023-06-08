@@ -1365,7 +1365,6 @@ export class Canvas {
     if (e.buttons === 2 && !this.drawingLine) {
       this.mouseRight = MouseRight.Down;
     }
-    console.log('进入');
     this.hideInput();
     if (
       this.store.data.locked === LockState.Disable ||
