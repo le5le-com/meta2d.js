@@ -1512,7 +1512,7 @@ export class Meta2d {
     return n;
   }
 
-  setMockData(pen: Pen) {
+  penMock(pen: Pen) {
     if (pen.realTimes) {
       let _d: any = {};
       pen.realTimes.forEach((realTime) => {
@@ -1579,7 +1579,7 @@ export class Meta2d {
     this.updateTimer = setInterval(() => {
       //模拟数据
       this.store.data.pens.forEach((pen) => {
-        this.setMockData(pen);
+        this.penMock(pen);
       });
 
       https.forEach(async (item) => {
