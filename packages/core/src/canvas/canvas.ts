@@ -1365,7 +1365,6 @@ export class Canvas {
     if (e.buttons === 2 && !this.drawingLine) {
       this.mouseRight = MouseRight.Down;
     }
-
     this.hideInput();
     if (
       this.store.data.locked === LockState.Disable ||
@@ -5828,7 +5827,7 @@ export class Canvas {
     let _textWidth = null;
     if (pen.textWidth) {
       _textWidth =
-        (pen.textWidth < 1 && pen.textWidth) > -1
+        pen.textWidth < 1 && pen.textWidth > -1
           ? pen.textWidth * pen.calculative.worldRect.width
           : pen.textWidth;
       if (pen.whiteSpace !== 'pre-line') {
