@@ -124,6 +124,7 @@ import { MagnifierCanvas } from './magnifierCanvas';
 import { lockedError } from '../utils/error';
 import { Meta2d } from '../core';
 import { Dialog } from '../dialog';
+import { setter } from '../utils/object';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -6239,6 +6240,10 @@ export class Canvas {
       }
       if (k === 'image') {
         willRenderImage = true;
+      }
+      if (k.indexOf('.') !== -1) {
+        delete pen[k];
+        setter(pen, k, data[k]);
       }
     }
 

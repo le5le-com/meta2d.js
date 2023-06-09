@@ -1571,6 +1571,7 @@ export class Meta2d {
       if (Object.keys(_d).length) {
         this.canvas.updateValue(pen, _d);
         this.store.emitter.emit('valueUpdate', pen);
+        pen.onValue?.(pen);
       }
     }
   }
