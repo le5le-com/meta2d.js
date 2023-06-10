@@ -129,7 +129,7 @@ import { setter } from '../utils/object';
 export const movingSuffix = '-moving' as const;
 export class Canvas {
   canvas = document.createElement('canvas');
-  offscreen = createOffscreen();
+  offscreen = createOffscreen() as HTMLCanvasElement;
 
   width: number;
   height: number;
@@ -3552,6 +3552,7 @@ export class Canvas {
               img.src = this.store.options.cdn + pen.image;
             }
             img.onload = () => {
+              // TODO: 连续的加载两张图片，若后开始加载 的图片先加载完成，可能会导致展示的是 先开始加载的图片
               pen.calculative.img = img;
               pen.calculative.imgNaturalWidth =
                 img.naturalWidth || pen.iconWidth;

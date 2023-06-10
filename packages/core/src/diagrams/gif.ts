@@ -35,6 +35,9 @@ export function gif(pen: Pen): Path2D {
     }
     gifsList[pen.id] = img; // 提前赋值，避免重复创建
     img.onload = () => {
+      if (gifsList[pen.id] !== img) {
+        return;
+      }
       pen.calculative.img = img;
       pen.calculative.imgNaturalWidth = img.naturalWidth || pen.iconWidth;
       pen.calculative.imgNaturalHeight = img.naturalHeight || pen.iconHeight;
