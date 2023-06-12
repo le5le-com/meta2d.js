@@ -91,7 +91,7 @@ export function echarts(pen: ChartPen): Path2D {
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
     setElemPosition(pen, div);
   } else {
-    path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
+    // path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
     if (pen.calculative.patchFlags && pen.calculative.singleton.div) {
       setElemPosition(pen, pen.calculative.singleton.div);

@@ -67,7 +67,7 @@ export function highcharts(pen: Pen): Path2D {
     setElemPosition(pen, div);
   }
 
-  path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
+  // path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
   if (pen.calculative.patchFlags && pen.calculative.singleton.div) {
     setElemPosition(pen, pen.calculative.singleton.div);

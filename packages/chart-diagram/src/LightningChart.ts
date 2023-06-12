@@ -60,7 +60,7 @@ export function lightningCharts(pen: Pen): Path2D {
     }, 400);
   }
 
-  path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
+  // path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
   if (pen.calculative.patchFlags && pen.calculative.singleton.div) {
     setElemPosition(pen, pen.calculative.singleton.div);
