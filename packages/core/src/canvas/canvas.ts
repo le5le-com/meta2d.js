@@ -3539,7 +3539,10 @@ export class Canvas {
             this.firefoxLoadSvg(pen);
           } else {
             const img = new Image();
-            img.crossOrigin = 'anonymous';
+            img.crossOrigin =
+              pen.crossOrigin === 'undefined'
+                ? undefined
+                : pen.crossOrigin || 'anonymous';
             img.src = pen.image;
             if (
               this.store.options.cdn &&
