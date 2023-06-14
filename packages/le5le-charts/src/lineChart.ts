@@ -147,7 +147,7 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     }
     ctx.stroke();
     ctx.closePath();
-
+    ctx.save();
     coordinateValue.forEach((item, index) => {
       ctx.beginPath();
       ctx.strokeStyle = '#fff';
@@ -157,6 +157,7 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
       ctx.fill();
       ctx.closePath();
     });
+    ctx.restore();
     coordinateValue = [];
   }
 }
