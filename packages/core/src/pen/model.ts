@@ -526,6 +526,7 @@ export interface Pen extends Rect {
   onStartVideo?: (pen: Pen) => void;
   onPauseVideo?: (pen: Pen) => void;
   onStopVideo?: (pen: Pen) => void;
+  onRenderPenRaw?: (pen: Pen) => void;
 }
 
 // 属性绑定变量

@@ -2121,12 +2121,20 @@ export class Meta2d {
    * @param padding 上右下左的内边距
    */
   downloadPng(name?: string, padding?: Padding) {
-    const a = document.createElement('a');
-    a.setAttribute('download', name || 'le5le.meta2d.png');
-    a.setAttribute('href', this.toPng(padding, undefined, true));
-    const evt = document.createEvent('MouseEvents');
-    evt.initEvent('click', true, true);
-    a.dispatchEvent(evt);
+    for (const pen of this.store.data.pens) {
+      if (pen.calculative.img) {
+        //重新生成绘制图片
+        pen.onRenderPenRaw?.(pen);
+      }
+    }
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.setAttribute('download', name || 'le5le.meta2d.png');
+      a.setAttribute('href', this.toPng(padding, undefined, true));
+      const evt = document.createEvent('MouseEvents');
+      evt.initEvent('click', true, true);
+      a.dispatchEvent(evt);
+    });
   }
 
   getRect(pens: Pen[] = this.store.data.pens) {

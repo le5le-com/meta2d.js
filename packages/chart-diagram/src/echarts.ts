@@ -50,6 +50,7 @@ export function echarts(pen: ChartPen): Path2D {
     pen.onBinds = binds;
     pen.onMouseEnter = move;
     pen.onAdd = onAdd;
+    pen.onRenderPenRaw = onRenderPenRaw;
   }
 
   if (!pen.calculative.singleton) {
@@ -544,4 +545,12 @@ export function setEchartsOption(
   }
   const meta2d = pen.calculative.canvas.parent;
   meta2d.setValue({ id: pen.id, echarts }, { render: false, doEvent: false });
+}
+
+function onRenderPenRaw(pen: Pen) {
+  const img = new Image();
+  img.src = pen.calculative.singleton?.echart.getDataURL({
+    pixelRatio: 2,
+  });
+  pen.calculative.img = img;
 }
