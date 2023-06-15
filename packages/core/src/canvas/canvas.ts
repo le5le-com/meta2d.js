@@ -89,7 +89,6 @@ import {
   fileToBase64,
   uploadFile,
   formatPadding,
-  isMobile,
   Padding,
   rgba,
   s8,
@@ -311,65 +310,62 @@ export class Canvas {
     this.externalElements.ondragover = (e) => e.preventDefault();
     this.externalElements.ondrop = this.ondrop;
     this.externalElements.oncontextmenu = (e) => e.preventDefault();
-    if (isMobile()) {
-      this.store.options.interval = 50;
-      this.externalElements.ontouchstart = this.ontouchstart;
-      this.externalElements.ontouchmove = this.ontouchmove;
-      this.externalElements.ontouchend = this.ontouchend;
-    } else {
-      this.externalElements.onmousedown = (e) => {
-        this.onMouseDown({
-          x: e.offsetX,
-          y: e.offsetY,
-          clientX: e.clientX,
-          clientY: e.clientY,
-          pageX: e.pageX,
-          pageY: e.pageY,
-          ctrlKey: e.ctrlKey || e.metaKey,
-          shiftKey: e.shiftKey,
-          altKey: e.altKey,
-          buttons: e.buttons,
-        });
-      };
-      this.externalElements.onmousemove = (e) => {
-        if (e.target !== this.externalElements) {
-          return;
-        }
-        this.onMouseMove({
-          x: e.offsetX,
-          y: e.offsetY,
-          clientX: e.clientX,
-          clientY: e.clientY,
-          pageX: e.pageX,
-          pageY: e.pageY,
-          ctrlKey: e.ctrlKey || e.metaKey,
-          shiftKey: e.shiftKey,
-          altKey: e.altKey,
-          buttons: e.buttons,
-        });
-      };
-      this.externalElements.onmouseup = (e) => {
-        this.onMouseUp({
-          x: e.offsetX,
-          y: e.offsetY,
-          clientX: e.clientX,
-          clientY: e.clientY,
-          pageX: e.pageX,
-          pageY: e.pageY,
-          ctrlKey: e.ctrlKey || e.metaKey,
-          shiftKey: e.shiftKey,
-          altKey: e.altKey,
-          buttons: e.buttons,
-          button: e.button,
-        });
-      };
-      this.externalElements.onmouseleave = (e) => {
-        if ((e as any).toElement !== this.tooltip.box) {
-          this.tooltip.hide();
-          this.store.lastHover = undefined;
-        }
-      };
-    }
+    this.store.options.interval = 50;
+    this.externalElements.ontouchstart = this.ontouchstart;
+    this.externalElements.ontouchmove = this.ontouchmove;
+    this.externalElements.ontouchend = this.ontouchend;
+    this.externalElements.onmousedown = (e) => {
+      this.onMouseDown({
+        x: e.offsetX,
+        y: e.offsetY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        pageX: e.pageX,
+        pageY: e.pageY,
+        ctrlKey: e.ctrlKey || e.metaKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        buttons: e.buttons,
+      });
+    };
+    this.externalElements.onmousemove = (e) => {
+      if (e.target !== this.externalElements) {
+        return;
+      }
+      this.onMouseMove({
+        x: e.offsetX,
+        y: e.offsetY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        pageX: e.pageX,
+        pageY: e.pageY,
+        ctrlKey: e.ctrlKey || e.metaKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        buttons: e.buttons,
+      });
+    };
+    this.externalElements.onmouseup = (e) => {
+      this.onMouseUp({
+        x: e.offsetX,
+        y: e.offsetY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        pageX: e.pageX,
+        pageY: e.pageY,
+        ctrlKey: e.ctrlKey || e.metaKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        buttons: e.buttons,
+        button: e.button,
+      });
+    };
+    this.externalElements.onmouseleave = (e) => {
+      if ((e as any).toElement !== this.tooltip.box) {
+        this.tooltip.hide();
+        this.store.lastHover = undefined;
+      }
+    };
 
     this.externalElements.ondblclick = this.ondblclick;
     this.externalElements.tabIndex = 0;
@@ -513,61 +509,27 @@ export class Canvas {
     if (this.store.data.locked === LockState.DisableScale) return;
     if (this.store.data.locked === LockState.DisableMoveScale) return;
 
+    // e.ctrlKey: false - 平移； true - 缩放。老windows触摸板不支持
+    if (!e.ctrlKey) {
+      if (this.store.options.scroll && !e.metaKey && this.scroll) {
+        this.scroll.wheel(e.deltaY < 0);
+        return;
+      }
+
+      this.translate(-e.deltaX, -e.deltaY);
+      return;
+    }
+
     //禁止触摸屏双指缩放操作
-    if (
-      this.store.options.disableTouchPadScale &&
-      e.ctrlKey &&
-      e.deltaY !== 0
-    ) {
+    if (this.store.options.disableTouchPadScale) {
       return;
     }
-
-    //window触控板只允许平移 触摸屏一般不超过100
-    let isWin = navigator.userAgent.indexOf('Win') !== -1;
-    if (isWin && !e.ctrlKey && Math.abs(e.deltaY) < 100) {
-      this.translate(-e.deltaX, -e.deltaY);
-      return;
-    }
-
-    //mac触控板只允许平移（排除普通鼠标的情况）
-    let isMac =
-      /macintosh|mac os x/i.test(navigator.userAgent) ||
-      navigator.platform.indexOf('Mac') !== -1;
-    if (isMac && !e.ctrlKey && (e as any).wheelDeltaY % 240 !== 0) {
-      this.translate(-e.deltaX, -e.deltaY);
-      return;
-    }
-    if (this.store.options.scroll && !e.ctrlKey && !e.metaKey && this.scroll) {
-      this.scroll.wheel(e.deltaY < 0);
-      return;
-    }
-    // 触摸板平移
-    const isTouchPad = !(!e.deltaX && e.deltaY);
-    const now = performance.now();
-    let _scale = 0.1;
-    if (now - this.touchStart < 50) {
-      return;
-    }
-    if (now - this.touchStart < 100) {
-      _scale = 0.5;
-    } else if (now - this.touchStart < 200) {
-      _scale = 0.3;
-    } else {
-      _scale = 0.1;
-    }
-
-    this.touchStart = now;
 
     const { offsetX: x, offsetY: y } = e;
-
-    if (isTouchPad) {
-      this.translate(e.deltaX, e.deltaY);
+    if (e.deltaY < 0) {
+      this.scale(this.store.data.scale + 0.015, { x, y });
     } else {
-      if (e.deltaY < 0) {
-        this.scale(this.store.data.scale + _scale, { x, y });
-      } else {
-        this.scale(this.store.data.scale - _scale, { x, y });
-      }
+      this.scale(this.store.data.scale - 0.015, { x, y });
     }
     this.externalElements.focus(); // 聚焦
   };
@@ -1198,7 +1160,6 @@ export class Canvas {
 
     const x = event.touches[0].pageX - this.clientRect.x;
     const y = event.touches[0].pageY - this.clientRect.y;
-
     if (len === 1) {
       this.onMouseMove({
         x,
@@ -1288,7 +1249,9 @@ export class Canvas {
       altKey: event.altKey,
       buttons: 1,
     });
-    this.render();
+    setTimeout(() => {
+      this.render();
+    }, 20);
   };
 
   onGesturestart = (e) => {
@@ -2182,6 +2145,7 @@ export class Canvas {
     this.clearDock();
     this.dragRect = undefined;
     this.initActiveRect = undefined;
+    this.render();
   };
 
   private addRuleLine(e: { x: number; y: number }) {
@@ -2883,19 +2847,7 @@ export class Canvas {
       }
       this.store.hoverAnchor = anchor;
       this.store.hover = pen;
-      // if (pen.name === 'line' && anchor.connectTo) {
-      //   const connectPen = this.findOne(anchor.connectTo);
-      //   if (!connectPen.calculative.active) {
-      //     this.store.hover = connectPen;
-      //     const connectAnchor = connectPen.calculative.worldAnchors.find(
-      //       (item) => item.id === anchor.anchorId
-      //     );
-      //     this.store.hoverAnchor = connectAnchor;
-      //     console.log('hover', connectAnchor);
-      //   }
-      // }
 
-      // console.log('hover', pen, anchor);
       if (pen.type) {
         if (anchor.connectTo && !pen.calculative.active) {
           this.store.hover = this.store.pens[anchor.connectTo];
@@ -3738,7 +3690,7 @@ export class Canvas {
     if (patchFlags == null || patchFlags === true || patchFlags === Infinity) {
       now = performance.now();
       this.patchFlags = true;
-    } else if (patchFlags > 1) {
+    } else if ((patchFlags as number) > 1) {
       now = patchFlags as number;
     } else {
       now = performance.now();
@@ -6633,16 +6585,13 @@ export class Canvas {
 
     this.externalElements.ondragover = (e) => e.preventDefault();
     this.externalElements.ondrop = undefined;
-    if (isMobile()) {
-      this.externalElements.ontouchstart = undefined;
-      this.externalElements.ontouchmove = undefined;
-      this.externalElements.ontouchend = undefined;
-    } else {
-      this.externalElements.onmousedown = undefined;
-      this.externalElements.onmousemove = undefined;
-      this.externalElements.onmouseup = undefined;
-      this.externalElements.onmouseleave = undefined;
-    }
+    this.externalElements.ontouchstart = undefined;
+    this.externalElements.ontouchmove = undefined;
+    this.externalElements.ontouchend = undefined;
+    this.externalElements.onmousedown = undefined;
+    this.externalElements.onmousemove = undefined;
+    this.externalElements.onmouseup = undefined;
+    this.externalElements.onmouseleave = undefined;
     this.externalElements.ondblclick = undefined;
     switch (this.store.options.keydown) {
       case KeydownType.Document:
