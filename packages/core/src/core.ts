@@ -76,9 +76,12 @@ export class Meta2d {
   mqttClients: MqttClient[];
   socketFn: (
     e: string,
-    topic: string,
+    // topic: string,
     context?: {
-      meta2d: Meta2d;
+      meta2d?: Meta2d;
+      type?: string;
+      topic?: string;
+      url?: string;
     }
   ) => boolean;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
@@ -1284,14 +1287,24 @@ export class Meta2d {
 
   listenSocket() {
     try {
-      let socketFn: (e: string, topic: string) => boolean;
+      let socketFn: (
+        e: string,
+        context?: {
+          meta2d?: Meta2d;
+          type?: string;
+          topic?: string;
+          url?: string;
+        }
+      ) => boolean;
       const socketCbJs = this.store.data.socketCbJs;
       if (socketCbJs) {
-        socketFn = new Function('e', 'topic', 'context', socketCbJs) as (
+        socketFn = new Function('e', 'context', socketCbJs) as (
           e: string,
-          topic: string,
           context?: {
-            meta2d: Meta2d;
+            meta2d?: Meta2d;
+            type?: string;
+            topic?: string;
+            url?: string;
           }
         ) => boolean;
       }
@@ -1318,7 +1331,10 @@ export class Meta2d {
         this.store.data.websocketProtocols
       );
       this.websocket.onmessage = (e) => {
-        this.socketCallback(e.data);
+        this.socketCallback(e.data, {
+          type: 'websocket',
+          url: this.store.data.websocket,
+        });
       };
 
       this.websocket.onclose = () => {
@@ -1365,7 +1381,11 @@ export class Meta2d {
         this.store.data.mqttOptions
       );
       this.mqttClient.on('message', (topic: string, message: Buffer) => {
-        this.socketCallback(message.toString(), topic);
+        this.socketCallback(message.toString(), {
+          topic,
+          type: 'mqtt',
+          url: this.store.data.mqtt,
+        });
       });
 
       if (this.store.data.mqttTopics) {
@@ -1393,7 +1413,7 @@ export class Meta2d {
             });
             if (res.ok) {
               const data = await res.text();
-              this.socketCallback(data);
+              this.socketCallback(data, { type: 'http', url: item.http });
             }
           }, item.httpTimeInterval || 1000);
         }
@@ -1408,7 +1428,7 @@ export class Meta2d {
           });
           if (res.ok) {
             const data = await res.text();
-            this.socketCallback(data);
+            this.socketCallback(data, { type: 'http', url: http });
           }
         }, httpTimeInterval || 1000);
       }
@@ -1475,7 +1495,11 @@ export class Meta2d {
           this.mqttClients[mqttIndex].on(
             'message',
             (topic: string, message: Buffer) => {
-              this.socketCallback(message.toString(), topic);
+              this.socketCallback(message.toString(), {
+                topic,
+                type: 'mqtt',
+                url: net.url,
+              });
             }
           );
 
@@ -1489,7 +1513,7 @@ export class Meta2d {
             net.protocols
           );
           this.websockets[websocketIndex].onmessage = (e) => {
-            this.socketCallback(e.data);
+            this.socketCallback(e.data, { type: 'websocket', url: net.url });
           };
           websocketIndex += 1;
         } else {
@@ -1593,7 +1617,7 @@ export class Meta2d {
           });
           if (res.ok) {
             const data = await res.text();
-            this.socketCallback(data);
+            this.socketCallback(data, { type: 'http', url: item.url });
           }
         }
       });
@@ -1616,10 +1640,21 @@ export class Meta2d {
     this.updateTimer = undefined;
   }
 
-  socketCallback(message: string, topic = '') {
-    this.store.emitter.emit('socket', { message, topic });
+  socketCallback(
+    message: string,
+    context?: { type?: string; topic?: string; url?: string }
+  ) {
+    this.store.emitter.emit('socket', { message, context });
 
-    if (this.socketFn && !this.socketFn(message, topic, { meta2d: this })) {
+    if (
+      this.socketFn &&
+      !this.socketFn(message, {
+        meta2d: this,
+        type: context.type,
+        topic: context.topic,
+        url: context.url,
+      })
+    ) {
       return;
     }
 
