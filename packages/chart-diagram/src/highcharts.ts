@@ -24,6 +24,7 @@ export function highcharts(pen: Pen): Path2D {
     pen.onRotate = move;
     pen.onValue = value;
     pen.onBeforeValue = beforeValue;
+    pen.onRenderPenRaw = onRenderPenRaw;
   }
 
   if (!pen.calculative.singleton) {
@@ -219,4 +220,15 @@ function beforeValue(pen: Pen, value: ChartData): any {
   delete value.dataY;
   delete value.overwrite;
   return Object.assign(value, { highcharts });
+}
+
+function onRenderPenRaw(pen: Pen) {
+  if (!pen.calculative?.singleton) {
+    return;
+  }
+  const xml = pen.calculative.singleton.highchart.getSVG();
+  const image = new Image();
+  image.src =
+    'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
+  pen.calculative.img = image;
 }

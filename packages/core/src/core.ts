@@ -582,7 +582,7 @@ export class Meta2d {
     this.store.patchFlagsTop = true;
   }
 
-  open(data?: Meta2dData) {
+  open(data?: Meta2dData, render: boolean = true) {
     this.clear(false);
     if (data) {
       this.setBackgroundImage(data.bkImage);
@@ -600,7 +600,9 @@ export class Meta2d {
         this.canvas.makePen(pen);
       }
     }
-
+    if (!render) {
+      this.canvas.opening = true;
+    }
     this.initBindDatas();
     this.render();
     this.listenSocket();

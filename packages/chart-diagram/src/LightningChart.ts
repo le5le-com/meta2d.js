@@ -23,6 +23,7 @@ export function lightningCharts(pen: Pen): Path2D {
     pen.onResize = resize;
     pen.onRotate = move;
     pen.onValue = value;
+    pen.onRenderPenRaw = onRenderPenRaw;
   }
 
   const path = new Path2D();
@@ -338,4 +339,13 @@ function value(pen: Pen) {
   }
   setLightningCharts(pen);
   setElemPosition(pen, pen.calculative.singleton.div);
+}
+
+function onRenderPenRaw(pen: Pen) {
+  if (!pen.calculative?.singleton) {
+    return;
+  }
+  const img = new Image();
+  img.src = pen.calculative.singleton.div.children[0].toDataURL();
+  pen.calculative.img = img;
 }
