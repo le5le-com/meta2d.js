@@ -966,15 +966,18 @@ export class Canvas {
       console.warn('canvas is locked, can not drop');
       return;
     }
+    // Fix bug: 在 firefox 上拖拽图片会打开新页
+    event.preventDefault();
+    event.stopPropagation();
+
+    const json =
+      event.dataTransfer.getData('Meta2d') ||
+      event.dataTransfer.getData('Text');
+    let obj = null;
     try {
-      // TODO: 若画布锁定，阻止默认行为不再执行。在 firefox 上拖拽图片会打开新页
-      event.preventDefault();
-      event.stopPropagation();
-      const json =
-        event.dataTransfer.getData('Meta2d') ||
-        event.dataTransfer.getData('Text');
-      let obj = null;
-      if (!json) {
+      if (json) {
+        obj = JSON.parse(json);
+      } else {
         const { files } = event.dataTransfer;
         if (files.length && files[0].type.match('image.*')) {
           // 必须是图片类型
@@ -982,12 +985,15 @@ export class Canvas {
           obj = await this.fileToPen(files[0], isGif);
         }
       }
-      !obj && (obj = JSON.parse(json));
-      obj = Array.isArray(obj) ? obj : [obj];
-      const pt = { x: event.offsetX, y: event.offsetY };
-      this.calibrateMouse(pt);
-      this.dropPens(obj, pt);
+      if (obj && obj.draggable !== false) {
+        obj = Array.isArray(obj) ? obj : [obj];
+        const pt = { x: event.offsetX, y: event.offsetY };
+        this.calibrateMouse(pt);
+        this.dropPens(obj, pt);
+      }
     } catch (e) {}
+
+    this.store.emitter.emit('drop', obj || json);
   };
 
   async dropPens(pens: Pen[], e: Point) {
