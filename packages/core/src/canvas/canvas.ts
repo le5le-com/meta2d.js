@@ -194,6 +194,7 @@ export class Canvas {
 
   pointSize = 8 as const;
   pasteOffset = 10;
+  opening: boolean = false;
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -3698,6 +3699,12 @@ export class Canvas {
   }
 
   render = (patchFlags?: number | boolean) => {
+    if (patchFlags) {
+      this.opening = false;
+    }
+    if (this.opening) {
+      return;
+    }
     let now: number;
     if (patchFlags == null || patchFlags === true || patchFlags === Infinity) {
       now = performance.now();
