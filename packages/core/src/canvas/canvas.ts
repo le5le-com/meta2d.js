@@ -194,7 +194,6 @@ export class Canvas {
 
   pointSize = 8 as const;
   pasteOffset = 10;
-  opening: boolean = false;
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -511,7 +510,7 @@ export class Canvas {
     if (this.store.data.locked === LockState.DisableMoveScale) return;
 
     // e.ctrlKey: false - 平移； true - 缩放。老windows触摸板不支持
-    if (!e.ctrlKey) {
+    if (!e.ctrlKey && Math.abs((e as any).wheelDelta) < 100) {
       if (this.store.options.scroll && !e.metaKey && this.scroll) {
         this.scroll.wheel(e.deltaY < 0);
         return;
@@ -526,12 +525,24 @@ export class Canvas {
       return;
     }
 
-    const { offsetX: x, offsetY: y } = e;
-    if (e.deltaY < 0) {
-      this.scale(this.store.data.scale + 0.015, { x, y });
+    let scaleOff = 0.015;
+    let isMac = /mac os /i.test(navigator.userAgent);
+    if (isMac) {
+      if (!e.ctrlKey) {
+        scaleOff *= (e as any).wheelDeltaY / 240;
+      } else if (e.deltaY > 0) {
+        scaleOff *= -1;
+      }
     } else {
-      this.scale(this.store.data.scale - 0.015, { x, y });
+      if (e.deltaY > 0) {
+        scaleOff = -0.2;
+      } else {
+        scaleOff = 0.2;
+      }
     }
+
+    const { offsetX: x, offsetY: y } = e;
+    this.scale(this.store.data.scale + scaleOff, { x, y });
     this.externalElements.focus(); // 聚焦
   };
 
@@ -3687,12 +3698,6 @@ export class Canvas {
   }
 
   render = (patchFlags?: number | boolean) => {
-    if (patchFlags) {
-      this.opening = false;
-    }
-    if (this.opening) {
-      return;
-    }
     let now: number;
     if (patchFlags == null || patchFlags === true || patchFlags === Infinity) {
       now = performance.now();
