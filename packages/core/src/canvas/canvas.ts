@@ -195,6 +195,7 @@ export class Canvas {
   pointSize = 8 as const;
   pasteOffset = 10;
   opening: boolean = false;
+  maxZindex: number = 4;
   /**
    * @deprecated 改用 beforeAddPens
    */
