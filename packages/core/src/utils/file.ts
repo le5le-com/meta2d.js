@@ -35,3 +35,12 @@ export async function uploadFile(
   // 后端返回的一级属性中，必须包含一个名为url的属性
   return (await res.json()).url;
 }
+
+export function loadCss(url: string, success?: any, error?: any) {
+  var link = document.createElement('link');
+  link.href = url;
+  link.rel = 'stylesheet';
+  success && (link.onload = success);
+  error && (link.onerror = error);
+  document.head.appendChild(link);
+}
