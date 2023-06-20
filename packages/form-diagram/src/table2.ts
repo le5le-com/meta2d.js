@@ -24,6 +24,8 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   const options = pen.calculative.canvas.store.options;
 
   pen.color = pen.color || data.color || options.color;
+  pen.textColor =
+    pen.textColor || pen.color || data.textColor || options.textColor;
   pen.activeColor = pen.activeColor || options.activeColor;
   pen.hoverColor = pen.hoverColor || options.hoverColor;
   pen.activeBackground = pen.activeBackground || options.activeBackground;
@@ -235,10 +237,12 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
           return fn(cell);
         });
       }
-      let color = pen.textColor || pen.color;
+      let color = pen.color;
+      let textColor = pen.textColor || pen.color;
       let background = null;
       if (isSuccess) {
         color = (cellStyle as any).color || pen.color;
+        textColor = (cellStyle as any).textColor || pen.textColor;
         background = (cellStyle as any).background;
       }
       let activeColor: any;
@@ -251,6 +255,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         color = pen.activeColor;
         background = pen.activeBackground;
         activeColor = color;
+        textColor = pen.activeTextColor || pen.activeColor;
       }
       // hover
       if (
@@ -259,7 +264,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       ) {
         color = pen.hoverColor;
         background = pen.hoverBackground;
-
+        textColor = pen.hoverTextColor || pen.hoverColor;
         activeColor = color;
       }
 
@@ -330,7 +335,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       }
 
       ctx.save();
-      ctx.fillStyle = color;
+      ctx.fillStyle = textColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font =
