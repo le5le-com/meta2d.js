@@ -52,6 +52,7 @@ export interface Meta2dData {
   height?: number;
   networkInterval?: number;
   networks?: Network[];
+  iconUrls?: string[];
   mockData?: Function;
 }
 

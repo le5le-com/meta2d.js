@@ -501,12 +501,14 @@ export class Canvas {
     if (this.pencil) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
 
     if (this.store.options.disableScale) {
       return;
     }
+
+    e.preventDefault();
+    e.stopPropagation();
+
     if (this.store.data.locked === LockState.Disable) return;
     if (this.store.data.locked === LockState.DisableScale) return;
     if (this.store.data.locked === LockState.DisableMoveScale) return;
@@ -5206,7 +5208,7 @@ export class Canvas {
     return 'meta2d-clipboard';
   }
 
-  async copy(pens?: Pen[]) {
+  async copy(pens?: Pen[], emit = true) {
     const page = s8();
     // 得到当前活动层的，包括子节点
     const { origin, scale } = this.store.data;
@@ -5252,11 +5254,15 @@ export class Canvas {
     } else {
       localStorage.setItem(this.clipboardName, JSON.stringify(clipboard));
     }
+
+    emit && this.store.emitter.emit('copy', clipboard.pens);
   }
 
   cut(pens?: Pen[]) {
-    this.copy(pens);
+    this.copy(pens, false);
     this.delete(pens);
+
+    this.store.emitter.emit('cut', pens);
   }
 
   async paste() {
@@ -5323,6 +5329,7 @@ export class Canvas {
     this.pushHistory({ type: EditType.Add, pens: this.store.clipboard.pens });
     this.render();
     this.store.emitter.emit('add', this.store.clipboard.pens);
+    this.store.emitter.emit('paste', this.store.clipboard.pens);
   }
 
   /**

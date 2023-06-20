@@ -44,6 +44,7 @@ import {
 } from './store';
 import {
   formatPadding,
+  loadCss,
   Padding,
   s8,
   valueInArray,
@@ -610,6 +611,13 @@ export class Meta2d {
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
+    if (this.store.data.iconUrls) {
+      for (const item of this.store.data.iconUrls) {
+        loadCss(item, () => {
+          this.render();
+        });
+      }
+    }
     this.store.emitter.emit('opened');
 
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
