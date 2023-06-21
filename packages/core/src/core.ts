@@ -44,6 +44,7 @@ import {
 } from './store';
 import {
   formatPadding,
+  loadCss,
   Padding,
   s8,
   valueInArray,
@@ -610,6 +611,13 @@ export class Meta2d {
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
+    if (this.store.data.iconUrls) {
+      for (const item of this.store.data.iconUrls) {
+        loadCss(item, () => {
+          this.render();
+        });
+      }
+    }
     this.store.emitter.emit('opened');
 
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
@@ -2799,21 +2807,40 @@ export class Meta2d {
 
   /**
    * 将该画笔置顶，即放到数组最后，最后绘制即在顶部
-   * @param pen pen 置顶的画笔
+   * @param pens pen 置顶的画笔
    */
-  top(pen: Pen) {
-    const pens = this.store.data.pens;
-    // 获取它包含它的子节点
-    const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
-    const allPens = pens.filter((p) => allIds.includes(p.id));
-    allPens.forEach((pen) => {
-      const index = pens.findIndex((p: Pen) => p.id === pen.id);
-      if (index > -1) {
-        pens.push(pens[index]);
-        pens.splice(index, 1);
-        this.initImageCanvas([pen]);
+  top(pens?: Pen | Pen[]) {
+    if (!pens) pens = this.store.active;
+    if (!Array.isArray(pens)) pens = [pens]; // 兼容
+    for (const pen of pens as Pen[]) {
+      const _pens = this.store.data.pens;
+      // 获取它包含它的子节点
+      const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
+      const allPens = _pens.filter((p) => allIds.includes(p.id));
+      allPens.forEach((pen) => {
+        const index = _pens.findIndex((p: Pen) => p.id === pen.id);
+        if (index > -1) {
+          _pens.push(_pens[index]);
+          _pens.splice(index, 1);
+          this.initImageCanvas([pen]);
+        }
+      });
+      //image
+      if (pen.image && pen.name !== 'gif') {
+        this.setValue(
+          { id: pen.id, isBottom: false },
+          { render: false, doEvent: false, history: false }
+        );
       }
-    });
+      //dom
+      if (pen.externElement || pen.name === 'gif') {
+        pen.calculative.canvas.maxZindex += 1;
+        this.setValue(
+          { id: pen.id, zIndex: pen.calculative.canvas.maxZindex },
+          { render: false, doEvent: false, history: false }
+        );
+      }
+    }
   }
 
   /**
@@ -2829,18 +2856,36 @@ export class Meta2d {
    * 该画笔置底，即放到数组最前，最后绘制即在底部
    * @param pens 画笔们，注意 pen 必须在该数组内才有效
    */
-  bottom(pen: Pen) {
-    const pens = this.store.data.pens;
-    const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
-    const allPens = pens.filter((p) => allIds.includes(p.id));
-    // 从后往前，保证 allPens 顺序不变
-    for (let i = allPens.length - 1; i >= 0; i--) {
-      const pen = allPens[i];
-      const index = pens.findIndex((p: Pen) => p.id === pen.id);
-      if (index > -1) {
-        pens.unshift(pens[index]);
-        pens.splice(index + 1, 1);
-        this.initImageCanvas([pen]);
+  bottom(pens?: Pen | Pen[]) {
+    if (!pens) pens = this.store.active;
+    if (!Array.isArray(pens)) pens = [pens]; // 兼容
+    for (const pen of pens as Pen[]) {
+      const _pens = this.store.data.pens;
+      const allIds = [...getAllChildren(pen, this.store), pen].map((p) => p.id);
+      const allPens = _pens.filter((p) => allIds.includes(p.id));
+      // 从后往前，保证 allPens 顺序不变
+      for (let i = allPens.length - 1; i >= 0; i--) {
+        const pen = allPens[i];
+        const index = _pens.findIndex((p: Pen) => p.id === pen.id);
+        if (index > -1) {
+          _pens.unshift(_pens[index]);
+          _pens.splice(index + 1, 1);
+          this.initImageCanvas([pen]);
+        }
+      }
+      //image
+      if (pen.image && pen.name !== 'gif') {
+        this.setValue(
+          { id: pen.id, isBottom: true },
+          { render: false, doEvent: false, history: false }
+        );
+      }
+      //dom
+      if (pen.externElement || pen.name === 'gif') {
+        this.setValue(
+          { id: pen.id, zIndex: 0 },
+          { render: false, doEvent: false, history: false }
+        );
       }
     }
   }
@@ -2903,39 +2948,60 @@ export class Meta2d {
 
   /**
    * 该画笔上移，即把该画笔在数组中的位置向后移动一个
-   * @param pen 画笔
+   * @param pens 画笔
    */
-  up(pen: Pen) {
-    const pens = this.store.data.pens;
-    if (pen.children) {
-      //组合图元
-      const preMovePens = [...getAllChildren(pen, this.store), pen];
-      //先保证组合图元的顺序正确。
-      const orderPens = [];
-      for (let index = 0; index < pens.length; index++) {
-        const _pen: any = pens[index];
-        if (preMovePens.findIndex((p: Pen) => p.id === _pen.id) !== -1) {
-          _pen.temIndex = index;
-          orderPens.push(_pen);
+  up(pens?: Pen | Pen[]) {
+    if (!pens) pens = this.store.active;
+    if (!Array.isArray(pens)) pens = [pens]; // 兼容
+    for (const pen of pens as Pen[]) {
+      const _pens = this.store.data.pens;
+      if (pen.children) {
+        //组合图元
+        const preMovePens = [...getAllChildren(pen, this.store), pen];
+        //先保证组合图元的顺序正确。
+        const orderPens = [];
+        for (let index = 0; index < _pens.length; index++) {
+          const _pen: any = _pens[index];
+          if (preMovePens.findIndex((p: Pen) => p.id === _pen.id) !== -1) {
+            _pen.temIndex = index;
+            orderPens.push(_pen);
+          }
+        }
+        let lastIndex = -1;
+        let offset = 0;
+        orderPens.forEach((_pen: any) => {
+          _pen.temIndex -= offset;
+          _pens.splice(_pen.temIndex, 1);
+          offset += 1;
+          lastIndex = _pen.temIndex;
+          delete _pen.temIndex;
+        });
+        _pens.splice(lastIndex + 1, 0, ...preMovePens);
+      } else {
+        const index = _pens.findIndex((p: Pen) => p.id === pen.id);
+        if (index > -1 && index !== _pens.length - 1) {
+          _pens.splice(index + 2, 0, _pens[index]);
+          _pens.splice(index, 1);
+          this.initImageCanvas([pen]);
         }
       }
-      let lastIndex = -1;
-      let offset = 0;
-      orderPens.forEach((_pen: any) => {
-        _pen.temIndex -= offset;
-        pens.splice(_pen.temIndex, 1);
-        offset += 1;
-        lastIndex = _pen.temIndex;
-        delete _pen.temIndex;
-      });
-      pens.splice(lastIndex + 1, 0, ...preMovePens);
-    } else {
-      const index = pens.findIndex((p: Pen) => p.id === pen.id);
 
-      if (index > -1 && index !== pens.length - 1) {
-        pens.splice(index + 2, 0, pens[index]);
-        pens.splice(index, 1);
-        this.initImageCanvas([pen]);
+      //image
+      if (pen.image && pen.name !== 'gif') {
+        this.setValue(
+          { id: pen.id, isBottom: false },
+          { render: false, doEvent: false, history: false }
+        );
+      }
+
+      //dom
+      if (pen.externElement || pen.name === 'gif') {
+        let zIndex =
+          pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
+        this.setValue(
+          { id: pen.id, zIndex },
+          { render: false, doEvent: false, history: false }
+        );
       }
     }
   }
@@ -2944,38 +3010,62 @@ export class Meta2d {
    * 该画笔下移，即把该画笔在该数组中的位置前移一个
    * @param pen 画笔
    */
-  down(pen: Pen) {
-    const pens = this.store.data.pens;
-    if (pen.children) {
-      //组合图元
-      const preMovePens = [...getAllChildren(pen, this.store), pen];
-      //先保证组合图元的顺序正确。
-      const orderPens = [];
-      for (let index = 0; index < pens.length; index++) {
-        const _pen: any = pens[index];
-        if (preMovePens.findIndex((p: Pen) => p.id === _pen.id) !== -1) {
-          _pen.temIndex = index;
-          orderPens.push(_pen);
+  down(pens?: Pen | Pen[]) {
+    if (!pens) pens = this.store.active;
+    if (!Array.isArray(pens)) pens = [pens]; // 兼容
+    for (const pen of pens as Pen[]) {
+      const _pens = this.store.data.pens;
+      if (pen.children) {
+        //组合图元
+        const preMovePens = [...getAllChildren(pen, this.store), pen];
+        //先保证组合图元的顺序正确。
+        const orderPens = [];
+        for (let index = 0; index < _pens.length; index++) {
+          const _pen: any = _pens[index];
+          if (preMovePens.findIndex((p: Pen) => p.id === _pen.id) !== -1) {
+            _pen.temIndex = index;
+            orderPens.push(_pen);
+          }
+        }
+        let firstIndex = -1;
+        let offset = 0;
+        orderPens.forEach((_pen: any, index) => {
+          _pen.temIndex -= offset;
+          _pens.splice(_pen.temIndex, 1);
+          offset += 1;
+          if (index === 0) {
+            firstIndex = _pen.temIndex;
+          }
+          delete _pen.temIndex;
+        });
+        _pens.splice(firstIndex - 1, 0, ...preMovePens);
+      } else {
+        const index = _pens.findIndex((p: Pen) => p.id === pen.id);
+        if (index > -1 && index !== 0) {
+          _pens.splice(index - 1, 0, _pens[index]);
+          _pens.splice(index + 1, 1);
+          this.initImageCanvas([pen]);
         }
       }
-      let firstIndex = -1;
-      let offset = 0;
-      orderPens.forEach((_pen: any, index) => {
-        _pen.temIndex -= offset;
-        pens.splice(_pen.temIndex, 1);
-        offset += 1;
-        if (index === 0) {
-          firstIndex = _pen.temIndex;
+
+      //image
+      if (pen.image && pen.name !== 'gif') {
+        this.setValue(
+          { id: pen.id, isBottom: true },
+          { render: false, doEvent: false, history: false }
+        );
+      }
+      //dom
+      if (pen.externElement || pen.name === 'gif') {
+        let zIndex =
+          pen.calculative.zIndex === undefined ? 3 : pen.calculative.zIndex - 1;
+        if (zIndex < 0) {
+          zIndex = 0;
         }
-        delete _pen.temIndex;
-      });
-      pens.splice(firstIndex - 1, 0, ...preMovePens);
-    } else {
-      const index = pens.findIndex((p: Pen) => p.id === pen.id);
-      if (index > -1 && index !== 0) {
-        pens.splice(index - 1, 0, pens[index]);
-        pens.splice(index + 1, 1);
-        this.initImageCanvas([pen]);
+        this.setValue(
+          { id: pen.id, zIndex },
+          { render: false, doEvent: false, history: false }
+        );
       }
     }
   }
