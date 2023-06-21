@@ -3205,6 +3205,7 @@ export class Canvas {
     } else {
       this.initImageCanvas(action.pens);
     }
+    this.parent.onSizeUpdate();
     this.render();
 
     this.store.emitter.emit(undo ? 'undo' : 'redo', action);
