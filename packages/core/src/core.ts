@@ -2824,22 +2824,8 @@ export class Meta2d {
           _pens.splice(index, 1);
           this.initImageCanvas([pen]);
         }
+        this.specificLayerMove(pen, 'top');
       });
-      //image
-      if (pen.image && pen.name !== 'gif') {
-        this.setValue(
-          { id: pen.id, isBottom: false },
-          { render: false, doEvent: false, history: false }
-        );
-      }
-      //dom
-      if (pen.externElement || pen.name === 'gif') {
-        pen.calculative.canvas.maxZindex += 1;
-        this.setValue(
-          { id: pen.id, zIndex: pen.calculative.canvas.maxZindex },
-          { render: false, doEvent: false, history: false }
-        );
-      }
     }
   }
 
@@ -2872,20 +2858,7 @@ export class Meta2d {
           _pens.splice(index + 1, 1);
           this.initImageCanvas([pen]);
         }
-      }
-      //image
-      if (pen.image && pen.name !== 'gif') {
-        this.setValue(
-          { id: pen.id, isBottom: true },
-          { render: false, doEvent: false, history: false }
-        );
-      }
-      //dom
-      if (pen.externElement || pen.name === 'gif') {
-        this.setValue(
-          { id: pen.id, zIndex: 0 },
-          { render: false, doEvent: false, history: false }
-        );
+        this.specificLayerMove(pen, 'bottom');
       }
     }
   }
@@ -2946,6 +2919,44 @@ export class Meta2d {
     this.initImageCanvas([pen]);
   }
 
+  //特殊图元层级处理
+  specificLayerMove(pen: Pen, type: string) {
+    //image
+    if (pen.image && pen.name !== 'gif') {
+      let isBottom = false;
+      if (type === 'bottom' || type === 'down') {
+        isBottom = true;
+      }
+      this.setValue(
+        { id: pen.id, isBottom },
+        { render: false, doEvent: false, history: false }
+      );
+    }
+
+    //dom
+    if (pen.externElement || pen.name === 'gif') {
+      let zIndex = 0;
+      // let zIndex = pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
+      if (type === 'top') {
+        pen.calculative.canvas.maxZindex += 1;
+        zIndex = pen.calculative.canvas.maxZindex;
+      } else if (type === 'up') {
+        zIndex =
+          pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
+      } else if (type === 'down') {
+        zIndex =
+          pen.calculative.zIndex === undefined ? 3 : pen.calculative.zIndex - 1;
+        if (zIndex < 0) {
+          zIndex = 0;
+        }
+      }
+      this.setValue(
+        { id: pen.id, zIndex },
+        { render: false, doEvent: false, history: false }
+      );
+    }
+  }
+
   /**
    * 该画笔上移，即把该画笔在数组中的位置向后移动一个
    * @param pens 画笔
@@ -2955,7 +2966,7 @@ export class Meta2d {
     if (!Array.isArray(pens)) pens = [pens]; // 兼容
     for (const pen of pens as Pen[]) {
       const _pens = this.store.data.pens;
-      if (pen.children) {
+      if (pen.children && pen.children.length) {
         //组合图元
         const preMovePens = [...getAllChildren(pen, this.store), pen];
         //先保证组合图元的顺序正确。
@@ -2975,8 +2986,10 @@ export class Meta2d {
           offset += 1;
           lastIndex = _pen.temIndex;
           delete _pen.temIndex;
+          this.specificLayerMove(_pen, 'up');
         });
-        _pens.splice(lastIndex + 1, 0, ...preMovePens);
+        _pens.splice(lastIndex + 1, 0, ...orderPens);
+        this.initImageCanvas(orderPens);
       } else {
         const index = _pens.findIndex((p: Pen) => p.id === pen.id);
         if (index > -1 && index !== _pens.length - 1) {
@@ -2984,24 +2997,7 @@ export class Meta2d {
           _pens.splice(index, 1);
           this.initImageCanvas([pen]);
         }
-      }
-
-      //image
-      if (pen.image && pen.name !== 'gif') {
-        this.setValue(
-          { id: pen.id, isBottom: false },
-          { render: false, doEvent: false, history: false }
-        );
-      }
-
-      //dom
-      if (pen.externElement || pen.name === 'gif') {
-        let zIndex =
-          pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
-        this.setValue(
-          { id: pen.id, zIndex },
-          { render: false, doEvent: false, history: false }
-        );
+        this.specificLayerMove(pen, 'up');
       }
     }
   }
@@ -3015,7 +3011,7 @@ export class Meta2d {
     if (!Array.isArray(pens)) pens = [pens]; // 兼容
     for (const pen of pens as Pen[]) {
       const _pens = this.store.data.pens;
-      if (pen.children) {
+      if (pen.children && pen.children.length) {
         //组合图元
         const preMovePens = [...getAllChildren(pen, this.store), pen];
         //先保证组合图元的顺序正确。
@@ -3037,8 +3033,10 @@ export class Meta2d {
             firstIndex = _pen.temIndex;
           }
           delete _pen.temIndex;
+          this.specificLayerMove(_pen, 'down');
         });
-        _pens.splice(firstIndex - 1, 0, ...preMovePens);
+        _pens.splice(firstIndex - 1, 0, ...orderPens);
+        this.initImageCanvas(orderPens);
       } else {
         const index = _pens.findIndex((p: Pen) => p.id === pen.id);
         if (index > -1 && index !== 0) {
@@ -3046,26 +3044,7 @@ export class Meta2d {
           _pens.splice(index + 1, 1);
           this.initImageCanvas([pen]);
         }
-      }
-
-      //image
-      if (pen.image && pen.name !== 'gif') {
-        this.setValue(
-          { id: pen.id, isBottom: true },
-          { render: false, doEvent: false, history: false }
-        );
-      }
-      //dom
-      if (pen.externElement || pen.name === 'gif') {
-        let zIndex =
-          pen.calculative.zIndex === undefined ? 3 : pen.calculative.zIndex - 1;
-        if (zIndex < 0) {
-          zIndex = 0;
-        }
-        this.setValue(
-          { id: pen.id, zIndex },
-          { render: false, doEvent: false, history: false }
-        );
+        this.specificLayerMove(pen, 'down');
       }
     }
   }
