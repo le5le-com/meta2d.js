@@ -2531,6 +2531,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   }
   const store = pen.calculative.canvas.store;
   const worldRect = pen.calculative.worldRect;
+  elem.style.opacity = pen.globalAlpha + '';
   elem.style.position = 'absolute';
   elem.style.outline = 'none';
   elem.style.left = worldRect.x + store.data.x + 'px';

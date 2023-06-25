@@ -572,6 +572,9 @@ export const isDomShapes = [
   'leHeadMenu',
   'leSliderVerify',
   'leDropDown',
+  'leFlvPlayer',
+  'leDatePicker',
+  'leSwiper',
 ];
 
 // 格式刷同步的属性
