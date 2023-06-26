@@ -976,25 +976,35 @@ export class Canvas {
     const json =
       event.dataTransfer.getData('Meta2d') ||
       event.dataTransfer.getData('Text');
+
     let obj = null;
     try {
       if (json) {
         obj = JSON.parse(json);
-      } else {
-        const { files } = event.dataTransfer;
-        if (files.length && files[0].type.match('image.*')) {
-          // 必须是图片类型
-          const isGif = files[0].type === 'image/gif';
-          obj = await this.fileToPen(files[0], isGif);
-        }
-      }
-      if (obj && obj.draggable !== false) {
-        obj = Array.isArray(obj) ? obj : [obj];
-        const pt = { x: event.offsetX, y: event.offsetY };
-        this.calibrateMouse(pt);
-        this.dropPens(obj, pt);
       }
     } catch (e) {}
+
+    if (!obj) {
+      const { files } = event.dataTransfer;
+      if (files.length && files[0].type.match('image.*')) {
+        // 必须是图片类型
+        const isGif = files[0].type === 'image/gif';
+        obj = await this.fileToPen(files[0], isGif);
+      } else if (this.addCaches.length) {
+        obj = this.addCaches;
+        this.addCaches = [];
+      } else {
+        this.store.emitter.emit('drop', undefined);
+        return;
+      }
+    }
+    if (obj && obj.draggable !== false) {
+      obj = Array.isArray(obj) ? obj : [obj];
+      const pt = { x: event.offsetX, y: event.offsetY };
+      this.calibrateMouse(pt);
+      this.dropPens(obj, pt);
+      this.addCaches = [];
+    }
 
     this.store.emitter.emit('drop', obj || json);
   };
@@ -3205,6 +3215,7 @@ export class Canvas {
     } else {
       this.initImageCanvas(action.pens);
     }
+    this.parent.onSizeUpdate();
     this.render();
 
     this.store.emitter.emit(undo ? 'undo' : 'redo', action);
