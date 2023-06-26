@@ -318,6 +318,7 @@ export interface Pen extends Rect {
   currentAnimation?: number; //当前动画索引
   realTimes?: RealTime[];
   crossOrigin?: string;
+  imageRadius?: number; //图片圆角
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   calculative?: {
     x?: number;
@@ -500,6 +501,7 @@ export interface Pen extends Rect {
     gradientAnimatePath?: Path2D;
     cssDisplay?: string; //css display
     animations?: any[];
+    imageRadius?: number;
   };
 
   // 前一个动画帧状态数据

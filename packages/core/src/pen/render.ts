@@ -789,7 +789,42 @@ export function drawImage(
     ctx.rotate((iconRotate * Math.PI) / 180);
     ctx.translate(-centerX, -centerY);
   }
-  ctx.drawImage(img, x, y, width, height);
+  if (pen.imageRadius) {
+    ctx.save();
+    let wr = pen.calculative.imageRadius || 0,
+      hr = wr;
+    const {
+      x: _x,
+      y: _y,
+      width: w,
+      height: h,
+      ex,
+      ey,
+    } = pen.calculative.worldRect;
+    if (wr < 1) {
+      wr = w * wr;
+      hr = h * hr;
+    }
+    let r = wr < hr ? wr : hr;
+    if (w < 2 * r) {
+      r = w / 2;
+    }
+    if (h < 2 * r) {
+      r = h / 2;
+    }
+    ctx.beginPath();
+
+    ctx.moveTo(_x + r, _y);
+    ctx.arcTo(ex, _y, ex, ey, r);
+    ctx.arcTo(ex, ey, _x, ey, r);
+    ctx.arcTo(_x, ey, _x, _y, r);
+    ctx.arcTo(_x, _y, ex, _y, r);
+    ctx.clip();
+    ctx.drawImage(img, x, y, width, height);
+    ctx.restore();
+  } else {
+    ctx.drawImage(img, x, y, width, height);
+  }
 }
 
 /**
