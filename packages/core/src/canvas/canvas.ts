@@ -552,6 +552,15 @@ export class Canvas {
 
   onkeydown = (e: KeyboardEvent) => {
     if (
+      this.store.data.locked >= LockState.DisableEdit &&
+      (e.target as HTMLElement).tagName !== 'INPUT' &&
+      (e.target as HTMLElement).tagName !== 'TEXTAREA'
+    ) {
+      this.store.active.forEach((pen) => {
+        pen.onKeyDown?.(pen, e.key);
+      });
+    }
+    if (
       this.store.data.locked >= LockState.DisableEdit ||
       (e.target as HTMLElement).tagName === 'INPUT' ||
       (e.target as HTMLElement).tagName === 'TEXTAREA'
