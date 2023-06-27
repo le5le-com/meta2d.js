@@ -1103,16 +1103,20 @@ export function ctxFlip(
 
 export function ctxRotate(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen
+  pen: Pen,
+  noFlip: boolean = false
 ) {
   const { x, y } = pen.calculative.worldRect.center;
   ctx.translate(x, y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
   // 目前只有水平和垂直翻转，都需要 * -1
-  if (pen.calculative.flipX) {
-    rotate *= -1;
-  } else if (pen.calculative.flipY) {
-    rotate *= -1;
+  if (!noFlip) {
+    if (pen.calculative.flipX) {
+      rotate *= -1;
+    }
+    if (pen.calculative.flipY) {
+      rotate *= -1;
+    }
   }
   ctx.rotate(rotate);
   ctx.translate(-x, -y);
@@ -1122,7 +1126,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
-
+  if (pen.textUnFlip || pen.textUnRotate) {
+    ctx.save();
+  }
   ctxFlip(ctx, pen);
 
   if (pen.calculative.rotate && pen.name !== 'line') {
@@ -1258,6 +1264,18 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     drawIcon(ctx, pen);
   }
 
+  if (pen.textUnFlip || pen.textUnRotate) {
+    ctx.restore();
+  }
+  if (!pen.textUnFlip && pen.textUnRotate) {
+    ctxFlip(ctx, pen);
+  }
+  if (!pen.textUnRotate && pen.textUnFlip) {
+    if (pen.calculative.rotate && pen.name !== 'line') {
+      ctxRotate(ctx, pen, true);
+    }
+  }
+
   drawText(ctx, pen);
 
   if (pen.type === PenType.Line && pen.fillTexts) {
@@ -1313,6 +1331,9 @@ export function renderPenRaw(
   // end
 
   ctx.beginPath();
+  if (pen.textUnFlip || pen.textUnRotate) {
+    ctx.save();
+  }
   if (pen.calculative.flipX) {
     if (rect) {
       ctx.translate(
@@ -1422,6 +1443,46 @@ export function renderPenRaw(
     ctx.restore();
   } else if (pen.calculative.icon) {
     drawIcon(ctx, pen);
+  }
+
+  if (pen.textUnFlip || pen.textUnRotate) {
+    ctx.restore();
+  }
+
+  if (!pen.textUnFlip && pen.textUnRotate) {
+    if (pen.calculative.flipX) {
+      if (rect) {
+        ctx.translate(
+          pen.calculative.worldRect.x + pen.calculative.worldRect.ex,
+          0
+        );
+      } else {
+        ctx.translate(
+          pen.calculative.worldRect.x + pen.calculative.worldRect.ex,
+          0
+        );
+      }
+      ctx.scale(-1, 1);
+    }
+    if (pen.calculative.flipY) {
+      if (rect) {
+        ctx.translate(
+          0,
+          pen.calculative.worldRect.y + pen.calculative.worldRect.ey
+        );
+      } else {
+        ctx.translate(
+          0,
+          pen.calculative.worldRect.y + pen.calculative.worldRect.ey
+        );
+      }
+      ctx.scale(1, -1);
+    }
+  }
+  if (!pen.textUnRotate && pen.textUnFlip) {
+    if (pen.calculative.rotate && pen.name !== 'line') {
+      ctxRotate(ctx, pen, true);
+    }
   }
 
   drawText(ctx, pen);
