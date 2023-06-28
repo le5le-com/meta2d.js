@@ -56,7 +56,7 @@ export const needCalcTextRectProps = [
   'keepDecimal',
 ];
 
-export const needSetPenProps = ['x', 'y', 'width', 'height'];
+export const needSetPenProps = ['x', 'y', 'width', 'height', 'flipX', 'flipY'];
 
 export const needPatchFlagsPenRectProps = [
   'paddingTop',

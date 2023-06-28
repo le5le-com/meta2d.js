@@ -1876,7 +1876,18 @@ export function calcWorldAnchors(pen: Pen) {
   const store: Meta2dStore = pen.calculative.canvas.store;
   let anchors: Point[] = [];
   if (pen.anchors) {
-    pen.anchors.forEach((anchor) => {
+    let _anchors = deepClone(pen.anchors);
+    if (pen.flipX) {
+      _anchors.forEach((anchor) => {
+        anchor.x = 0.5 - (anchor.x - 0.5);
+      });
+    }
+    if (pen.flipY) {
+      _anchors.forEach((anchor) => {
+        anchor.y = 0.5 - (anchor.y - 0.5);
+      });
+    }
+    _anchors.forEach((anchor) => {
       anchors.push(calcWorldPointOfPen(pen, anchor));
     });
   }

@@ -600,6 +600,9 @@ export class Meta2d {
       for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
+      for (const pen of data.pens) {
+        this.canvas.updateLines(pen);
+      }
     }
     if (!render) {
       this.canvas.opening = true;
