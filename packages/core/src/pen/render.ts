@@ -1126,7 +1126,10 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
-  if (pen.textUnFlip || pen.textUnRotate) {
+  const store = pen.calculative.canvas.store;
+  const textFlip = pen.textFlip || store.options.textFlip;
+  const textRotate = pen.textRotate || store.options.textRotate;
+  if (!textFlip || !textRotate) {
     ctx.save();
   }
   ctxFlip(ctx, pen);
@@ -1138,8 +1141,6 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.lineWidth > 1) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
-
-  const store = pen.calculative.canvas.store;
 
   inspectRect(ctx, store, pen); // 审查 rect
   let fill: any;
@@ -1264,13 +1265,13 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     drawIcon(ctx, pen);
   }
 
-  if (pen.textUnFlip || pen.textUnRotate) {
+  if (!textFlip || !textRotate) {
     ctx.restore();
   }
-  if (!pen.textUnFlip && pen.textUnRotate) {
+  if (textFlip && !textRotate) {
     ctxFlip(ctx, pen);
   }
-  if (!pen.textUnRotate && pen.textUnFlip) {
+  if (!textFlip && textRotate) {
     if (pen.calculative.rotate && pen.name !== 'line') {
       ctxRotate(ctx, pen, true);
     }
@@ -1329,9 +1330,11 @@ export function renderPenRaw(
   // for canvas2svg
   (ctx as any).setAttrs?.(pen);
   // end
-
+  const store = pen.calculative.canvas.store;
+  const textFlip = pen.textFlip || store.options.textFlip;
+  const textRotate = pen.textRotate || store.options.textRotate;
   ctx.beginPath();
-  if (pen.textUnFlip || pen.textUnRotate) {
+  if (!textFlip || !textRotate) {
     ctx.save();
   }
   if (pen.calculative.flipX) {
@@ -1370,9 +1373,6 @@ export function renderPenRaw(
   if (pen.calculative.lineWidth > 1) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
-
-  const store = pen.calculative.canvas.store;
-
   let fill: any;
   if (pen.calculative.hover) {
     ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
@@ -1445,11 +1445,11 @@ export function renderPenRaw(
     drawIcon(ctx, pen);
   }
 
-  if (pen.textUnFlip || pen.textUnRotate) {
+  if (textFlip || textRotate) {
     ctx.restore();
   }
 
-  if (!pen.textUnFlip && pen.textUnRotate) {
+  if (textFlip && !textRotate) {
     if (pen.calculative.flipX) {
       if (rect) {
         ctx.translate(
@@ -1479,7 +1479,7 @@ export function renderPenRaw(
       ctx.scale(1, -1);
     }
   }
-  if (!pen.textUnRotate && pen.textUnFlip) {
+  if (!textFlip && textRotate) {
     if (pen.calculative.rotate && pen.name !== 'line') {
       ctxRotate(ctx, pen, true);
     }
