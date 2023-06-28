@@ -43,6 +43,7 @@ export interface Point {
   isTemp?: boolean;
   // 拖拽停靠的锚点
   dockAnchorId?: string;
+  direction?: Direction; //锚点出线方向
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {

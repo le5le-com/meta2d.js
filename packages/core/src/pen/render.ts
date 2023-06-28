@@ -2087,7 +2087,14 @@ export function facePen(pt: Point, pen?: Pen) {
   if (!pen || !pen.calculative || !pen.calculative.worldRect.center) {
     return Direction.None;
   }
-
+  if (pt.anchorId) {
+    let anchor = pen.anchors.filter((_anchor) => _anchor.id === pt.anchorId);
+    if (anchor.length) {
+      if (anchor[0].direction > -1) {
+        return anchor[0].direction;
+      }
+    }
+  }
   return facePoint(pt, pen.calculative.worldRect.center);
 }
 
