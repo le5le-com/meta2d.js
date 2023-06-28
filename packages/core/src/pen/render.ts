@@ -1445,7 +1445,7 @@ export function renderPenRaw(
     drawIcon(ctx, pen);
   }
 
-  if (textFlip || textRotate) {
+  if (!textFlip || !textRotate) {
     ctx.restore();
   }
 
