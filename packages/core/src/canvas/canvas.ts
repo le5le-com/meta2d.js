@@ -124,6 +124,7 @@ import { lockedError } from '../utils/error';
 import { Meta2d } from '../core';
 import { Dialog } from '../dialog';
 import { setter } from '../utils/object';
+import { Title } from '../title';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -225,6 +226,7 @@ export class Canvas {
   dropdown = document.createElement('ul');
 
   tooltip: Tooltip;
+  title: Title;
   mousePos: Point = { x: 0, y: 0 };
 
   scroll: Scroll;
@@ -280,6 +282,7 @@ export class Canvas {
     };
 
     this.dialog = new Dialog(parentElement);
+    this.title = new Title(parentElement);
 
     if (this.store.options.scroll) {
       this.scroll = new Scroll(this);
@@ -2660,6 +2663,20 @@ export class Canvas {
         !pointInRect(pt, pen.calculative.worldRect)
       ) {
         continue;
+      }
+      //anchor title
+      if (this.store.data.locked) {
+        // locked>0
+        if (pen.calculative.worldAnchors) {
+          for (const anchor of pen.calculative.worldAnchors) {
+            if (hitPoint(pt, anchor, this.pointSize)) {
+              this.title.show(anchor);
+              if (anchor.title) {
+                break outer;
+              }
+            }
+          }
+        }
       }
       // 锚点
       if (!this.store.data.locked && this.hotkeyType !== HotkeyType.Resize) {
@@ -6629,6 +6646,7 @@ export class Canvas {
     this.scroll && this.scroll.destroy();
     this.tooltip?.destroy();
     this.dialog?.destroy();
+    this.title?.destroy();
 
     // ios
     this.externalElements.removeEventListener(

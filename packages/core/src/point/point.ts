@@ -44,6 +44,7 @@ export interface Point {
   // 拖拽停靠的锚点
   dockAnchorId?: string;
   direction?: Direction; //锚点出线方向
+  title?: string; //锚点hover提示文字
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
