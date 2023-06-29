@@ -2407,6 +2407,7 @@ export class Canvas {
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
       pen.calculative.activeAnchor = undefined;
+      pen.calculative.hover = false;
       setChildrenActive(pen, false);
     });
     !drawing && this.store.emitter.emit('inactive', this.store.active);
@@ -2422,6 +2423,7 @@ export class Canvas {
       emit && this.store.emitter.emit('inactive', this.store.active);
       for (const pen of this.store.active) {
         pen.calculative.active = undefined;
+        pen.calculative.hover = false;
         setChildrenActive(pen, false);
       }
     }
