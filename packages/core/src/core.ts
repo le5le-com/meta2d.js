@@ -605,6 +605,7 @@ export class Meta2d {
       this.canvas.opening = true;
     }
     this.initBindDatas();
+    this.initBinds();
     this.render();
     this.listenSocket();
     this.connectSocket();
@@ -646,6 +647,23 @@ export class Meta2d {
             formItem,
           });
         });
+      });
+    });
+  }
+
+  initBinds() {
+    this.store.binds = {};
+    this.store.data.pens.forEach((pen) => {
+      pen.realTimes?.forEach((realTime) => {
+        if (realTime.binds && realTime.binds.id) {
+          if (!this.store.binds[realTime.binds.id]) {
+            this.store.binds[realTime.binds.id] = [];
+          }
+          this.store.binds[realTime.binds.id].push({
+            id: pen.id,
+            key: realTime.key,
+          });
+        }
       });
     });
   }
@@ -1550,7 +1568,10 @@ export class Meta2d {
     if (pen.realTimes) {
       let _d: any = {};
       pen.realTimes.forEach((realTime) => {
-        if (!realTime.binds || !realTime.binds.length) {
+        if (
+          realTime.value !== undefined &&
+          (!realTime.binds || !realTime.binds.id)
+        ) {
           if (realTime.type === 'number') {
             if (realTime.value && realTime.value.indexOf(',') !== -1) {
               let arr = realTime.value.split(',');
@@ -1623,7 +1644,7 @@ export class Meta2d {
           const res: Response = await fetch(item.url, {
             headers: item.headers,
             method: item.method,
-            body: item.body,
+            body: item.method === 'GET' ? undefined : item.body,
           });
           if (res.ok) {
             const data = await res.text();
@@ -1742,6 +1763,32 @@ export class Meta2d {
           }
         }
       );
+      this.store.binds[v.id]?.forEach((p: { id: string; key: string }) => {
+        const pen = this.store.pens[p.id];
+        if (!pen) {
+          return;
+        }
+        let penValue = penValues.get(pen);
+
+        // if (typeof pen.onBinds === 'function') {
+        //   // 已经计算了
+        //   if (penValue) {
+        //     return;
+        //   }
+        //   //TODO onBinds的情况
+        //   penValues.set(pen, pen.onBinds(pen, datas));
+        //   return;
+        // }
+        if (penValue) {
+          penValue[p.key] = v.value;
+        } else {
+          penValue = {
+            id: p.id,
+            [p.key]: v.value,
+          };
+          penValues.set(pen, penValue);
+        }
+      });
     });
 
     let initPens: Pen[];

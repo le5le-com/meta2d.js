@@ -121,6 +121,6 @@ export interface RealTime {
   type?: string;
   keywords?: true;
   triggers?: Trigger[];
-  binds?: Bind[];
+  binds?: Bind;
   value?: string;
 }

@@ -676,4 +676,9 @@ export function clearLifeCycle(pen: Pen) {
   pen.onInput = undefined;
   pen.onChangeId = undefined;
   pen.onBinds = undefined;
+  pen.onStartVideo = undefined;
+  pen.onPauseVideo = undefined;
+  pen.onStopVideo = undefined;
+  pen.onRenderPenRaw = undefined;
+  pen.onKeyDown = undefined;
 }

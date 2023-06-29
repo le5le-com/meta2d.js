@@ -109,6 +109,7 @@ export interface Meta2dStore {
   path2dMap: WeakMap<Pen, Path2D>;
   animateMap: WeakMap<Pen, Pen>;
   bindDatas: { [key: string]: { id: string; formItem: FormItem }[] };
+  binds: { [key: string]: { id: string; key: string }[] };
   active?: Pen[];
   hover?: Pen;
   lastHover?: Pen;
@@ -159,6 +160,7 @@ export const createStore = () => {
     options: { ...defaultOptions },
     emitter: mitt(),
     bindDatas: {},
+    binds: {},
   } as Meta2dStore;
 };
 
@@ -188,6 +190,7 @@ export const clearStore = (store: Meta2dStore) => {
   store.path2dMap = new WeakMap();
   store.animateMap = new WeakMap();
   store.bindDatas = {};
+  store.binds = {};
   store.active = [];
   store.hover = undefined;
   store.lastHover = undefined;
