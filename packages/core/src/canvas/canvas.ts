@@ -124,6 +124,7 @@ import { lockedError } from '../utils/error';
 import { Meta2d } from '../core';
 import { Dialog } from '../dialog';
 import { setter } from '../utils/object';
+import { Title } from '../title';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -196,6 +197,7 @@ export class Canvas {
   pasteOffset = 10;
   opening: boolean = false;
   maxZindex: number = 4;
+  canMoveLine: boolean = false; //moveConnectedLine=false
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -225,6 +227,7 @@ export class Canvas {
   dropdown = document.createElement('ul');
 
   tooltip: Tooltip;
+  title: Title;
   mousePos: Point = { x: 0, y: 0 };
 
   scroll: Scroll;
@@ -280,6 +283,7 @@ export class Canvas {
     };
 
     this.dialog = new Dialog(parentElement);
+    this.title = new Title(parentElement);
 
     if (this.store.options.scroll) {
       this.scroll = new Scroll(this);
@@ -841,6 +845,10 @@ export class Canvas {
           e.stopPropagation();
         }
         break;
+      case 'l':
+      case 'L':
+        this.canMoveLine = true;
+        break;
     }
 
     this.render(false);
@@ -924,13 +932,17 @@ export class Canvas {
   }
 
   onkeyup = (e: KeyboardEvent) => {
-    // switch (e.key) {
-    //   case 'Alt':
-    //     if (this.drawingLine) {
-    //       this.store.options.autoAnchor = !this.store.options.autoAnchor;
-    //     }
-    //     break;
-    // }
+    switch (e.key) {
+      case 'l':
+      case 'L':
+        this.canMoveLine = false;
+        break;
+      // case 'Alt':
+      //   if (this.drawingLine) {
+      //     this.store.options.autoAnchor = !this.store.options.autoAnchor;
+      //   }
+      //   break;
+    }
 
     if (this.hotkeyType) {
       this.render();
@@ -2404,6 +2416,7 @@ export class Canvas {
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
       pen.calculative.activeAnchor = undefined;
+      pen.calculative.hover = false;
       setChildrenActive(pen, false);
     });
     !drawing && this.store.emitter.emit('inactive', this.store.active);
@@ -2416,8 +2429,10 @@ export class Canvas {
 
   active(pens: Pen[], emit = true) {
     if (this.store.active) {
+      emit && this.store.emitter.emit('inactive', this.store.active);
       for (const pen of this.store.active) {
         pen.calculative.active = undefined;
+        pen.calculative.hover = false;
         setChildrenActive(pen, false);
       }
     }
@@ -2660,6 +2675,20 @@ export class Canvas {
         !pointInRect(pt, pen.calculative.worldRect)
       ) {
         continue;
+      }
+      //anchor title
+      if (this.store.data.locked) {
+        // locked>0
+        if (pen.calculative.worldAnchors) {
+          for (const anchor of pen.calculative.worldAnchors) {
+            if (hitPoint(pt, anchor, this.pointSize)) {
+              this.title.show(anchor);
+              if (anchor.title) {
+                break outer;
+              }
+            }
+          }
+        }
       }
       // 锚点
       if (!this.store.data.locked && this.hotkeyType !== HotkeyType.Resize) {
@@ -4305,6 +4334,7 @@ export class Canvas {
 
     if (
       !this.store.options.moveConnectedLine &&
+      !this.canMoveLine &&
       this.store.active.length === 1 &&
       (this.store.active[0].anchors[0]?.connectTo ||
         this.store.active[0].anchors[this.store.active[0].anchors.length - 1]
@@ -4395,7 +4425,7 @@ export class Canvas {
    * 半透明，去图片
    */
   initMovingPens() {
-    if (!this.store.options.moveConnectedLine) {
+    if (!this.store.options.moveConnectedLine && !this.canMoveLine) {
       for (let i = 0; i < this.store.active.length; i++) {
         const pen = this.store.active[i];
         if (
@@ -4786,7 +4816,7 @@ export class Canvas {
       }
 
       if (pen.type === PenType.Line) {
-        if (!this.store.options.moveConnectedLine) {
+        if (!this.store.options.moveConnectedLine && !this.canMoveLine) {
           return;
         }
         translateLine(pen, x, y);
@@ -6629,6 +6659,7 @@ export class Canvas {
     this.scroll && this.scroll.destroy();
     this.tooltip?.destroy();
     this.dialog?.destroy();
+    this.title?.destroy();
 
     // ios
     this.externalElements.removeEventListener(

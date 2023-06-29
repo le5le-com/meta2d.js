@@ -1103,16 +1103,20 @@ export function ctxFlip(
 
 export function ctxRotate(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pen: Pen
+  pen: Pen,
+  noFlip: boolean = false
 ) {
   const { x, y } = pen.calculative.worldRect.center;
   ctx.translate(x, y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
   // 目前只有水平和垂直翻转，都需要 * -1
-  if (pen.calculative.flipX) {
-    rotate *= -1;
-  } else if (pen.calculative.flipY) {
-    rotate *= -1;
+  if (!noFlip) {
+    if (pen.calculative.flipX) {
+      rotate *= -1;
+    }
+    if (pen.calculative.flipY) {
+      rotate *= -1;
+    }
   }
   ctx.rotate(rotate);
   ctx.translate(-x, -y);
@@ -1122,7 +1126,12 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
-
+  const store = pen.calculative.canvas.store;
+  const textFlip = pen.textFlip || store.options.textFlip;
+  const textRotate = pen.textRotate || store.options.textRotate;
+  if (!textFlip || !textRotate) {
+    ctx.save();
+  }
   ctxFlip(ctx, pen);
 
   if (pen.calculative.rotate && pen.name !== 'line') {
@@ -1132,8 +1141,6 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.lineWidth > 1) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
-
-  const store = pen.calculative.canvas.store;
 
   inspectRect(ctx, store, pen); // 审查 rect
   let fill: any;
@@ -1258,6 +1265,18 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     drawIcon(ctx, pen);
   }
 
+  if (!textFlip || !textRotate) {
+    ctx.restore();
+  }
+  if (textFlip && !textRotate) {
+    ctxFlip(ctx, pen);
+  }
+  if (!textFlip && textRotate) {
+    if (pen.calculative.rotate && pen.name !== 'line') {
+      ctxRotate(ctx, pen, true);
+    }
+  }
+
   drawText(ctx, pen);
 
   if (pen.type === PenType.Line && pen.fillTexts) {
@@ -1311,8 +1330,13 @@ export function renderPenRaw(
   // for canvas2svg
   (ctx as any).setAttrs?.(pen);
   // end
-
+  const store = pen.calculative.canvas.store;
+  const textFlip = pen.textFlip || store.options.textFlip;
+  const textRotate = pen.textRotate || store.options.textRotate;
   ctx.beginPath();
+  if (!textFlip || !textRotate) {
+    ctx.save();
+  }
   if (pen.calculative.flipX) {
     if (rect) {
       ctx.translate(
@@ -1349,9 +1373,6 @@ export function renderPenRaw(
   if (pen.calculative.lineWidth > 1) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
-
-  const store = pen.calculative.canvas.store;
-
   let fill: any;
   if (pen.calculative.hover) {
     ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
@@ -1422,6 +1443,46 @@ export function renderPenRaw(
     ctx.restore();
   } else if (pen.calculative.icon) {
     drawIcon(ctx, pen);
+  }
+
+  if (!textFlip || !textRotate) {
+    ctx.restore();
+  }
+
+  if (textFlip && !textRotate) {
+    if (pen.calculative.flipX) {
+      if (rect) {
+        ctx.translate(
+          pen.calculative.worldRect.x + pen.calculative.worldRect.ex,
+          0
+        );
+      } else {
+        ctx.translate(
+          pen.calculative.worldRect.x + pen.calculative.worldRect.ex,
+          0
+        );
+      }
+      ctx.scale(-1, 1);
+    }
+    if (pen.calculative.flipY) {
+      if (rect) {
+        ctx.translate(
+          0,
+          pen.calculative.worldRect.y + pen.calculative.worldRect.ey
+        );
+      } else {
+        ctx.translate(
+          0,
+          pen.calculative.worldRect.y + pen.calculative.worldRect.ey
+        );
+      }
+      ctx.scale(1, -1);
+    }
+  }
+  if (!textFlip && textRotate) {
+    if (pen.calculative.rotate && pen.name !== 'line') {
+      ctxRotate(ctx, pen, true);
+    }
   }
 
   drawText(ctx, pen);
@@ -1815,7 +1876,18 @@ export function calcWorldAnchors(pen: Pen) {
   const store: Meta2dStore = pen.calculative.canvas.store;
   let anchors: Point[] = [];
   if (pen.anchors) {
-    pen.anchors.forEach((anchor) => {
+    let _anchors = deepClone(pen.anchors);
+    if (pen.flipX) {
+      _anchors.forEach((anchor) => {
+        anchor.x = 0.5 - (anchor.x - 0.5);
+      });
+    }
+    if (pen.flipY) {
+      _anchors.forEach((anchor) => {
+        anchor.y = 0.5 - (anchor.y - 0.5);
+      });
+    }
+    _anchors.forEach((anchor) => {
       anchors.push(calcWorldPointOfPen(pen, anchor));
     });
   }
@@ -2015,7 +2087,14 @@ export function facePen(pt: Point, pen?: Pen) {
   if (!pen || !pen.calculative || !pen.calculative.worldRect.center) {
     return Direction.None;
   }
-
+  if (pt.anchorId) {
+    let anchor = pen.anchors.filter((_anchor) => _anchor.id === pt.anchorId);
+    if (anchor.length) {
+      if (anchor[0].direction > -1) {
+        return anchor[0].direction;
+      }
+    }
+  }
   return facePoint(pt, pen.calculative.worldRect.center);
 }
 
