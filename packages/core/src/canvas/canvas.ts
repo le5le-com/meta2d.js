@@ -197,6 +197,7 @@ export class Canvas {
   pasteOffset = 10;
   opening: boolean = false;
   maxZindex: number = 4;
+  canMoveLine: boolean = false; //moveConnectedLine=false
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -844,6 +845,10 @@ export class Canvas {
           e.stopPropagation();
         }
         break;
+      case 'l':
+      case 'L':
+        this.canMoveLine = true;
+        break;
     }
 
     this.render(false);
@@ -927,13 +932,17 @@ export class Canvas {
   }
 
   onkeyup = (e: KeyboardEvent) => {
-    // switch (e.key) {
-    //   case 'Alt':
-    //     if (this.drawingLine) {
-    //       this.store.options.autoAnchor = !this.store.options.autoAnchor;
-    //     }
-    //     break;
-    // }
+    switch (e.key) {
+      case 'l':
+      case 'L':
+        this.canMoveLine = false;
+        break;
+      // case 'Alt':
+      //   if (this.drawingLine) {
+      //     this.store.options.autoAnchor = !this.store.options.autoAnchor;
+      //   }
+      //   break;
+    }
 
     if (this.hotkeyType) {
       this.render();
@@ -4325,6 +4334,7 @@ export class Canvas {
 
     if (
       !this.store.options.moveConnectedLine &&
+      !this.canMoveLine &&
       this.store.active.length === 1 &&
       (this.store.active[0].anchors[0]?.connectTo ||
         this.store.active[0].anchors[this.store.active[0].anchors.length - 1]
@@ -4415,7 +4425,7 @@ export class Canvas {
    * 半透明，去图片
    */
   initMovingPens() {
-    if (!this.store.options.moveConnectedLine) {
+    if (!this.store.options.moveConnectedLine && !this.canMoveLine) {
       for (let i = 0; i < this.store.active.length; i++) {
         const pen = this.store.active[i];
         if (
@@ -4806,7 +4816,7 @@ export class Canvas {
       }
 
       if (pen.type === PenType.Line) {
-        if (!this.store.options.moveConnectedLine) {
+        if (!this.store.options.moveConnectedLine && !this.canMoveLine) {
           return;
         }
         translateLine(pen, x, y);
