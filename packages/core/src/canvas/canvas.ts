@@ -1109,11 +1109,11 @@ export class Canvas {
     return pen;
   }
 
-  async addPens(pens: Pen[], history?: boolean): Promise<Pen[]> {
+  async addPens<P extends Pen = Pen>(pens: P[], history?: boolean): Promise<P[]> {
     if (this.beforeAddPens && (await this.beforeAddPens(pens)) != true) {
       return [];
     }
-    const list: Pen[] = [];
+    const list: P[] = [];
     for (const pen of pens) {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;

@@ -504,7 +504,7 @@ export class Meta2d {
     return await this.canvas.addPen(pen, history, emit);
   }
 
-  async addPens(pens: Pen[], history?: boolean) {
+  async addPens<P extends Pen = Pen>(pens: P[], history?: boolean): Promise<P[]> {
     return await this.canvas.addPens(pens, history);
   }
 
