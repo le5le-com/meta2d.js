@@ -3039,7 +3039,7 @@ export class Canvas {
     this.canvasImageBottom.clear();
   }
 
-  async addPen(pen: Pen, history?: boolean, emit?: boolean): Promise<Pen> {
+  async addPen<P extends Pen = Pen>(pen: P, history?: boolean, emit?: boolean): Promise<P> {
     if (this.beforeAddPens && (await this.beforeAddPens([pen])) != true) {
       return;
     }

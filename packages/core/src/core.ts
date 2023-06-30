@@ -500,7 +500,7 @@ export class Meta2d {
    *
    * @param emit 是否发送消息
    */
-  async addPen(pen: Pen, history?: boolean, emit = true) {
+  async addPen<P extends Pen = Pen>(pen: P, history?: boolean, emit = true): Promise<P> {
     return await this.canvas.addPen(pen, history, emit);
   }
 
