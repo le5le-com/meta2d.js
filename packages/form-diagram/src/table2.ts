@@ -9,7 +9,7 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.onAdd = onAdd;
     if (!pen.rowPos || !pen.colPos) {
       pen.onAdd(pen);
-      pen.calculative.canvas.parent.active([pen]);
+      // pen.calculative.canvas.parent.active([pen]);
     }
     pen.onMouseMove = onMouseMove;
     pen.onMouseLeave = onMouseLeave;
@@ -590,7 +590,7 @@ function onValue(pen: formPen) {
         pen.calculative.canvas.delForce(pen.calculative.canvas.findOne(child));
       });
     pen.calculative.texts = undefined;
-    pen.calculative.canvas.active([pen]);
+    // pen.calculative.canvas.active([pen]);
   }
 }
 
