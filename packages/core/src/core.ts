@@ -585,28 +585,47 @@ export class Meta2d {
 
   open(data?: Meta2dData, render: boolean = true) {
     this.clear(false);
-    if (data) {
+    let index = this.store.meta2dDatas.findIndex(
+      (item) => item._id === data._id
+    );
+    if (this.store.options.cacheLength && data._id && index !== -1) {
+      this.store.data = this.store.meta2dDatas[index];
       this.setBackgroundImage(data.bkImage);
-      Object.assign(this.store.data, data);
-      this.store.data.pens = [];
-      // 第一遍赋初值
-      for (const pen of data.pens) {
-        if (!pen.id) {
-          pen.id = s8();
-        }
-        !pen.calculative && (pen.calculative = { canvas: this.canvas });
+      this.store.pens = {};
+      this.store.data.pens.forEach((pen) => {
+        pen.calculative.canvas = this.canvas;
         this.store.pens[pen.id] = pen;
-      }
-      for (const pen of data.pens) {
-        this.canvas.makePen(pen);
-      }
-      for (const pen of data.pens) {
-        this.canvas.updateLines(pen);
+        globalStore.path2dDraws[pen.name] &&
+          this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+
+        pen.type &&
+          this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+      });
+    } else {
+      if (data) {
+        this.setBackgroundImage(data.bkImage);
+        Object.assign(this.store.data, data);
+        this.store.data.pens = [];
+        // 第一遍赋初值
+        for (const pen of data.pens) {
+          if (!pen.id) {
+            pen.id = s8();
+          }
+          !pen.calculative && (pen.calculative = { canvas: this.canvas });
+          this.store.pens[pen.id] = pen;
+        }
+        for (const pen of data.pens) {
+          this.canvas.makePen(pen);
+        }
+        for (const pen of data.pens) {
+          this.canvas.updateLines(pen);
+        }
       }
     }
     if (!render) {
       this.canvas.opening = true;
     }
+    this.cacheMeta2dData(data);
     this.initBindDatas();
     this.initBinds();
     this.render();
@@ -626,6 +645,23 @@ export class Meta2d {
 
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
       this.canvas.scroll.init();
+    }
+  }
+
+  cacheMeta2dData(data?: Meta2dData) {
+    if (data._id && this.store.options.cacheLength) {
+      let index = this.store.meta2dDatas.findIndex(
+        (item) => item._id === data._id
+      );
+      if (index === -1) {
+        this.store.meta2dDatas.push(deepClone(this.store.data, true));
+        if (this.store.meta2dDatas.length > this.store.options.cacheLength) {
+          this.store.meta2dDatas.shift();
+        }
+      } else {
+        let meta2dData = this.store.meta2dDatas.splice(index, 1)[0];
+        this.store.meta2dDatas.push(meta2dData);
+      }
     }
   }
 

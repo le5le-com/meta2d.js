@@ -47,6 +47,7 @@ export interface Meta2dData {
   httpHeaders?: HeadersInit; //请求头
   version?: string; // 版本号
   id?: string;
+  _id?: string;
   https?: HttpOptions[];
   width?: number;
   height?: number;
@@ -127,6 +128,7 @@ export interface Meta2dStore {
   bkImg: HTMLImageElement;
   // 测试使用
   fillWorldTextRect?: boolean; // 填充文本区域
+  meta2dDatas?: Meta2dData[];
 }
 
 export interface Meta2dClipboard {
@@ -161,6 +163,7 @@ export const createStore = () => {
     emitter: mitt(),
     bindDatas: {},
     binds: {},
+    meta2dDatas: [],
   } as Meta2dStore;
 };
 
