@@ -60,5 +60,5 @@ function onDestroy(pen: Pen) {
       store.pens[p] = undefined;
     }
   });
-  pen.children = undefined;
+  pen.children = [];
 }

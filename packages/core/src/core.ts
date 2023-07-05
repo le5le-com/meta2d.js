@@ -600,6 +600,7 @@ export class Meta2d {
 
         pen.type &&
           this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+          this.canvas.loadImage(pen);
       });
     } else {
       if (data) {

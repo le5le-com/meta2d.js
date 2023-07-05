@@ -3543,7 +3543,7 @@ export class Canvas {
   }
 
   loadImage(pen: Pen) {
-    if (pen.image !== pen.calculative.image) {
+    if (pen.image !== pen.calculative.image || !pen.calculative.img) {
       pen.calculative.img = undefined;
       if (pen.image) {
         if (globalStore.htmlElements[pen.image]) {
