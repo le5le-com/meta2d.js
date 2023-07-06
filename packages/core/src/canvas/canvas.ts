@@ -513,6 +513,12 @@ export class Canvas {
     e.preventDefault();
     e.stopPropagation();
 
+    //移动画笔过程中不允许缩放
+    if (
+      this.mouseDown &&
+      (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line)
+    )
+      return;
     if (this.store.data.locked === LockState.Disable) return;
     if (this.store.data.locked === LockState.DisableScale) return;
     if (this.store.data.locked === LockState.DisableMoveScale) return;
