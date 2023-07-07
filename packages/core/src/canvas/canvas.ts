@@ -1060,6 +1060,10 @@ export class Canvas {
         pen.height *= this.store.data.scale;
         pen.x = e.x - pen.width / 2;
         pen.y = e.y - pen.height / 2;
+        if (pen.tags && pen.tags.includes('meta3d')) {
+          pen.x = this.store.data.origin.x;
+          pen.y = this.store.data.origin.y;
+        }
       }
     }
     //大屏区域
@@ -1081,7 +1085,13 @@ export class Canvas {
             { x: pen.x, y: pen.y + pen.height },
             { x: pen.x + pen.width, y: pen.y + pen.height },
           ];
-          if (points.some((point) => pointInRect(point, rect))) {
+          if (
+            (pen.x === rect.x &&
+              pen.y === rect.y &&
+              pen.width === rect.width &&
+              pen.height === rect.height) ||
+            points.some((point) => pointInRect(point, rect))
+          ) {
             flag = false;
             break;
           }
