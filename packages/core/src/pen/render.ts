@@ -2929,16 +2929,15 @@ export function setChildValue(pen: Pen, data: IValue) {
       pen[k] = data[k];
       pen.calculative[k] = data[k];
     }
-
-    if (
-      pen.calculative.canvas.parent.isCombine(pen) &&
-      pen.showChild === undefined
-    ) {
-      const children = pen.children;
-      children?.forEach((childId) => {
-        const child = pen.calculative.canvas.store.pens[childId];
-        setChildValue(child, data);
-      });
-    }
+  }
+  if (
+    pen.calculative.canvas.parent.isCombine(pen) &&
+    pen.showChild === undefined
+  ) {
+    const children = pen.children;
+    children?.forEach((childId) => {
+      const child = pen.calculative.canvas.store.pens[childId];
+      setChildValue(child, data);
+    });
   }
 }
