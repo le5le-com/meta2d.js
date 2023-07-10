@@ -1,6 +1,7 @@
 import {
   BindId,
   ChartData,
+  deepClone,
   FormItem,
   IValue,
   Pen,
@@ -8,6 +9,8 @@ import {
 } from '@meta2d/core';
 import type { EChartOption } from 'echarts';
 import { deepSetValue } from '@meta2d/core';
+import { getter } from '@meta2d/core/src/utils/object';
+import { formatTime } from '@meta2d/core/src/utils/time';
 
 export enum ReplaceMode {
   Add,
@@ -21,6 +24,7 @@ export interface ChartPen extends Pen {
     max: number; // 最大数据量
     replaceMode: ReplaceMode; // 替换模式
     theme: string; // 主题
+    timeFormat: string; //格式化
   };
   beforeScale: number;
 }
@@ -222,8 +226,43 @@ function value(pen: ChartPen) {
 }
 
 function beforeValue(pen: ChartPen, value: ChartData) {
-  if ((value as any).echarts || (!value.dataX && !value.dataY)) {
+  if ((value as any).echarts) {
     // 整体传参，不做处理
+    return value;
+  }
+  if (pen.realTimes && pen.realTimes.length) {
+    const { xAxis, yAxis } = pen.echarts.option;
+    const { max, replaceMode, timeFormat } = pen.echarts;
+
+    for (let key in value) {
+      if (key.includes('echarts.option')) {
+        let beforeV = deepClone(getter(pen, key));
+        if (Array.isArray(beforeV) && replaceMode === ReplaceMode.Add) {
+          //追加
+          beforeV.push(value[key]);
+          if (max) {
+            beforeV.splice(0, beforeV.length - max);
+          }
+          value[key] = beforeV;
+          let _key = 'echarts.option.xAxis.data';
+          if (Array.isArray(xAxis) && xAxis.length) {
+            _key = 'echarts.option.xAxis.0.data';
+          }
+          let _value = getter(pen, _key);
+          let _time = formatTime(
+            timeFormat || '`${hours}:${minutes}:${seconds}`'
+          );
+          _value.push(_time);
+          if (max) {
+            _value.splice(0, _value.length - max);
+          }
+          value[_key] = _value;
+        }
+      }
+    }
+    return value;
+  }
+  if (!value.dataX && !value.dataY) {
     return value;
   }
   // 1. 拿到老的 echarts
