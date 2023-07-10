@@ -2310,7 +2310,7 @@ export class Meta2d {
 
   fitSizeView(fit: boolean = true, viewPadding: Padding = 10) {
     // 默认垂直填充，两边留白
-    if (!this.hasView()) return;
+    // if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
     const { canvas } = this.canvas;
     const { offsetWidth: width, offsetHeight: height } = canvas;
@@ -2342,7 +2342,7 @@ export class Meta2d {
   }
 
   centerSizeView() {
-    if (!this.hasView()) return;
+    // if (!this.hasView()) return;
     const viewCenter = this.getViewCenter();
     //根据画布尺寸居中对齐
     const _width = this.store.data.width || this.store.options.width;

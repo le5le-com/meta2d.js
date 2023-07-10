@@ -1,7 +1,6 @@
 import {
   BindId,
   ChartData,
-  deepClone,
   FormItem,
   IValue,
   Pen,
@@ -236,7 +235,7 @@ function beforeValue(pen: ChartPen, value: ChartData) {
 
     for (let key in value) {
       if (key.includes('echarts.option')) {
-        let beforeV = deepClone(getter(pen, key));
+        let beforeV = getter(pen, key);
         if (Array.isArray(beforeV) && replaceMode === ReplaceMode.Add) {
           //追加
           beforeV.push(value[key]);
