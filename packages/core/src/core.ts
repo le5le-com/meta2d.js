@@ -600,7 +600,7 @@ export class Meta2d {
 
         pen.type &&
           this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
-          this.canvas.loadImage(pen);
+        this.canvas.loadImage(pen);
       });
     } else {
       if (data) {
@@ -632,6 +632,7 @@ export class Meta2d {
     this.render();
     this.listenSocket();
     this.connectSocket();
+    this.connectNetwork();
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
