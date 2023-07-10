@@ -166,13 +166,33 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.colPos) {
     return;
   }
-  const worldRect = pen.calculative.worldRect;
+  // const worldRect = pen.calculative.worldRect;
+  const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
   ctx.save();
   ctx.strokeStyle = pen.color;
 
   // 绘画最外框
   ctx.beginPath();
-  ctx.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
+  // ctx.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
+  let wr = pen.calculative.borderRadius || 0,
+    hr = wr;
+  if (wr < 1) {
+    wr = width * wr;
+    hr = height * hr;
+  }
+  let r = wr < hr ? wr : hr;
+  if (width < 2 * r) {
+    r = width / 2;
+  }
+  if (height < 2 * r) {
+    r = height / 2;
+  }
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(ex, y, ex, ey, r);
+  ctx.arcTo(ex, ey, x, ey, r);
+  ctx.arcTo(x, ey, x, y, r);
+  ctx.arcTo(x, y, ex, y, r);
+
   if (pen.background) {
     ctx.fillStyle = pen.background;
     ctx.fill();
@@ -220,6 +240,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
   const textScale = 1;
 
   for (let i = 0; i < pen.rowPos.length; i++) {
+    let { style: rowStyle } = getRow(pen, i);
     for (let j = 0; j < pen.colPos.length; j++) {
       let { value: cell, style: cellStyle } = getCell(pen, i, j);
       let isSuccess = true;
@@ -240,10 +261,19 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       let color = pen.color;
       let textColor = pen.textColor || pen.color;
       let background = null;
+      let fontSize = null;
       if (isSuccess) {
-        color = (cellStyle as any).color || pen.color;
-        textColor = (cellStyle as any).textColor || pen.textColor;
-        background = (cellStyle as any).background;
+        color =
+          (cellStyle as any).color || (rowStyle as any).color || pen.color;
+        textColor =
+          (cellStyle as any).textColor ||
+          (rowStyle as any).textColor ||
+          pen.textColor;
+        background =
+          (cellStyle as any).background || (rowStyle as any).background;
+        fontSize =
+          ((cellStyle as any).fontSize || (rowStyle as any).fontSize || 0) *
+          pen.calculative.canvas.store.data.scale;
       }
       let activeColor: any;
 
@@ -343,7 +373,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         ' normal ' +
         (pen.calculative.fontWeight || '') +
         ' ' +
-        (pen.calculative.fontSize || 12) * textScale +
+        (fontSize || pen.calculative.fontSize || 12) * textScale +
         'px ' +
         pen.calculative.fontFamily;
 
@@ -356,7 +386,9 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       } else {
         const y = 0.55;
         const lineHeight =
-          pen.calculative.fontSize * pen.calculative.lineHeight * textScale;
+          (fontSize || pen.calculative.fontSize) *
+          pen.calculative.lineHeight *
+          textScale;
 
         const h = rowText[j].length * lineHeight;
         let top = (rect.height - h) / 2;
@@ -485,6 +517,26 @@ function getCell(pen: formPen, rowIndex: number, colIndex: number) {
     });
   if (Array.isArray(row)) {
     return { value: row[colIndex], style: style?.length > 0 ? style[0] : {} };
+  } else if (!row.data || !Array.isArray(row.data)) {
+    return;
+  }
+}
+
+// 根据index获取getRow
+function getRow(pen: formPen, rowIndex: number) {
+  if (!pen.data || !Array.isArray(pen.data)) {
+    return;
+  }
+
+  const row = pen.data[rowIndex];
+  //TODO 没有获取单独设置 某行 某列 的样式
+  const style =
+    pen.styles &&
+    pen.styles.filter((item) => {
+      return item.row === rowIndex && !item.col;
+    });
+  if (Array.isArray(row)) {
+    return { value: row, style: style?.length > 0 ? style[0] : {} };
   } else if (!row.data || !Array.isArray(row.data)) {
     return;
   }
