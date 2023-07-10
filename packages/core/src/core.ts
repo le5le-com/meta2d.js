@@ -1637,7 +1637,9 @@ export class Meta2d {
               _d[realTime.key] = Math.random() < 0.5;
             }
           } else if (realTime.type === 'object' || realTime.type === 'array') {
-            _d[realTime.key] = realTime.value;
+            if (realTime.value) {
+              _d[realTime.key] = realTime.value;
+            }
           } else {
             //if (realTime.type === 'string')
             if (
@@ -1665,7 +1667,8 @@ export class Meta2d {
         }
       });
       if (Object.keys(_d).length) {
-        this.canvas.updateValue(pen, _d);
+        let data = pen.onBeforeValue ? pen.onBeforeValue(pen, _d) : _d;
+        this.canvas.updateValue(pen, data);
         this.store.emitter.emit('valueUpdate', pen);
         pen.onValue?.(pen);
       }
