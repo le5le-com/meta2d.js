@@ -1638,7 +1638,8 @@ export class Meta2d {
             }
           } else if (realTime.type === 'object' || realTime.type === 'array') {
             if (realTime.value) {
-              _d[realTime.key] = realTime.value;
+              //对象or数组 不mock
+              // _d[realTime.key] = realTime.value;
             }
           } else {
             //if (realTime.type === 'string')
