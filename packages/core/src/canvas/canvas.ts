@@ -2112,7 +2112,7 @@ export class Canvas {
     }
 
     // Add pen
-    if (this.addCaches) {
+    if (this.addCaches && this.addCaches.length) {
       if (!this.store.data.locked) {
         this.dropPens(this.addCaches, e);
       }
