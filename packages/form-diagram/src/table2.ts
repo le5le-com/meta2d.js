@@ -262,6 +262,8 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       let textColor = pen.textColor || pen.color;
       let background = null;
       let fontSize = null;
+      let fontWeight = null;
+      let fontStyle = null;
       if (isSuccess) {
         color =
           (cellStyle as any).color || (rowStyle as any).color || pen.color;
@@ -274,6 +276,9 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         fontSize =
           ((cellStyle as any).fontSize || (rowStyle as any).fontSize || 0) *
           pen.calculative.canvas.store.data.scale;
+        fontWeight =
+          (cellStyle as any).fontWeight || (rowStyle as any).fontWeight;
+        fontStyle = (cellStyle as any).fontStyle || (rowStyle as any).fontStyle;
       }
       let activeColor: any;
 
@@ -369,9 +374,9 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font =
-        (pen.calculative.fontStyle || '') +
+        (fontStyle || pen.calculative.fontStyle || '') +
         ' normal ' +
-        (pen.calculative.fontWeight || '') +
+        (fontWeight || pen.calculative.fontWeight || '') +
         ' ' +
         (fontSize || pen.calculative.fontSize || 12) * textScale +
         'px ' +
