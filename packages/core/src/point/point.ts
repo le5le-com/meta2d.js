@@ -1,4 +1,7 @@
 import { Direction } from '../data';
+import { Pen } from '../pen';
+import { pointInRect } from '../rect';
+import { Meta2dStore } from '../store';
 
 export enum PrevNextType {
   Mirror,
@@ -13,6 +16,11 @@ export enum TwoWay {
   DisableConnected, // 禁止被连接
   DisableConnectTo, // 禁止连线锚点连接其他锚点
   Disable = 10,
+}
+
+export enum PointType {
+  Default,
+  Line,
 }
 
 export interface Point {
@@ -35,7 +43,7 @@ export interface Point {
   lineLength?: number;
   step?: number;
   curvePoints?: Point[];
-  rotate?: number;
+  rotate?: number; //线锚点 [0,180)
   hidden?: boolean;
   locked?: number;
   flag?: number;
@@ -45,6 +53,9 @@ export interface Point {
   dockAnchorId?: string;
   direction?: Direction; //锚点出线方向
   title?: string; //锚点hover提示文字
+  type?: PointType;
+  length?: number;
+  distance?: number;
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
@@ -67,13 +78,39 @@ export function rotatePoint(pt: Point, angle: number, center: Point) {
   pt.next && rotatePoint(pt.next, angle, center);
 }
 
-export function hitPoint(pt: Point, target: Point, radius = 5) {
-  return (
-    pt.x > target.x - radius &&
-    pt.x < target.x + radius &&
-    pt.y > target.y - radius &&
-    pt.y < target.y + radius
-  );
+export function hitPoint(pt: Point, target: Point, radius = 5, pen?: Pen) {
+  if (target.type === PointType.Line) {
+    let _rotate = pen.rotate;
+    if (pen.flipX) {
+      _rotate *= -1;
+    }
+    if (pen.flipY) {
+      _rotate *= -1;
+    }
+    let rotate = target.rotate + _rotate;
+    if (pen.flipX) {
+      rotate *= -1;
+    }
+    if (pen.flipY) {
+      rotate *= -1;
+    }
+    return pointInRect(pt, {
+      x:
+        target.x -
+        (target.length * pen.calculative.canvas.store.data.scale) / 2,
+      y: target.y - radius,
+      width: target.length * pen.calculative.canvas.store.data.scale,
+      height: radius * 2,
+      rotate: rotate,
+    });
+  } else {
+    return (
+      pt.x > target.x - radius &&
+      pt.x < target.x + radius &&
+      pt.y > target.y - radius &&
+      pt.y < target.y + radius
+    );
+  }
 }
 
 export function scalePoint(pt: Point, scale: number, center: Point) {
@@ -162,4 +199,34 @@ export function translatePoint(pt: Point, x: number, y: number) {
  */
 export function samePoint(pt1: Point, pt2: Point): boolean {
   return pt1.anchorId === pt2.anchorId && pt1.connectTo === pt2.connectTo;
+}
+
+export function getDistance(form: Point, to: Point, store: Meta2dStore) {
+  let dis =
+    Math.sqrt(
+      (form.x - to.x) * (form.x - to.x) + (form.y - to.y) * (form.y - to.y)
+    ) / store.data.scale;
+
+  if (to.rotate === 0) {
+    if (form.x < to.x) {
+      if (!store.pens[to.penId].flipX) {
+        dis *= -1;
+      }
+    } else {
+      if (store.pens[to.penId].flipX) {
+        dis *= -1;
+      }
+    }
+  } else {
+    if (form.y < to.y) {
+      if (!store.pens[to.penId].flipY) {
+        dis *= -1;
+      }
+    } else {
+      if (store.pens[to.penId].flipY) {
+        dis *= -1;
+      }
+    }
+  }
+  form.distance = dis;
 }
