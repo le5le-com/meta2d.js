@@ -1620,7 +1620,9 @@ export function ctxDrawLinePath(
             if (!pen.calculative.gradientAnimatePath) {
               pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
             }
-            ctx.stroke(pen.calculative.gradientAnimatePath);
+            if (pen.calculative.gradientAnimatePath instanceof Path2D) {
+              ctx.stroke(pen.calculative.gradientAnimatePath);
+            }
           } else {
             ctx.stroke(path);
           }
