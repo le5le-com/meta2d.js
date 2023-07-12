@@ -515,6 +515,12 @@ export class Canvas {
     e.preventDefault();
     e.stopPropagation();
 
+    //移动画笔过程中不允许缩放
+    if (
+      this.mouseDown &&
+      (this.hoverType === HoverType.Node || this.hoverType === HoverType.Line)
+    )
+      return;
     if (this.store.data.locked === LockState.Disable) return;
     if (this.store.data.locked === LockState.DisableScale) return;
     if (this.store.data.locked === LockState.DisableMoveScale) return;
@@ -1056,6 +1062,10 @@ export class Canvas {
         pen.height *= this.store.data.scale;
         pen.x = e.x - pen.width / 2;
         pen.y = e.y - pen.height / 2;
+        if (pen.tags && pen.tags.includes('meta3d')) {
+          pen.x = this.store.data.origin.x;
+          pen.y = this.store.data.origin.y;
+        }
       }
     }
     //大屏区域
@@ -1077,7 +1087,13 @@ export class Canvas {
             { x: pen.x, y: pen.y + pen.height },
             { x: pen.x + pen.width, y: pen.y + pen.height },
           ];
-          if (points.some((point) => pointInRect(point, rect))) {
+          if (
+            (pen.x === rect.x &&
+              pen.y === rect.y &&
+              pen.width === rect.width &&
+              pen.height === rect.height) ||
+            points.some((point) => pointInRect(point, rect))
+          ) {
             flag = false;
             break;
           }
@@ -2118,7 +2134,7 @@ export class Canvas {
     }
 
     // Add pen
-    if (this.addCaches) {
+    if (this.addCaches && this.addCaches.length) {
       if (!this.store.data.locked) {
         this.dropPens(this.addCaches, e);
       }
@@ -3578,7 +3594,7 @@ export class Canvas {
   }
 
   loadImage(pen: Pen) {
-    if (pen.image !== pen.calculative.image) {
+    if (pen.image !== pen.calculative.image || !pen.calculative.img) {
       pen.calculative.img = undefined;
       if (pen.image) {
         if (globalStore.htmlElements[pen.image]) {

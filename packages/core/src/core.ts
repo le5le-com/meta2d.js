@@ -600,6 +600,7 @@ export class Meta2d {
 
         pen.type &&
           this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+        this.canvas.loadImage(pen);
       });
     } else {
       if (data) {
@@ -631,6 +632,7 @@ export class Meta2d {
     this.render();
     this.listenSocket();
     this.connectSocket();
+    this.connectNetwork();
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
@@ -1635,7 +1637,10 @@ export class Meta2d {
               _d[realTime.key] = Math.random() < 0.5;
             }
           } else if (realTime.type === 'object' || realTime.type === 'array') {
-            _d[realTime.key] = realTime.value;
+            if (realTime.value) {
+              //对象or数组 不mock
+              // _d[realTime.key] = realTime.value;
+            }
           } else {
             //if (realTime.type === 'string')
             if (
@@ -1663,7 +1668,8 @@ export class Meta2d {
         }
       });
       if (Object.keys(_d).length) {
-        this.canvas.updateValue(pen, _d);
+        let data = pen.onBeforeValue ? pen.onBeforeValue(pen, _d) : _d;
+        this.canvas.updateValue(pen, data);
         this.store.emitter.emit('valueUpdate', pen);
         pen.onValue?.(pen);
       }
@@ -2260,7 +2266,10 @@ export class Meta2d {
     }
     setTimeout(() => {
       const a = document.createElement('a');
-      a.setAttribute('download', name || 'le5le.meta2d.png');
+      a.setAttribute(
+        'download',
+        (name || this.store.data.name || 'le5le.meta2d') + '.png'
+      );
       a.setAttribute('href', this.toPng(padding, undefined, true));
       const evt = document.createEvent('MouseEvents');
       evt.initEvent('click', true, true);
@@ -2308,7 +2317,7 @@ export class Meta2d {
 
   fitSizeView(fit: boolean = true, viewPadding: Padding = 10) {
     // 默认垂直填充，两边留白
-    if (!this.hasView()) return;
+    // if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
     const { canvas } = this.canvas;
     const { offsetWidth: width, offsetHeight: height } = canvas;
@@ -2340,7 +2349,7 @@ export class Meta2d {
   }
 
   centerSizeView() {
-    if (!this.hasView()) return;
+    // if (!this.hasView()) return;
     const viewCenter = this.getViewCenter();
     //根据画布尺寸居中对齐
     const _width = this.store.data.width || this.store.options.width;

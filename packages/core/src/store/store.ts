@@ -55,6 +55,7 @@ export interface Meta2dData {
   networks?: Network[];
   iconUrls?: string[];
   mockData?: Function;
+  name?: string;
 }
 
 export interface Network {
