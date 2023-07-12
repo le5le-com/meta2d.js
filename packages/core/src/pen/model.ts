@@ -504,6 +504,7 @@ export interface Pen extends Rect {
     cssDisplay?: string; //css display
     animations?: any[];
     imageRadius?: number;
+    autoPolylineFlag?: boolean; //首次打开不自动计算
   };
 
   // 前一个动画帧状态数据

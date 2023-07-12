@@ -5120,6 +5120,7 @@ export class Canvas {
       if (
         this.store.options.autoPolyline &&
         line.autoPolyline !== false &&
+        line.calculative.autoPolylineFlag === true &&
         line.lineName === 'polyline'
       ) {
         let from = getFromAnchor(line);

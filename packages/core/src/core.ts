@@ -626,6 +626,7 @@ export class Meta2d {
     if (!render) {
       this.canvas.opening = true;
     }
+    this.extendedFn();
     this.cacheMeta2dData(data);
     this.initBindDatas();
     this.initBinds();
@@ -648,6 +649,18 @@ export class Meta2d {
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
       this.canvas.scroll.init();
     }
+  }
+
+  extendedFn() {
+    this.store.data.pens.forEach((pen) => {
+      if (
+        pen.name === 'line' &&
+        pen.lineName === 'polyline' &&
+        pen.autoPolyline !== false
+      ) {
+        pen.calculative.autoPolylineFlag = true;
+      }
+    });
   }
 
   cacheMeta2dData(data?: Meta2dData) {
