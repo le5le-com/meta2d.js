@@ -5791,7 +5791,7 @@ export class Canvas {
       !this.store.options.disableInput
     ) {
       if (this.store.hover.onShowInput) {
-        this.store.hover.onShowInput(this.store.hover, e);
+        this.store.hover.onShowInput(this.store.hover, e as any);
       } else {
         this.showInput(this.store.hover);
       }

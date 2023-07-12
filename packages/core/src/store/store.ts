@@ -5,6 +5,7 @@ import { defaultOptions, Options } from '../options';
 
 import { Point } from '../point';
 import { globalStore } from './global';
+import { Rect } from '../rect';
 
 export interface Meta2dData {
   pens: Pen[];
@@ -139,7 +140,7 @@ export interface Meta2dClipboard {
   scale: number;
   offset?: number;
   page: string;
-  initRect?: Point;
+  initRect?: Rect;
   pos?: Point;
 }
 
