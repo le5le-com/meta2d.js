@@ -127,10 +127,13 @@ export interface Meta2dStore {
   clipboard?: Meta2dClipboard;
   patchFlagsBackground?: boolean; // 是否需要重绘背景，包含网格
   patchFlagsTop?: boolean; // 是否需要重绘标尺
-  bkImg: HTMLImageElement;
+  bkImg?: HTMLImageElement;
   // 测试使用
   fillWorldTextRect?: boolean; // 填充文本区域
-  meta2dDatas?: Meta2dData[];
+  cacheDatas?: {
+    data: Meta2dData;
+  }[];
+  patchFlagsLast?: boolean; // 清除上次图片画布层
 }
 
 export interface Meta2dClipboard {
@@ -165,7 +168,7 @@ export const createStore = () => {
     emitter: mitt(),
     bindDatas: {},
     binds: {},
-    meta2dDatas: [],
+    cacheDatas: [],
   } as Meta2dStore;
 };
 

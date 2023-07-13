@@ -176,10 +176,16 @@ export class CanvasImage {
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.renderRule(ctx);
     }
-
+    // 从有图片画布层切换到无图片画布
+    const patchFlagsLast = this.store.patchFlagsLast;
+    if (patchFlagsLast) {
+      const ctx = this.offscreen.getContext('2d');
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
     if (patchFlags) {
       const ctx = this.offscreen.getContext('2d');
       ctx.save();
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.translate(this.store.data.x, this.store.data.y);
       for (const pen of this.store.data.pens) {
         if (

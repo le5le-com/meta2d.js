@@ -585,49 +585,29 @@ export class Meta2d {
 
   open(data?: Meta2dData, render: boolean = true) {
     this.clear(false);
-    let index = this.store.meta2dDatas.findIndex(
-      (item) => item._id === data._id
-    );
-    if (this.store.options.cacheLength && data._id && index !== -1) {
-      this.store.data = this.store.meta2dDatas[index];
+    if (data) {
       this.setBackgroundImage(data.bkImage);
-      this.store.pens = {};
-      this.store.data.pens.forEach((pen) => {
-        pen.calculative.canvas = this.canvas;
+      Object.assign(this.store.data, data);
+      this.store.data.pens = [];
+      // 第一遍赋初值
+      for (const pen of data.pens) {
+        if (!pen.id) {
+          pen.id = s8();
+        }
+        !pen.calculative && (pen.calculative = { canvas: this.canvas });
         this.store.pens[pen.id] = pen;
-        globalStore.path2dDraws[pen.name] &&
-          this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
-
-        pen.type &&
-          this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
-        this.canvas.loadImage(pen);
-      });
-    } else {
-      if (data) {
-        this.setBackgroundImage(data.bkImage);
-        Object.assign(this.store.data, data);
-        this.store.data.pens = [];
-        // 第一遍赋初值
-        for (const pen of data.pens) {
-          if (!pen.id) {
-            pen.id = s8();
-          }
-          !pen.calculative && (pen.calculative = { canvas: this.canvas });
-          this.store.pens[pen.id] = pen;
-        }
-        for (const pen of data.pens) {
-          this.canvas.makePen(pen);
-        }
-        for (const pen of data.pens) {
-          this.canvas.updateLines(pen);
-        }
+      }
+      for (const pen of data.pens) {
+        this.canvas.makePen(pen);
+      }
+      for (const pen of data.pens) {
+        this.canvas.updateLines(pen);
       }
     }
     if (!render) {
       this.canvas.opening = true;
     }
     this.extendedFn();
-    this.cacheMeta2dData(data);
     this.initBindDatas();
     this.initBinds();
     this.render();
@@ -663,21 +643,60 @@ export class Meta2d {
     });
   }
 
-  cacheMeta2dData(data?: Meta2dData) {
-    if (data._id && this.store.options.cacheLength) {
-      let index = this.store.meta2dDatas.findIndex(
-        (item) => item._id === data._id
+  cacheData(id: string) {
+    if (id && this.store.options.cacheLength) {
+      let index = this.store.cacheDatas.findIndex(
+        (item) => item.data && item.data._id === id
       );
       if (index === -1) {
-        this.store.meta2dDatas.push(deepClone(this.store.data, true));
-        if (this.store.meta2dDatas.length > this.store.options.cacheLength) {
-          this.store.meta2dDatas.shift();
+        this.store.cacheDatas.push({
+          data: deepClone(this.store.data, true),
+          // offscreen: new Array(2),
+          // flag: new Array(2)
+        });
+        if (this.store.cacheDatas.length > this.store.options.cacheLength) {
+          this.store.cacheDatas.shift();
         }
       } else {
-        let meta2dData = this.store.meta2dDatas.splice(index, 1)[0];
-        this.store.meta2dDatas.push(meta2dData);
+        let cacheDatas = this.store.cacheDatas.splice(index, 1)[0];
+        this.store.cacheDatas.push(cacheDatas);
       }
     }
+  }
+
+  loadCacheData(id: string) {
+    let index = this.store.cacheDatas.findIndex(
+      (item) => item.data && item.data._id === id
+    );
+    if (index === -1) {
+      return;
+    }
+    // const ctx = this.canvas.canvas.getContext('2d');
+    // ctx.clearRect(0, 0, this.canvas.canvas.width, this.canvas.canvas.height);
+    // for (let offs of this.store.cacheDatas[index].offscreen) {
+    //   if (offs) {
+    //     ctx.drawImage(offs, 0, 0, this.canvas.width, this.canvas.height);
+    //   }
+    // }
+    // ctx.clearRect(0, 0, this.canvas.canvas.width, this.canvas.canvas.height);
+    this.store.data = this.store.cacheDatas[index].data;
+    this.setBackgroundImage(this.store.data.bkImage);
+    this.store.pens = {};
+    this.store.data.pens.forEach((pen) => {
+      pen.calculative.canvas = this.canvas;
+      this.store.pens[pen.id] = pen;
+      globalStore.path2dDraws[pen.name] &&
+        this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+
+      pen.type &&
+        this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+
+      if (pen.name === 'image') {
+        pen.calculative.imageDrawed = false;
+        this.canvas.loadImage(pen);
+      }
+    });
+    this.render();
   }
 
   initBindDatas() {
