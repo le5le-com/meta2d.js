@@ -2931,7 +2931,12 @@ export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
     if (inheritanceProps.includes(k)) {
       pen[k] = data[k];
-      pen.calculative[k] = data[k];
+      if (k === 'fontSize') {
+        pen.calculative[k] = data[k] * pen.calculative.canvas.store.data.scale;
+        calcTextRect(pen);
+      } else {
+        pen.calculative[k] = data[k];
+      }
     }
   }
   if (
