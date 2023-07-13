@@ -1019,7 +1019,7 @@ export class Canvas {
         // 必须是图片类型
         const isGif = files[0].type === 'image/gif';
         obj = await this.fileToPen(files[0], isGif);
-      } else if (this.addCaches.length) {
+      } else if (this.addCaches && this.addCaches.length) {
         obj = this.addCaches;
         this.addCaches = [];
       } else {
