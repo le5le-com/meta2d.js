@@ -84,6 +84,12 @@ export interface formPen extends Pen {
   isFirstTime?: boolean;
   replaceMode?: ReplaceMode;
   timer?: any;
+  bordered?: boolean;
+  vLine?: boolean;
+  hLine?: boolean;
+  stripe?: boolean; //是否显示斑马纹
+  stripeColor?: string; //斑马纹颜色
+  hasHeader?: boolean; //是否显示表头
 }
 
 export interface cellData extends ChartData {

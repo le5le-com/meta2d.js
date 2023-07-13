@@ -1,8 +1,7 @@
-import { formPen, cellData, Pos } from './common';
+import { formPen, cellData, Pos, ReplaceMode } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
-import { calcRightBottom, calcTextLines } from '@meta2d/core';
-import { ReplaceMode } from './common';
+import { calcRightBottom, calcTextLines } from '../../core';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -197,33 +196,37 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
     ctx.fillStyle = pen.background;
     ctx.fill();
   }
-  ctx.stroke();
-
-  // 绘画行的线
-  let last = pen.rowPos[pen.rowPos.length - 1];
-  for (const item of pen.rowPos) {
-    if (item === last) {
-      continue;
-    }
-    const y = (item * pen.calculative.worldRect.height) / pen.tableHeight;
-    ctx.beginPath();
-    ctx.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + y);
-    ctx.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + y);
+  if (pen.bordered !== false) {
     ctx.stroke();
   }
-
-  // 绘画列的线
-  last = pen.colPos[pen.colPos.length - 1];
-  pen.colPos.forEach((item: number, i: number) => {
-    if (item === last) {
-      return;
+  if (pen.hLine !== false) {
+    // 绘画行的线
+    let last = pen.rowPos[pen.rowPos.length - 1];
+    for (const item of pen.rowPos) {
+      if (item === last) {
+        continue;
+      }
+      const y = (item * pen.calculative.worldRect.height) / pen.tableHeight;
+      ctx.beginPath();
+      ctx.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + y);
+      ctx.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + y);
+      ctx.stroke();
     }
-    const x = (item * pen.calculative.worldRect.width) / pen.tableWidth;
-    ctx.beginPath();
-    ctx.moveTo(pen.calculative.worldRect.x + x, pen.calculative.worldRect.y);
-    ctx.lineTo(pen.calculative.worldRect.x + x, pen.calculative.worldRect.ey);
-    ctx.stroke();
-  });
+  }
+  if (pen.vLine !== false) {
+    // 绘画列的线
+    let last = pen.colPos[pen.colPos.length - 1];
+    pen.colPos.forEach((item: number, i: number) => {
+      if (item === last) {
+        return;
+      }
+      const x = (item * pen.calculative.worldRect.width) / pen.tableWidth;
+      ctx.beginPath();
+      ctx.moveTo(pen.calculative.worldRect.x + x, pen.calculative.worldRect.y);
+      ctx.lineTo(pen.calculative.worldRect.x + x, pen.calculative.worldRect.ey);
+      ctx.stroke();
+    });
+  }
 
   ctx.restore();
 }
@@ -281,9 +284,20 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         fontStyle = (cellStyle as any).fontStyle || (rowStyle as any).fontStyle;
       }
       let activeColor: any;
-
+      if (pen.stripe) {
+        if (pen.hasHeader !== false) {
+          if (i % 2 === 1) {
+            background = background || pen.stripeColor || '#407FFF1F';
+          }
+        } else {
+          if (i % 2 === 0) {
+            background = background || pen.stripeColor || '#407FFF1F';
+          }
+        }
+      }
       // 选中
       if (
+        pen.calculative.active &&
         pen.calculative.activeCell?.row === i &&
         pen.calculative.activeCell?.col === j
       ) {
@@ -309,7 +323,12 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
-        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        ctx.fillRect(
+          rect.x,
+          rect.y,
+          rect.width + 0.25 * pen.calculative.canvas.store.data.scale,
+          rect.height
+        );
         ctx.restore();
       }
 
@@ -343,7 +362,13 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
             if (pen.isFirstTime) {
               let childrenPen = JSON.parse(JSON.stringify(_colPen[0].pens));
               childrenPen.forEach((item: formPen) => {
-                Object.assign(item, { row: i, col: j });
+                Object.assign(item, { row: i, col: j }, cell);
+                item.activeBackground = item.background;
+                item.hoverBackground = item.background;
+                item.activeColor = item.color;
+                item.hoverColor = item.color;
+                item.activeTextColor = item.textColor;
+                item.hoverTextColor = item.textColor;
                 item.height *= pen.calculative.canvas.store.data.scale;
                 item.width *= pen.calculative.canvas.store.data.scale;
               });
@@ -609,30 +634,36 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
   let lastX = 0;
   let lastY = 0;
   const scale = pen.calculative.canvas.store.data.scale;
-  for (const item of children) {
-    if (lastX + item.width * scaleX + 20 * scale * scaleX < rect.width) {
-      item.x = rect.x + lastX + 10 * scale * scaleX;
-      item.y = rect.y + lastY + 10 * scale * scaleY;
-
-      lastX += (item.width + 10 * scale) * scaleX;
-      height = Math.max(height, lastY + (item.height + 10 * scale) * scaleY);
-    } else {
-      // 超出需要换行
-      lastX = 0;
-      lastY = height;
-      item.x = rect.x + lastX + 10 * scale * scaleX;
-      item.y = rect.y + lastY + 10 * scale * scaleY;
-
-      height += (item.height + 10 * scale) * scaleY;
-    }
-  }
-
-  // 垂直居中
-  if (height + 20 * scale * scaleY < rect.height) {
-    const top = (rect.height - height - 10 * scale * scaleY) / 2;
+  if (children.length > 1) {
     for (const item of children) {
-      item.y += top;
+      if (lastX + item.width * scaleX + 20 * scale * scaleX < rect.width) {
+        item.x = rect.x + lastX + 10 * scale * scaleX;
+        item.y = rect.y + lastY + 10 * scale * scaleY;
+
+        lastX += (item.width + 10 * scale) * scaleX;
+        height = Math.max(height, lastY + (item.height + 10 * scale) * scaleY);
+      } else {
+        // 超出需要换行
+        lastX = 0;
+        lastY = height;
+        item.x = rect.x + lastX + 10 * scale * scaleX;
+        item.y = rect.y + lastY + 10 * scale * scaleY;
+
+        height += (item.height + 10 * scale) * scaleY;
+      }
     }
+
+    // 垂直居中
+    if (height + 20 * scale * scaleY < rect.height) {
+      const top = (rect.height - height - 10 * scale * scaleY) / 2;
+      for (const item of children) {
+        item.y += top;
+      }
+    }
+  } else {
+    //一个子图元默认水平垂直居中
+    children[0].x = rect.x + (rect.width - children[0].width) / 2;
+    children[0].y = rect.y + (rect.height - children[0].height) / 2;
   }
 }
 
