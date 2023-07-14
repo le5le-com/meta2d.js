@@ -450,6 +450,12 @@ function getSmoothAdjacent(smoothLenth: number, p1: Point, p2: Point) {
   let nexLength = Math.sqrt(
     (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
   );
+  if (nexLength === 0) {
+    return {
+      x: p1.x,
+      y: p1.y,
+    };
+  }
   if (smoothLenth < nexLength) {
     return {
       x: p1.x + ((p2.x - p1.x) * smoothLenth) / nexLength,
