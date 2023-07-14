@@ -1,0 +1,434 @@
+:root {
+  --font-family: '-apple-system', 'BlinkMacSystemFont', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei UI', ' Microsoft YaHei',
+    'Source Han Sans CN', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol';
+  --font-size: 13px;
+  --color: #595959;
+  --color-title: #262626;
+  --color-desc: #8c8c8c;
+  --color-gray: #bfbfbf;
+
+  --color-bland: #ff4000;
+  --color-bland-hover: #fa541c;
+
+  --color-primary: #4583ff;
+  --color-primary-hover: #0c56eb;
+  --color-primary-disabled: #bae7ff;
+  --color-success: #52c41a;
+  --color-success-hover: #3fad09;
+  --color-success-disabled: #c6ebb4;
+  --color-warning: #faad14;
+  --color-warning-hover: #d9a116;
+  --color-warning-disabled: #fff6dd;
+  --color-error: #f50000;
+  --color-error-hover: #f00;
+  --color-error-disabled: #ffc2c5;
+
+  --color-border: #dddddd;
+
+  --color-scrollbar: #dad7d7;
+  --color-scrollbar-hover: #e5e5e5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+
+body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size);
+  font-family: var(--font-family);
+  overflow: hidden;
+  color: var(--color);
+}
+
+input {
+  font-size: var(--font-size);
+}
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+#app {
+  min-height: 100%;
+}
+
+.title,
+h1,
+h2,
+h3,
+h4 {
+  color: var(--color-title);
+  font-weight: 700;
+  line-height: 2;
+}
+
+h1 {
+  font-size: 32px;
+}
+
+h2 {
+  font-size: 28px;
+}
+
+h3 {
+  font-size: 24px;
+}
+
+h4 {
+  font-size: 20px;
+}
+
+h5 {
+  font-size: 16px;
+}
+
+.small {
+  font-size: 10px;
+}
+
+.bland {
+  color: var(--color-bland);
+}
+
+.color {
+  color: var(--color);
+}
+
+.primary {
+  color: var(--color-primary);
+}
+
+.desc {
+  color: var(--color-desc);
+}
+
+.gray {
+  color: var(--color-gray);
+}
+
+.warning {
+  color: var(--color-warning);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.error {
+  color: var(--color-error);
+}
+
+.hover:hover {
+  color: var(--color-primary) !important;
+  cursor: pointer !important;
+}
+
+.ellipsis {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+a {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a.hover {
+  text-decoration: none;
+}
+
+a.hover:hover {
+  color: var(--color-primary-hover) !important;
+}
+
+.button {
+  display: inline-block !important;
+  padding: 0 16px;
+  line-height: 2;
+  color: var(--color);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: var(--font-size);
+  text-align: center;
+}
+
+.button.solid {
+  background-color: var(--color-background);
+  border-color: var(--color-background);
+
+  &.bland {
+    color: #ffffff !important;
+    background-color: var(--color-bland);
+    border-color: var(--color-bland);
+
+    &:hover {
+      color: #ffffff !important;
+      text-decoration: none;
+      background-color: var(--color-bland-hover);
+      border-color: var(--color-bland-hover);
+    }
+  }
+}
+
+.button.solid:hover {
+  background-color: var(--color-border);
+  border-color: var(--color-border);
+}
+
+.button.solid.primary {
+  color: #ffffff !important;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.button.solid.primary:hover {
+  color: #ffffff !important;
+  text-decoration: none;
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.button.primary {
+  color: var(--color-primary) !important;
+}
+
+.button.primary:hover {
+  color: var(--color-primary-hover) !important;
+}
+
+.button.bland {
+  color: var(--color-bland) !important;
+}
+
+.button.bland:hover {
+  color: var(--color-bland-hover) !important;
+}
+
+.visible {
+  visibility: visible;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.flex {
+  display: flex;
+  &.column {
+    flex-direction: column;
+  }
+  &.middle {
+    align-items: center;
+  }
+  &.center {
+    justify-content: center;
+  }
+
+  &.between {
+    justify-content: space-between;
+  }
+
+  .shrink-0 {
+    flex-shrink: 0;
+  }
+}
+
+.flex-grow {
+  flex: 1;
+}
+
+.grid {
+  display: grid;
+}
+
+.left {
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.ml-4 {
+  margin-left: 4px;
+}
+
+.mr-4 {
+  margin-right: 4px;
+}
+
+.mr-8 {
+  margin-right: 8px;
+}
+
+.ml-8 {
+  margin-left: 8px;
+}
+
+.-ml-8 {
+  margin-left: -8px;
+}
+
+.mb-8 {
+  margin-bottom: 8px;
+}
+
+.ml-12 {
+  margin-left: 12px;
+}
+
+.ml-16 {
+  margin-left: 16px;
+}
+
+.mt-4 {
+  margin-top: 4px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mt-12 {
+  margin-top: 12px;
+}
+
+.mb-12 {
+  margin-bottom: 12px;
+}
+
+.mr-12 {
+  margin-right: 12px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mr-16 {
+  margin-right: 16px;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mt-24 {
+  margin-top: 24px;
+}
+
+.mb-24 {
+  margin-bottom: 24px;
+}
+
+.px-4 {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.py-4 {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.pl-8 {
+  padding-left: 8px;
+}
+
+.px-8 {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.py-8 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.px-12 {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.py-12 {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.p-12 {
+  padding: 12px;
+}
+
+.pb-16 {
+  padding-bottom: 16px;
+}
+
+.px-16 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.py-16 {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.px-16 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.p-16 {
+  padding: 16px;
+}
+
+/*定义滚动条轨道 内阴影+圆角*/
+::-webkit-scrollbar {
+  width: 3px;
+  height: 6px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+/*滚动条里面小方块*/
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbar) !important;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-scrollbar-hover);
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent !important;
+}
