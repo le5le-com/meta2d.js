@@ -1145,95 +1145,97 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   inspectRect(ctx, store, pen); // 审查 rect
   let fill: any;
   // 该变量控制在 hover active 状态下的节点是否设置填充颜色
-  let setBack = true;
+  // let setBack = true;
   let lineGradientFlag = false;
+  let _stroke = undefined;
   if (pen.calculative.hover) {
-    ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
+    _stroke = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
-    ctx.fillStyle = fill;
-    fill && (setBack = false);
+    //  ctx.fillStyle = fill;
+    //  fill && (setBack = false);
   } else if (pen.calculative.active) {
-    ctx.strokeStyle = pen.activeColor || store.options.activeColor;
+    _stroke = pen.activeColor || store.options.activeColor;
     fill = pen.activeBackground || store.options.activeBackground;
-    ctx.fillStyle = fill;
-    fill && (setBack = false);
+    // ctx.fillStyle = fill;
+    // fill && (setBack = false);
   } else if (pen.calculative.isDock) {
     if (pen.type === PenType.Line) {
-      ctx.strokeStyle = store.options.dockPenColor;
+      _stroke = store.options.dockPenColor;
     } else {
       fill = rgba(store.options.dockPenColor, 0.2);
-      ctx.fillStyle = fill;
-      fill && (setBack = false);
+      //  ctx.fillStyle = fill;
+      //  fill && (setBack = false);
     }
+  }
+  // else {
+  const strokeImg = pen.calculative.strokeImg;
+  if (pen.calculative.strokeImage && strokeImg) {
+    ctx.strokeStyle = _stroke || ctx.createPattern(strokeImg, 'repeat');
+    // fill = true;
   } else {
-    const strokeImg = pen.calculative.strokeImg;
-    if (pen.calculative.strokeImage && strokeImg) {
-      ctx.strokeStyle = ctx.createPattern(strokeImg, 'repeat');
-      fill = true;
-    } else {
-      let stroke: string | CanvasGradient | CanvasPattern;
-      // TODO: 线只有线性渐变
-      if (pen.calculative.strokeType) {
-        if (pen.calculative.lineGradientColors) {
-          if (pen.name === 'line') {
-            lineGradientFlag = true;
-          } else {
-            if (pen.calculative.lineGradient) {
-              stroke = pen.calculative.lineGradient;
-            } else {
-              stroke = getLineGradient(ctx, pen);
-              pen.calculative.lineGradient = stroke;
-            }
-          }
+    let stroke: string | CanvasGradient | CanvasPattern;
+    // TODO: 线只有线性渐变
+    if (pen.calculative.strokeType) {
+      if (pen.calculative.lineGradientColors) {
+        if (pen.name === 'line') {
+          lineGradientFlag = true;
         } else {
-          stroke = strokeLinearGradient(ctx, pen);
+          if (pen.calculative.lineGradient) {
+            stroke = pen.calculative.lineGradient;
+          } else {
+            stroke = getLineGradient(ctx, pen);
+            pen.calculative.lineGradient = stroke;
+          }
         }
       } else {
-        stroke = pen.calculative.color || getGlobalColor(store);
+        stroke = strokeLinearGradient(ctx, pen);
       }
-      ctx.strokeStyle = stroke;
-    }
-  }
-  if (setBack) {
-    const backgroundImg = pen.calculative.backgroundImg;
-    if (pen.calculative.backgroundImage && backgroundImg) {
-      ctx.fillStyle = ctx.createPattern(backgroundImg, 'repeat');
-      fill = true;
     } else {
-      let back: string | CanvasGradient | CanvasPattern;
-      if (pen.calculative.bkType === Gradient.Linear) {
-        if (pen.calculative.gradientColors) {
-          if (pen.name !== 'line') {
-            //连线不考虑渐进背景
-            if (pen.calculative.gradient) {
-              //位置变化/放大缩小操作不会触发重新计算
-              back = pen.calculative.gradient;
-            } else {
-              back = getBkGradient(ctx, pen);
-              pen.calculative.gradient = back;
-            }
-          }
-        } else {
-          back = drawBkLinearGradient(ctx, pen);
-        }
-      } else if (pen.calculative.bkType === Gradient.Radial) {
-        if (pen.calculative.gradientColors) {
-          if (pen.calculative.radialGradient) {
-            back = pen.calculative.radialGradient;
+      stroke = pen.calculative.color || getGlobalColor(store);
+    }
+    ctx.strokeStyle = _stroke || stroke;
+  }
+  // }
+  //if (setBack) {
+  const backgroundImg = pen.calculative.backgroundImg;
+  if (pen.calculative.backgroundImage && backgroundImg) {
+    ctx.fillStyle = fill || ctx.createPattern(backgroundImg, 'repeat');
+    fill = true;
+  } else {
+    let back: string | CanvasGradient | CanvasPattern;
+    if (pen.calculative.bkType === Gradient.Linear) {
+      if (pen.calculative.gradientColors) {
+        if (pen.name !== 'line') {
+          //连线不考虑渐进背景
+          if (pen.calculative.gradient) {
+            //位置变化/放大缩小操作不会触发重新计算
+            back = pen.calculative.gradient;
           } else {
-            back = getBkRadialGradient(ctx, pen);
-            pen.calculative.radialGradient = back;
+            back = getBkGradient(ctx, pen);
+            pen.calculative.gradient = back;
           }
-        } else {
-          back = drawBkRadialGradient(ctx, pen);
         }
       } else {
-        back = pen.calculative.background || store.data.penBackground;
+        back = drawBkLinearGradient(ctx, pen);
       }
-      ctx.fillStyle = back;
-      fill = !!back;
+    } else if (pen.calculative.bkType === Gradient.Radial) {
+      if (pen.calculative.gradientColors) {
+        if (pen.calculative.radialGradient) {
+          back = pen.calculative.radialGradient;
+        } else {
+          back = getBkRadialGradient(ctx, pen);
+          pen.calculative.radialGradient = back;
+        }
+      } else {
+        back = drawBkRadialGradient(ctx, pen);
+      }
+    } else {
+      back = pen.calculative.background || store.data.penBackground;
     }
+    ctx.fillStyle = fill || back;
+    fill = !!back;
   }
+  // }
 
   setLineCap(ctx, pen);
   setLineJoin(ctx, pen);
