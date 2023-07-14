@@ -16,7 +16,7 @@ The meta2d.js is real-time data exchange and interactive web 2D engine. Develope
 
 # Use online
 
-http://2ds.le5le.com/
+https://2ds.le5le.com/
 
 # Why
 
@@ -26,15 +26,22 @@ Faster, better, smart, more productive.
 
 # Highlight
 
-- Data-driven view   
-- Rich interactive events  
-- Subscribe message  
-- Animation  
-- Real-time data monitoring  
-- Lifecycle hooks  
-- Video play  
-- Extensible  
+- Data-driven view
+- Rich interactive events
+- Subscribe message
+- Animation
+- Real-time data monitoring
+- Lifecycle hooks
+- Video play
+- Extensible
 
+# Documents
+
+https://doc.le5le.com/document/119359590
+
+# Get Started
+
+https://github.com/le5le-com/meta2d.js/tree/main/examples/diagram-editor-vue3
 
 # License
 
