@@ -151,7 +151,7 @@ export class Meta2d {
         !this.canvas.scroll && (this.canvas.scroll = new Scroll(this.canvas));
         this.canvas.scroll.show();
       } else {
-        this.canvas.scroll.hide();
+        this.canvas.scroll && this.canvas.scroll.hide();
       }
     }
   }
