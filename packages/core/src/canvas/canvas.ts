@@ -239,6 +239,7 @@ export class Canvas {
   canvasImageBottom: CanvasImage;
   magnifierCanvas: MagnifierCanvas;
   dialog: Dialog;
+  autoPolylineFlag: boolean = false; //标记open不自动计算
 
   stopPropagation = (e: MouseEvent) => {
     e.stopPropagation();
@@ -5119,8 +5120,8 @@ export class Canvas {
       );
       if (
         this.store.options.autoPolyline &&
+        !this.autoPolylineFlag &&
         line.autoPolyline !== false &&
-        line.calculative.autoPolylineFlag === true &&
         line.lineName === 'polyline'
       ) {
         let from = getFromAnchor(line);

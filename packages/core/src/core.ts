@@ -585,6 +585,7 @@ export class Meta2d {
 
   open(data?: Meta2dData, render: boolean = true) {
     this.clear(false);
+    this.canvas.autoPolylineFlag = true;
     if (data) {
       this.setBackgroundImage(data.bkImage);
       Object.assign(this.store.data, data);
@@ -607,7 +608,6 @@ export class Meta2d {
     if (!render) {
       this.canvas.opening = true;
     }
-    this.extendedFn();
     this.initBindDatas();
     this.initBinds();
     this.render();
@@ -624,23 +624,12 @@ export class Meta2d {
         });
       }
     }
+    this.canvas.autoPolylineFlag = false;
     this.store.emitter.emit('opened');
 
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
       this.canvas.scroll.init();
     }
-  }
-
-  extendedFn() {
-    this.store.data.pens.forEach((pen) => {
-      if (
-        pen.name === 'line' &&
-        pen.lineName === 'polyline' &&
-        pen.autoPolyline !== false
-      ) {
-        pen.calculative.autoPolylineFlag = true;
-      }
-    });
   }
 
   cacheData(id: string) {
