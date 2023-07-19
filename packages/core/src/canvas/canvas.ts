@@ -196,7 +196,7 @@ export class Canvas {
   initPens?: Pen[];
 
   pointSize = 8 as const;
-  pasteOffset = 10;
+  pasteOffset: boolean = true;
   opening: boolean = false;
   maxZindex: number = 4;
   canMoveLine: boolean = false; //moveConnectedLine=false
@@ -2409,7 +2409,7 @@ export class Canvas {
       })
     );
     // 偏移量 0
-    this.pasteOffset = 0;
+    this.pasteOffset = false;
     this.paste();
   }
 
@@ -5482,6 +5482,9 @@ export class Canvas {
     if (curPage !== clipboard.page) {
       this.store.clipboard.pos = { x: this.mousePos.x, y: this.mousePos.y };
       this.store.clipboard.offset = 0;
+    } else if (!this.pasteOffset) {
+      this.store.clipboard.offset = 0;
+      this.pasteOffset = true;
     } else {
       offset && (this.store.clipboard.offset = offset);
       pos && (this.store.clipboard.pos = pos);
