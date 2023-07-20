@@ -714,14 +714,14 @@ export class Meta2d {
   }
 
   initBinds() {
-    this.store.binds = {};
+    this.store.bind = {};
     this.store.data.pens.forEach((pen) => {
       pen.realTimes?.forEach((realTime) => {
-        if (realTime.binds && realTime.binds.id) {
-          if (!this.store.binds[realTime.binds.id]) {
-            this.store.binds[realTime.binds.id] = [];
+        if (realTime.bind && realTime.bind.id) {
+          if (!this.store.bind[realTime.bind.id]) {
+            this.store.bind[realTime.bind.id] = [];
           }
-          this.store.binds[realTime.binds.id].push({
+          this.store.bind[realTime.bind.id].push({
             id: pen.id,
             key: realTime.key,
           });
@@ -1570,12 +1570,12 @@ export class Meta2d {
   connectNetwork() {
     this.closeNetwork();
     const { networks } = this.store.data;
+    const https = [];
     if (networks) {
       let mqttIndex = 0;
       this.mqttClients = [];
       let websocketIndex = 0;
       this.websockets = [];
-      const https = [];
       networks.forEach((net) => {
         if (net.type === 'mqtt') {
           if (net.options.clientId && !net.options.customClientId) {
@@ -1610,9 +1610,8 @@ export class Meta2d {
           https.push(net);
         }
       });
-
-      this.onNetworkConnect(https);
     }
+    this.onNetworkConnect(https);
   }
 
   randomString(e: number) {
@@ -1631,59 +1630,73 @@ export class Meta2d {
       let _d: any = {};
       pen.realTimes.forEach((realTime) => {
         if (
-          realTime.value !== undefined &&
-          (!realTime.binds || !realTime.binds.id)
+          realTime.enableMock &&
+          realTime.mock !== undefined &&
+          (!realTime.bind || !realTime.bind.id)
         ) {
-          if (realTime.type === 'number') {
-            if (realTime.value && realTime.value.indexOf(',') !== -1) {
-              let arr = realTime.value.split(',');
+          if (realTime.type === 'float') {
+            if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
+              let arr = realTime.mock.split(',');
               let rai = Math.floor(Math.random() * arr.length);
               _d[realTime.key] = parseFloat(arr[rai]);
-            } else if (realTime.value && realTime.value.indexOf('-') !== -1) {
-              let arr = realTime.value.split('-');
+            } else if (realTime.mock && realTime.mock.indexOf('-') !== -1) {
+              let arr = realTime.mock.split('-');
               let max = parseFloat(arr[1]);
               let min = parseFloat(arr[0]);
               _d[realTime.key] = Math.random() * (max - min) + min;
             } else {
-              _d[realTime.key] = parseFloat(realTime.value);
+              _d[realTime.key] = parseFloat(realTime.mock);
+            }
+          } else if (realTime.type === 'float') {
+            if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
+              let arr = realTime.mock.split(',');
+              let rai = Math.floor(Math.random() * arr.length);
+              _d[realTime.key] = parseInt(arr[rai]);
+            } else if (realTime.mock && realTime.mock.indexOf('-') !== -1) {
+              let arr = realTime.mock.split('-');
+              let max = parseInt(arr[1]);
+              let min = parseInt(arr[0]);
+              _d[realTime.key] = Math.random() * (max - min) + min;
+            } else {
+              _d[realTime.key] = parseInt(realTime.mock);
             }
           } else if (realTime.type === 'bool') {
-            if (typeof realTime.value === 'boolean') {
-              _d[realTime.key] = realTime.value;
-            } else if ('true' === realTime.value) {
+            if (typeof realTime.mock === 'boolean') {
+              _d[realTime.key] = realTime.mock;
+            } else if ('true' === realTime.mock) {
               _d[realTime.key] = true;
-            } else if ('false' === realTime.value) {
+            } else if ('false' === realTime.mock) {
               _d[realTime.key] = false;
             } else {
               _d[realTime.key] = Math.random() < 0.5;
             }
           } else if (realTime.type === 'object' || realTime.type === 'array') {
-            if (realTime.value) {
+            if (realTime.mock) {
               //对象or数组 不mock
               // _d[realTime.key] = realTime.value;
             }
           } else {
             //if (realTime.type === 'string')
             if (
-              realTime.value &&
-              realTime.value.startsWith('{') &&
-              realTime.value.endsWith('}')
+              realTime.mock &&
+              realTime.mock.startsWith('{') &&
+              realTime.mock.endsWith('}')
             ) {
-              let str = realTime.value.substring(1, realTime.value.length - 1);
+              let str = realTime.mock.substring(1, realTime.mock.length - 1);
               let arr = str.split(',');
               let rai = Math.floor(Math.random() * arr.length);
               _d[realTime.key] = arr[rai];
             } else if (
-              realTime.value &&
-              realTime.value.startsWith('[') &&
-              realTime.value.endsWith(']')
+              realTime.mock &&
+              realTime.mock.startsWith('[') &&
+              realTime.mock.endsWith(']')
             ) {
               let len = parseInt(
-                realTime.value.substring(1, realTime.value.length - 1)
+                realTime.mock.substring(1, realTime.mock.length - 1)
               );
               _d[realTime.key] = this.randomString(len);
             } else {
-              _d[realTime.key] = realTime.value;
+              _d[realTime.key] = realTime.mock;
             }
           }
         }
@@ -1698,11 +1711,16 @@ export class Meta2d {
   }
 
   onNetworkConnect(https: Network[]) {
+    let enable = this.store.data.enableMock;
+    if (!(https && https.length) && !enable) {
+      return;
+    }
     this.updateTimer = setInterval(() => {
       //模拟数据
-      this.store.data.pens.forEach((pen) => {
-        this.penMock(pen);
-      });
+      enable &&
+        this.store.data.pens.forEach((pen) => {
+          this.penMock(pen);
+        });
 
       https.forEach(async (item) => {
         if (item.url) {
@@ -1718,7 +1736,7 @@ export class Meta2d {
           }
         }
       });
-      this.render();
+      // this.render();
     }, this.store.data.networkInterval || 1000);
   }
 
@@ -1829,7 +1847,7 @@ export class Meta2d {
           }
         }
       );
-      this.store.binds[v.id]?.forEach((p: { id: string; key: string }) => {
+      this.store.bind[v.id]?.forEach((p: { id: string; key: string }) => {
         const pen = this.store.pens[p.id];
         if (!pen) {
           return;

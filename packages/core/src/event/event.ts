@@ -121,6 +121,8 @@ export interface RealTime {
   type?: string;
   keywords?: true;
   triggers?: Trigger[];
-  binds?: Bind;
+  bind?: Bind;
   value?: string;
+  enableMock?: boolean;
+  mock?: any;
 }
