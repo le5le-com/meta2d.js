@@ -1647,7 +1647,7 @@ export class Meta2d {
             } else {
               _d[realTime.key] = parseFloat(realTime.mock);
             }
-          } else if (realTime.type === 'float') {
+          } else if (realTime.type === 'integer') {
             if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
               let arr = realTime.mock.split(',');
               let rai = Math.floor(Math.random() * arr.length);
@@ -1656,7 +1656,9 @@ export class Meta2d {
               let arr = realTime.mock.split('-');
               let max = parseInt(arr[1]);
               let min = parseInt(arr[0]);
-              _d[realTime.key] = Math.random() * (max - min) + min;
+              _d[realTime.key] = parseInt(
+                Math.random() * (max - min) + min + ''
+              );
             } else {
               _d[realTime.key] = parseInt(realTime.mock);
             }
@@ -1736,7 +1738,7 @@ export class Meta2d {
           }
         }
       });
-      // this.render();
+      this.render();
     }, this.store.data.networkInterval || 1000);
   }
 
