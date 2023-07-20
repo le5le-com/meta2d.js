@@ -3230,6 +3230,7 @@ export class Canvas {
             (item) => item.id === pen.id
           );
           if (i > -1) {
+            pen.onDestroy?.(this.store.pens[pen.id]);
             this.store.data.pens.splice(i, 1);
             this.store.pens[pen.id] = undefined;
             if (!pen.calculative) {
@@ -3238,7 +3239,6 @@ export class Canvas {
             pen.calculative.canvas = this;
             this.store.animates.delete(pen);
             this.store.animateMap.delete(pen);
-            pen.onDestroy?.(pen);
           }
         });
         action.type = EditType.Delete;
