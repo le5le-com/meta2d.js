@@ -188,9 +188,9 @@ export class CanvasImage {
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.translate(this.store.data.x, this.store.data.y);
       for (const pen of this.store.data.pens) {
+        //pen.calculative.imageDrawed  只用于判断是否需要重绘整块画布，不用于判断改图片节点是否绘制过
         if (
           !pen.calculative.hasImage ||
-          pen.calculative.imageDrawed ||
           this.store.animates.has(pen) ||
           this.store.animates.has(getParent(pen, true))
         ) {
