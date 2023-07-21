@@ -62,7 +62,8 @@ export interface Meta2dData {
 
 export interface Network {
   name?: string;
-  type: 'mqtt' | 'websocket' | 'http';
+  protocol: 'mqtt' | 'websocket' | 'http';
+  type?: string; //subscribe
   url?: string;
   //websocket
   protocols?: string;
@@ -75,7 +76,7 @@ export interface Network {
     customClientId?: boolean;
   };
   //http
-  headers?: HeadersInit; //请求头
+  headers?: any; //请求头
   method?: string;
   body?: any;
 }

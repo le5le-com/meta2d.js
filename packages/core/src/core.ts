@@ -1577,42 +1577,44 @@ export class Meta2d {
       let websocketIndex = 0;
       this.websockets = [];
       networks.forEach((net) => {
-        if (net.type === 'mqtt') {
-          if (net.options.clientId && !net.options.customClientId) {
-            net.options.clientId = s8();
-          }
-          this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
-          this.mqttClients[mqttIndex].on(
-            'message',
-            (topic: string, message: Buffer) => {
-              this.socketCallback(message.toString(), {
-                topic,
-                type: 'mqtt',
-                url: net.url,
-              });
+        if (net.type === 'subscribe') {
+          if (net.protocol === 'mqtt') {
+            if (net.options.clientId && !net.options.customClientId) {
+              net.options.clientId = s8();
             }
-          );
+            this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
+            this.mqttClients[mqttIndex].on(
+              'message',
+              (topic: string, message: Buffer) => {
+                this.socketCallback(message.toString(), {
+                  topic,
+                  type: 'mqtt',
+                  url: net.url,
+                });
+              }
+            );
 
-          if (net.topics) {
-            this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
+            if (net.topics) {
+              this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
+            }
+            mqttIndex += 1;
+          } else if (net.protocol === 'websocket') {
+            this.websockets[websocketIndex] = new WebSocket(
+              net.url,
+              net.protocols
+            );
+            this.websockets[websocketIndex].onmessage = (e) => {
+              this.socketCallback(e.data, { type: 'websocket', url: net.url });
+            };
+            websocketIndex += 1;
+          } else if (net.protocol === 'http') {
+            https.push({
+              url: net.url,
+              headers: net.headers || undefined,
+              method: net.method,
+              body: net.body,
+            });
           }
-          mqttIndex += 1;
-        } else if (net.type === 'websocket') {
-          this.websockets[websocketIndex] = new WebSocket(
-            net.url,
-            net.protocols
-          );
-          this.websockets[websocketIndex].onmessage = (e) => {
-            this.socketCallback(e.data, { type: 'websocket', url: net.url });
-          };
-          websocketIndex += 1;
-        } else {
-          https.push({
-            url: net.url,
-            headers: net.headers || undefined,
-            method: net.method,
-            body: net.body,
-          });
         }
       });
     }
