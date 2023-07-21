@@ -1607,7 +1607,12 @@ export class Meta2d {
           };
           websocketIndex += 1;
         } else {
-          https.push(net);
+          https.push({
+            url: net.url,
+            headers: net.headers || undefined,
+            method: net.method,
+            body: net.body,
+          });
         }
       });
     }
