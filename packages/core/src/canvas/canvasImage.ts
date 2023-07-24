@@ -135,7 +135,9 @@ export class CanvasImage {
     if (patchFlagsBackground && this.isBottom) {
       const ctx = this.otherOffsreen.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      if (this.store.data.width && this.store.data.height && this.store.bkImg) {
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height && this.store.bkImg) {
         ctx.save();
         ctx.drawImage(
           this.store.bkImg,

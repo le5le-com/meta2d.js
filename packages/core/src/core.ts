@@ -536,9 +536,15 @@ export class Meta2d {
     }
 
     this.store.data.bkImage = url;
-    this.canvas.canvasImageBottom.canvas.style.backgroundImage = url
-      ? `url(${url})`
-      : '';
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (width && height) {
+      this.canvas.canvasImageBottom.canvas.style.backgroundImage = null;
+    } else {
+      this.canvas.canvasImageBottom.canvas.style.backgroundImage = url
+        ? `url('${url}')`
+        : '';
+    }
     if (url) {
       const img = await loadImage(url);
       // 用作 toPng 的绘制
