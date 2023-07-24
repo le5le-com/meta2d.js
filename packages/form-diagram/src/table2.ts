@@ -42,6 +42,9 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
 }
 
 function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
+  if (!pen.calculative.hover) {
+    return;
+  }
   if (!pen.calculative.hoverCell) {
     return;
   }
@@ -51,6 +54,7 @@ function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.calculative.isHover) {
     return;
   }
+
   const { row, col } = pen.calculative.hoverCell;
   const { x, y } = pen.calculative.canvas.mousePos;
   if (!pen.data[row]) {

@@ -2914,7 +2914,7 @@ export function setGlobalAlpha(
   pen: Pen
 ) {
   const globalAlpha = pen.calculative.globalAlpha;
-  if (globalAlpha < 1) {
+  if (globalAlpha < 1 || (globalAlpha as any) !== '') {
     ctx.globalAlpha = globalAlpha;
   }
 }

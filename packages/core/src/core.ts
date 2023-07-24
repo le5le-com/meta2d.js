@@ -1583,37 +1583,44 @@ export class Meta2d {
       let websocketIndex = 0;
       this.websockets = [];
       networks.forEach((net) => {
-        if (net.type === 'mqtt') {
-          if (net.options.clientId && !net.options.customClientId) {
-            net.options.clientId = s8();
-          }
-          this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
-          this.mqttClients[mqttIndex].on(
-            'message',
-            (topic: string, message: Buffer) => {
-              this.socketCallback(message.toString(), {
-                topic,
-                type: 'mqtt',
-                url: net.url,
-              });
+        if (net.type === 'subscribe') {
+          if (net.protocol === 'mqtt') {
+            if (net.options.clientId && !net.options.customClientId) {
+              net.options.clientId = s8();
             }
-          );
+            this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
+            this.mqttClients[mqttIndex].on(
+              'message',
+              (topic: string, message: Buffer) => {
+                this.socketCallback(message.toString(), {
+                  topic,
+                  type: 'mqtt',
+                  url: net.url,
+                });
+              }
+            );
 
-          if (net.topics) {
-            this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
+            if (net.topics) {
+              this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
+            }
+            mqttIndex += 1;
+          } else if (net.protocol === 'websocket') {
+            this.websockets[websocketIndex] = new WebSocket(
+              net.url,
+              net.protocols
+            );
+            this.websockets[websocketIndex].onmessage = (e) => {
+              this.socketCallback(e.data, { type: 'websocket', url: net.url });
+            };
+            websocketIndex += 1;
+          } else if (net.protocol === 'http') {
+            https.push({
+              url: net.url,
+              headers: net.headers || undefined,
+              method: net.method,
+              body: net.body,
+            });
           }
-          mqttIndex += 1;
-        } else if (net.type === 'websocket') {
-          this.websockets[websocketIndex] = new WebSocket(
-            net.url,
-            net.protocols
-          );
-          this.websockets[websocketIndex].onmessage = (e) => {
-            this.socketCallback(e.data, { type: 'websocket', url: net.url });
-          };
-          websocketIndex += 1;
-        } else {
-          https.push(net);
         }
       });
     }
@@ -1635,11 +1642,7 @@ export class Meta2d {
     if (pen.realTimes) {
       let _d: any = {};
       pen.realTimes.forEach((realTime) => {
-        if (
-          realTime.enableMock &&
-          realTime.mock !== undefined &&
-          (!realTime.bind || !realTime.bind.id)
-        ) {
+        if (realTime.enableMock && realTime.mock !== undefined) {
           if (realTime.type === 'float') {
             if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
               let arr = realTime.mock.split(',');
@@ -1649,11 +1652,18 @@ export class Meta2d {
               let arr = realTime.mock.split('-');
               let max = parseFloat(arr[1]);
               let min = parseFloat(arr[0]);
-              _d[realTime.key] = Math.random() * (max - min) + min;
+              if (arr[1].indexOf('.') !== -1) {
+                let length = arr[1].split('.')[1].length;
+                _d[realTime.key] = (Math.random() * (max - min) + min).toFixed(
+                  length
+                );
+              } else {
+                _d[realTime.key] = Math.random() * (max - min) + min;
+              }
             } else {
               _d[realTime.key] = parseFloat(realTime.mock);
             }
-          } else if (realTime.type === 'float') {
+          } else if (realTime.type === 'integer') {
             if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
               let arr = realTime.mock.split(',');
               let rai = Math.floor(Math.random() * arr.length);
@@ -1662,7 +1672,9 @@ export class Meta2d {
               let arr = realTime.mock.split('-');
               let max = parseInt(arr[1]);
               let min = parseInt(arr[0]);
-              _d[realTime.key] = Math.random() * (max - min) + min;
+              _d[realTime.key] = parseInt(
+                Math.random() * (max - min) + min + ''
+              );
             } else {
               _d[realTime.key] = parseInt(realTime.mock);
             }
@@ -1742,7 +1754,7 @@ export class Meta2d {
           }
         }
       });
-      // this.render();
+      this.render();
     }, this.store.data.networkInterval || 1000);
   }
 
@@ -3620,6 +3632,7 @@ export class Meta2d {
   destroy(onlyData?: boolean) {
     this.clear(false);
     this.closeSocket();
+    this.closeNetwork();
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     this.canvas = undefined;
