@@ -3626,6 +3626,7 @@ export class Meta2d {
   destroy(onlyData?: boolean) {
     this.clear(false);
     this.closeSocket();
+    this.closeNetwork();
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     this.canvas = undefined;
