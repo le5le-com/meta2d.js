@@ -1643,11 +1643,28 @@ export class Meta2d {
               let rai = Math.floor(Math.random() * arr.length);
               _d[realTime.key] = parseFloat(arr[rai]);
             } else if (realTime.mock && realTime.mock.indexOf('-') !== -1) {
+              let max;
+              let min;
+              let len;
               let arr = realTime.mock.split('-');
-              let max = parseFloat(arr[1]);
-              let min = parseFloat(arr[0]);
-              if (arr[1].indexOf('.') !== -1) {
-                let length = arr[1].split('.')[1].length;
+              if (realTime.mock.charAt(0) === '-') {
+                //负数
+                if (arr.length === 4) {
+                  max = -parseFloat(arr[3]);
+                  min = -parseFloat(arr[1]);
+                  len = arr[3];
+                } else {
+                  max = parseFloat(arr[2]);
+                  min = -parseFloat(arr[1]);
+                  len = arr[2];
+                }
+              } else {
+                max = parseFloat(arr[1]);
+                min = parseFloat(arr[0]);
+                len = arr[1];
+              }
+              if ((len + '').indexOf('.') !== -1) {
+                let length = (len + '').split('.')[1].length;
                 _d[realTime.key] = (Math.random() * (max - min) + min).toFixed(
                   length
                 );
@@ -1663,9 +1680,21 @@ export class Meta2d {
               let rai = Math.floor(Math.random() * arr.length);
               _d[realTime.key] = parseInt(arr[rai]);
             } else if (realTime.mock && realTime.mock.indexOf('-') !== -1) {
+              let max;
+              let min;
               let arr = realTime.mock.split('-');
-              let max = parseInt(arr[1]);
-              let min = parseInt(arr[0]);
+              if (realTime.mock.charAt(0) === '-') {
+                if (arr.length === 4) {
+                  max = -parseFloat(arr[3]);
+                  min = -parseFloat(arr[1]);
+                } else {
+                  max = parseFloat(arr[2]);
+                  min = -parseFloat(arr[1]);
+                }
+              } else {
+                max = parseInt(arr[1]);
+                min = parseInt(arr[0]);
+              }
               _d[realTime.key] = parseInt(
                 Math.random() * (max - min) + min + ''
               );
