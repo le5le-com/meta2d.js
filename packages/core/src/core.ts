@@ -1636,11 +1636,7 @@ export class Meta2d {
     if (pen.realTimes) {
       let _d: any = {};
       pen.realTimes.forEach((realTime) => {
-        if (
-          realTime.enableMock &&
-          realTime.mock !== undefined &&
-          (!realTime.bind || !realTime.bind.id)
-        ) {
+        if (realTime.enableMock && realTime.mock !== undefined) {
           if (realTime.type === 'float') {
             if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
               let arr = realTime.mock.split(',');
@@ -1650,7 +1646,14 @@ export class Meta2d {
               let arr = realTime.mock.split('-');
               let max = parseFloat(arr[1]);
               let min = parseFloat(arr[0]);
-              _d[realTime.key] = Math.random() * (max - min) + min;
+              if (arr[1].indexOf('.') !== -1) {
+                let length = arr[1].split('.')[1].length;
+                _d[realTime.key] = (Math.random() * (max - min) + min).toFixed(
+                  length
+                );
+              } else {
+                _d[realTime.key] = Math.random() * (max - min) + min;
+              }
             } else {
               _d[realTime.key] = parseFloat(realTime.mock);
             }
