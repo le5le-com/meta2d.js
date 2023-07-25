@@ -2772,7 +2772,7 @@ export class Canvas {
         if (pen.children) {
           const pens = []; // TODO: 只考虑了一级子
           pen.children.forEach((id) => {
-            pens.push(this.store.pens[id]);
+            this.store.pens[id] && pens.push(this.store.pens[id]);
           });
           hoverType = this.inPens(pt, pens);
           if (hoverType) {
