@@ -1817,7 +1817,8 @@ export function calcWorldRects(pen: Pen) {
     y: pen.y,
   };
 
-  if (!pen.parentId) {
+  if (!pen.parentId || (pen.parentId && !store.pens[pen.parentId])) {
+    pen.parentId = undefined;
     rect.width = pen.width;
     rect.height = pen.height;
     rect.rotate = pen.rotate;
@@ -2954,7 +2955,7 @@ export function setChildValue(pen: Pen, data: IValue) {
     const children = pen.children;
     children?.forEach((childId) => {
       const child = pen.calculative.canvas.store.pens[childId];
-      setChildValue(child, data);
+      child && setChildValue(child, data);
     });
   }
 }
