@@ -1851,7 +1851,7 @@ export class Meta2d {
 
   // 绑定变量方式更新组件数据
   setDatas(
-    datas: { dataId: string; value: any }[],
+    datas: { dataId?: string; id?: string; value: any }[],
     {
       render = true,
       doEvent = true,
@@ -1971,7 +1971,21 @@ export class Meta2d {
         return;
       }
       const pen = this.store.pens[data.id];
-      pen && (pens = [pen]);
+      if (pen) {
+        pens = [pen];
+      } else {
+        //bind 绑定变量的情况
+        let bindArr = this.store.bind[data.id];
+        if (bindArr && bindArr.length) {
+          pens = [];
+          this.setDatas([data] as any, {
+            render,
+            doEvent,
+            history,
+          });
+          return;
+        }
+      }
     } else if (data.dataId) {
       pens = [];
       this.setDatas([data] as any, {
