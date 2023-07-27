@@ -24,6 +24,9 @@ export interface ChartPen extends Pen {
     replaceMode: ReplaceMode; // 替换模式
     theme: string; // 主题
     timeFormat: string; //格式化
+    geoName?: string;
+    geoJson?: any;
+    geoUrl?: string;
   };
   beforeScale: number;
 }
@@ -75,25 +78,70 @@ export function echarts(pen: ChartPen): Path2D {
     document.body.appendChild(div);
     pen.calculative.singleton.div = div;
     pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
+    let flag = true;
+    if (pen.echarts.geoName) {
+      if (!echarts.getMap(pen.echarts.geoName)) {
+        if (pen.echarts.geoJson) {
+          echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
+        } else if (pen.echarts.geoUrl) {
+          flag = false;
+          fetch(pen.echarts.geoUrl).then((e) => {
+            e.text().then((data) => {
+              let _data;
+              if (data.constructor === Object || data.constructor === Array) {
+                _data = data;
+              } else if (typeof data === 'string') {
+                try {
+                  _data = JSON.parse(data);
+                } catch (error) {
+                  console.warn('Invalid data:', data, error);
+                }
+              }
+              echarts.registerMap(pen.echarts.geoName, _data);
+              pen.calculative.singleton.echart.setOption(
+                pen.echarts.option,
+                true
+              );
+              pen.calculative.singleton.echart.resize();
+              setTimeout(() => {
+                const img = new Image();
+                img.src = pen.calculative.singleton.echart.getDataURL({
+                  pixelRatio: 2,
+                });
+                pen.calculative.img = img;
+              }, 100);
+            });
 
-    // 3. 生产预览图
-    // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
-    setTimeout(() => {
-      pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
-      pen.calculative.singleton.echart.resize();
+            // 4. 加载到div layer
+            pen.calculative.canvas.externalElements?.parentElement.appendChild(
+              div
+            );
+            setElemPosition(pen, div);
+          });
+        }
+      }
+    }
+
+    if (flag) {
+      // 3. 生产预览图
+      // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
-        const img = new Image();
-        img.src = pen.calculative.singleton.echart.getDataURL({
-          pixelRatio: 2,
-        });
-        pen.calculative.img = img;
-      }, 100);
-    });
+        pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
+        pen.calculative.singleton.echart.resize();
+        setTimeout(() => {
+          const img = new Image();
+          img.src = pen.calculative.singleton.echart.getDataURL({
+            pixelRatio: 2,
+          });
+          pen.calculative.img = img;
+        }, 100);
+      });
 
-    // 4. 加载到div layer
-    // pen.calculative.canvas.externalElements?.appendChild(div);
-    pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
-    setElemPosition(pen, div);
+      // 4. 加载到div layer
+      // pen.calculative.canvas.externalElements?.appendChild(div);
+      pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
+      setElemPosition(pen, div);
+    }
   } else {
     // path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
 
