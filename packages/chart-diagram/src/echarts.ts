@@ -83,12 +83,12 @@ export function echarts(pen: ChartPen): Path2D {
     // 3. 解析echarts数据
     pen.calculative.singleton.div = div;
     pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
-    pen.calculative.singleton.ready = true;
+    pen.calculative.singleton.echartsReady = true;
     if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) {
       if (pen.echarts.geoJson) {
         echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
       } else if (pen.echarts.geoUrl) {
-        pen.calculative.singleton.ready = false;
+        pen.calculative.singleton.echartsReady = false;
         fetch(pen.echarts.geoUrl).then((e) => {
           e.text().then((data: any) => {
             if (typeof data === 'string') {
@@ -101,7 +101,7 @@ export function echarts(pen: ChartPen): Path2D {
               return;
             }
             echarts.registerMap(pen.echarts.geoName, data);
-            pen.calculative.singleton.ready = true;
+            pen.calculative.singleton.echartsReady = true;
             pen.calculative.singleton.echart.setOption(
               pen.echarts.option,
               true
@@ -115,7 +115,7 @@ export function echarts(pen: ChartPen): Path2D {
     }
 
     // 4. 加载echarts
-    if (pen.calculative.singleton.ready) {
+    if (pen.calculative.singleton.echartsReady) {
       // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
         pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
@@ -195,7 +195,7 @@ function value(pen: ChartPen) {
     return;
   }
   setElemPosition(pen, pen.calculative.singleton.div);
-  pen.calculative.singleton.ready &&
+  pen.calculative.singleton.echartsReady &&
     pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
 }
 
