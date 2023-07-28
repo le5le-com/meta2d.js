@@ -76,83 +76,51 @@ export function echarts(pen: ChartPen): Path2D {
     div.style.width = worldRect.width + 'px';
     div.style.height = worldRect.height + 'px';
     document.body.appendChild(div);
+    // 2. 加载到div layer
+    pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
+    setElemPosition(pen, div);
+
+    // 3. 解析echarts数据
     pen.calculative.singleton.div = div;
-    // pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
-    let flag = true;
-    if (pen.echarts.geoName) {
-      if (!echarts.getMap(pen.echarts.geoName)) {
-        if (pen.echarts.geoJson) {
-          echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
-        } else if (pen.echarts.geoUrl) {
-          flag = false;
-          fetch(pen.echarts.geoUrl).then((e) => {
-            e.text().then((data) => {
-              let _data;
-              if (data.constructor === Object || data.constructor === Array) {
-                _data = data;
-              } else if (typeof data === 'string') {
-                try {
-                  _data = JSON.parse(data);
-                } catch (error) {
-                  console.warn('Invalid data:', data, error);
-                }
-              }
-              pen.calculative.singleton.echart = echarts.init(
-                div,
-                pen.echarts.theme
-              );
-
-              echarts.registerMap(pen.echarts.geoName, _data);
-              pen.calculative.singleton.echart.setOption(
-                pen.echarts.option,
-                true
-              );
-              pen.calculative.singleton.echart.resize();
-              setTimeout(() => {
-                const img = new Image();
-                img.src = pen.calculative.singleton.echart.getDataURL({
-                  pixelRatio: 2,
-                });
-                pen.calculative.img = img;
-              }, 100);
-            });
-
-            // 4. 加载到div layer
-            pen.calculative.canvas.externalElements?.parentElement.appendChild(
-              div
+    pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
+    pen.calculative.singleton.ready = true;
+    if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) {
+      if (pen.echarts.geoJson) {
+        echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
+      } else if (pen.echarts.geoUrl) {
+        pen.calculative.singleton.ready = false;
+        fetch(pen.echarts.geoUrl).then((e) => {
+          e.text().then((data: any) => {
+            if (typeof data === 'string') {
+              try {
+                data = JSON.parse(data);
+              } catch {}
+            }
+            if (data.constructor !== Object && data.constructor !== Array) {
+              console.warn('Invalid data:', data);
+              return;
+            }
+            echarts.registerMap(pen.echarts.geoName, data);
+            pen.calculative.singleton.ready = true;
+            pen.calculative.singleton.echart.setOption(
+              pen.echarts.option,
+              true
             );
-            setElemPosition(pen, div);
+            setTimeout(() => {
+              onRenderPenRaw(pen);
+            }, 300);
           });
-        }
+        });
       }
     }
 
-    if (flag) {
-      pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
-      // 3. 生产预览图
+    // 4. 加载echarts
+    if (pen.calculative.singleton.ready) {
       // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
         pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
-        pen.calculative.singleton.echart.resize();
-        setTimeout(() => {
-          const img = new Image();
-          img.src = pen.calculative.singleton.echart.getDataURL({
-            pixelRatio: 2,
-          });
-          pen.calculative.img = img;
-        }, 100);
+        setTimeout(() => onRenderPenRaw(pen), 300);
       });
-
-      // 4. 加载到div layer
-      // pen.calculative.canvas.externalElements?.appendChild(div);
-      pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
-      setElemPosition(pen, div);
-    }
-  } else {
-    // path.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
-
-    if (pen.calculative.patchFlags && pen.calculative.singleton.div) {
-      setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
 
@@ -188,55 +156,7 @@ function resize(pen: ChartPen) {
   if (!pen.beforeScale) {
     pen.beforeScale = pen.calculative.canvas.store.data.scale;
   }
-  let change = false;
   let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
-  /*
-  if (option.textStyle) {
-    option.textStyle.fontSize *= ratio;
-    change = true;
-  }
-  if (option.title) {
-    if (Array.isArray(option.title)) {
-      option.title.forEach((item) => {
-        item.textStyle && (item.textStyle.fontSize *= ratio);
-        change = true;
-      });
-    } else {
-      option.title.textStyle && (option.title.textStyle.fontSize *= ratio);
-      change = true;
-    }
-  }
-  if (option.legend) {
-    option.legend.textStyle && (option.legend.textStyle.fontSize *= ratio);
-  }
-  if (option.tooltip) {
-    option.tooltip.textStyle && (option.tooltip.textStyle.fontSize *= ratio);
-    change = true;
-  }
-  if (option.xAxis) {
-    if (Array.isArray(option.xAxis)) {
-      option.xAxis.forEach((item) => {
-        item.axisLabel && (item.axisLabel.fontSize *= ratio);
-        change = true;
-      });
-    } else {
-      option.xAxis.axisLabel && (option.xAxis.axisLabel.fontSize *= ratio);
-      change = true;
-    }
-  }
-
-  if (option.yAxis) {
-    if (Array.isArray(option.yAxis)) {
-      option.yAxis.forEach((item) => {
-        item.axisLabel && (item.axisLabel.fontSize *= ratio);
-        change = true;
-      });
-    } else {
-      option.yAxis.axisLabel && (option.yAxis.axisLabel.fontSize *= ratio);
-      change = true;
-    }
-  }
-  */
   if (option.grid) {
     let props = ['top', 'bottom', 'left', 'right'];
     for (let i = 0; i < props.length; i++) {
@@ -275,7 +195,8 @@ function value(pen: ChartPen) {
     return;
   }
   setElemPosition(pen, pen.calculative.singleton.div);
-  pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
+  pen.calculative.singleton.ready &&
+    pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
 }
 
 function beforeValue(pen: ChartPen, value: ChartData) {
@@ -486,7 +407,6 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue {
           }
         }
       });
-      // console.log('单饼图 dataY', JSON.stringify(dataY));
       return {
         id: pen.id,
         dataY,
@@ -512,7 +432,6 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue {
         }
       }
     });
-    // console.log('dataX', JSON.stringify(dataX), 'dataY', JSON.stringify(dataY));
     return {
       id: pen.id,
       dataY,
@@ -551,12 +470,6 @@ function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue {
     } else {
       return;
     }
-    // console.log(
-    //   'series',
-    //   JSON.stringify(series.map((serie) => serie.name)),
-    //   'dataY',
-    //   JSON.stringify(dataY)
-    // );
     return {
       id: pen.id,
       dataY: dataY.length === 1 ? dataY[0] : dataY,
@@ -641,7 +554,7 @@ export function setEchartsOption(
 
 function onRenderPenRaw(pen: Pen) {
   const img = new Image();
-  img.src = pen.calculative.singleton?.echart.getDataURL({
+  img.src = pen.calculative.singleton?.echart?.getDataURL({
     pixelRatio: 2,
   });
   pen.calculative.img = img;
