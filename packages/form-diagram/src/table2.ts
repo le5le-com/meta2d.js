@@ -54,6 +54,21 @@ function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
   if (!pen.calculative.isHover) {
     return;
   }
+  let rect = pen.calculative.worldRect;
+  let mousePos = pen.calculative.canvas.mousePos;
+  if (
+    !(
+      mousePos.x > rect.x &&
+      mousePos.x < rect.x + rect.width &&
+      mousePos.y > rect.y &&
+      mousePos.y < rect.y + rect.height
+    )
+  ) {
+    pen.calculative.hover = false;
+    pen.calculative.isHover = false;
+    pen.calculative.hoverCell = undefined;
+    return;
+  }
 
   const { row, col } = pen.calculative.hoverCell;
   const { x, y } = pen.calculative.canvas.mousePos;
