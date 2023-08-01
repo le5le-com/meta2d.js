@@ -1603,7 +1603,7 @@ export class Canvas {
           this.store.data.rule &&
             !this.store.options.disableRuleLine &&
             this.addRuleLine(e);
-          // this.inactive();
+          this.inactive();
           break;
         case HoverType.Node:
         case HoverType.Line:
@@ -2288,7 +2288,6 @@ export class Canvas {
         },
       ],
     });
-    this.inactive();
   }
 
   /**
