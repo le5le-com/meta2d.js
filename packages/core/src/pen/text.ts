@@ -282,3 +282,47 @@ export function calcTextAdaptionWidth(
 function setEllipsisOnLastLine(lines: string[]) {
   lines[lines.length - 1] = lines[lines.length - 1].slice(0, -3) + '...';
 }
+
+export function calcTextAutoWidth(pen: Pen) {
+  let arr = pen.text.split('\n');
+  const canvas: Canvas = pen.calculative.canvas;
+  const ctx = canvas.offscreen.getContext('2d') as CanvasRenderingContext2D;
+  const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } =
+    pen.calculative;
+  let textWidth = 0; // pen.calculative.worldTextRect.width;
+  let currentWidth = 0; // textWidth;
+  ctx.save();
+  for (let i = 0; i < arr.length; i++) {
+    if (canvas.store.options.measureTextWidth) {
+      ctx.font = getFont({
+        fontStyle,
+        fontWeight,
+        fontFamily: fontFamily || canvas.store.options.fontFamily,
+        fontSize,
+        lineHeight,
+      });
+      currentWidth = ctx.measureText(arr[i]).width; //* scale;
+    } else {
+      // 近似计算
+      const chinese = arr[i].match(/[^\x00-\xff]/g) || '';
+      const chineseWidth = chinese.length * fontSize; // 中文占用的宽度
+      const spaces = arr[i].match(/\s/g) || '';
+      const spaceWidth = spaces.length * fontSize * 0.3; // 空格占用的宽度
+      const otherWidth =
+        (arr[i].length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
+      currentWidth = chineseWidth + spaceWidth + otherWidth;
+    }
+    if (currentWidth > textWidth) {
+      textWidth = currentWidth; //* scale;
+    }
+  }
+  ctx.restore();
+  let textHeight = arr.length * fontSize * lineHeight;
+  // if (textHeight > pen.height) {
+  pen.height = textHeight;
+  // }
+  pen.x = pen.x - (textWidth - pen.width) / 2;
+  pen.width = textWidth;
+  pen.calculative.canvas.updatePenRect(pen);
+  pen.calculative.canvas.calcActiveRect();
+}

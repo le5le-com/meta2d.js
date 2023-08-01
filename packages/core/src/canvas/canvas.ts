@@ -50,6 +50,7 @@ import {
   getGlobalColor,
   clearLifeCycle,
   rotatePen,
+  calcTextAutoWidth,
 } from '../pen';
 import {
   calcRotate,
@@ -6087,6 +6088,9 @@ export class Canvas {
         pen.text = this.inputDiv.dataset.value;
         pen.calculative.text = pen.text;
         this.inputDiv.dataset.penId = undefined;
+        if (pen.name === 'text' && pen.textAutoAdjust) {
+          calcTextAutoWidth(pen);
+        }
         calcTextRect(pen);
         this.patchFlags = true;
         this.pushHistory({
