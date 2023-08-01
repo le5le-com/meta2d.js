@@ -2328,7 +2328,8 @@ export class Canvas {
     // active 消息表示拖拽结束
     // this.store.emitter.emit('active', this.store.active);
     this.initImageCanvas(this.store.active);
-
+    // 避免选中图元的出错情况，this.dock为undefined
+    if (!this.dock) return;
     const { xDock, yDock } = this.dock;
     let dockPen: Pen;
     if (xDock) {
