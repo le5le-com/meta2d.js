@@ -1840,6 +1840,9 @@ export class Meta2d {
     if (!Array.isArray(data)) {
       data = [data];
     }
+    if (!data.length) {
+      return;
+    }
     if (data[0].dataId) {
       this.setDatas(data);
     } else {
