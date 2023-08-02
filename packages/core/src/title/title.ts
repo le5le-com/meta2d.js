@@ -1,3 +1,4 @@
+import { Pen } from '../pen';
 import { Point } from '../point';
 
 export class Title {
@@ -88,13 +89,17 @@ export class Title {
     return !anchor.title; // && !anchor.titleFn && !anchor.titleFnJs;
   }
 
-  show(anchor: Point) {
+  show(anchor: Point, pen: Pen) {
     if (Title.titleEmpty(anchor)) {
       return;
     }
     this.currentAnchor = anchor;
     this.setText(anchor);
-    this.changePositionByAnchor(anchor);
+    let pos = {
+      x: pen.calculative.canvas.store.data.x + anchor.x,
+      y: pen.calculative.canvas.store.data.y + anchor.y,
+    };
+    this.changePositionByAnchor(pos);
   }
 
   hide() {

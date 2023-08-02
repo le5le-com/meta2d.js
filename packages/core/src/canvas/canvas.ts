@@ -2734,7 +2734,7 @@ export class Canvas {
                 anchor.penId ? this.store.pens[anchor.penId] : undefined
               )
             ) {
-              this.title.show(anchor);
+              this.title.show(anchor, pen);
               if (anchor.title) {
                 break outer;
               }
