@@ -581,6 +581,9 @@ export class Canvas {
     ) {
       return;
     }
+    if (this.store.options.unavailableKeys.includes(e.key)) {
+      return;
+    }
     let x = 10;
     let y = 10;
     switch (e.key) {
