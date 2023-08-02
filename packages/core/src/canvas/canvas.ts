@@ -4542,6 +4542,7 @@ export class Canvas {
       pen.lineWidth === 0 && (value.lineWidth = 1);
       // TODO: 例如 pen.name = 'triangle' 的情况，但有图片，是否还需要变成矩形呢？
       if (
+        pen.name.endsWith('Dom') ||
         isDomShapes.includes(pen.name) ||
         this.store.options.domShapes.includes(pen.name) ||
         pen.image

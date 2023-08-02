@@ -572,15 +572,6 @@ export const isDomShapes = [
   'echarts',
   'highcharts',
   'lightningCharts',
-  'leInput',
-  'leSelect',
-  'leMenu',
-  'leHeadMenu',
-  'leSliderVerify',
-  'leDropDown',
-  'leFlvPlayer',
-  'leDatePicker',
-  'leSwiper',
 ];
 
 // 格式刷同步的属性
