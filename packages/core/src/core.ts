@@ -67,6 +67,7 @@ import * as mqtt from 'mqtt/dist/mqtt.min.js';
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
+import { getter } from './utils/object';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -2264,37 +2265,38 @@ export class Meta2d {
       if (valueType === 'prop') {
         value = this.store.pens[target][condition.value];
       }
+      let compareValue = getter(pen, key);
       switch (operator) {
         case '>':
-          can = pen[key] > +value;
+          can = compareValue > +value;
           break;
         case '>=':
-          can = pen[key] >= +value;
+          can = compareValue >= +value;
           break;
         case '<':
-          can = pen[key] < +value;
+          can = compareValue < +value;
           break;
         case '<=':
-          can = pen[key] <= +value;
+          can = compareValue <= +value;
           break;
         case '=':
         case '==':
-          can = pen[key] == value;
+          can = compareValue == value;
           break;
         case '!=':
-          can = pen[key] != value;
+          can = compareValue != value;
           break;
         case '[)':
-          can = valueInRange(+pen[key], value);
+          can = valueInRange(+compareValue, value);
           break;
         case '![)':
-          can = !valueInRange(+pen[key], value);
+          can = !valueInRange(+compareValue, value);
           break;
         case '[]':
-          can = valueInArray(+pen[key], value);
+          can = valueInArray(+compareValue, value);
           break;
         case '![]':
-          can = !valueInArray(+pen[key], value);
+          can = !valueInArray(+compareValue, value);
           break;
       }
     }
