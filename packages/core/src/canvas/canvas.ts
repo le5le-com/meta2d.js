@@ -5798,7 +5798,7 @@ export class Canvas {
   private ondblclick = (e: MouseEvent) => {
     if (
       this.store.hover &&
-      !this.store.data.locked &&
+      (!this.store.data.locked||this.store.hover.dbInput) &&
       !this.store.options.disableInput
     ) {
       if (this.store.hover.onShowInput) {
@@ -5839,8 +5839,11 @@ export class Canvas {
       return;
     }
     //过滤table2图元
-    if (!rect) {
+    if (!rect&& !pen.dbInput) {
       this.setInputStyle(pen);
+    } else {
+      this.inputDiv.style.width = '100%';
+      this.inputDiv.style.height = '100%';
     }
     const textRect = rect || pen.calculative.worldTextRect;
 
