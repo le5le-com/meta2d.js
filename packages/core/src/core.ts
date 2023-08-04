@@ -611,6 +611,12 @@ export class Meta2d {
         this.canvas.updateLines(pen);
       }
     }
+
+    this.canvas.patchFlagsLines.forEach((pen) => {
+      if (pen.type) {
+        this.canvas.initLineRect(pen);
+      }
+    });
     if (!render) {
       this.canvas.opening = true;
     }
