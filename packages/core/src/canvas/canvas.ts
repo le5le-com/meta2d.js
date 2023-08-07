@@ -520,7 +520,12 @@ export class Canvas {
     if (this.pencil) {
       return;
     }
-
+    if (this.store.hover) {
+      if (this.store.hover.onWheel) {
+        this.store.hover.onWheel(this.store.hover, e);
+        return;
+      }
+    }
     if (this.store.options.disableScale) {
       return;
     }

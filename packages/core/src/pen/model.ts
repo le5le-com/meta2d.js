@@ -534,6 +534,7 @@ export interface Pen extends Rect {
   onStopVideo?: (pen: Pen) => void;
   onRenderPenRaw?: (pen: Pen) => void;
   onKeyDown?: (pen: Pen, key: string) => void;
+  onWheel?: (pen: Pen, e: WheelEvent) => void;
 }
 
 // 属性绑定变量
