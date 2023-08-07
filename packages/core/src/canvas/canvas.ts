@@ -371,6 +371,17 @@ export class Canvas {
       });
     };
     this.externalElements.onmouseleave = (e) => {
+      //离开画布取消所有选中
+      this.store.data.pens.forEach((pen) => {
+        if (pen.calculative.hover) {
+          pen.calculative.hover = false;
+        }
+      });
+      if (this.store.hover) {
+        this.store.hover.calculative.hover = false;
+        this.store.hover = undefined;
+      }
+      this.render();
       if ((e as any).toElement !== this.tooltip.box) {
         this.tooltip.hide();
         this.store.lastHover = undefined;
@@ -5798,7 +5809,7 @@ export class Canvas {
   private ondblclick = (e: MouseEvent) => {
     if (
       this.store.hover &&
-      (!this.store.data.locked||this.store.hover.dbInput) &&
+      (!this.store.data.locked || this.store.hover.dbInput) &&
       !this.store.options.disableInput
     ) {
       if (this.store.hover.onShowInput) {
@@ -5839,7 +5850,7 @@ export class Canvas {
       return;
     }
     //过滤table2图元
-    if (!rect&& !pen.dbInput) {
+    if (!rect && !pen.dbInput) {
       this.setInputStyle(pen);
     } else {
       this.inputDiv.style.width = '100%';
