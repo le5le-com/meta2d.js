@@ -27,6 +27,7 @@ import {
   FormItem,
   BindId,
   isAncestor,
+  isShowChild,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -2386,6 +2387,50 @@ export class Meta2d {
       evt.initEvent('click', true, true);
       a.dispatchEvent(evt);
     });
+  }
+
+  downloadSvg() {
+    if (!(window as any).C2S) {
+      console.error('请先加载乐吾乐官网下的canvas2svg.js', 'https://assets.le5lecdn.com/2d/canvas2svg.js');
+      throw new Error('请先加载乐吾乐官网下的canvas2svg.js');
+    }
+
+    const rect = this.getRect();
+    rect.x -= 10;
+    rect.y -= 10;
+    const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
+    ctx.textBaseline = 'middle';
+    for (const pen of this.store.data.pens) {
+      if (pen.visible == false || !isShowChild(pen, this.store)) {
+        continue;
+      }
+      renderPenRaw(ctx, pen, rect);
+    }
+
+    let mySerializedSVG = ctx.getSerializedSvg();
+    if (this.store.data.background) {
+      mySerializedSVG = mySerializedSVG.replace('{{bk}}', '');
+      mySerializedSVG = mySerializedSVG.replace(
+        '{{bkRect}}',
+        `<rect x="0" y="0" width="100%" height="100%" fill="${this.store.data.background}"></rect>`
+      );
+    } else {
+      mySerializedSVG = mySerializedSVG.replace('{{bk}}', '');
+      mySerializedSVG = mySerializedSVG.replace('{{bkRect}}', '');
+    }
+
+    mySerializedSVG = mySerializedSVG.replace(/--le5le--/g, '&#x');
+
+    const urlObject = window.URL;
+    const export_blob = new Blob([mySerializedSVG]);
+    const url = urlObject.createObjectURL(export_blob);
+
+    const a = document.createElement('a');
+    a.setAttribute('download', `${this.store.data.name || 'le5le.meta2d'}.svg`);
+    a.setAttribute('href', url);
+    const evt = document.createEvent('MouseEvents');
+    evt.initEvent('click', true, true);
+    a.dispatchEvent(evt);
   }
 
   getRect(pens: Pen[] = this.store.data.pens) {

@@ -327,6 +327,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       }
       // hover
       if (
+        pen.calculative.hover &&
         pen.calculative.hoverCell?.row === i &&
         pen.calculative.hoverCell?.col === j
       ) {
