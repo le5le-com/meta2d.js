@@ -2507,7 +2507,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       const offsetRotate =
         ((pen.calculative.initRect.rotate + lastVal + frame[k] * process) %
           360) -
-        pen.calculative.rotate;
+        (pen.calculative.rotate || 0);
       if (pen.children?.length) {
         pen.calculative.canvas.rotatePen(
           pen,
