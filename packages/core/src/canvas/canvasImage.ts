@@ -137,27 +137,26 @@ export class CanvasImage {
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       const width = this.store.data.width || this.store.options.width;
       const height = this.store.data.height || this.store.options.height;
+      const x = this.store.data.x || this.store.options.x;
+      const y = this.store.data.y || this.store.options.y;
       if (width && height && this.store.bkImg) {
         ctx.save();
         ctx.drawImage(
           this.store.bkImg,
-          this.store.data.origin.x + this.store.data.x,
-          this.store.data.origin.y + this.store.data.y,
-          this.store.data.width * this.store.data.scale,
-          this.store.data.height * this.store.data.scale
+          this.store.data.origin.x + x,
+          this.store.data.origin.y + y,
+          width * this.store.data.scale,
+          height * this.store.data.scale
         );
         ctx.restore();
       }
       const background =
-        this.store.data.background || this.store.options.background;
+        this.store.data.background ||
+        (this.store.bkImg ? undefined : this.store.options.background);
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
-        const width = this.store.data.width || this.store.options.width;
-        const height = this.store.data.height || this.store.options.height;
         if (width && height) {
-          const x = this.store.data.x || this.store.options.x;
-          const y = this.store.data.y || this.store.options.y;
           ctx.fillRect(
             this.store.data.origin.x + x,
             this.store.data.origin.y + y,
