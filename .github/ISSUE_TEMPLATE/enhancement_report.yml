@@ -1,0 +1,23 @@
+name: "bug报告"
+description: "向我们反馈项目出现的意外错误."
+title: "[Bug]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    attributes:
+      label: 建议
+      description: |
+        请输入你想为改善产品提出的建议
+      placeholder: |
+        请输入建议
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 建议原因
+      description: |
+        此建议你认为能解决什么痛点
+      placeholder: |
+        请输入建议原因
+    validations:
+      required: true
