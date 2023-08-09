@@ -2157,6 +2157,16 @@ export class Canvas {
     // Add pen
     if (this.addCaches && this.addCaches.length) {
       if (!this.store.data.locked) {
+        if(this.dragRect){
+          // 只存在一个缓存图元
+          if(this.addCaches.length === 1){
+            const target = this.addCaches[0];
+            target.width = this.dragRect.width;
+            target.height = this.dragRect.height;
+            e.x = (this.dragRect.x + this.dragRect.ex) / 2;
+            e.y = (this.dragRect.y + this.dragRect.ey) / 2;
+          }
+        }
         this.dropPens(this.addCaches, e);
       }
       this.addCaches = undefined;
