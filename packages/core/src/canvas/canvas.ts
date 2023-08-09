@@ -4380,6 +4380,7 @@ export class Canvas {
       const sign = [1, 3].includes(this.resizeIndex) ? -1 : 1;
       offsetY = (sign * (offsetX * h)) / w;
     }
+    (this.activeRect as any).ratio = this.initPens[0].ratio;
     resizeRect(this.activeRect, offsetX, offsetY, this.resizeIndex);
     calcCenter(this.activeRect);
 
