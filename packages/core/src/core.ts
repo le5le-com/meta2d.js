@@ -2471,7 +2471,7 @@ export class Meta2d {
     this.centerView();
   }
 
-  fitSizeView(fit: boolean = true, viewPadding: Padding = 10) {
+  fitSizeView(fit: boolean|string = true, viewPadding: Padding = 10) {
     // 默认垂直填充，两边留白
     // if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
@@ -2491,11 +2491,17 @@ export class Meta2d {
     const w = (width - padding[1] - padding[3]) / _width;
     const h = (height - padding[0] - padding[2]) / _height;
     let ratio = w;
-    if (fit) {
-      // 完整显示取小的
-      ratio = w > h ? h : w;
+    if (fit === 'width') {
+      ratio = w;
+    } else if (fit === 'height') {
+      ratio = h;
     } else {
-      ratio = w > h ? w : h;
+      if (fit) {
+        // 完整显示取小的
+        ratio = w > h ? h : w;
+      } else {
+        ratio = w > h ? w : h;
+      }
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
     this.scale(ratio * this.store.data.scale);
