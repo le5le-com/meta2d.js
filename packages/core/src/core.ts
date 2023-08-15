@@ -878,6 +878,10 @@ export class Meta2d {
     clearStore(this.store);
     this.hideInput();
     this.canvas.tooltip.hide();
+    if (this.map && this.map.isShow) {
+      this.map.show();
+      this.map.setView();
+    }
     this.canvas.clearCanvas();
     sessionStorage.removeItem('page');
     this.store.clipboard = undefined;
