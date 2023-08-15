@@ -371,6 +371,17 @@ export class Canvas {
       });
     };
     this.externalElements.onmouseleave = (e) => {
+      //离开画布取消所有选中
+      this.store.data.pens.forEach((pen) => {
+        if (pen.calculative.hover) {
+          pen.calculative.hover = false;
+        }
+      });
+      if (this.store.hover) {
+        this.store.hover.calculative.hover = false;
+        this.store.hover = undefined;
+      }
+      this.render();
       if ((e as any).toElement !== this.tooltip.box) {
         this.tooltip.hide();
         this.store.lastHover = undefined;
@@ -509,7 +520,12 @@ export class Canvas {
     if (this.pencil) {
       return;
     }
-
+    if (this.store.hover) {
+      if (this.store.hover.onWheel) {
+        this.store.hover.onWheel(this.store.hover, e);
+        return;
+      }
+    }
     if (this.store.options.disableScale) {
       return;
     }
@@ -2141,6 +2157,16 @@ export class Canvas {
     // Add pen
     if (this.addCaches && this.addCaches.length) {
       if (!this.store.data.locked) {
+        if(this.dragRect){
+          // 只存在一个缓存图元
+          if(this.addCaches.length === 1){
+            const target = this.addCaches[0];
+            target.width = this.dragRect.width;
+            target.height = this.dragRect.height;
+            e.x = (this.dragRect.x + this.dragRect.ex) / 2;
+            e.y = (this.dragRect.y + this.dragRect.ey) / 2;
+          }
+        }
         this.dropPens(this.addCaches, e);
       }
       this.addCaches = undefined;
@@ -4364,6 +4390,7 @@ export class Canvas {
       const sign = [1, 3].includes(this.resizeIndex) ? -1 : 1;
       offsetY = (sign * (offsetX * h)) / w;
     }
+    (this.activeRect as any).ratio = this.initPens[0].ratio;
     resizeRect(this.activeRect, offsetX, offsetY, this.resizeIndex);
     calcCenter(this.activeRect);
 
@@ -5798,7 +5825,7 @@ export class Canvas {
   private ondblclick = (e: MouseEvent) => {
     if (
       this.store.hover &&
-      !this.store.data.locked &&
+      (!this.store.data.locked || this.store.hover.dbInput) &&
       !this.store.options.disableInput
     ) {
       if (this.store.hover.onShowInput) {
@@ -5839,8 +5866,11 @@ export class Canvas {
       return;
     }
     //过滤table2图元
-    if (!rect) {
+    if (!rect && !pen.dbInput) {
       this.setInputStyle(pen);
+    } else {
+      this.inputDiv.style.width = '100%';
+      this.inputDiv.style.height = '100%';
     }
     const textRect = rect || pen.calculative.worldTextRect;
 
