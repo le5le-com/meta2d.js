@@ -440,7 +440,7 @@ export class Meta2d {
       const res: Response = await fetch(network.url, {
         headers: network.headers,
         method: network.method,
-        body: value,
+        body: JSON.stringify(value),
       });
       if (res.ok) {
         console.info('http消息发送成功');
@@ -1517,7 +1517,10 @@ export class Meta2d {
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
             const res: Response = await fetch(item.http, {
+              method: item.method || 'GET',
               headers: item.httpHeaders,
+              body:
+                item.method === 'POST' ? JSON.stringify(item.body) : undefined,
             });
             if (res.ok) {
               const data = await res.text();
@@ -1787,7 +1790,7 @@ export class Meta2d {
           const res: Response = await fetch(item.url, {
             headers: item.headers,
             method: item.method,
-            body: item.method === 'GET' ? undefined : item.body,
+            body: item.method === 'GET' ? undefined : JSON.stringify(item.body),
           });
           if (res.ok) {
             const data = await res.text();
@@ -2395,7 +2398,10 @@ export class Meta2d {
 
   downloadSvg() {
     if (!(window as any).C2S) {
-      console.error('请先加载乐吾乐官网下的canvas2svg.js', 'https://assets.le5lecdn.com/2d/canvas2svg.js');
+      console.error(
+        '请先加载乐吾乐官网下的canvas2svg.js',
+        'https://assets.le5lecdn.com/2d/canvas2svg.js'
+      );
       throw new Error('请先加载乐吾乐官网下的canvas2svg.js');
     }
 
@@ -2475,7 +2481,7 @@ export class Meta2d {
     this.centerView();
   }
 
-  fitSizeView(fit: boolean|string = true, viewPadding: Padding = 10) {
+  fitSizeView(fit: boolean | string = true, viewPadding: Padding = 10) {
     // 默认垂直填充，两边留白
     // if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
