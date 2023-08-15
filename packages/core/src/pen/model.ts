@@ -323,7 +323,7 @@ export interface Pen extends Rect {
   textRotate?: boolean; //文字是否旋转
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   textAutoAdjust?: boolean; //text图元宽高根据文本自动调整
-  dbInput?: boolean;//锁定状态下，双击能否输入
+  dbInput?: boolean; //锁定状态下，双击能否输入
   calculative?: {
     x?: number;
     y?: number;
@@ -579,7 +579,7 @@ export const isDomShapes = [
 // 格式刷同步的属性
 export const formatAttrs: Set<string> = new Set([
   'borderRadius',
-  'rotate',
+  // 'rotate',
   'paddingLeft',
   'paddingRight',
   'paddingTop',
