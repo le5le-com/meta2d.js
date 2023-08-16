@@ -378,7 +378,7 @@ export class Meta2d {
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
       const value = deepClone(e.value);
       if (value && typeof value === 'object') {
-        if (e.targetType === 'action') {
+        if (e.targetType === 'id') {
           const _pen = e.params ? this.findOne(e.params) : pen;
           for (let key in value) {
             if (!value[key]) {
@@ -436,16 +436,35 @@ export class Meta2d {
     if (!network.url) {
       return;
     }
-    if (network.type === 'http') {
-      const res: Response = await fetch(network.url, {
-        headers: network.headers,
+    if (network.protocol === 'http') {
+      if (typeof network.headers === 'object') {
+        for (let i in network.headers) {
+          let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+          if (keys) {
+            network.headers[i] = network.headers[i].replace(
+              `\${${keys[0]}}`,
+              this.getDynamicParam(keys[0])
+            );
+          }
+        }
+      }
+      let params = undefined;
+      if (network.method === 'GET') {
+        params =
+          '?' +
+          Object.keys(value)
+            .map((key) => key + '=' + value[key])
+            .join('&');
+      }
+      const res: Response = await fetch(network.url + (params ? params : ''), {
+        headers: network.headers || {},
         method: network.method,
-        body: JSON.stringify(value),
+        body: network.method === 'POST' ? JSON.stringify(value) : undefined,
       });
       if (res.ok) {
         console.info('http消息发送成功');
       }
-    } else if (network.type === 'mqtt') {
+    } else if (network.protocol === 'mqtt') {
       const clients = this.mqttClients.filter(
         (client) => (client.options as any).href === network.url
       );
@@ -466,7 +485,7 @@ export class Meta2d {
           });
         });
       }
-    } else if (network.type === 'websocket') {
+    } else if (network.protocol === 'websocket') {
       const websockets = this.websockets.filter(
         (socket) => socket.url === network.url
       );
@@ -1772,6 +1791,29 @@ export class Meta2d {
     }
   }
 
+  //获取动态参数
+  getDynamicParam(key: string) {
+    function queryURLParams() {
+      let url = window.location.href.split('?')[1];
+      const urlSearchParams = new URLSearchParams(url);
+      const params = Object.fromEntries(urlSearchParams.entries());
+      return params;
+    }
+
+    function getCookie(name: string) {
+      let arr: RegExpMatchArray | null;
+      const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
+      if ((arr = document.cookie.match(reg))) {
+        return decodeURIComponent(arr[2]);
+      } else {
+        return '';
+      }
+    }
+    let params = queryURLParams();
+    let value = params[key] || localStorage[key] || getCookie(key) || '';
+    return value;
+  }
+
   onNetworkConnect(https: Network[]) {
     let enable = this.store.data.enableMock;
     if (!(https && https.length) && !enable) {
@@ -1786,6 +1828,28 @@ export class Meta2d {
 
       https.forEach(async (item) => {
         if (item.url) {
+          if (typeof item.headers === 'object') {
+            for (let i in item.headers) {
+              let keys = item.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+              if (keys) {
+                item.headers[i] = item.headers[i].replace(
+                  `\${${keys[0]}}`,
+                  this.getDynamicParam(keys[0])
+                );
+              }
+            }
+          }
+          if (typeof item.body === 'object') {
+            for (let i in item.body) {
+              let keys = item.body[i].match(/(?<=\$\{).*?(?=\})/g);
+              if (keys) {
+                item.body[i] = item.body[i].replace(
+                  `\${${keys[0]}}`,
+                  this.getDynamicParam(keys[0])
+                );
+              }
+            }
+          }
           // 默认每一秒请求一次
           const res: Response = await fetch(item.url, {
             headers: item.headers,
