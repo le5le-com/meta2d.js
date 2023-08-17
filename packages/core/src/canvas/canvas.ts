@@ -673,12 +673,12 @@ export class Canvas {
           this.translateAnchor(-1, 0);
           break;
         }
-        x = -10;
+        x = -1;
         if (e.shiftKey) {
           x = -5;
         }
         if (e.ctrlKey || e.metaKey) {
-          x = -1;
+          x = -10;
         }
         this.translatePens(this.store.active, x, 0);
         break;
@@ -687,12 +687,12 @@ export class Canvas {
           this.translateAnchor(0, -1);
           break;
         }
-        y = -10;
+        y = -1;
         if (e.shiftKey) {
           y = -5;
         }
         if (e.ctrlKey || e.metaKey) {
-          y = -1;
+          y = -10;
         }
         this.translatePens(this.store.active, 0, y);
         break;
@@ -701,11 +701,12 @@ export class Canvas {
           this.translateAnchor(1, 0);
           break;
         }
+        x = 1;
         if (e.shiftKey) {
           x = 5;
         }
         if (e.ctrlKey || e.metaKey) {
-          x = 1;
+          x = 10;
         }
         this.translatePens(this.store.active, x, 0);
         break;
@@ -714,11 +715,12 @@ export class Canvas {
           this.translateAnchor(0, 1);
           break;
         }
+        y = 1;
         if (e.shiftKey) {
           y = 5;
         }
         if (e.ctrlKey || e.metaKey) {
-          y = 1;
+          y = 10;
         }
         this.translatePens(this.store.active, 0, y);
         break;
@@ -2157,9 +2159,9 @@ export class Canvas {
     // Add pen
     if (this.addCaches && this.addCaches.length) {
       if (!this.store.data.locked) {
-        if(this.dragRect){
+        if (this.dragRect) {
           // 只存在一个缓存图元
-          if(this.addCaches.length === 1){
+          if (this.addCaches.length === 1) {
             const target = this.addCaches[0];
             target.width = this.dragRect.width;
             target.height = this.dragRect.height;
@@ -4926,6 +4928,8 @@ export class Canvas {
     y: number,
     doing?: boolean
   ) {
+    x = x * this.store.data.scale;
+    y = y * this.store.data.scale;
     if (!pens || !pens.length) {
       return;
     }
