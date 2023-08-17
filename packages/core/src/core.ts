@@ -643,6 +643,7 @@ export class Meta2d {
     }
     this.initBindDatas();
     this.initBinds();
+    this.initMessageEvents();
     this.render();
     this.listenSocket();
     this.connectSocket();
@@ -810,6 +811,9 @@ export class Meta2d {
         pen.onMove && pen.onMove(pen);
       }
     });
+    if (lock > 0) {
+      this.initMessageEvents();
+    }
   }
 
   // end  - 当前鼠标位置，是否作为终点
@@ -2209,6 +2213,14 @@ export class Meta2d {
         this.onSizeUpdate();
         break;
     }
+
+    if (this.store.messageEvents[eventName]) {
+      this.store.messageEvents[eventName].forEach((item) => {
+        item.event.actions.forEach((action) => {
+          this.events[action.action](item.pen, action);
+        });
+      });
+    }
   };
 
   private doEvent = (pen: Pen, eventName: EventName) => {
@@ -2308,6 +2320,22 @@ export class Meta2d {
     // 事件冒泡，子执行完，父执行
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
+
+  initMessageEvents() {
+    this.store.data.pens.forEach((pen) => {
+      pen.events?.forEach((event) => {
+        if (event.name === 'message' && event.message) {
+          if (!this.store.messageEvents[event.message]) {
+            this.store.messageEvents[event.message] = [];
+          }
+          this.store.messageEvents[event.message].push({
+            pen: pen,
+            event: event,
+          });
+        }
+      });
+    });
+  }
 
   judgeCondition(pen: Pen, key: string, condition: TriggerCondition) {
     const { type, target, fnJs, fn, operator, valueType } = condition;
