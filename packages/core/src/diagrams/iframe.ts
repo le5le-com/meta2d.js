@@ -73,6 +73,9 @@ function beforeValue(pen: Pen, value: any) {
     value['operationalRect.width'] !== undefined ||
     value['operationalRect.height'] !== undefined
   ) {
+    if (!pen.operationalRect) {
+      pen.operationalRect = {};
+    }
     let _value = deepClone(value);
     if (!_value.operationalRect) {
       _value.operationalRect = {};
@@ -172,7 +175,7 @@ function generateAroundDiv(pen: Pen) {
   top.style.top = '0px';
   top.style.width = '100%';
   top.style.height = pen.operationalRect.y * 100 + '%';
-  top.className = 'blur';
+  top.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
   div.appendChild(top);
 
   const right = document.createElement('div');
@@ -182,7 +185,8 @@ function generateAroundDiv(pen: Pen) {
   right.style.width =
     (1 - pen.operationalRect.x - pen.operationalRect.width) * 100 + '%';
   right.style.height = '100%';
-  right.className = 'blur';
+  right.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+
   div.appendChild(right);
 
   const bottom = document.createElement('div');
@@ -192,7 +196,8 @@ function generateAroundDiv(pen: Pen) {
   bottom.style.width = '100%';
   bottom.style.height =
     (1 - pen.operationalRect.y - pen.operationalRect.height) * 100 + '%';
-  bottom.className = 'blur';
+  bottom.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+
   div.appendChild(bottom);
 
   const left = document.createElement('div');
@@ -201,7 +206,7 @@ function generateAroundDiv(pen: Pen) {
   left.style.top = '0px';
   left.style.width = pen.operationalRect.x * 100 + '%';
   left.style.height = '100%';
-  left.className = 'blur';
+  left.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
   div.appendChild(left);
 
   let mouseEnter = () => {

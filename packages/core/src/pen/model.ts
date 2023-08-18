@@ -325,6 +325,7 @@ export interface Pen extends Rect {
   textAutoAdjust?: boolean; //text图元宽高根据文本自动调整
   dbInput?: boolean; //锁定状态下，双击能否输入
   operationalRect?: Rect; //iframe可操作区域 x,y,width,height 均取值0-1
+  blur?: number;
   calculative?: {
     x?: number;
     y?: number;
