@@ -2463,6 +2463,10 @@ export class Meta2d {
     return this.canvas.toPng(padding, callback, containBkImg);
   }
 
+  activeToPng(padding?: Padding) {
+    return this.canvas.activeToPng(padding);
+  }
+
   /**
    * 下载 png
    * @param name 传入参数自带文件后缀名 例如：'test.png'

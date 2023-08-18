@@ -6684,6 +6684,61 @@ export class Canvas {
     return canvas.toDataURL();
   }
 
+  activeToPng(padding: Padding = 2) {
+    const allPens = this.getAllByPens(this.store.active);
+    let ids = allPens.map((pen) => pen.id);
+    const rect = getRect(allPens);
+    if (!isFinite(rect.width)) {
+      throw new Error('can not to png, because width is not finite');
+    }
+    const oldRect = deepClone(rect);
+    const p = formatPadding(padding);
+    rect.x -= p[3];
+    rect.y -= p[0];
+    rect.width += p[3] + p[1];
+    rect.height += p[0] + p[2];
+    calcRightBottom(rect);
+    const canvas = document.createElement('canvas');
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    if (
+      canvas.width > 32767 ||
+      canvas.height > 32767 ||
+      (!navigator.userAgent.includes('Firefox') &&
+        canvas.height * canvas.width > 268435456) ||
+      (navigator.userAgent.includes('Firefox') &&
+        canvas.height * canvas.width > 472907776)
+    ) {
+      throw new Error(
+        'can not to png, because the size exceeds the browser limit'
+      );
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'middle'; // 默认垂直居中
+
+    // // 平移画布，画笔的 worldRect 不变化
+    ctx.translate(-oldRect.x, -oldRect.y);
+
+    for (const pen of this.store.data.pens) {
+      if (ids.includes(pen.id)) {
+        // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
+        if (!isShowChild(pen, this.store) || pen.visible == false) {
+          continue;
+        }
+        const { active } = pen.calculative;
+        pen.calculative.active = false;
+        if (pen.calculative.img) {
+          renderPenRaw(ctx, pen);
+        } else {
+          renderPen(ctx, pen);
+        }
+        pen.calculative.active = active;
+      }
+    }
+
+    return canvas.toDataURL();
+  }
+
   toggleAnchorMode() {
     if (!this.hotkeyType) {
       if (this.store.options.disableAnchor || this.store.hover?.disableAnchor) {
