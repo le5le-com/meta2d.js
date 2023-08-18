@@ -324,6 +324,7 @@ export interface Pen extends Rect {
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   textAutoAdjust?: boolean; //text图元宽高根据文本自动调整
   dbInput?: boolean; //锁定状态下，双击能否输入
+  operationalRect?: Rect; //iframe可操作区域 x,y,width,height 均取值0-1
   calculative?: {
     x?: number;
     y?: number;
