@@ -6,6 +6,7 @@ import { defaultOptions, Options } from '../options';
 import { Point } from '../point';
 import { globalStore } from './global';
 import { Rect } from '../rect';
+import { Event } from '../event';
 
 export interface Meta2dData {
   pens: Pen[];
@@ -136,6 +137,7 @@ export interface Meta2dStore {
     data: Meta2dData;
   }[];
   patchFlagsLast?: boolean; // 清除上次图片画布层
+  messageEvents?: { [key: string]: { pen: Pen; event: Event }[] };
 }
 
 export interface Meta2dClipboard {
@@ -171,6 +173,7 @@ export const createStore = () => {
     bindDatas: {},
     bind: {},
     cacheDatas: [],
+    messageEvents: {},
   } as Meta2dStore;
 };
 

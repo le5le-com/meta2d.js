@@ -13,7 +13,9 @@ export type EventName =
   | 'mousedown'
   | 'mouseup'
   | 'dblclick'
-  | 'valueUpdate';
+  | 'valueUpdate'
+  | 'message';
+
 export interface Event {
   name: EventName;
   action: EventAction; // 事件动作
@@ -29,6 +31,7 @@ export interface Event {
   targetType?: string;
   network?: Network;
   actions?: Event[];
+  message?: string; //消息名称
 }
 
 export enum EventAction {
