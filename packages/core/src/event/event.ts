@@ -51,6 +51,8 @@ export enum EventAction {
   Navigator,
   Dialog,
   SendData, //数据源选择
+  PostMessage, //发送场景数据
+  PostMessageToParent, //向父窗口发送消息
 }
 
 export interface Where {

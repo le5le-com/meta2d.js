@@ -69,6 +69,7 @@ import pkg from '../package.json';
 import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
+import { queryURLParams } from './utils/url';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -390,6 +391,36 @@ export class Meta2d {
           return;
         }
       }
+    };
+    this.events[EventAction.PostMessage] = (pen: Pen, e: Event) => {
+      if (typeof e.value !== 'string') {
+        console.warn('[meta2d] Emit value must be a string');
+        return;
+      }
+      const _pen = e.params ? this.findOne(e.params) : pen;
+      if (_pen.name !== 'iframe' || !pen.iframe) {
+        console.warn('不是嵌入页面');
+        return;
+      }
+      let params = queryURLParams(_pen.iframe.split('?')[1]);
+      (
+        _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
+      ).contentWindow.postMessage(
+        JSON.stringify({
+          name: e.value,
+          id: params.id,
+        }),
+        '*'
+      );
+      return;
+    };
+    this.events[EventAction.PostMessageToParent] = (pen: Pen, e: Event) => {
+      if (typeof e.value !== 'string') {
+        console.warn('[meta2d] Emit value must be a string');
+        return;
+      }
+      window.parent.postMessage(e.value, '*');
+      return;
     };
   }
 
@@ -1797,13 +1828,6 @@ export class Meta2d {
 
   //获取动态参数
   getDynamicParam(key: string) {
-    function queryURLParams() {
-      let url = window.location.href.split('?')[1];
-      const urlSearchParams = new URLSearchParams(url);
-      const params = Object.fromEntries(urlSearchParams.entries());
-      return params;
-    }
-
     function getCookie(name: string) {
       let arr: RegExpMatchArray | null;
       const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
