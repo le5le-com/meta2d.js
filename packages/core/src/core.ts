@@ -1036,9 +1036,10 @@ export class Meta2d {
   startAnimate(idOrTagOrPens?: string | Pen[], params?: number | string): void {
     this.stopAnimate(idOrTagOrPens);
     let pens: Pen[];
+    // 没有参数 则播放有自动播放属性的动画
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
-        return (pen.type || pen.frames) && pen.autoPlay;
+        return ((pen.type || pen.frames) && pen.autoPlay) || pen.animations;
       });
     } else if (typeof idOrTagOrPens === 'string') {
       pens = this.find(idOrTagOrPens);
@@ -1052,8 +1053,8 @@ export class Meta2d {
         pen.calculative.frameStart += d;
         pen.calculative.frameEnd += d;
       } else {
+        let index = -1;
         if (params !== undefined && pen.animations) {
-          let index = -1;
           if (typeof params === 'string') {
             index = pen.animations.findIndex(
               (animation) => animation.name === params
@@ -1068,6 +1069,10 @@ export class Meta2d {
               return;
             }
           }
+        }else if(params === undefined){
+          index = pen.animations.findIndex(i=>i.autoPlay);
+        }
+        if (index !== -1){
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
           animate.currentAnimation = index;
