@@ -578,6 +578,6 @@ function updateOption(_option, ratio) {
       });
     }
   }
-  deepSetValue(option, 'fontSize', ratio);
+  deepSetValue(option, ['fontSize'], ratio);
   return option;
 }
