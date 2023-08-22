@@ -398,7 +398,7 @@ export class Meta2d {
         return;
       }
       const _pen = e.params ? this.findOne(e.params) : pen;
-      if (_pen.name !== 'iframe' || !pen.iframe) {
+      if (_pen.name !== 'iframe' || !_pen.iframe) {
         console.warn('不是嵌入页面');
         return;
       }
@@ -1069,10 +1069,10 @@ export class Meta2d {
               return;
             }
           }
-        }else if(params === undefined){
-          index = pen.animations.findIndex(i=>i.autoPlay);
+        } else if (params === undefined) {
+          index = pen.animations.findIndex((i) => i.autoPlay);
         }
-        if (index !== -1){
+        if (index !== -1) {
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
           animate.currentAnimation = index;
