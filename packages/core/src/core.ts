@@ -1039,7 +1039,7 @@ export class Meta2d {
     // 没有参数 则播放有自动播放属性的动画
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
-        return ((pen.type || pen.frames) && pen.autoPlay) || pen.animations;
+        return ((pen.type || pen.frames) && pen.autoPlay) || (pen.animations && pen.autoPlay);
       });
     } else if (typeof idOrTagOrPens === 'string') {
       pens = this.find(idOrTagOrPens);
