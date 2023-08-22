@@ -17,6 +17,7 @@ export enum ReplaceMode {
   Replace,
   ReplaceAll,
 }
+let keyWords = ['fontSize', 'nameGap'];
 
 export interface ChartPen extends Pen {
   echarts: {
@@ -46,7 +47,10 @@ export function echarts(pen: ChartPen): Path2D {
   if (!pen.echarts) {
     return;
   }
-
+  keyWords =
+    pen.calculative.canvas.store.options.diagramOptions['chart']?.keyWords ||
+    keyWords;
+  console.log('keyWords');
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
     pen.onMove = move;
@@ -578,6 +582,6 @@ function updateOption(_option, ratio) {
       });
     }
   }
-  deepSetValue(option, ['fontSize'], ratio);
+  deepSetValue(option, keyWords, ratio);
   return option;
 }
