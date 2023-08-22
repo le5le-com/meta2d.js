@@ -419,7 +419,7 @@ export class Meta2d {
         console.warn('[meta2d] Emit value must be a string');
         return;
       }
-      window.parent.postMessage(e.value, '*');
+      window.parent.postMessage(JSON.stringify(e.value), '*');
       return;
     };
   }
