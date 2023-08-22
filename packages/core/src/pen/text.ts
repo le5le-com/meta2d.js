@@ -318,10 +318,23 @@ export function calcTextAutoWidth(pen: Pen) {
   }
   ctx.restore();
   let textHeight = arr.length * fontSize * lineHeight;
+  if (pen.textAlign === 'left') {
+    // pen.x = pen.x;
+  } else if (pen.textAlign === 'right') {
+    pen.x = pen.x - (textWidth - pen.width);
+  } else {
+    pen.x = pen.x - (textWidth - pen.width) / 2;
+  }
+
+  if (pen.textBaseline === 'top') {
+  } else if (pen.textBaseline === 'bottom') {
+    pen.y = pen.y - (textHeight - pen.height);
+  } else {
+    pen.y = pen.y - (textHeight - pen.height) / 2;
+  }
   // if (textHeight > pen.height) {
   pen.height = textHeight;
   // }
-  pen.x = pen.x - (textWidth - pen.width) / 2;
   pen.width = textWidth;
   pen.calculative.canvas.updatePenRect(pen);
   pen.calculative.canvas.calcActiveRect();
