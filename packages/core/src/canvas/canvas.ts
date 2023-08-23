@@ -4933,8 +4933,10 @@ export class Canvas {
     y: number,
     doing?: boolean
   ) {
-    x = x * this.store.data.scale;
-    y = y * this.store.data.scale;
+    if (this.store.data.scale < 1 || (Math.abs(x) <= 10 && Math.abs(y) <= 10)) {
+      x = x * this.store.data.scale;
+      y = y * this.store.data.scale;
+    }
     if (!pens || !pens.length) {
       return;
     }
