@@ -2629,6 +2629,7 @@ export class Canvas {
     let hoverType = HoverType.None;
     this.store.hover = undefined;
     this.store.hoverAnchor = undefined;
+    this.title.hide();
     this.store.pointAt = undefined;
     this.store.pointAtIndex = undefined;
     const activeLine =
@@ -2750,32 +2751,36 @@ export class Canvas {
         continue;
       }
       //anchor title
-      if (this.store.data.locked) {
-        // locked>0
-        if (pen.calculative.worldAnchors) {
-          for (const anchor of pen.calculative.worldAnchors) {
-            if (
-              hitPoint(
-                pt,
-                anchor,
-                this.pointSize,
-                anchor.penId ? this.store.pens[anchor.penId] : undefined
-              )
-            ) {
-              this.title.show(anchor, pen);
-              if (anchor.title) {
-                break outer;
-              }
-            }
-          }
-        }
-      }
+      // if (this.store.data.locked) {
+      //   // locked>0
+      //   if (pen.calculative.worldAnchors) {
+      //     for (const anchor of pen.calculative.worldAnchors) {
+      //       if (
+      //         hitPoint(
+      //           pt,
+      //           anchor,
+      //           this.pointSize,
+      //           anchor.penId ? this.store.pens[anchor.penId] : undefined
+      //         )
+      //       ) {
+      //         this.title.show(anchor, pen);
+      //         if (anchor.title) {
+      //           break outer;
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
       // 锚点
       if (!this.store.data.locked && this.hotkeyType !== HotkeyType.Resize) {
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
             if (hoverType) {
+              //title显示
+              let _anchor = deepClone(anchor);
+              Object.assign(_anchor, pt);
+              this.title.show(_anchor, pen);
               break outer;
             }
           }

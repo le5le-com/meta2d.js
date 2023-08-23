@@ -10,9 +10,9 @@ export class Title {
 
     parentElement.appendChild(this.box);
 
-    this.box.onmouseleave = () => {
-      this.hide();
-    };
+    // this.box.onmouseleave = () => {
+    //   this.hide();
+    // };
 
     let sheet: any;
     for (let i = 0; i < document.styleSheets.length; i++) {
@@ -32,7 +32,7 @@ export class Title {
       document.head.appendChild(style);
       sheet = style.sheet;
       sheet.insertRule(
-        '.meta2d-title{position:absolute;padding:0;z-index:10;left: -9999px;top: -9999px;width:8px;height:8px;cursor: crosshair;}'
+        '.meta2d-title{position:absolute;padding:0;z-index:10;left: -9999px;top: -9999px;background:#fff;color:#000; cursor: crosshair;}'
       );
     }
   }
@@ -57,7 +57,8 @@ export class Title {
    * @returns 返回设置前的 rect
    */
   private setText(anchor: Point) {
-    this.box.title = anchor.title;
+    // this.box.title = anchor.title;
+    this.box.innerText = anchor.title;
   }
 
   /**
@@ -81,8 +82,8 @@ export class Title {
    * @param newRect 新
    */
   private changePositionByAnchor(anchor: Point) {
-    this.box.style.left = anchor.x - 4 + 'px';
-    this.box.style.top = anchor.y - 4 + 'px';
+    this.box.style.left = anchor.x + 10 + 'px';
+    this.box.style.top = anchor.y + 10 + 'px';
   }
 
   private static titleEmpty(anchor: Point) {
@@ -104,7 +105,7 @@ export class Title {
 
   hide() {
     this.box.style.left = '-9999px';
-    this.box.title = '';
+    this.box.innerText = '';
     this.currentAnchor = null;
   }
 
