@@ -1070,7 +1070,7 @@ export class Meta2d {
             }
           }
         } else if (params === undefined) {
-          index = pen.animations.findIndex((i) => i.autoPlay);
+          index = pen.animations?.findIndex((i) => i.autoPlay) || -1;
         }
         if (index !== -1) {
           const animate = deepClone(pen.animations[index]);
