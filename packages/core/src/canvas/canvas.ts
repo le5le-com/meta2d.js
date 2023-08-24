@@ -680,6 +680,7 @@ export class Canvas {
         if (e.ctrlKey || e.metaKey) {
           x = -10;
         }
+        x = x * this.store.data.scale;
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowUp':
@@ -694,6 +695,7 @@ export class Canvas {
         if (e.ctrlKey || e.metaKey) {
           y = -10;
         }
+        y = y * this.store.data.scale;
         this.translatePens(this.store.active, 0, y);
         break;
       case 'ArrowRight':
@@ -708,6 +710,7 @@ export class Canvas {
         if (e.ctrlKey || e.metaKey) {
           x = 10;
         }
+        x = x * this.store.data.scale;
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowDown':
@@ -722,6 +725,7 @@ export class Canvas {
         if (e.ctrlKey || e.metaKey) {
           y = 10;
         }
+        y = y * this.store.data.scale;
         this.translatePens(this.store.active, 0, y);
         break;
       case 'd':
@@ -4933,10 +4937,7 @@ export class Canvas {
     y: number,
     doing?: boolean
   ) {
-    if (this.store.data.scale < 1 || (Math.abs(x) <= 10 && Math.abs(y) <= 10)) {
-      x = x * this.store.data.scale;
-      y = y * this.store.data.scale;
-    }
+
     if (!pens || !pens.length) {
       return;
     }
