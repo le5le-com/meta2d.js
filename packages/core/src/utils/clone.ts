@@ -57,7 +57,13 @@ export function deepSetValue<T>(o: any, keyWords: string[], value: number): T {
     // const _o = {} as any;
     for (const key in o) {
       if (keyWords.includes(key)) {
-        o[key] = Number(o[key]) * value;
+        if(Array.isArray(o[key])){
+          o[key].forEach((i,index)=>{
+            o[key][index] = Number(i * value);
+          });
+        }else {
+          o[key] = Number(o[key]) * value;
+        }
       } else {
         o[key] = deepSetValue(o[key], keyWords, value);
       }
