@@ -1,6 +1,7 @@
 import {
   BindId,
   ChartData,
+  deepClone,
   FormItem,
   IValue,
   Pen,
@@ -16,6 +17,7 @@ export enum ReplaceMode {
   Replace,
   ReplaceAll,
 }
+let keyWords = ['fontSize', 'nameGap'];
 
 export interface ChartPen extends Pen {
   echarts: {
@@ -28,7 +30,7 @@ export interface ChartPen extends Pen {
     geoJson?: any;
     geoUrl?: string;
   };
-  beforeScale: number;
+  // beforeScale: number;
 }
 
 export function echarts(pen: ChartPen): Path2D {
@@ -45,7 +47,10 @@ export function echarts(pen: ChartPen): Path2D {
   if (!pen.echarts) {
     return;
   }
-
+  keyWords =
+    pen.calculative.canvas.store.options.diagramOptions['chart']?.keyWords ||
+    keyWords;
+  console.log('keyWords');
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
     pen.onMove = move;
@@ -55,7 +60,7 @@ export function echarts(pen: ChartPen): Path2D {
     pen.onBeforeValue = beforeValue;
     pen.onBinds = binds;
     pen.onMouseEnter = move;
-    pen.onAdd = onAdd;
+    // pen.onAdd = onAdd;
     pen.onRenderPenRaw = onRenderPenRaw;
   }
 
@@ -103,7 +108,10 @@ export function echarts(pen: ChartPen): Path2D {
             echarts.registerMap(pen.echarts.geoName, data);
             pen.calculative.singleton.echartsReady = true;
             pen.calculative.singleton.echart.setOption(
-              pen.echarts.option,
+              updateOption(
+                pen.echarts.option,
+                pen.calculative.canvas.store.data.scale
+              ),
               true
             );
             setTimeout(() => {
@@ -118,7 +126,13 @@ export function echarts(pen: ChartPen): Path2D {
     if (pen.calculative.singleton.echartsReady) {
       // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
-        pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
+        pen.calculative.singleton.echart.setOption(
+          updateOption(
+            pen.echarts.option,
+            pen.calculative.canvas.store.data.scale
+          ),
+          true
+        );
         setTimeout(() => onRenderPenRaw(pen), 300);
       });
     }
@@ -127,9 +141,9 @@ export function echarts(pen: ChartPen): Path2D {
   return path;
 }
 
-function onAdd(pen: ChartPen) {
-  pen.beforeScale = pen.calculative.canvas.store.data.scale;
-}
+// function onAdd(pen: ChartPen) {
+//   // pen.beforeScale = pen.calculative.canvas.store.data.scale;
+// }
 
 function destory(pen: Pen) {
   if (pen.calculative.singleton && pen.calculative.singleton.div) {
@@ -152,41 +166,17 @@ function resize(pen: ChartPen) {
     return;
   }
   setElemPosition(pen, pen.calculative.singleton.div);
-  let option = pen.echarts.option;
-  if (!pen.beforeScale) {
-    pen.beforeScale = pen.calculative.canvas.store.data.scale;
-  }
-  let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
-  if (option.grid) {
-    let props = ['top', 'bottom', 'left', 'right'];
-    for (let i = 0; i < props.length; i++) {
-      if (Array.isArray(option.grid)) {
-        option.grid.forEach((item) => {
-          if (!isNaN(item[props[i]])) {
-            item[props[i]] *= ratio;
-          }
-        });
-      } else {
-        if (!isNaN(option.grid[props[i]])) {
-          option.grid[props[i]] *= ratio;
-        }
-      }
-    }
-  }
-
-  if (option.dataZoom) {
-    let props = ['right', 'top', 'width', 'height', 'left', 'bottom'];
-    for (let i = 0; i < props.length; i++) {
-      option.dataZoom.forEach((item) => {
-        if (!isNaN(item[props[i]])) {
-          item[props[i]] *= ratio;
-        }
-      });
-    }
-  }
-  deepSetValue(option, 'fontSize', ratio);
-  pen.calculative.singleton.echart.setOption(option, true);
-  pen.beforeScale = pen.calculative.canvas.store.data.scale;
+  // let option = pen.echarts.option;
+  // if (!pen.beforeScale) {
+  //   pen.beforeScale = pen.calculative.canvas.store.data.scale;
+  // }
+  // let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
+  // updateOption(option, ratio);
+  pen.calculative.singleton.echart.setOption(
+    updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
+    true
+  );
+  // pen.beforeScale = pen.calculative.canvas.store.data.scale;
   pen.calculative.singleton.echart.resize();
 }
 
@@ -196,7 +186,10 @@ function value(pen: ChartPen) {
   }
   setElemPosition(pen, pen.calculative.singleton.div);
   pen.calculative.singleton.echartsReady &&
-    pen.calculative.singleton.echart.setOption(pen.echarts.option, true);
+    pen.calculative.singleton.echart.setOption(
+      updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
+      true
+    );
 }
 
 function beforeValue(pen: ChartPen, value: ChartData) {
@@ -558,4 +551,37 @@ function onRenderPenRaw(pen: Pen) {
     pixelRatio: 2,
   });
   pen.calculative.img = img;
+}
+
+function updateOption(_option, ratio) {
+  const option = deepClone(_option);
+  if (option.grid) {
+    let props = ['top', 'bottom', 'left', 'right'];
+    for (let i = 0; i < props.length; i++) {
+      if (Array.isArray(option.grid)) {
+        option.grid.forEach((item) => {
+          if (!isNaN(item[props[i]])) {
+            item[props[i]] *= ratio;
+          }
+        });
+      } else {
+        if (!isNaN(option.grid[props[i]])) {
+          option.grid[props[i]] *= ratio;
+        }
+      }
+    }
+  }
+
+  if (option.dataZoom) {
+    let props = ['right', 'top', 'width', 'height', 'left', 'bottom'];
+    for (let i = 0; i < props.length; i++) {
+      option.dataZoom.forEach((item) => {
+        if (!isNaN(item[props[i]])) {
+          item[props[i]] *= ratio;
+        }
+      });
+    }
+  }
+  deepSetValue(option, keyWords, ratio);
+  return option;
 }

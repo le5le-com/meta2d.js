@@ -293,7 +293,8 @@ export function resizeRect(
   offsetY: number,
   resizeIndex: number
 ) {
-  if (rect.rotate && rect.rotate % 360) {
+  let calcRotate = rect.rotate?rect.rotate % 360 : 0;
+  if (calcRotate) {
     // 计算出外边的四个点
     const pts = rectToPoints(rect);
     // 斜率不改变，提前计算
@@ -303,7 +304,17 @@ export function resizeRect(
       // 斜对角的四个点
       // resize 的点
       pts[resizeIndex].x += offsetX;
-      pts[resizeIndex].y += offsetY;
+      if((rect as Pen ).ratio){
+        if(resizeIndex === 0 || resizeIndex === 2){
+          let calcOffsetY = offsetX * Math.tan((90-(360-calcRotate) - (Math.atan(rect.width/rect.height))/Math.PI*180)/ 180 * Math.PI);
+          pts[resizeIndex].y += calcOffsetY;
+        }else {
+          let calcOffsetY = offsetX * Math.tan((90-(360-calcRotate) + (Math.atan(rect.width/rect.height))/Math.PI*180)/ 180 * Math.PI);
+          pts[resizeIndex].y += calcOffsetY;
+        }
+      }else{
+        pts[resizeIndex].y += offsetY;
+      }
       // 不变的点
       const noChangePoint = pts[(resizeIndex + 2) % 4];
       // 由于斜率是不变的，我们只需要根据斜率 和 已知的两点求出相交的 另外两点

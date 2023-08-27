@@ -69,6 +69,7 @@ import pkg from '../package.json';
 import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
+import { queryURLParams } from './utils/url';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -378,7 +379,7 @@ export class Meta2d {
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
       const value = deepClone(e.value);
       if (value && typeof value === 'object') {
-        if (e.targetType === 'action') {
+        if (e.targetType === 'id') {
           const _pen = e.params ? this.findOne(e.params) : pen;
           for (let key in value) {
             if (!value[key]) {
@@ -390,6 +391,36 @@ export class Meta2d {
           return;
         }
       }
+    };
+    this.events[EventAction.PostMessage] = (pen: Pen, e: Event) => {
+      if (typeof e.value !== 'string') {
+        console.warn('[meta2d] Emit value must be a string');
+        return;
+      }
+      const _pen = e.params ? this.findOne(e.params) : pen;
+      if (_pen.name !== 'iframe' || !_pen.iframe) {
+        console.warn('不是嵌入页面');
+        return;
+      }
+      let params = queryURLParams(_pen.iframe.split('?')[1]);
+      (
+        _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
+      ).contentWindow.postMessage(
+        JSON.stringify({
+          name: e.value,
+          id: params.id,
+        }),
+        '*'
+      );
+      return;
+    };
+    this.events[EventAction.PostMessageToParent] = (pen: Pen, e: Event) => {
+      if (typeof e.value !== 'string') {
+        console.warn('[meta2d] Emit value must be a string');
+        return;
+      }
+      window.parent.postMessage(JSON.stringify(e.value), '*');
+      return;
     };
   }
 
@@ -436,16 +467,35 @@ export class Meta2d {
     if (!network.url) {
       return;
     }
-    if (network.type === 'http') {
-      const res: Response = await fetch(network.url, {
-        headers: network.headers,
+    if (network.protocol === 'http') {
+      if (typeof network.headers === 'object') {
+        for (let i in network.headers) {
+          let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+          if (keys) {
+            network.headers[i] = network.headers[i].replace(
+              `\${${keys[0]}}`,
+              this.getDynamicParam(keys[0])
+            );
+          }
+        }
+      }
+      let params = undefined;
+      if (network.method === 'GET') {
+        params =
+          '?' +
+          Object.keys(value)
+            .map((key) => key + '=' + value[key])
+            .join('&');
+      }
+      const res: Response = await fetch(network.url + (params ? params : ''), {
+        headers: network.headers || {},
         method: network.method,
-        body: value,
+        body: network.method === 'POST' ? JSON.stringify(value) : undefined,
       });
       if (res.ok) {
         console.info('http消息发送成功');
       }
-    } else if (network.type === 'mqtt') {
+    } else if (network.protocol === 'mqtt') {
       const clients = this.mqttClients.filter(
         (client) => (client.options as any).href === network.url
       );
@@ -466,7 +516,7 @@ export class Meta2d {
           });
         });
       }
-    } else if (network.type === 'websocket') {
+    } else if (network.protocol === 'websocket') {
       const websockets = this.websockets.filter(
         (socket) => socket.url === network.url
       );
@@ -624,6 +674,7 @@ export class Meta2d {
     }
     this.initBindDatas();
     this.initBinds();
+    this.initMessageEvents();
     this.render();
     this.listenSocket();
     this.connectSocket();
@@ -791,6 +842,9 @@ export class Meta2d {
         pen.onMove && pen.onMove(pen);
       }
     });
+    if (lock > 0) {
+      this.initMessageEvents();
+    }
   }
 
   // end  - 当前鼠标位置，是否作为终点
@@ -879,6 +933,10 @@ export class Meta2d {
     clearStore(this.store);
     this.hideInput();
     this.canvas.tooltip.hide();
+    if (this.map && this.map.isShow) {
+      this.map.show();
+      this.map.setView();
+    }
     this.canvas.clearCanvas();
     sessionStorage.removeItem('page');
     this.store.clipboard = undefined;
@@ -978,9 +1036,10 @@ export class Meta2d {
   startAnimate(idOrTagOrPens?: string | Pen[], params?: number | string): void {
     this.stopAnimate(idOrTagOrPens);
     let pens: Pen[];
+    // 没有参数 则播放有自动播放属性的动画
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
-        return (pen.type || pen.frames) && pen.autoPlay;
+        return ((pen.type || pen.frames) && pen.autoPlay) || (pen.animations && pen.autoPlay);
       });
     } else if (typeof idOrTagOrPens === 'string') {
       pens = this.find(idOrTagOrPens);
@@ -994,8 +1053,8 @@ export class Meta2d {
         pen.calculative.frameStart += d;
         pen.calculative.frameEnd += d;
       } else {
+        let index = -1;
         if (params !== undefined && pen.animations) {
-          let index = -1;
           if (typeof params === 'string') {
             index = pen.animations.findIndex(
               (animation) => animation.name === params
@@ -1010,6 +1069,10 @@ export class Meta2d {
               return;
             }
           }
+        } else if (params === undefined) {
+          index = pen.animations?.findIndex((i) => i.autoPlay) || -1;
+        }
+        if (index !== -1) {
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
           animate.currentAnimation = index;
@@ -1513,7 +1576,10 @@ export class Meta2d {
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
             const res: Response = await fetch(item.http, {
+              method: item.method || 'GET',
               headers: item.httpHeaders,
+              body:
+                item.method === 'POST' ? JSON.stringify(item.body) : undefined,
             });
             if (res.ok) {
               const data = await res.text();
@@ -1765,6 +1831,22 @@ export class Meta2d {
     }
   }
 
+  //获取动态参数
+  getDynamicParam(key: string) {
+    function getCookie(name: string) {
+      let arr: RegExpMatchArray | null;
+      const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
+      if ((arr = document.cookie.match(reg))) {
+        return decodeURIComponent(arr[2]);
+      } else {
+        return '';
+      }
+    }
+    let params = queryURLParams();
+    let value = params[key] || localStorage[key] || getCookie(key) || '';
+    return value;
+  }
+
   onNetworkConnect(https: Network[]) {
     let enable = this.store.data.enableMock;
     if (!(https && https.length) && !enable) {
@@ -1779,11 +1861,33 @@ export class Meta2d {
 
       https.forEach(async (item) => {
         if (item.url) {
+          if (typeof item.headers === 'object') {
+            for (let i in item.headers) {
+              let keys = item.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+              if (keys) {
+                item.headers[i] = item.headers[i].replace(
+                  `\${${keys[0]}}`,
+                  this.getDynamicParam(keys[0])
+                );
+              }
+            }
+          }
+          if (typeof item.body === 'object') {
+            for (let i in item.body) {
+              let keys = item.body[i].match(/(?<=\$\{).*?(?=\})/g);
+              if (keys) {
+                item.body[i] = item.body[i].replace(
+                  `\${${keys[0]}}`,
+                  this.getDynamicParam(keys[0])
+                );
+              }
+            }
+          }
           // 默认每一秒请求一次
           const res: Response = await fetch(item.url, {
             headers: item.headers,
             method: item.method,
-            body: item.method === 'GET' ? undefined : item.body,
+            body: item.method === 'GET' ? undefined : JSON.stringify(item.body),
           });
           if (res.ok) {
             const data = await res.text();
@@ -2138,6 +2242,14 @@ export class Meta2d {
         this.onSizeUpdate();
         break;
     }
+
+    if (this.store.messageEvents[eventName]) {
+      this.store.messageEvents[eventName].forEach((item) => {
+        item.event.actions.forEach((action) => {
+          this.events[action.action](item.pen, action);
+        });
+      });
+    }
   };
 
   private doEvent = (pen: Pen, eventName: EventName) => {
@@ -2237,6 +2349,22 @@ export class Meta2d {
     // 事件冒泡，子执行完，父执行
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
+
+  initMessageEvents() {
+    this.store.data.pens.forEach((pen) => {
+      pen.events?.forEach((event) => {
+        if (event.name === 'message' && event.message) {
+          if (!this.store.messageEvents[event.message]) {
+            this.store.messageEvents[event.message] = [];
+          }
+          this.store.messageEvents[event.message].push({
+            pen: pen,
+            event: event,
+          });
+        }
+      });
+    });
+  }
 
   judgeCondition(pen: Pen, key: string, condition: TriggerCondition) {
     const { type, target, fnJs, fn, operator, valueType } = condition;
@@ -2364,6 +2492,10 @@ export class Meta2d {
     return this.canvas.toPng(padding, callback, containBkImg);
   }
 
+  activeToPng(padding?: Padding) {
+    return this.canvas.activeToPng(padding);
+  }
+
   /**
    * 下载 png
    * @param name 传入参数自带文件后缀名 例如：'test.png'
@@ -2391,7 +2523,10 @@ export class Meta2d {
 
   downloadSvg() {
     if (!(window as any).C2S) {
-      console.error('请先加载乐吾乐官网下的canvas2svg.js', 'https://assets.le5lecdn.com/2d/canvas2svg.js');
+      console.error(
+        '请先加载乐吾乐官网下的canvas2svg.js',
+        'https://assets.le5lecdn.com/2d/canvas2svg.js'
+      );
       throw new Error('请先加载乐吾乐官网下的canvas2svg.js');
     }
 
@@ -2471,7 +2606,7 @@ export class Meta2d {
     this.centerView();
   }
 
-  fitSizeView(fit: boolean = true, viewPadding: Padding = 10) {
+  fitSizeView(fit: boolean | string = true, viewPadding: Padding = 10) {
     // 默认垂直填充，两边留白
     // if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
@@ -2491,11 +2626,17 @@ export class Meta2d {
     const w = (width - padding[1] - padding[3]) / _width;
     const h = (height - padding[0] - padding[2]) / _height;
     let ratio = w;
-    if (fit) {
-      // 完整显示取小的
-      ratio = w > h ? h : w;
+    if (fit === 'width') {
+      ratio = w;
+    } else if (fit === 'height') {
+      ratio = h;
     } else {
-      ratio = w > h ? w : h;
+      if (fit) {
+        // 完整显示取小的
+        ratio = w > h ? h : w;
+      } else {
+        ratio = w > h ? w : h;
+      }
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
     this.scale(ratio * this.store.data.scale);
