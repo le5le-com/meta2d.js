@@ -3476,6 +3476,10 @@ export class Meta2d {
         console.warn(node, 'node contain a error connectedLine');
         return;
       }
+      if (lines.find((_line) => _line.id === line.id)) {
+        //去重
+        return;
+      }
       switch (type) {
         case 'all':
           lines.push(line);
