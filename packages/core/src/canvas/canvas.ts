@@ -4052,7 +4052,7 @@ export class Canvas {
           }
           if (anchor.type === PointType.Line) {
             //旋转的情况
-            let _rotate = this.store.pens[anchor.penId].rotate;
+            let _rotate = this.store.pens[anchor.penId].rotate || 0;
             if (this.store.pens[anchor.penId].calculative.flipX) {
               _rotate *= -1;
             }
@@ -4937,7 +4937,6 @@ export class Canvas {
     y: number,
     doing?: boolean
   ) {
-
     if (!pens || !pens.length) {
       return;
     }
