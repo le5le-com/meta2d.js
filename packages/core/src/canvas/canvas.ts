@@ -2938,8 +2938,11 @@ export class Canvas {
             ) {
               continue;
             }
-
+            this.title.hide();
             if (this.inAnchor(pt, pen, anchor)) {
+              let _anchor = deepClone(anchor);
+              Object.assign(_anchor, pt);
+              this.title.show(_anchor, pen);
               return true;
             }
           }
