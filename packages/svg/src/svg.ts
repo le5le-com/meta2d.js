@@ -398,6 +398,7 @@ function transformNormalShape(
   let x = 0,
     y = 0;
   let rotate = 0;
+  let matrix = null;
   if (finalProperty.transform) {
     const transforms = finalProperty.transform.split(') ');
     transforms.forEach((transform: string) => {
@@ -407,13 +408,16 @@ function transformNormalShape(
         // 平移
         x = Number(offsetX) || 0;
         y = Number(offsetY) || 0;
-      }
-      if (type === 'rotate') {
+      } else if (type === 'rotate') {
         // TODO: transform 中的 rotate 圆心与 meta2d.js 圆心不一致，处理过程中默认把 translate 干掉
         // 旋转
         rotate = parseFloat(value);
         x = 0;
         y = 0;
+      } else if (type === 'matrix') {
+        // 矩阵变换
+        // TODO: 是否有 , 分隔的？如果有 ，getTranslate 的代码是否重复了？直接挂到这个里面？
+        matrix = value.split(' ').map((item) => parseFloat(item));
       }
     });
   }
@@ -446,6 +450,7 @@ function transformNormalShape(
     fontFamily: finalProperty['font-family'],
     fontWeight: finalProperty['font-weight'],
     fontStyle: finalProperty['font-style'],
+    matrix,
   };
 }
 
@@ -496,11 +501,31 @@ function transformPolygon(childProperty: any, pen: any): any {
   };
 }
 
+/**
+ * 根据矩阵计算点的坐标
+ */
+function calcPointByMatrix(point: { x: number; y: number }, matrix: number[]) {
+  const [a, b, c, d, e, f] = matrix;
+  const oldX = point.x;
+  const oldY = point.y;
+
+  const x = a * oldX + c * oldY + e;
+  const y = b * oldX + d * oldY + f;
+
+  return [x, y];
+}
+
 function transformLine(childProperty: any, pen: any) {
-  const x1 = Number(childProperty.x1) || 0;
-  const x2 = Number(childProperty.x2) || 0;
-  const y1 = Number(childProperty.y1) || 0;
-  const y2 = Number(childProperty.y2) || 0;
+  let x1 = Number(childProperty.x1) || 0;
+  let x2 = Number(childProperty.x2) || 0;
+  let y1 = Number(childProperty.y1) || 0;
+  let y2 = Number(childProperty.y2) || 0;
+
+  if (Array.isArray(pen.matrix)) {
+    [x1, y1] = calcPointByMatrix({ x: x1, y: y1 }, pen.matrix);
+    [x2, y2] = calcPointByMatrix({ x: x2, y: y2 }, pen.matrix);
+  }
+
   const minX = Math.min(x1, x2);
   const maxX = Math.max(x1, x2);
   const minY = Math.min(y1, y2);

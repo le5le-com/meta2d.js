@@ -3953,14 +3953,18 @@ export class Canvas {
         }
         ctx.strokeStyle = this.store.options.activeColor;
 
-        ctx.globalAlpha = 0.3;
+        ctx.globalAlpha = this.store.options.activeGlobalAlpha || 0.3;
         ctx.beginPath();
+        ctx.lineWidth = this.store.options.activeLineWidth || 1;
+        ctx.setLineDash(this.store.options.activeLineDash || []);
         ctx.strokeRect(
           this.activeRect.x,
           this.activeRect.y,
           this.activeRect.width,
           this.activeRect.height
         );
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
 
         ctx.globalAlpha = 1;
         if (

@@ -326,6 +326,7 @@ export interface Pen extends Rect {
   dbInput?: boolean; //锁定状态下，双击能否输入
   operationalRect?: Rect; //iframe可操作区域 x,y,width,height 均取值0-1
   blur?: number;
+  blurBackground?: string;
   calculative?: {
     x?: number;
     y?: number;

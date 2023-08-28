@@ -32,7 +32,7 @@ export class Title {
       document.head.appendChild(style);
       sheet = style.sheet;
       sheet.insertRule(
-        '.meta2d-title{position:absolute;padding:0;z-index:10;left: -9999px;top: -9999px;background:#fff;color:#000; cursor: crosshair;}'
+        '.meta2d-title{position:absolute;padding:0;z-index:10;left: -9999px;top: -9999px;background:#fff;color:#000; cursor: crosshair;border: 1px solid black;}'
       );
     }
   }
