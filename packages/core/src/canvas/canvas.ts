@@ -4257,7 +4257,8 @@ export class Canvas {
    * @param center 中心点，引用类型，存在副作用，会更改原值
    */
   scale(scale: number, center = { x: 0, y: 0 }) {
-    const { minScale, maxScale } = this.store.options;
+    const minScale = this.store.data.minScale || this.store.options.minScale;
+    const maxScale = this.store.data.maxScale || this.store.options.maxScale;
     if (!(scale >= minScale && scale <= maxScale)) {
       return;
     }

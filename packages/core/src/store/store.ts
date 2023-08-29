@@ -59,6 +59,8 @@ export interface Meta2dData {
   mockData?: Function;
   name?: string;
   enableMock?: boolean;
+  minScale?: number;
+  maxScale?: number;
 }
 
 export interface Network {
