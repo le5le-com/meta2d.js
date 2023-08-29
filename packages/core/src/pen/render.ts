@@ -280,6 +280,7 @@ function rgbaToHex(value) {
         color = color.replace(')', '');
         let colorA = parseInt(color * 255 + '');
         let colorAHex = colorA.toString(16);
+        colorAHex = colorAHex.length === 2? colorAHex : '0' + colorAHex;
         value += colorAHex;
       }
     }
