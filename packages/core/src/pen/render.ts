@@ -280,6 +280,7 @@ function rgbaToHex(value) {
         color = color.replace(')', '');
         let colorA = parseInt(color * 255 + '');
         let colorAHex = colorA.toString(16);
+        colorAHex = colorAHex.length === 2? colorAHex : '0' + colorAHex;
         value += colorAHex;
       }
     }
@@ -1938,12 +1939,13 @@ export function calcPadding(pen: Pen, rect: Rect) {
   !pen.paddingLeft && (pen.calculative.paddingLeft = 0);
   !pen.paddingRight && (pen.calculative.paddingRight = 0);
 
-  pen.calculative.paddingTop < 1 && (pen.calculative.paddingTop *= rect.height);
-  pen.calculative.paddingBottom < 1 &&
+  Math.abs(pen.calculative.paddingTop) < 1 &&
+    (pen.calculative.paddingTop *= rect.height);
+  Math.abs(pen.calculative.paddingBottom) < 1 &&
     (pen.calculative.paddingBottom *= rect.height);
-  pen.calculative.paddingLeft < 1 &&
+  Math.abs(pen.calculative.paddingLeft) < 1 &&
     (pen.calculative.paddingLeft *= rect.width);
-  pen.calculative.paddingRight < 1 &&
+  Math.abs(pen.calculative.paddingRight) < 1 &&
     (pen.calculative.paddingRight *= rect.width);
 }
 
