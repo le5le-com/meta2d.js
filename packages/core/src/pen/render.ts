@@ -914,11 +914,47 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
       x = width - textLineWidth;
     }
     ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
+    const { textDecorationColor, textDecorationDash, textDecoration } = pen;
+    if (textDecoration) {
+      drawUnderLine(
+        ctx,
+        {
+          x: drawRectX + x,
+          y: drawRectY + (i + y) * oneRowHeight,
+          width: textLineWidth,
+        },
+        { textDecorationColor, textDecorationDash, fontSize }
+      );
+    }
   });
-
   ctx.restore();
 }
-
+function drawUnderLine(
+  ctx: CanvasRenderingContext2D,
+  location: any,
+  config: any
+) {
+  const { textDecorationColor, textDecorationDash, fontSize } = config;
+  let { x, y, width } = location;
+  switch (ctx.textBaseline) {
+    case 'top':
+      y += fontSize;
+      break;
+    case 'middle':
+      y += fontSize / 2;
+      break;
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.strokeStyle = textDecorationColor ? textDecorationColor : ctx.fillStyle;
+  ctx.lineWidth = 1;
+  ctx.moveTo(x, y);
+  console.log(textDecorationDash, 'te');
+  ctx.setLineDash(textDecorationDash || []);
+  ctx.lineTo(x + width, y);
+  ctx.stroke();
+  ctx.restore();
+}
 function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
   if (text == undefined) {
     return;
@@ -1286,9 +1322,9 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
 
   drawText(ctx, pen);
-
   if (pen.type === PenType.Line && pen.fillTexts) {
     for (const text of pen.fillTexts) {
+      console.log(text, 111);
       drawFillText(ctx, pen, text);
     }
   }
