@@ -8,6 +8,7 @@ import {
   setElemPosition,
 } from '@meta2d/core';
 import type { EChartOption } from 'echarts';
+// tslint:disable-next-line:no-duplicate-imports
 import { deepSetValue } from '@meta2d/core';
 import { getter } from '@meta2d/core/src/utils/object';
 import { formatTime } from '@meta2d/core/src/utils/time';
@@ -17,7 +18,33 @@ export enum ReplaceMode {
   Replace,
   ReplaceAll,
 }
-let keyWords = ['fontSize', 'nameGap'];
+let keyWords = [
+  'fontSize',
+  'nameGap',
+  'margin',
+  'width'/*线条宽度*/,
+  'symbolSize'/*结点大小*/,
+  'itemWidth', // 图例宽度
+  'itemHeight', // 图例高度
+  'fontWeight',
+  'top',
+  'left',
+  'right',
+  'bottom',
+  'zoom',
+  'edgeSymbolSize',
+  'nodeWidth',
+  'nodeGap',
+  'distance',
+  'length',
+  'length2',
+  'offsetCenter',
+  'size',
+  'symbolOffset',
+  'padding',
+  'barWidth',
+  'symbolOffset'
+];
 
 export interface ChartPen extends Pen {
   echarts: {
@@ -50,7 +77,6 @@ export function echarts(pen: ChartPen): Path2D {
   keyWords =
     pen.calculative.canvas.store.options.diagramOptions['chart']?.keyWords ||
     keyWords;
-  console.log('keyWords');
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
     pen.onMove = move;
@@ -555,22 +581,22 @@ function onRenderPenRaw(pen: Pen) {
 
 function updateOption(_option, ratio) {
   const option = deepClone(_option);
-  if (option.grid) {
-    let props = ['top', 'bottom', 'left', 'right'];
-    for (let i = 0; i < props.length; i++) {
-      if (Array.isArray(option.grid)) {
-        option.grid.forEach((item) => {
-          if (!isNaN(item[props[i]])) {
-            item[props[i]] *= ratio;
-          }
-        });
-      } else {
-        if (!isNaN(option.grid[props[i]])) {
-          option.grid[props[i]] *= ratio;
-        }
-      }
-    }
-  }
+  // if (option.grid) {
+  //   let props = ['top', 'bottom', 'left', 'right'];
+  //   for (let i = 0; i < props.length; i++) {
+  //     if (Array.isArray(option.grid)) {
+  //       option.grid.forEach((item) => {
+  //         if (!isNaN(item[props[i]])) {
+  //           item[props[i]] *= ratio;
+  //         }
+  //       });
+  //     } else {
+  //       if (!isNaN(option.grid[props[i]])) {
+  //         option.grid[props[i]] *= ratio;
+  //       }
+  //     }
+  //   }
+  // }
 
   if (option.dataZoom) {
     let props = ['right', 'top', 'width', 'height', 'left', 'bottom'];
