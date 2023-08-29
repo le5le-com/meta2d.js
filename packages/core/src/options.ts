@@ -82,6 +82,10 @@ export interface Options {
   textRotate?: boolean; //文字旋转
   cacheLength?: number; //缓存数据长度
   unavailableKeys?: string[]; //屏蔽的快捷键
+  activeLineDash?: number[];
+  activeLineWidth?: number;
+  activeGlobalAlpha?: number;
+  diagramOptions?: { [key: string]: any };
 }
 
 export const defaultOptions: Options = {
@@ -146,4 +150,5 @@ export const defaultOptions: Options = {
   textFlip: true,
   textRotate: true,
   unavailableKeys: [],
+  diagramOptions: {},
 };
