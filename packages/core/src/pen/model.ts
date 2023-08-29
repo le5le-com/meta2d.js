@@ -514,6 +514,10 @@ export interface Pen extends Rect {
   textDecoration?:boolean;
   textDecorationDash?:number[];
   textDecorationColor?:string;
+  // 删除线相关配置
+  textStrickoutColor?:string;
+  textStrickoutDash?:number[];
+  textStrickout?:boolean;
   // 前一个动画帧状态数据
   prevFrame?: Pen;
 
