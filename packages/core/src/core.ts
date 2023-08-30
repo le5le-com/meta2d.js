@@ -2939,7 +2939,7 @@ export class Meta2d {
   }
 
   //对齐大屏
-  alignNodeV(align: string, pens: Pen[] = this.store.data.pens) {
+  alignNodesV(align: string, pens: Pen[] = this.store.data.pens) {
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
     let rect = {
