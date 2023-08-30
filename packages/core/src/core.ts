@@ -1039,7 +1039,10 @@ export class Meta2d {
     // 没有参数 则播放有自动播放属性的动画
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
-        return ((pen.type || pen.frames) && pen.autoPlay) || (pen.animations && pen.autoPlay);
+        return (
+          ((pen.type || pen.frames) && pen.autoPlay) ||
+          (pen.animations && pen.autoPlay)
+        );
       });
     } else if (typeof idOrTagOrPens === 'string') {
       pens = this.find(idOrTagOrPens);
@@ -2928,6 +2931,27 @@ export class Meta2d {
       this.alignPen(align, item, rect);
     }
     this.render();
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
+  }
+
+  //对齐大屏
+  alignNodeV(align: string, pens: Pen[] = this.store.data.pens) {
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    let rect = {
+      x: 0,
+      y: 0,
+      width,
+      height,
+    };
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
+    for (const item of pens) {
+      this.alignPen(align, item, rect);
+    }
     this.pushHistory({
       type: EditType.Update,
       initPens,
