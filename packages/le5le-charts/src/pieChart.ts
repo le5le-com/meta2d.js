@@ -4,6 +4,8 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   if (!pen.onBeforeValue) {
     pen.onBeforeValue = beforeValue;
   }
+  // 缩放模式
+  let scale = pen.calculative.canvas.store.data.scale;
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
@@ -93,7 +95,7 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     ctx.strokeStyle = isEcharts
       ? series.itemStyle?.borderColor || '#fff'
       : '#fff';
-    ctx.lineWidth = isEcharts ? series.itemStyle?.borderWidth || 2 : 2;
+    ctx.lineWidth = (isEcharts ? series.itemStyle?.borderWidth || 2 : 2) * scale;
     const data = isEcharts ? series.data : series;
     data.forEach((item: any, index: number) => {
       afterAngle += (Math.PI * 2 * item.value) / sum;
@@ -137,8 +139,8 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
       ctx.closePath();
       //绘制label
       let centerAngle = (beforeAngle + afterAngle) / 2;
-      let temX = centerX + (toR + 5) * Math.sin(centerAngle);
-      let temY = centerY - (toR + 5) * Math.cos(centerAngle);
+      let temX = centerX + (toR + 10*scale) * Math.sin(centerAngle);
+      let temY = centerY - (toR + 10*scale) * Math.cos(centerAngle);
       let temFillStyle = ctx.fillStyle;
       if (!series.label) {
         series.label = { position: 'outside', show: true };
@@ -167,25 +169,26 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
       ctx.font = r / 10 + 'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
+      // 写入文字
       if (centerAngle > Math.PI) {
         if ((isEcharts && series.label.position === 'outside') || !isEcharts) {
           ctx.textAlign = 'end';
         }
         if ((isEcharts && series.labelLine.show !== false) || !isEcharts) {
-          ctx.lineTo(temX - 5, temY);
+          ctx.lineTo(temX - 5*scale, temY);
         }
         if ((isEcharts && series.label.show !== false) || !isEcharts) {
-          ctx.fillText(item.name, temX - 5, temY);
+          ctx.fillText(item.name, temX - 5*scale, temY);
         }
       } else {
         if ((isEcharts && series.label.position === 'outside') || !isEcharts) {
           ctx.textAlign = 'start';
         }
         if ((isEcharts && series.labelLine.show !== false) || !isEcharts) {
-          ctx.lineTo(temX + 5, temY);
+          ctx.lineTo(temX + 5*scale, temY);
         }
         if ((isEcharts && series.label.show !== false) || !isEcharts) {
-          ctx.fillText(item.name, temX + 5, temY);
+          ctx.fillText(item.name, temX + 5*scale, temY);
         }
       }
       ctx.stroke();
