@@ -50,7 +50,9 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.fill();
 
   // draw ball
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = pen.btnBackground || '#000000';
+  ctx.strokeStyle = pen.activeColor || options.activeColor;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   x = pen.calculative.worldRect.x + pen.calculative.ballRect.x;
   y =
