@@ -84,7 +84,7 @@ export class CanvasImage {
         pen.calculative.imageDrawed = false;
       }
     }
-    this.store.patchFlagsBackground = true;
+    // this.store.patchFlagsBackground = true;
     this.store.patchFlagsTop = true;
   }
 
@@ -131,45 +131,45 @@ export class CanvasImage {
       }
     }
 
-    const patchFlagsBackground = this.store.patchFlagsBackground;
-    if (patchFlagsBackground && this.isBottom) {
-      const ctx = this.otherOffsreen.getContext('2d');
-      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      const width = this.store.data.width || this.store.options.width;
-      const height = this.store.data.height || this.store.options.height;
-      const x = this.store.data.x || this.store.options.x;
-      const y = this.store.data.y || this.store.options.y;
-      if (width && height && this.store.bkImg) {
-        ctx.save();
-        ctx.drawImage(
-          this.store.bkImg,
-          this.store.data.origin.x + x,
-          this.store.data.origin.y + y,
-          width * this.store.data.scale,
-          height * this.store.data.scale
-        );
-        ctx.restore();
-      }
-      const background =
-        this.store.data.background ||
-        (this.store.bkImg ? undefined : this.store.options.background);
-      if (background) {
-        ctx.save();
-        ctx.fillStyle = background;
-        if (width && height) {
-          ctx.fillRect(
-            this.store.data.origin.x + x,
-            this.store.data.origin.y + y,
-            width * this.store.data.scale,
-            height * this.store.data.scale
-          );
-        } else {
-          ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-        ctx.restore();
-      }
-      this.renderGrid(ctx);
-    }
+    // const patchFlagsBackground = this.store.patchFlagsBackground;
+    // if (patchFlagsBackground && this.isBottom) {
+    //   const ctx = this.otherOffsreen.getContext('2d');
+    //   ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //   const width = this.store.data.width || this.store.options.width;
+    //   const height = this.store.data.height || this.store.options.height;
+    //   const x = this.store.data.x || this.store.options.x;
+    //   const y = this.store.data.y || this.store.options.y;
+    //   if (width && height && this.store.bkImg) {
+    //     ctx.save();
+    //     ctx.drawImage(
+    //       this.store.bkImg,
+    //       this.store.data.origin.x + x,
+    //       this.store.data.origin.y + y,
+    //       width * this.store.data.scale,
+    //       height * this.store.data.scale
+    //     );
+    //     ctx.restore();
+    //   }
+    //   const background =
+    //     this.store.data.background ||
+    //     (this.store.bkImg ? undefined : this.store.options.background);
+    //   if (background) {
+    //     ctx.save();
+    //     ctx.fillStyle = background;
+    //     if (width && height) {
+    //       ctx.fillRect(
+    //         this.store.data.origin.x + x,
+    //         this.store.data.origin.y + y,
+    //         width * this.store.data.scale,
+    //         height * this.store.data.scale
+    //       );
+    //     } else {
+    //       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    //     }
+    //     ctx.restore();
+    //   }
+    //   this.renderGrid(ctx);
+    // }
 
     const patchFlagsTop = this.store.patchFlagsTop;
     if (patchFlagsTop && !this.isBottom) {
@@ -197,6 +197,9 @@ export class CanvasImage {
         ) {
           continue;
         }
+        if (pen.template) {
+          continue;
+        }
         pen.calculative.imageDrawed = true;
         ctx.save();
         ctxFlip(ctx, pen);
@@ -219,6 +222,9 @@ export class CanvasImage {
         if (!pen.calculative.hasImage) {
           continue;
         }
+        if (pen.template) {
+          continue;
+        }
         pen.calculative.imageDrawed = true;
         ctx.save();
         ctxFlip(ctx, pen);
@@ -233,6 +239,9 @@ export class CanvasImage {
       //图片组合节点 动画
       for (const pen of this.store.data.pens) {
         if (!pen.calculative.hasImage || !pen.parentId) {
+          continue;
+        }
+        if (pen.template) {
           continue;
         }
         if (this.store.animates.has(getParent(pen, true))) {
@@ -254,21 +263,21 @@ export class CanvasImage {
     if (
       patchFlags ||
       patchFlagsAnimate ||
-      (patchFlagsBackground && this.isBottom) ||
+      // (patchFlagsBackground && this.isBottom) ||
       (patchFlagsTop && !this.isBottom)
     ) {
       const ctxCanvas = this.canvas.getContext('2d');
       ctxCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      if (this.isBottom) {
-        ctxCanvas.drawImage(
-          this.otherOffsreen,
-          0,
-          0,
-          this.canvas.width,
-          this.canvas.height
-        );
-        this.store.patchFlagsBackground = false;
-      }
+      // if (this.isBottom) {
+      //   ctxCanvas.drawImage(
+      //     this.otherOffsreen,
+      //     0,
+      //     0,
+      //     this.canvas.width,
+      //     this.canvas.height
+      //   );
+      //   this.store.patchFlagsBackground = false;
+      // }
       ctxCanvas.drawImage(
         this.offscreen,
         0,
@@ -296,39 +305,39 @@ export class CanvasImage {
     }
   }
 
-  renderGrid(
-    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
-  ) {
-    const { data, options } = this.store;
-    const { grid, gridRotate, gridColor, gridSize, scale } = data;
-    if (!(grid ?? options.grid)) {
-      // grid false 时不绘制, undefined 时看 options.grid
-      return;
-    }
-    ctx.save();
-    const { width, height } = this.canvas;
-    if (gridRotate) {
-      ctx.translate(width / 2, height / 2);
-      ctx.rotate((gridRotate * Math.PI) / 180);
-      ctx.translate(-width / 2, -height / 2);
-    }
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = gridColor || options.gridColor;
-    ctx.beginPath();
-    const size = (gridSize || options.gridSize) * scale;
-    const longSide = Math.max(width, height);
-    const count = Math.ceil(longSide / size);
-    for (let i = -size * count; i < longSide * 2; i += size) {
-      ctx.moveTo(i, -longSide);
-      ctx.lineTo(i, longSide * 2);
-    }
-    for (let i = -size * count; i < longSide * 2; i += size) {
-      ctx.moveTo(-longSide, i);
-      ctx.lineTo(longSide * 2, i);
-    }
-    ctx.stroke();
-    ctx.restore();
-  }
+  // renderGrid(
+  //   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+  // ) {
+  //   const { data, options } = this.store;
+  //   const { grid, gridRotate, gridColor, gridSize, scale } = data;
+  //   if (!(grid ?? options.grid)) {
+  //     // grid false 时不绘制, undefined 时看 options.grid
+  //     return;
+  //   }
+  //   ctx.save();
+  //   const { width, height } = this.canvas;
+  //   if (gridRotate) {
+  //     ctx.translate(width / 2, height / 2);
+  //     ctx.rotate((gridRotate * Math.PI) / 180);
+  //     ctx.translate(-width / 2, -height / 2);
+  //   }
+  //   ctx.lineWidth = 1;
+  //   ctx.strokeStyle = gridColor || options.gridColor;
+  //   ctx.beginPath();
+  //   const size = (gridSize || options.gridSize) * scale;
+  //   const longSide = Math.max(width, height);
+  //   const count = Math.ceil(longSide / size);
+  //   for (let i = -size * count; i < longSide * 2; i += size) {
+  //     ctx.moveTo(i, -longSide);
+  //     ctx.lineTo(i, longSide * 2);
+  //   }
+  //   for (let i = -size * count; i < longSide * 2; i += size) {
+  //     ctx.moveTo(-longSide, i);
+  //     ctx.lineTo(longSide * 2, i);
+  //   }
+  //   ctx.stroke();
+  //   ctx.restore();
+  // }
 
   renderRule(
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D

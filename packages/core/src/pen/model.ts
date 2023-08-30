@@ -327,6 +327,7 @@ export interface Pen extends Rect {
   operationalRect?: Rect; //iframe可操作区域 x,y,width,height 均取值0-1
   blur?: number;
   blurBackground?: string;
+  template?: boolean; //是否作为模版图元
   calculative?: {
     x?: number;
     y?: number;
@@ -511,13 +512,13 @@ export interface Pen extends Rect {
     imageRadius?: number;
   };
   // 下划线相关配置属性
-  textDecoration?:boolean;
-  textDecorationDash?:number[];
-  textDecorationColor?:string;
+  textDecoration?: boolean;
+  textDecorationDash?: number[];
+  textDecorationColor?: string;
   // 删除线相关配置
-  textStrickoutColor?:string;
-  textStrickoutDash?:number[];
-  textStrickout?:boolean;
+  textStrickoutColor?: string;
+  textStrickoutDash?: number[];
+  textStrickout?: boolean;
   // 前一个动画帧状态数据
   prevFrame?: Pen;
 

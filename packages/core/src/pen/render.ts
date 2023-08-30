@@ -2758,7 +2758,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
     }
   }
   elem.style.zIndex =
-    pen.calculative.zIndex !== undefined ? pen.calculative.zIndex + '' : '4';
+    pen.calculative.zIndex !== undefined ? pen.calculative.zIndex + '' : '5';
   if (pen.calculative.zIndex > pen.calculative.canvas.maxZindex) {
     pen.calculative.canvas.maxZindex = pen.calculative.zIndex;
   }

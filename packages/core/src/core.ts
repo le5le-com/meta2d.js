@@ -592,6 +592,7 @@ export class Meta2d {
     const height = this.store.data.height || this.store.options.height;
     if (width && height) {
       this.canvas.canvasImageBottom.canvas.style.backgroundImage = null;
+      this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     } else {
       this.canvas.canvasImageBottom.canvas.style.backgroundImage = url
         ? `url('${url}')`
@@ -608,7 +609,8 @@ export class Meta2d {
 
   setBackgroundColor(color: string = this.store.data.background) {
     this.store.data.background = color;
-    this.store.patchFlagsBackground = true;
+    // this.store.patchFlagsBackground = true;
+    this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
   }
 
   setGrid({
@@ -626,7 +628,8 @@ export class Meta2d {
     this.store.data.gridColor = gridColor;
     this.store.data.gridSize = gridSize;
     this.store.data.gridRotate = gridRotate;
-    this.store.patchFlagsBackground = true;
+    // this.store.patchFlagsBackground = true;
+    this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
   }
 
   setRule({
@@ -642,7 +645,7 @@ export class Meta2d {
   }
 
   open(data?: Meta2dData, render: boolean = true) {
-    this.clear(false);
+    this.clear(false, data.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
       this.setBackgroundImage(data.bkImage);
@@ -669,6 +672,11 @@ export class Meta2d {
         this.canvas.initLineRect(pen);
       }
     });
+
+    if (!this.store.data.template) {
+      this.store.data.template = s8();
+    }
+
     if (!render) {
       this.canvas.opening = true;
     }
@@ -926,11 +934,11 @@ export class Meta2d {
    * 擦除画布，释放 store 上的 pens
    * @param render 是否重绘
    */
-  clear(render = true) {
+  clear(render = true, template?: string) {
     for (const pen of this.store.data.pens) {
       pen.onDestroy?.(pen);
     }
-    clearStore(this.store);
+    clearStore(this.store, template);
     this.hideInput();
     this.canvas.tooltip.hide();
     if (this.map && this.map.isShow) {
@@ -942,7 +950,10 @@ export class Meta2d {
     this.store.clipboard = undefined;
 
     // 非必要，为的是 open 时重绘 背景与网格
-    this.store.patchFlagsBackground = true;
+    // this.store.patchFlagsBackground = true;
+    if (!this.store.sameTemplate) {
+      this.canvas.canvasTemplate.bgPatchFlags = true;
+    }
     this.store.patchFlagsTop = true;
     this.setBackgroundImage(undefined);
     render && this.render();
@@ -2575,6 +2586,23 @@ export class Meta2d {
     return getRect(pens);
   }
 
+  hiddenTemplate() {
+    this.canvas.canvasTemplate.hidden();
+  }
+
+  showTemplate() {
+    this.canvas.canvasTemplate.show();
+  }
+
+  lockTemplate(lock: LockState) {
+    //锁定
+    this.store.data.pens.forEach((pen) => {
+      if (pen.template) {
+        pen.locked = lock;
+      }
+    });
+  }
+
   /**
    * 放大到屏幕尺寸，并居中
    * @param fit true，填满但完整展示；false，填满，但长边可能截取（即显示不完整）
@@ -2606,6 +2634,58 @@ export class Meta2d {
     this.scale(ratio * this.store.data.scale);
 
     // 5. 居中
+    this.centerView();
+  }
+
+  trimPens() {
+    //去除空连线
+    let pens = this.store.data.pens.filter(
+      (pen) => pen.name === 'line' && pen.anchors.length < 2
+    );
+    this.delete(pens);
+  }
+
+  /**
+   * 放大到屏幕尺寸，并居中
+   * @param fit true，填满但完整展示；false，填满，但长边可能截取（即显示不完整）
+   */
+  fitTemplateView(fit: boolean = true, viewPadding: Padding = 10) {
+    //  默认垂直填充，两边留白
+    if (!this.hasView()) return;
+    // 1. 重置画布尺寸为容器尺寸
+    const { canvas } = this.canvas;
+    const { offsetWidth: width, offsetHeight: height } = canvas;
+    // 2. 获取设置的留白值
+    const padding = formatPadding(viewPadding);
+
+    // 3. 获取图形尺寸
+    const rect = this.getRect();
+
+    // 4. 计算缩放比例
+    const w = (width - padding[1] - padding[3]) / rect.width;
+    const h = (height - padding[0] - padding[2]) / rect.height;
+    let ratio = w;
+    if (fit) {
+      // 完整显示取小的
+      ratio = w > h ? h : w;
+    } else {
+      ratio = w > h ? w : h;
+    }
+
+    // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
+    this.canvas.templateScale(ratio * this.store.data.scale);
+    let _rect = this.getRect();
+
+    let pens = this.store.data.pens.filter((pen) => !pen.parentId);
+    this.canvas.templateTranslatePens(pens, -_rect.x, -_rect.y);
+    // 5. 居中
+    this.store.data.pens.forEach((pen) => {
+      if (!pen.type) {
+        this.canvas.updateLines(pen);
+      } else {
+        this.canvas.initLineRect(pen);
+      }
+    });
     this.centerView();
   }
 
@@ -3358,7 +3438,7 @@ export class Meta2d {
         zIndex = pen.calculative.canvas.maxZindex;
       } else if (type === 'up') {
         zIndex =
-          pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
+          pen.calculative.zIndex === undefined ? 6 : pen.calculative.zIndex + 1;
       } else if (type === 'down') {
         zIndex =
           pen.calculative.zIndex === undefined ? 3 : pen.calculative.zIndex - 1;

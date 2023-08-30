@@ -143,7 +143,7 @@ function mouseMove(pen: Pen, e: Point) {
   }
   if (initOperationalRect(pen.operationalRect)) {
     if (
-      pen.calculative.zIndex < 4 &&
+      pen.calculative.zIndex < 5 &&
       e.x > pen.x + pen.width * pen.operationalRect.x &&
       e.x <
         pen.x +
@@ -156,7 +156,7 @@ function mouseMove(pen: Pen, e: Point) {
       if (pen.calculative.singleton.div) {
         let children: HTMLElement[] =
           pen.calculative.singleton.div.parentNode.children;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           children[i].style.pointerEvents = 'none';
         }
       }
@@ -248,9 +248,9 @@ function updatePointerEvents(pen: Pen) {
   if (!pen.calculative.canvas.store.data.locked && !pen.locked) {
     return;
   }
-  if (pen.calculative.zIndex < 4) {
+  if (pen.calculative.zIndex < 5) {
     let children: any = pen.calculative.singleton.div.parentNode.children;
-    for (let i = 1; i < 5; i++) {
+    for (let i = 1; i < 6; i++) {
       children[i].style.pointerEvents = 'initial';
     }
   }
