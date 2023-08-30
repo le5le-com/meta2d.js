@@ -216,6 +216,7 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
     ctx.fill();
   }
   if (pen.bordered !== false) {
+    ctx.strokeStyle = pen.borderColor || '#424B61';
     ctx.stroke();
   }
   if (pen.hLine !== false) {
@@ -229,6 +230,7 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.beginPath();
       ctx.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + y);
       ctx.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + y);
+      ctx.strokeStyle = pen.borderColor || '#424B61';
       ctx.stroke();
     }
   }
@@ -243,6 +245,7 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
       ctx.beginPath();
       ctx.moveTo(pen.calculative.worldRect.x + x, pen.calculative.worldRect.y);
       ctx.lineTo(pen.calculative.worldRect.x + x, pen.calculative.worldRect.ey);
+      ctx.strokeStyle = pen.borderColor || '#424B61';
       ctx.stroke();
     });
   }

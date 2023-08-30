@@ -15,6 +15,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
   const h = pen.calculative.worldRect.height;
+  let scale = pen.calculative.canvas.store.data.scale;
 
   let basicConfigure = {
     startAngle: 225,
@@ -87,7 +88,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   }
   ctx.lineCap = 'butt';
   //主刻度线
-  let dashWidth = 2;
+  let dashWidth = 2 * scale;
   let mainR = r - bgLineWidth;
   if (mainR < 0) {
     mainR = 0;
@@ -112,7 +113,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   ctx.closePath();
 
   //从刻度线
-  let fromDashWidth = 1;
+  let fromDashWidth = 1 * scale;
   let fromR = r - bgLineWidth;
   if (fromR < 0) {
     fromR = 0;

@@ -8,6 +8,7 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     pen.onBeforeValue = beforeValue;
   }
 
+  let scale = pen.calculative.canvas.store.data.scale;
   const x = pen.calculative.worldRect.x;
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
@@ -44,6 +45,7 @@ export function histogram(ctx: CanvasRenderingContext2D, pen: leChartPen) {
       ? pen.echarts.option.color[j]
       : pen.chartsColor[j];
     ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1 * scale;
     let currentX = 0;
     let currentY = 0;
     let currentH = 0;

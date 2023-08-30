@@ -8,6 +8,10 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   const w = pen.calculative.worldRect.width;
   const h = pen.calculative.worldRect.height;
 
+  // 缩放比例
+  let r = w / 2;
+  let scale = pen.calculative.canvas.store.data.scale;
+
   let series = [];
 
   if (pen.echarts) {
@@ -32,18 +36,18 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     : pen.xAxisData.length;
   ctx.beginPath();
   ctx.strokeStyle = '#BFBFBF';
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 6 * scale;
   ctx.lineCap = 'butt';
   let dash = (w - 1 * (num + 1)) / num;
   ctx.setLineDash([1, dash]);
-  ctx.moveTo(x, y + h + 3);
-  ctx.lineTo(x + w, y + h + 3);
+  ctx.moveTo(x, y + h + 3*scale);
+  ctx.lineTo(x + w, y + h + 3*scale);
   ctx.stroke();
   ctx.closePath();
 
   //x轴绘制
   ctx.beginPath();
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1 * scale;
   ctx.setLineDash([]);
   ctx.moveTo(x, y + h);
   ctx.lineTo(x + w, y + h);
@@ -58,9 +62,10 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     let temH = (i * h) / normalizedOption.splitNumber;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
+    ctx.font = r / 10 +'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
     ctx.fillText(
       normalizedOption.max - i * normalizedOption.interval + '',
-      x - 10,
+      x - 10 * scale,
       y + temH
     );
     ctx.fill();
@@ -82,7 +87,8 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(xData[i], xdataX, y + h + 10);
+    ctx.font = r / 10 +'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
+    ctx.fillText(xData[i], xdataX, (y + h + 10*scale));
     ctx.fill();
   }
   ctx.closePath();

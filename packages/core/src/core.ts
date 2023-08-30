@@ -1161,7 +1161,7 @@ export class Meta2d {
     });
     this.initImageCanvas(pens);
     setTimeout(() => {
-      this.canvas.calcActiveRect();
+      this.canvas?.calcActiveRect();
       this.render();
     }, 20);
   }
