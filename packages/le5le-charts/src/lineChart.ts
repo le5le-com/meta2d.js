@@ -10,6 +10,7 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   const y = pen.calculative.worldRect.y;
   const w = pen.calculative.worldRect.width;
   const h = pen.calculative.worldRect.height;
+  let scale = pen.calculative.canvas.store.data.scale;
   let series = [];
   if (pen.echarts && !pen.echarts.option.color) {
     pen.echarts.option.color = [
@@ -151,8 +152,8 @@ export function lineChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     coordinateValue.forEach((item, index) => {
       ctx.beginPath();
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.arc(item.x, item.y, 4, 0, Math.PI * 2);
+      ctx.lineWidth = 2 * scale;
+      ctx.arc(item.x, item.y, 4 * scale, 0, Math.PI * 2);
       ctx.stroke();
       ctx.fill();
       ctx.closePath();
