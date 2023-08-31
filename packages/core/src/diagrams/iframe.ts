@@ -11,6 +11,7 @@ export function iframe(pen: Pen) {
     pen.onValue = move;
     pen.onMouseMove = mouseMove;
     pen.onBeforeValue = beforeValue;
+    pen.onRenderPenRaw = renderPenRaw;
   }
   if (!pen.calculative.singleton) {
     pen.calculative.singleton = {};
@@ -254,4 +255,37 @@ function updatePointerEvents(pen: Pen) {
       children[i].style.pointerEvents = 'initial';
     }
   }
+}
+
+function renderPenRaw(pen: Pen) {
+  if (pen.calculative.singleton && pen.calculative.singleton.div) {
+    handleSaveImg(pen);
+  }
+}
+
+function handleSaveImg(pen: Pen) {
+  let iframeHtml = pen.calculative.singleton.div.children[0].contentWindow;
+  const iframeBody = iframeHtml.document.getElementsByTagName('body')[0];
+  const iframeScrollY = iframeHtml.document.documentElement.scrollTop;
+  const iframeScrollX = iframeHtml.document.documentElement.scrollLeft;
+
+  globalThis.html2canvas &&
+    globalThis
+      .html2canvas(iframeBody, {
+        allowTaint: true,
+        useCORS: true,
+        width: pen.width, // TODO 截屏按照1920*1080分辨率下的预览窗口宽高
+        height: pen.height,
+        x: iframeScrollX,
+        y: iframeScrollY,
+      })
+      .then((canvas) => {
+        // 转成图片，生成图片地址
+        // imgBase64 = canvas.toDataURL('image/png');
+        const img = new Image();
+        img.src = canvas.toDataURL('image/png', 0.1);
+        if (img.src.length > 10) {
+          pen.calculative.img = img;
+        }
+      });
 }

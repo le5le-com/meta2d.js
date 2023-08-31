@@ -2517,7 +2517,7 @@ export class Meta2d {
    */
   downloadPng(name?: string, padding?: Padding) {
     for (const pen of this.store.data.pens) {
-      if (pen.calculative.img) {
+      if (pen.calculative.img || ['iframe'].includes(pen.name)) {
         //重新生成绘制图片
         pen.onRenderPenRaw?.(pen);
       }
@@ -2532,7 +2532,7 @@ export class Meta2d {
       const evt = document.createEvent('MouseEvents');
       evt.initEvent('click', true, true);
       a.dispatchEvent(evt);
-    });
+    }, 1000);
   }
 
   downloadSvg() {
