@@ -1,6 +1,6 @@
 import { Pen, setElemPosition } from '../pen';
 import { Point } from '../point';
-import { deepClone } from '../utils';
+import { deepClone, getRootDomain } from '../utils';
 
 export function iframe(pen: Pen) {
   if (!pen.onDestroy) {
@@ -276,7 +276,7 @@ function handleSaveImg(pen: Pen) {
   const iframeBody = iframeHtml.document.getElementsByTagName('body')[0];
   const iframeScrollY = iframeHtml.document.documentElement.scrollTop;
   const iframeScrollX = iframeHtml.document.documentElement.scrollLeft;
-
+  iframeHtml.document.domain = getRootDomain();
   globalThis.html2canvas &&
     globalThis
       .html2canvas(iframeBody, {
@@ -295,5 +295,8 @@ function handleSaveImg(pen: Pen) {
         if (img.src.length > 10) {
           pen.calculative.img = img;
         }
+      })
+      .catch((e) => {
+        console.warn(e);
       });
 }
