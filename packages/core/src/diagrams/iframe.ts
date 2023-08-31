@@ -39,6 +39,9 @@ export function iframe(pen: Pen) {
     pen.calculative.iframe = pen.iframe;
     div.appendChild(iframe);
     generateAroundDiv(pen);
+    iframe.onload = () => {
+      iframe.setAttribute('document.domain', '');
+    };
   }
 
   if (pen.calculative.patchFlags) {
@@ -259,7 +262,12 @@ function updatePointerEvents(pen: Pen) {
 
 function renderPenRaw(pen: Pen) {
   if (pen.calculative.singleton && pen.calculative.singleton.div) {
-    handleSaveImg(pen);
+    try {
+      handleSaveImg(pen);
+    } catch (e) {
+      console.warn(e);
+      pen.calculative.img = null;
+    }
   }
 }
 
