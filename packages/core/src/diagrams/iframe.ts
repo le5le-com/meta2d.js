@@ -271,37 +271,60 @@ function renderPenRaw(pen: Pen) {
   }
 }
 
-function handleSaveImg(pen: Pen) {
+async function handleSaveImg(pen: Pen) {
   let iframeHtml = pen.calculative.singleton.div.children[0].contentWindow;
   const iframeBody = iframeHtml.document.getElementsByTagName('body')[0];
   const iframeScrollY = iframeHtml.document.documentElement.scrollTop;
   const iframeScrollX = iframeHtml.document.documentElement.scrollLeft;
   iframeHtml.document.domain = getRootDomain();
-  globalThis.html2canvas &&
-    globalThis
-      .html2canvas(iframeBody, {
-        allowTaint: true,
-        useCORS: true,
-        width: pen.width, // TODO 截屏按照1920*1080分辨率下的预览窗口宽高
-        height: pen.height,
-        x: iframeScrollX,
-        y: iframeScrollY,
-        foreignObjectRendering: true,
-      })
-      .then((canvas) => {
-        // 转成图片，生成图片地址
-        // imgBase64 = canvas.toDataURL('image/png');
-        const img = new Image();
-        img.crossOrigin =
-          pen.crossOrigin === 'undefined'
-            ? undefined
-            : pen.crossOrigin || 'anonymous';
-        img.src = canvas.toDataURL('image/png', 0.1);
-        if (img.src.length > 10) {
-          pen.calculative.img = img;
-        }
-      })
-      .catch((e) => {
-        console.warn(e);
-      });
+  if (globalThis.html2canvas) {
+    const canvas = await globalThis.html2canvas(iframeBody, {
+      allowTaint: true,
+      useCORS: true,
+      width: pen.width, // TODO 截屏按照1920*1080分辨率下的预览窗口宽高
+      height: pen.height,
+      x: iframeScrollX,
+      y: iframeScrollY,
+      foreignObjectRendering: true,
+    });
+    canvas.getContext('2d', {
+      willReadFrequently: true,
+    });
+    const img = new Image();
+    img.crossOrigin =
+      pen.crossOrigin === 'undefined'
+        ? undefined
+        : pen.crossOrigin || 'anonymous';
+    img.src = canvas.toDataURL('image/png', 0.1);
+    if (img.src.length > 10) {
+      pen.calculative.img = img;
+    }
+  }
+  // globalThis.html2canvas &&
+  //   globalThis
+  //     .html2canvas(iframeBody, {
+  //       allowTaint: true,
+  //       useCORS: true,
+  //       width: pen.width, // TODO 截屏按照1920*1080分辨率下的预览窗口宽高
+  //       height: pen.height,
+  //       x: iframeScrollX,
+  //       y: iframeScrollY,
+  //       foreignObjectRendering: true,
+  //     })
+  //     .then((canvas) => {
+  //       // 转成图片，生成图片地址
+  //       // imgBase64 = canvas.toDataURL('image/png');
+  //       const img = new Image();
+  //       img.crossOrigin =
+  //         pen.crossOrigin === 'undefined'
+  //           ? undefined
+  //           : pen.crossOrigin || 'anonymous';
+  //       img.src = canvas.toDataURL('image/png', 0.1);
+  //       if (img.src.length > 10) {
+  //         pen.calculative.img = img;
+  //       }
+  //     })
+  //     .catch((e) => {
+  //       console.warn(e);
+  //     });
 }
