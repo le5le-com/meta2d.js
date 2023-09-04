@@ -291,6 +291,10 @@ function handleSaveImg(pen: Pen) {
         // 转成图片，生成图片地址
         // imgBase64 = canvas.toDataURL('image/png');
         const img = new Image();
+        img.crossOrigin =
+          pen.crossOrigin === 'undefined'
+            ? undefined
+            : pen.crossOrigin || 'anonymous';
         img.src = canvas.toDataURL('image/png', 0.1);
         if (img.src.length > 10) {
           pen.calculative.img = img;
