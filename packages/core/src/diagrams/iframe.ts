@@ -286,6 +286,7 @@ function handleSaveImg(pen: Pen) {
         height: pen.height,
         x: iframeScrollX,
         y: iframeScrollY,
+        foreignObjectRendering: true,
       })
       .then((canvas) => {
         // 转成图片，生成图片地址
