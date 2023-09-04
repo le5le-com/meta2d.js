@@ -70,6 +70,7 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
     );
     ctx.fill();
     if (i < normalizedOption.splitNumber) {
+      ctx.beginPath();
       ctx.moveTo(x, y + temH);
       ctx.lineTo(x + w, y + temH);
       ctx.stroke();

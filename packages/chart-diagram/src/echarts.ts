@@ -43,7 +43,9 @@ let keyWords = [
   'symbolOffset',
   'padding',
   'barWidth',
-  'symbolOffset'
+  'symbolOffset',
+  'shadowOffsetY',
+  'shadowOffsetX',
 ];
 
 export interface ChartPen extends Pen {
