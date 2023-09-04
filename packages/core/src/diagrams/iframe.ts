@@ -285,6 +285,7 @@ async function handleSaveImg(pen: Pen) {
       height: pen.height,
       x: iframeScrollX,
       y: iframeScrollY,
+      foreignObjectRendering: true,
     });
     canvas.getContext('2d', {
       willReadFrequently: true,
