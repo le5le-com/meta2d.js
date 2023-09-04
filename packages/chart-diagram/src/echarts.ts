@@ -43,7 +43,9 @@ let keyWords = [
   'symbolOffset',
   'padding',
   'barWidth',
-  'symbolOffset'
+  'symbolOffset',
+  'shadowOffsetY',
+  'shadowOffsetX',
 ];
 
 export interface ChartPen extends Pen {
@@ -191,6 +193,7 @@ function resize(pen: ChartPen) {
   if (!pen.calculative.singleton.echart) {
     return;
   }
+  let echarts = globalThis.echarts;
   setElemPosition(pen, pen.calculative.singleton.div);
   // let option = pen.echarts.option;
   // if (!pen.beforeScale) {
@@ -198,6 +201,7 @@ function resize(pen: ChartPen) {
   // }
   // let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
   // updateOption(option, ratio);
+  if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) return;
   pen.calculative.singleton.echart.setOption(
     updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
     true

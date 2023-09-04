@@ -304,10 +304,10 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
 function onAdd(pen: leChartPen) {
   if (pen.isClock) {
     pen.clockInterval = setInterval(() => {
-      var date = new Date();
-      var second = date.getSeconds();
-      var minute = date.getMinutes() + second / 60;
-      var hour = (date.getHours() % 12) + minute / 60;
+      let date = new Date();
+      let second = date.getSeconds();
+      let minute = date.getMinutes() + second / 60;
+      let hour = (date.getHours() % 12) + minute / 60;
       pen.calculative.canvas.parent.setValue(
         {
           id: pen.id,
