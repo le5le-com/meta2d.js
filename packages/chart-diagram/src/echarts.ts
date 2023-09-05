@@ -225,6 +225,32 @@ function value(pen: ChartPen) {
 
 function beforeValue(pen: ChartPen, value: ChartData) {
   if ((value as any).echarts) {
+    let echarts = globalThis.echarts;
+    if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) {
+      if (pen.echarts.geoJson) {
+        echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
+      } else if (pen.echarts.geoUrl) {
+        pen.calculative.singleton.echartsReady = false;
+        fetch(pen.echarts.geoUrl).then((e) => {
+          e.text().then((data: any) => {
+            if (typeof data === 'string') {
+              try {
+                data = JSON.parse(data);
+              } catch {}
+            }
+            if (data.constructor !== Object && data.constructor !== Array) {
+              console.warn('Invalid data:', data);
+              return;
+            }
+            echarts.registerMap(pen.echarts.geoName, data);
+            pen.calculative.singleton.echartsReady = true;
+           // @ts-ignore
+            pen.onValue(pen);
+            return false;
+          });
+        });
+      }
+    }
     // 整体传参，不做处理
     return value;
   }
