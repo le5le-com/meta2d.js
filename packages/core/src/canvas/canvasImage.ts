@@ -264,6 +264,7 @@ export class CanvasImage {
       patchFlags ||
       patchFlagsAnimate ||
       // (patchFlagsBackground && this.isBottom) ||
+      this.isBottom ||
       (patchFlagsTop && !this.isBottom)
     ) {
       const ctxCanvas = this.canvas.getContext('2d');
