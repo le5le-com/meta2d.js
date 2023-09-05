@@ -142,6 +142,7 @@ export function echarts(pen: ChartPen): Path2D {
               ),
               true
             );
+            pen.calculative.singleton.echart.resize();
             setTimeout(() => {
               onRenderPenRaw(pen);
             }, 300);
