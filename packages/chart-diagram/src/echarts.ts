@@ -223,15 +223,15 @@ function value(pen: ChartPen) {
     );
 }
 
-function beforeValue(pen: ChartPen, value: ChartData) {
+function beforeValue(pen: ChartPen, value: any) {
   if ((value as any).echarts) {
     let echarts = globalThis.echarts;
-    if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) {
-      if (pen.echarts.geoJson) {
-        echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
-      } else if (pen.echarts.geoUrl) {
+    if (value.echarts.geoName && !echarts.getMap(value.echarts.geoName)) {
+      if (value.echarts.geoJson) {
+        echarts.registerMap(value.echarts.geoName, value.echarts.geoJson);
+      } else if (value.echarts.geoUrl) {
         pen.calculative.singleton.echartsReady = false;
-        fetch(pen.echarts.geoUrl).then((e) => {
+        fetch(value.echarts.geoUrl).then((e) => {
           e.text().then((data: any) => {
             if (typeof data === 'string') {
               try {
@@ -242,7 +242,7 @@ function beforeValue(pen: ChartPen, value: ChartData) {
               console.warn('Invalid data:', data);
               return;
             }
-            echarts.registerMap(pen.echarts.geoName, data);
+            echarts.registerMap(value.echarts.geoName, data);
             pen.calculative.singleton.echartsReady = true;
            // @ts-ignore
             pen.onValue(pen);
