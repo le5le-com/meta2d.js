@@ -1,5 +1,6 @@
 import { scaleCompute, ScaleOption } from './normalizedAxis';
 import { leChartPen } from './common';
+import {getFont} from "@meta2d/core";
 
 //用于绘制坐标轴
 export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
@@ -58,11 +59,20 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   ctx.fillStyle = '#BFBFBF';
   ctx.strokeStyle = '#E9E9E9';
   ctx.setLineDash([2, 2]);
+  let fontOptions = {
+    fontStyle: pen.yAxis?.axisLabel?.fontStyle || pen.fontStyle,
+    textDecoration: pen.yAxis?.axisLabel?.textDecoration,
+    fontWeight: pen.yAxis?.axisLabel?.fontWeight || pen.fontWeight,
+    fontFamily: pen.yAxis?.axisLabel?.fontFamily || pen.fontFamily,
+    fontSize: pen.yAxis?.axisLabel?.fontSize || pen.fontSize,
+    lineHeight: pen.yAxis?.axisLabel?.lineHeight || pen.lineHeight,
+  };
+  ctx.fillStyle = pen.yAxis?.axisLabel?.fontColor || pen.color;
   for (let i = 0; i < normalizedOption.splitNumber + 1; i++) {
     let temH = (i * h) / normalizedOption.splitNumber;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.font = r / 10 +'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
+    ctx.font = getFont(fontOptions);    //r / 10 +'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
     ctx.fillText(
       normalizedOption.max - i * normalizedOption.interval + '',
       x - 10 * scale,
@@ -88,7 +98,16 @@ export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.font = r / 10 +'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
+    let fontOptions = {
+      fontStyle: pen.xAxis?.axisLabel?.fontStyle || pen.calculative.fontStyle,
+      textDecoration: pen.xAxis?.axisLabel?.textDecoration,
+      fontWeight: pen.xAxis?.axisLabel?.fontWeight || pen.calculative.fontWeight,
+      fontFamily: pen.xAxis?.axisLabel?.fontFamily || pen.calculative.fontFamily,
+      fontSize: pen.xAxis?.axisLabel?.fontSize || pen.calculative.fontSize,
+      lineHeight: pen.xAxis?.axisLabel?.lineHeight || pen.calculative.lineHeight,
+    };
+    ctx.font = getFont(fontOptions);    //r / 10 +'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
+    ctx.fillStyle = pen.xAxis?.axisLabel?.fontColor || pen.calculative.color;
     ctx.fillText(xData[i], xdataX, (y + h + 10*scale));
     ctx.fill();
   }
