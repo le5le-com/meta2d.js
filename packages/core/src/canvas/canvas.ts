@@ -1044,7 +1044,7 @@ export class Canvas {
       }
     } catch (e) {}
 
-    if (!obj) {
+    if (!obj && !(this.addCaches && this.addCaches.length)) {
       const { files } = event.dataTransfer;
       if (files.length && files[0].type.match('image.*')) {
         // 必须是图片类型
