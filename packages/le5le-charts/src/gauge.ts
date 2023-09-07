@@ -1,4 +1,5 @@
 import { getValidValue, leChartPen } from './common';
+import {getFont} from "@meta2d/core";
 
 //仪表全盘
 export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
@@ -143,14 +144,15 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   ctx.beginPath();
   let valueGap = pen.max - pen.min;
   let interval = valueGap / pen.splitNumber;
-  ctx.font =
-    (pen.calculative.fontStyle || '') +
-    ' normal ' +
-    (pen.calculative.fontWeight || '') +
-    ' ' +
-    r / 10 +
-    'px ' +
-    pen.calculative.fontFamily;
+  let fontOption = {
+    fontStyle: pen.tickLabel?.fontStyle || pen.calculative.fontStyle,
+    textDecoration: pen.tickLabel?.textDecoration || pen.textDecoration,
+    fontWeight: pen.tickLabel?.fontWeight || pen.calculative.fontWeight,
+    fontFamily: pen.tickLabel?.fontFamily || pen.calculative.fontFamily,
+    fontSize: (pen.tickLabel?.fontSize || pen.calculative.fontSize) * scale,
+    lineHeight: pen.tickLabel?.lineHeight || pen.calculative.lineHeight,
+  };
+  ctx.font = getFont(fontOption);
   let textR = r - bgLineWidth - r / 20;
   for (let i = 0; i <= pen.splitNumber; i++) {
     if (Math.abs(pen.startAngle) + Math.abs(pen.endAngle) === 360) {
@@ -160,7 +162,7 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
     let angle = pen.startAngle - ((interval * i) / valueGap) * gap;
     let width = Math.cos((angle / 180) * Math.PI);
     let height = Math.sin((angle / 180) * Math.PI);
-    ctx.fillStyle = '#999999';
+    ctx.fillStyle = pen.tickLabel?.color || '#999999';
     if (width > 0.02) {
       ctx.textAlign = 'end';
     } else if (width < -0.02) {
@@ -266,15 +268,16 @@ export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {
   ctx.beginPath();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font =
-    (pen.calculative.fontStyle || '') +
-    ' normal ' +
-    (pen.calculative.fontWeight || '') +
-    ' ' +
-    r / 5 +
-    'px ' +
-    pen.calculative.fontFamily;
-  ctx.fillStyle = pointColor;
+  let titleOption = {
+    fontStyle: pen.titleLabel?.fontStyle || pen.calculative.fontStyle,
+    textDecoration: pen.titleLabel?.textDecoration || pen.textDecoration,
+    fontWeight: pen.titleLabel?.fontWeight || pen.calculative.fontWeight,
+    fontFamily: pen.titleLabel?.fontFamily || pen.calculative.fontFamily,
+    fontSize: (pen.titleLabel?.fontSize || pen.calculative.fontSize) * scale,
+    lineHeight: pen.titleLabel?.lineHeight || pen.calculative.lineHeight,
+  };
+  ctx.font = getFont(titleOption);
+  ctx.fillStyle = pen.titleLabel?.color || pointColor;
   if (pen.isClock) {
     ctx.fillText(
       ('0' + parseInt(pen.hourvalue)).slice(-2) +
