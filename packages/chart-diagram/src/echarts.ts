@@ -223,8 +223,34 @@ function value(pen: ChartPen) {
     );
 }
 
-function beforeValue(pen: ChartPen, value: ChartData) {
+function beforeValue(pen: ChartPen, value: any) {
   if ((value as any).echarts) {
+    let echarts = globalThis.echarts;
+    if (value.echarts.geoName && !echarts.getMap(value.echarts.geoName)) {
+      if (value.echarts.geoJson) {
+        echarts.registerMap(value.echarts.geoName, value.echarts.geoJson);
+      } else if (value.echarts.geoUrl) {
+        pen.calculative.singleton.echartsReady = false;
+        fetch(value.echarts.geoUrl).then((e) => {
+          e.text().then((data: any) => {
+            if (typeof data === 'string') {
+              try {
+                data = JSON.parse(data);
+              } catch {}
+            }
+            if (data.constructor !== Object && data.constructor !== Array) {
+              console.warn('Invalid data:', data);
+              return;
+            }
+            echarts.registerMap(value.echarts.geoName, data);
+            pen.calculative.singleton.echartsReady = true;
+           // @ts-ignore
+            pen.onValue(pen);
+            return false;
+          });
+        });
+      }
+    }
     // 整体传参，不做处理
     return value;
   }

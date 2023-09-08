@@ -512,7 +512,7 @@ export interface Pen extends Rect {
     imageRadius?: number;
   };
   // 下划线相关配置属性
-  textDecoration?: boolean;
+  textDecoration?: string;
   textDecorationDash?: number[];
   textDecorationColor?: string;
   // 删除线相关配置

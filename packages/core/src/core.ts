@@ -561,7 +561,7 @@ export class Meta2d {
   }
 
   render(patchFlags?: boolean | number) {
-    this.canvas.render(patchFlags);
+    this.canvas?.render(patchFlags);
   }
 
   async setBackgroundImage(url: string) {

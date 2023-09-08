@@ -1,4 +1,5 @@
 import { leChartPen, ReplaceMode } from './common';
+import {getFont} from "@meta2d/core";
 //饼状图
 export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   if (!pen.onBeforeValue) {
@@ -166,7 +167,14 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
 
         ctx.lineTo(temX, temY);
       }
-      ctx.font = r / 10 + 'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
+      let fontOption = {
+        fontStyle: pen.tickLabel?.fontStyle || pen.calculative.fontStyle,
+        fontWeight:pen.tickLabel?.fontWeight || pen.calculative.fontWeight,
+        fontFamily:pen.tickLabel?.fontFamily || pen.calculative.fontFamily,
+        lineHeight: pen.tickLabel?.lineHeight || pen.calculative.lineHeight,
+        fontSize: (pen.tickLabel?.fontSize || pen.calculative.fontSize) * scale
+      };
+      ctx.font = getFont(fontOption);  // r / 10 + 'px AlibabaPuHuiTi-Regular, Alibaba PuHuiTi';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       // 写入文字
@@ -174,10 +182,10 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
         if ((isEcharts && series.label.position === 'outside') || !isEcharts) {
           ctx.textAlign = 'end';
         }
-        if ((isEcharts && series.labelLine.show !== false) || !isEcharts) {
+        if ((isEcharts && series.labelLine.show !== false) || (!isEcharts && (pen.tickLabel?.labelLine?.show??true))) {
           ctx.lineTo(temX - 5*scale, temY);
         }
-        if ((isEcharts && series.label.show !== false) || !isEcharts) {
+        if ((isEcharts && series.label.show !== false) || (!isEcharts && (pen.tickLabel?.show??true))) {
           ctx.fillText(item.name, temX - 5*scale, temY);
         }
       } else {
@@ -187,7 +195,7 @@ export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
         if ((isEcharts && series.labelLine.show !== false) || !isEcharts) {
           ctx.lineTo(temX + 5*scale, temY);
         }
-        if ((isEcharts && series.label.show !== false) || !isEcharts) {
+        if ((isEcharts && series.label.show !== false) || (!isEcharts && (pen.tickLabel?.show??true))) {
           ctx.fillText(item.name, temX + 5*scale, temY);
         }
       }
