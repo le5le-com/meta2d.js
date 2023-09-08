@@ -4,6 +4,7 @@ import { slider } from './slider';
 import { checkbox } from './checkbox';
 import { radio } from './radio';
 import { table2 } from './table2';
+import { time } from './time';
 
 export function formPens() {
   return {
@@ -13,5 +14,11 @@ export function formPens() {
     checkbox,
     table,
     table2,
+  };
+}
+
+export function formPath2DPens() {
+  return {
+    time,
   };
 }
