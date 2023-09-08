@@ -22,7 +22,7 @@ function formatTime(pen: any) {
   const now = new Date();
   const year = now.getFullYear();
   let pad = '';
-  if (pen.isPadding) {
+  if (pen.fillZero) {
     pad = '0';
   }
   const month = (now.getMonth() + 1 + '').padStart(2, pad);
