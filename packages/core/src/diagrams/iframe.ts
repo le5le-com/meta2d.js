@@ -261,12 +261,22 @@ function updatePointerEvents(pen: Pen) {
 }
 
 function renderPenRaw(pen: Pen) {
-  if (pen.calculative.singleton && pen.calculative.singleton.div) {
-    try {
-      handleSaveImg(pen);
-    } catch (e) {
-      console.warn(e);
-      pen.calculative.img = null;
+  if (pen.thumbImg) {
+    const img = new Image();
+    img.crossOrigin =
+      pen.crossOrigin === 'undefined'
+        ? undefined
+        : pen.crossOrigin || 'anonymous';
+    img.src = pen.thumbImg;
+    pen.calculative.img = img;
+  } else {
+    if (pen.calculative.singleton && pen.calculative.singleton.div) {
+      try {
+        handleSaveImg(pen);
+      } catch (e) {
+        console.warn(e);
+        pen.calculative.img = null;
+      }
     }
   }
 }

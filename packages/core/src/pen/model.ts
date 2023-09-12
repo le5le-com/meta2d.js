@@ -328,6 +328,7 @@ export interface Pen extends Rect {
   blur?: number;
   blurBackground?: string;
   template?: boolean; //是否作为模版图元
+  thumbImg?: string; //iframe嵌入场景缩略图
   calculative?: {
     x?: number;
     y?: number;
