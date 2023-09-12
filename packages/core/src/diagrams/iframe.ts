@@ -291,9 +291,9 @@ async function handleSaveImg(pen: Pen) {
       y: iframeScrollY,
       // foreignObjectRendering: true,
     });
-    canvas.getContext('2d', {
-      willReadFrequently: true,
-    });
+    // canvas.getContext('2d', {
+    //   willReadFrequently: true,
+    // });
     const img = new Image();
     img.crossOrigin =
       pen.crossOrigin === 'undefined'
