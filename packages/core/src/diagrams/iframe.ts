@@ -276,16 +276,20 @@ async function handleSaveImg(pen: Pen) {
   const iframeBody = iframeHtml.document.getElementsByTagName('body')[0];
   const iframeScrollY = iframeHtml.document.documentElement.scrollTop;
   const iframeScrollX = iframeHtml.document.documentElement.scrollLeft;
+  var fillContent = document.createElement('div');
+  // 把需要转换成图片的元素内容赋给创建的元素
+  fillContent.innerHTML = iframeBody.outerHTML;
+  document.body.appendChild(fillContent);
   iframeHtml.document.domain = getRootDomain();
   if (globalThis.html2canvas) {
-    const canvas = await globalThis.html2canvas(iframeBody, {
+    const canvas = await globalThis.html2canvas(fillContent, {
       allowTaint: true,
       useCORS: true,
       width: pen.width, // TODO 截屏按照1920*1080分辨率下的预览窗口宽高
       height: pen.height,
       x: iframeScrollX,
       y: iframeScrollY,
-      foreignObjectRendering: true,
+      // foreignObjectRendering: true,
     });
     canvas.getContext('2d', {
       willReadFrequently: true,
@@ -299,6 +303,7 @@ async function handleSaveImg(pen: Pen) {
     if (img.src.length > 10) {
       pen.calculative.img = img;
     }
+    document.body.removeChild(fillContent);
   }
   // globalThis.html2canvas &&
   //   globalThis
