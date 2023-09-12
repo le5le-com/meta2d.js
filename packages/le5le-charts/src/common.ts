@@ -1,20 +1,11 @@
 import { Pen } from '../../core/src/pen';
 
-
-
-type RGB = `rgb(${number}, ${number}, ${number})`;
-type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
-type HEX = `#${string}`;
-
-type Color = RGB | RGBA | HEX;
-
 // 坐标轴样式配置
 interface Axis {
-  lineStyle?:{
-  };
-  axisLabel?:{
+  lineStyle?: {};
+  axisLabel?: {
     fontSize?: number;
-    fontColor?: Color;
+    fontColor?: string;
     fontStyle?: string;
     textDecoration?: string;
     fontWeight?: string;
@@ -52,30 +43,30 @@ export interface leChartPen extends Pen {
       color: string[];
     };
   };
-  tickLabel?:{
-    show?: boolean,
-    labelLine?:{
-      show?:boolean,
-    },
-    color?:Color,
-    fontSize?:number,
-    fontFamily?: string,
-    fontWeight?: string,
-    lineHeight?: number,
-    fontStyle?: string,
-    textDecoration?: string
+  tickLabel?: {
+    show?: boolean;
+    labelLine?: {
+      show?: boolean;
+    };
+    color?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    lineHeight?: number;
+    fontStyle?: string;
+    textDecoration?: string;
   };
-  titleLabel?:{
-    fontSize?:number,
-    fontFamily?: string,
-    fontWeight?: string,
-    lineHeight?: number,
-    fontStyle?: string,
-    textDecoration?: string
-    color?: Color,
+  titleLabel?: {
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    lineHeight?: number;
+    fontStyle?: string;
+    textDecoration?: string;
+    color?: string;
   };
-  xAxis?:Axis;
-  yAxis?:Axis;
+  xAxis?: Axis;
+  yAxis?: Axis;
   startAngle?: number;
   endAngle?: number;
   min?: number;

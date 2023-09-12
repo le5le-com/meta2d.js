@@ -102,6 +102,7 @@ export function polyline(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
   if (connected) {
     const i = pen.calculative.worldAnchors.length - 2;
     pen.calculative.worldAnchors[i].isTemp = false;
+    pen.calculative.worldAnchors[1].isTemp = false;
   }
 }
 

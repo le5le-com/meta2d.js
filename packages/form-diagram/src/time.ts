@@ -21,12 +21,16 @@ function formatTime(pen: any) {
   const weeks = ['天', '一', '二', '三', '四', '五', '六'];
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
+  let pad = '';
+  if (pen.fillZero) {
+    pad = '0';
+  }
+  const month = (now.getMonth() + 1 + '').padStart(2, pad);
+  const day = (now.getDate() + '').padStart(2, pad);
   const week = now.getDay();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  const seconds = now.getSeconds();
+  const hours = (now.getHours() + '').padStart(2, pad);
+  const minutes = (now.getMinutes() + '').padStart(2, pad);
+  const seconds = (now.getSeconds() + '').padStart(2, pad);
   const fn = new Function(
     'year',
     'month',
