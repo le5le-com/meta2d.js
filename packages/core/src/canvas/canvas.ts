@@ -386,7 +386,11 @@ export class Canvas {
         this.store.hover = undefined;
       }
       this.render();
-      if ((e as any).toElement !== this.tooltip.box) {
+      if (
+        (e as any).toElement !== this.tooltip.box &&
+        (e as any).toElement !== this.tooltip.arrowUp &&
+        (e as any).toElement !== this.tooltip.arrowDown
+      ) {
         this.tooltip.hide();
         this.store.lastHover = undefined;
       }
@@ -2171,8 +2175,8 @@ export class Canvas {
           // 只存在一个缓存图元
           if (this.addCaches.length === 1) {
             const target = this.addCaches[0];
-            target.width = this.dragRect.width;
-            target.height = this.dragRect.height;
+            target.width = this.dragRect.width / this.store.data.scale;
+            target.height = this.dragRect.height / this.store.data.scale;
             e.x = (this.dragRect.x + this.dragRect.ex) / 2;
             e.y = (this.dragRect.y + this.dragRect.ey) / 2;
           }
