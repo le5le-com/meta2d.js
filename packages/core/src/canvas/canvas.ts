@@ -386,7 +386,11 @@ export class Canvas {
         this.store.hover = undefined;
       }
       this.render();
-      if ((e as any).toElement !== this.tooltip.box) {
+      if (
+        (e as any).toElement !== this.tooltip.box &&
+        (e as any).toElement !== this.tooltip.arrowUp &&
+        (e as any).toElement !== this.tooltip.arrowDown
+      ) {
         this.tooltip.hide();
         this.store.lastHover = undefined;
       }
