@@ -591,10 +591,10 @@ export class Meta2d {
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
     if (width && height) {
-      this.canvas.canvasImageBottom.canvas.style.backgroundImage = null;
+      this.canvas.canvasTemplate.canvas.style.backgroundImage = null;
       this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     } else {
-      this.canvas.canvasImageBottom.canvas.style.backgroundImage = url
+      this.canvas.canvasTemplate.canvas.style.backgroundImage = url
         ? `url('${url}')`
         : '';
     }
