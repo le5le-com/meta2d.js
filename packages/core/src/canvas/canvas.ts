@@ -2512,6 +2512,7 @@ export class Canvas {
     if (!this.store.active.length) {
       return;
     }
+    this.initTemplateCanvas(this.store.active);
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
       pen.calculative.activeAnchor = undefined;
@@ -2543,6 +2544,7 @@ export class Canvas {
     this.store.active.push(...pens);
     this.activeRect = undefined;
     this.calcActiveRect();
+    this.initTemplateCanvas(pens);
     this.patchFlags = true;
     emit && this.store.emitter.emit('active', this.store.active);
   }
