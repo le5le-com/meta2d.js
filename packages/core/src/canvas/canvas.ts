@@ -2831,6 +2831,7 @@ export class Canvas {
           this.store.hover = pen;
           this.store.pointAt = pos.point;
           this.store.pointAtIndex = pos.i;
+          this.initTemplateCanvas([this.store.hover]);
           hoverType = HoverType.Line;
           break;
         }
@@ -2868,6 +2869,7 @@ export class Canvas {
           }
 
           this.store.hover = pen;
+          this.initTemplateCanvas([this.store.hover]);
           hoverType = HoverType.Node;
           this.store.pointAt = pt;
           // 锚点贴边吸附
