@@ -561,6 +561,13 @@ export class Canvas {
       this.translate(-e.deltaX, -e.deltaY);
       return;
     }
+    if (Math.abs((e as any).wheelDelta) > 100) {
+      //鼠标滚轮滚动 scroll模式下是上下滚动而不是缩放
+      if (this.store.options.scroll && this.scroll) {
+        this.scroll.wheel(e.deltaY < 0);
+        return;
+      }
+    }
 
     //禁止触摸屏双指缩放操作
     if (this.store.options.disableTouchPadScale) {
