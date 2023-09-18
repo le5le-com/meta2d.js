@@ -1121,6 +1121,7 @@ export class Canvas {
             { x: pen.x + pen.width, y: pen.y },
             { x: pen.x, y: pen.y + pen.height },
             { x: pen.x + pen.width, y: pen.y + pen.height },
+            { x: pen.x + pen.width / 2, y: pen.y + pen.height / 2 },
           ];
           if (
             (pen.x === rect.x &&
