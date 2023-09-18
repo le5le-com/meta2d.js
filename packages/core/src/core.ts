@@ -3318,6 +3318,7 @@ export class Meta2d {
         if (index > -1) {
           _pens.push(_pens[index]);
           _pens.splice(index, 1);
+          this.initTemplateCanvas([pen]);
           this.initImageCanvas([pen]);
         }
         this.specificLayerMove(pen, 'top');
@@ -3332,6 +3333,14 @@ export class Meta2d {
    */
   initImageCanvas(pens: Pen[]) {
     this.canvas.initImageCanvas(pens);
+  }
+
+  /**
+   * 模版图元图层改变
+   * @param pens 本次改变的 pens
+   */
+  initTemplateCanvas(pens: Pen[]) {
+    this.canvas.initTemplateCanvas(pens);
   }
 
   /**
@@ -3352,6 +3361,7 @@ export class Meta2d {
         if (index > -1) {
           _pens.unshift(_pens[index]);
           _pens.splice(index + 1, 1);
+          this.initTemplateCanvas([pen]);
           this.initImageCanvas([pen]);
         }
         this.specificLayerMove(pen, 'bottom');
@@ -3485,12 +3495,14 @@ export class Meta2d {
           this.specificLayerMove(_pen, 'up');
         });
         _pens.splice(lastIndex + 1, 0, ...orderPens);
+        this.initTemplateCanvas(orderPens);
         this.initImageCanvas(orderPens);
       } else {
         const index = _pens.findIndex((p: Pen) => p.id === pen.id);
         if (index > -1 && index !== _pens.length - 1) {
           _pens.splice(index + 2, 0, _pens[index]);
           _pens.splice(index, 1);
+          this.initTemplateCanvas([pen]);
           this.initImageCanvas([pen]);
         }
         this.specificLayerMove(pen, 'up');
@@ -3532,12 +3544,14 @@ export class Meta2d {
           this.specificLayerMove(_pen, 'down');
         });
         _pens.splice(firstIndex - 1, 0, ...orderPens);
+        this.initTemplateCanvas(orderPens);
         this.initImageCanvas(orderPens);
       } else {
         const index = _pens.findIndex((p: Pen) => p.id === pen.id);
         if (index > -1 && index !== 0) {
           _pens.splice(index - 1, 0, _pens[index]);
           _pens.splice(index + 1, 1);
+          this.initTemplateCanvas([pen]);
           this.initImageCanvas([pen]);
         }
         this.specificLayerMove(pen, 'down');
