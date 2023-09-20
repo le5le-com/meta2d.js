@@ -113,6 +113,7 @@ export class Scroll {
 
     if (this.isDownH || this.isDownV) {
       this.parent.onMovePens();
+      this.parent.canvasTemplate.init();
       this.parent.canvasImage.init();
       this.parent.canvasImageBottom.init();
       this.parent.render();
@@ -264,6 +265,7 @@ export class Scroll {
       (y * this.rect.height) / this.parent.parentElement.clientHeight;
 
     this.parent.onMovePens();
+    this.parent.canvasTemplate.init();
     this.parent.canvasImage.init();
     this.parent.canvasImageBottom.init();
     this.parent.render();

@@ -561,6 +561,13 @@ export class Canvas {
       this.translate(-e.deltaX, -e.deltaY);
       return;
     }
+    if (Math.abs((e as any).wheelDelta) > 100) {
+      //鼠标滚轮滚动 scroll模式下是上下滚动而不是缩放
+      if (this.store.options.scroll && this.scroll) {
+        this.scroll.wheel(e.deltaY < 0);
+        return;
+      }
+    }
 
     //禁止触摸屏双指缩放操作
     if (this.store.options.disableTouchPadScale) {
@@ -1121,6 +1128,7 @@ export class Canvas {
             { x: pen.x + pen.width, y: pen.y },
             { x: pen.x, y: pen.y + pen.height },
             { x: pen.x + pen.width, y: pen.y + pen.height },
+            { x: pen.x + pen.width / 2, y: pen.y + pen.height / 2 },
           ];
           if (
             (pen.x === rect.x &&
@@ -2504,6 +2512,7 @@ export class Canvas {
     if (!this.store.active.length) {
       return;
     }
+    this.initTemplateCanvas(this.store.active);
     this.store.active.forEach((pen) => {
       pen.calculative.active = undefined;
       pen.calculative.activeAnchor = undefined;
@@ -2535,6 +2544,7 @@ export class Canvas {
     this.store.active.push(...pens);
     this.activeRect = undefined;
     this.calcActiveRect();
+    this.initTemplateCanvas(pens);
     this.patchFlags = true;
     emit && this.store.emitter.emit('active', this.store.active);
   }
@@ -2821,6 +2831,7 @@ export class Canvas {
           this.store.hover = pen;
           this.store.pointAt = pos.point;
           this.store.pointAtIndex = pos.i;
+          this.initTemplateCanvas([this.store.hover]);
           hoverType = HoverType.Line;
           break;
         }
@@ -2858,6 +2869,7 @@ export class Canvas {
           }
 
           this.store.hover = pen;
+          this.initTemplateCanvas([this.store.hover]);
           hoverType = HoverType.Node;
           this.store.pointAt = pt;
           // 锚点贴边吸附
