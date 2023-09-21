@@ -62,8 +62,24 @@ export function polyline(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
   }
   a = getFacePoint(to, toFace, faceSpace);
   const end = to;
+  let corner = undefined;
   if (a) {
     to = a;
+    if (end.connectTo) {
+      if ((a.y > end.y && from.y < end.y) || (a.y < end.y && from.y > end.y)) {
+        //拐角 防止连线覆盖
+        corner = a;
+        let _faceSpace = faceSpace;
+        if (from.x < a.x) {
+          _faceSpace = -_faceSpace;
+        }
+        if (Math.abs(from.x - a.x) < _faceSpace) {
+          _faceSpace = -_faceSpace;
+        }
+        const point = { x: a.x + _faceSpace, y: a.y, id: s8() };
+        to = point;
+      }
+    }
   }
 
   switch (fromFace) {
@@ -91,6 +107,9 @@ export function polyline(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
   });
 
   pen.calculative.worldAnchors.push(to);
+  if (corner) {
+    pen.calculative.worldAnchors.push(corner);
+  }
   if (a) {
     pen.calculative.worldAnchors.push(end);
   }
