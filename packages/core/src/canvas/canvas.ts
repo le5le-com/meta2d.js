@@ -5170,6 +5170,9 @@ export class Canvas {
     const from = getFromAnchor(line);
     const to = getToAnchor(line);
     const newAnchor = nearestAnchor(pen, lineAnchor === from ? to : from);
+    if (!newAnchor) {
+      return;
+    }
     lineAnchor.x = newAnchor.x;
     lineAnchor.y = newAnchor.y;
     lineAnchor.prev = undefined;
