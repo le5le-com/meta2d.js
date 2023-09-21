@@ -220,7 +220,7 @@ export class Meta2d {
       // TODO: 若频繁地触发，重复 render 可能带来性能问题，待考虑
       const value = e.value;
       if (value && typeof value === 'object') {
-        const pens = e.params ? this.find(e.params) : [pen];
+        const pens = e.params ? this.find(e.params) : this.find(pen.id);
         pens.forEach((pen: Pen) => {
           if (value.hasOwnProperty('visible')) {
             this.setVisible(pen, value.visible);
@@ -2993,15 +2993,33 @@ export class Meta2d {
   }
 
   clearFormatPainter() {
-    const attrs = {};
+    const pens = this.store.active;
+    const initPens = deepClone(pens);
     formatAttrs.forEach((attr) => {
-      attrs[attr] =
-        this.store.options.defaultFormat[attr] ||
-        this.store.options[attr] ||
-        undefined;
+      for (let i = 0; i < pens.length; i++) {
+        const pen = pens[i];
+        const { fontSize, lineHeight } = this.store.options;
+        if (attr === 'lineWidth') {
+          pen.lineWidth = 1;
+          pen.calculative.lineWidth = 1;
+        } else if (attr === 'fontSize') {
+          pen.fontSize = fontSize;
+          pen.calculative.fontSize = fontSize;
+        } else if (attr === 'lineHeight') {
+          pen.lineHeight = lineHeight;
+          pen.calculative.lineHeight = lineHeight;
+        } else {
+          delete pen[attr];
+          delete pen.calculative[attr];
+        }
+      }
     });
-    localStorage.setItem('meta2d-formatPainter', JSON.stringify(attrs));
-    this.formatPainter();
+    this.render();
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
   }
 
   alignNodes(align: string, pens: Pen[] = this.store.data.pens, rect?: Rect) {
