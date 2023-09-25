@@ -1054,10 +1054,13 @@ export class Canvas {
         obj = JSON.parse(json);
       }
     } catch (e) {}
-
-    if (!obj && !(this.addCaches && this.addCaches.length)) {
+    if (!obj) {
       const { files } = event.dataTransfer;
-      if (files.length && files[0].type.match('image.*')) {
+      if (
+        files.length &&
+        files[0].type.match('image.*') &&
+        !(this.addCaches && this.addCaches.length)
+      ) {
         // 必须是图片类型
         const isGif = files[0].type === 'image/gif';
         obj = await this.fileToPen(files[0], isGif);
