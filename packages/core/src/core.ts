@@ -602,6 +602,12 @@ export class Meta2d {
       const img = await loadImage(url);
       // 用作 toPng 的绘制
       this.store.bkImg = img;
+      if (width && height) {
+        if (this.canvas) {
+          this.canvas.canvasTemplate.init();
+          this.render();
+        }
+      }
     } else {
       this.store.bkImg = null;
     }
