@@ -148,6 +148,23 @@ export class Meta2d {
   }
 
   setOptions(opts: Options = {}) {
+    if (
+      opts.grid !== undefined ||
+      opts.gridColor !== undefined ||
+      opts.gridSize !== undefined
+    ) {
+      this.setGrid({
+        grid: opts.grid,
+        gridColor: opts.gridColor,
+        gridSize: opts.gridSize,
+      });
+    }
+    if (opts.rule !== undefined || opts.ruleColor !== undefined) {
+      this.setRule({
+        rule: opts.rule,
+        ruleColor: opts.ruleColor,
+      });
+    }
     this.store.options = Object.assign(this.store.options, opts);
     if (this.canvas && opts.scroll !== undefined) {
       if (opts.scroll) {
