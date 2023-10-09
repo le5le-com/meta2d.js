@@ -6809,6 +6809,16 @@ export class Canvas {
       );
     }
     const ctx = canvas.getContext('2d');
+
+    if(window.devicePixelRatio > 1) {
+      canvas.width *= window.devicePixelRatio;
+      canvas.height *= window.devicePixelRatio;
+      canvas.style.width = `${canvas.width / window.devicePixelRatio}`;
+      canvas.style.height = `${canvas.height / window.devicePixelRatio}`;
+
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+
     ctx.textBaseline = 'middle'; // 默认垂直居中
     if (isDrawBkImg) {
       const x = rect.x < 0 ? -rect.x : 0;
