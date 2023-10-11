@@ -581,7 +581,7 @@ export class Meta2d {
     this.canvas?.render(patchFlags);
   }
 
-  async setBackgroundImage(url: string) {
+  async setBackgroundImage(url: string, data?: any) {
     let that = this;
     async function loadImage(url: string) {
       return new Promise<HTMLImageElement>((resolve) => {
@@ -605,8 +605,10 @@ export class Meta2d {
     }
 
     this.store.data.bkImage = url;
-    const width = this.store.data.width || this.store.options.width;
-    const height = this.store.data.height || this.store.options.height;
+    const width =
+      data?.width || this.store.data?.width || this.store.options?.width;
+    const height =
+      data?.height || this.store.data?.height || this.store.options?.height;
     if (width && height) {
       this.canvas.canvasTemplate.canvas.style.backgroundImage = null;
       this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
@@ -671,7 +673,7 @@ export class Meta2d {
     this.clear(false, data.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
-      this.setBackgroundImage(data.bkImage);
+      this.setBackgroundImage(data.bkImage, data);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
       // 第一遍赋初值
