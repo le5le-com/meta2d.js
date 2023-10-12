@@ -460,7 +460,8 @@ function transformNormalShape(
  * @returns
  */
 function polygonPointsToXY(points: string) {
-  const pointsArr = points.split(/\s|,/);
+  const _points = points.replace(/[\'\"\\\/\b\f\n\r\t]/g, '');
+  const pointsArr = _points.split(/\s|,/);
   const resPoints = [];
   pointsArr.forEach((item: string, index: number) => {
     if (index % 2 === 0) {
@@ -676,7 +677,7 @@ function cssToJson(text: string) {
   const styleArr = text.split('}');
   styleArr.forEach((item) => {
     const [key, value] = item.split('{');
-    key && (json[key] = styleToJson(value));
+    key && (json[key.trim()] = styleToJson(value));
   });
   return json;
 }
@@ -686,7 +687,7 @@ function getClassStyle(className: string) {
   for (const key in style) {
     if (Object.prototype.hasOwnProperty.call(style, key)) {
       const value = style[key];
-      if (key.includes(className)) {
+      if (key === '.' + className) {
         Object.assign(classStyle, value);
       }
     }
