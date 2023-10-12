@@ -463,7 +463,8 @@ export class Meta2d {
     this.store.emitter.emit('sendData', data);
   }
 
-  async sendDataToNetWork(value: any, network: Network) {
+  async sendDataToNetWork(value: any, _network: Network) {
+    const network = deepClone(_network);
     if (!network.url) {
       return;
     }
@@ -1879,7 +1880,8 @@ export class Meta2d {
           this.penMock(pen);
         });
 
-      https.forEach(async (item) => {
+      https.forEach(async (_item) => {
+        const item = deepClone(_item);
         if (item.url) {
           if (typeof item.headers === 'object') {
             for (let i in item.headers) {
