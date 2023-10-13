@@ -280,7 +280,7 @@ function rgbaToHex(value) {
         color = color.replace(')', '');
         let colorA = parseInt(color * 255 + '');
         let colorAHex = colorA.toString(16);
-        colorAHex = colorAHex.length === 2? colorAHex : '0' + colorAHex;
+        colorAHex = colorAHex.length === 2 ? colorAHex : '0' + colorAHex;
         value += colorAHex;
       }
     }
@@ -2990,7 +2990,11 @@ export function setGlobalAlpha(
   pen: Pen
 ) {
   const globalAlpha = pen.calculative.globalAlpha;
-  if (globalAlpha < 1 || (globalAlpha as any) !== '') {
+  if (
+    typeof globalAlpha === 'number' &&
+    globalAlpha < 1 &&
+    !isNaN(globalAlpha)
+  ) {
     ctx.globalAlpha = globalAlpha;
   }
 }
