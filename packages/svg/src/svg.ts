@@ -687,7 +687,11 @@ function getClassStyle(className: string) {
   for (const key in style) {
     if (Object.prototype.hasOwnProperty.call(style, key)) {
       const value = style[key];
-      if (key === '.' + className) {
+      if (
+        key === '.' + className ||
+        key.includes('.' + className + ',') ||
+        key.includes(',.' + className)
+      ) {
         Object.assign(classStyle, value);
       }
     }
