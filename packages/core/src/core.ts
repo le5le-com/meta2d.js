@@ -452,7 +452,7 @@ export class Meta2d {
       if (idx === -1) {
         window.location.href = arr[0] + 'id=' + id;
       } else {
-        window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx + 1);
+        window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx);
       }
     }
   }
