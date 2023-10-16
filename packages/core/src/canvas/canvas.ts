@@ -6753,7 +6753,13 @@ export class Canvas {
     };
   }
 
-  toPng(padding: Padding = 2, callback?: BlobCallback, containBkImg = false) {
+  toPng(
+    padding: Padding = 2,
+    callback?: BlobCallback,
+    containBkImg = false,
+    // 默认值 8k
+    { longSide = 8 * 1024 }: { longSide?: number } = {}
+  ) {
     const rect = getRect(this.store.data.pens);
     if (!isFinite(rect.width)) {
       throw new Error('can not to png, because width is not finite');
@@ -6791,6 +6797,13 @@ export class Canvas {
     rect.y -= p[0];
     rect.width += p[3] + p[1];
     rect.height += p[0] + p[2];
+
+    // 扩大图
+    const scale =
+      rect.width > rect.height ? longSide / rect.width : longSide / rect.height;
+    rect.width *= scale;
+    rect.height *= scale;
+
     calcRightBottom(rect);
 
     const canvas = document.createElement('canvas');
@@ -6820,6 +6833,7 @@ export class Canvas {
     }
 
     ctx.textBaseline = 'middle'; // 默认垂直居中
+    ctx.scale(scale, scale);
     if (isDrawBkImg) {
       const x = rect.x < 0 ? -rect.x : 0;
       const y = rect.y < 0 ? -rect.y : 0;
