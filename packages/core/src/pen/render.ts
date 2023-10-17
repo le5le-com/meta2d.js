@@ -1324,7 +1324,11 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   setGlobalAlpha(ctx, pen);
 
   if (pen.calculative.lineDash) {
-    ctx.setLineDash(pen.calculative.lineDash);
+    ctx.setLineDash(
+      pen.calculative.lineDash.map(
+        (item) => item * pen.calculative.canvas.store.data.scale
+      )
+    );
   }
   if (pen.calculative.lineDashOffset) {
     ctx.lineDashOffset = pen.calculative.lineDashOffset;
@@ -1644,6 +1648,7 @@ export function ctxDrawPath(
     }
 
     if (pen.calculative.lineWidth) {
+      ctx.lineWidth = pen.calculative.lineWidth;
       if (path instanceof Path2D) {
         ctx.stroke(path);
       } else {

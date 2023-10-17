@@ -6757,10 +6757,10 @@ export class Canvas {
     padding: Padding = 2,
     callback?: BlobCallback,
     containBkImg = false,
-    // 默认值 8k
-    { longSide = 8 * 1024 }: { longSide?: number } = {}
+    maxWidth?: number
   ) {
     const rect = getRect(this.store.data.pens);
+    const _scale = this.store.data.scale;
     if (!isFinite(rect.width)) {
       throw new Error('can not to png, because width is not finite');
     }
@@ -6793,14 +6793,14 @@ export class Canvas {
 
     // 有背景图，也添加 padding
     const p = formatPadding(padding);
-    rect.x -= p[3];
-    rect.y -= p[0];
-    rect.width += p[3] + p[1];
-    rect.height += p[0] + p[2];
-
+    rect.x -= p[3] * _scale;
+    rect.y -= p[0] * _scale;
+    rect.width += (p[3] + p[1]) * _scale;
+    rect.height += (p[0] + p[2]) * _scale;
     // 扩大图
-    const scale =
-      rect.width > rect.height ? longSide / rect.width : longSide / rect.height;
+    // const scale =
+    //   rect.width > rect.height ? longSide / rect.width : longSide / rect.height;
+    const scale = (maxWidth || 1920) / rect.width;
     rect.width *= scale;
     rect.height *= scale;
 
@@ -6823,14 +6823,14 @@ export class Canvas {
     }
     const ctx = canvas.getContext('2d');
 
-    if(window.devicePixelRatio > 1) {
-      canvas.width *= window.devicePixelRatio;
-      canvas.height *= window.devicePixelRatio;
-      canvas.style.width = `${canvas.width / window.devicePixelRatio}`;
-      canvas.style.height = `${canvas.height / window.devicePixelRatio}`;
+    // if (window.devicePixelRatio > 1) {
+    //   canvas.width *= window.devicePixelRatio;
+    //   canvas.height *= window.devicePixelRatio;
+    //   canvas.style.width = `${canvas.width / window.devicePixelRatio}`;
+    //   canvas.style.height = `${canvas.height / window.devicePixelRatio}`;
 
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
+    //   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // }
 
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
@@ -6851,7 +6851,12 @@ export class Canvas {
       // 绘制背景颜色
       ctx.save();
       ctx.fillStyle = background;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(
+        0,
+        0,
+        oldRect.width + (p[3] + p[1]) * _scale,
+        oldRect.height + (p[0] + p[2]) * _scale
+      );
       ctx.restore();
     }
     if (!isDrawBkImg) {

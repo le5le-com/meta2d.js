@@ -2529,8 +2529,13 @@ export class Meta2d {
 
   renderPenRaw = renderPenRaw;
 
-  toPng(padding?: Padding, callback?: BlobCallback, containBkImg = false) {
-    return this.canvas.toPng(padding, callback, containBkImg);
+  toPng(
+    padding?: Padding,
+    callback?: BlobCallback,
+    containBkImg = false,
+    maxWidth?: number
+  ) {
+    return this.canvas.toPng(padding, callback, containBkImg, maxWidth);
   }
 
   activeToPng(padding?: Padding) {
@@ -2542,7 +2547,7 @@ export class Meta2d {
    * @param name 传入参数自带文件后缀名 例如：'test.png'
    * @param padding 上右下左的内边距
    */
-  downloadPng(name?: string, padding?: Padding) {
+  downloadPng(name?: string, padding?: Padding, maxWidth?: number) {
     for (const pen of this.store.data.pens) {
       if (pen.calculative.img || ['iframe'].includes(pen.name)) {
         //重新生成绘制图片
@@ -2555,7 +2560,7 @@ export class Meta2d {
         'download',
         (name || this.store.data.name || 'le5le.meta2d') + '.png'
       );
-      a.setAttribute('href', this.toPng(padding, undefined, true));
+      a.setAttribute('href', this.toPng(padding, undefined, true, maxWidth));
       const evt = document.createEvent('MouseEvents');
       evt.initEvent('click', true, true);
       a.dispatchEvent(evt);
