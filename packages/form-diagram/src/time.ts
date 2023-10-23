@@ -11,6 +11,9 @@ export function time(pen: any, ctx?: CanvasRenderingContext2D): Path2D {
       pen.onAdd(pen);
     }
   }
+  if (!pen.interval) {
+    pen.onAdd(pen);
+  }
 
   if (path instanceof Path2D) return path;
   return;
