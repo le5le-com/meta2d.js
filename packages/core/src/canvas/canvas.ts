@@ -617,6 +617,19 @@ export class Canvas {
     }
     let x = 10;
     let y = 10;
+    let vRect: Rect = null;
+    if (this.store.options.strictScope) {
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height) {
+        vRect = {
+          x: this.store.data.origin.x,
+          y: this.store.data.origin.y,
+          width: width * this.store.data.scale,
+          height: height * this.store.data.scale,
+        };
+      }
+    }
     switch (e.key) {
       case ' ':
         this.hotkeyType = HotkeyType.Translate;
@@ -696,6 +709,11 @@ export class Canvas {
           x = -10;
         }
         x = x * this.store.data.scale;
+
+        if (vRect && this.activeRect.x + x < vRect.x) {
+          x = vRect.x - this.activeRect.x;
+        }
+
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowUp':
@@ -711,6 +729,10 @@ export class Canvas {
           y = -10;
         }
         y = y * this.store.data.scale;
+
+        if (vRect && this.activeRect.y + y < vRect.y) {
+          y = vRect.y - this.activeRect.y;
+        }
         this.translatePens(this.store.active, 0, y);
         break;
       case 'ArrowRight':
@@ -726,6 +748,13 @@ export class Canvas {
           x = 10;
         }
         x = x * this.store.data.scale;
+        if (
+          vRect &&
+          this.activeRect.x + this.activeRect.width + x > vRect.x + vRect.width
+        ) {
+          x =
+            vRect.x + vRect.width - (this.activeRect.x + this.activeRect.width);
+        }
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowDown':
@@ -741,6 +770,16 @@ export class Canvas {
           y = 10;
         }
         y = y * this.store.data.scale;
+        if (
+          vRect &&
+          this.activeRect.y + this.activeRect.height + y >
+            vRect.y + vRect.height
+        ) {
+          y =
+            vRect.y +
+            vRect.height -
+            (this.activeRect.y + this.activeRect.height);
+        }
         this.translatePens(this.store.active, 0, y);
         break;
       case 'd':
@@ -1141,6 +1180,21 @@ export class Canvas {
             points.some((point) => pointInRect(point, rect))
           ) {
             flag = false;
+            //严格范围模式下对齐大屏边界
+            if (this.store.options.strictScope) {
+              if (pen.x < rect.x) {
+                pen.x = rect.x;
+              }
+              if (pen.y < rect.y) {
+                pen.y = rect.y;
+              }
+              if (pen.x + pen.width > rect.x + rect.width) {
+                pen.x = rect.x + rect.width - pen.width;
+              }
+              if (pen.y + pen.height > rect.y + rect.height) {
+                pen.y = rect.y + rect.height - pen.height;
+              }
+            }
             break;
           }
         }
@@ -4524,6 +4578,51 @@ export class Canvas {
     }
     (this.activeRect as any).ratio = this.initPens[0].ratio;
     resizeRect(this.activeRect, offsetX, offsetY, this.resizeIndex);
+    //大屏区域
+    if (this.store.options.strictScope) {
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height) {
+        let vRect: Rect = {
+          x: this.store.data.origin.x,
+          y: this.store.data.origin.y,
+          width: width * this.store.data.scale,
+          height: height * this.store.data.scale,
+        };
+
+        if (this.activeRect.x < vRect.x) {
+          this.activeRect.width =
+            this.activeRect.width - (vRect.x - this.activeRect.x);
+          this.activeRect.x = vRect.x;
+        }
+        if (this.activeRect.y < vRect.y) {
+          this.activeRect.height =
+            this.activeRect.height - (vRect.y - this.activeRect.y);
+          this.activeRect.y = vRect.y;
+        }
+        if (this.activeRect.x + this.activeRect.width > vRect.x + vRect.width) {
+          this.activeRect.width =
+            this.activeRect.width -
+            (this.activeRect.x +
+              this.activeRect.width -
+              (vRect.x + vRect.width));
+          this.activeRect.x = vRect.x + vRect.width - this.activeRect.width;
+          this.activeRect.ex = this.activeRect.x + this.activeRect.width;
+        }
+        if (
+          this.activeRect.y + this.activeRect.height >
+          vRect.y + vRect.height
+        ) {
+          this.activeRect.height =
+            this.activeRect.height -
+            (this.activeRect.y +
+              this.activeRect.height -
+              (vRect.y + vRect.height));
+          this.activeRect.y = vRect.y + vRect.height - this.activeRect.height;
+          this.activeRect.ey = this.activeRect.y + this.activeRect.height;
+        }
+      }
+    }
     calcCenter(this.activeRect);
 
     const scaleX = this.activeRect.width / w;
@@ -4607,11 +4706,42 @@ export class Canvas {
     e.ctrlKey && (x = 0);
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
+    let vFlag = false;
+    if (this.store.options.strictScope) {
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height) {
+        let vRect: Rect = {
+          x: this.store.data.origin.x,
+          y: this.store.data.origin.y,
+          width: width * this.store.data.scale,
+          height: height * this.store.data.scale,
+        };
+
+        if (rect.x < vRect.x) {
+          rect.x = vRect.x;
+          vFlag = true;
+        }
+        if (rect.y < vRect.y) {
+          rect.y = vRect.y;
+          vFlag = true;
+        }
+        if (rect.x + rect.width > vRect.x + vRect.width) {
+          rect.x = vRect.x + vRect.width - rect.width;
+          vFlag = true;
+        }
+        if (rect.y + rect.height > vRect.y + vRect.height) {
+          rect.y = vRect.y + vRect.height - rect.height;
+          vFlag = true;
+        }
+      }
+    }
+
     const offset: Point = {
       x: rect.x - this.activeRect.x,
       y: rect.y - this.activeRect.y,
     };
-    if (!this.store.options.disableDock) {
+    if (!this.store.options.disableDock && !vFlag) {
       this.clearDock();
       const moveDock = this.customMoveDock || calcMoveDock;
       this.dock = moveDock(this.store, rect, this.movingPens, offset);

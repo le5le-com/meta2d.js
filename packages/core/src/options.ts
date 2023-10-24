@@ -86,6 +86,7 @@ export interface Options {
   activeLineWidth?: number;
   activeGlobalAlpha?: number;
   diagramOptions?: { [key: string]: any };
+  strictScope?: boolean; //大屏严格范围
 }
 
 export const defaultOptions: Options = {
