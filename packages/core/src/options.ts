@@ -1,5 +1,6 @@
 import { TextAlign, TextBaseline, Pen } from './pen';
 import { Point } from './point';
+import { Padding } from './utils';
 
 export enum KeydownType {
   None = -1,
@@ -87,6 +88,7 @@ export interface Options {
   activeGlobalAlpha?: number;
   diagramOptions?: { [key: string]: any };
   strictScope?: boolean; //大屏严格范围
+  padding?: Padding; //大屏padding区域
 }
 
 export const defaultOptions: Options = {

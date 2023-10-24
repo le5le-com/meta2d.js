@@ -4343,6 +4343,52 @@ export class Canvas {
     this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
+    if (this.store.options.padding) {
+      let p = formatPadding(this.store.options.padding);
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (this.width < (width + p[1] + p[3]) * this.store.data.scale) {
+        if (
+          this.store.data.x + this.store.data.origin.x >
+          p[3] * this.store.data.scale
+        ) {
+          this.store.data.x =
+            p[3] * this.store.data.scale - this.store.data.origin.x;
+        }
+
+        if (
+          this.store.data.x +
+            this.store.data.origin.x +
+            width * this.store.data.scale <
+          this.width - p[1] * this.store.data.scale
+        ) {
+          this.store.data.x =
+            this.width -
+            p[1] * this.store.data.scale -
+            (this.store.data.origin.x + width * this.store.data.scale);
+        }
+      }
+      if (this.height < (height + p[0] + p[2]) * this.store.data.scale) {
+        if (
+          this.store.data.y + this.store.data.origin.y >
+          p[0] * this.store.data.scale
+        ) {
+          this.store.data.y =
+            p[0] * this.store.data.scale - this.store.data.origin.y;
+        }
+        if (
+          this.store.data.y +
+            this.store.data.origin.y +
+            height * this.store.data.scale <
+          this.height - p[2] * this.store.data.scale
+        ) {
+          this.store.data.y =
+            this.height -
+            p[2] * this.store.data.scale -
+            (this.store.data.origin.y + height * this.store.data.scale);
+        }
+      }
+    }
     setTimeout(() => {
       this.canvasTemplate.init();
       this.canvasImage.init();
