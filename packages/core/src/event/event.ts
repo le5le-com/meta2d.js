@@ -31,6 +31,8 @@ export interface Event {
   targetType?: string;
   network?: Network;
   actions?: Event[];
+  conditions?: TriggerCondition[];
+  conditionType?: string;
   message?: string; //消息名称
 }
 
@@ -105,6 +107,7 @@ export interface TriggerCondition {
       meta2d: Meta2d;
     }
   ) => boolean;
+  key?: string;
 }
 
 export interface Trigger {
