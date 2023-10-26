@@ -654,7 +654,9 @@ export class Canvas {
           this.toggleAnchorHand();
         } else if (!this.hotkeyType) {
           this.patchFlags = true;
-          this.hotkeyType = HotkeyType.Resize;
+          if (!this.store.options.resizeMode) {
+            this.hotkeyType = HotkeyType.Resize;
+          }
         }
         break;
       case 'Alt':
@@ -1701,6 +1703,9 @@ export class Canvas {
           this.store.data.rule &&
             !this.store.options.disableRuleLine &&
             this.addRuleLine(e);
+          if (this.store.options.resizeMode) {
+            this.hotkeyType = HotkeyType.None;
+          }
           this.inactive();
           break;
         case HoverType.Node:
@@ -1722,6 +1727,9 @@ export class Canvas {
             } else {
               if (!pen.calculative.active) {
                 this.active([pen]);
+                if (this.store.options.resizeMode) {
+                  this.hotkeyType = HotkeyType.Resize;
+                }
               }
             }
 

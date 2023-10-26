@@ -89,6 +89,7 @@ export interface Options {
   diagramOptions?: { [key: string]: any };
   strictScope?: boolean; //大屏严格范围
   padding?: Padding; //大屏padding区域
+  resizeMode?: boolean;
 }
 
 export const defaultOptions: Options = {

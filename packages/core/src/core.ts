@@ -70,6 +70,7 @@ import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
 import { queryURLParams } from './utils/url';
+import { HotkeyType } from './data';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -164,6 +165,11 @@ export class Meta2d {
         rule: opts.rule,
         ruleColor: opts.ruleColor,
       });
+    }
+    if (opts.resizeMode !== undefined) {
+      if (!opts.resizeMode) {
+        this.canvas.hotkeyType = HotkeyType.None;
+      }
     }
     this.store.options = Object.assign(this.store.options, opts);
     if (this.canvas && opts.scroll !== undefined) {
