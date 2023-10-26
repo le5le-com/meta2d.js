@@ -552,13 +552,17 @@ export class Canvas {
     if (this.store.data.locked === LockState.DisableMoveScale) return;
 
     // e.ctrlKey: false - 平移； true - 缩放。老windows触摸板不支持
-    if (!e.ctrlKey && Math.abs((e as any).wheelDelta) < 100) {
+    if (
+      !e.ctrlKey &&
+      Math.abs((e as any).wheelDelta) < 100 &&
+      e.deltaY.toString().indexOf('.') === -1
+    ) {
       if (this.store.options.scroll && !e.metaKey && this.scroll) {
         this.scroll.wheel(e.deltaY < 0);
         return;
       }
-
-      this.translate(-e.deltaX, -e.deltaY);
+      const scale = this.store.data.scale || 1;
+      this.translate(-e.deltaX / scale, -e.deltaY / scale);
       return;
     }
     if (Math.abs((e as any).wheelDelta) > 100) {
@@ -584,9 +588,9 @@ export class Canvas {
       }
     } else {
       if (e.deltaY > 0) {
-        scaleOff = -0.2;
+        scaleOff = -0.01;
       } else {
-        scaleOff = 0.2;
+        scaleOff = 0.01;
       }
     }
 
