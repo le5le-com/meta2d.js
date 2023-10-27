@@ -588,9 +588,9 @@ export class Canvas {
       }
     } else {
       if (e.deltaY > 0) {
-        scaleOff = -0.01;
+        scaleOff = -0.05;
       } else {
-        scaleOff = 0.01;
+        scaleOff = 0.05;
       }
     }
 
