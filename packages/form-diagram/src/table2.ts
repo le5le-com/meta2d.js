@@ -109,6 +109,7 @@ function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
 function initRect(pen: formPen) {
   const colPos = [];
   const rowPos = [];
+  const colStyle = {};
 
   if (!pen.rowHeight) {
     pen.rowHeight = 40;
@@ -133,6 +134,15 @@ function initRect(pen: formPen) {
       (_colWidthMap[i] || pen.colWidth) *
       pen.calculative.canvas.store.data.scale;
     colPos.push(width);
+
+    let style =
+      pen.styles &&
+      pen.styles.filter((item) => {
+        return item.col === i && item.row === undefined;
+      });
+    if (style) {
+      colStyle[i] = style[0];
+    }
   }
 
   let height = 0;
@@ -158,6 +168,7 @@ function initRect(pen: formPen) {
 
   pen.colPos = colPos;
   pen.rowPos = rowPos;
+  pen.colStyle = colStyle;
 
   pen.tableWidth = width;
   pen.tableHeight = height;
@@ -429,13 +440,26 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         (fontSize || pen.calculative.fontSize || 12) * textScale +
         'px ' +
         pen.calculative.fontFamily;
-
+      let textAlign = pen.colStyle && pen.colStyle[j]?.textAlign;
+      if (textAlign) {
+        ctx.textAlign = textAlign;
+      }
       if (rowText[j].length === 1) {
-        ctx.fillText(
-          rowText[j][0],
-          rect.x + rect.width / 2,
-          rect.y + rect.height / 2
-        );
+        if (textAlign === 'left') {
+          ctx.fillText(rowText[j][0], rect.x, rect.y + rect.height / 2);
+        } else if (textAlign === 'right') {
+          ctx.fillText(
+            rowText[j][0],
+            rect.x + rect.width,
+            rect.y + rect.height / 2
+          );
+        } else {
+          ctx.fillText(
+            rowText[j][0],
+            rect.x + rect.width / 2,
+            rect.y + rect.height / 2
+          );
+        }
       } else {
         const y = 0.55;
         const lineHeight =
@@ -445,13 +469,27 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
 
         const h = rowText[j].length * lineHeight;
         let top = (rect.height - h) / 2;
-        rowText[j].forEach((text, i) => {
-          ctx.fillText(
-            text,
-            rect.x + rect.width / 2,
-            rect.y + top + (i + y) * lineHeight
-          );
-        });
+        if (textAlign === 'left') {
+          rowText[j].forEach((text, i) => {
+            ctx.fillText(text, rect.x, rect.y + top + (i + y) * lineHeight);
+          });
+        } else if (textAlign === 'right') {
+          rowText[j].forEach((text, i) => {
+            ctx.fillText(
+              text,
+              rect.x + rect.width,
+              rect.y + top + (i + y) * lineHeight
+            );
+          });
+        } else {
+          rowText[j].forEach((text, i) => {
+            ctx.fillText(
+              text,
+              rect.x + rect.width / 2,
+              rect.y + top + (i + y) * lineHeight
+            );
+          });
+        }
       }
       ctx.restore();
     }

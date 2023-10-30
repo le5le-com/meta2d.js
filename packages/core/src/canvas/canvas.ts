@@ -587,10 +587,14 @@ export class Canvas {
         scaleOff *= -1;
       }
     } else {
+      let offset = 0.2;
+      if (e.deltaY.toString().indexOf('.') !== -1) {
+        offset = 0.01;
+      }
       if (e.deltaY > 0) {
-        scaleOff = -0.05;
+        scaleOff = -offset;
       } else {
-        scaleOff = 0.05;
+        scaleOff = offset;
       }
     }
 
