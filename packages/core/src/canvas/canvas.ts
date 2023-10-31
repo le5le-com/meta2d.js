@@ -3529,6 +3529,7 @@ export class Canvas {
     }
     !pen.rotate && (pen.rotate = 0);
     this.loadImage(pen);
+    this.parent.penNetwork(pen);
   }
 
   drawline(mouse?: Point) {

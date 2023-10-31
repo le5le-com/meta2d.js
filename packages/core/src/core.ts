@@ -1877,6 +1877,23 @@ export class Meta2d {
     }
   }
 
+  penNetwork(pen: Pen) {
+    const penNetwork: Network = {
+      url: pen.apiUrl,
+      method: pen.apiMethod,
+      headers: pen.apiHeaders,
+      body: pen.apiBody,
+    };
+    //临时请求一次
+    this.requestHttp(penNetwork);
+    if (pen.apiEnable) {
+      if (!this.store.pensNetwork) {
+        this.store.pensNetwork = {};
+      }
+      this.store.pensNetwork[pen.id] = penNetwork;
+    }
+  }
+
   //获取动态参数
   getDynamicParam(key: string) {
     function getCookie(name: string) {
@@ -1898,6 +1915,11 @@ export class Meta2d {
     if (!(https && https.length) && !enable) {
       return;
     }
+    if (this.store.pensNetwork) {
+      for (let key in this.store.pensNetwork) {
+        https.push(this.store.pensNetwork[key]);
+      }
+    }
     this.updateTimer = setInterval(() => {
       //模拟数据
       enable &&
@@ -1906,44 +1928,48 @@ export class Meta2d {
         });
 
       https.forEach(async (_item) => {
-        const item = deepClone(_item);
-        if (item.url) {
-          if (typeof item.headers === 'object') {
-            for (let i in item.headers) {
-              let keys = item.headers[i].match(/(?<=\$\{).*?(?=\})/g);
-              if (keys) {
-                item.headers[i] = item.headers[i].replace(
-                  `\${${keys[0]}}`,
-                  this.getDynamicParam(keys[0])
-                );
-              }
-            }
-          }
-          if (typeof item.body === 'object') {
-            for (let i in item.body) {
-              let keys = item.body[i].match(/(?<=\$\{).*?(?=\})/g);
-              if (keys) {
-                item.body[i] = item.body[i].replace(
-                  `\${${keys[0]}}`,
-                  this.getDynamicParam(keys[0])
-                );
-              }
-            }
-          }
-          // 默认每一秒请求一次
-          const res: Response = await fetch(item.url, {
-            headers: item.headers,
-            method: item.method,
-            body: item.method === 'GET' ? undefined : JSON.stringify(item.body),
-          });
-          if (res.ok) {
-            const data = await res.text();
-            this.socketCallback(data, { type: 'http', url: item.url });
-          }
-        }
+        this.requestHttp(_item);
       });
       this.render();
     }, this.store.data.networkInterval || 1000);
+  }
+
+  async requestHttp(_req: Network) {
+    let req = deepClone(_req);
+    if (req.url) {
+      if (typeof req.headers === 'object') {
+        for (let i in req.headers) {
+          let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+          if (keys) {
+            req.headers[i] = req.headers[i].replace(
+              `\${${keys[0]}}`,
+              this.getDynamicParam(keys[0])
+            );
+          }
+        }
+      }
+      if (typeof req.body === 'object') {
+        for (let i in req.body) {
+          let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
+          if (keys) {
+            req.body[i] = req.body[i].replace(
+              `\${${keys[0]}}`,
+              this.getDynamicParam(keys[0])
+            );
+          }
+        }
+      }
+      // 默认每一秒请求一次
+      const res: Response = await fetch(req.url, {
+        headers: req.headers,
+        method: req.method,
+        body: req.method === 'GET' ? undefined : JSON.stringify(req.body),
+      });
+      if (res.ok) {
+        const data = await res.text();
+        this.socketCallback(data, { type: 'http', url: req.url });
+      }
+    }
   }
 
   closeNetwork() {
