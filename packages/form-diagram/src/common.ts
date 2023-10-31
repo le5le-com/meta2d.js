@@ -91,6 +91,7 @@ export interface formPen extends Pen {
   stripeColor?: string; //斑马纹颜色
   hasHeader?: boolean; //是否显示表头
   btnBackground?: string;
+  colStyle?: any;
 }
 
 export interface cellData extends ChartData {

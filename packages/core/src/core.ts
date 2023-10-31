@@ -70,6 +70,7 @@ import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
 import { queryURLParams } from './utils/url';
+import { HotkeyType } from './data';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -164,6 +165,11 @@ export class Meta2d {
         rule: opts.rule,
         ruleColor: opts.ruleColor,
       });
+    }
+    if (opts.resizeMode !== undefined) {
+      if (!opts.resizeMode) {
+        this.canvas.hotkeyType = HotkeyType.None;
+      }
     }
     this.store.options = Object.assign(this.store.options, opts);
     if (this.canvas && opts.scroll !== undefined) {
@@ -2300,11 +2306,30 @@ export class Meta2d {
 
     pen.events?.forEach((event) => {
       if (event.actions && event.actions.length) {
-        event.actions.forEach((action) => {
-          if (this.events[action.action] && event.name === eventName) {
-            this.events[action.action](pen, action);
+        if (event.name === eventName) {
+          //条件成立
+          let flag = false;
+          if (event.conditions && event.conditions.length) {
+            if (event.conditionType === 'and') {
+              flag = event.conditions.every((condition) => {
+                return this.judgeCondition(pen, condition.key, condition);
+              });
+            } else if (event.conditionType === 'or') {
+              flag = event.conditions.some((condition) => {
+                return this.judgeCondition(pen, condition.key, condition);
+              });
+            }
+          } else {
+            flag = true;
           }
-        });
+          if (flag) {
+            event.actions.forEach((action) => {
+              if (this.events[action.action]) {
+                this.events[action.action](pen, action);
+              }
+            });
+          }
+        }
       } else {
         if (this.events[event.action] && event.name === eventName) {
           let can = !event.where?.type;

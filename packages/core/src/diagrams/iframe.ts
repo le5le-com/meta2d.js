@@ -47,6 +47,7 @@ export function iframe(pen: Pen) {
   if (pen.calculative.patchFlags) {
     setElemPosition(pen, pen.calculative.singleton.div);
   }
+  pen.onRenderPenRaw(pen);
   return new Path2D();
 }
 
@@ -262,13 +263,15 @@ function updatePointerEvents(pen: Pen) {
 
 function renderPenRaw(pen: Pen) {
   if (pen.thumbImg) {
-    const img = new Image();
-    img.crossOrigin =
-      pen.crossOrigin === 'undefined'
-        ? undefined
-        : pen.crossOrigin || 'anonymous';
-    img.src = pen.thumbImg;
-    pen.calculative.img = img;
+    if (!pen.calculative.img) {
+      const img = new Image();
+      img.crossOrigin =
+        pen.crossOrigin === 'undefined'
+          ? undefined
+          : pen.crossOrigin || 'anonymous';
+      img.src = pen.thumbImg;
+      pen.calculative.img = img;
+    }
   } else {
     if (pen.calculative.singleton && pen.calculative.singleton.div) {
       try {

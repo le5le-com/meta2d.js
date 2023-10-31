@@ -552,13 +552,17 @@ export class Canvas {
     if (this.store.data.locked === LockState.DisableMoveScale) return;
 
     // e.ctrlKey: false - 平移； true - 缩放。老windows触摸板不支持
-    if (!e.ctrlKey && Math.abs((e as any).wheelDelta) < 100) {
+    if (
+      !e.ctrlKey &&
+      Math.abs((e as any).wheelDelta) < 100 &&
+      e.deltaY.toString().indexOf('.') === -1
+    ) {
       if (this.store.options.scroll && !e.metaKey && this.scroll) {
         this.scroll.wheel(e.deltaY < 0);
         return;
       }
-
-      this.translate(-e.deltaX, -e.deltaY);
+      const scale = this.store.data.scale || 1;
+      this.translate(-e.deltaX / scale, -e.deltaY / scale);
       return;
     }
     if (Math.abs((e as any).wheelDelta) > 100) {
@@ -583,10 +587,14 @@ export class Canvas {
         scaleOff *= -1;
       }
     } else {
+      let offset = 0.2;
+      if (e.deltaY.toString().indexOf('.') !== -1) {
+        offset = 0.01;
+      }
       if (e.deltaY > 0) {
-        scaleOff = -0.2;
+        scaleOff = -offset;
       } else {
-        scaleOff = 0.2;
+        scaleOff = offset;
       }
     }
 
@@ -617,6 +625,19 @@ export class Canvas {
     }
     let x = 10;
     let y = 10;
+    let vRect: Rect = null;
+    if (this.store.options.strictScope) {
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height) {
+        vRect = {
+          x: this.store.data.origin.x,
+          y: this.store.data.origin.y,
+          width: width * this.store.data.scale,
+          height: height * this.store.data.scale,
+        };
+      }
+    }
     switch (e.key) {
       case ' ':
         this.hotkeyType = HotkeyType.Translate;
@@ -641,7 +662,9 @@ export class Canvas {
           this.toggleAnchorHand();
         } else if (!this.hotkeyType) {
           this.patchFlags = true;
-          this.hotkeyType = HotkeyType.Resize;
+          if (!this.store.options.resizeMode) {
+            this.hotkeyType = HotkeyType.Resize;
+          }
         }
         break;
       case 'Alt':
@@ -696,6 +719,11 @@ export class Canvas {
           x = -10;
         }
         x = x * this.store.data.scale;
+
+        if (vRect && this.activeRect.x + x < vRect.x) {
+          x = vRect.x - this.activeRect.x;
+        }
+
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowUp':
@@ -711,6 +739,10 @@ export class Canvas {
           y = -10;
         }
         y = y * this.store.data.scale;
+
+        if (vRect && this.activeRect.y + y < vRect.y) {
+          y = vRect.y - this.activeRect.y;
+        }
         this.translatePens(this.store.active, 0, y);
         break;
       case 'ArrowRight':
@@ -726,6 +758,13 @@ export class Canvas {
           x = 10;
         }
         x = x * this.store.data.scale;
+        if (
+          vRect &&
+          this.activeRect.x + this.activeRect.width + x > vRect.x + vRect.width
+        ) {
+          x =
+            vRect.x + vRect.width - (this.activeRect.x + this.activeRect.width);
+        }
         this.translatePens(this.store.active, x, 0);
         break;
       case 'ArrowDown':
@@ -741,6 +780,16 @@ export class Canvas {
           y = 10;
         }
         y = y * this.store.data.scale;
+        if (
+          vRect &&
+          this.activeRect.y + this.activeRect.height + y >
+            vRect.y + vRect.height
+        ) {
+          y =
+            vRect.y +
+            vRect.height -
+            (this.activeRect.y + this.activeRect.height);
+        }
         this.translatePens(this.store.active, 0, y);
         break;
       case 'd':
@@ -1141,6 +1190,21 @@ export class Canvas {
             points.some((point) => pointInRect(point, rect))
           ) {
             flag = false;
+            //严格范围模式下对齐大屏边界
+            if (this.store.options.strictScope) {
+              if (pen.x < rect.x) {
+                pen.x = rect.x;
+              }
+              if (pen.y < rect.y) {
+                pen.y = rect.y;
+              }
+              if (pen.x + pen.width > rect.x + rect.width) {
+                pen.x = rect.x + rect.width - pen.width;
+              }
+              if (pen.y + pen.height > rect.y + rect.height) {
+                pen.y = rect.y + rect.height - pen.height;
+              }
+            }
             break;
           }
         }
@@ -1647,6 +1711,9 @@ export class Canvas {
           this.store.data.rule &&
             !this.store.options.disableRuleLine &&
             this.addRuleLine(e);
+          if (this.store.options.resizeMode) {
+            this.hotkeyType = HotkeyType.None;
+          }
           this.inactive();
           break;
         case HoverType.Node:
@@ -1668,6 +1735,9 @@ export class Canvas {
             } else {
               if (!pen.calculative.active) {
                 this.active([pen]);
+                if (this.store.options.resizeMode) {
+                  this.hotkeyType = HotkeyType.Resize;
+                }
               }
             }
 
@@ -4289,6 +4359,52 @@ export class Canvas {
     this.store.data.y += y * this.store.data.scale;
     this.store.data.x = Math.round(this.store.data.x);
     this.store.data.y = Math.round(this.store.data.y);
+    if (this.store.options.padding) {
+      let p = formatPadding(this.store.options.padding);
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (this.width < (width + p[1] + p[3]) * this.store.data.scale) {
+        if (
+          this.store.data.x + this.store.data.origin.x >
+          p[3] * this.store.data.scale
+        ) {
+          this.store.data.x =
+            p[3] * this.store.data.scale - this.store.data.origin.x;
+        }
+
+        if (
+          this.store.data.x +
+            this.store.data.origin.x +
+            width * this.store.data.scale <
+          this.width - p[1] * this.store.data.scale
+        ) {
+          this.store.data.x =
+            this.width -
+            p[1] * this.store.data.scale -
+            (this.store.data.origin.x + width * this.store.data.scale);
+        }
+      }
+      if (this.height < (height + p[0] + p[2]) * this.store.data.scale) {
+        if (
+          this.store.data.y + this.store.data.origin.y >
+          p[0] * this.store.data.scale
+        ) {
+          this.store.data.y =
+            p[0] * this.store.data.scale - this.store.data.origin.y;
+        }
+        if (
+          this.store.data.y +
+            this.store.data.origin.y +
+            height * this.store.data.scale <
+          this.height - p[2] * this.store.data.scale
+        ) {
+          this.store.data.y =
+            this.height -
+            p[2] * this.store.data.scale -
+            (this.store.data.origin.y + height * this.store.data.scale);
+        }
+      }
+    }
     setTimeout(() => {
       this.canvasTemplate.init();
       this.canvasImage.init();
@@ -4524,6 +4640,51 @@ export class Canvas {
     }
     (this.activeRect as any).ratio = this.initPens[0].ratio;
     resizeRect(this.activeRect, offsetX, offsetY, this.resizeIndex);
+    //大屏区域
+    if (this.store.options.strictScope) {
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height) {
+        let vRect: Rect = {
+          x: this.store.data.origin.x,
+          y: this.store.data.origin.y,
+          width: width * this.store.data.scale,
+          height: height * this.store.data.scale,
+        };
+
+        if (this.activeRect.x < vRect.x) {
+          this.activeRect.width =
+            this.activeRect.width - (vRect.x - this.activeRect.x);
+          this.activeRect.x = vRect.x;
+        }
+        if (this.activeRect.y < vRect.y) {
+          this.activeRect.height =
+            this.activeRect.height - (vRect.y - this.activeRect.y);
+          this.activeRect.y = vRect.y;
+        }
+        if (this.activeRect.x + this.activeRect.width > vRect.x + vRect.width) {
+          this.activeRect.width =
+            this.activeRect.width -
+            (this.activeRect.x +
+              this.activeRect.width -
+              (vRect.x + vRect.width));
+          this.activeRect.x = vRect.x + vRect.width - this.activeRect.width;
+          this.activeRect.ex = this.activeRect.x + this.activeRect.width;
+        }
+        if (
+          this.activeRect.y + this.activeRect.height >
+          vRect.y + vRect.height
+        ) {
+          this.activeRect.height =
+            this.activeRect.height -
+            (this.activeRect.y +
+              this.activeRect.height -
+              (vRect.y + vRect.height));
+          this.activeRect.y = vRect.y + vRect.height - this.activeRect.height;
+          this.activeRect.ey = this.activeRect.y + this.activeRect.height;
+        }
+      }
+    }
     calcCenter(this.activeRect);
 
     const scaleX = this.activeRect.width / w;
@@ -4607,11 +4768,42 @@ export class Canvas {
     e.ctrlKey && (x = 0);
     const rect = deepClone(this.initActiveRect);
     translateRect(rect, x, y);
+    let vFlag = false;
+    if (this.store.options.strictScope) {
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height) {
+        let vRect: Rect = {
+          x: this.store.data.origin.x,
+          y: this.store.data.origin.y,
+          width: width * this.store.data.scale,
+          height: height * this.store.data.scale,
+        };
+
+        if (rect.x < vRect.x) {
+          rect.x = vRect.x;
+          vFlag = true;
+        }
+        if (rect.y < vRect.y) {
+          rect.y = vRect.y;
+          vFlag = true;
+        }
+        if (rect.x + rect.width > vRect.x + vRect.width) {
+          rect.x = vRect.x + vRect.width - rect.width;
+          vFlag = true;
+        }
+        if (rect.y + rect.height > vRect.y + vRect.height) {
+          rect.y = vRect.y + vRect.height - rect.height;
+          vFlag = true;
+        }
+      }
+    }
+
     const offset: Point = {
       x: rect.x - this.activeRect.x,
       y: rect.y - this.activeRect.y,
     };
-    if (!this.store.options.disableDock) {
+    if (!this.store.options.disableDock && !vFlag) {
       this.clearDock();
       const moveDock = this.customMoveDock || calcMoveDock;
       this.dock = moveDock(this.store, rect, this.movingPens, offset);
