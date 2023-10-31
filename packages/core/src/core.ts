@@ -3542,7 +3542,7 @@ export class Meta2d {
 
     //dom
     if (pen.externElement || pen.name === 'gif') {
-      let zIndex = 0;
+      let zIndex = 1;
       // let zIndex = pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
       if (type === 'top') {
         pen.calculative.canvas.maxZindex += 1;
@@ -3553,8 +3553,8 @@ export class Meta2d {
       } else if (type === 'down') {
         zIndex =
           pen.calculative.zIndex === undefined ? 3 : pen.calculative.zIndex - 1;
-        if (zIndex < 0) {
-          zIndex = 0;
+        if (zIndex < 1) {
+          zIndex = 1;
         }
       }
       this.setValue(
