@@ -406,6 +406,8 @@ export interface Pen extends Rect {
     textLeft?: number;
     textTop?: number;
     textColor?: string;
+    textType?: Gradient;
+    textGradientColors?: string;
     fontFamily?: string;
     fontSize?: number;
     lineHeight?: number;
