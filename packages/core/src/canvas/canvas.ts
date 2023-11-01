@@ -3432,7 +3432,13 @@ export class Canvas {
           if (!pen.calculative) {
             pen.calculative = {};
           }
-          this.store.data.pens.splice(pen.calculative?.layer, 0, pen);
+          this.store.data.pens.splice(
+            pen.calculative?.layer !== -1
+              ? pen.calculative?.layer
+              : this.store.data.pens.length,
+            0,
+            pen
+          );
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
           pen.calculative.canvas = this;
