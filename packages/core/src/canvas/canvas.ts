@@ -6386,10 +6386,15 @@ export class Canvas {
       if (tem < 0) {
         tem = 0;
       }
-      style += `height:${
-        pen.fontSize * scale < 12 ? tem * font_scale : tem * scale * font_scale
-      }px;`;
+      let height =
+        pen.fontSize * scale < 12 ? tem * font_scale : tem * scale * font_scale;
+      if (height < pen.fontSize * pen.lineHeight * scale) {
+        height = pen.fontSize * pen.lineHeight * scale;
+        style += `top:-${height / 2}px;`;
+      }
+      style += `height:${height}px;`;
     }
+
     let _textWidth = null;
     if (pen.textWidth) {
       _textWidth =
