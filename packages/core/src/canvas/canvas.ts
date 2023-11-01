@@ -6575,7 +6575,34 @@ export class Canvas {
       );
       sheet.insertRule(`.input-div div{}`);
     }
-
+    this.inputDiv.onfocus = (e: any) => {
+      //无文本时，光标确保居中
+      if (!e.target.innerText) {
+        let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
+        if (inputDivStyle.justifyContent === 'center') {
+          this.inputDiv.style.paddingTop = ` ${
+            this.inputDiv.offsetHeight / 2 -
+            parseFloat(inputDivStyle.lineHeight) / 2
+          }px`;
+        }
+      } else {
+        this.inputDiv.style.paddingTop = '';
+      }
+    };
+    this.inputDiv.oninput = (e: any) => {
+      //无文本时，光标确保居中
+      if (!e.target.innerText) {
+        let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
+        if (inputDivStyle.justifyContent === 'center') {
+          this.inputDiv.style.paddingTop = ` ${
+            this.inputDiv.offsetHeight / 2 -
+            parseFloat(inputDivStyle.lineHeight) / 2
+          }px`;
+        }
+      } else {
+        this.inputDiv.style.paddingTop = '';
+      }
+    };
     this.inputDiv.onclick = (e) => {
       e.stopPropagation();
       const pen = this.store.pens[this.inputDiv.dataset.penId];
