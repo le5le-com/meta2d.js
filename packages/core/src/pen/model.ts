@@ -329,6 +329,11 @@ export interface Pen extends Rect {
   blurBackground?: string;
   template?: boolean; //是否作为模版图元
   thumbImg?: string; //iframe嵌入场景缩略图
+  apiUrl?: string;
+  apiMethod?: string;
+  apiHeaders?: any;
+  apiBody?: any;
+  apiEnable?: boolean;
   calculative?: {
     x?: number;
     y?: number;
@@ -401,6 +406,8 @@ export interface Pen extends Rect {
     textLeft?: number;
     textTop?: number;
     textColor?: string;
+    textType?: Gradient;
+    textGradientColors?: string;
     fontFamily?: string;
     fontSize?: number;
     lineHeight?: number;

@@ -186,6 +186,49 @@ function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   return getLinearGradient(ctx, points, colors, r);
 }
 
+function getTextRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { worldRect, textGradientColors } = pen.calculative;
+  if (!textGradientColors) {
+    return;
+  }
+
+  const { width, height, center } = worldRect;
+  const { x: centerX, y: centerY } = center;
+  let r = width;
+  if (r < height) {
+    r = height;
+  }
+  r *= 0.5;
+  const { colors } = formatGradient(textGradientColors);
+  const grd = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    0,
+    centerX,
+    centerY,
+    r
+  );
+  colors.forEach((stop) => {
+    grd.addColorStop(stop.i, stop.color);
+  });
+
+  return grd;
+}
+
+function getTextGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  let points = [
+    { x: ex, y: y + height / 2 },
+    { x: x, y: y + height / 2 },
+  ];
+  const { angle, colors } = formatGradient(pen.calculative.textGradientColors);
+  let r = getGradientR(angle, width, height);
+  points.forEach((point) => {
+    rotatePoint(point, angle, center);
+  });
+  return getLinearGradient(ctx, points, colors, r);
+}
+
 function getGradientR(angle: number, width: number, height: number) {
   const dividAngle = (Math.atan(height / width) / Math.PI) * 180;
   let calculateAngle = (angle - 90) % 360;
@@ -862,6 +905,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     canvas,
     textHasShadow,
     textBackground,
+    textType,
   } = pen.calculative;
   if (text == undefined || hiddenText) {
     return;
@@ -879,8 +923,13 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   } else if (pen.calculative.active) {
     fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
   }
-  ctx.fillStyle = fill || getTextColor(pen, store);
-
+  let gradient = undefined;
+  if (textType === Gradient.Linear) {
+    gradient = getTextGradient(ctx, pen);
+  } else if (textType === Gradient.Radial) {
+    gradient = getTextRadialGradient(ctx, pen);
+  }
+  ctx.fillStyle = fill || gradient || getTextColor(pen, store);
   ctx.font = getFont({
     fontStyle,
     fontWeight,

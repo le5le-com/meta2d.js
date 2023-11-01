@@ -3529,6 +3529,7 @@ export class Canvas {
     }
     !pen.rotate && (pen.rotate = 0);
     this.loadImage(pen);
+    this.parent.penNetwork(pen);
   }
 
   drawline(mouse?: Point) {
@@ -6987,6 +6988,16 @@ export class Canvas {
       isRight = rect.x === 0;
       isBottom = rect.y === 0;
     }
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    //大屏
+    if (width && height) {
+      rect.x = this.store.data.origin.x;
+      rect.y = this.store.data.origin.y;
+      rect.width = width * this.store.data.scale;
+      rect.height = height * this.store.data.scale;
+    }
+    const vRect = deepClone(rect);
 
     // 有背景图，也添加 padding
     const p = formatPadding(padding);
@@ -7031,39 +7042,67 @@ export class Canvas {
 
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
-    if (isDrawBkImg) {
-      const x = rect.x < 0 ? -rect.x : 0;
-      const y = rect.y < 0 ? -rect.y : 0;
-      ctx.drawImage(
-        this.store.bkImg,
-        x,
-        y,
-        this.canvasRect.width,
-        this.canvasRect.height
-      );
-    }
+
     const background =
       this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色
       ctx.save();
       ctx.fillStyle = background;
-      ctx.fillRect(
-        0,
-        0,
-        oldRect.width + (p[3] + p[1]) * _scale,
-        oldRect.height + (p[0] + p[2]) * _scale
-      );
+      if (width && height) {
+        ctx.fillRect(
+          0,
+          0,
+          vRect.width + (p[1] + p[3]) * _scale,
+          vRect.height + (p[0] + p[2]) * _scale
+        );
+      } else {
+        ctx.fillRect(
+          0,
+          0,
+          oldRect.width + (p[3] + p[1]) * _scale,
+          oldRect.height + (p[0] + p[2]) * _scale
+        );
+      }
       ctx.restore();
+    }
+
+    if (isDrawBkImg) {
+      if (width && height) {
+        ctx.drawImage(
+          this.store.bkImg,
+          p[3] * _scale || 0,
+          p[0] * _scale || 0,
+          vRect.width,
+          vRect.height
+        );
+      } else {
+        const x = rect.x < 0 ? -rect.x : 0;
+        const y = rect.y < 0 ? -rect.y : 0;
+        ctx.drawImage(
+          this.store.bkImg,
+          x,
+          y,
+          this.canvasRect.width,
+          this.canvasRect.height
+        );
+      }
     }
     if (!isDrawBkImg) {
       ctx.translate(-rect.x, -rect.y);
     } else {
       // 平移画布，画笔的 worldRect 不变化
-      ctx.translate(
-        isRight ? storeData.x : -oldRect.x,
-        isBottom ? storeData.y : -oldRect.y
-      );
+      if (width && height) {
+        ctx.translate(
+          -oldRect.x + p[3] * _scale || 0,
+          -oldRect.y + p[0] * _scale || 0
+        );
+      } else {
+        ctx.translate(
+          (isRight ? storeData.x : -oldRect.x) + p[3] * _scale || 0,
+          (isBottom ? storeData.y : -oldRect.y) + p[0] * _scale || 0
+        );
+      }
     }
     for (const pen of this.store.data.pens) {
       // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的

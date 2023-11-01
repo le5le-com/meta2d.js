@@ -66,7 +66,7 @@ export interface Meta2dData {
 
 export interface Network {
   name?: string;
-  protocol: 'mqtt' | 'websocket' | 'http';
+  protocol?: 'mqtt' | 'websocket' | 'http';
   type?: string; //subscribe
   url?: string;
   //websocket
@@ -144,6 +144,9 @@ export interface Meta2dStore {
   templatePens?: { [key: string]: Pen };
   sameTemplate?: boolean; //标记是否是同一模版
   lastScale?: number; //记录上次模版的scale
+  pensNetwork?: {
+    [key: string]: { url?: string; method?: string; headers?: any; body?: any };
+  };
 }
 
 export interface Meta2dClipboard {
@@ -178,6 +181,7 @@ export const createStore = () => {
     emitter: mitt(),
     bindDatas: {},
     bind: {},
+    pensNetwork: {},
     cacheDatas: [],
     messageEvents: {},
     templatePens: {},
@@ -223,6 +227,7 @@ export const clearStore = (store: Meta2dStore, template?: string) => {
   store.animateMap = new WeakMap();
   store.bindDatas = {};
   store.bind = {};
+  store.pensNetwork = {};
   store.active = [];
   store.hover = undefined;
   store.lastHover = undefined;
