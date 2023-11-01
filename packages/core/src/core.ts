@@ -2221,10 +2221,11 @@ export class Meta2d {
     }
 
     if (history) {
+      let _pens = deepClone(pens);
       this.pushHistory({
         type: EditType.Update,
         initPens,
-        pens,
+        pens: _pens,
       });
     }
     doEvent &&
