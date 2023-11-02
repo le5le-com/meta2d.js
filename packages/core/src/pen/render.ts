@@ -1673,11 +1673,20 @@ export function ctxDrawPath(
 
     const progress = pen.calculative.progress;
     if (progress != null) {
+      // 从左往右 x, y, x + width * progress, y
+      // 从右往左 ex, y, x + width * (1-progress), y
+      // 从下往上 x, y, x, y + height * progress
+      // 从上往下 x, ey, x, y + height * (1 - progress)
       ctx.save();
-      const { x, y, width, height, ey } = pen.calculative.worldRect;
-      const grd = !pen.verticalProgress
-        ? ctx.createLinearGradient(x, y, x + width * progress, y)
-        : ctx.createLinearGradient(x, ey, x, y + height * (1 - progress));
+      const {ex, x, y, width, height, ey } = pen.calculative.worldRect;
+      let grd = null;
+      if(!pen.verticalProgress){
+        grd = !pen.reverseProgress ? 
+          ctx.createLinearGradient(x, y, x + width * progress, y):ctx.createLinearGradient(ex, y, x + width * (1-progress), y);
+      }else{
+        grd = !pen.reverseProgress ? 
+          ctx.createLinearGradient(x, ey, x, y + height * (1 - progress)):ctx.createLinearGradient(x, y, x, y + height * progress);
+      }
       const color =
         pen.calculative.progressColor ||
         pen.calculative.color ||
