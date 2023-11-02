@@ -552,7 +552,7 @@ function smoothAnimateTransition(
   ctx.quadraticCurveTo(contrlPoint.x, contrlPoint.y, next.x, next.y);
 }
 
-function getGradientAnimatePath(pen: Pen) {
+export function getGradientAnimatePath(pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
   let smoothLenth =
     pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 0);

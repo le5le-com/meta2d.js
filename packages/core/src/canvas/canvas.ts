@@ -51,6 +51,7 @@ import {
   clearLifeCycle,
   rotatePen,
   calcTextAutoWidth,
+  getGradientAnimatePath,
 } from '../pen';
 import {
   calcRotate,
@@ -5554,6 +5555,9 @@ export class Canvas {
 
       this.store.path2dMap.set(line, globalStore.path2dDraws[line.name](line));
       this.patchFlagsLines.add(line);
+      if (line.calculative.gradientSmooth) {
+        line.calculative.gradientAnimatePath = getGradientAnimatePath(line);
+      }
 
       change && getLineLength(line);
     });
