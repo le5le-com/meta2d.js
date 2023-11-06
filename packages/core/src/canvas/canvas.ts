@@ -6063,7 +6063,7 @@ export class Canvas {
       return;
     }
     const deletePens: Pen[] = [];
-    this._del(pens, deletePens);
+    this._del(pens, deletePens, canDelLocked);
     this.initImageCanvas(deletePens);
     this.initTemplateCanvas(deletePens);
     this.inactive();
@@ -6076,14 +6076,13 @@ export class Canvas {
     this.store.emitter.emit('delete', pens);
   }
 
-  private _del(pens: Pen[], delPens?: Pen[]) {
+  private _del(pens: Pen[], delPens?: Pen[], canDelLocked?: boolean) {
     if (!pens) {
       return;
     }
     pens.forEach((pen) => {
       if (!pen.parentId) {
-        if (pen.locked) {
-          // TODO: canDelLocked 是 true ， locked 仍然删不掉
+        if (!canDelLocked && pen.locked) {
           return;
         } else {
           if (delPens) {
