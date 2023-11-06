@@ -555,6 +555,7 @@ export interface Pen extends Rect {
   onRenderPenRaw?: (pen: Pen) => void;
   onKeyDown?: (pen: Pen, key: string) => void;
   onWheel?: (pen: Pen, e: WheelEvent) => void;
+  onContextmenu?: (pen: Pen, e: Point) => void;
 }
 
 // 属性绑定变量
@@ -698,4 +699,7 @@ export function clearLifeCycle(pen: Pen) {
   pen.onStopVideo = undefined;
   pen.onRenderPenRaw = undefined;
   pen.onKeyDown = undefined;
+  pen.onContextmenu = undefined;
+  pen.onScale = undefined;
+  pen.onWheel = undefined;
 }

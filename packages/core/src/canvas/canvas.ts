@@ -2112,6 +2112,7 @@ export class Canvas {
       this.store.emitter.emit('contextmenu', {
         e,
         clientRect: this.clientRect,
+        pen: this.store.hover,
       });
     }
     this.mouseRight = MouseRight.None;

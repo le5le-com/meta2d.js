@@ -14,7 +14,8 @@ export type EventName =
   | 'mouseup'
   | 'dblclick'
   | 'valueUpdate'
-  | 'message';
+  | 'message'
+  | 'contextmenu';
 
 export interface Event {
   name: EventName;

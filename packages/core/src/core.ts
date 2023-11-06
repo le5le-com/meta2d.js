@@ -2289,6 +2289,12 @@ export class Meta2d {
         e.pen && e.pen.onClick && e.pen.onClick(e.pen, this.canvas.mousePos);
         this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
         break;
+      case 'contextmenu':
+        e.pen &&
+          e.pen.onContextmenu &&
+          e.pen.onContextmenu(e.pen, this.canvas.mousePos);
+        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        break;
       case 'mousedown':
         e.pen &&
           e.pen.onMouseDown &&
