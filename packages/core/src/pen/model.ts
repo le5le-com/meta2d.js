@@ -292,6 +292,7 @@ export interface Pen extends Rect {
   progress?: number;
   progressColor?: string;
   verticalProgress?: boolean;
+  reverseProgress?: boolean;
   externElement?: boolean;
 
   autoPolyline?: boolean;
@@ -606,6 +607,7 @@ export const formatAttrs: Set<string> = new Set([
   'progress',
   'progressColor',
   'verticalProgress',
+  'reverseProgress',
   // 'flip',
   'flipX',
   'flipY',
