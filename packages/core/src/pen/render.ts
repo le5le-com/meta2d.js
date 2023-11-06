@@ -2538,8 +2538,15 @@ export function setNodeAnimate(pen: Pen, now: number) {
       // 以初始位置为参考点。因为网页在后台时，不执行动画帧，网页恢复显示时，位置不确定
       pen.calculative.x = pen.calculative.initRect.x;
       pen.calculative.y = pen.calculative.initRect.y;
-      pen.calculative.rotate = pen.calculative.initRect.rotate || 0;
-
+      if (pen.children?.length) {
+        pen.calculative.canvas.rotatePen(
+          pen,
+          (pen.calculative.initRect.rotate || 0) - pen.calculative.rotate,
+          pen.calculative.initRect
+        );
+      } else {
+        pen.calculative.rotate = pen.calculative.initRect.rotate || 0;
+      }
       if (frameIndex > 0) {
         pen.prevFrame = {};
         const prevFrame = pen.frames[frameIndex - 1];
