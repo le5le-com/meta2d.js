@@ -6874,39 +6874,38 @@ export class Canvas {
     let oldRotate: number = undefined;
     let willRenderImage = false; // 是否需要重新渲染图片
     for (const k in data) {
-      if (k === 'rotate') {
-        oldRotate = pen.calculative.rotate || 0;
-      }
-      if (typeof pen[k] !== 'object' || k === 'lineDash') {
-        pen.calculative[k] = data[k];
-      }
-      if (needCalcTextRectProps.includes(k)) {
-        willCalcTextRect = true;
-      }
-      if (['name', 'borderRadius'].includes(k)) {
-        willUpdatePath = true;
-      }
-      if (needSetPenProps.includes(k)) {
-        willSetPenRect = true;
-      }
-      if (needPatchFlagsPenRectProps.includes(k)) {
-        willPatchFlagsPenRect = true;
-      }
-      if (needCalcIconRectProps.includes(k)) {
-        willCalcIconRect = true;
-      }
-      if (k === 'isBottom') {
-        containIsBottom = true;
-      }
-      if (k === 'image') {
-        willRenderImage = true;
-      }
-      if (k.indexOf('.') !== -1) {
+      if (k.indexOf('.') === -1) {
+        if (k === 'rotate') {
+          oldRotate = pen.calculative.rotate || 0;
+        }else if (k === 'isBottom') {
+          containIsBottom = true;
+        }else if (k === 'image') {
+          willRenderImage = true;
+        }
+        if (typeof pen[k] !== 'object' || k === 'lineDash') {
+          pen.calculative[k] = data[k];
+        }
+        if (needCalcTextRectProps.includes(k)) {
+          willCalcTextRect = true;
+        }
+        if (['name', 'borderRadius'].includes(k)) {
+          willUpdatePath = true;
+        }
+        if (needSetPenProps.includes(k)) {
+          willSetPenRect = true;
+        }
+        if (needPatchFlagsPenRectProps.includes(k)) {
+          willPatchFlagsPenRect = true;
+        }
+        if (needCalcIconRectProps.includes(k)) {
+          willCalcIconRect = true;
+        }
+      }else {
         delete pen[k];
         setter(pen, k, data[k]);
-      }
-      if (k.split('.')[0] === 'anchors') {
-        calcWorldAnchors(pen);
+        if (k.split('.')[0] === 'anchors') {
+          calcWorldAnchors(pen);
+        }
       }
     }
 
