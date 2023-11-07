@@ -6518,6 +6518,8 @@ export class Canvas {
           initPens,
         });
         this.store.emitter.emit('valueUpdate', pen);
+      } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines.length == 0) {
+        calcTextRect(pen);
       }
       this.initTemplateCanvas([pen]);
     }
