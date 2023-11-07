@@ -1082,10 +1082,7 @@ export class Meta2d {
     // 没有参数 则播放有自动播放属性的动画
     if (!idOrTagOrPens) {
       pens = this.store.data.pens.filter((pen) => {
-        return (
-          ((pen.type || pen.frames) && pen.autoPlay) ||
-          (pen.animations && pen.autoPlay)
-        );
+        return ((pen.type || pen.frames) && pen.autoPlay) || pen.animations;
       });
     } else if (typeof idOrTagOrPens === 'string') {
       pens = this.find(idOrTagOrPens);
@@ -1116,7 +1113,7 @@ export class Meta2d {
             }
           }
         } else if (params === undefined) {
-          index = pen.animations?.findIndex((i) => i.autoPlay) || -1;
+          index = pen.animations?.findIndex((i) => i.autoPlay);
         }
         if (index !== -1) {
           const animate = deepClone(pen.animations[index]);
