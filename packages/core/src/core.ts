@@ -1084,7 +1084,9 @@ export class Meta2d {
       pens = this.store.data.pens.filter((pen) => {
         return (
           ((pen.type || pen.frames) && pen.autoPlay) ||
-          (pen.animations && pen.autoPlay)
+          (pen.animations &&
+            pen.animations.length &&
+            pen.animations.findIndex((i) => i.autoPlay) !== -1)
         );
       });
     } else if (typeof idOrTagOrPens === 'string') {
@@ -1116,7 +1118,7 @@ export class Meta2d {
             }
           }
         } else if (params === undefined) {
-          index = pen.animations?.findIndex((i) => i.autoPlay) || -1;
+          index = pen.animations?.findIndex((i) => i.autoPlay);
         }
         if (index !== -1) {
           const animate = deepClone(pen.animations[index]);
