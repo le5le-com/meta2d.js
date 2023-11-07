@@ -6880,6 +6880,9 @@ export class Canvas {
         delete pen[k];
         setter(pen, k, data[k]);
       }
+      if (k.split('.')[0] === 'anchors') {
+        calcWorldAnchors(pen);
+      }
     }
 
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
