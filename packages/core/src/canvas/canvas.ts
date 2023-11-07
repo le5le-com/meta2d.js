@@ -6925,6 +6925,13 @@ export class Canvas {
       };
       this.setPenRect(pen, rect, false);
       this.updateLines(pen, true);
+      if (
+        this.store.active &&
+        this.store.active.length &&
+        pen.id === this.store.active[0].id
+      ) {
+        this.calcActiveRect();
+      }
     } else if (willPatchFlagsPenRect) {
       this.updatePenRect(pen);
     } else {
