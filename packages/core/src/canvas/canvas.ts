@@ -5660,9 +5660,34 @@ export class Canvas {
           pen.calculative.media.currentTime = 0;
           pen.calculative.media?.play();
           pen.onStartVideo?.(pen);
-        } else if (pen.type || pen.frames?.length) {
+        } else if (
+          pen.type ||
+          pen.frames?.length ||
+          (pen.animations && pen.animations.length)
+        ) {
           //存储动画初始状态
           if (!pen.type) {
+            if (!pen.frames && pen.animations && pen.animations.length) {
+              //无活动动画
+              let autoIndex = pen.animations?.findIndex((i) => i.autoPlay);
+              let index = autoIndex === -1 ? 0 : autoIndex;
+              const animate = deepClone(pen.animations[index]);
+              delete animate.name;
+              animate.currentAnimation = index;
+              if (!pen.type && animate.frames) {
+                animate.showDuration = this.parent.calcAnimateDuration(animate);
+              }
+              this.parent.setValue(
+                {
+                  id: pen.id,
+                  ...animate,
+                },
+                {
+                  doEvent: false,
+                  history: false,
+                }
+              );
+            }
             this.store.animateMap.set(pen, this.getFrameProps(pen));
           }
           this.store.animates.add(pen);
@@ -5672,7 +5697,7 @@ export class Canvas {
     this.animate();
   }
 
-  getFrameProps(pen) {
+  getFrameProps(pen: Pen) {
     let initProps = {};
     pen.frames &&
       pen.frames.forEach((frame) => {
