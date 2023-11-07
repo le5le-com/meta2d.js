@@ -6874,6 +6874,7 @@ export class Canvas {
     let oldRotate: number = undefined;
     let willRenderImage = false; // 是否需要重新渲染图片
     for (const k in data) {
+      // 单属性
       if (k.indexOf('.') === -1) {
         if (k === 'rotate') {
           oldRotate = pen.calculative.rotate || 0;
@@ -6901,11 +6902,13 @@ export class Canvas {
           willCalcIconRect = true;
         }
       }else {
+        // 复合属性，如abc.def.ghi
         delete pen[k];
         setter(pen, k, data[k]);
-        if (k.split('.')[0] === 'anchors') {
-          calcWorldAnchors(pen);
-        }
+      }
+      // anchors 或者 anchors.x都去执行
+      if (k.split('.')[0] === 'anchors') {
+        calcWorldAnchors(pen);
       }
     }
 
