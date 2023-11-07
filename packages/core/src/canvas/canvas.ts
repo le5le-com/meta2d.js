@@ -6574,37 +6574,60 @@ export class Canvas {
       );
       sheet.insertRule('.meta2d-input ul li:hover{background: #eeeeee;}');
       sheet.insertRule(`.input-div::-webkit-scrollbar {display:none}`);
+      sheet.insertRule(`.input-div{scrollbar-width: none;}`);
       sheet.insertRule(
         '.meta2d-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
       );
       sheet.insertRule(`.input-div div{}`);
     }
     this.inputDiv.onfocus = (e: any) => {
-      //无文本时，光标确保居中
-      if (!e.target.innerText) {
-        let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
-        if (inputDivStyle.justifyContent === 'center') {
-          this.inputDiv.style.paddingTop = ` ${
-            this.inputDiv.offsetHeight / 2 -
-            parseFloat(inputDivStyle.lineHeight) / 2
-          }px`;
+      if (navigator.userAgent.includes('Firefox')) {
+        if (!e.target.innerText) {
+          let left = this.inputDiv.offsetWidth / 2;
+          let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
+          if (inputDivStyle.textAlign !== 'center') {
+            left = 0;
+          }
+          this.inputDiv.innerHTML = `<br style="margin-left:${left}px;margin-top:4px;" />`;
         }
       } else {
-        this.inputDiv.style.paddingTop = '';
+        //无文本时，光标确保居中
+        if (!e.target.innerText) {
+          let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
+          if (inputDivStyle.justifyContent === 'center') {
+            this.inputDiv.style.paddingTop = ` ${
+              this.inputDiv.offsetHeight / 2 -
+              parseFloat(inputDivStyle.lineHeight) / 2
+            }px`;
+          }
+        } else {
+          this.inputDiv.style.paddingTop = '';
+        }
       }
     };
     this.inputDiv.oninput = (e: any) => {
-      //无文本时，光标确保居中
-      if (!e.target.innerText) {
-        let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
-        if (inputDivStyle.justifyContent === 'center') {
-          this.inputDiv.style.paddingTop = ` ${
-            this.inputDiv.offsetHeight / 2 -
-            parseFloat(inputDivStyle.lineHeight) / 2
-          }px`;
+      // //无文本时，光标确保居中
+      if (navigator.userAgent.includes('Firefox')) {
+        if (!e.target.innerText.trim()) {
+          let left = this.inputDiv.offsetWidth / 2;
+          let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
+          if (inputDivStyle.textAlign !== 'center') {
+            left = 0;
+          }
+          this.inputDiv.innerHTML = `<br style="margin-left:${left}px;margin-top:4px;" />`;
         }
       } else {
-        this.inputDiv.style.paddingTop = '';
+        if (!e.target.innerText) {
+          let inputDivStyle = window.getComputedStyle(this.inputDiv, null);
+          if (inputDivStyle.justifyContent === 'center') {
+            this.inputDiv.style.paddingTop = ` ${
+              this.inputDiv.offsetHeight / 2 -
+              parseFloat(inputDivStyle.lineHeight) / 2
+            }px`;
+          }
+        } else {
+          this.inputDiv.style.paddingTop = '';
+        }
       }
     };
     this.inputDiv.onclick = (e) => {
