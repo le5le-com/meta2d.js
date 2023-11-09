@@ -1123,7 +1123,7 @@ export class Meta2d {
         } else if (params === undefined) {
           index = pen.animations?.findIndex((i) => i.autoPlay);
         }
-        if (index !== -1) {
+        if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
           animate.currentAnimation = index;
@@ -2648,7 +2648,7 @@ export class Meta2d {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
       }
-      renderPenRaw(ctx, pen, rect);
+      renderPenRaw(ctx, pen, rect,true);
     }
 
     let mySerializedSVG = ctx.getSerializedSvg();
