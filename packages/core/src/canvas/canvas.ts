@@ -2423,13 +2423,25 @@ export class Canvas {
     // 鼠标松手才更新，此处是更新前的值
     const initPens = deepClone(this.store.active, true);
     // const pens = deepClone(this.store.active, true);
-
+    const gridSize = this.store.data.gridSize || this.store.options.gridSize;
+    const { origin, scale } = this.store.data;
+    const autoAlignGrid = this.store.options.autoAlignGrid && this.store.data.grid;
     this.store.active.forEach((pen, i: number) => {
       const { x, y } = this.movingPens[i];
-      Object.assign(pen, {
-        x,
-        y,
-      });
+      const obj = {x,y};
+      // 根据是否开启了自动网格对齐，来修正坐标
+      if(autoAlignGrid){
+        const rect = this.getPenRect(this.movingPens[i]);
+        // 算出偏移了多少个网格
+        const m = parseInt((rect.x / gridSize).toFixed());
+        const n = parseInt((rect.y / gridSize).toFixed());
+        const x1 = m * gridSize;
+        const y1 = n * gridSize;
+        // 算出最终的偏移坐标
+        obj.x = origin.x + x1 * scale;
+        obj.y = origin.y + y1 * scale;
+      }
+      Object.assign(pen, obj);
       pen.onMove?.(pen);
       this.updatePenRect(pen);
       this.updateLines(pen);
@@ -2505,7 +2517,11 @@ export class Canvas {
         }
       }
     }
-
+    // 如果开启自动网格对齐，则需要重算activeRect和sizeCPs
+    if(autoAlignGrid){
+      this.calcActiveRect();
+      this.getSizeCPs();
+    }
     // 此处是更新后的值
     this.pushHistory({
       type: EditType.Update,

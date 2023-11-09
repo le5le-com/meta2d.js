@@ -110,7 +110,16 @@ export class CanvasTemplate {
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
-        if (width && height) {
+        if (width && height && x && y) {
+          if(this.store.data.globalAlpha != 'undefined') {
+            ctx.globalAlpha = this.store.data.globalAlpha;
+          } else {
+            ctx.globalAlpha = this.store.options.globalAlpha;
+          }
+          ctx.shadowOffsetX = this.store.options.shadowOffsetX;
+          ctx.shadowOffsetY = this.store.options.shadowOffsetY;
+          ctx.shadowBlur = this.store.options.shadowBlur;
+          ctx.shadowColor = this.store.options.shadowColor;
           ctx.fillRect(
             this.store.data.origin.x + x,
             this.store.data.origin.y + y,
@@ -189,14 +198,17 @@ export class CanvasTemplate {
   renderGrid(
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
   ) {
-    const { data, options } = this.store;
-    const { grid, gridRotate, gridColor, gridSize, scale } = data;
+    const { data, options, } = this.store;
+    const { grid, gridRotate, gridColor, gridSize, scale, origin } = data;
     if (!(grid ?? options.grid)) {
       // grid false 时不绘制, undefined 时看 options.grid
       return;
     }
     ctx.save();
-    const { width, height } = this.canvas;
+    const width = (data.width || options.width) * scale;
+    const height = (data.height || options.height) * scale;
+    const startX = (data.x || options.x || 0) + origin.x;
+    const startY = (data.y || options.y || 0) + origin.y;
     if (gridRotate) {
       ctx.translate(width / 2, height / 2);
       ctx.rotate((gridRotate * Math.PI) / 180);
@@ -206,15 +218,36 @@ export class CanvasTemplate {
     ctx.strokeStyle = gridColor || options.gridColor;
     ctx.beginPath();
     const size = (gridSize || options.gridSize) * scale;
-    const longSide = Math.max(width, height);
-    const count = Math.ceil(longSide / size);
-    for (let i = -size * count; i < longSide * 2; i += size) {
-      ctx.moveTo(i, -longSide);
-      ctx.lineTo(i, longSide * 2);
-    }
-    for (let i = -size * count; i < longSide * 2; i += size) {
-      ctx.moveTo(-longSide, i);
-      ctx.lineTo(longSide * 2, i);
+    if(!width || !height){
+      const ratio = this.store.dpiRatio;
+      const cW = this.canvas.width / ratio;
+      const cH = this.canvas.height / ratio;
+      const m = startX / size;
+      const n = startY / size;
+      const offset = size * 10; //补偿值
+      const newX = (startX-Math.ceil(m)*size);
+      const newY = (startY-Math.ceil(n)*size);
+      const endX = cW + newX+ offset;
+      const endY = cH + newY+ offset;
+      for (let i = newX; i <= endX; i += size) {
+        ctx.moveTo(i, newY);
+        ctx.lineTo(i, cH + newY+ offset);
+      }
+      for (let i = newY; i <= endY; i += size) {
+        ctx.moveTo(newX, i);
+        ctx.lineTo(cW + newX+ offset, i);
+      }
+    }else{
+      const endX = width + startX;
+      const endY = height + startY;
+      for (let i = startX; i <= endX; i += size) {
+        ctx.moveTo(i, startY);
+        ctx.lineTo(i, height + startY);
+      }
+      for (let i = startY; i <= endY; i += size) {
+        ctx.moveTo(startX, i);
+        ctx.lineTo(width + startX, i);
+      }
     }
     ctx.stroke();
     ctx.restore();
