@@ -28,7 +28,7 @@ export interface Meta2dData {
   mqttTopics?: string;
   websocketProtocols?: string | string[];
   background?: string;
-  globalAlpha?:string;
+  globalAlpha?:number;
   socketCbJs?: string;
   initJs?: string;
   grid?: boolean;
