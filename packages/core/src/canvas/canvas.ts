@@ -203,6 +203,7 @@ export class Canvas {
   opening: boolean = false;
   maxZindex: number = 5;
   canMoveLine: boolean = false; //moveConnectedLine=false
+  randomIdObj: object; //记录拖拽前后id变化
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -1134,9 +1135,24 @@ export class Canvas {
   };
 
   async dropPens(pens: Pen[], e: Point) {
+    this.randomIdObj = {};
     for (const pen of pens) {
       // 只修改 树根处的 祖先节点, randomCombineId 会递归更改子节点
       !pen.parentId && this.randomCombineId(pen, pens);
+    }
+    if (Object.keys(this.randomIdObj).length !== 0) {
+      for (const pen of pens) {
+        if (pen.type) {
+          pen.anchors[0].connectTo = this.randomIdObj[pen.anchors[0].connectTo];
+          pen.anchors[pen.anchors.length - 1].connectTo =
+            this.randomIdObj[pen.anchors[pen.anchors.length - 1].connectTo];
+        } else {
+          pen.connectedLines?.forEach((item) => {
+            item.lineAnchor = this.randomIdObj[item.lineAnchor];
+            item.lineId = this.randomIdObj[item.lineId];
+          });
+        }
+      }
     }
     for (const pen of pens) {
       // TODO: randomCombineId 会更改 id， 此处应该不存在空 id
@@ -1223,7 +1239,34 @@ export class Canvas {
   }
 
   randomCombineId(pen: Pen, pens: Pen[], parentId?: string) {
+    let beforeIds = null;
+    if (pen.type) {
+      if (
+        pen.anchors[0].connectTo ||
+        pen.anchors[pen.anchors.length - 1].connectTo
+      ) {
+        beforeIds = [
+          pen.id,
+          pen.anchors[0].id,
+          pen.anchors[pen.anchors.length - 1].id,
+        ];
+      }
+    } else {
+      if (pen.connectedLines && pen.connectedLines.length) {
+        beforeIds = [pen.id];
+      }
+    }
     randomId(pen);
+    if (beforeIds) {
+      if (beforeIds.length === 1) {
+        this.randomIdObj[beforeIds[0]] = pen.id;
+      } else {
+        this.randomIdObj[beforeIds[0]] = pen.id;
+        this.randomIdObj[beforeIds[1]] = pen.anchors[0].id;
+        this.randomIdObj[beforeIds[2]] = pen.anchors[pen.anchors.length - 1].id;
+      }
+    }
+    //处理链接关系
     pen.parentId = parentId;
     const newChildren = [];
     if (Array.isArray(pen.children)) {
@@ -2435,13 +2478,25 @@ export class Canvas {
     // 鼠标松手才更新，此处是更新前的值
     const initPens = deepClone(this.store.active, true);
     // const pens = deepClone(this.store.active, true);
-
+    const gridSize = this.store.data.gridSize || this.store.options.gridSize;
+    const { origin, scale } = this.store.data;
+    const autoAlignGrid = this.store.options.autoAlignGrid && this.store.data.grid;
     this.store.active.forEach((pen, i: number) => {
       const { x, y } = this.movingPens[i];
-      Object.assign(pen, {
-        x,
-        y,
-      });
+      const obj = {x,y};
+      // 根据是否开启了自动网格对齐，来修正坐标
+      if(autoAlignGrid){
+        const rect = this.getPenRect(this.movingPens[i]);
+        // 算出偏移了多少个网格
+        const m = parseInt((rect.x / gridSize).toFixed());
+        const n = parseInt((rect.y / gridSize).toFixed());
+        const x1 = m * gridSize;
+        const y1 = n * gridSize;
+        // 算出最终的偏移坐标
+        obj.x = origin.x + x1 * scale;
+        obj.y = origin.y + y1 * scale;
+      }
+      Object.assign(pen, obj);
       pen.onMove?.(pen);
       this.updatePenRect(pen);
       this.updateLines(pen);
@@ -2517,7 +2572,11 @@ export class Canvas {
         }
       }
     }
-
+    // 如果开启自动网格对齐，则需要重算activeRect和sizeCPs
+    if(autoAlignGrid){
+      this.calcActiveRect();
+      this.getSizeCPs();
+    }
     // 此处是更新后的值
     this.pushHistory({
       type: EditType.Update,
@@ -6890,9 +6949,9 @@ export class Canvas {
       if (k.indexOf('.') === -1) {
         if (k === 'rotate') {
           oldRotate = pen.calculative.rotate || 0;
-        }else if (k === 'isBottom') {
+        } else if (k === 'isBottom') {
           containIsBottom = true;
-        }else if (k === 'image') {
+        } else if (k === 'image') {
           willRenderImage = true;
         }
         if (typeof pen[k] !== 'object' || k === 'lineDash') {
@@ -6913,7 +6972,7 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
-      }else {
+      } else {
         // 复合属性，如abc.def.ghi
         delete pen[k];
         setter(pen, k, data[k]);
@@ -7224,7 +7283,7 @@ export class Canvas {
       if (pen.calculative.img) {
         renderPenRaw(ctx, pen);
       } else {
-        renderPen(ctx, pen);
+        renderPen(ctx, pen, true);
       }
       pen.calculative.active = active;
     }

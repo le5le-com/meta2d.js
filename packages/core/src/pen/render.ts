@@ -1252,7 +1252,11 @@ export function ctxRotate(
   ctx.translate(-x, -y);
 }
 
-export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
+export function renderPen(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  download?: boolean
+) {
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
@@ -1267,8 +1271,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.rotate && pen.name !== 'line') {
     ctxRotate(ctx, pen);
   }
-
-  if (pen.calculative.lineWidth > 1) {
+  if (pen.calculative.lineWidth > 1 || download) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
 
@@ -1455,7 +1458,8 @@ export function setLineJoin(ctx: CanvasRenderingContext2D, pen: Pen) {
 export function renderPenRaw(
   ctx: CanvasRenderingContext2D,
   pen: Pen,
-  rect?: Rect
+  rect?: Rect,
+  download?: boolean
 ) {
   ctx.save();
   if (rect) {
@@ -1504,8 +1508,7 @@ export function renderPenRaw(
   if (pen.calculative.rotate && pen.name !== 'line') {
     ctxRotate(ctx, pen);
   }
-
-  if (pen.calculative.lineWidth > 1) {
+  if (pen.calculative.lineWidth > 1 || download) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
   let fill: any;
@@ -1678,14 +1681,16 @@ export function ctxDrawPath(
       // 从下往上 x, y, x, y + height * progress
       // 从上往下 x, ey, x, y + height * (1 - progress)
       ctx.save();
-      const {ex, x, y, width, height, ey } = pen.calculative.worldRect;
+      const { ex, x, y, width, height, ey } = pen.calculative.worldRect;
       let grd = null;
-      if(!pen.verticalProgress){
-        grd = !pen.reverseProgress ? 
-          ctx.createLinearGradient(x, y, x + width * progress, y):ctx.createLinearGradient(ex, y, x + width * (1-progress), y);
-      }else{
-        grd = !pen.reverseProgress ? 
-          ctx.createLinearGradient(x, ey, x, y + height * (1 - progress)):ctx.createLinearGradient(x, y, x, y + height * progress);
+      if (!pen.verticalProgress) {
+        grd = !pen.reverseProgress
+          ? ctx.createLinearGradient(x, y, x + width * progress, y)
+          : ctx.createLinearGradient(ex, y, x + width * (1 - progress), y);
+      } else {
+        grd = !pen.reverseProgress
+          ? ctx.createLinearGradient(x, ey, x, y + height * (1 - progress))
+          : ctx.createLinearGradient(x, y, x, y + height * progress);
       }
       const color =
         pen.calculative.progressColor ||
@@ -1706,7 +1711,6 @@ export function ctxDrawPath(
     }
 
     if (pen.calculative.lineWidth) {
-      ctx.lineWidth = pen.calculative.lineWidth;
       if (path instanceof Path2D) {
         ctx.stroke(path);
       } else {

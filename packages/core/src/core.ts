@@ -550,7 +550,10 @@ export class Meta2d {
         }
       } else {
         //临时建立连接
-        let websocket = new WebSocket(network.url, network.protocols);
+        let websocket = new WebSocket(
+          network.url,
+          network.protocols || undefined
+        );
         websocket.onopen = function () {
           console.info('websocket连接成功');
           websocket.send(value);
@@ -1120,7 +1123,7 @@ export class Meta2d {
         } else if (params === undefined) {
           index = pen.animations?.findIndex((i) => i.autoPlay);
         }
-        if (index !== -1) {
+        if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
           animate.currentAnimation = index;
@@ -1543,7 +1546,7 @@ export class Meta2d {
     if (this.store.data.websocket) {
       this.websocket = new WebSocket(
         this.store.data.websocket,
-        this.store.data.websocketProtocols
+        this.store.data.websocketProtocols || undefined
       );
       this.websocket.onmessage = (e) => {
         this.socketCallback(e.data, {
@@ -1729,7 +1732,7 @@ export class Meta2d {
           } else if (net.protocol === 'websocket') {
             this.websockets[websocketIndex] = new WebSocket(
               net.url,
-              net.protocols
+              net.protocols || undefined
             );
             this.websockets[websocketIndex].onmessage = (e) => {
               this.socketCallback(e.data, { type: 'websocket', url: net.url });
@@ -2645,7 +2648,7 @@ export class Meta2d {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
       }
-      renderPenRaw(ctx, pen, rect);
+      renderPenRaw(ctx, pen, rect,true);
     }
 
     let mySerializedSVG = ctx.getSerializedSvg();
