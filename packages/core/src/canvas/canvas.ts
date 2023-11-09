@@ -1709,7 +1709,7 @@ export class Canvas {
     } else {
       switch (this.hoverType) {
         case HoverType.None:
-          this.store.data.rule &&
+          (this.store.data.rule || this.store.options.rule) &&
             !this.store.options.disableRuleLine &&
             this.addRuleLine(e);
           if (this.store.options.resizeMode) {
@@ -2368,8 +2368,8 @@ export class Canvas {
     this.render();
   };
 
-  private addRuleLine(e: { x: number; y: number }) {
-    const { x: offsetX, y: offsetY } = this.store.data;
+  private addRuleLine(e: { x: number; y: number; ctrlKey?: boolean }) {
+    const { x: offsetX, y: offsetY, scale, origin } = this.store.data;
     // 靠近左上角的 x ，y
     const x = e.x + offsetX;
     const y = e.y + offsetY;
@@ -2384,11 +2384,23 @@ export class Canvas {
       lineX = -offsetX;
       width = this.width;
       otherPX = 1;
+      if (!e.ctrlKey) {
+        //找最近的标尺线
+        lineY =
+          Math.round((lineY - origin.y) / (scale * 10)) * (scale * 10) +
+          origin.y;
+      }
     } else if (y < x && y < 20) {
       // 绘制一条垂直线
       lineY = -offsetY;
       height = this.height;
       otherPY = 1;
+      if (!e.ctrlKey) {
+        //找最近的标尺线
+        lineX =
+          Math.round((lineX - origin.x) / (scale * 10)) * (scale * 10) +
+          origin.x;
+      }
     } else {
       return;
     }
