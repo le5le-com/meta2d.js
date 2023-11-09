@@ -2648,7 +2648,7 @@ export class Meta2d {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
       }
-      renderPenRaw(ctx, pen, rect);
+      renderPenRaw(ctx, pen, rect,true);
     }
 
     let mySerializedSVG = ctx.getSerializedSvg();
