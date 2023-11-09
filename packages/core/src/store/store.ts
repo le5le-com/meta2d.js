@@ -28,7 +28,7 @@ export interface Meta2dData {
   mqttTopics?: string;
   websocketProtocols?: string | string[];
   background?: string;
-  globalAlpha?:number;
+  globalAlpha?: number;
   socketCbJs?: string;
   initJs?: string;
   grid?: boolean;
@@ -63,6 +63,7 @@ export interface Meta2dData {
   minScale?: number;
   maxScale?: number;
   template?: string; //模版id
+  cancelFirstConnect?: boolean; //http定时轮询首次是否请求
 }
 
 export interface Network {

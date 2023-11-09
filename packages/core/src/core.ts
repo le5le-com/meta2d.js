@@ -42,6 +42,7 @@ import {
   Meta2dStore,
   useStore,
   Network,
+  HttpOptions,
 } from './store';
 import {
   formatPadding,
@@ -1622,20 +1623,16 @@ export class Meta2d {
     this.closeHttp();
     const { https } = this.store.data;
     if (https) {
+      if (!this.store.data.cancelFirstConnect) {
+        https.forEach(async (item) => {
+          this.oldRequestHttp(item);
+        });
+      }
       https.forEach((item, index) => {
         if (item.http) {
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
-            const res: Response = await fetch(item.http, {
-              method: item.method || 'GET',
-              headers: item.httpHeaders,
-              body:
-                item.method === 'POST' ? JSON.stringify(item.body) : undefined,
-            });
-            if (res.ok) {
-              const data = await res.text();
-              this.socketCallback(data, { type: 'http', url: item.http });
-            }
+            this.oldRequestHttp(item);
           }, item.httpTimeInterval || 1000);
         }
       });
@@ -1652,6 +1649,21 @@ export class Meta2d {
             this.socketCallback(data, { type: 'http', url: http });
           }
         }, httpTimeInterval || 1000);
+      }
+    }
+  }
+
+  async oldRequestHttp(_req: HttpOptions) {
+    let req = deepClone(_req);
+    if (req.http) {
+      const res: Response = await fetch(req.http, {
+        headers: req.httpHeaders,
+        method: req.method || 'GET',
+        body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
+      });
+      if (res.ok) {
+        const data = await res.text();
+        this.socketCallback(data, { type: 'http', url: req.http });
       }
     }
   }
@@ -1924,6 +1936,11 @@ export class Meta2d {
       for (let key in this.store.pensNetwork) {
         https.push(this.store.pensNetwork[key]);
       }
+    }
+    if (!this.store.data.cancelFirstConnect) {
+      https.forEach(async (_item) => {
+        this.requestHttp(_item);
+      });
     }
     this.updateTimer = setInterval(() => {
       //模拟数据
@@ -2648,7 +2665,7 @@ export class Meta2d {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
       }
-      renderPenRaw(ctx, pen, rect,true);
+      renderPenRaw(ctx, pen, rect, true);
     }
 
     let mySerializedSVG = ctx.getSerializedSvg();
