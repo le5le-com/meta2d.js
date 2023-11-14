@@ -7159,7 +7159,11 @@ export class Canvas {
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
     //大屏
-    if (width && height) {
+    let isV = false;
+    if (width && height&&!this.store.data.component) {
+      isV = true;
+    }
+    if(isV){
       rect.x = this.store.data.origin.x;
       rect.y = this.store.data.origin.y;
       rect.width = width * this.store.data.scale;
@@ -7217,7 +7221,7 @@ export class Canvas {
       // 绘制背景颜色
       ctx.save();
       ctx.fillStyle = background;
-      if (width && height) {
+      if (isV) {
         ctx.fillRect(
           0,
           0,
@@ -7236,7 +7240,7 @@ export class Canvas {
     }
 
     if (isDrawBkImg) {
-      if (width && height) {
+      if (isV) {
         ctx.drawImage(
           this.store.bkImg,
           p[3] * _scale || 0,
@@ -7260,7 +7264,7 @@ export class Canvas {
       ctx.translate(-rect.x, -rect.y);
     } else {
       // 平移画布，画笔的 worldRect 不变化
-      if (width && height) {
+      if (isV) {
         ctx.translate(
           -oldRect.x + p[3] * _scale || 0,
           -oldRect.y + p[0] * _scale || 0
