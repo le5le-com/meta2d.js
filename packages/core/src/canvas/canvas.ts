@@ -2470,7 +2470,36 @@ export class Canvas {
       ],
     });
   }
-
+  /**
+   * @description 调整pen的坐标，让pen按照网格自动对齐
+   * @author Joseph Ho
+   * @date 14/11/2023
+   * @memberof Canvas
+   */
+  alignPenToGrid(pen: Pen){
+    const autoAlignGrid = this.store.options.autoAlignGrid && this.store.data.grid;
+    if(autoAlignGrid){
+      const gridSize = this.store.data.gridSize || this.store.options.gridSize;
+      const { origin, scale } = this.store.data;
+      const {x,y}= pen;
+      const obj = {x,y};
+      const rect = this.getPenRect(pen);
+      // 算出偏移了多少个网格
+      const m = parseInt((rect.x / gridSize).toFixed());
+      const n = parseInt((rect.y / gridSize).toFixed());
+      console.log(m,n);
+      const x1 = m * gridSize;
+      const y1 = n * gridSize;
+      // 算出最终的偏移坐标
+      obj.x = origin.x + x1 * scale;
+      obj.y = origin.y + y1 * scale;
+      Object.assign(pen, obj);
+      pen.onMove?.(pen);
+      this.updatePenRect(pen);
+      this.calcActiveRect();
+      this.getSizeCPs();
+    }
+  }
   /**
    * 拖拽结束，数据更新到 active.pens
    */
