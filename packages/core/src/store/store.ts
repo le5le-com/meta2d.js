@@ -64,6 +64,7 @@ export interface Meta2dData {
   maxScale?: number;
   template?: string; //模版id
   cancelFirstConnect?: boolean; //http定时轮询首次是否请求
+  component?:boolean;
 }
 
 export interface Network {
