@@ -3474,6 +3474,11 @@ export class Canvas {
           );
           if (i > -1) {
             pen.calculative = this.store.data.pens[i].calculative;
+            if(this.store.data.pens[i].type&&this.store.data.pens[i].lastConnected){
+              for(let key  in this.store.data.pens[i].lastConnected){
+                this.store.pens[key].connectedLines = this.store.data.pens[i].lastConnected[key];
+              }
+            }
             this.store.data.pens[i] = pen;
             this.store.pens[pen.id] = pen;
             for (const k in pen) {
@@ -3500,7 +3505,7 @@ export class Canvas {
         });
         break;
       case EditType.Delete:
-        action.pens.forEach((aPen) => {
+        action.pens.reverse().forEach((aPen) => {
           const pen = deepClone(aPen, true);
           if (!pen.calculative) {
             pen.calculative = {};
@@ -3514,9 +3519,14 @@ export class Canvas {
           );
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
+          if(pen.type&&pen.lastConnected){
+            for(let key  in pen.lastConnected){
+              this.store.pens[key].connectedLines = pen.lastConnected[key];
+            }
+          }
           pen.calculative.canvas = this;
         });
-        action.pens.forEach((aPen) => {
+        action.pens.reverse().forEach((aPen) => {
           const pen = this.store.pens[aPen.id];
           const rect = this.getPenRect(pen, action.origin, action.scale);
           this.setPenRect(pen, rect, false);
@@ -6178,6 +6188,9 @@ export class Canvas {
       return;
     }
     pens.forEach((pen) => {
+      if(pen.type){
+        pen.lastConnected = {};
+      }
       if (!pen.parentId) {
         if (!canDelLocked && pen.locked) {
           return;
