@@ -269,7 +269,22 @@ function renderPenRaw(pen: Pen) {
         pen.crossOrigin === 'undefined'
           ? undefined
           : pen.crossOrigin || 'anonymous';
-      img.src = pen.thumbImg;
+      if (
+        pen.calculative.canvas.store.options.cdn &&
+        !(
+          pen.image.startsWith('http') ||
+          pen.image.startsWith('//') ||
+          pen.image.startsWith('data:image')
+        )
+      ) {
+        img.src = pen.calculative.canvas.store.options.cdn + pen.thumbImg;
+      } else {
+        img.src = pen.thumbImg;
+      }
+      img.onerror = (e) => {
+        img.remove();
+        pen.calculative.img = undefined;
+      };
       pen.calculative.img = img;
     }
   } else {
