@@ -272,9 +272,9 @@ function renderPenRaw(pen: Pen) {
       if (
         pen.calculative.canvas.store.options.cdn &&
         !(
-          pen.image.startsWith('http') ||
-          pen.image.startsWith('//') ||
-          pen.image.startsWith('data:image')
+          pen.thumbImg.startsWith('http') ||
+          pen.thumbImg.startsWith('//') ||
+          pen.thumbImg.startsWith('data:image')
         )
       ) {
         img.src = pen.calculative.canvas.store.options.cdn + pen.thumbImg;
