@@ -1,14 +1,13 @@
 import { formPen, cellData, Pos, ReplaceMode } from './common';
 import { Point } from '../../core/src/point';
 import { Rect } from '../../core/src/rect';
-import { calcRightBottom, calcTextLines } from '../../core';
+import { calcRightBottom, calcTextLines, deepClone } from '../../core';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
     pen.onAdd = onAdd;
-    if (!pen.rowPos || !pen.colPos) {
+    if (!pen.rowPos || !pen.colPos || !pen.calculative.maxOffsetY) {
       pen.onAdd(pen);
-      // pen.calculative.canvas.parent.active([pen]);
     }
     pen.onMouseMove = onMouseMove;
     pen.onMouseLeave = onMouseLeave;
@@ -17,6 +16,9 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.onInput = onInput;
     pen.onValue = onValue;
     pen.onBeforeValue = beforeValue;
+    pen.onMouseEnter = onMouseEnter;
+    pen.onWheel = onWheel;
+    pen.onDestroy = onDestroy;
   }
 
   const data = pen.calculative.canvas.store.data;
@@ -29,7 +31,15 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   pen.hoverColor = pen.hoverColor || options.hoverColor;
   pen.activeBackground = pen.activeBackground || options.activeBackground;
   pen.hoverBackground = pen.hoverBackground || options.hoverBackground;
-
+  if (!pen.hasHeader) {
+    ctx.save();
+    ctx.beginPath();
+    const { x, y, width, height } = pen.calculative.worldRect;
+    ctx.fillStyle = '#fff0';
+    ctx.rect(x, y, width, height);
+    ctx.fill();
+    ctx.clip();
+  }
   // 画网格线
   drawGridLine(ctx, pen);
 
@@ -38,6 +48,7 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
 
   // 画title
   drawNote(ctx, pen);
+  ctx.restore();
   pen.isFirstTime = false;
 }
 
@@ -80,6 +91,7 @@ function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
     return;
   }
   ctx.save();
+  ctx.beginPath();
   ctx.textAlign = 'start';
   ctx.textBaseline = 'middle';
   ctx.font = ctx.font =
@@ -159,24 +171,29 @@ function initRect(pen: formPen) {
       _rowHeightMap[_r.row] = _r.height;
     });
   // 显示表头
+  let finalHight = height;
   for (let j = 0; j < pen.data.length; j++) {
     height +=
       (_rowHeightMap[j] || pen.rowHeight) *
       pen.calculative.canvas.store.data.scale;
     rowPos.push(height);
+    if (j < pen.maxNum) {
+      finalHight = height;
+    }
   }
-
   pen.colPos = colPos;
   pen.rowPos = rowPos;
   pen.colStyle = colStyle;
-
+  pen.initScale = pen.calculative.canvas.store.data.scale;
   pen.tableWidth = width;
-  pen.tableHeight = height;
+  pen.tableHeight = finalHight || height;
   //   if (!pen.width) {
   pen.width = width;
-  pen.height = height;
+  pen.height = finalHight || height;
   pen.calculative.width = width;
-  pen.calculative.height = height;
+  pen.calculative.height = finalHight || height;
+  pen.calculative.maxOffsetY =
+    (height - finalHight) / pen.calculative.canvas.store.data.scale;
   pen.calculative.worldRect = {
     x: pen.x,
     y: pen.y,
@@ -198,6 +215,7 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
   // const worldRect = pen.calculative.worldRect;
   const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
   ctx.save();
+  ctx.beginPath();
   ctx.strokeStyle = pen.color;
 
   // 绘画最外框
@@ -233,11 +251,38 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (pen.hLine !== false) {
     // 绘画行的线
     let last = pen.rowPos[pen.rowPos.length - 1];
+    if (pen.hasHeader) {
+      ctx.beginPath();
+      ctx.moveTo(
+        pen.calculative.worldRect.x,
+        pen.calculative.worldRect.y +
+          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight
+      );
+      ctx.lineTo(
+        pen.calculative.worldRect.ex,
+        pen.calculative.worldRect.y +
+          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight
+      );
+      ctx.strokeStyle = pen.borderColor || '#424B61';
+      ctx.stroke();
+    }
     for (const item of pen.rowPos) {
       if (item === last) {
         continue;
       }
-      const y = (item * pen.calculative.worldRect.height) / pen.tableHeight;
+      const y =
+        (item * pen.calculative.worldRect.height) / pen.tableHeight -
+        pen.offsetY * pen.calculative.canvas.store.data.scale;
+      if (pen.hasHeader) {
+        if (y < 0 + pen.rowPos[0] || y > pen.calculative.worldRect.height) {
+          continue;
+        }
+      } else {
+        if (y < 0 || y > pen.calculative.worldRect.height) {
+          continue;
+        }
+      }
+
       ctx.beginPath();
       ctx.moveTo(pen.calculative.worldRect.x, pen.calculative.worldRect.y + y);
       ctx.lineTo(pen.calculative.worldRect.ex, pen.calculative.worldRect.y + y);
@@ -276,6 +321,22 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
   const textScale = 1;
 
   for (let i = 0; i < pen.rowPos.length; i++) {
+    if (pen.hasHeader && i === 1) {
+      ctx.save();
+      ctx.beginPath();
+      const { x, y, width, height } = pen.calculative.worldRect;
+      ctx.fillStyle = '#fff0';
+      ctx.rect(
+        x,
+        y +
+          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight,
+        width,
+        height -
+          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight
+      );
+      ctx.fill();
+      ctx.clip();
+    }
     let { style: rowStyle } = getRow(pen, i);
     for (let j = 0; j < pen.colPos.length; j++) {
       let { value: cell, style: cellStyle } = getCell(pen, i, j);
@@ -352,10 +413,16 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       }
 
       const rect = getCellRect(pen, i, j);
-
+      if (
+        rect.y + rect.height < pen.calculative.worldRect.y ||
+        rect.y > pen.calculative.worldRect.height + pen.calculative.worldRect.y
+      ) {
+        continue;
+      }
       // 有背景
       if (background) {
         ctx.save();
+        ctx.beginPath();
         ctx.fillStyle = background;
         ctx.fillRect(
           rect.x,
@@ -369,6 +436,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       // 选中或hover
       if (activeColor) {
         ctx.save();
+        ctx.beginPath();
         ctx.strokeStyle = activeColor;
         ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
         ctx.restore();
@@ -394,6 +462,11 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
           if (_colPen.length > 0) {
             rowText[j] = '';
             if (pen.isFirstTime) {
+              if (pen.maxNum) {
+                if (pen.hasHeader && i >= pen.maxNum) {
+                  cell.visible = false;
+                }
+              }
               let childrenPen = JSON.parse(JSON.stringify(_colPen[0].pens));
               childrenPen.forEach((item: formPen) => {
                 Object.assign(item, { row: i, col: j }, cell);
@@ -429,6 +502,7 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       }
 
       ctx.save();
+      ctx.beginPath();
       ctx.fillStyle = textColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -498,7 +572,13 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
 
 // 添加table节点回调
 function onAdd(pen: formPen) {
-  pen.isFirstTime = true;
+  createInterval(pen);
+  if (!pen.children?.length) {
+    pen.isFirstTime = true;
+  }
+  if (!pen.offsetY) {
+    pen.offsetY = 0;
+  }
   initRect(pen);
 }
 
@@ -562,6 +642,7 @@ function onMouseMove(pen: formPen, e: Point) {
 }
 
 function onMouseLeave(pen: formPen, e: Point) {
+  createInterval(pen);
   pen.calculative.hoverCell = undefined;
   //   pen.calculative.activeCell = undefined;
   pen.calculative.canvas.render();
@@ -585,7 +666,12 @@ function getCellIndex(pen: formPen, e: Point): Pos {
     }
   }
   for (let i = 0; i < pen.rowPos.length; i++) {
-    if (e.y > pen.calculative.worldRect.y + pen.rowPos[i] * scaleY) {
+    if (
+      e.y >
+      pen.calculative.worldRect.y +
+        pen.rowPos[i] * scaleY -
+        pen.offsetY * pen.calculative.canvas.store.data.scale
+    ) {
       pos.row = i + 1;
     }
   }
@@ -674,12 +760,15 @@ function getCellRect(pen: formPen, rowIndex: number, colIndex: number) {
   if (rowIndex > 0) {
     y = pen.rowPos[rowIndex - 1] * scaleY;
   }
-
+  let offset = pen.offsetY * pen.calculative.canvas.store.data.scale;
+  if (rowIndex === 0 && pen.hasHeader) {
+    offset = 0;
+  }
   return {
     x: pen.calculative.worldRect.x + x,
-    y: pen.calculative.worldRect.y + y,
+    y: pen.calculative.worldRect.y + y - offset,
     ex: pen.calculative.worldRect.x + ex,
-    ey: pen.calculative.worldRect.y + ey,
+    ey: pen.calculative.worldRect.y + ey - offset,
     width: ex - x,
     height: ey - y,
   };
@@ -730,10 +819,10 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
 
 function onValue(pen: formPen) {
   if (pen.calculative.isUpdateData) {
-    onAdd(pen);
     delete pen.calculative.isUpdateData;
-    let temChildren = pen.children;
+    let temChildren = deepClone(pen.children);
     pen.children = [];
+    onAdd(pen);
     temChildren &&
       temChildren.forEach((child: string) => {
         pen.calculative.canvas.delForce(pen.calculative.canvas.findOne(child));
@@ -745,6 +834,13 @@ function onValue(pen: formPen) {
 
 function beforeValue(pen: formPen, value: any) {
   pen.calculative.isUpdateData = false;
+  if (pen.swiper !== undefined) {
+    if (pen.swiper) {
+      createInterval(pen);
+    } else {
+      delInterval(pen);
+    }
+  }
   if (
     (value as any).table ||
     (value.col == undefined && value.row == undefined)
@@ -777,7 +873,7 @@ function beforeValue(pen: formPen, value: any) {
       return Object.assign(value, { data });
     }
 
-    if (value.data || pen.styles) {
+    if (value.data || value.styles || value.maxNum) {
       pen.calculative.isUpdateData = true;
     }
     return value;
@@ -795,4 +891,267 @@ function beforeValue(pen: formPen, value: any) {
   delete value.col;
   delete value.row;
   return value;
+}
+
+//鼠标滚动
+function onWheel(pen: formPen, e: WheelEvent) {
+  if (!pen.locked && !pen.calculative.canvas.store.data.locked) {
+    return;
+  }
+  if (!pen.maxNum) {
+    return;
+  }
+  let offset = 0;
+  if (e.deltaY > 0) {
+    offset = 1;
+  } else {
+    offset = -1;
+  }
+  scroll(pen, offset);
+}
+
+//滚动处理
+function scroll(pen: formPen, offset: number) {
+  if (!pen.offsetY) {
+    pen.offsetY = 0;
+  }
+  pen.offsetY += offset;
+  //滚动的最大偏移值
+  if (pen.offsetY > pen.calculative.maxOffsetY) {
+    pen.offsetY = pen.calculative.maxOffsetY;
+  }
+  if (pen.offsetY < 0) {
+    pen.offsetY = 0;
+  }
+  //子节点
+
+  pen.children?.forEach((item) => {
+    const _pen: formPen = pen.calculative.canvas.store.pens[item];
+    changeChildVisible(pen, _pen);
+  });
+  pen.calculative.canvas.render();
+}
+
+//控制子节点
+function changeChildVisible(pen: formPen, _pen: formPen) {
+  if (!_pen) {
+    return;
+  }
+  if (!_pen.oldY) {
+    _pen.oldY = _pen.y;
+  }
+  const { y, height } = _pen.calculative.worldRect;
+  const { y: penY, height: penH } = pen.calculative.worldRect;
+  const scale = pen.calculative.canvas.store.data.scale;
+  const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
+  const rowHeight = pen.rowHeight; //*scale;
+
+  //y值更新
+  _pen.y = _pen.oldY - (pen.offsetY * scale) / pen.calculative.worldRect.height;
+  const oldOffset =
+    ((rowHeight * (pen.initScale || 1)) / pen.tableHeight) * pen.maxNum;
+  pen.calculative.canvas.updatePenRect(_pen);
+
+  if (pen.hasHeader) {
+    if (_pen.y < pen.rowPos[0] / pen.tableHeight) {
+      //显示/隐藏
+      _pen.calculative.visible = false;
+      _pen.visible = false;
+      //颜色及位置更新
+      if (_pen.y < pen.rowPos[0] / pen.tableHeight / 2) {
+        _pen.oldY += oldOffset;
+
+        let row = _pen.row + pen.maxNum;
+        if (!pen.data[row]) {
+          return;
+        }
+        let rowStyle = deepClone(pen.data[row][_pen.col]);
+        if (rowStyle.background) {
+          rowStyle.activeBackground = rowStyle.background;
+          rowStyle.hoverBackground = rowStyle.background;
+        }
+        if (rowStyle.color) {
+          rowStyle.hoverColor = rowStyle.color;
+          rowStyle.activeColor = rowStyle.color;
+        }
+        if (rowStyle.textColor) {
+          rowStyle.activeTextColor = rowStyle.textColor;
+          rowStyle.hoverTextColor = rowStyle.textColor;
+        }
+        Object.assign(_pen, rowStyle, { row: row });
+        Object.assign(_pen.calculative, rowStyle, { row: row });
+      }
+    } else if (_pen.y + _pen.height > 1) {
+      //显示/隐藏
+      _pen.calculative.visible = false;
+      _pen.visible = false;
+
+      //颜色及位置更新
+      if (_pen.y + _pen.height / 2 > 1) {
+        _pen.oldY -= oldOffset;
+        let row = _pen.row - pen.maxNum;
+        if (!pen.data[row]) {
+          return;
+        }
+        let rowStyle = deepClone(pen.data[row][_pen.col]);
+        if (rowStyle.background) {
+          rowStyle.activeBackground = rowStyle.background;
+          rowStyle.hoverBackground = rowStyle.background;
+        }
+        if (rowStyle.color) {
+          rowStyle.hoverColor = rowStyle.color;
+          rowStyle.activeColor = rowStyle.color;
+        }
+        if (rowStyle.textColor) {
+          rowStyle.activeTextColor = rowStyle.textColor;
+          rowStyle.hoverTextColor = rowStyle.textColor;
+        }
+        Object.assign(_pen, rowStyle, { row: row });
+        Object.assign(_pen.calculative, rowStyle, { row: row });
+      }
+    } else {
+      _pen.visible = true;
+      _pen.calculative.visible = true;
+    }
+  } else {
+    if (_pen.y < 0) {
+      _pen.calculative.visible = false;
+      _pen.visible = false;
+
+      if (_pen.y < -rowHeight / pen.tableHeight / 2) {
+        _pen.oldY += oldOffset;
+
+        let row = _pen.row + pen.maxNum;
+        if (!pen.data[row]) {
+          return;
+        }
+        let rowStyle = deepClone(pen.data[row][_pen.col]);
+        if (rowStyle.background) {
+          rowStyle.activeBackground = rowStyle.background;
+          rowStyle.hoverBackground = rowStyle.background;
+        }
+        if (rowStyle.color) {
+          rowStyle.hoverColor = rowStyle.color;
+          rowStyle.activeColor = rowStyle.color;
+        }
+        if (rowStyle.textColor) {
+          rowStyle.activeTextColor = rowStyle.textColor;
+          rowStyle.hoverTextColor = rowStyle.textColor;
+        }
+
+        Object.assign(_pen, rowStyle, { row: row });
+        Object.assign(_pen.calculative, rowStyle, { row: row });
+      }
+    } else if (_pen.y + _pen.height > 1) {
+      _pen.calculative.visible = false;
+      _pen.visible = false;
+
+      if (_pen.y + _pen.height / 2 > 1) {
+        _pen.oldY -= oldOffset;
+        let row = _pen.row - pen.maxNum;
+        if (!pen.data[row]) {
+          return;
+        }
+        let rowStyle = deepClone(pen.data[row][_pen.col]);
+        if (rowStyle.background) {
+          rowStyle.activeBackground = rowStyle.background;
+          rowStyle.hoverBackground = rowStyle.background;
+        }
+        if (rowStyle.color) {
+          rowStyle.hoverColor = rowStyle.color;
+          rowStyle.activeColor = rowStyle.color;
+        }
+        if (rowStyle.textColor) {
+          rowStyle.activeTextColor = rowStyle.textColor;
+          rowStyle.hoverTextColor = rowStyle.textColor;
+        }
+        Object.assign(_pen, rowStyle, { row: row });
+        Object.assign(_pen.calculative, rowStyle, { row: row });
+      }
+    } else {
+      _pen.calculative.visible = true;
+      _pen.visible = true;
+    }
+  }
+}
+
+function onDestroy(pen: any) {
+  delInterval(pen);
+}
+
+
+function delInterval(pen: formPen) {
+  if (pen.interval) {
+    globalThis.clearInterval(pen.interval);
+    pen.interval = null;
+  }
+}
+
+function createInterval(pen: formPen) {
+  if (pen.maxNum && pen.swiper) {
+    if (pen.interval) {
+      return;
+    }
+
+    pen.interval = globalThis.setInterval(() => {
+      if (pen.offsetY >= pen.calculative.maxOffsetY) {
+        pen.offsetY = 0;
+        initChildrenStyle(pen);
+      } else {
+        if (!(pen.offsetY % pen.rowHeight)) {
+          //完整一行 停顿
+          if (!pen.calculative.stap) {
+            pen.calculative.stap = 0;
+          }
+          pen.calculative.stap += 1;
+          if (pen.calculative.stap == 12) {
+            pen.calculative.stap = 0;
+            scroll(pen, 1);
+          }
+        } else {
+          scroll(pen, 1);
+        }
+      }
+    }, 50);
+  }
+}
+
+function initChildrenStyle(pen: formPen) {
+  pen.children?.forEach((item) => {
+    const rowHeight = pen.rowHeight; //*scale;
+    const _pen: formPen = pen.calculative.canvas.store.pens[item];
+    if (!_pen) {
+      return;
+    }
+    const oldOffset =
+      ((rowHeight * (pen.initScale || 1)) / pen.tableHeight) * pen.maxNum;
+    _pen.oldY -= oldOffset;
+    const row = _pen.row - pen.maxNum;
+    if (!pen.data[row]) {
+      return;
+    }
+    let rowStyle = deepClone(pen.data[row][_pen.col]);
+    if (rowStyle.background) {
+      rowStyle.activeBackground = rowStyle.background;
+      rowStyle.hoverBackground = rowStyle.background;
+    }
+    if (rowStyle.color) {
+      rowStyle.hoverColor = rowStyle.color;
+      rowStyle.activeColor = rowStyle.color;
+    }
+    if (rowStyle.textColor) {
+      rowStyle.activeTextColor = rowStyle.textColor;
+      rowStyle.hoverTextColor = rowStyle.textColor;
+    }
+    _pen.calculative.visible = true;
+    _pen.visible = true;
+    Object.assign(_pen, rowStyle, { row: row });
+    Object.assign(_pen.calculative, rowStyle, { row: row });
+  });
+
+  pen.calculative.canvas.render();
+}
+
+function onMouseEnter(pen: formPen) {
+  delInterval(pen);
 }

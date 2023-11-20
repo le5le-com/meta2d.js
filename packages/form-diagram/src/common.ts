@@ -36,6 +36,8 @@ export interface formPen extends Pen {
     isUpdateData?: boolean;
     isHover?: boolean;
     isInput?: boolean;
+    maxOffsetY?:number;
+    stap?:number;
   } & Pen['calculative'];
   checked?: boolean | string;
   onColor?: string;
@@ -92,6 +94,14 @@ export interface formPen extends Pen {
   hasHeader?: boolean; //是否显示表头
   btnBackground?: string;
   colStyle?: any;
+  maxNum?:number; //最大展示数量
+  offsetY?:number;
+  interval?:any;
+  oldY?:number;
+  row?:number;
+  col?:number;
+  swiper?:boolean; //是否轮播
+  initScale?:number;
 }
 
 export interface cellData extends ChartData {
