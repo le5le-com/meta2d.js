@@ -520,6 +520,7 @@ export interface Pen extends Rect {
     animations?: any[];
     imageRadius?: number;
   };
+  lastConnected?:any;
   // 下划线相关配置属性
   textDecoration?: string;
   textDecorationDash?: number[];

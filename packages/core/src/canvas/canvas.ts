@@ -2470,7 +2470,36 @@ export class Canvas {
       ],
     });
   }
-
+  /**
+   * @description 调整pen的坐标，让pen按照网格自动对齐
+   * @author Joseph Ho
+   * @date 14/11/2023
+   * @memberof Canvas
+   */
+  alignPenToGrid(pen: Pen){
+    const autoAlignGrid = this.store.options.autoAlignGrid && this.store.data.grid;
+    if(autoAlignGrid){
+      const gridSize = this.store.data.gridSize || this.store.options.gridSize;
+      const { origin, scale } = this.store.data;
+      const {x,y}= pen;
+      const obj = {x,y};
+      const rect = this.getPenRect(pen);
+      // 算出偏移了多少个网格
+      const m = parseInt((rect.x / gridSize).toFixed());
+      const n = parseInt((rect.y / gridSize).toFixed());
+      console.log(m,n);
+      const x1 = m * gridSize;
+      const y1 = n * gridSize;
+      // 算出最终的偏移坐标
+      obj.x = origin.x + x1 * scale;
+      obj.y = origin.y + y1 * scale;
+      Object.assign(pen, obj);
+      pen.onMove?.(pen);
+      this.updatePenRect(pen);
+      this.calcActiveRect();
+      this.getSizeCPs();
+    }
+  }
   /**
    * 拖拽结束，数据更新到 active.pens
    */
@@ -3474,6 +3503,11 @@ export class Canvas {
           );
           if (i > -1) {
             pen.calculative = this.store.data.pens[i].calculative;
+            if(this.store.data.pens[i].type&&this.store.data.pens[i].lastConnected){
+              for(let key  in this.store.data.pens[i].lastConnected){
+                this.store.pens[key].connectedLines = this.store.data.pens[i].lastConnected[key];
+              }
+            }
             this.store.data.pens[i] = pen;
             this.store.pens[pen.id] = pen;
             for (const k in pen) {
@@ -3500,7 +3534,7 @@ export class Canvas {
         });
         break;
       case EditType.Delete:
-        action.pens.forEach((aPen) => {
+        action.pens.reverse().forEach((aPen) => {
           const pen = deepClone(aPen, true);
           if (!pen.calculative) {
             pen.calculative = {};
@@ -3514,9 +3548,14 @@ export class Canvas {
           );
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
+          if(pen.type&&pen.lastConnected){
+            for(let key  in pen.lastConnected){
+              this.store.pens[key].connectedLines = pen.lastConnected[key];
+            }
+          }
           pen.calculative.canvas = this;
         });
-        action.pens.forEach((aPen) => {
+        action.pens.reverse().forEach((aPen) => {
           const pen = this.store.pens[aPen.id];
           const rect = this.getPenRect(pen, action.origin, action.scale);
           this.setPenRect(pen, rect, false);
@@ -6178,6 +6217,9 @@ export class Canvas {
       return;
     }
     pens.forEach((pen) => {
+      if(pen.type){
+        pen.lastConnected = {};
+      }
       if (!pen.parentId) {
         if (!canDelLocked && pen.locked) {
           return;

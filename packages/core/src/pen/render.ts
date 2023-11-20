@@ -2413,7 +2413,13 @@ export function disconnectLine(
   if (!pen.connectedLines || !pen.connectedLines.length) {
     return;
   }
-
+  
+  if (!line.lastConnected) {
+    line.lastConnected = {};
+  }
+  if (!line.lastConnected[pen.id]) {
+    line.lastConnected[pen.id] = deepClone(pen.connectedLines);
+  }
   pen.connectedLines.forEach((item, index, arr) => {
     if (
       (item.lineId === line.id || item.lineId === line.id) &&

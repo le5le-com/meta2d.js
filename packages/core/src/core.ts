@@ -866,7 +866,9 @@ export class Meta2d {
     lineName && lockedError(this.store);
     this.canvas.drawingLineName = lineName;
   }
-
+  alignPenToGrid(pen: Pen) {
+    this.canvas.alignPenToGrid(pen);
+  }
   drawingPencil() {
     this.canvas.drawingPencil();
   }
