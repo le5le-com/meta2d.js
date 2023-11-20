@@ -903,9 +903,9 @@ function onWheel(pen: formPen, e: WheelEvent) {
   }
   let offset = 0;
   if (e.deltaY > 0) {
-    offset = 1;
+    offset = 4;
   } else {
-    offset = -1;
+    offset = -4;
   }
   scroll(pen, offset);
 }
