@@ -1125,6 +1125,10 @@ export class Meta2d {
           }
         } else if (params === undefined) {
           index = pen.animations?.findIndex((i) => i.autoPlay);
+          if (index === -1 && pen.animations?.length) {
+            //默认执行第0个动画
+            index = 0;
+          }
         }
         if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);

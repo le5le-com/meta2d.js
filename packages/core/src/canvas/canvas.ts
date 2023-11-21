@@ -5803,6 +5803,23 @@ export class Canvas {
               );
             }
             this.store.animateMap.set(pen, this.getFrameProps(pen));
+          }else{
+            if(pen.animations?.length){
+              //默认执行line的第一个动画
+              const animate = deepClone(pen.animations[0]);
+              delete animate.name;
+              animate.currentAnimation = 0;
+              this.parent.setValue(
+                {
+                  id: pen.id,
+                  ...animate,
+                },
+                {
+                  doEvent: false,
+                  history: false,
+                }
+              );
+            }
           }
           this.store.animates.add(pen);
         }
