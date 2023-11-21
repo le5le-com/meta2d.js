@@ -5563,9 +5563,13 @@ export class Canvas {
         pen.calculative.worldRect = pen.calculative.initRect;
       }
       this.updatePenRect(pen, { worldRectIsReady: true });
+      this.updateLines(pen);
       if (pen.calculative.text !== pen.text) {
         pen.calculative.text = pen.text;
         calcTextLines(pen);
+      }
+      if(this.store.active?.length){
+        this.calcActiveRect();
       }
       pen.calculative.initRect = undefined;
     }
