@@ -1692,12 +1692,22 @@ export function ctxDrawPath(
           ? ctx.createLinearGradient(x, ey, x, y + height * (1 - progress))
           : ctx.createLinearGradient(x, y, x, y + height * progress);
       }
-      const color =
-        pen.calculative.progressColor ||
-        pen.calculative.color ||
-        store.options.activeColor;
-      grd.addColorStop(0, color);
-      grd.addColorStop(1, color);
+
+      if (pen.calculative.progressGradientColors) {
+        const { colors } = formatGradient(
+          pen.calculative.progressGradientColors
+        );
+        colors.forEach((stop) => {
+          grd.addColorStop(stop.i, stop.color);
+        });
+      } else {
+        const color =
+          pen.calculative.progressColor ||
+          pen.calculative.color ||
+          store.options.activeColor;
+        grd.addColorStop(0, color);
+        grd.addColorStop(1, color);
+      }
       grd.addColorStop(1, 'transparent');
 
       ctx.fillStyle = grd;

@@ -293,6 +293,7 @@ export interface Pen extends Rect {
   progressColor?: string;
   verticalProgress?: boolean;
   reverseProgress?: boolean;
+  progressGradientColors?: string;
   externElement?: boolean;
 
   autoPolyline?: boolean;
@@ -344,7 +345,7 @@ export interface Pen extends Rect {
 
     progress?: number;
     progressColor?: string;
-
+    progressGradientColors?: string;
     worldRect?: Rect;
     worldAnchors?: Point[];
     worldIconRect?: Rect;
