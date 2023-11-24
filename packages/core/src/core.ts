@@ -427,6 +427,7 @@ export class Meta2d {
         return;
       }
       let params = queryURLParams(_pen.iframe.split('?')[1]);
+      console.log('消息',e,params);
       (
         _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
       ).contentWindow.postMessage(
@@ -1125,6 +1126,10 @@ export class Meta2d {
           }
         } else if (params === undefined) {
           index = pen.animations?.findIndex((i) => i.autoPlay);
+          if (index === -1 && pen.animations?.length) {
+            //默认执行第0个动画
+            index = 0;
+          }
         }
         if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
@@ -1530,8 +1535,10 @@ export class Meta2d {
         ) => boolean;
       }
       if (!socketFn) {
+        this.socketFn = null;
         return false;
       }
+      console.log("进入")
       this.socketFn = socketFn;
     } catch (e) {
       console.error('Create the function for socket:', e);
@@ -2379,6 +2386,7 @@ export class Meta2d {
           } else {
             flag = true;
           }
+          console.log("flag",flag);
           if (flag) {
             event.actions.forEach((action) => {
               if (this.events[action.action]) {

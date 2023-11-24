@@ -5574,9 +5574,13 @@ export class Canvas {
         pen.calculative.worldRect = pen.calculative.initRect;
       }
       this.updatePenRect(pen, { worldRectIsReady: true });
+      this.updateLines(pen);
       if (pen.calculative.text !== pen.text) {
         pen.calculative.text = pen.text;
         calcTextLines(pen);
+      }
+      if(this.store.active?.length){
+        this.calcActiveRect();
       }
       pen.calculative.initRect = undefined;
     }
@@ -5810,6 +5814,23 @@ export class Canvas {
               );
             }
             this.store.animateMap.set(pen, this.getFrameProps(pen));
+          }else{
+            if(pen.animations?.length){
+              //默认执行line的第一个动画
+              const animate = deepClone(pen.animations[0]);
+              delete animate.name;
+              animate.currentAnimation = 0;
+              this.parent.setValue(
+                {
+                  id: pen.id,
+                  ...animate,
+                },
+                {
+                  doEvent: false,
+                  history: false,
+                }
+              );
+            }
           }
           this.store.animates.add(pen);
         }
