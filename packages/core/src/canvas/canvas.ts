@@ -847,6 +847,9 @@ export class Canvas {
       case 'v':
       case 'V':
         if (!e.ctrlKey && !e.metaKey) {
+          if (this.pencil) {
+            this.stopPencil();
+          }
           if (this.drawingLineName) {
             this.finishDrawline();
             this.drawingLineName = '';
@@ -861,7 +864,15 @@ export class Canvas {
         break;
       case 'b':
       case 'B':
-        this.drawingPencil();
+        if (this.drawingLineName) {
+          this.finishDrawline();
+          this.drawingLineName = '';
+        }
+        if (this.pencil) {
+          this.stopPencil();
+        } else {
+          this.drawingPencil();
+        }
         break;
       case 'y':
       case 'Y':
