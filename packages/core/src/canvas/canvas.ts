@@ -2498,7 +2498,6 @@ export class Canvas {
       // 算出偏移了多少个网格
       const m = parseInt((rect.x / gridSize).toFixed());
       const n = parseInt((rect.y / gridSize).toFixed());
-      console.log(m,n);
       const x1 = m * gridSize;
       const y1 = n * gridSize;
       // 算出最终的偏移坐标
