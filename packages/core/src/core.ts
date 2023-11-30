@@ -173,7 +173,7 @@ export class Meta2d {
       }
     }
     if (opts.width !== undefined || opts.height !== undefined) {
-      this.canvas.canvasTemplate.bgPatchFlags = true;
+      this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     }
     this.store.options = Object.assign(this.store.options, opts);
     if (this.canvas && opts.scroll !== undefined) {
