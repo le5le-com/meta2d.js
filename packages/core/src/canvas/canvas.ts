@@ -1134,12 +1134,12 @@ export class Canvas {
         return;
       }
     }
-    if (obj && obj.draggable !== false) {
-      obj = Array.isArray(obj) ? obj : [obj];
-      const pt = { x: event.offsetX, y: event.offsetY };
-      this.calibrateMouse(pt);
-      this.dropPens(obj, pt);
-      this.addCaches = [];
+    obj = Array.isArray(obj) ? obj : [obj];
+    if (obj[0] && obj[0].draggable !== false) {
+        const pt = { x: event.offsetX, y: event.offsetY };
+        this.calibrateMouse(pt);
+        this.dropPens(obj, pt);
+        this.addCaches = [];
     }
 
     this.store.emitter.emit('drop', obj || json);
