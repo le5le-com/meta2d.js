@@ -288,14 +288,14 @@ function renderPenRaw(pen: Pen) {
       pen.calculative.img = img;
     }
   } else {
-    if (pen.calculative.singleton && pen.calculative.singleton.div) {
-      try {
-        handleSaveImg(pen);
-      } catch (e) {
-        console.warn(e);
-        pen.calculative.img = null;
-      }
-    }
+    // if (pen.calculative.singleton && pen.calculative.singleton.div) {
+    //   try {
+    //     // handleSaveImg(pen);
+    //   } catch (e) {
+    //     console.warn(e);
+    //     pen.calculative.img = null;
+    //   }
+    // }
   }
 }
 
