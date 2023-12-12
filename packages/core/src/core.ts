@@ -351,7 +351,7 @@ export class Meta2d {
       if (value && typeof value === 'object') {
         const _pen = e.params ? this.findOne(e.params) : pen;
         for (let key in value) {
-          if (value[key] === undefined) {
+          if (value[key] === undefined || value[key] === '') {
             value[key] = _pen[key];
           }
         }
@@ -409,7 +409,7 @@ export class Meta2d {
         if (e.targetType === 'id') {
           const _pen = e.params ? this.findOne(e.params) : pen;
           for (let key in value) {
-            if (value[key] === undefined) {
+            if (value[key] === undefined || value[key] === '') {
               value[key] = _pen[key];
             }
           }
