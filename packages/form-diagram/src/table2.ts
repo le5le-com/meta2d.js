@@ -876,6 +876,11 @@ function beforeValue(pen: formPen, value: any) {
     if (value.data || value.styles || value.maxNum) {
       pen.calculative.isUpdateData = true;
     }
+    for (let key of Object.keys(value)) {
+      if (key.includes('data.')) {
+        pen.calculative.isUpdateData = true;
+      }
+    }
     return value;
   }
   let rowData = pen.data[value.row];

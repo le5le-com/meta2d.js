@@ -103,15 +103,16 @@ export class CanvasTemplate {
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       const width = this.store.data.width || this.store.options.width;
       const height = this.store.data.height || this.store.options.height;
-      const x = this.store.data.x || this.store.options.x;
-      const y = this.store.data.y || this.store.options.y;
+      const x = this.store.data.x || this.store.options.x || 0;
+      const y = this.store.data.y || this.store.options.y || 0;
       const background =
         this.store.data.background || this.store.options.background;
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
-        if (width && height && x && y) {
-          ctx.globalAlpha = this.store.data.globalAlpha ?? this.store.options.globalAlpha;
+        if (width && height) {
+          ctx.globalAlpha =
+            this.store.data.globalAlpha ?? this.store.options.globalAlpha;
           ctx.shadowOffsetX = this.store.options.shadowOffsetX;
           ctx.shadowOffsetY = this.store.options.shadowOffsetY;
           ctx.shadowBlur = this.store.options.shadowBlur;
@@ -194,7 +195,7 @@ export class CanvasTemplate {
   renderGrid(
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
   ) {
-    const { data, options, } = this.store;
+    const { data, options } = this.store;
     const { grid, gridRotate, gridColor, gridSize, scale, origin } = data;
     if (!(grid ?? options.grid)) {
       // grid false 时不绘制, undefined 时看 options.grid
@@ -214,26 +215,26 @@ export class CanvasTemplate {
     ctx.strokeStyle = gridColor || options.gridColor;
     ctx.beginPath();
     const size = (gridSize || options.gridSize) * scale;
-    if(!width || !height){
+    if (!width || !height) {
       const ratio = this.store.dpiRatio;
       const cW = this.canvas.width / ratio;
       const cH = this.canvas.height / ratio;
       const m = startX / size;
       const n = startY / size;
       const offset = size * 10; //补偿值
-      const newX = (startX-Math.ceil(m)*size);
-      const newY = (startY-Math.ceil(n)*size);
-      const endX = cW + newX+ offset;
-      const endY = cH + newY+ offset;
+      const newX = startX - Math.ceil(m) * size;
+      const newY = startY - Math.ceil(n) * size;
+      const endX = cW + newX + offset;
+      const endY = cH + newY + offset;
       for (let i = newX; i <= endX; i += size) {
         ctx.moveTo(i, newY);
-        ctx.lineTo(i, cH + newY+ offset);
+        ctx.lineTo(i, cH + newY + offset);
       }
       for (let i = newY; i <= endY; i += size) {
         ctx.moveTo(newX, i);
-        ctx.lineTo(cW + newX+ offset, i);
+        ctx.lineTo(cW + newX + offset, i);
       }
-    }else{
+    } else {
       const endX = width + startX;
       const endY = height + startY;
       for (let i = startX; i <= endX; i += size) {

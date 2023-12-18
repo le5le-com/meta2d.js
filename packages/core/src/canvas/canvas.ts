@@ -1134,12 +1134,12 @@ export class Canvas {
         return;
       }
     }
-    if (obj && obj.draggable !== false) {
-      obj = Array.isArray(obj) ? obj : [obj];
-      const pt = { x: event.offsetX, y: event.offsetY };
-      this.calibrateMouse(pt);
-      this.dropPens(obj, pt);
-      this.addCaches = [];
+    obj = Array.isArray(obj) ? obj : [obj];
+    if (obj[0] && obj[0].draggable !== false) {
+        const pt = { x: event.offsetX, y: event.offsetY };
+        this.calibrateMouse(pt);
+        this.dropPens(obj, pt);
+        this.addCaches = [];
     }
 
     this.store.emitter.emit('drop', obj || json);
@@ -2489,7 +2489,8 @@ export class Canvas {
    */
   alignPenToGrid(pen: Pen){
     const autoAlignGrid = this.store.options.autoAlignGrid && this.store.data.grid;
-    if(autoAlignGrid){
+    // 如果开启了自动网格,并且不是连线，则使pen对齐网格
+    if(autoAlignGrid && !pen.type){
       const gridSize = this.store.data.gridSize || this.store.options.gridSize;
       const { origin, scale } = this.store.data;
       const {x,y}= pen;
@@ -2498,7 +2499,6 @@ export class Canvas {
       // 算出偏移了多少个网格
       const m = parseInt((rect.x / gridSize).toFixed());
       const n = parseInt((rect.y / gridSize).toFixed());
-      console.log(m,n);
       const x1 = m * gridSize;
       const y1 = n * gridSize;
       // 算出最终的偏移坐标
@@ -2525,7 +2525,7 @@ export class Canvas {
       const { x, y } = this.movingPens[i];
       const obj = {x,y};
       // 根据是否开启了自动网格对齐，来修正坐标
-      if(autoAlignGrid){
+      if(autoAlignGrid && !this.movingPens[i].type){
         const rect = this.getPenRect(this.movingPens[i]);
         // 算出偏移了多少个网格
         const m = parseInt((rect.x / gridSize).toFixed());

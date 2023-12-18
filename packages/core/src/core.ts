@@ -172,6 +172,9 @@ export class Meta2d {
         this.canvas.hotkeyType = HotkeyType.None;
       }
     }
+    if (opts.width !== undefined || opts.height !== undefined) {
+      this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
+    }
     this.store.options = Object.assign(this.store.options, opts);
     if (this.canvas && opts.scroll !== undefined) {
       if (opts.scroll) {
@@ -348,7 +351,7 @@ export class Meta2d {
       if (value && typeof value === 'object') {
         const _pen = e.params ? this.findOne(e.params) : pen;
         for (let key in value) {
-          if (value[key] === undefined) {
+          if (value[key] === undefined || value[key] === '') {
             value[key] = _pen[key];
           }
         }
@@ -406,7 +409,7 @@ export class Meta2d {
         if (e.targetType === 'id') {
           const _pen = e.params ? this.findOne(e.params) : pen;
           for (let key in value) {
-            if (value[key] === undefined) {
+            if (value[key] === undefined || value[key] === '') {
               value[key] = _pen[key];
             }
           }
@@ -427,7 +430,6 @@ export class Meta2d {
         return;
       }
       let params = queryURLParams(_pen.iframe.split('?')[1]);
-      console.log('消息',e,params);
       (
         _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
       ).contentWindow.postMessage(
@@ -1538,7 +1540,6 @@ export class Meta2d {
         this.socketFn = null;
         return false;
       }
-      console.log("进入")
       this.socketFn = socketFn;
     } catch (e) {
       console.error('Create the function for socket:', e);
@@ -2386,7 +2387,6 @@ export class Meta2d {
           } else {
             flag = true;
           }
-          console.log("flag",flag);
           if (flag) {
             event.actions.forEach((action) => {
               if (this.events[action.action]) {
@@ -3600,6 +3600,8 @@ export class Meta2d {
         { id: pen.id, zIndex },
         { render: false, doEvent: false, history: false }
       );
+      pen.calculative.singleton.div &&
+        setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
 
