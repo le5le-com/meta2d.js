@@ -1,4 +1,11 @@
-import { ColorStop, IValue, LineAnimateType, LockState, Pen } from './model';
+import {
+  CanvasLayer,
+  ColorStop,
+  IValue,
+  LineAnimateType,
+  LockState,
+  Pen,
+} from './model';
 import { getLineRect, getSplitAnchor, line } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
@@ -2689,9 +2696,14 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       pen.image = frame['image'];
       pen.calculative.image = undefined;
       pen.calculative.canvas.loadImage(pen);
-      if (pen.isBottom) {
+      // if (pen.isBottom) {
+      //   pen.calculative.canvas.canvasImageBottom.init();
+      // } else {
+      //   pen.calculative.canvas.canvasImage.init();
+      // }
+      if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
         pen.calculative.canvas.canvasImageBottom.init();
-      } else {
+      } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
         pen.calculative.canvas.canvasImage.init();
       }
     } else if (isLinear(frame[k], k, pen)) {
@@ -2709,9 +2721,14 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
     } else {
       if (k === 'visible') {
         if (pen.calculative.image) {
-          if (pen.isBottom) {
+          // if (pen.isBottom) {
+          //   pen.calculative.canvas.canvasImageBottom.init();
+          // } else {
+          //   pen.calculative.canvas.canvasImage.init();
+          // }
+          if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
             pen.calculative.canvas.canvasImageBottom.init();
-          } else {
+          } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
             pen.calculative.canvas.canvasImage.init();
           }
         }

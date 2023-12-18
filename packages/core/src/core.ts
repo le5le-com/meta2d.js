@@ -28,6 +28,7 @@ import {
   BindId,
   isAncestor,
   isShowChild,
+  CanvasLayer,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -2719,7 +2720,10 @@ export class Meta2d {
   lockTemplate(lock: LockState) {
     //锁定
     this.store.data.pens.forEach((pen) => {
-      if (pen.template) {
+      // if (pen.template) {
+      //   pen.locked = lock;
+      // }
+      if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
         pen.locked = lock;
       }
     });
@@ -3569,18 +3573,25 @@ export class Meta2d {
   specificLayerMove(pen: Pen, type: string) {
     //image
     if (pen.image && pen.name !== 'gif') {
-      let isBottom = false;
-      if (type === 'bottom' || type === 'down') {
-        isBottom = true;
+      // let isBottom = false;
+      // if (type === 'bottom' || type === 'down') {
+      //   isBottom = true;
+      // }
+      // this.setValue(
+      //   { id: pen.id, isBottom },
+      //   { render: false, doEvent: false, history: false }
+      // );
+      let layer = CanvasLayer.CanvasImageBottom;
+      if (type === 'top') {
+        layer = CanvasLayer.CanvasImage;
+      } else if (type === 'up' || type === 'down') {
+        layer = CanvasLayer.CanvasMain;
       }
       this.setValue(
-        { id: pen.id, isBottom },
+        { id: pen.id, canvasLayer: layer },
         { render: false, doEvent: false, history: false }
       );
-    }
-
-    //dom
-    if (pen.externElement || pen.name === 'gif') {
+    } else if (pen.externElement || pen.name === 'gif') {
       let zIndex = 1;
       // let zIndex = pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
       if (type === 'top') {

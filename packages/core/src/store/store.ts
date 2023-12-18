@@ -1,6 +1,6 @@
 import { default as mitt, Emitter } from 'mitt';
 
-import { FormItem, LockState, Pen } from '../pen';
+import { CanvasLayer, FormItem, LockState, Pen } from '../pen';
 import { defaultOptions, Options } from '../options';
 
 import { Point } from '../point';
@@ -64,7 +64,7 @@ export interface Meta2dData {
   maxScale?: number;
   template?: string; //模版id
   cancelFirstConnect?: boolean; //http定时轮询首次是否请求
-  component?:boolean;
+  component?: boolean;
 }
 
 export interface Network {
@@ -206,7 +206,8 @@ export const clearStore = (store: Meta2dStore, template?: string) => {
   if (isSame) {
     //模版一样
     for (const pen of store.data.pens) {
-      if (pen.template) {
+      // if (pen.template) {
+      if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
         store.templatePens[pen.id] = pen;
       }
     }

@@ -6,6 +6,7 @@ import {
   setGlobalAlpha,
   getParent,
   renderPen,
+  CanvasLayer,
 } from '../pen';
 import { Meta2dStore } from '../store';
 import { rgba } from '../utils';
@@ -150,7 +151,10 @@ export class CanvasTemplate {
         if (!isFinite(pen.x)) {
           continue;
         }
-        if (pen.template && pen.calculative.inView) {
+        if (
+          // pen.template 
+          pen.canvasLayer===CanvasLayer.CanvasTemplate
+          && pen.calculative.inView) {
           //非图片
           renderPen(ctx, pen);
           //图片
