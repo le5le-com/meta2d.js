@@ -36,7 +36,7 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
     ctx.beginPath();
     const { x, y, width, height } = pen.calculative.worldRect;
     ctx.fillStyle = '#fff0';
-    ctx.rect(x, y, width, height);
+    ctx.rect(x-1, y-1, width+2, height+2);
     ctx.fill();
     ctx.clip();
   }
@@ -344,12 +344,12 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       const { x, y, width, height } = pen.calculative.worldRect;
       ctx.fillStyle = '#fff0';
       ctx.rect(
-        x,
+        x-1,
         y +
-          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight,
-        width,
+          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight-1,
+        width+2,
         height -
-          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight
+          (pen.rowPos[0] * pen.calculative.worldRect.height) / pen.tableHeight+2
       );
       ctx.fill();
       ctx.clip();

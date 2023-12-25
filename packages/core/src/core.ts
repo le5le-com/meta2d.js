@@ -4085,11 +4085,15 @@ export class Meta2d {
         },
       ];
     }
+    //如果本身就是 一个 组合图元
+    const parents = components.filter((pen)=>!pen.parentId);
     const p = components.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
     const oneIsParent = p && showChild === undefined;
-    if (oneIsParent) {
+    if(parents.length===1){
+      parent =parents[0];
+    }else if (oneIsParent) {
       if (!p.children) {
         p.children = [];
       }
@@ -4115,7 +4119,7 @@ export class Meta2d {
       // pen.type = PenType.Node;
     });
 
-    return oneIsParent
+    return (oneIsParent||parents.length===1)
       ? deepClone(components)
       : deepClone([parent, ...components]);
   }
