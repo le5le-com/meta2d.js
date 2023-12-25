@@ -188,20 +188,37 @@ function initRect(pen: formPen) {
   pen.tableWidth = width;
   pen.tableHeight = finalHight || height;
   //   if (!pen.width) {
-  pen.width = width;
-  pen.height = finalHight || height;
+  pen.calculative.width = width;
+  pen.calculative.height = finalHight || height;
   pen.calculative.width = width;
   pen.calculative.height = finalHight || height;
   pen.calculative.maxOffsetY =
     (height - finalHight) / pen.calculative.canvas.store.data.scale;
+  if (!pen.height) {
+    pen.height = pen.calculative.height;
+  }
+  if (!pen.width) {
+    pen.width = pen.calculative.width;
+  }
+  let x = pen.x;
+  let y = pen.y;
+  if (pen.parentId) {
+    let parentPen = pen.calculative.canvas.store.pens[pen.parentId];
+    x =
+      parentPen.calculative.worldRect.x +
+      parentPen.calculative.worldRect.width * pen.x;
+    y =
+      parentPen.calculative.worldRect.y +
+      parentPen.calculative.worldRect.height * pen.y;
+  }
   pen.calculative.worldRect = {
-    x: pen.x,
-    y: pen.y,
-    height: pen.height,
-    width: pen.width,
+    x,
+    y,
+    height: pen.calculative.height,
+    width: pen.calculative.width,
     center: {
-      x: pen.x + pen.width / 2,
-      y: pen.y + pen.height / 2,
+      x: pen.x + pen.calculative.width / 2,
+      y: pen.y + pen.calculative.height / 2,
     },
   };
   calcRightBottom(pen.calculative.worldRect);
@@ -219,7 +236,7 @@ function drawGridLine(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.strokeStyle = pen.color;
 
   // 绘画最外框
-  ctx.beginPath();
+  // ctx.beginPath();
   // ctx.rect(worldRect.x, worldRect.y, worldRect.width, worldRect.height);
   let wr = pen.calculative.borderRadius || 0,
     hr = wr;
@@ -1083,7 +1100,6 @@ function changeChildVisible(pen: formPen, _pen: formPen) {
 function onDestroy(pen: any) {
   delInterval(pen);
 }
-
 
 function delInterval(pen: formPen) {
   if (pen.interval) {
