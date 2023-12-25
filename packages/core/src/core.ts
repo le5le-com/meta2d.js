@@ -685,7 +685,7 @@ export class Meta2d {
   }
 
   open(data?: Meta2dData, render: boolean = true) {
-    this.clear(false, data.template);
+    this.clear(false, data?.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
       this.setBackgroundImage(data.bkImage, data);
