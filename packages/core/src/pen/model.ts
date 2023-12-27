@@ -577,6 +577,14 @@ export interface Pen extends Rect {
   onKeyDown?: (pen: Pen, key: string) => void;
   onWheel?: (pen: Pen, e: WheelEvent) => void;
   onContextmenu?: (pen: Pen, e: Point) => void;
+  onConnectLine?: (line: Pen, e: {
+    lineAnchor: Point;
+    fromAnchor: Point;
+    line: Pen;
+    anchor: Point;
+    pen: Pen;
+    fromPen: Pen
+  }) => void;
 }
 
 // 属性绑定变量
@@ -723,4 +731,5 @@ export function clearLifeCycle(pen: Pen) {
   pen.onContextmenu = undefined;
   pen.onScale = undefined;
   pen.onWheel = undefined;
+  pen.onConnectLine = undefined;
 }

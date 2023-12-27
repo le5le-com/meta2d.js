@@ -2410,7 +2410,10 @@ export function connectLine(
     pen,
     anchor,
   });
-
+  // 新增连线生命周期
+  let fromPen = line.anchors[0].connectTo;
+  let fromAnchor = line.calculative.canvas.store.pens[line.anchors[0].connectTo]?.anchors.find(i=>i.id === line.anchors[0].anchorId); // num
+  pen.onConnectLine?.(pen,{line,lineAnchor,pen,anchor,fromPen,fromAnchor});
   return true;
 }
 
@@ -2430,7 +2433,7 @@ export function disconnectLine(
   if (!pen.connectedLines || !pen.connectedLines.length) {
     return;
   }
-  
+
   if (!line.lastConnected) {
     line.lastConnected = {};
   }
