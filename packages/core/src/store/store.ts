@@ -100,6 +100,7 @@ export enum EditType {
   Add,
   Update,
   Delete,
+  Replace
 }
 
 export interface EditAction {

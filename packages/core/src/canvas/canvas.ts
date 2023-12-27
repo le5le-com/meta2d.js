@@ -3605,6 +3605,67 @@ export class Canvas {
         });
         action.type = EditType.Add;
         break;
+      case EditType.Replace: {
+        // undo pens则为新的pen
+        const pens = undo ? action.initPens : action.pens;
+        const unPens = undo ? action.pens : action.initPens;
+
+        // 删除旧的
+        unPens.forEach((aPen) => {
+          const pen: Pen = deepClone(aPen, true);
+          const i = this.store.data.pens.findIndex(
+            (item) => item.id === pen.id
+          );
+          if (i > -1) {
+            pen.onDestroy?.(this.store.data.pens.find(i=>i.id === pen.id));
+            const i = this.store.data.pens.findIndex(
+              (item) => item.id === pen.id
+            );
+            this.store.data.pens.splice(i, 1);
+            this.store.pens[pen.id] = undefined;
+            if (!pen.calculative) {
+              pen.calculative = {};
+            }
+            pen.calculative.canvas = this;
+            this.store.animates.delete(pen);
+            this.store.animateMap.delete(pen);
+          }
+        });
+
+        // 放置新的
+        pens.reverse().forEach((aPen) => {
+          const pen = deepClone(aPen, true);
+          if (!pen.calculative) {
+            pen.calculative = {};
+          }
+          this.store.data.pens.splice(
+            pen.calculative?.layer !== -1
+              ? pen.calculative?.layer
+              : this.store.data.pens.length,
+            0,
+            pen
+          );
+          // 先放进去，pens 可能是子节点在前，而父节点在后
+          this.store.pens[pen.id] = pen;
+          if(pen.type&&pen.lastConnected){
+            for(let key  in pen.lastConnected){
+              this.store.pens[key].connectedLines = pen.lastConnected[key];
+            }
+          }
+          pen.calculative.canvas = this;
+        });
+        pens.reverse().forEach((aPen) => {
+          const pen = this.store.data.pens.find(i=>i.id === aPen.id);
+          const rect = this.getPenRect(pen, action.origin, action.scale);
+          this.setPenRect(pen, rect, false);
+          pen.calculative.image = undefined;
+          pen.calculative.backgroundImage = undefined;
+          pen.calculative.strokeImage = undefined;
+          this.loadImage(pen);
+        });
+        action.type = EditType.Replace;
+        break;
+      }
     }
     if (action.type === EditType.Update) {
       let pens = [...action.pens, ...action.initPens];
@@ -6303,6 +6364,7 @@ export class Canvas {
     this.render();
     // TODO: 连线的删除 ，连接的 node 的 connectLines 会变化（删除 node ，line 的 anchors 类似），未记历史记录
     if (history) {
+      if(deletePens.length === 0)return;
       this.pushHistory({ type: EditType.Delete, pens: deletePens });
     }
     this.store.emitter.emit('delete', pens);
