@@ -1,7 +1,7 @@
 import { commonAnchors, commonPens, cube } from './diagrams';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
-import { Options } from './options';
+import {Options, penPlugin, pluginOptions} from './options';
 import {
   calcInView,
   calcTextDrawRect,
@@ -29,6 +29,7 @@ import {
   isAncestor,
   isShowChild,
   CanvasLayer,
+  validationPlugin,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -81,6 +82,12 @@ export class Meta2d {
   mqttClient: MqttClient;
   websockets: WebSocket[];
   mqttClients: MqttClient[];
+  penPluginMap: Map<penPlugin,{
+    tag?:string,
+    name?:string,
+    id?:string,
+    option:Object
+  }[]> = new Map();
   socketFn: (
     e: string,
     // topic: string,
@@ -4123,6 +4130,66 @@ export class Meta2d {
       ? deepClone(components)
       : deepClone([parent, ...components]);
   }
+// TODO 安装pen插件 此处是否应当进行相关的适配？不再让插件内部处理install的目标逻辑？
+  /**
+   * @description 安装插件方法
+   * @param plugins 插件列表及其配置项
+   * @param pen {string | Pen} 接受tag、name、或者Pen对象*/
+  installPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: pluginOptions[] ){
+    if(!pen.tag && !pen.name && !pen.id)return;
+    let type;
+    pen.id?type = 'id':
+      pen.tag?type = 'tag':
+        pen.name?type = 'name':'';
+    plugins.forEach(pluginConfig=>{
+      let plugin = pluginConfig.plugin;
+      let option = pluginConfig.options;
+      if(!plugin)return;
+      // 插件校验
+      if(validationPlugin(plugin) && type){
+        plugin.install(pen,option);
+        // 若当前不存在此插件
+        if(!this.penPluginMap.has(plugin)){
+          this.penPluginMap.set(plugin,[{[type]:pen[type],option}]);
+        }else {
+          let op = this.penPluginMap.get(plugin).find((i)=>{
+            return i[type] === pen[type];
+          });
+          // 存在替换
+          if(op){
+            op.option = option;
+          }else{
+            this.penPluginMap.get(plugin).push({
+              [type]:pen[type],
+              option
+            });
+          }
+        }
+      }
+    });
+  }
+
+  uninstallPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: pluginOptions[] ) {
+    let type;
+    pen.id?type = 'id':
+      pen.tag?type = 'tag':
+        pen.name?type = 'name':'';
+    if(!type)return;
+    plugins.forEach(pluginConfig=>{
+      let plugin = pluginConfig.plugin;
+      plugin.uninstall(pen,pluginConfig.options);
+      let mapList = this.penPluginMap.get(plugin);
+      let op = mapList.findIndex(i=>i[type] === pen[type]);
+      if(op!==-1){
+        mapList.splice(op,1);
+        // TODO 在运行时 插件卸载后是否需要移除？
+        if(mapList.length === 0){
+          this.penPluginMap.delete(plugin);
+        }
+      }
+    });
+  }
+
 
   setVisible(pen: Pen, visible: boolean, render = true) {
     this.onSizeUpdate();
