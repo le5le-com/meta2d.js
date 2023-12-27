@@ -45,7 +45,8 @@ function rewritePenLifeCycle() {
 }
 export let setLifeCycleFunc = rewritePenLifeCycle();
 
-// 检验penPlugin
+/**
+ * @description 校验插件*/
 export function validationPlugin(plugin){
   // 校验penPlugin
   if(!plugin.name && !plugin.install){

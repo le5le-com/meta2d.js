@@ -169,13 +169,15 @@ export const defaultOptions: Options = {
   diagramOptions: {},
 };
 
-export interface penPlugin {
+export interface PenPlugin {
   install: (pen:Pen|string,options)=>void;
   uninstall: (pen:Pen|string,options)=>void;
   name:string;
+  [key:string]:any;
 }
-export interface pluginOptions {
-  plugin:penPlugin;
+export interface PluginOptions {
+  plugin:PenPlugin;
   options?:object;
   enable?:boolean;
+  [key:string]:any;
 }

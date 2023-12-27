@@ -1,7 +1,7 @@
 import { commonAnchors, commonPens, cube } from './diagrams';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
-import {Options, penPlugin, pluginOptions} from './options';
+import {Options, PenPlugin, PluginOptions} from './options';
 import {
   calcInView,
   calcTextDrawRect,
@@ -82,7 +82,7 @@ export class Meta2d {
   mqttClient: MqttClient;
   websockets: WebSocket[];
   mqttClients: MqttClient[];
-  penPluginMap: Map<penPlugin,{
+  penPluginMap: Map<PenPlugin,{
     tag?:string,
     name?:string,
     id?:string,
@@ -4135,7 +4135,7 @@ export class Meta2d {
    * @description 安装插件方法
    * @param plugins 插件列表及其配置项
    * @param pen {string | Pen} 接受tag、name、或者Pen对象*/
-  installPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: pluginOptions[] ){
+  installPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: PluginOptions[] ){
     if(!pen.tag && !pen.name && !pen.id)return;
     let type;
     pen.id?type = 'id':
@@ -4169,7 +4169,7 @@ export class Meta2d {
     });
   }
 
-  uninstallPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: pluginOptions[] ) {
+  uninstallPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: PluginOptions[] ) {
     let type;
     pen.id?type = 'id':
       pen.tag?type = 'tag':
