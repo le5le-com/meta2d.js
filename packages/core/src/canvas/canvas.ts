@@ -614,7 +614,8 @@ export class Canvas {
     if (
       this.store.data.locked >= LockState.DisableEdit &&
       (e.target as HTMLElement).tagName !== 'INPUT' &&
-      (e.target as HTMLElement).tagName !== 'TEXTAREA'
+      (e.target as HTMLElement).tagName !== 'TEXTAREA' &&
+      !(e.target as HTMLElement).dataset.meta2dIgnore
     ) {
       this.store.active.forEach((pen) => {
         pen.onKeyDown?.(pen, e.key);
@@ -623,7 +624,8 @@ export class Canvas {
     if (
       this.store.data.locked >= LockState.DisableEdit ||
       (e.target as HTMLElement).tagName === 'INPUT' ||
-      (e.target as HTMLElement).tagName === 'TEXTAREA'
+      (e.target as HTMLElement).tagName === 'TEXTAREA' ||
+      (e.target as HTMLElement).dataset.meta2dIgnore
     ) {
       return;
     }
