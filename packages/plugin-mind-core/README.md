@@ -1,11 +1,6 @@
 # `plugin-mind-core`
 
-> TODO: description
+> meta2d脑图解决方案核心插件
 
 ## Usage
-
-```
-const pluginMindCore = require('plugin-mind-core');
-
-// TODO: DEMONSTRATE API
-```
+详情请参考官网：https://doc.le5le.com/document/145615402
