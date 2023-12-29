@@ -441,9 +441,10 @@ export let mindBoxPlugin = {
         target = pen.pen;
       }
       let toolbox: any = (window as any).toolbox;
-      if (!(window as any).toolbox) {
+      if (!toolbox) {
         // @ts-ignore
         toolbox = new ToolBox(meta2d.canvas.externalElements.parentElement, options);
+        (window as any).toolbox = toolbox;
       }
       // 当前图元已经绑定了此插件后，不做任何处理。
       if (mindBoxPlugin.target.includes(target)) return;
