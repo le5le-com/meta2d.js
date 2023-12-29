@@ -1,4 +1,6 @@
 import {mindBoxPlugin} from "../core/MindBoxPlugin";
+import {Meta2d} from "@meta2d/core";
+declare const meta2d: Meta2d;
 
 // 是否应当用面向切面的方式来暴露给用户
 export function right(pen: any, recursion = true,) {

@@ -1,5 +1,5 @@
 // @ts-ignore
-import {disconnectLine, connectLine, deepClone, setLifeCycleFunc, Pen, Point, EditType} from "@meta2d/core";
+import {disconnectLine, connectLine, deepClone, setLifeCycleFunc, Pen, Point, EditType, Meta2d} from "@meta2d/core";
 import {ToolBox} from "./toolbox";
 import {colorList, defaultFuncList, FuncOption, generateColor, pluginDefault} from "../config/default";
 import {top, left, right, bottom, butterfly, sandglass} from "../layout";
@@ -9,6 +9,8 @@ import {debounce, debounceFirstOnly, deepMerge, isIntersection} from "../utils";
 let CONFIGS = ['animate', 'animateDuration', 'childrenGap', 'levelGap', 'colorList'];
 let destroyRes: any = null;
 let optionMap = new Map();
+declare const meta2d: Meta2d;
+declare const toolbox:ToolBox;
 
 // @ts-ignore
 export let mindBoxPlugin = {
@@ -393,7 +395,7 @@ export let mindBoxPlugin = {
             let t: Pen = meta2d.findOne(pen.mind?.rootId) || {};
             let isAdd = isIntersection(mindBoxPlugin.target,pen.tags) || mindBoxPlugin.target.includes(t.name) || pen.mind;
             if (isAdd && (pen.mind.type === 'node')) {
-              window.meta2d.emit('plugin:mindBox:open', pen);
+              meta2d.emit('plugin:mindBox:open', pen);
               mindBoxPlugin.combineToolBox(pen);
               mindBoxPlugin.combineLifeCircle(pen);
             }
@@ -424,7 +426,7 @@ export let mindBoxPlugin = {
           }
         });
         meta2d.on('inactive', () => {
-          window.toolbox?.hide();
+          toolbox?.hide();
         });
         isInit = true;
       }
@@ -438,11 +440,10 @@ export let mindBoxPlugin = {
       } else if (pen.pen) {
         target = pen.pen;
       }
-      let toolbox: any = null;
-      if (!window.toolbox) {
+      let toolbox: any = (window as any).toolbox;
+      if (!(window as any).toolbox) {
         // @ts-ignore
         toolbox = new ToolBox(meta2d.canvas.externalElements.parentElement, options);
-        window.toolbox = toolbox;
       }
       // 当前图元已经绑定了此插件后，不做任何处理。
       if (mindBoxPlugin.target.includes(target)) return;
@@ -692,14 +693,14 @@ export let mindBoxPlugin = {
   deleteNodeOnlyOnce: debounceFirstOnly(async (pen: any) => {
     let children = mindBoxPlugin.getChildrenList(pen);
     if (!children || children.length === 0) return;
-    await window.mate2d.delete(children, true, false);
+    await meta2d.delete(children, true, false);
   }, 1000),
   combineToolBox(target: any, del = false) {
     let option = (meta2d.store.pens[target.mind.rootId] as any).mind.mindboxOption;
     let showTrigger = option.trigger?.show || 'onMouseUp';
     let hideTrigger = option.trigger?.hide || 'onMouseDown';
 
-    let toolbox = window.toolbox;
+    let toolbox = (window as any).toolbox;
     let onMouseUp = (targetPen: any) => {
       if (!meta2d.store.data.locked) {
         let root: any = meta2d.findOne(targetPen.mind?.rootId);
@@ -818,15 +819,15 @@ export let mindBoxPlugin = {
     // mindBoxPlugin.update(rootNode,true);
     if (mindBoxPlugin.animate) {
       setTimeout(() => {
-        window.toolbox.bindPen(newPen);
-        window.toolbox.setFuncList(deepClone(this.getFuncList(newPen)));
-        window.toolbox.translateWithPen(newPen);
+        toolbox.bindPen(newPen);
+        toolbox.setFuncList(deepClone(this.getFuncList(newPen)));
+        toolbox.translateWithPen(newPen);
       }, mindBoxPlugin.animateDuration + 100);
 
     } else {
-      window.toolbox.bindPen(newPen);
-      window.toolbox.setFuncList(deepClone(this.getFuncList(newPen)));
-      window.toolbox.translateWithPen(newPen);
+      toolbox.bindPen(newPen);
+      toolbox.setFuncList(deepClone(this.getFuncList(newPen)));
+      toolbox.translateWithPen(newPen);
     }
     // TODO 此处是否应当局部替换
     let newPens = deepClone(meta2d.store.data.pens.filter((pen: any) => pen.mind).map((i: any) => {

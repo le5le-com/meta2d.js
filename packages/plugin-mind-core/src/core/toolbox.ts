@@ -11,7 +11,7 @@ import {Scope} from "../parse";
 import {Pen, Point} from "@meta2d/core";
 
 const extra = 'extra';
-
+declare const toolbox:ToolBox;
 let cssVarMap = {
   itemHoverBackgroundColor: '--toolboxItem-hover-backgroundColor',
   boxMoveOutLine: '--toolbox-move-outLine'

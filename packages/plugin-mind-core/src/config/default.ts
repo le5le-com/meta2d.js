@@ -1,8 +1,8 @@
 import {createDom} from "../utils";
 import {mindBoxPlugin} from "../core";
 import {Scope} from "../parse";
-import {Event, Pen} from "@meta2d/core";
-
+import {Event, Meta2d, Pen} from "@meta2d/core";
+declare const meta2d:Meta2d;
 export let colorList = ['#FF2318', '#9C64A2', '#B4C926', '#0191B3',
   '#6F6EB9', '#9C64A2', '#FF291B', '#F4AE3C'];
 
@@ -659,7 +659,7 @@ let funcList =
               let res = value ? 'mind' : 'polyline';
               // toolbox.renderFuncList()
 
-              let root = (window).meta2d.findOne(pen.mind.rootId);
+              let root:any = meta2d.findOne(pen.mind.rootId);
               root.mind.lineStyle = res;
               mindBoxPlugin.resetLinesStyle(root);
               self.lineStyle = res;
@@ -1089,7 +1089,7 @@ let funcList =
             setDirection(e: string) {
               mindBoxPlugin.record(pen);
 
-              let root = (window).meta2d.findOne(pen.mind.rootId);
+              let root = meta2d.findOne(pen.mind.rootId);
               mindBoxPlugin.resetLayOut(root, e, true);
               mindBoxPlugin.update(root);
               self.direction = e;
@@ -1250,11 +1250,10 @@ let funcList =
           menu: {
             name: '',
             icon: '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" t="1698915834790" class="icon" viewBox="0 0 1365 1024" version="1.1" p-id="13181" width="50" height="30"><path d="M920.32924106 188.22098215H435.74469865c-178.43219866 0-323.49023438 145.05719866-323.49023438 323.49023436 0 178.43219866 145.05803572 323.49023438 323.49023438 323.49023439h484.58454241c178.43303572 0 323.49023438-145.05803572 323.49023437-323.49023439 0.14481026-178.28822544-144.91322544-323.49023438-323.49023437-323.49023436z m2.65345982 603.01339285H439.05440848c-145.05719866 0-281.40652902-137.4375-281.40652903-281.19475447 0-145.05803572 132.71735492-270.29966518 277.77455357-270.29966518h489.52064732c145.05803572 0 272.32700893 131.98995536 272.32700893 275.74720983 0 143.61328125-129.22935267 275.74720982-274.28738839 275.74720982z" p-id="13182"/></svg>',
-
           },
           event: 'click',
           func(self: FuncOption, pen: any, dom: HTMLElement, father: FuncOption) {
-            let parent = (window).meta2d.findOne(pen.mind.preNodeId);
+            let parent:any = meta2d.findOne(pen.mind.preNodeId);
             let index = parent.mind.children.indexOf(pen.id);
             mindBoxPlugin.addNode(parent, index + 1, 'mindNode2', {width: 200, height: 50});
             father.close();
@@ -1267,7 +1266,7 @@ let funcList =
           },
           event: 'click',
           func(self: FuncOption, pen: any, dom: HTMLElement, father: FuncOption) {
-            let parent = (window).meta2d.findOne(pen.mind.preNodeId);
+            let parent:any = meta2d.findOne(pen.mind.preNodeId);
             let index = parent.mind.children.indexOf(pen.id);
             mindBoxPlugin.addNode(parent, index + 1, 'diamond', {width: 200, height: 120});
             father.close();
@@ -1287,7 +1286,7 @@ let funcList =
           },
           event: 'click',
           func(self: FuncOption, pen: any, dom: HTMLElement, father: FuncOption) {
-            let parent = (window).meta2d.findOne(pen.mind.preNodeId);
+            let parent:any = meta2d.findOne(pen.mind.preNodeId);
             let index = parent.mind.children.indexOf(pen.id);
             mindBoxPlugin.addNode(parent, index + 1, 'circle', {width: 200, height: 75});
             father.close();
