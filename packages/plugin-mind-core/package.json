@@ -7,7 +7,7 @@
   "license": "ISC",
   "main": "index.ts",
   "scripts": {
-    "copy": "shx cp package.build.json ../../dist/plugini-mind-core/package.json",
+    "copy": "shx cp package.build.json ../../dist/plugin-mind-core/package.json",
     "build": "tsc && npm run copy"
   },
   "repository": {
