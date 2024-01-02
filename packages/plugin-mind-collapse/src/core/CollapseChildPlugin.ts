@@ -1,5 +1,5 @@
 import {CollapseButton} from "../dom";
-import {deepClone, Meta2d, Pen, setLifeCycleFunc} from '@meta2d/core';
+import {deepClone, Meta2d, Pen, setLifeCycleFunc,} from '@meta2d/core';
 import {error, isCollapsePen} from "../utils";
 import {FuncOption, isIntersection, ToolBox} from "@meta2d/plugin-mind-core";
 

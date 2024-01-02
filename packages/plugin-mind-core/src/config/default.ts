@@ -569,6 +569,7 @@ let funcList =
             flexDirection: 'row',
             flexWrap: 'wrap',
             transformOrigin: 'top',
+            boxSizing: 'content-box',
             transition: 'all .3s',
             justifyContent: 'flex-start',
             position: 'absolute',
