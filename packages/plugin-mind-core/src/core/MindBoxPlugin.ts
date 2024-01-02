@@ -4,7 +4,7 @@ import {ToolBox} from "./toolbox";
 import {colorList, defaultFuncList, FuncOption, generateColor, pluginDefault} from "../config/default";
 import {top, left, right, bottom, butterfly, sandglass} from "../layout";
 import defaultColorRule from "../color/default";
-import {debounce, debounceFirstOnly, deepMerge, isIntersection} from "../utils";
+import {debounce, debounceFirstOnly, deepMerge, error, isIntersection} from "../utils";
 
 let CONFIGS = ['animate', 'animateDuration', 'childrenGap', 'levelGap', 'colorList'];
 let destroyRes: any = null;
@@ -515,9 +515,14 @@ export let mindBoxPlugin = {
       isTag = true;
       target = pen.tag;
     } else if (pen.pen) {
-      target = pen.pen;
+      target = pen.pen.id;
     }
-    if (mindBoxPlugin.target.includes(pen.tag) || mindBoxPlugin.target.includes(pen.name) || mindBoxPlugin.target.includes(pen.id)) {
+    else if(pen.id){
+      target = pen.id;
+    }else  {
+      return error('mindBox','uninstall parma error');
+    }
+    if (mindBoxPlugin.target.includes(pen.tag) || mindBoxPlugin.target.includes(pen.name) || mindBoxPlugin.target.includes(pen.id) || mindBoxPlugin.target.includes(pen.pen.id)) {
       if (typeof target === "string") {
         // 不能只清理当前pen上的内容，还应当清理所有的内容
         let pens = meta2d.store.data.pens.filter((pen: any) => pen.tags.includes(target) || pen.name === target);
