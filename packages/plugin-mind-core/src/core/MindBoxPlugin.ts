@@ -522,10 +522,14 @@ export let mindBoxPlugin = {
     }else  {
       return error('mindBox','uninstall parma error');
     }
-    if (mindBoxPlugin.target.includes(pen.tag) || mindBoxPlugin.target.includes(pen.name) || mindBoxPlugin.target.includes(pen.id) || mindBoxPlugin.target.includes(pen.pen.id)) {
+    if (mindBoxPlugin.target.includes(target) || mindBoxPlugin.target.includes(pen.pen.id)) {
       if (typeof target === "string") {
         // 不能只清理当前pen上的内容，还应当清理所有的内容
-        let pens = meta2d.store.data.pens.filter((pen: any) => pen.tags.includes(target) || pen.name === target);
+        let pens = meta2d.store.data.pens.filter((pen: any) => {
+          let root = meta2d.findOne(pen.mind?.rootId);
+          if(!root)return false;
+          return root.tags?.includes(target) || root.name === target || root.id === target;
+        });
         pens.forEach((i: any) => {
           if (i.mind) this.unCombineToolBox(i);
         });
@@ -534,7 +538,7 @@ export let mindBoxPlugin = {
       }
       mindBoxPlugin.target.splice(mindBoxPlugin.target.indexOf(target), 1);
     }
-
+  toolbox.hide();
   },
 
   unCombineToolBox(pen: any) {
