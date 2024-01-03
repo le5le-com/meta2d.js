@@ -8,6 +8,7 @@ export let defaultStyle = {
   zIndex: '10',
   cursor: 'pointer',
   display: 'flex',
+  boxSizing:'content-box',
   justifyContent: 'center',
   alignItems: 'center',
   color: "#4D4DFF",

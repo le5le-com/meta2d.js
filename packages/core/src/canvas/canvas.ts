@@ -2803,26 +2803,27 @@ export class Canvas {
       }
     }
     //取最近角度
-    let _min = 999;
-    let index = -1;
-    for (let i = 0; i < angleArr.length; i++) {
-      if (angle < 0) {
-        if (Math.abs(angle + angleArr[i]) < _min) {
-          index = i;
-          _min = Math.abs(angle + angleArr[i]);
-        }
-      } else {
-        if (Math.abs(angle - angleArr[i]) < _min) {
-          index = i;
-          _min = Math.abs(angle - angleArr[i]);
-        }
-      }
-    }
-    if (angle < 0) {
-      angle = -angleArr[index];
-    } else {
-      angle = angleArr[index];
-    }
+    // let _min = 999;
+    // let index = -1;
+    // for (let i = 0; i < angleArr.length; i++) {
+    //   if (angle < 0) {
+    //     if (Math.abs(angle + angleArr[i]) < _min) {
+    //       index = i;
+    //       _min = Math.abs(angle + angleArr[i]);
+    //     }
+    //   } else {
+    //     if (Math.abs(angle - angleArr[i]) < _min) {
+    //       index = i;
+    //       _min = Math.abs(angle - angleArr[i]);
+    //     }
+    //   }
+    // }
+    // if (angle < 0) {
+    //   angle = -angleArr[index];
+    // } else {
+    //   angle = angleArr[index];
+    // }
+    angle = Math.round(angle / 15) * 15;
     let length = Math.sqrt(
       (last.x - to.x) * (last.x - to.x) + (last.y - to.y) * (last.y - to.y)
     );
@@ -5211,35 +5212,33 @@ export class Canvas {
       let offsetX = 0;
       let offsetY = 0;
       if (
-        line.lineName === 'line' &&
-        line.calculative.worldAnchors[
-          line.calculative.worldAnchors.length - 1
-        ] === this.store.activeAnchor
+        line.lineName === 'line'
       ) {
+        let index = line.calculative.worldAnchors.findIndex(
+          (anchor) => anchor.id === this.store.activeAnchor.id
+        );
+        if (index === 0) {
+          index = 2;
+        }
+        let relativePt = line.calculative.worldAnchors[index - 1];
         if (keyOptions.ctrlKey && keyOptions.shiftKey) {
           let _pt = deepClone(pt);
           this.getSpecialAngle(
             _pt,
-            line.calculative.worldAnchors[
-              line.calculative.worldAnchors.length - 2
-            ]
+            relativePt
           );
           offsetX = _pt.x - this.store.activeAnchor.x;
           offsetY = _pt.y - this.store.activeAnchor.y;
         } else if (!keyOptions.ctrlKey && keyOptions.shiftKey) {
           let _pt = {
             x: pt.x,
-            y: line.calculative.worldAnchors[
-              line.calculative.worldAnchors.length - 2
-            ].y,
+            y: relativePt.y,
           };
           offsetX = _pt.x - this.store.activeAnchor.x;
           offsetY = _pt.y - this.store.activeAnchor.y;
         } else if (keyOptions.ctrlKey && !keyOptions.shiftKey) {
           let _pt = {
-            x: line.calculative.worldAnchors[
-              line.calculative.worldAnchors.length - 2
-            ].x,
+            x: relativePt.x,
             y: pt.y,
           };
           offsetX = _pt.x - this.store.activeAnchor.x;
