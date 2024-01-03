@@ -12,7 +12,8 @@
     "lib": [
       "es2018",
       "es2020.string",
-      "dom"
+      "dom",
+      "es2021.string"
     ],
     "downlevelIteration": true,
     "resolveJsonModule": true,

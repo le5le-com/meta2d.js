@@ -1,17 +1,18 @@
 {
-  "name": "@meta2d/plugin-mind-core",
+  "name": "@meta2d/plugin-mind-collapse",
   "version": "1.0.0",
-  "description": "The mind core plugin based on le5le meta2d.",
+  "description": "The mind collapse plugin based on le5le meta2d.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "copy": "copyfiles  package.json ../../dist/plugin-mind-core/",
+    "copy": "copyfiles  package.json ../../dist/plugin-mind-collapse/",
     "build": "tsc && npm run copy"
   },
   "keywords": [
     "meta2d",
     "mind",
     "plugin",
+    "collapse",
     "canvas"
   ],
   "author": "Grnetsky <1101767893@qq.com>",

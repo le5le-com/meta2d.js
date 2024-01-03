@@ -1,5 +1,6 @@
 import {generateColor} from "../config/default";
-
+import {Meta2d} from "@meta2d/core";
+declare const meta2d:Meta2d;
 function defaultColorRule(pen: any, recursion = true) {
   let children = pen.mind.children || [];
   let generateColorFunc = generateColor();
