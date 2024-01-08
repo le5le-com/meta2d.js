@@ -277,6 +277,7 @@ export let collapseChildPlugin = {
     this._setVisible(pen, false, true);
     this._controlChildButton(pen, false);
     pen.mind.allChildrenCount = allCount;
+    meta2d.emit('plugin:collapse:collapse',{target:pen});
     return allCount;
   },
   _controlChildButton(pen, status, recursion = true) {
@@ -314,6 +315,7 @@ export let collapseChildPlugin = {
     if (!pen) return;
     this._setExtend(pen);
     this._controlChildButton(pen, true);
+    meta2d.emit('plugin:collapse:extend',{target:pen});
   },
   _setExtend(pen, recursion = true) {
     if (!pen) return;
