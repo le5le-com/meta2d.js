@@ -43,7 +43,7 @@ export let mindBoxPlugin = {
       layoutFunc(pen, recursion);
       colorFunc(pen, recursion);
     } catch (e: any) {
-      throw new Error(`mindBoxPlugin error : ${e.message}`);
+      throw new Error(`[mindBoxPlugin calcChildrenPosAndColor] error : ${e.message}`);
     }
   },
   calcChildrenColor(pen: Pen, type = mindBoxPlugin._colorRule, recursion = true) {
@@ -52,7 +52,7 @@ export let mindBoxPlugin = {
     try {
       colorFunc(pen, recursion);
     } catch (e: any) {
-      throw new Error(`mindBoxPlugin error : ${e.message}`);
+      throw new Error(`[mindBoxPlugin calcChildrenColor] error : ${e.message}`);
     }
   },
   calcChildrenPos(pen: any, position = pen.mind.direction || 'right', recursion = true) {
