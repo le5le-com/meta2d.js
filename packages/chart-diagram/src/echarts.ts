@@ -5,11 +5,10 @@ import {
   FormItem,
   IValue,
   Pen,
+  deepSetValue,
   setElemPosition,
 } from '@meta2d/core';
 import type { EChartOption } from 'echarts';
-// tslint:disable-next-line:no-duplicate-imports
-import { deepSetValue } from '@meta2d/core';
 import { getter } from '@meta2d/core/src/utils/object';
 import { formatTime } from '@meta2d/core/src/utils/time';
 
