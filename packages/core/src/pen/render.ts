@@ -1,4 +1,11 @@
-import { ColorStop, IValue, LineAnimateType, LockState, Pen } from './model';
+import {
+  CanvasLayer,
+  ColorStop,
+  IValue,
+  LineAnimateType,
+  LockState,
+  Pen,
+} from './model';
 import { getLineRect, getSplitAnchor, line } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
@@ -1252,7 +1259,11 @@ export function ctxRotate(
   ctx.translate(-x, -y);
 }
 
-export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
+export function renderPen(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  download?: boolean
+) {
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
@@ -1267,8 +1278,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (pen.calculative.rotate && pen.name !== 'line') {
     ctxRotate(ctx, pen);
   }
-
-  if (pen.calculative.lineWidth > 1) {
+  if (pen.calculative.lineWidth > 1 || download) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
 
@@ -1335,7 +1345,7 @@ export function renderPen(ctx: CanvasRenderingContext2D, pen: Pen) {
     let back: string | CanvasGradient | CanvasPattern;
     if (pen.calculative.bkType === Gradient.Linear) {
       if (pen.calculative.gradientColors) {
-        if (pen.name !== 'line') {
+        if (!pen.type) {
           //连线不考虑渐进背景
           if (pen.calculative.gradient) {
             //位置变化/放大缩小操作不会触发重新计算
@@ -1455,7 +1465,8 @@ export function setLineJoin(ctx: CanvasRenderingContext2D, pen: Pen) {
 export function renderPenRaw(
   ctx: CanvasRenderingContext2D,
   pen: Pen,
-  rect?: Rect
+  rect?: Rect,
+  download?: boolean
 ) {
   ctx.save();
   if (rect) {
@@ -1504,8 +1515,7 @@ export function renderPenRaw(
   if (pen.calculative.rotate && pen.name !== 'line') {
     ctxRotate(ctx, pen);
   }
-
-  if (pen.calculative.lineWidth > 1) {
+  if (pen.calculative.lineWidth > 1 || download) {
     ctx.lineWidth = pen.calculative.lineWidth;
   }
   let fill: any;
@@ -1678,21 +1688,33 @@ export function ctxDrawPath(
       // 从下往上 x, y, x, y + height * progress
       // 从上往下 x, ey, x, y + height * (1 - progress)
       ctx.save();
-      const {ex, x, y, width, height, ey } = pen.calculative.worldRect;
+      const { ex, x, y, width, height, ey } = pen.calculative.worldRect;
       let grd = null;
-      if(!pen.verticalProgress){
-        grd = !pen.reverseProgress ? 
-          ctx.createLinearGradient(x, y, x + width * progress, y):ctx.createLinearGradient(ex, y, x + width * (1-progress), y);
-      }else{
-        grd = !pen.reverseProgress ? 
-          ctx.createLinearGradient(x, ey, x, y + height * (1 - progress)):ctx.createLinearGradient(x, y, x, y + height * progress);
+      if (!pen.verticalProgress) {
+        grd = !pen.reverseProgress
+          ? ctx.createLinearGradient(x, y, x + width * progress, y)
+          : ctx.createLinearGradient(ex, y, x + width * (1 - progress), y);
+      } else {
+        grd = !pen.reverseProgress
+          ? ctx.createLinearGradient(x, ey, x, y + height * (1 - progress))
+          : ctx.createLinearGradient(x, y, x, y + height * progress);
       }
-      const color =
-        pen.calculative.progressColor ||
-        pen.calculative.color ||
-        store.options.activeColor;
-      grd.addColorStop(0, color);
-      grd.addColorStop(1, color);
+
+      if (pen.calculative.progressGradientColors) {
+        const { colors } = formatGradient(
+          pen.calculative.progressGradientColors
+        );
+        colors.forEach((stop) => {
+          grd.addColorStop(stop.i, stop.color);
+        });
+      } else {
+        const color =
+          pen.calculative.progressColor ||
+          pen.calculative.color ||
+          store.options.activeColor;
+        grd.addColorStop(0, color);
+        grd.addColorStop(1, color);
+      }
       grd.addColorStop(1, 'transparent');
 
       ctx.fillStyle = grd;
@@ -1706,7 +1728,6 @@ export function ctxDrawPath(
     }
 
     if (pen.calculative.lineWidth) {
-      ctx.lineWidth = pen.calculative.lineWidth;
       if (path instanceof Path2D) {
         ctx.stroke(path);
       } else {
@@ -2389,7 +2410,10 @@ export function connectLine(
     pen,
     anchor,
   });
-
+  // 新增连线生命周期
+  let fromPen = line.calculative.worldAnchors?.[0].connectTo;
+  let fromAnchor = line.calculative.canvas.store.pens[line.calculative.worldAnchors?.[0].connectTo]?.anchors.find(i=>i.id === line.calculative.worldAnchors?.[0].anchorId); // num
+  pen.onConnectLine?.(pen,{line,lineAnchor,pen,anchor,fromPen,fromAnchor});
   return true;
 }
 
@@ -2410,6 +2434,12 @@ export function disconnectLine(
     return;
   }
 
+  if (!line.lastConnected) {
+    line.lastConnected = {};
+  }
+  if (!line.lastConnected[pen.id]) {
+    line.lastConnected[pen.id] = deepClone(pen.connectedLines);
+  }
   pen.connectedLines.forEach((item, index, arr) => {
     if (
       (item.lineId === line.id || item.lineId === line.id) &&
@@ -2669,9 +2699,14 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       pen.image = frame['image'];
       pen.calculative.image = undefined;
       pen.calculative.canvas.loadImage(pen);
-      if (pen.isBottom) {
+      // if (pen.isBottom) {
+      //   pen.calculative.canvas.canvasImageBottom.init();
+      // } else {
+      //   pen.calculative.canvas.canvasImage.init();
+      // }
+      if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
         pen.calculative.canvas.canvasImageBottom.init();
-      } else {
+      } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
         pen.calculative.canvas.canvasImage.init();
       }
     } else if (isLinear(frame[k], k, pen)) {
@@ -2689,9 +2724,14 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
     } else {
       if (k === 'visible') {
         if (pen.calculative.image) {
-          if (pen.isBottom) {
+          // if (pen.isBottom) {
+          //   pen.calculative.canvas.canvasImageBottom.init();
+          // } else {
+          //   pen.calculative.canvas.canvasImage.init();
+          // }
+          if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
             pen.calculative.canvas.canvasImageBottom.init();
-          } else {
+          } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
             pen.calculative.canvas.canvasImage.init();
           }
         }

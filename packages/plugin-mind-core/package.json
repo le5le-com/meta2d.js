@@ -1,0 +1,24 @@
+{
+  "name": "@meta2d/plugin-mind-core",
+  "version": "1.0.0",
+  "description": "The mind core plugin based on le5le meta2d.",
+  "author": "Grnetsky <1101767893@qq.com>",
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
+  "license": "ISC",
+  "main": "index.ts",
+  "scripts": {
+    "copy": "shx cp package.build.json ../../dist/plugin-mind-core/package.json",
+    "build": "tsc && npm run copy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
+  },
+  "peerDependencies": {
+    "@meta2d/core": "^1.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+}

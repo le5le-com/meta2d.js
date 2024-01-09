@@ -1,7 +1,7 @@
 import { commonAnchors, commonPens, cube } from './diagrams';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
-import { Options } from './options';
+import {Options, PenPlugin, PluginOptions} from './options';
 import {
   calcInView,
   calcTextDrawRect,
@@ -28,6 +28,8 @@ import {
   BindId,
   isAncestor,
   isShowChild,
+  CanvasLayer,
+  validationPlugin,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -42,6 +44,7 @@ import {
   Meta2dStore,
   useStore,
   Network,
+  HttpOptions,
 } from './store';
 import {
   formatPadding,
@@ -79,6 +82,12 @@ export class Meta2d {
   mqttClient: MqttClient;
   websockets: WebSocket[];
   mqttClients: MqttClient[];
+  penPluginMap: Map<PenPlugin,{
+    tag?:string,
+    name?:string,
+    id?:string,
+    option:Object
+  }[]> = new Map();
   socketFn: (
     e: string,
     // topic: string,
@@ -170,6 +179,9 @@ export class Meta2d {
       if (!opts.resizeMode) {
         this.canvas.hotkeyType = HotkeyType.None;
       }
+    }
+    if (opts.width !== undefined || opts.height !== undefined) {
+      this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     }
     this.store.options = Object.assign(this.store.options, opts);
     if (this.canvas && opts.scroll !== undefined) {
@@ -347,7 +359,7 @@ export class Meta2d {
       if (value && typeof value === 'object') {
         const _pen = e.params ? this.findOne(e.params) : pen;
         for (let key in value) {
-          if (!value[key]) {
+          if (value[key] === undefined || value[key] === '') {
             value[key] = _pen[key];
           }
         }
@@ -405,7 +417,7 @@ export class Meta2d {
         if (e.targetType === 'id') {
           const _pen = e.params ? this.findOne(e.params) : pen;
           for (let key in value) {
-            if (!value[key]) {
+            if (value[key] === undefined || value[key] === '') {
               value[key] = _pen[key];
             }
           }
@@ -550,7 +562,10 @@ export class Meta2d {
         }
       } else {
         //临时建立连接
-        let websocket = new WebSocket(network.url, network.protocols);
+        let websocket = new WebSocket(
+          network.url,
+          network.protocols || undefined
+        );
         websocket.onopen = function () {
           console.info('websocket连接成功');
           websocket.send(value);
@@ -677,7 +692,7 @@ export class Meta2d {
   }
 
   open(data?: Meta2dData, render: boolean = true) {
-    this.clear(false, data.template);
+    this.clear(false, data?.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
       this.setBackgroundImage(data.bkImage, data);
@@ -862,7 +877,9 @@ export class Meta2d {
     lineName && lockedError(this.store);
     this.canvas.drawingLineName = lineName;
   }
-
+  alignPenToGrid(pen: Pen) {
+    this.canvas.alignPenToGrid(pen);
+  }
   drawingPencil() {
     this.canvas.drawingPencil();
   }
@@ -1084,7 +1101,9 @@ export class Meta2d {
       pens = this.store.data.pens.filter((pen) => {
         return (
           ((pen.type || pen.frames) && pen.autoPlay) ||
-          (pen.animations && pen.autoPlay)
+          (pen.animations &&
+            pen.animations.length &&
+            pen.animations.findIndex((i) => i.autoPlay) !== -1)
         );
       });
     } else if (typeof idOrTagOrPens === 'string') {
@@ -1116,9 +1135,13 @@ export class Meta2d {
             }
           }
         } else if (params === undefined) {
-          index = pen.animations?.findIndex((i) => i.autoPlay) || -1;
+          index = pen.animations?.findIndex((i) => i.autoPlay);
+          if (index === -1 && pen.animations?.length) {
+            //默认执行第0个动画
+            index = 0;
+          }
         }
-        if (index !== -1) {
+        if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
           delete animate.name;
           animate.currentAnimation = index;
@@ -1522,6 +1545,7 @@ export class Meta2d {
         ) => boolean;
       }
       if (!socketFn) {
+        this.socketFn = null;
         return false;
       }
       this.socketFn = socketFn;
@@ -1541,7 +1565,7 @@ export class Meta2d {
     if (this.store.data.websocket) {
       this.websocket = new WebSocket(
         this.store.data.websocket,
-        this.store.data.websocketProtocols
+        this.store.data.websocketProtocols || undefined
       );
       this.websocket.onmessage = (e) => {
         this.socketCallback(e.data, {
@@ -1617,20 +1641,16 @@ export class Meta2d {
     this.closeHttp();
     const { https } = this.store.data;
     if (https) {
+      if (!this.store.data.cancelFirstConnect) {
+        https.forEach(async (item) => {
+          this.oldRequestHttp(item);
+        });
+      }
       https.forEach((item, index) => {
         if (item.http) {
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
-            const res: Response = await fetch(item.http, {
-              method: item.method || 'GET',
-              headers: item.httpHeaders,
-              body:
-                item.method === 'POST' ? JSON.stringify(item.body) : undefined,
-            });
-            if (res.ok) {
-              const data = await res.text();
-              this.socketCallback(data, { type: 'http', url: item.http });
-            }
+            this.oldRequestHttp(item);
           }, item.httpTimeInterval || 1000);
         }
       });
@@ -1647,6 +1667,21 @@ export class Meta2d {
             this.socketCallback(data, { type: 'http', url: http });
           }
         }, httpTimeInterval || 1000);
+      }
+    }
+  }
+
+  async oldRequestHttp(_req: HttpOptions) {
+    let req = deepClone(_req);
+    if (req.http) {
+      const res: Response = await fetch(req.http, {
+        headers: req.httpHeaders,
+        method: req.method || 'GET',
+        body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
+      });
+      if (res.ok) {
+        const data = await res.text();
+        this.socketCallback(data, { type: 'http', url: req.http });
       }
     }
   }
@@ -1727,7 +1762,7 @@ export class Meta2d {
           } else if (net.protocol === 'websocket') {
             this.websockets[websocketIndex] = new WebSocket(
               net.url,
-              net.protocols
+              net.protocols || undefined
             );
             this.websockets[websocketIndex].onmessage = (e) => {
               this.socketCallback(e.data, { type: 'websocket', url: net.url });
@@ -1919,6 +1954,11 @@ export class Meta2d {
       for (let key in this.store.pensNetwork) {
         https.push(this.store.pensNetwork[key]);
       }
+    }
+    if (!this.store.data.cancelFirstConnect) {
+      https.forEach(async (_item) => {
+        this.requestHttp(_item);
+      });
     }
     this.updateTimer = setInterval(() => {
       //模拟数据
@@ -2643,7 +2683,7 @@ export class Meta2d {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
       }
-      renderPenRaw(ctx, pen, rect);
+      renderPenRaw(ctx, pen, rect, true);
     }
 
     let mySerializedSVG = ctx.getSerializedSvg();
@@ -2687,7 +2727,10 @@ export class Meta2d {
   lockTemplate(lock: LockState) {
     //锁定
     this.store.data.pens.forEach((pen) => {
-      if (pen.template) {
+      // if (pen.template) {
+      //   pen.locked = lock;
+      // }
+      if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
         pen.locked = lock;
       }
     });
@@ -3537,18 +3580,25 @@ export class Meta2d {
   specificLayerMove(pen: Pen, type: string) {
     //image
     if (pen.image && pen.name !== 'gif') {
-      let isBottom = false;
-      if (type === 'bottom' || type === 'down') {
-        isBottom = true;
+      // let isBottom = false;
+      // if (type === 'bottom' || type === 'down') {
+      //   isBottom = true;
+      // }
+      // this.setValue(
+      //   { id: pen.id, isBottom },
+      //   { render: false, doEvent: false, history: false }
+      // );
+      let layer = CanvasLayer.CanvasImageBottom;
+      if (type === 'top') {
+        layer = CanvasLayer.CanvasImage;
+      } else if (type === 'up' || type === 'down') {
+        layer = CanvasLayer.CanvasMain;
       }
       this.setValue(
-        { id: pen.id, isBottom },
+        { id: pen.id, canvasLayer: layer },
         { render: false, doEvent: false, history: false }
       );
-    }
-
-    //dom
-    if (pen.externElement || pen.name === 'gif') {
+    } else if (pen.externElement || pen.name === 'gif') {
       let zIndex = 1;
       // let zIndex = pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
       if (type === 'top') {
@@ -3568,6 +3618,8 @@ export class Meta2d {
         { id: pen.id, zIndex },
         { render: false, doEvent: false, history: false }
       );
+      pen.calculative.singleton.div &&
+        setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
 
@@ -4040,11 +4092,15 @@ export class Meta2d {
         },
       ];
     }
+    //如果本身就是 一个 组合图元
+    const parents = components.filter((pen)=>!pen.parentId);
     const p = components.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
     const oneIsParent = p && showChild === undefined;
-    if (oneIsParent) {
+    if(parents.length===1){
+      parent =parents[0];
+    }else if (oneIsParent) {
       if (!p.children) {
         p.children = [];
       }
@@ -4070,10 +4126,70 @@ export class Meta2d {
       // pen.type = PenType.Node;
     });
 
-    return oneIsParent
+    return (oneIsParent||parents.length===1)
       ? deepClone(components)
       : deepClone([parent, ...components]);
   }
+// TODO 安装pen插件 此处是否应当进行相关的适配？不再让插件内部处理install的目标逻辑？
+  /**
+   * @description 安装插件方法
+   * @param plugins 插件列表及其配置项
+   * @param pen {string | Pen} 接受tag、name、或者Pen对象*/
+  installPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: PluginOptions[] ){
+    if(!pen.tag && !pen.name && !pen.id)return;
+    let type;
+    pen.id?type = 'id':
+      pen.tag?type = 'tag':
+        pen.name?type = 'name':'';
+    plugins.forEach(pluginConfig=>{
+      let plugin = pluginConfig.plugin;
+      let option = pluginConfig.options;
+      if(!plugin)return;
+      // 插件校验
+      if(validationPlugin(plugin) && type){
+        plugin.install(pen,option);
+        // 若当前不存在此插件
+        if(!this.penPluginMap.has(plugin)){
+          this.penPluginMap.set(plugin,[{[type]:pen[type],option}]);
+        }else {
+          let op = this.penPluginMap.get(plugin).find((i)=>{
+            return i[type] === pen[type];
+          });
+          // 存在替换
+          if(op){
+            op.option = option;
+          }else{
+            this.penPluginMap.get(plugin).push({
+              [type]:pen[type],
+              option
+            });
+          }
+        }
+      }
+    });
+  }
+
+  uninstallPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: PluginOptions[] ) {
+    let type;
+    pen.id?type = 'id':
+      pen.tag?type = 'tag':
+        pen.name?type = 'name':'';
+    if(!type)return;
+    plugins.forEach(pluginConfig=>{
+      let plugin = pluginConfig.plugin;
+      plugin.uninstall(pen,pluginConfig.options);
+      let mapList = this.penPluginMap.get(plugin);
+      let op = mapList.findIndex(i=>i[type] === pen[type]);
+      if(op!==-1){
+        mapList.splice(op,1);
+        // TODO 在运行时 插件卸载后是否需要移除？
+        if(mapList.length === 0){
+          this.penPluginMap.delete(plugin);
+        }
+      }
+    });
+  }
+
 
   setVisible(pen: Pen, visible: boolean, render = true) {
     this.onSizeUpdate();

@@ -1,0 +1,35 @@
+{
+  "name": "@meta2d/plugin-mind-collapse",
+  "version": "1.0.0",
+  "description": "The mind collapse plugin based on le5le meta2d.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "copy": "copyfiles  package.json ../../dist/plugin-mind-collapse/",
+    "build": "tsc && npm run copy"
+  },
+  "keywords": [
+    "meta2d",
+    "mind",
+    "plugin",
+    "collapse",
+    "canvas"
+  ],
+  "author": "Grnetsky <1101767893@qq.com>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
+  "peerDependencies": {
+    "@meta2d/core": "^1.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+}

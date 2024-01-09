@@ -402,6 +402,21 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
     pen.calculative.drawlineH =
       Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
   }
+  let index = pen.calculative.worldAnchors.findIndex(
+    (anchor) => anchor.id == from.id
+  );
+  if (index > 1) {
+    let prev = pen.calculative.worldAnchors[index - 1];
+    if (prev.x === from.x && prev.y !== from.y) {
+      //水平
+      pts.push({ x: to.x, y: from.y });
+      return pts;
+    } else if (prev.y === from.y && prev.x !== from.x) {
+      //垂直
+      pts.push({ x: from.x, y: to.y });
+      return pts;
+    }
+  }
 
   if (pen.calculative.worldAnchors.length) {
     to.isTemp = undefined;

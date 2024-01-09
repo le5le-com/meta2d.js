@@ -5,6 +5,7 @@ import {
   Pen,
   setGlobalAlpha,
   getParent,
+  CanvasLayer,
 } from '../pen';
 import { Meta2dStore } from '../store';
 import { rgba } from '../utils';
@@ -107,7 +108,9 @@ export class CanvasImage {
     pen.calculative.hasImage =
       pen.calculative &&
       pen.calculative.inView &&
-      !pen.isBottom == !this.isBottom && // undefined == false 结果 false
+      // !pen.isBottom == !this.isBottom && // undefined == false 结果 false
+      ((this.isBottom && pen.canvasLayer === CanvasLayer.CanvasImageBottom) ||
+        (!this.isBottom && pen.canvasLayer === CanvasLayer.CanvasImage)) &&
       pen.image &&
       pen.calculative.img &&
       pen.name !== 'gif';
@@ -197,7 +200,8 @@ export class CanvasImage {
         ) {
           continue;
         }
-        if (pen.template) {
+        // if (pen.template) {
+        if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
           continue;
         }
         pen.calculative.imageDrawed = true;
@@ -222,7 +226,8 @@ export class CanvasImage {
         if (!pen.calculative.hasImage) {
           continue;
         }
-        if (pen.template) {
+        // if (pen.template) {
+        if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
           continue;
         }
         pen.calculative.imageDrawed = true;
@@ -241,7 +246,8 @@ export class CanvasImage {
         if (!pen.calculative.hasImage || !pen.parentId) {
           continue;
         }
-        if (pen.template) {
+        // if (pen.template) {
+        if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
           continue;
         }
         if (this.store.animates.has(getParent(pen, true))) {

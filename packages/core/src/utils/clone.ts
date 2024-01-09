@@ -62,6 +62,9 @@ export function deepSetValue<T>(o: any, keyWords: string[], value: number): T {
             o[key][index] = Number(i * value);
           });
         }else {
+          if(Number.isNaN(Number(o[key]))){
+            continue;
+          }
           o[key] = Number(o[key]) * value;
         }
       } else {

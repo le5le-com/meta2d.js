@@ -269,18 +269,33 @@ function renderPenRaw(pen: Pen) {
         pen.crossOrigin === 'undefined'
           ? undefined
           : pen.crossOrigin || 'anonymous';
-      img.src = pen.thumbImg;
+      if (
+        pen.calculative.canvas.store.options.cdn &&
+        !(
+          pen.thumbImg.startsWith('http') ||
+          pen.thumbImg.startsWith('//') ||
+          pen.thumbImg.startsWith('data:image')
+        )
+      ) {
+        img.src = pen.calculative.canvas.store.options.cdn + pen.thumbImg;
+      } else {
+        img.src = pen.thumbImg;
+      }
+      img.onerror = (e) => {
+        img.remove();
+        pen.calculative.img = undefined;
+      };
       pen.calculative.img = img;
     }
   } else {
-    if (pen.calculative.singleton && pen.calculative.singleton.div) {
-      try {
-        handleSaveImg(pen);
-      } catch (e) {
-        console.warn(e);
-        pen.calculative.img = null;
-      }
-    }
+    // if (pen.calculative.singleton && pen.calculative.singleton.div) {
+    //   try {
+    //     // handleSaveImg(pen);
+    //   } catch (e) {
+    //     console.warn(e);
+    //     pen.calculative.img = null;
+    //   }
+    // }
   }
 }
 

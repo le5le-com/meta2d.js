@@ -30,6 +30,14 @@ export enum Gradient {
   Radial, // 镜像渐变
 }
 
+//所在画布层 值和画布zIndex对应
+export enum CanvasLayer{
+  CanvasTemplate = 1, //模版层
+  CanvasImageBottom, //底部图片层
+  CanvasMain, //主画布层
+  CanvasImage //顶部图片层
+}
+
 // export enum Flip {
 //   None, // 正常
 //   Horizontal, // 水平翻转
@@ -293,6 +301,7 @@ export interface Pen extends Rect {
   progressColor?: string;
   verticalProgress?: boolean;
   reverseProgress?: boolean;
+  progressGradientColors?: string;
   externElement?: boolean;
 
   autoPolyline?: boolean;
@@ -308,7 +317,11 @@ export interface Pen extends Rect {
   showChild?: number; // 第几个子元素展示 undefined 即展示全部
   animateDotSize?: number; // 线条原点动画，原点大小
   isRuleLine?: boolean; // 是否是规则线，规则线不受缩放，平移影响
+   /**
+   * @deprecated 改用 canvasLayer
+   */
   isBottom?: boolean; // 是否是底部图片
+  canvasLayer?: CanvasLayer; //图元所在画布层
   form?: FormItem[]; // 业务表单
   lockedOnCombine?: LockState; // 组合成 combine ，该节点的 locked 值
   ratio?: boolean; //宽高比锁定
@@ -328,6 +341,9 @@ export interface Pen extends Rect {
   operationalRect?: Rect; //iframe可操作区域 x,y,width,height 均取值0-1
   blur?: number;
   blurBackground?: string;
+  /**
+   * @deprecated 改用 canvasLayer
+   */
   template?: boolean; //是否作为模版图元
   thumbImg?: string; //iframe嵌入场景缩略图
   apiUrl?: string;
@@ -344,7 +360,7 @@ export interface Pen extends Rect {
 
     progress?: number;
     progressColor?: string;
-
+    progressGradientColors?: string;
     worldRect?: Rect;
     worldAnchors?: Point[];
     worldIconRect?: Rect;
@@ -459,7 +475,11 @@ export interface Pen extends Rect {
     // 图片是否已经绘画，避免频繁重绘
     imageDrawed?: boolean;
     // 图片是否在底层
+    /**
+     * @deprecated 改用 canvasLayer
+     */
     isBottom?: boolean;
+    canvasLayer?: CanvasLayer; //图元所在画布层
 
     scale?: number;
 
@@ -520,6 +540,7 @@ export interface Pen extends Rect {
     animations?: any[];
     imageRadius?: number;
   };
+  lastConnected?:any;
   // 下划线相关配置属性
   textDecoration?: string;
   textDecorationDash?: number[];
@@ -556,6 +577,14 @@ export interface Pen extends Rect {
   onKeyDown?: (pen: Pen, key: string) => void;
   onWheel?: (pen: Pen, e: WheelEvent) => void;
   onContextmenu?: (pen: Pen, e: Point) => void;
+  onConnectLine?: (line: Pen, e: {
+    lineAnchor: Point;
+    fromAnchor: Point;
+    line: Pen;
+    anchor: Point;
+    pen: Pen;
+    fromPen: Pen
+  }) => void;
 }
 
 // 属性绑定变量
@@ -702,4 +731,5 @@ export function clearLifeCycle(pen: Pen) {
   pen.onContextmenu = undefined;
   pen.onScale = undefined;
   pen.onWheel = undefined;
+  pen.onConnectLine = undefined;
 }

@@ -35,6 +35,7 @@ export interface Options {
   disableSize?: boolean;
   disableAnchor?: boolean;
   autoAnchor?: boolean;
+  autoAlignGrid?: boolean; // 自动对齐网格
   disableEmptyLine?: boolean;
   disableRepeatLine?: boolean;
   disableScale?: boolean;
@@ -46,6 +47,11 @@ export interface Options {
   maxScale?: number;
   keydown?: KeydownType;
   background?: string;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
+  shadowBlur?: number;
+  shadowColor?: string;
+  globalAlpha?: number;
   grid?: boolean;
   gridColor?: string;
   gridSize?: number;
@@ -122,8 +128,14 @@ export const defaultOptions: Options = {
   animateInterval: 30,
   autoPolyline: true,
   autoAnchor: true,
+  autoAlignGrid: false,
   animateColor: '#ff4d4f',
   ruleLineColor: '#FF4101',
+  shadowOffsetX: 0,
+  shadowOffsetY: 13,
+  shadowBlur: 64,
+  shadowColor: "#00000014",
+  globalAlpha: 1,
   defaultAnchors: [
     {
       x: 0.5,
@@ -156,3 +168,16 @@ export const defaultOptions: Options = {
   unavailableKeys: [],
   diagramOptions: {},
 };
+
+export interface PenPlugin {
+  install: (pen:Pen|string,options)=>void;
+  uninstall: (pen:Pen|string,options)=>void;
+  name:string;
+  [key:string]:any;
+}
+export interface PluginOptions {
+  plugin:PenPlugin;
+  options?:object;
+  enable?:boolean;
+  [key:string]:any;
+}
