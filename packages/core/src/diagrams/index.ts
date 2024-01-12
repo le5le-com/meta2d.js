@@ -61,6 +61,7 @@ export function commonPens() {
     gif,
     mindNode,
     mindLine,
+    mindNode2:rectangle
   };
 }
 
