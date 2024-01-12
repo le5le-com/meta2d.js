@@ -129,7 +129,7 @@ export class ToolBox {
 
       let icon = Scope({key: 'toolbox'}, {
           template: `
-<div style="display: flex;flex-direction: row"">
+<div style="display: flex;flex-direction: row">
 <div style="display: flex;justify-content: center;align-items: center"><svg style="margin: 0 10px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="6px" height="14px" viewBox="0 0 6 14" version="1.1">
                                 <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
                                     <g id="未固定" transform="translate(-266.000000, -148.000000)" fill="#BCBCC4">

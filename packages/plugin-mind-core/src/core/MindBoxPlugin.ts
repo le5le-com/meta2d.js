@@ -495,6 +495,7 @@ export let mindBoxPlugin = {
             pen.mind.mindboxOption = optionMap.get(isIntersection(mindBoxPlugin.target,pen.tags,true )?.[0])|| optionMap.get(pens[0].name);
             mindBoxPlugin.combineToolBox(pen);
             mindBoxPlugin.combineLifeCircle(pen);
+            mindBoxPlugin.loadOptions(pen.mind.mindboxOption);
             meta2d.emit('plugin:mindBox:addRoot', pen);
             mindBoxPlugin.record(pen.id);
             meta2d.render();
