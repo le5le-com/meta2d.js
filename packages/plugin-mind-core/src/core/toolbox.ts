@@ -80,7 +80,10 @@ export class ToolBox {
     let funcContainer = createDom('div', {style: funcListStyle, className: 'toolbox_func'});
     this.box.appendChild(funcContainer);
     this._funcDom = funcContainer;
-    let stylesheet = document.styleSheets[0]; // 选择第一个样式表
+    let style = document.createElement('style');
+    style.type = 'text/css';
+    document.head.appendChild(style);
+    let stylesheet = style.sheet;
     // toolbox_item是否交给用户设置
     stylesheet.insertRule(".toolbox_item,.toolbox_slider_item {" +
       "display: flex;" +
