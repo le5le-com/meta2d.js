@@ -3618,7 +3618,7 @@ export class Meta2d {
         { id: pen.id, zIndex },
         { render: false, doEvent: false, history: false }
       );
-      pen.calculative.singleton.div &&
+      pen.calculative.singleton?.div &&
         setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
