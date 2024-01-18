@@ -30,6 +30,7 @@ import {
   isShowChild,
   CanvasLayer,
   validationPlugin,
+  setLifeCycleFunc,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -4215,6 +4216,7 @@ export class Meta2d {
 
   setElemPosition = setElemPosition;
 
+  setLifeCycleFunc = setLifeCycleFunc;
   destroy(onlyData?: boolean) {
     this.clear(false);
     this.closeSocket();
