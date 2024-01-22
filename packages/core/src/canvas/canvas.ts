@@ -729,6 +729,18 @@ export class Canvas {
         }
         x = x * this.store.data.scale;
 
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x + x, y: this.store.activeAnchor.y },
+            {}
+          );
+          break;
+        }
         if (vRect && this.activeRect.x + x < vRect.x) {
           x = vRect.x - this.activeRect.x;
         }
@@ -752,6 +764,19 @@ export class Canvas {
         if (vRect && this.activeRect.y + y < vRect.y) {
           y = vRect.y - this.activeRect.y;
         }
+        
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x, y: this.store.activeAnchor.y + y },
+            {}
+          );
+          break;
+        }
         this.translatePens(this.store.active, 0, y);
         break;
       case 'ArrowRight':
@@ -767,6 +792,19 @@ export class Canvas {
           x = 10;
         }
         x = x * this.store.data.scale;
+        
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x + x, y: this.store.activeAnchor.y },
+            {}
+          );
+          break;
+        }
         if (
           vRect &&
           this.activeRect.x + this.activeRect.width + x > vRect.x + vRect.width
@@ -798,6 +836,18 @@ export class Canvas {
             vRect.y +
             vRect.height -
             (this.activeRect.y + this.activeRect.height);
+        }
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x, y: this.store.activeAnchor.y + y },
+            {}
+          );
+          break;
         }
         this.translatePens(this.store.active, 0, y);
         break;
