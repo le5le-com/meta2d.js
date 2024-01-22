@@ -2411,8 +2411,8 @@ export function connectLine(
     anchor,
   });
   // 新增连线生命周期
-  let fromPen = line.anchors[0].connectTo;
-  let fromAnchor = line.calculative.canvas.store.pens[line.anchors[0].connectTo]?.anchors.find(i=>i.id === line.anchors[0].anchorId); // num
+  let fromPen = (line.calculative.worldAnchors?.length >= 2)? line.calculative.worldAnchors?.[0].connectTo : undefined;
+  let fromAnchor = (line.calculative.worldAnchors?.length >= 2)?line.calculative.canvas.store.pens[line.calculative.worldAnchors?.[0].connectTo]?.anchors.find(i=>i.id === line.calculative.worldAnchors?.[0].anchorId): undefined; // num
   pen.onConnectLine?.(pen,{line,lineAnchor,pen,anchor,fromPen,fromAnchor});
   return true;
 }
