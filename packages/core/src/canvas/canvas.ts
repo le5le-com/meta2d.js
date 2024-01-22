@@ -2026,7 +2026,7 @@ export class Canvas {
           // Move line anchor
           if (this.hoverType === HoverType.LineAnchor) {
             if (
-              (this.store.active[0].lineName === 'line' || this.dockInAnchor(e)) &&
+              (this.dockInAnchor(e) || this.store.active[0].lineName === 'line') &&
               !this.store.options.disableDock &&
               !this.store.options.disableLineDock
             ) {
