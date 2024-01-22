@@ -209,6 +209,11 @@ export class Canvas {
   maxZindex: number = 5;
   canMoveLine: boolean = false; //moveConnectedLine=false
   randomIdObj: object; //记录拖拽前后id变化
+  keyOptions?:{
+    shiftKey?: boolean;
+    altKey?: boolean;
+    ctrlKey?:boolean;
+  }
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -632,6 +637,12 @@ export class Canvas {
     if (this.store.options.unavailableKeys.includes(e.key)) {
       return;
     }
+    if (!this.keyOptions) {
+      this.keyOptions = {};
+    }
+    this.keyOptions.altKey = e.altKey;
+    this.keyOptions.shiftKey = e.shiftKey;
+    this.keyOptions.ctrlKey = e.ctrlKey;
     let x = 10;
     let y = 10;
     let vRect: Rect = null;
@@ -914,7 +925,9 @@ export class Canvas {
             this.drawingLineName = this.store.options.drawingLineName;
           }
         }
-        if ((e.ctrlKey || e.metaKey) && this.store.options.disableClipboard) {
+        if ((e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard || 
+          (!this.store.options.disableClipboard && e.altKey)) //alt按下，paste事件无效
+        ) {
           this.paste();
         }
 
@@ -6315,8 +6328,15 @@ export class Canvas {
         pen.x -= initRect.center.x - this.store.clipboard.pos.x;
         pen.y -= initRect.center.y - this.store.clipboard.pos.y;
       }
-      pen.x += this.store.clipboard.offset * this.store.data.scale;
-      pen.y += this.store.clipboard.offset * this.store.data.scale;
+      if(this.keyOptions.altKey){
+        pen.x =-this.store.data.x+ this.width / 2 - pen.width / 2;
+        pen.y =-this.store.data.y+ this.height / 2 - pen.height / 2;
+      }else if(this.keyOptions.shiftKey){
+
+      }else{
+        pen.x += this.store.clipboard.offset * this.store.data.scale;
+        pen.y += this.store.clipboard.offset * this.store.data.scale;
+      }
     }
     this.makePen(pen);
     const newChildren = [];
