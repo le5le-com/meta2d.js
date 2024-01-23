@@ -213,6 +213,7 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
     ctrlKey?:boolean;
+    metaKey?:boolean;
   }
   /**
    * @deprecated 改用 beforeAddPens
@@ -643,6 +644,7 @@ export class Canvas {
     this.keyOptions.altKey = e.altKey;
     this.keyOptions.shiftKey = e.shiftKey;
     this.keyOptions.ctrlKey = e.ctrlKey;
+    this.keyOptions.metaKey = e.metaKey;
     let x = 10;
     let y = 10;
     let vRect: Rect = null;
@@ -912,6 +914,7 @@ export class Canvas {
           this.cut();
         }
         break;
+      case '√': //MAC OPTION + V
       case 'v':
       case 'V':
         if (!e.ctrlKey && !e.metaKey) {
@@ -6333,10 +6336,10 @@ export class Canvas {
         pen.x -= initRect.center.x - this.store.clipboard.pos.x;
         pen.y -= initRect.center.y - this.store.clipboard.pos.y;
       }
-      if(this.keyOptions.altKey){
+      if(this.keyOptions.altKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
         pen.x =-this.store.data.x+ this.width / 2 - pen.width / 2;
         pen.y =-this.store.data.y+ this.height / 2 - pen.height / 2;
-      }else if(this.keyOptions.shiftKey){
+      }else if(this.keyOptions.shiftKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
 
       }else{
         pen.x += this.store.clipboard.offset * this.store.data.scale;
