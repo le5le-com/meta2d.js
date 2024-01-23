@@ -3873,6 +3873,8 @@ export class Canvas {
     calcPadding(pen, rect);
     calcTextRect(pen);
     calcInView(pen);
+    pen.calculative &&
+    (pen.calculative.gradientAnimatePath = undefined);
     this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     if (pen.calculative.worldAnchors) {
       pen.anchors = pen.calculative.worldAnchors.map((pt) => {
@@ -6096,6 +6098,9 @@ export class Canvas {
             if (pen.keepAnimateState) {
               for (const k in pen) {
                 if (pen.calculative[k] === undefined) {
+                  continue;
+                }
+                if(k === 'length'){
                   continue;
                 }
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
