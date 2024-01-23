@@ -5352,6 +5352,10 @@ export class Canvas {
     this.render();
     this.store.active[0].calculative &&
       (this.store.active[0].calculative.gradientAnimatePath = undefined);
+    this.store.emitter.emit('moveLineAnchor', {
+      pen: this.store.active[0],
+      anchor: this.store.activeAnchor,
+    });
 
     if (this.timer) {
       clearTimeout(this.timer);
