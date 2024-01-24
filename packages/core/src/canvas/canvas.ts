@@ -209,6 +209,12 @@ export class Canvas {
   maxZindex: number = 5;
   canMoveLine: boolean = false; //moveConnectedLine=false
   randomIdObj: object; //记录拖拽前后id变化
+  keyOptions?:{
+    shiftKey?: boolean;
+    altKey?: boolean;
+    ctrlKey?:boolean;
+    metaKey?:boolean;
+  }
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -632,6 +638,13 @@ export class Canvas {
     if (this.store.options.unavailableKeys.includes(e.key)) {
       return;
     }
+    if (!this.keyOptions) {
+      this.keyOptions = {};
+    }
+    this.keyOptions.altKey = e.altKey;
+    this.keyOptions.shiftKey = e.shiftKey;
+    this.keyOptions.ctrlKey = e.ctrlKey;
+    this.keyOptions.metaKey = e.metaKey;
     let x = 10;
     let y = 10;
     let vRect: Rect = null;
@@ -729,6 +742,18 @@ export class Canvas {
         }
         x = x * this.store.data.scale;
 
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x + x, y: this.store.activeAnchor.y },
+            {}
+          );
+          break;
+        }
         if (vRect && this.activeRect.x + x < vRect.x) {
           x = vRect.x - this.activeRect.x;
         }
@@ -752,6 +777,19 @@ export class Canvas {
         if (vRect && this.activeRect.y + y < vRect.y) {
           y = vRect.y - this.activeRect.y;
         }
+        
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x, y: this.store.activeAnchor.y + y },
+            {}
+          );
+          break;
+        }
         this.translatePens(this.store.active, 0, y);
         break;
       case 'ArrowRight':
@@ -767,6 +805,19 @@ export class Canvas {
           x = 10;
         }
         x = x * this.store.data.scale;
+        
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x + x, y: this.store.activeAnchor.y },
+            {}
+          );
+          break;
+        }
         if (
           vRect &&
           this.activeRect.x + this.activeRect.width + x > vRect.x + vRect.width
@@ -798,6 +849,18 @@ export class Canvas {
             vRect.y +
             vRect.height -
             (this.activeRect.y + this.activeRect.height);
+        }
+        if (
+          this.store.activeAnchor &&
+          this.store.active &&
+          this.store.active.length === 1 &&
+          this.store.active[0].type
+        ) {
+          this.moveLineAnchor(
+            { x: this.store.activeAnchor.x, y: this.store.activeAnchor.y + y },
+            {}
+          );
+          break;
         }
         this.translatePens(this.store.active, 0, y);
         break;
@@ -851,6 +914,7 @@ export class Canvas {
           this.cut();
         }
         break;
+      case '√': //MAC OPTION + V
       case 'v':
       case 'V':
         if (!e.ctrlKey && !e.metaKey) {
@@ -864,7 +928,9 @@ export class Canvas {
             this.drawingLineName = this.store.options.drawingLineName;
           }
         }
-        if ((e.ctrlKey || e.metaKey) && this.store.options.disableClipboard) {
+        if ((e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard || 
+          (!this.store.options.disableClipboard && e.altKey)) //alt按下，paste事件无效
+        ) {
           this.paste();
         }
 
@@ -1976,7 +2042,7 @@ export class Canvas {
           // Move line anchor
           if (this.hoverType === HoverType.LineAnchor) {
             if (
-              (this.store.active[0].lineName === 'line' || this.dockInAnchor(e)) &&
+              (this.dockInAnchor(e) || this.store.active[0].lineName === 'line') &&
               !this.store.options.disableDock &&
               !this.store.options.disableLineDock
             ) {
@@ -3810,6 +3876,8 @@ export class Canvas {
     calcPadding(pen, rect);
     calcTextRect(pen);
     calcInView(pen);
+    pen.calculative &&
+    (pen.calculative.gradientAnimatePath = undefined);
     this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
     if (pen.calculative.worldAnchors) {
       pen.anchors = pen.calculative.worldAnchors.map((pt) => {
@@ -5284,6 +5352,10 @@ export class Canvas {
     this.render();
     this.store.active[0].calculative &&
       (this.store.active[0].calculative.gradientAnimatePath = undefined);
+    this.store.emitter.emit('moveLineAnchor', {
+      pen: this.store.active[0],
+      anchor: this.store.activeAnchor,
+    });
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -6035,6 +6107,9 @@ export class Canvas {
                 if (pen.calculative[k] === undefined) {
                   continue;
                 }
+                if(k === 'length'){
+                  continue;
+                }
                 if (typeof pen[k] !== 'object' || k === 'lineDash') {
                   if (k === 'lineWidth') {
                     pen[k] =
@@ -6265,8 +6340,15 @@ export class Canvas {
         pen.x -= initRect.center.x - this.store.clipboard.pos.x;
         pen.y -= initRect.center.y - this.store.clipboard.pos.y;
       }
-      pen.x += this.store.clipboard.offset * this.store.data.scale;
-      pen.y += this.store.clipboard.offset * this.store.data.scale;
+      if(this.keyOptions.altKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
+        pen.x =-this.store.data.x+ this.width / 2 - pen.width / 2;
+        pen.y =-this.store.data.y+ this.height / 2 - pen.height / 2;
+      }else if(this.keyOptions.shiftKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
+
+      }else{
+        pen.x += this.store.clipboard.offset * this.store.data.scale;
+        pen.y += this.store.clipboard.offset * this.store.data.scale;
+      }
     }
     this.makePen(pen);
     const newChildren = [];
