@@ -500,6 +500,10 @@ export class Meta2d {
 
   async sendDataToNetWork(value: any, _network: Network) {
     const network = deepClone(_network);
+    if(network.data){
+      Object.assign(network,network.data);
+      delete network.data;
+    }
     if (!network.url) {
       return;
     }
