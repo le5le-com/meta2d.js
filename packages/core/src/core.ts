@@ -1931,6 +1931,8 @@ export class Meta2d {
         this.store.pensNetwork = {};
       }
       this.store.pensNetwork[pen.id] = penNetwork;
+    }else{
+      delete this.store.pensNetwork[pen.id];
     }
   }
 
