@@ -1034,6 +1034,22 @@ export class Canvas {
       case 'L':
         this.canMoveLine = true;
         break;
+      case '[':
+        //下一层
+        this.parent.down();
+        break;  
+      case ']':
+        //上一层
+        this.parent.up();
+        break;  
+      case '{':
+        // 置底
+        this.parent.bottom();
+        break;  
+      case '}':
+        //置顶
+        this.parent.top();
+        break;  
     }
 
     this.render(false);
@@ -6340,10 +6356,10 @@ export class Canvas {
         pen.x -= initRect.center.x - this.store.clipboard.pos.x;
         pen.y -= initRect.center.y - this.store.clipboard.pos.y;
       }
-      if(this.keyOptions.altKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
+      if(this.keyOptions && this.keyOptions.altKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
         pen.x =-this.store.data.x+ this.width / 2 - pen.width / 2;
         pen.y =-this.store.data.y+ this.height / 2 - pen.height / 2;
-      }else if(this.keyOptions.shiftKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
+      }else if(this.keyOptions && this.keyOptions.shiftKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
 
       }else{
         pen.x += this.store.clipboard.offset * this.store.data.scale;

@@ -3482,6 +3482,7 @@ export class Meta2d {
         this.specificLayerMove(pen, 'top');
       });
     }
+    this.store.emitter.emit('layer', { type: 'top', pens });
   }
 
   /**
@@ -3525,6 +3526,7 @@ export class Meta2d {
         this.specificLayerMove(pen, 'bottom');
       }
     }
+    this.store.emitter.emit('layer', { type: 'bottom', pens });
   }
 
   /**
@@ -3675,6 +3677,7 @@ export class Meta2d {
         this.specificLayerMove(pen, 'up');
       }
     }
+    this.store.emitter.emit('layer', { type: 'up' , pens});
   }
 
   /**
@@ -3724,6 +3727,7 @@ export class Meta2d {
         this.specificLayerMove(pen, 'down');
       }
     }
+    this.store.emitter.emit('layer', { type: 'down', pens });
   }
 
   setLayer(pen: Pen, toIndex: number, pens = this.store.data.pens) {
