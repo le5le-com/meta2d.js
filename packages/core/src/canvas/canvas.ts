@@ -6377,6 +6377,7 @@ export class Canvas {
       }
     }
     pen.children = newChildren;
+    calcInView(pen,true);
     return pen;
   };
   /**
