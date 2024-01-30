@@ -59,7 +59,9 @@ export function deepSetValue<T>(o: any, keyWords: string[], value: number): T {
       if (keyWords.includes(key)) {
         if(Array.isArray(o[key])){
           o[key].forEach((i,index)=>{
-            o[key][index] = Number(i * value);
+            if(!Number.isNaN(Number(i))){
+              o[key][index] = Number(i * value);
+            }
           });
         }else {
           if(Number.isNaN(Number(o[key]))){
