@@ -57,6 +57,7 @@ import {
   ctxRotate,
   setGlobalAlpha,
   drawImage,
+  setElemPosition,
 } from '../pen';
 import {
   calcRotate,
@@ -7376,6 +7377,10 @@ export class Canvas {
       pen.canvasLayer === CanvasLayer.CanvasTemplate
     ) {
       this.initTemplateCanvas([pen]);
+    }
+    if(data.zIndex !== undefined){
+      pen.calculative.singleton.div &&
+      setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
 
