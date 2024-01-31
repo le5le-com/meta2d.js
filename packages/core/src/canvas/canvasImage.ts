@@ -366,42 +366,67 @@ export class CanvasImage {
     const x = origin.x + data.x;
     const y = origin.y + data.y;
     const { width, height } = this.canvas;
-
+    let h = options.ruleOptions?.height || 20;
+    if(options.ruleOptions?.background){
+      //背景颜色
+      ctx.beginPath();
+      ctx.fillStyle = options.ruleOptions?.background;
+      ctx.rect(0,0,width,h);
+      ctx.fill();
+      ctx.rect(0,0,h,height);
+      ctx.fill();
+    }
+    if(options.ruleOptions?.underline){
+      ctx.beginPath();
+      ctx.fillStyle = rgba(finalRuleColor, 0.7);
+      ctx.moveTo(0, h);
+      ctx.lineTo(width, h);
+      ctx.stroke();
+      ctx.moveTo(h, 0);
+      ctx.lineTo(h, height);
+      ctx.stroke();
+    }
+    let b_y = h/4;
+    if(options.ruleOptions?.baseline === "bottom"){
+      b_y = h*3/4;
+    }
     // horizontal rule
     ctx.beginPath();
-    ctx.lineWidth = 12;
+    ctx.lineWidth = h/2;
     ctx.lineDashOffset = -x % span;
     ctx.setLineDash([1, span - 1]);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(width, 0);
+    ctx.moveTo(0, b_y);
+    ctx.lineTo(width, b_y);
     ctx.stroke();
 
     // vertical rule
     ctx.beginPath();
     ctx.lineDashOffset = -y % span;
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, height);
+    ctx.moveTo(b_y, 0);
+    ctx.lineTo(b_y, height);
     ctx.stroke();
 
     // the big rule
     ctx.strokeStyle = finalRuleColor;
     ctx.beginPath();
-    ctx.lineWidth = 24;
+    ctx.lineWidth = h;
     ctx.lineDashOffset = -x % (span * 10);
     ctx.setLineDash([1, span * 10 - 1]);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(width, 0);
+    ctx.moveTo(0, h/2);
+    ctx.lineTo(width, h/2);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.lineDashOffset = -y % (span * 10);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, height);
+    ctx.moveTo(h/2, 0);
+    ctx.lineTo(h/2, height);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fillStyle = options.ruleOptions?.textColor|| ctx.strokeStyle;
     let text: number = 0 - Math.floor(x / span / 10) * 100;
+    let textTop = options.ruleOptions?.textTop || 16;
+    let textLeft = options.ruleOptions?.textLeft || 4;
     if (x < 0) {
       text -= 100;
     }
@@ -409,7 +434,7 @@ export class CanvasImage {
       if (span < 3 && text % 500) {
         continue;
       }
-      ctx.fillText(text.toString(), i + 4, 16);
+      ctx.fillText(text.toString(), i + textLeft, textTop);
     }
 
     text = 0 - Math.floor(y / span / 10) * 100;
@@ -422,7 +447,7 @@ export class CanvasImage {
       }
       ctx.save();
       ctx.beginPath();
-      ctx.translate(16, i - 4);
+      ctx.translate(textTop, i - textLeft);
       ctx.rotate((270 * Math.PI) / 180);
       ctx.fillText(text.toString(), 0, 0);
       ctx.restore();

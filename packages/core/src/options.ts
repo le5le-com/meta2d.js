@@ -57,6 +57,15 @@ export interface Options {
   gridSize?: number;
   rule?: boolean;
   ruleColor?: string;
+  ruleOptions?:{
+    height?:number;
+    background?:string; //背景颜色
+    underline?:boolean; 
+    textColor?:string; //文字颜色
+    textLeft?:number;
+    textTop?:number;
+    baseline?:string;
+  },
   drawingLineName?: string;
   fromArrow?: string;
   toArrow?: string;
