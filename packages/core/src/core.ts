@@ -164,17 +164,28 @@ export class Meta2d {
       opts.gridColor !== undefined ||
       opts.gridSize !== undefined
     ) {
-      this.setGrid({
-        grid: opts.grid,
-        gridColor: opts.gridColor,
-        gridSize: opts.gridSize,
-      });
+      // this.setGrid({
+      //   grid: opts.grid,
+      //   gridColor: opts.gridColor,
+      //   gridSize: opts.gridSize,
+      // });
+      this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     }
-    if (opts.rule !== undefined || opts.ruleColor !== undefined) {
-      this.setRule({
-        rule: opts.rule,
-        ruleColor: opts.ruleColor,
-      });
+    if (opts.rule !== undefined || opts.ruleColor !== undefined ||opts.ruleOptions !==undefined) {
+      // this.setRule({
+      //   rule: opts.rule,
+      //   ruleColor: opts.ruleColor,
+      // });
+      this.store.patchFlagsTop = true;
+      if(opts.ruleOptions){
+        if(this.store.options?.ruleOptions){
+          Object.assign(this.store.options.ruleOptions,opts.ruleOptions);
+          opts.ruleOptions = this.store.options.ruleOptions;
+        }
+      }
+    }
+    if(opts.background !== undefined){
+      this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     }
     if (opts.resizeMode !== undefined) {
       if (!opts.resizeMode) {
