@@ -1423,19 +1423,6 @@ export const toolboxDefault = {
   offset: 80,
   showControl: true
 };
-export let pluginDefault = {
-  animate: false,
-  animateDuration: 200,
-  childrenGap: 20,
-  levelGap: 200,
-  showControl: true,
-  funcList,
-  colorList: colorList,
-  getFuncList(pen: any) {
-    return pen.mind.isRoot ? mindBoxPlugin.funcList['root'] : mindBoxPlugin.funcList['leaf'];
-  }
-};
-
 
 export let toolboxStyle = {
   backgroundColor: '#fff',
