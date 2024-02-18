@@ -1,7 +1,7 @@
 // @ts-ignore
 import {disconnectLine, connectLine, deepClone, setLifeCycleFunc, Pen, Point, EditType, Meta2d} from "@meta2d/core";
 import {ToolBox} from "./toolbox";
-import {colorList, defaultFuncList, FuncOption, generateColor, pluginDefault} from "../config/default";
+import {colorList, defaultFuncList, FuncOption, generateColor,funcList} from "../config/default";
 import {top, left, right, bottom, butterfly, sandglass} from "../layout";
 import defaultColorRule from "../color/default";
 import {debounce, debounceFirstOnly, deepMerge, error, isIntersection} from "../utils";
@@ -11,6 +11,19 @@ let destroyRes: any = null;
 let optionMap = new Map();
 declare const meta2d: Meta2d;
 declare const toolbox:ToolBox;
+
+const pluginDefault = {
+  animate: false,
+  animateDuration: 200,
+  childrenGap: 20,
+  levelGap: 200,
+  showControl: true,
+  funcList,
+  colorList: colorList,
+  getFuncList(pen: any) {
+    return pen.mind.isRoot ? mindBoxPlugin.funcList['root'] : mindBoxPlugin.funcList['leaf'];
+  }
+};
 
 // @ts-ignore
 export let mindBoxPlugin = {

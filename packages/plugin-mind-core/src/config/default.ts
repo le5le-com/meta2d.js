@@ -1,7 +1,7 @@
 import {createDom} from "../utils";
 import {mindBoxPlugin} from "../core";
 import {Scope} from "../parse";
-import {Event, Meta2d, Pen} from "@meta2d/core";
+import {Meta2d, Pen} from "@meta2d/core";
 declare const meta2d:Meta2d;
 export let colorList = ['#FF2318', '#9C64A2', '#B4C926', '#0191B3',
   '#6F6EB9', '#9C64A2', '#FF291B', '#F4AE3C'];
@@ -37,7 +37,7 @@ export function* generateColor(colorList?: string[]) {
   }
 }
 
-let funcList =
+export let funcList =
   [
     //   {
     // key: "id",

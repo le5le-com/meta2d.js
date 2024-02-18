@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/plugin-mind-core",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "The mind core plugin based on le5le meta2d.",
   "main": "index.js",
   "types": "index.d.ts",
