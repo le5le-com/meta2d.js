@@ -1,7 +1,7 @@
 // @ts-ignore
 import {disconnectLine, connectLine, deepClone, setLifeCycleFunc, Pen, Point, EditType, Meta2d} from "@meta2d/core";
 import {ToolBox} from "./toolbox";
-import {colorList, defaultFuncList, FuncOption, generateColor,funcList} from "../config/default";
+import {defaultFuncList, FuncOption, generateColor,funcList} from "../config/default";
 import {top, left, right, bottom, butterfly, sandglass} from "../layout";
 import defaultColorRule from "../color/default";
 import {debounce, debounceFirstOnly, deepMerge, error, isIntersection} from "../utils";
@@ -19,7 +19,8 @@ const pluginDefault = {
   levelGap: 200,
   showControl: true,
   funcList,
-  colorList: colorList,
+  colorList: ['#FF2318', '#9C64A2', '#B4C926', '#0191B3',
+    '#6F6EB9', '#9C64A2', '#FF291B', '#F4AE3C'],
   getFuncList(pen: any) {
     return pen.mind.isRoot ? mindBoxPlugin.funcList['root'] : mindBoxPlugin.funcList['leaf'];
   }
