@@ -1,7 +1,7 @@
 // @ts-ignore
 import {disconnectLine, connectLine, deepClone, setLifeCycleFunc, Pen, Point, EditType, Meta2d} from "@meta2d/core";
 import {ToolBox} from "./toolbox";
-import {colorList, defaultFuncList, FuncOption, generateColor, pluginDefault} from "../config/default";
+import {defaultFuncList, FuncOption, generateColor,funcList} from "../config/default";
 import {top, left, right, bottom, butterfly, sandglass} from "../layout";
 import defaultColorRule from "../color/default";
 import {debounce, debounceFirstOnly, deepMerge, error, isIntersection} from "../utils";
@@ -11,6 +11,20 @@ let destroyRes: any = null;
 let optionMap = new Map();
 declare const meta2d: Meta2d;
 declare const toolbox:ToolBox;
+
+const pluginDefault = {
+  animate: false,
+  animateDuration: 200,
+  childrenGap: 20,
+  levelGap: 200,
+  showControl: true,
+  funcList,
+  colorList: ['#FF2318', '#9C64A2', '#B4C926', '#0191B3',
+    '#6F6EB9', '#9C64A2', '#FF291B', '#F4AE3C'],
+  getFuncList(pen: any) {
+    return pen.mind.isRoot ? mindBoxPlugin.funcList['root'] : mindBoxPlugin.funcList['leaf'];
+  }
+};
 
 // @ts-ignore
 export let mindBoxPlugin = {
@@ -495,6 +509,7 @@ export let mindBoxPlugin = {
             pen.mind.mindboxOption = optionMap.get(isIntersection(mindBoxPlugin.target,pen.tags,true )?.[0])|| optionMap.get(pens[0].name);
             mindBoxPlugin.combineToolBox(pen);
             mindBoxPlugin.combineLifeCircle(pen);
+            mindBoxPlugin.loadOptions(pen.mind.mindboxOption);
             meta2d.emit('plugin:mindBox:addRoot', pen);
             mindBoxPlugin.record(pen.id);
             meta2d.render();

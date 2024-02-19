@@ -1,11 +1,8 @@
 import {createDom} from "../utils";
 import {mindBoxPlugin} from "../core";
 import {Scope} from "../parse";
-import {Event, Meta2d, Pen} from "@meta2d/core";
+import {Meta2d, Pen} from "@meta2d/core";
 declare const meta2d:Meta2d;
-export let colorList = ['#FF2318', '#9C64A2', '#B4C926', '#0191B3',
-  '#6F6EB9', '#9C64A2', '#FF291B', '#F4AE3C'];
-
 export interface FuncOption {
   key: string;
   description?: string;
@@ -37,7 +34,7 @@ export function* generateColor(colorList?: string[]) {
   }
 }
 
-let funcList =
+export let funcList =
   [
     //   {
     // key: "id",
@@ -1423,19 +1420,6 @@ export const toolboxDefault = {
   offset: 80,
   showControl: true
 };
-export let pluginDefault = {
-  animate: false,
-  animateDuration: 200,
-  childrenGap: 20,
-  levelGap: 200,
-  showControl: true,
-  funcList,
-  colorList: colorList,
-  getFuncList(pen: any) {
-    return pen.mind.isRoot ? mindBoxPlugin.funcList['root'] : mindBoxPlugin.funcList['leaf'];
-  }
-};
-
 
 export let toolboxStyle = {
   backgroundColor: '#fff',
@@ -1490,7 +1474,6 @@ export let basicFuncConfig = {
 };
 export default {
   funcList,
-  colorList,
   controlStyle,
   extraStyle,
   defaultFuncList,

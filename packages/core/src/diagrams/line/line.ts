@@ -270,6 +270,10 @@ export function getLineLength(pen: Pen): number {
     from.lineLength = lineLen(from, from.next, to.prev, to);
     len += from.lineLength;
   }
+  if (pen.calculative.animatePos) {
+    pen.calculative.animatePos =
+      (len / pen.length) * pen.calculative.animatePos;
+  }
   pen.length = len;
   return len;
 }

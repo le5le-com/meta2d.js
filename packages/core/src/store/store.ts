@@ -86,6 +86,7 @@ export interface Network {
   headers?: any; //请求头
   method?: string;
   body?: any;
+  data?: Network
 }
 
 export interface HttpOptions {
