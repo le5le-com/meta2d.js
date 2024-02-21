@@ -283,6 +283,13 @@ export class Meta2d {
       console.warn('[meta2d] SetProps value is not an object');
     };
     this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
+      let _pen = pen;
+      if(e.value){
+        _pen = this.findOne((e.value as string));
+      }
+      if(this.store.animates.has(_pen)&&!_pen.calculative.pause){
+        return;
+      }
       if (e.targetType && e.params) {
         this.startAnimate((e.value as string) || [pen], e.params);
         return;
