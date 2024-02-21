@@ -3,9 +3,6 @@ import {mindBoxPlugin} from "../core";
 import {Scope} from "../parse";
 import {Meta2d, Pen} from "@meta2d/core";
 declare const meta2d:Meta2d;
-export let colorList = ['#FF2318', '#9C64A2', '#B4C926', '#0191B3',
-  '#6F6EB9', '#9C64A2', '#FF291B', '#F4AE3C'];
-
 export interface FuncOption {
   key: string;
   description?: string;
@@ -1477,7 +1474,6 @@ export let basicFuncConfig = {
 };
 export default {
   funcList,
-  colorList,
   controlStyle,
   extraStyle,
   defaultFuncList,
