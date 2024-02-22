@@ -40,6 +40,7 @@ export function renderFromArrow(
   }
   ctx.save();
   ctx.beginPath();
+  ctx.setLineDash([]);
   const fromArrowColor = pen.fromArrowColor || pen.calculative.color;
   fromArrowColor && (ctx.strokeStyle = fromArrowColor);
   arrows[pen.fromArrow](ctx, pen, store, pt);
@@ -71,6 +72,7 @@ export function renderToArrow(
     }
   }
   ctx.beginPath();
+  ctx.setLineDash([]);
   const toArrowColor = pen.toArrowColor || pen.calculative.color;
   toArrowColor && (ctx.strokeStyle = toArrowColor);
   arrows[pen.toArrow](ctx, pen, store, pt);
