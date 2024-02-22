@@ -4445,7 +4445,7 @@ export class Canvas {
         }
         ctx.strokeStyle = this.store.options.activeColor;
 
-        ctx.globalAlpha = this.store.options.activeGlobalAlpha || 0.3;
+        ctx.globalAlpha = this.store.options.activeGlobalAlpha === undefined ? 0.3 : this.store.options.activeGlobalAlpha;
         ctx.beginPath();
         ctx.lineWidth = this.store.options.activeLineWidth || 1;
         ctx.setLineDash(this.store.options.activeLineDash || []);
