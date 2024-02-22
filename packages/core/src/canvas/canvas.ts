@@ -4748,12 +4748,13 @@ export class Canvas {
         }
       }
     }
-    setTimeout(() => {
+    //TODO 当初为什么加异步
+    // setTimeout(() => {
       this.canvasTemplate.init();
       this.canvasImage.init();
       this.canvasImageBottom.init();
       this.render();
-    });
+    // });
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
       y: this.store.data.y,
@@ -4831,7 +4832,7 @@ export class Canvas {
       this.execPenResize(pen);
     });
     this.calcActiveRect();
-    setTimeout(() => {
+    // setTimeout(() => {
       this.canvasTemplate.init();
       this.canvasImage.init();
       this.canvasImageBottom.init();
@@ -4841,7 +4842,7 @@ export class Canvas {
       }
       this.render();
       this.store.emitter.emit('scale', this.store.data.scale);
-    });
+    // });
   }
 
   templateScale(scale: number, center = { x: 0, y: 0 }) {
