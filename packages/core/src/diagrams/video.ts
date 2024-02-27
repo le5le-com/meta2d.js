@@ -111,7 +111,6 @@ function move(pen: Pen) {
 }
 
 function click(pen: Pen) {
-  console.log("点击");
   if (pen.calculative.media) {
     pen.calculative.media.muted = false;
     if (pen.calculative.media.paused) {
