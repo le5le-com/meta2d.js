@@ -27,7 +27,10 @@ export function video(pen: Pen) {
     progress.style.background = '#52c41a';
     progress.style.zIndex = '1';
     player.appendChild(progress);
-
+    player.onclick = (e)=>{
+      e.stopPropagation();
+      click(pen);
+    }
     let media: HTMLMediaElement;
     if (pen.video) {
       media = document.createElement('video');
@@ -56,7 +59,7 @@ export function video(pen: Pen) {
     setElemPosition(pen, player);
     if (pen.autoPlay) {
       media.autoplay = true;
-      media.muted = true;
+      media.muted = false;
     }
   } else if (
     pen.video &&
@@ -66,7 +69,7 @@ export function video(pen: Pen) {
     console.warn('video 更改, 此处是否执行？');
     pen.calculative.media.src = pen.video;
     if (pen.autoPlay) {
-      pen.calculative.media.muted = true;
+      pen.calculative.media.muted = false;
       pen.calculative.media.autoplay = true;
     }
     pen.calculative.media.loop = pen.playLoop;
@@ -78,7 +81,7 @@ export function video(pen: Pen) {
   ) {
     pen.calculative.media.src = pen.audio;
     if (pen.autoPlay) {
-      pen.calculative.media.muted = true;
+      pen.calculative.media.muted = false;
       pen.calculative.media.autoplay = true;
     }
     pen.calculative.media.loop = pen.playLoop;
@@ -91,6 +94,7 @@ export function video(pen: Pen) {
 }
 
 function destory(pen: Pen) {
+  videos[pen.id].onclick = null;
   videos[pen.id].remove();
   videos[pen.id] = undefined;
 }
@@ -107,6 +111,7 @@ function move(pen: Pen) {
 }
 
 function click(pen: Pen) {
+  console.log("点击");
   if (pen.calculative.media) {
     pen.calculative.media.muted = false;
     if (pen.calculative.media.paused) {
@@ -151,7 +156,7 @@ function value(pen: Pen) {
   }
   // TODO: 下面每次都改动，是否影响性能？
   if (pen.autoPlay) {
-    pen.calculative.media.muted = true;
+    pen.calculative.media.muted = false;
     // TODO: 自动播放何时关？
     pen.calculative.media.autoplay = true;
   }
