@@ -3939,6 +3939,7 @@ export class Canvas {
     if (!from.connectTo || !to.connectTo) {
       if (this.store.options.disableEmptyLine) {
         // 有一端未连线，且 禁止创建空线条
+        this.store.pens[from.connectTo].connectedLines = this.store.pens[from.connectTo].connectedLines.filter((item) =>item.lineId !== this.drawingLine.id);
         this.drawingLine = undefined;
         this.render();
         return;
@@ -6916,6 +6917,8 @@ export class Canvas {
           initPens,
         });
         this.store.emitter.emit('valueUpdate', pen);
+      } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines.length == 0) {
+        calcTextRect(pen);
       }
       this.initTemplateCanvas([pen]);
     }
