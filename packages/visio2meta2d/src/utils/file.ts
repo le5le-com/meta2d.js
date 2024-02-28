@@ -10,3 +10,10 @@ export async function xmlFileToJson(materials:JSZip,path:string){
   const xmlJson: any[] = parser.parse(str);
   return xmlJson;
 }
+
+export function lowercaseFirstCharacter(str) {
+  if (!str) {
+    return '';
+  }
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
