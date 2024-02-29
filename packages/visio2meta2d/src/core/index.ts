@@ -4,3 +4,5 @@
  * @version 0.0.1
  * */
 export * from "./factory";
+export * from "./types";
+export * from "./map";

@@ -1,10 +1,11 @@
-import {TransferFunction} from "../../types";
+import {TransferFunction} from "../../core/types";
 import JSZip from "jszip";
-import {lowercaseFirstCharacter, xmlFileToJson} from "../../../utils";
+import {lowercaseFirstCharacter, xmlFileToJson} from "../../utils";
 import {GraphMap} from "@meta2d/visio2meta2d/src/core/map";
 
 /**
- * @description 首先进行最基本的转换，将page1.xml转为page1.xml.json
+ * @description 首先进行最基本的转换，将page1.xml转为page1.xml.json,
+ * @target 此文件仅处理文件的图元样式位置
  * */
 
 export const baseTransfer: TransferFunction = async (material:JSZip, graph:GraphMap, previous) => {

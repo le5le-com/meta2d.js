@@ -1,9 +1,9 @@
 import JSZip from "jszip";
 import {deepClone, Meta2dData} from "@meta2d/core";
 import {CombinerFunction, MiddleProduct, TransferFunction} from "./types";
-import {baseTransfer} from "./transfers";
-import {baseCombiner} from "./combiners";
-import {GraphMap} from "@meta2d/visio2meta2d/src/core/map";
+import {baseTransfer} from "../transfers";
+import {baseCombiner} from "../combiners";
+import {GraphMap} from "./map";
 
 export class V2M {
   private file: File;
@@ -11,16 +11,19 @@ export class V2M {
   private material: JSZip;
   private result: Meta2dData;
   private readonly onerror: Function;
-  private transfersMap: Map<string,(TransferFunction | CombinerFunction)[]> = new Map();
+  private transfersMap: Map<string, (TransferFunction | CombinerFunction)[]> = new Map();
   public graphMap = new GraphMap();
+
   constructor(file: File, onerror?: Function) {
     this.file = file;
-    this.onerror = onerror || (()=>{});
+    this.onerror = onerror || (() => {
+    });
     this.init();
 
-    this.addTransfer('transform',baseTransfer);
-    this.addTransfer('combinate',baseCombiner);
+    this.addTransfer('transform', baseTransfer);
+    this.addTransfer('combinate', baseCombiner);
   }
+
   private async load() {
     await this.unZipVsdx();
     let transformDataList = await this.transform();
@@ -28,12 +31,14 @@ export class V2M {
     this.clear();
     return product;
   }
-  private init(){
-    this.stags.forEach(i=>{
-      this.transfersMap.set(i,[]);
+
+  private init() {
+    this.stags.forEach(i => {
+      this.transfersMap.set(i, []);
     });
   }
-  private async transform() {
+
+  private async transform(): Promise<MiddleProduct[]> {
     let transfers = this.transfersMap.get('transform');
     let previousData = null;
     const transferData = [];
@@ -46,7 +51,7 @@ export class V2M {
     return transferData;
   }
 
-  private async combinate( transformDataList: MiddleProduct[] ){
+  private async combinate(transformDataList: MiddleProduct[]) {
     const combiners = this.transfersMap.get('combinate');
     let product = null;
     for (const combiner of combiners) {
@@ -56,7 +61,7 @@ export class V2M {
     return product;
   }
 
-  public addTransfer(stage:string, transfer:TransferFunction | CombinerFunction) {
+  public addTransfer(stage: string, transfer: TransferFunction | CombinerFunction) {
     if (this.transfersMap.has(stage)) {
       this.transfersMap.get(stage).push(transfer);
     }

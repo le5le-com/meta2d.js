@@ -1,4 +1,4 @@
-import {MiddleProduct} from "../../types";
+import {MiddleProduct} from "../../core/types";
 import {GraphMap} from "@meta2d/visio2meta2d/src/core/map";
 
 export function baseCombiner(middleProducts:MiddleProduct[], previous) {
