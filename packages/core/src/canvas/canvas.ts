@@ -1763,7 +1763,7 @@ export class Canvas {
             this.store.options.drawingLineLength)
       ) {
         this.finishDrawline(true);
-        if (this.store.active[0]?.anchors[0].connectTo) {
+        if (this.store.active[0]?.anchors[0].connectTo || this.store.active.length == 0) {
           this.drawingLineName = '';
         } else {
           this.drawingLineName = this.store.options.drawingLineName;
@@ -3939,7 +3939,9 @@ export class Canvas {
     if (!from.connectTo || !to.connectTo) {
       if (this.store.options.disableEmptyLine) {
         // 有一端未连线，且 禁止创建空线条
-        this.store.pens[from.connectTo].connectedLines = this.store.pens[from.connectTo].connectedLines.filter((item) =>item.lineId !== this.drawingLine.id);
+        if(from.connectTo) {
+          this.store.pens[from.connectTo].connectedLines = this.store.pens[from.connectTo].connectedLines.filter((item) =>item.lineId !== this.drawingLine.id);
+        }
         this.drawingLine = undefined;
         this.render();
         return;
