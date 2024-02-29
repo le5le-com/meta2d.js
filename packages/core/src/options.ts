@@ -141,7 +141,7 @@ export const defaultOptions: Options = {
   animateColor: '#ff4d4f',
   ruleLineColor: '#FF4101',
   shadowOffsetX: 0,
-  shadowOffsetY: 13,
+  shadowOffsetY: 0,
   shadowBlur: 64,
   shadowColor: "#00000014",
   globalAlpha: 1,

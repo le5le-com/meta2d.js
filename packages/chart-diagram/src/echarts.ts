@@ -72,9 +72,6 @@ export function echarts(pen: ChartPen): Path2D {
       pen.echarts = JSON.parse(pen.echarts);
     } catch (e) {}
   }
-  if (!pen.echarts) {
-    return;
-  }
   keyWords =
     pen.calculative.canvas.store.options.diagramOptions['chart']?.keyWords ||
     keyWords;

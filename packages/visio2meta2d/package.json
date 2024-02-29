@@ -1,0 +1,19 @@
+{
+  "name": "vision2meta2d",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "@meta2d/core": "^1.0.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.3.5",
+    "jszip": "^3.10.1"
+  }
+}
