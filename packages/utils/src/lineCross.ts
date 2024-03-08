@@ -109,7 +109,8 @@ function mouseUp(e: any) {
     setTimeout(() => {
       // 画布活动节点
       const pens = e ? (window as any).meta2d.store.active : (window as any).meta2d.store.data.pens;
-      const actives = pens.filter(el => el);
+      // 弯曲的情况与pen的顺序有关，所以需要倒序
+      const actives = pens.filter(el => el).reverse();
       // 活动的连线，包括直线和线段
       let ls = [], passiveL = [];
       // const ls = actives.filter(pen => pen.type === PenType.Line && crossLines.indexOf(pen.lineName) !== -1);
