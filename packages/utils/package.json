@@ -1,0 +1,33 @@
+{
+  "name": "@meta2d/utils",
+  "version": "1.0.0",
+  "description": "The sequence library based on le5le meta2d.",
+  "main": "index.ts",
+  "types": "index.d.ts",
+  "scripts": {
+    "copy": "shx cp package.build.json ../../dist/utils/package.json",
+    "build": "tsc && npm run copy"
+  },
+  "keywords": [
+    "meta2d",
+    "utils",
+    "canvas"
+  ],
+  "author": "alsmile123@qq.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
+  "peerDependencies": {
+    "@meta2d/core": "^1.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+}

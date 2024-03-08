@@ -1848,6 +1848,9 @@ export function setCtxLineAnimate(
       if (len < 6) {
         len = 6;
       }
+      if(len > 40){
+        len = 40;
+      }
       ctx.lineWidth =
         (pen.calculative.animateLineWidth || len) * store.data.scale;
       ctx.setLineDash([0.1, pen.length]);
