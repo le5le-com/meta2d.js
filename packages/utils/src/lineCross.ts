@@ -40,12 +40,14 @@ export function lineCross(defaultCross: any) {
   isDefaultCross = defaultCross;
   (window as any).meta2d.on('opened', opened);
 }
+export function handleLineCross(flag: any) {
+  mouseDown();
+  mouseUp(flag);
+}
 function opened() {
-  console.log('opened',isDefaultCross);
   // 如果需要默认相交弯曲，则走以下逻辑
   if (isDefaultCross) {
-    mouseDown();
-    mouseUp(undefined);
+    handleLineCross(undefined);
   }
 }
 function active() {
