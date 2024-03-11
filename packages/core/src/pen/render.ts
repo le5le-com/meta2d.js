@@ -1867,6 +1867,9 @@ export function setCtxLineAnimate(
       if (len < 6) {
         len = 6;
       }
+      if(len > 40){
+        len = 40;
+      }
       ctx.lineWidth =
         (pen.calculative.animateLineWidth || len) * store.data.scale;
       ctx.setLineDash([0.1, pen.length]);
@@ -1877,6 +1880,7 @@ export function setCtxLineAnimate(
       break;
     default:
       if (pen.animateReverse) {
+        ctx.lineDashOffset = Number.EPSILON;//防止在执行动画时会绘制多余的远点
         ctx.setLineDash([
           0,
           pen.length - pen.calculative.animatePos + 1,
@@ -1885,7 +1889,7 @@ export function setCtxLineAnimate(
       } else {
         ctx.setLineDash([
           pen.calculative.animatePos,
-          pen.length - pen.calculative.animatePos,
+          pen.length + 0.01 - pen.calculative.animatePos,//避免在缩放时，精度问题绘制多余圆点
         ]);
       }
       break;
