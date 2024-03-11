@@ -7267,7 +7267,7 @@ export class Canvas {
         if (needCalcTextRectProps.includes(k)) {
           willCalcTextRect = true;
         }
-        if (['name', 'borderRadius'].includes(k)) {
+        if (['name', 'borderRadius','lineSmooth'].includes(k)) {
           willUpdatePath = true;
         }
         if (needSetPenProps.includes(k)) {

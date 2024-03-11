@@ -101,6 +101,7 @@ export enum LineAnimateType {
   Normal, // 水流
   Beads, // 水珠流动
   Dot, // 圆点
+  Arrow, // 箭头
 }
 
 export interface ColorStop {
@@ -326,6 +327,7 @@ export interface Pen extends Rect {
   lockedOnCombine?: LockState; // 组合成 combine ，该节点的 locked 值
   ratio?: boolean; //宽高比锁定
   animateLineWidth?: number; //连线动画线宽
+  lineSmooth?:number; //连线平滑度
   gradientSmooth?: number; //渐进色平滑度
   scrolling?: string; //iframe scrolling属性
   animations?: any[]; //动画数组
@@ -534,6 +536,7 @@ export interface Pen extends Rect {
     gradientColorStop?: ColorStop[]; //临时 连线ColorStop
     gradientTimer?: any;
     animateLineWidth?: number;
+    lineSmooth?:number; //连线平滑度
     gradientSmooth?: number; //渐进色平滑度
     gradientAnimatePath?: Path2D;
     cssDisplay?: string; //css display
@@ -700,6 +703,7 @@ export const formatAttrs: Set<string> = new Set([
   'lineGradientColors',
   'animateLineWidth',
   'gradientSmooth',
+  'lineSmooth',
 ]);
 
 /**

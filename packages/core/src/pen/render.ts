@@ -6,7 +6,7 @@ import {
   LockState,
   Pen,
 } from './model';
-import { getLineRect, getSplitAnchor, line } from '../diagrams';
+import { drawArrow, getLineRect, getSplitAnchor } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
   calcRotate,
@@ -402,7 +402,7 @@ function drawLinearGradientLine(
 function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
   let smoothLenth =
-    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 0);
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || pen.calculative.lineSmooth || 0);
   for (let i = 0; i < anchors.length - 1; i++) {
     if (
       (pen.lineName === 'curve' || pen.lineName === 'mind') &&
@@ -562,7 +562,7 @@ function smoothAnimateTransition(
 export function getGradientAnimatePath(pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
   let smoothLenth =
-    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || 0);
+    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || pen.calculative.lineSmooth || 0);
   //只创建一次
   const _path = new Path2D();
   for (let i = 0; i < anchors.length - 1; i++) {
@@ -1740,11 +1740,23 @@ export function ctxDrawPath(
       if (pen.calculative.animatePos) {
         ctx.save();
         setCtxLineAnimate(ctx, pen, store);
-        if (path instanceof Path2D) {
-          ctx.stroke(path);
-        } else {
-          path(pen, ctx);
-          ctx.stroke();
+        if(pen.lineAnimateType === LineAnimateType.Arrow){
+          //箭头动画
+          let _path = drawArrow(pen,ctx);
+          if(_path instanceof Path2D){
+            ctx.stroke(_path);
+            ctx.fill(_path);
+          }else{
+            ctx.stroke();
+            ctx.fill();
+          }         
+        }else{
+          if (path instanceof Path2D) {
+            ctx.stroke(path);
+          } else {
+            path(pen, ctx);
+            ctx.stroke();
+          }
         }
         ctx.restore();
       }
@@ -1780,14 +1792,21 @@ export function ctxDrawLinePath(
         if (path instanceof Path2D) {
           //是否设置了平滑度
           if (
-            pen.calculative.gradientSmooth &&
+            (pen.calculative.gradientSmooth || pen.calculative.lineSmooth) &&
             (pen.lineName === 'polyline' || pen.lineName === 'line')
           ) {
-            if (!pen.calculative.gradientAnimatePath) {
-              pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
-            }
-            if (pen.calculative.gradientAnimatePath instanceof Path2D) {
-              ctx.stroke(pen.calculative.gradientAnimatePath);
+            if(pen.lineAnimateType === LineAnimateType.Arrow){
+              //箭头动画
+              const _path = drawArrow(pen);
+              ctx.stroke(_path);
+              ctx.fill(_path);
+            }else{
+              if (!pen.calculative.gradientAnimatePath) {
+                pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
+              }
+              if (pen.calculative.gradientAnimatePath instanceof Path2D) {
+                ctx.stroke(pen.calculative.gradientAnimatePath);
+              }
             }
           } else {
             ctx.stroke(path);
@@ -1851,6 +1870,10 @@ export function setCtxLineAnimate(
       ctx.lineWidth =
         (pen.calculative.animateLineWidth || len) * store.data.scale;
       ctx.setLineDash([0.1, pen.length]);
+      break;
+    case LineAnimateType.Arrow:
+      ctx.fillStyle =   pen.animateColor || store.options.animateColor;
+      ctx.lineWidth = 1;
       break;
     default:
       if (pen.animateReverse) {

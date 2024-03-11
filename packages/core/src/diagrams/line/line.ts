@@ -1,4 +1,4 @@
-import { deleteTempAnchor, getFromAnchor, getToAnchor, Pen } from '../../pen';
+import { deleteTempAnchor, getFromAnchor, getGradientAnimatePath, getToAnchor, Pen } from '../../pen';
 import { hitPoint, Point } from '../../point';
 import { getRectOfPoints, pointInSimpleRect, Rect } from '../../rect';
 import { Meta2dStore } from '../../store';
@@ -9,6 +9,13 @@ export function line(
   ctx?: CanvasRenderingContext2D | Path2D
 ): Path2D {
   const path = !ctx ? new Path2D() : ctx;
+  if (pen.lineName === 'line' || pen.lineName === 'polyline') {
+    if (pen.calculative.lineSmooth) {
+      let _path = getGradientAnimatePath(pen);
+      (path as Path2D).addPath(_path);
+      if (path instanceof Path2D) return path;
+    }
+  }
   const worldAnchors = pen.calculative.worldAnchors;
   if (worldAnchors.length > 1) {
     let from: Point; // 上一个点
