@@ -9,14 +9,15 @@ export function drawArrow(
   const path = !ctx ? new Path2D() : ctx;
   const worldAnchors = pen.calculative.worldAnchors;
   let scale = pen.calculative.canvas.store.data.scale;
-  let size = (pen.calculative.animateDotSize || 1) * scale; // 箭头大小
-  let arrowLength = (pen.animateLineDash?.[0] || 10) * size * scale; // 箭头长度
+  let size = (pen.calculative.animateDotSize || 6) * scale; // 箭头大小
+  let arrowLength = (pen.animateLineDash?.[0] || 10) * scale; // 箭头长度
   let d = (pen.animateLineDash?.[1] || 100) * scale; // 箭头间距
-  let smoothLenth = pen.calculative.lineWidth *(pen.calculative.lineSmooth || 0)*scale;
+  let smoothLenth = pen.calculative.lineWidth *(pen.calculative.lineSmooth || 0)//*scale;
   let lineWidth = (pen.calculative.animateLineWidth || 2) * scale;
   if (pen.animateReverse) {
     //箭头反向
     arrowLength = -arrowLength;
+    size = -size;
   }
   if (worldAnchors.length > 1) {
     let from: Point; // 上一个点
@@ -61,32 +62,32 @@ export function drawArrow(
               ptTFrom - newPTFrom > smoothLenth
           ) {
             let pr = getRotatePoint(
-              { x: newP.x + arrowLength, y: newP.y + 0.57*arrowLength },
+              { x: newP.x + size, y: newP.y + 0.57*size },
               { x: newP.x, y: newP.y },
               angle
             );
             let pl = getRotatePoint(
-              { x: newP.x + arrowLength, y: newP.y - 0.57*arrowLength },
+              { x: newP.x + size, y: newP.y - 0.57*size },
               { x: newP.x, y: newP.y },
               angle
             );
             let pr1 = getRotatePoint(
-              { x: newP.x + arrowLength, y: newP.y + lineWidth/2 },
+              { x: newP.x + size, y: newP.y + lineWidth/2 },
               { x: newP.x, y: newP.y },
               angle
             );
             let pr2 = getRotatePoint(
-              { x: newP.x + arrowLength * 2, y: newP.y + lineWidth/2},
+              { x: newP.x + arrowLength, y: newP.y + lineWidth/2},
               { x: newP.x, y: newP.y },
               angle
             );
             let pl1 = getRotatePoint(
-              { x: newP.x + arrowLength, y: newP.y - lineWidth/2 },
+              { x: newP.x + size, y: newP.y - lineWidth/2 },
               { x: newP.x, y: newP.y },
               angle
             );
             let pl2 = getRotatePoint(
-              { x: newP.x + arrowLength * 2, y: newP.y - lineWidth/2 },
+              { x: newP.x + arrowLength, y: newP.y - lineWidth/2 },
               { x: newP.x, y: newP.y },
               angle
             );

@@ -1790,25 +1790,25 @@ export function ctxDrawLinePath(
         setCtxLineAnimate(ctx, pen, store);
         ctx.beginPath();
         if (path instanceof Path2D) {
-          //是否设置了平滑度
-          if (
-            (pen.calculative.gradientSmooth || pen.calculative.lineSmooth) &&
-            (pen.lineName === 'polyline' || pen.lineName === 'line')
-          ) {
+          if(pen.lineName === 'polyline' || pen.lineName === 'line'){
             if(pen.lineAnimateType === LineAnimateType.Arrow){
               //箭头动画
               const _path = drawArrow(pen);
               ctx.stroke(_path);
               ctx.fill(_path);
             }else{
-              if (!pen.calculative.gradientAnimatePath) {
-                pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
-              }
-              if (pen.calculative.gradientAnimatePath instanceof Path2D) {
-                ctx.stroke(pen.calculative.gradientAnimatePath);
+              if(pen.calculative.gradientSmooth || pen.calculative.lineSmooth){
+                if (!pen.calculative.gradientAnimatePath) {
+                  pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
+                }
+                if (pen.calculative.gradientAnimatePath instanceof Path2D) {
+                  ctx.stroke(pen.calculative.gradientAnimatePath);
+                }
+              }else{
+                ctx.stroke(path);
               }
             }
-          } else {
+          }else {
             ctx.stroke(path);
           }
         } else {
