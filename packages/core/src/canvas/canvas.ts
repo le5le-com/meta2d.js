@@ -3440,11 +3440,18 @@ export class Canvas {
       .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.offscreen.getContext('2d').textBaseline = 'middle';
 
-    this.render();
     // TODO 窗口大小变化没有刷新图纸
     for (const pen of this.store.data.pens) {
+      if(pen.isRuleLine){
+        if (!pen.width) {
+          pen.height = this.height;
+        } else if (!pen.height) {
+          pen.width = this.width;
+        }
+      }
       calcInView(pen);
     }
+    this.render();
   }
 
   clearCanvas() {
@@ -4820,7 +4827,7 @@ export class Canvas {
       pen.onScale && pen.onScale(pen);
       if (pen.isRuleLine) {
         // 扩大线的比例，若是放大，即不缩小，若是缩小，会放大
-        const lineScale = s > 1 ? 1 : 1 / s / s;
+        const lineScale = 1 / s; //s > 1 ? 1 : 1 / s / s;
         // 中心点即为线的中心
         const lineCenter = pen.calculative.worldRect.center;
         if (!pen.width) {
@@ -4834,6 +4841,7 @@ export class Canvas {
       this.updatePenRect(pen, { worldRectIsReady: true });
       this.execPenResize(pen);
     });
+    this.onMovePens();
     this.calcActiveRect();
     // setTimeout(() => {
       this.canvasTemplate.init();
