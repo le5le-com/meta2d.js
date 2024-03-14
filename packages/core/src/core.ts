@@ -2489,26 +2489,28 @@ export class Meta2d {
         }
       }
     });
-
-    pen.realTimes?.forEach((realTime) => {
-      realTime.triggers?.forEach((trigger) => {
-        let flag = false;
-        if (trigger.conditionType === 'and') {
-          flag = trigger.conditions.every((condition) => {
-            return this.judgeCondition(pen, realTime.key, condition);
-          });
-        } else if (trigger.conditionType === 'or') {
-          flag = trigger.conditions.some((condition) => {
-            return this.judgeCondition(pen, realTime.key, condition);
-          });
-        }
-        if (flag) {
-          trigger.actions?.forEach((event) => {
-            this.events[event.action](pen, event);
-          });
-        }
+    
+    if(eventName === 'valueUpdate'){
+      pen.realTimes?.forEach((realTime) => {
+        realTime.triggers?.forEach((trigger) => {
+          let flag = false;
+          if (trigger.conditionType === 'and') {
+            flag = trigger.conditions.every((condition) => {
+              return this.judgeCondition(pen, realTime.key, condition);
+            });
+          } else if (trigger.conditionType === 'or') {
+            flag = trigger.conditions.some((condition) => {
+              return this.judgeCondition(pen, realTime.key, condition);
+            });
+          }
+          if (flag) {
+            trigger.actions?.forEach((event) => {
+              this.events[event.action](pen, event);
+            });
+          }
+        });
       });
-    });
+    }
 
     // 事件冒泡，子执行完，父执行
     this.doEvent(this.store.pens[pen.parentId], eventName);
