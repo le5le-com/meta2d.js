@@ -1838,8 +1838,8 @@ export function setCtxLineAnimate(
 ) {
   ctx.strokeStyle = pen.animateColor || store.options.animateColor;
   if(pen.animateShadow){
-    ctx.shadowBlur = pen.animateLineWidth || 6;
-    ctx.shadowColor = pen.animateColor || store.options.animateColor;
+    ctx.shadowBlur = pen.animateShadowBlur || pen.animateLineWidth || 6;
+    ctx.shadowColor = pen.animateShadowColor || pen.animateColor || store.options.animateColor;
   }
   pen.calculative.animateLineWidth &&
     (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);

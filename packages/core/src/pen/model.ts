@@ -290,7 +290,8 @@ export interface Pen extends Rect {
   animateList?: Pen[][];
   animateInterval?: number;//动画间隔 （箭头）
   animateShadow?: boolean;//发光效果
-
+  animateShadowColor?: string;
+  animateShadowBlur?: number;
   input?: boolean;
   dropdownList?: Dropdown[];
 
