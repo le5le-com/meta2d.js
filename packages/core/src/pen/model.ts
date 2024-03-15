@@ -288,6 +288,8 @@ export interface Pen extends Rect {
   frames?: Pen[];
   // 提前预置的不同效果的动画组
   animateList?: Pen[][];
+  animateInterval?: number;//动画间隔 （箭头）
+  animateShadow?: boolean;//发光效果
 
   input?: boolean;
   dropdownList?: Dropdown[];

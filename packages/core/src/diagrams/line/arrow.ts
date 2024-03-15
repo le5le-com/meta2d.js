@@ -9,11 +9,11 @@ export function drawArrow(
   const path = !ctx ? new Path2D() : ctx;
   const worldAnchors = pen.calculative.worldAnchors;
   let scale = pen.calculative.canvas.store.data.scale;
-  let size = (pen.calculative.animateDotSize || 6) * scale; // 箭头大小
-  let arrowLength = (pen.animateLineDash?.[0] || 10) * scale; // 箭头长度
-  let d = (pen.animateLineDash?.[1] || 100) * scale; // 箭头间距
+  let size = (pen.calculative.animateLineWidth || 6) * scale; // 箭头大小
+  let arrowLength = (pen.animateLineWidth*2 || 12) * scale; // 箭头长度
+  let d = (pen.animateInterval || 100) * scale; // 箭头间距
   let smoothLenth = pen.calculative.lineWidth *(pen.calculative.lineSmooth || 0)//*scale;
-  let lineWidth = (pen.calculative.animateLineWidth || 2) * scale;
+  let lineWidth = (pen.calculative.animateLineWidth/2 || 3) * scale;
   if (pen.animateReverse) {
     //箭头反向
     arrowLength = -arrowLength;

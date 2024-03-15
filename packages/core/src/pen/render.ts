@@ -1837,6 +1837,10 @@ export function setCtxLineAnimate(
   store: Meta2dStore
 ) {
   ctx.strokeStyle = pen.animateColor || store.options.animateColor;
+  if(pen.animateShadow){
+    ctx.shadowBlur = pen.animateLineWidth || 6;
+    ctx.shadowColor = pen.animateColor || store.options.animateColor;
+  }
   pen.calculative.animateLineWidth &&
     (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);
   let len = 0;
