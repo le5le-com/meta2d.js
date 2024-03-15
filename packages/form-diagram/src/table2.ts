@@ -122,7 +122,9 @@ function initRect(pen: formPen) {
   const colPos = [];
   const rowPos = [];
   const colStyle = {};
-
+  if(pen.initWorldRect){
+    return;
+  }
   if (!pen.rowHeight) {
     pen.rowHeight = 40;
   }
@@ -221,6 +223,14 @@ function initRect(pen: formPen) {
       y: pen.y + pen.calculative.height / 2,
     },
   };
+  pen.width = pen.calculative.width;
+  pen.height = pen.calculative.height;
+  if(!pen.initWorldRect){
+    pen.initWorldRect = {
+      width: pen.calculative.worldRect.width,
+      height: pen.calculative.worldRect.height,
+    }
+  }
   calcRightBottom(pen.calculative.worldRect);
   //   }
 }
@@ -795,7 +805,16 @@ function getCellRect(pen: formPen, rowIndex: number, colIndex: number) {
 function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
   const scaleX = pen.calculative.worldRect.width / pen.tableWidth;
   const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
-
+  let resizeX = 1;
+  let resizeY = 1;
+  if(pen.initWorldRect){
+    if(pen.calculative.worldRect.width !== pen.initWorldRect.width){
+      resizeX = pen.calculative.worldRect.width / pen.initWorldRect.width;
+    }
+    if(pen.calculative.worldRect.height !== pen.initWorldRect.height){
+      resizeY = pen.calculative.worldRect.height / pen.initWorldRect.height;
+    }
+  }
   // 计算子节点需要的宽高
   let height = 0;
   let lastX = 0;
@@ -832,6 +851,10 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
     children[0].x = rect.x + (rect.width - children[0].width) / 2;
     children[0].y = rect.y + (rect.height - children[0].height) / 2;
   }
+  children.forEach((item: formPen) => {
+    item.width = item.width * resizeX / scale;
+    item.height = item.height * resizeY / scale;
+  });
 }
 
 function onValue(pen: formPen) {
@@ -857,6 +880,9 @@ function beforeValue(pen: formPen, value: any) {
     } else {
       delInterval(pen);
     }
+  }
+  if(value.styles){
+    pen.initWorldRect = undefined;
   }
   if (
     (value as any).table ||

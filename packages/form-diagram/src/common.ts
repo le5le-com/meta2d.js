@@ -102,6 +102,7 @@ export interface formPen extends Pen {
   col?:number;
   swiper?:boolean; //是否轮播
   initScale?:number;
+  initWorldRect?:Rect;
 }
 
 export interface cellData extends ChartData {
