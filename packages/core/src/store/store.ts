@@ -87,6 +87,7 @@ export interface Network {
   method?: string;
   body?: any;
   data?: Network
+  interval?: number; // http 请求间隔
 }
 
 export interface HttpOptions {

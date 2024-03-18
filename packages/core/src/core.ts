@@ -1751,6 +1751,7 @@ export class Meta2d {
   }
 
   updateTimer: any;
+  updateTimerList: any[] = [];
   connectNetwork() {
     this.closeNetwork();
     const { networks } = this.store.data;
@@ -1794,6 +1795,7 @@ export class Meta2d {
           } else if (net.protocol === 'http') {
             https.push({
               url: net.url,
+              interval: net.interval,
               headers: net.headers || undefined,
               method: net.method,
               body: net.body,
@@ -1985,18 +1987,26 @@ export class Meta2d {
         this.requestHttp(_item);
       });
     }
-    this.updateTimer = setInterval(() => {
-      //模拟数据
-      enable &&
+    if( enable ){
+      this.updateTimer = setInterval(() => {
+        //模拟数据
+      
         this.store.data.pens.forEach((pen) => {
           this.penMock(pen);
         });
 
-      https.forEach(async (_item) => {
+        // https.forEach(async (_item) => {
+        //   this.requestHttp(_item);
+        // });
+        // this.render();
+      }, this.store.data.networkInterval || 1000);
+    }
+
+    https.forEach((_item,index) => {
+      this.updateTimerList[index] = setInterval(async () => {
         this.requestHttp(_item);
-      });
-      this.render();
-    }, this.store.data.networkInterval || 1000);
+      }, _item.interval || 1000);
+    });
   }
 
   async requestHttp(_req: Network) {
@@ -2050,6 +2060,11 @@ export class Meta2d {
     this.websockets = undefined;
     clearInterval(this.updateTimer);
     this.updateTimer = undefined;
+    this.updateTimerList &&
+    this.updateTimerList.forEach((_updateTimer) => {
+      clearInterval(_updateTimer);
+      _updateTimer = undefined;
+    });
   }
 
   socketCallback(
