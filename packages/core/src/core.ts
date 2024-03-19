@@ -2416,8 +2416,9 @@ export class Meta2d {
     if (!pen) {
       return;
     }
-
-    pen.events?.forEach((event) => {
+    let old = false; //是否是旧的事件
+    let indexArr = []; //事件条件成立的索引
+    pen.events?.forEach((event,index) => {
       if (event.actions && event.actions.length) {
         if (event.name === eventName) {
           //条件成立
@@ -2436,14 +2437,16 @@ export class Meta2d {
             flag = true;
           }
           if (flag) {
-            event.actions.forEach((action) => {
-              if (this.events[action.action]) {
-                this.events[action.action](pen, action);
-              }
-            });
+            // event.actions.forEach((action) => {
+            //   if (this.events[action.action]) {
+            //     this.events[action.action](pen, action);
+            //   }
+            // });
+            indexArr.push(index);
           }
         }
       } else {
+        old = true;
         if (this.events[event.action] && event.name === eventName) {
           let can = !event.where?.type;
           if (event.where) {
@@ -2500,14 +2503,37 @@ export class Meta2d {
               }
             }
           }
-          can && this.events[event.action](pen, event);
+          // can && this.events[event.action](pen, event);
+          if(can){
+            indexArr.push(index);
+          }
         }
       }
     });
     
+    //所有的条件判断后，再统一执行条件成立的事件
+    if(old){
+      pen.events?.forEach((event,index) => {
+        if(indexArr.includes(index)){
+          this.events[event.action](pen, event);
+        }
+      });
+    }else{
+      pen.events?.forEach((event,index) => {
+        if(indexArr.includes(index)){
+          event.actions.forEach((action) => {
+            if (this.events[action.action]) {
+              this.events[action.action](pen, action);
+            }
+          });
+        }
+      });
+    }
+    
     if(eventName === 'valueUpdate'){
       pen.realTimes?.forEach((realTime) => {
-        realTime.triggers?.forEach((trigger) => {
+        let indexArr = [];
+        realTime.triggers?.forEach((trigger,index) => {
           let flag = false;
           if (trigger.conditionType === 'and') {
             flag = trigger.conditions.every((condition) => {
@@ -2519,6 +2545,16 @@ export class Meta2d {
             });
           }
           if (flag) {
+            indexArr.push(index);
+            // trigger.actions?.forEach((event) => {
+            //   this.events[event.action](pen, event);
+            // });
+          }
+        });
+
+        //执行
+        realTime.triggers?.forEach((trigger,index) => {
+          if(indexArr.includes(index)){
             trigger.actions?.forEach((event) => {
               this.events[event.action](pen, event);
             });
