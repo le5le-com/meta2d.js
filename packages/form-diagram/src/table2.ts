@@ -122,9 +122,7 @@ function initRect(pen: formPen) {
   const colPos = [];
   const rowPos = [];
   const colStyle = {};
-  if(pen.initWorldRect){
-    return;
-  }
+
   if (!pen.rowHeight) {
     pen.rowHeight = 40;
   }
@@ -183,6 +181,11 @@ function initRect(pen: formPen) {
       finalHight = height;
     }
   }
+  pen.calculative.maxOffsetY =
+  (height - finalHight) / pen.calculative.canvas.store.data.scale;
+  if(pen.initWorldRect){
+    return;
+  }
   pen.colPos = colPos;
   pen.rowPos = rowPos;
   pen.colStyle = colStyle;
@@ -194,8 +197,7 @@ function initRect(pen: formPen) {
   pen.calculative.height = finalHight || height;
   pen.calculative.width = width;
   pen.calculative.height = finalHight || height;
-  pen.calculative.maxOffsetY =
-    (height - finalHight) / pen.calculative.canvas.store.data.scale;
+ 
   if (!pen.height) {
     pen.height = pen.calculative.height;
   }
