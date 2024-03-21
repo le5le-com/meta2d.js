@@ -1740,7 +1740,7 @@ export function ctxDrawPath(
       if (pen.calculative.animatePos) {
         ctx.save();
         setCtxLineAnimate(ctx, pen, store);
-        if(pen.lineAnimateType === LineAnimateType.Arrow){
+        if(pen.lineAnimateType === LineAnimateType.Arrow || pen.lineAnimateType === LineAnimateType.WaterDrop){
           //箭头动画
           let _path = drawArrow(pen,ctx);
           if(_path instanceof Path2D){
@@ -1791,7 +1791,7 @@ export function ctxDrawLinePath(
         ctx.beginPath();
         if (path instanceof Path2D) {
           if(pen.lineName === 'polyline' || pen.lineName === 'line'){
-            if(pen.lineAnimateType === LineAnimateType.Arrow){
+            if(pen.lineAnimateType === LineAnimateType.Arrow || pen.lineAnimateType === LineAnimateType.WaterDrop){
               //箭头动画
               const _path = drawArrow(pen);
               ctx.stroke(_path);
@@ -1879,6 +1879,10 @@ export function setCtxLineAnimate(
       ctx.setLineDash([0.1, pen.length]);
       break;
     case LineAnimateType.Arrow:
+      ctx.fillStyle =   pen.animateColor || store.options.animateColor;
+      ctx.lineWidth = 1;
+      break;
+    case LineAnimateType.WaterDrop:
       ctx.fillStyle =   pen.animateColor || store.options.animateColor;
       ctx.lineWidth = 1;
       break;

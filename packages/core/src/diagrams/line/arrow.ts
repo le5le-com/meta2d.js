@@ -1,4 +1,4 @@
-import { Pen } from '../../pen';
+import { Pen, LineAnimateType } from '../../pen';
 import { Point } from '../../point';
 
 //箭头动画
@@ -11,6 +11,9 @@ export function drawArrow(
   let scale = pen.calculative.canvas.store.data.scale;
   let size = (pen.calculative.animateLineWidth || 6) * scale; // 箭头大小
   let arrowLength = (pen.animateLineWidth*2 || 12) * scale; // 箭头长度
+  if(pen.lineAnimateType === LineAnimateType.WaterDrop){
+    arrowLength = (pen.animateLineWidth*4 || 24) * scale; // 水滴长度
+  }
   let d = (pen.animateInterval || 100) * scale; // 箭头间距
   let smoothLenth = pen.calculative.lineWidth *(pen.calculative.lineSmooth || 0)//*scale;
   let lineWidth = (pen.calculative.animateLineWidth/2 || 3) * scale;
@@ -61,44 +64,11 @@ export function drawArrow(
               newPTFrom > (smoothLenth+arrowLength * 2 ) &&
               ptTFrom - newPTFrom > smoothLenth
           ) {
-            let pr = getRotatePoint(
-              { x: newP.x + size, y: newP.y + 0.57*size },
-              { x: newP.x, y: newP.y },
-              angle
-            );
-            let pl = getRotatePoint(
-              { x: newP.x + size, y: newP.y - 0.57*size },
-              { x: newP.x, y: newP.y },
-              angle
-            );
-            let pr1 = getRotatePoint(
-              { x: newP.x + size, y: newP.y + lineWidth/2 },
-              { x: newP.x, y: newP.y },
-              angle
-            );
-            let pr2 = getRotatePoint(
-              { x: newP.x + arrowLength, y: newP.y + lineWidth/2},
-              { x: newP.x, y: newP.y },
-              angle
-            );
-            let pl1 = getRotatePoint(
-              { x: newP.x + size, y: newP.y - lineWidth/2 },
-              { x: newP.x, y: newP.y },
-              angle
-            );
-            let pl2 = getRotatePoint(
-              { x: newP.x + arrowLength, y: newP.y - lineWidth/2 },
-              { x: newP.x, y: newP.y },
-              angle
-            );
-            path.moveTo(pr.x, pr.y);
-            path.lineTo(newP.x, newP.y);
-            path.lineTo(pl.x, pl.y);
-            path.lineTo(pl1.x, pl1.y);
-            path.lineTo(pl2.x, pl2.y);
-            path.lineTo(pr2.x, pr2.y);
-            path.lineTo(pr1.x, pr1.y);
-            path.lineTo(pr.x, pr.y);
+            if(pen.lineAnimateType === LineAnimateType.Arrow){
+              arrow(path, newP, size, angle, lineWidth, arrowLength);
+            }else if(pen.lineAnimateType === LineAnimateType.WaterDrop){
+              waterDrop(path, newP, size, angle, lineWidth, arrowLength);
+            }
           }
           newP.x += d * Math.cos((angle * Math.PI) / 180);
           newP.y -= d * Math.sin((angle * Math.PI) / 180);
@@ -134,4 +104,64 @@ function getRotatePoint(p: Point, rp: Point, _angle: number) {
     x: (p.x - rp.x) * Math.cos(angle) - (p.y - rp.y) * Math.sin(angle) + rp.x,
     y: (p.x - rp.x) * Math.sin(angle) + (p.y - rp.y) * Math.cos(angle) + rp.y,
   };
+}
+
+//标准箭头
+function arrow(path:CanvasRenderingContext2D |Path2D, newP:Point, size:number, angle:number, lineWidth:number, arrowLength:number){
+  let pr = getRotatePoint(
+    { x: newP.x + size, y: newP.y + 0.57*size },
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  let pl = getRotatePoint(
+    { x: newP.x + size, y: newP.y - 0.57*size },
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  let pr1 = getRotatePoint(
+    { x: newP.x + size, y: newP.y + lineWidth/2 },
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  let pr2 = getRotatePoint(
+    { x: newP.x + arrowLength, y: newP.y + lineWidth/2},
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  let pl1 = getRotatePoint(
+    { x: newP.x + size, y: newP.y - lineWidth/2 },
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  let pl2 = getRotatePoint(
+    { x: newP.x + arrowLength, y: newP.y - lineWidth/2 },
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  path.moveTo(pr.x, pr.y);
+  path.lineTo(newP.x, newP.y);
+  path.lineTo(pl.x, pl.y);
+  path.lineTo(pl1.x, pl1.y);
+  path.lineTo(pl2.x, pl2.y);
+  path.lineTo(pr2.x, pr2.y);
+  path.lineTo(pr1.x, pr1.y);
+  path.lineTo(pr.x, pr.y);
+}
+
+//水滴
+function waterDrop(path:CanvasRenderingContext2D |Path2D, newP:Point, size:number, angle:number, lineWidth:number, arrowLength:number){
+  let pl1 = getRotatePoint(
+    { x: newP.x, y: newP.y + lineWidth/2 },
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  let pE = getRotatePoint(
+    { x: newP.x + arrowLength, y: newP.y  },
+    { x: newP.x, y: newP.y },
+    angle
+  );
+  path.moveTo(newP.x, newP.y);
+  path.arc(newP.x, newP.y, lineWidth/2, -Math.PI/2-angle/180*Math.PI, Math.PI/2-angle/180*Math.PI, false);
+  path.lineTo(pE.x, pE.y);
+  path.lineTo(pl1.x, pl1.y);
 }

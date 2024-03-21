@@ -101,7 +101,8 @@ export enum LineAnimateType {
   Normal, // 水流
   Beads, // 水珠流动
   Dot, // 圆点
-  Arrow, // 箭头
+  Arrow, // 箭头,
+  WaterDrop, // 水滴
 }
 
 export interface ColorStop {
