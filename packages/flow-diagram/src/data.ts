@@ -16,3 +16,32 @@ export function flowData(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   path.closePath();
   if (path instanceof Path2D) return path;
 }
+
+export function flowDataAnchors(pen: Pen) {
+  const points = [
+    {
+      x: 0.5,
+      y: 0,
+    },
+    {
+      x: 13/14,
+      y: 0.5,
+    },
+    {
+      x: 0.5,
+      y: 1,
+    },
+    {
+      x: 1/14,
+      y: 0.5,
+    },
+  ] as const;
+  pen.anchors = points.map(({ x, y }, index) => {
+    return {
+      id: `${index}`,
+      penId: pen.id,
+      x,
+      y,
+    };
+  });
+}

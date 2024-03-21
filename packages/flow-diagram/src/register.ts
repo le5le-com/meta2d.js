@@ -1,6 +1,6 @@
 import { Pen } from '@meta2d/core';
 import { flowComment, flowCommentAnchors } from './comment';
-import { flowData } from './data';
+import { flowData, flowDataAnchors } from './data';
 import { flowDb } from './db';
 import { flowDisplay } from './display';
 import { flowDocument, flowDocumentAnchors } from './document';
@@ -36,5 +36,6 @@ export function flowAnchors() {
     flowManually: flowManuallyAnchors,
     flowParallel: flowParallelAnchors,
     flowComment: flowCommentAnchors,
+    flowData: flowDataAnchors,
   };
 }
