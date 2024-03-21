@@ -1673,7 +1673,13 @@ export function ctxDrawPath(
       ctx.restore();
     }
     if (path instanceof Path2D) {
-      fill && ctx.fill(path);
+      if(pen.type){
+        if(pen.close){
+         fill && ctx.fill(path);
+        }
+      }else{
+        fill && ctx.fill(path);
+      }
     } else {
       ctx.save();
       path(pen, ctx);
