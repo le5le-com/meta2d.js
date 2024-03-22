@@ -138,7 +138,7 @@ export const defaultOptions: Options = {
   autoPolyline: true,
   autoAnchor: true,
   autoAlignGrid: false,
-  animateColor: '#ff4d4f',
+  animateColor: '#30EEDC',
   ruleLineColor: '#FF4101',
   shadowOffsetX: 0,
   shadowOffsetY: 0,
