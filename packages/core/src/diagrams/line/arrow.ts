@@ -58,10 +58,10 @@ export function drawArrow(
         let ptTFrom = Math.sqrt((pt.x - from.x) ** 2 + (pt.y - from.y) ** 2);
         while (newPTFrom < ptTFrom) {
           if (
-            ((pen.animateReverse && newPTFrom - arrowLength * 2 < ptTFrom) ||
+            ((pen.animateReverse && newPTFrom - arrowLength < ptTFrom) || //不允许超出连线绘制
             (!pen.animateReverse &&
-              newPTFrom > arrowLength * 2)) &&
-              newPTFrom > (smoothLenth+arrowLength * 2 ) &&
+              newPTFrom > arrowLength)) &&
+              newPTFrom > (smoothLenth+arrowLength) &&
               ptTFrom - newPTFrom > smoothLenth
           ) {
             if(pen.lineAnimateType === LineAnimateType.Arrow){
