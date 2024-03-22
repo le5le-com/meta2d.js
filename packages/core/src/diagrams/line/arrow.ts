@@ -67,7 +67,7 @@ export function drawArrow(
             if(pen.lineAnimateType === LineAnimateType.Arrow){
               arrow(path, newP, size, angle, lineWidth, arrowLength);
             }else if(pen.lineAnimateType === LineAnimateType.WaterDrop){
-              waterDrop(path, newP, size, angle, lineWidth, arrowLength);
+              waterDrop(path, newP, pen.animateReverse, angle, lineWidth, arrowLength);
             }
           }
           newP.x += d * Math.cos((angle * Math.PI) / 180);
@@ -149,9 +149,13 @@ function arrow(path:CanvasRenderingContext2D |Path2D, newP:Point, size:number, a
 }
 
 //水滴
-function waterDrop(path:CanvasRenderingContext2D |Path2D, newP:Point, size:number, angle:number, lineWidth:number, arrowLength:number){
+function waterDrop(path:CanvasRenderingContext2D |Path2D, newP:Point, reverse:boolean, angle:number, lineWidth:number, arrowLength:number){
+  let dis = lineWidth/2;
+  if(reverse){
+    dis = -lineWidth/2;
+  }
   let pl1 = getRotatePoint(
-    { x: newP.x, y: newP.y + lineWidth/2 },
+    { x: newP.x, y: newP.y + dis },
     { x: newP.x, y: newP.y },
     angle
   );
@@ -160,8 +164,12 @@ function waterDrop(path:CanvasRenderingContext2D |Path2D, newP:Point, size:numbe
     { x: newP.x, y: newP.y },
     angle
   );
+  let rAngle =Math.PI/2;
+  if(reverse){
+    rAngle = -Math.PI/2;
+  }
   path.moveTo(newP.x, newP.y);
-  path.arc(newP.x, newP.y, lineWidth/2, -Math.PI/2-angle/180*Math.PI, Math.PI/2-angle/180*Math.PI, false);
+  path.arc(newP.x, newP.y, lineWidth/2, -rAngle-angle/180*Math.PI, rAngle-angle/180*Math.PI, false);
   path.lineTo(pE.x, pE.y);
   path.lineTo(pl1.x, pl1.y);
 }
