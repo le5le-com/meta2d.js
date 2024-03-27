@@ -20,6 +20,16 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.onWheel = onWheel;
     pen.onDestroy = onDestroy;
   }
+  if(pen.data.length !== pen.rowPos.length){
+    pen.initWorldRect = null;
+    pen.calculative.isUpdateData = true;
+    pen.onValue(pen);
+  }
+  if(pen.data[0].length !== pen.colPos.length){
+    pen.initWorldRect = null;
+    pen.calculative.isUpdateData = true;
+    pen.onValue(pen);
+  }
 
   const data = pen.calculative.canvas.store.data;
   const options = pen.calculative.canvas.store.options;
