@@ -2,6 +2,7 @@ import { default as mitt, Emitter } from 'mitt';
 
 import { CanvasLayer, FormItem, LockState, Pen } from '../pen';
 import { defaultOptions, Options } from '../options';
+import { defaultTheme, Theme } from '../theme';
 
 import { Point } from '../point';
 import { globalStore } from './global';
@@ -65,6 +66,7 @@ export interface Meta2dData {
   template?: string; //模版id
   cancelFirstConnect?: boolean; //http定时轮询首次是否请求
   component?: boolean;
+  theme?: string; //主题
 }
 
 export interface Network {
@@ -134,6 +136,7 @@ export interface Meta2dStore {
   pointAtIndex?: number;
   animates: Set<Pen>;
   options: Options;
+  theme: Theme;
   emitter: Emitter;
   dpiRatio?: number;
   clipboard?: Meta2dClipboard;
@@ -176,6 +179,7 @@ export const createStore = () => {
       origin: { x: 0, y: 0 },
       center: { x: 0, y: 0 },
       paths: {},
+      theme:'light'
     },
     histories: [],
     pens: {},
@@ -184,6 +188,7 @@ export const createStore = () => {
     active: [],
     animates: new Set(),
     options: { ...defaultOptions },
+    theme:{ ...defaultTheme },
     emitter: mitt(),
     bindDatas: {},
     bind: {},

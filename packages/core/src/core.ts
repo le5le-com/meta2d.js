@@ -210,6 +210,18 @@ export class Meta2d {
     return this.store.options;
   }
 
+  setTheme(theme:string){
+    this.store.data.theme = theme;
+    this.setBackgroundColor(this.store.theme[theme].background);
+    this.canvas.parentElement.style.background = this.store.theme[theme].parentBackground;
+    this.store.data.color = this.store.theme[theme].color;
+    this.setOptions({
+      ruleColor:this.store.theme[theme].ruleColor,
+      ruleOptions:this.store.theme[theme].ruleOptions
+    });
+    this.render();
+  }
+
   setDatabyOptions(options: Options = {}) {
     const {
       color,
