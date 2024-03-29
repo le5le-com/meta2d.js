@@ -67,6 +67,7 @@ export interface Meta2dData {
   cancelFirstConnect?: boolean; //http定时轮询首次是否请求
   component?: boolean;
   theme?: string; //主题
+  smoothNum?:number;//平滑量 值越大，平滑效果越好
 }
 
 export interface Network {

@@ -532,7 +532,7 @@ function smoothTransition(
   let next = getSmoothAdjacent(smoothLenth, p2, p3);
   let contrlPoint = { x: p2.x, y: p2.y };
 
-  let points = getBezierPoints(100, last, contrlPoint, next);
+  let points = getBezierPoints(pen.calculative.canvas.store.data.smoothNum || 20, last, contrlPoint, next);
   for (let k = 0; k < points.length - 1; k++) {
     drawLinearGradientLine(ctx, pen, [
       {
