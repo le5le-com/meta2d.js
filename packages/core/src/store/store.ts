@@ -7,7 +7,7 @@ import { defaultTheme, Theme } from '../theme';
 import { Point } from '../point';
 import { globalStore } from './global';
 import { Rect } from '../rect';
-import { Event } from '../event';
+import { Event, Trigger } from '../event';
 
 export interface Meta2dData {
   pens: Pen[];
@@ -68,6 +68,7 @@ export interface Meta2dData {
   component?: boolean;
   theme?: string; //主题
   smoothNum?:number;//平滑量 值越大，平滑效果越好
+  triggers?:Trigger[]; //全局状态
 }
 
 export interface Network {
@@ -157,6 +158,7 @@ export interface Meta2dStore {
   pensNetwork?: {
     [key: string]: { url?: string; method?: string; headers?: any; body?: any };
   };
+  globalTriggers?:{[key:string]:Trigger[]};
 }
 
 export interface Meta2dClipboard {
@@ -197,6 +199,7 @@ export const createStore = () => {
     cacheDatas: [],
     messageEvents: {},
     templatePens: {},
+    globalTriggers:{},
   } as Meta2dStore;
 };
 

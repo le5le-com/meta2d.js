@@ -765,6 +765,7 @@ export class Meta2d {
     this.initBindDatas();
     this.initBinds();
     this.initMessageEvents();
+    this.initGlobalTriggers();
     this.render();
     this.listenSocket();
     this.connectSocket();
@@ -2573,13 +2574,55 @@ export class Meta2d {
           }
         });
       });
+
+      //全局
+      let indexArr = [];
+      this.store.globalTriggers[pen.id]?.forEach((trigger,index) => {
+        let flag = false;
+        if (trigger.conditionType === 'and') {
+          flag = trigger.conditions.every((condition) => {
+            return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+          });
+        } else if (trigger.conditionType === 'or') {
+          flag = trigger.conditions.some((condition) => {
+            return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+          });
+        }
+        if (flag) {
+          indexArr.push(index);
+        }
+      });
+      this.store.globalTriggers[pen.id]?.forEach((trigger,index) => {
+        if(indexArr.includes(index)){
+          trigger.actions?.forEach((event) => {
+            this.events[event.action](pen, event);
+          });
+        }
+      });
     }
 
     // 事件冒泡，子执行完，父执行
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
 
+  initGlobalTriggers(){
+    this.store.globalTriggers = {};
+    this.store.data.triggers?.forEach((trigger) => {
+      trigger.conditions.forEach((condition) => {
+        if(condition.source){
+          if(!this.store.globalTriggers[condition.source]){
+            this.store.globalTriggers[condition.source] = [];
+          }
+          if(!this.store.globalTriggers[condition.source].includes(trigger)){
+            this.store.globalTriggers[condition.source].push(trigger);
+          }
+        }
+      })
+    });
+  }
+
   initMessageEvents() {
+    this.store.messageEvents = {};
     this.store.data.pens.forEach((pen) => {
       pen.events?.forEach((event) => {
         if (event.name === 'message' && event.message) {

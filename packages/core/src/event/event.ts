@@ -109,6 +109,7 @@ export interface TriggerCondition {
     }
   ) => boolean;
   key?: string;
+  source?:string;
 }
 
 export interface Trigger {
