@@ -5802,6 +5802,10 @@ export class Canvas {
       }
       this.updatePenRect(pen, { worldRectIsReady: true });
       this.updateLines(pen);
+      if (pen.image && pen.name !== 'gif') {
+        this.canvasImage.init();
+        this.canvasImageBottom.init();
+      }
       if (pen.calculative.text !== pen.text) {
         pen.calculative.text = pen.text;
         calcTextLines(pen);
