@@ -464,7 +464,7 @@ export class Canvas {
   };
 
   onPaste = (event: ClipboardEvent) => {
-    if (this.store.options.disableClipboard) {
+    if (this.store.data.locked || this.store.options.disableClipboard) {
       return;
     }
     if (
@@ -929,7 +929,7 @@ export class Canvas {
             this.drawingLineName = this.store.options.drawingLineName;
           }
         }
-        if ((e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard || 
+        if (!this.store.data.locked && (e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard || 
           (!this.store.options.disableClipboard && e.altKey)) //alt按下，paste事件无效
         ) {
           this.paste();
