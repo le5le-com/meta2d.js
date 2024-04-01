@@ -2433,7 +2433,7 @@ export class Canvas {
         if (
           pen.visible === false ||
           pen.locked >= LockState.DisableMove ||
-          pen.parentId
+          pen.parentId || pen.isRuleLine
         ) {
           return false;
         }
@@ -3112,6 +3112,15 @@ export class Canvas {
       }
       // 图形
       if (pen.type) {
+        if (pen.isRuleLine) {
+          let ruleH = this.store.options.ruleOptions?.height || 20;
+          if (
+            pt.x + this.store.data.x > ruleH &&
+            pt.y + this.store.data.y > ruleH
+          ) {
+            break;
+          }
+        }
         const pos = pointInLine(pt, pen);
         if (pos) {
           if (!this.store.data.locked && !pen.locked) {
@@ -5628,6 +5637,9 @@ export class Canvas {
 
       if (pen.type === PenType.Line) {
         if (!this.store.options.moveConnectedLine && !this.canMoveLine) {
+          return;
+        }
+        if(pen.isRuleLine){
           return;
         }
         translateLine(pen, x, y);
