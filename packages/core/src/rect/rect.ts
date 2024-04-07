@@ -474,3 +474,17 @@ export function calcRelativePoint(pt: Point, worldRect: Rect) {
   }
   return point;
 }
+
+//射线法 判断点是否在多边形内部
+export function pointInPolygon(pt: Point, pts: Point[]) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    let xi = pts[i].x, yi = pts[i].y;
+    let xj = pts[j].x, yj = pts[j].y;
+      
+    let intersect = ((yi > pt.y) != (yj > pt.y))
+          && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}

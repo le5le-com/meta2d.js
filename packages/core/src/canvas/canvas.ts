@@ -86,6 +86,7 @@ import {
   rectToPoints,
   resizeRect,
   translateRect,
+  pointInPolygon
 } from '../rect';
 import {
   EditAction,
@@ -3163,6 +3164,12 @@ export class Canvas {
           isIn = pointInRect(pt, pen.calculative.worldRect);
         }
         if (isIn) {
+          if(pen.type === PenType.Node && pen.name==='line'){
+            let pIn =  pointInPolygon(pt,pen.calculative.worldAnchors);
+            if(!pIn){
+              continue;
+            }
+          }
           if (!this.store.data.locked && !pen.locked) {
             if (this.hotkeyType === HotkeyType.AddAnchor) {
               this.externalElements.style.cursor = 'pointer';
