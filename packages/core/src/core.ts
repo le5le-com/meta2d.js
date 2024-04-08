@@ -1034,11 +1034,11 @@ export class Meta2d {
     sessionStorage.removeItem('page');
     this.store.clipboard = undefined;
 
-    // 非必要，为的是 open 时重绘 背景与网格
-    // this.store.patchFlagsBackground = true;
+  
     if (!this.store.sameTemplate) {
       this.canvas.canvasTemplate.bgPatchFlags = true;
     }
+    this.store.patchFlagsBackground = true;
     this.store.patchFlagsTop = true;
     this.setBackgroundImage(undefined);
     render && this.render();
