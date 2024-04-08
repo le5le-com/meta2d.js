@@ -2414,6 +2414,12 @@ export class Meta2d {
       case 'resizePens':
         this.onSizeUpdate();
         break;
+      case 'navigator':
+        if(!this.store.data.id){
+          console.warn('请先保存当前图纸');
+        }
+        this.navigatorTo(e.params);
+        break;
     }
 
     if (this.store.messageEvents[eventName]) {
