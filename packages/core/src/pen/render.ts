@@ -1770,7 +1770,7 @@ export function ctxDrawPath(
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
 
-      if (pen.calculative.active && !pen.calculative.pencil) {
+      if (pen.calculative.active && !pen.calculative.pencil && !store.options.disableAnchor && !store.data.locked) {
         renderLineAnchors(ctx, pen);
       }
     }
@@ -1827,7 +1827,7 @@ export function ctxDrawLinePath(
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
       //TODO 锚点处渐进色的过渡
-      if (pen.calculative.active && !pen.calculative.pencil) {
+      if (pen.calculative.active && !pen.calculative.pencil && !store.options.disableAnchor && !store.data.locked) {
         renderLineAnchors(ctx, pen);
       }
     }
