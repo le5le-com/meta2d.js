@@ -2005,6 +2005,9 @@ export class Canvas {
         if (!this.drawingLineName && !this.movingAnchor) {
           // 在锚点上开始连线
           if (this.hoverType === HoverType.NodeAnchor) {
+            if(!this.store.hoverAnchor){
+              return;
+            }
             this.drawingLineName = this.store.options.drawingLineName;
             const pt: Point = {
               id: s8(),
@@ -2060,7 +2063,7 @@ export class Canvas {
           // Move line anchor
           if (this.hoverType === HoverType.LineAnchor) {
             if (
-              (this.dockInAnchor(e) || this.store.active[0].lineName === 'line') &&
+              (this.dockInAnchor(e) || this.store.active[0]?.lineName === 'line') &&
               !this.store.options.disableDock &&
               !this.store.options.disableLineDock
             ) {
@@ -3362,6 +3365,9 @@ export class Canvas {
               this.store.hover.calculative.worldAnchors.find(
                 (a) => a.id === anchor.anchorId
               );
+            if (!this.store.hoverAnchor) {
+              return HoverType.None;
+            }
             this.externalElements.style.cursor = 'crosshair';
             return HoverType.NodeAnchor;
           }
