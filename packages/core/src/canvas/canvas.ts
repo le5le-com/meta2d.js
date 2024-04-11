@@ -779,7 +779,7 @@ export class Canvas {
         if (vRect && this.activeRect.y + y < vRect.y) {
           y = vRect.y - this.activeRect.y;
         }
-        
+
         if (
           this.store.activeAnchor &&
           this.store.active &&
@@ -807,7 +807,7 @@ export class Canvas {
           x = 10;
         }
         x = x * this.store.data.scale;
-        
+
         if (
           this.store.activeAnchor &&
           this.store.active &&
@@ -930,7 +930,7 @@ export class Canvas {
             this.drawingLineName = this.store.options.drawingLineName;
           }
         }
-        if (!this.store.data.locked && (e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard || 
+        if (!this.store.data.locked && (e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard ||
           (!this.store.options.disableClipboard && e.altKey)) //alt按下，paste事件无效
         ) {
           this.paste();
@@ -1039,19 +1039,19 @@ export class Canvas {
       case '[':
         //下一层
         this.parent.down();
-        break;  
+        break;
       case ']':
         //上一层
         this.parent.up();
-        break;  
+        break;
       case '{':
         // 置底
         this.parent.bottom();
-        break;  
+        break;
       case '}':
         //置顶
         this.parent.top();
-        break;  
+        break;
     }
 
     this.render(false);
@@ -7045,6 +7045,9 @@ export class Canvas {
         }
       }
     };
+    this.inputDiv.onblur = ()=>{
+      this.hideInput()
+    }
     this.inputDiv.oninput = (e: any) => {
       // //无文本时，光标确保居中
       if (navigator.userAgent.includes('Firefox')) {
