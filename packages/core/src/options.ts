@@ -105,6 +105,7 @@ export interface Options {
   strictScope?: boolean; //大屏严格范围
   padding?: Padding; //大屏padding区域
   resizeMode?: boolean;
+  svgPathStroke?:boolean; //svg path是否显示边框
 }
 
 export const defaultOptions: Options = {

@@ -1678,6 +1678,7 @@ export function ctxDrawPath(
          fill && ctx.fill(path);
         }
       }else{
+        //svgPath
         fill && ctx.fill(path);
       }
     } else {
@@ -1735,7 +1736,9 @@ export function ctxDrawPath(
 
     if (pen.calculative.lineWidth) {
       if (path instanceof Path2D) {
-        ctx.stroke(path);
+        if(store.options.svgPathStroke || pen.name!=='svgPath'){
+          ctx.stroke(path);
+        }
       } else {
         path(pen, ctx);
         ctx.stroke();
