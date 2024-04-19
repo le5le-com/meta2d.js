@@ -2027,23 +2027,27 @@ export class Meta2d {
     if (req.url) {
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
-          let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
-          if (keys) {
-            req.headers[i] = req.headers[i].replace(
-              `\${${keys[0]}}`,
-              this.getDynamicParam(keys[0])
-            );
+          if(typeof req.headers[i] === 'string'){
+            let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            if (keys) {
+              req.headers[i] = req.headers[i].replace(
+                `\${${keys[0]}}`,
+                this.getDynamicParam(keys[0])
+              );
+            }
           }
         }
       }
       if (typeof req.body === 'object') {
         for (let i in req.body) {
-          let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
-          if (keys) {
-            req.body[i] = req.body[i].replace(
-              `\${${keys[0]}}`,
-              this.getDynamicParam(keys[0])
-            );
+          if(typeof req.headers[i] === 'string'){
+            let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
+            if (keys) {
+              req.body[i] = req.body[i].replace(
+                `\${${keys[0]}}`,
+                this.getDynamicParam(keys[0])
+              );
+            }
           }
         }
       }
