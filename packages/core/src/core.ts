@@ -2040,7 +2040,7 @@ export class Meta2d {
       }
       if (typeof req.body === 'object') {
         for (let i in req.body) {
-          if(typeof req.headers[i] === 'string'){
+          if(typeof req.body[i] === 'string'){
             let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
             if (keys) {
               req.body[i] = req.body[i].replace(
