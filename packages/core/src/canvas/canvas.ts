@@ -7412,9 +7412,10 @@ export class Canvas {
       } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
         this.canvasImage.init();
       }
-    } else {
-      this.initImageCanvas([pen]);
-    }
+    } 
+    // else {
+    //   this.initImageCanvas([pen]);
+    // }
     // if (data.template !== undefined || pen.template) {
     //   this.initTemplateCanvas([pen]);
     // }
