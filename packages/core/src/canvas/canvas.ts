@@ -7046,7 +7046,9 @@ export class Canvas {
       }
     };
     this.inputDiv.onblur = ()=>{
-      this.hideInput()
+      setTimeout(()=> {
+        this.hideInput()
+      },300)
     }
     this.inputDiv.oninput = (e: any) => {
       // //无文本时，光标确保居中
