@@ -7425,7 +7425,7 @@ export class Canvas {
       this.initTemplateCanvas([pen]);
     }
     if(data.zIndex !== undefined){
-      pen.calculative.singleton.div &&
+      pen.calculative.singleton?.div &&
       setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
