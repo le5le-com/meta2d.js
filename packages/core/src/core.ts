@@ -321,6 +321,16 @@ export class Meta2d {
     };
     this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
+        if(e.value){
+          let _pen = this.findOne((e.value as string));
+          if(!this.store.animates.has(_pen)){
+            return;
+          }
+        }else{
+          if(!this.store.animates.has(pen)){
+            return;
+          }
+        }
         this.stopAnimate((e.value as string) || [pen]);
         return;
       }
