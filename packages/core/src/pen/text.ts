@@ -248,7 +248,7 @@ export function wrapLines(words: string[], pen: Pen) {
       currentWidth = chineseWidth + spaceWidth + otherWidth;
     }
     const textWidth = pen.calculative.worldTextRect.width;
-    if (currentWidth <= textWidth) {
+    if (currentWidth <= textWidth + 0.1) {
       currentLine += word;
     } else {
       currentLine.length && lines.push(currentLine);
