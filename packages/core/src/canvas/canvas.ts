@@ -7298,7 +7298,7 @@ export class Canvas {
       if (k.indexOf('.') === -1) {
         if (k === 'rotate') {
           oldRotate = pen.calculative.rotate || 0;
-        } else if (k === 'canvasLayer' || k === 'isBottom') {
+        } else if (k === 'canvasLayer' || k === 'isBottom' || k === 'showChild') {
           containIsBottom = true;
         } else if (k === 'image') {
           willRenderImage = true;
