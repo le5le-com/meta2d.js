@@ -282,7 +282,9 @@ export class Meta2d {
         const pens = e.params ? this.find(e.params) : this.find(pen.id);
         pens.forEach((pen: Pen) => {
           if (value.hasOwnProperty('visible')) {
-            this.setVisible(pen, value.visible);
+            if(pen.visible !== value.visible) {
+              this.setVisible(pen, value.visible);
+            }
           }
           this.setValue(
             { id: pen.id, ...value },
@@ -1157,6 +1159,9 @@ export class Meta2d {
     } else {
       pens = idOrTagOrPens;
     }
+    if(!pens.length){
+      return;
+    }
     pens.forEach((pen) => {
       if (pen.calculative.pause) {
         const d = Date.now() - pen.calculative.pause;
@@ -1215,8 +1220,9 @@ export class Meta2d {
         }
       }
     });
-    this.canvas.canvasImage.init();
-    this.canvas.canvasImageBottom.init();
+    // this.canvas.canvasImage.init();
+    // this.canvas.canvasImageBottom.init();
+    this.initImageCanvas(pens);
     this.canvas.animate();
   }
 
