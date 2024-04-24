@@ -2438,9 +2438,25 @@ export class Meta2d {
 
     if (this.store.messageEvents[eventName]) {
       this.store.messageEvents[eventName].forEach((item) => {
-        item.event.actions.forEach((action) => {
-          this.events[action.action](item.pen, action);
-        });
+        let flag = false;
+        if (item.event.conditions && item.event.conditions.length) {
+          if (item.event.conditionType === 'and') {
+            flag = item.event.conditions.every((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          } else if (item.event.conditionType === 'or') {
+            flag = item.event.conditions.some((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          }
+        } else {
+          flag = true;
+        }
+        if (flag) {
+          item.event.actions.forEach((action) => {
+            this.events[action.action](item.pen, action);
+          });
+        }
       });
     }
   };
