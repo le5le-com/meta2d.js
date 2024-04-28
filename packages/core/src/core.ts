@@ -2027,7 +2027,7 @@ export class Meta2d {
         // https.forEach(async (_item) => {
         //   this.requestHttp(_item);
         // });
-        // this.render();
+        this.render();
       }, this.store.data.networkInterval || 1000);
     }
 
