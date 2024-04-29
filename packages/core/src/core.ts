@@ -1484,6 +1484,27 @@ export class Meta2d {
     this.inactive();
   }
 
+  appendChild(pens: Pen[] = this.store.active){
+    if(!pens){
+      return;
+    }
+    if(pens.length < 2){
+      return;
+    }
+    const pIdx = pens.findIndex(pen=>pen.name === 'combine'&&pen.showChild !== undefined);
+    if(pIdx !== -1){
+      let parent = pens[pIdx];
+      this.pushChildren(parent,[...pens.slice(0, pIdx), ...pens.slice(pIdx + 1)]);
+      pens.forEach((pen) => {
+        calcInView(pen, true);
+      });
+      this.initImageCanvas(pens);
+      this.render();
+    }else{
+      console.warn('Invalid operation!');
+    }
+  }
+
   isCombine(pen: Pen) {
     if (pen.name === 'combine') {
       return true;
