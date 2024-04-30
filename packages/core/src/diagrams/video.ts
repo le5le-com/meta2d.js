@@ -29,7 +29,9 @@ export function video(pen: Pen) {
     progress.style.height = '2px';
     progress.style.background = '#52c41a';
     progress.style.zIndex = '1';
-
+    if((pen as any).hideProgress){
+      progress.style.display = 'none';
+    }
     const muted = document.createElement('div');
     muted.innerHTML = mutedIcons[1];
     muted.style.position = 'absolute';
