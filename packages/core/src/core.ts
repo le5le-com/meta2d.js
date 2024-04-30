@@ -98,7 +98,7 @@ export class Meta2d {
       topic?: string;
       url?: string;
     }
-  ) => boolean;
+  ) => boolean | string;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: ViewMap;
   mapTimer: any;
@@ -2126,25 +2126,29 @@ export class Meta2d {
     context?: { type?: string; topic?: string; url?: string }
   ) {
     this.store.emitter.emit('socket', { message, context });
-
+    let _message:any = message;
     if (
-      this.socketFn &&
-      !this.socketFn(message, {
+      this.socketFn
+    ) {
+      _message =  this.socketFn(message, {
         meta2d: this,
         type: context.type,
         topic: context.topic,
         url: context.url,
       })
-    ) {
-      return;
+      if(!_message){
+        return;
+      }
     }
-
+    if(_message===true){
+      _message = message;
+    }
     let data: any;
-    if (message.constructor === Object || message.constructor === Array) {
-      data = message;
-    } else if (typeof message === 'string') {
+    if (_message.constructor === Object || _message.constructor === Array) {
+      data = _message;
+    } else if (typeof _message === 'string') {
       try {
-        data = JSON.parse(message);
+        data = JSON.parse(_message);
       } catch (error) {
         console.warn('Invalid socket data:', data, error);
       }
