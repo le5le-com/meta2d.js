@@ -2575,6 +2575,14 @@ export class Canvas {
       ],
     });
   }
+
+  clearRuleLines() {
+    this.delete(this.ruleLines);
+  }
+
+  get ruleLines (){
+    return this.store.data.pens.filter(p =>p.isRuleLine);
+  }
   /**
    * @description 调整pen的坐标，让pen按照网格自动对齐
    * @author Joseph Ho

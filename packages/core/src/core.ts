@@ -2396,6 +2396,10 @@ export class Meta2d {
     this.canvas.clearDropdownList();
   }
 
+  clearRuleLines(){
+    this.canvas.clearRuleLines();
+  }
+
   private onEvent = (eventName: string, e: any) => {
     switch (eventName) {
       case 'add':
