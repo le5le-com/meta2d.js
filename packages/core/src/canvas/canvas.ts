@@ -3579,7 +3579,7 @@ export class Canvas {
       this.doEditAction(action, true);
       step--;
     }
-    if (action.type == EditType.Add || action.type == EditType.Delete) {
+    if (action.type == EditType.Add || action.type == EditType.Delete || action.type == EditType.Update) {
       this.activeHistory();
     }
   }
@@ -3601,15 +3601,23 @@ export class Canvas {
       this.doEditAction(action, false);
       step--;
     }
-    if (action.type == EditType.Add || action.type == EditType.Delete) {
+    if (action.type == EditType.Add || action.type == EditType.Delete || action.type == EditType.Update) {
       this.activeHistory();
     }
   }
 
   activeHistory() {
+    let now = this.store.histories[this.store.historyIndex + 1];
+    const pens = [];
+    if(now && (now.type === EditType.Update)){
+      now.pens.forEach((pen) => {
+        pens.push(this.store.pens[pen.id]);
+      });
+      this.active(pens);
+      return;
+    }
     let before = this.store.histories[this.store.historyIndex];
-    if (before && before.type === EditType.Add) {
-      const pens = [];
+    if (before && (before.type === EditType.Add || before.type === EditType.Delete)) {
       before.pens.forEach((pen) => {
         pens.push(this.store.pens[pen.id]);
       });
