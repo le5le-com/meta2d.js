@@ -3365,6 +3365,8 @@ export class Meta2d {
     for (const item of pens) {
       this.alignPen(align, item, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3387,6 +3389,9 @@ export class Meta2d {
     for (const item of pens) {
       this.alignPen(align, item, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
+    this.render();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -3407,6 +3412,8 @@ export class Meta2d {
       const pen = pens[i];
       this.alignPen(align, pen, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3428,6 +3435,8 @@ export class Meta2d {
       const pen = pens[i];
       this.alignPen(align, pen, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3515,6 +3524,8 @@ export class Meta2d {
         { render: false, doEvent: false }
       );
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3579,6 +3590,8 @@ export class Meta2d {
         currentY += maxHeight + space;
       }
     });
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
