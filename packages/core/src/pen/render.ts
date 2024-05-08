@@ -1345,7 +1345,7 @@ export function renderPen(
     let back: string | CanvasGradient | CanvasPattern;
     if (pen.calculative.bkType === Gradient.Linear) {
       if (pen.calculative.gradientColors) {
-        if (!pen.type) {
+        // if (!pen.type) {
           //连线不考虑渐进背景
           if (pen.calculative.gradient) {
             //位置变化/放大缩小操作不会触发重新计算
@@ -1354,7 +1354,7 @@ export function renderPen(
             back = getBkGradient(ctx, pen);
             pen.calculative.gradient = back;
           }
-        }
+        // }
       } else {
         back = drawBkLinearGradient(ctx, pen);
       }
@@ -1403,6 +1403,7 @@ export function renderPen(
     ctxDrawLinearGradientPath(ctx, pen);
     ctxDrawLinePath(true, ctx, pen, store);
   } else {
+    console.log("进入",fill,ctx.fillStyle);
     ctxDrawPath(true, ctx, pen, store, fill);
 
     ctxDrawCanvas(ctx, pen);
