@@ -1403,7 +1403,6 @@ export function renderPen(
     ctxDrawLinearGradientPath(ctx, pen);
     ctxDrawLinePath(true, ctx, pen, store);
   } else {
-    console.log("进入",fill,ctx.fillStyle);
     ctxDrawPath(true, ctx, pen, store, fill);
 
     ctxDrawCanvas(ctx, pen);
