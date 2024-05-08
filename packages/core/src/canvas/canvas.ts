@@ -7684,7 +7684,14 @@ export class Canvas {
   }
 
   activeToPng(padding: Padding = 2) {
-    const allPens = this.getAllByPens(this.store.active);
+    return this.pensToPng(this.store.active,padding);
+  }
+
+  pensToPng(pens:Pen[] = this.store.active,padding:Padding=2){
+    if(pens.length === 0){
+      return;
+    }
+    const allPens = this.getAllByPens(pens);
     let ids = allPens.map((pen) => pen.id);
     const rect = getRect(allPens);
     if (!isFinite(rect.width)) {
