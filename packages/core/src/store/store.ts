@@ -142,7 +142,7 @@ export interface Meta2dStore {
   emitter: Emitter;
   dpiRatio?: number;
   clipboard?: Meta2dClipboard;
-  // patchFlagsBackground?: boolean; // 是否需要重绘背景，包含网格
+  patchFlagsBackground?: boolean; // 是否需要绘制底层图片   是否需要重绘背景，包含网格
   patchFlagsTop?: boolean; // 是否需要重绘标尺
   bkImg?: HTMLImageElement;
   // 测试使用

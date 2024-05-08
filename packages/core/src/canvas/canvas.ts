@@ -86,6 +86,7 @@ import {
   rectToPoints,
   resizeRect,
   translateRect,
+  pointInPolygon
 } from '../rect';
 import {
   EditAction,
@@ -778,7 +779,7 @@ export class Canvas {
         if (vRect && this.activeRect.y + y < vRect.y) {
           y = vRect.y - this.activeRect.y;
         }
-        
+
         if (
           this.store.activeAnchor &&
           this.store.active &&
@@ -806,7 +807,7 @@ export class Canvas {
           x = 10;
         }
         x = x * this.store.data.scale;
-        
+
         if (
           this.store.activeAnchor &&
           this.store.active &&
@@ -929,7 +930,7 @@ export class Canvas {
             this.drawingLineName = this.store.options.drawingLineName;
           }
         }
-        if (!this.store.data.locked && (e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard || 
+        if (!this.store.data.locked && (e.ctrlKey || e.metaKey) && (this.store.options.disableClipboard ||
           (!this.store.options.disableClipboard && e.altKey)) //alt按下，paste事件无效
         ) {
           this.paste();
@@ -978,9 +979,6 @@ export class Canvas {
               pen.close = !pen.close;
               this.store.path2dMap.set(pen, globalStore.path2dDraws.line(pen));
               getLineLength(pen);
-            }else{
-              //图元进入编辑模式
-              pen.calculative.focus = !pen.calculative.focus;
             }
           });
           this.render();
@@ -1041,19 +1039,19 @@ export class Canvas {
       case '[':
         //下一层
         this.parent.down();
-        break;  
+        break;
       case ']':
         //上一层
         this.parent.up();
-        break;  
+        break;
       case '{':
         // 置底
         this.parent.bottom();
-        break;  
+        break;
       case '}':
         //置顶
         this.parent.top();
-        break;  
+        break;
     }
 
     this.render(false);
@@ -2007,6 +2005,9 @@ export class Canvas {
         if (!this.drawingLineName && !this.movingAnchor) {
           // 在锚点上开始连线
           if (this.hoverType === HoverType.NodeAnchor) {
+            if(!this.store.hoverAnchor){
+              return;
+            }
             this.drawingLineName = this.store.options.drawingLineName;
             const pt: Point = {
               id: s8(),
@@ -2062,7 +2063,7 @@ export class Canvas {
           // Move line anchor
           if (this.hoverType === HoverType.LineAnchor) {
             if (
-              (this.dockInAnchor(e) || this.store.active[0].lineName === 'line') &&
+              (this.dockInAnchor(e) || this.store.active[0]?.lineName === 'line') &&
               !this.store.options.disableDock &&
               !this.store.options.disableLineDock
             ) {
@@ -2122,12 +2123,8 @@ export class Canvas {
           }
           if (this.store.active.length === 1) {
             const activePen = this.store.active[0];
-            if (activePen.locked === undefined || activePen.locked < LockState.DisableMove) {
+            if (activePen.locked < LockState.DisableMove) {
               activePen?.onMouseMove?.(activePen, this.mousePos);
-            }
-            if(activePen.calculative.focus){
-              //执行图元的操作
-              return;
             }
           }
           this.movePens(e);
@@ -2260,16 +2257,11 @@ export class Canvas {
     }
 
     if (this.mouseRight === MouseRight.Down) {
-      if(this.store.hover&&this.store.hover.calculative.focus){
-        this.store.hover.onContextmenu &&
-        this.store.hover.onContextmenu(this.store.hover, e);
-      }else{
-        this.store.emitter.emit('contextmenu', {
-          e,
-          clientRect: this.clientRect,
-          pen: this.store.hover,
-        });
-      }
+      this.store.emitter.emit('contextmenu', {
+        e,
+        clientRect: this.clientRect,
+        pen: this.store.hover,
+      });
     }
     this.mouseRight = MouseRight.None;
 
@@ -2582,6 +2574,14 @@ export class Canvas {
         },
       ],
     });
+  }
+
+  clearRuleLines() {
+    this.delete(this.ruleLines);
+  }
+
+  get ruleLines (){
+    return this.store.data.pens.filter(p =>p.isRuleLine);
   }
   /**
    * @description 调整pen的坐标，让pen按照网格自动对齐
@@ -3175,6 +3175,12 @@ export class Canvas {
           isIn = pointInRect(pt, pen.calculative.worldRect);
         }
         if (isIn) {
+          if(pen.type === PenType.Node && pen.name==='line'){
+            let pIn =  pointInPolygon(pt,pen.calculative.worldAnchors);
+            if(!pIn){
+              continue;
+            }
+          }
           if (!this.store.data.locked && !pen.locked) {
             if (this.hotkeyType === HotkeyType.AddAnchor) {
               this.externalElements.style.cursor = 'pointer';
@@ -3367,6 +3373,9 @@ export class Canvas {
               this.store.hover.calculative.worldAnchors.find(
                 (a) => a.id === anchor.anchorId
               );
+            if (!this.store.hoverAnchor) {
+              return HoverType.None;
+            }
             this.externalElements.style.cursor = 'crosshair';
             return HoverType.NodeAnchor;
           }
@@ -3578,7 +3587,7 @@ export class Canvas {
       this.doEditAction(action, true);
       step--;
     }
-    if (action.type == EditType.Add || action.type == EditType.Delete) {
+    if (action.type == EditType.Add || action.type == EditType.Delete || action.type == EditType.Update) {
       this.activeHistory();
     }
   }
@@ -3600,15 +3609,23 @@ export class Canvas {
       this.doEditAction(action, false);
       step--;
     }
-    if (action.type == EditType.Add || action.type == EditType.Delete) {
+    if (action.type == EditType.Add || action.type == EditType.Delete || action.type == EditType.Update) {
       this.activeHistory();
     }
   }
 
   activeHistory() {
+    let now = this.store.histories[this.store.historyIndex + 1];
+    const pens = [];
+    if(now && (now.type === EditType.Update)){
+      now.pens.forEach((pen) => {
+        pens.push(this.store.pens[pen.id]);
+      });
+      this.active(pens);
+      return;
+    }
     let before = this.store.histories[this.store.historyIndex];
-    if (before && before.type === EditType.Add) {
-      const pens = [];
+    if (before && (before.type === EditType.Add || before.type === EditType.Delete)) {
       before.pens.forEach((pen) => {
         pens.push(this.store.pens[pen.id]);
       });
@@ -6681,7 +6698,6 @@ export class Canvas {
 
       return;
     }
-
     //过滤table2图元
     if (!rect && !pen.dbInput) {
       this.setInputStyle(pen);
@@ -6692,7 +6708,7 @@ export class Canvas {
     const textRect = rect || pen.calculative.worldTextRect;
 
     //value和innerText问题
-    const preInputText = pen.calculative.tempText === undefined? (pen.text + '' || '') : pen.calculative.tempText;
+    const preInputText = pen.calculative.tempText || pen.text + '' || '';
     const textArr = preInputText.replace(/\x20/g, '&nbsp;').split(/[\s\n]/);
     const finalText = `${textArr.join('</div><div>')}</div>`
       .replace('</div>', '')
@@ -7045,6 +7061,11 @@ export class Canvas {
         }
       }
     };
+    this.inputDiv.onblur = ()=>{
+      setTimeout(()=> {
+        this.hideInput()
+      },300)
+    }
     this.inputDiv.oninput = (e: any) => {
       // //无文本时，光标确保居中
       if (navigator.userAgent.includes('Firefox')) {
@@ -7293,7 +7314,7 @@ export class Canvas {
       if (k.indexOf('.') === -1) {
         if (k === 'rotate') {
           oldRotate = pen.calculative.rotate || 0;
-        } else if (k === 'canvasLayer' || k === 'isBottom') {
+        } else if (k === 'canvasLayer' || k === 'isBottom' || k === 'showChild') {
           containIsBottom = true;
         } else if (k === 'image') {
           willRenderImage = true;
@@ -7409,9 +7430,10 @@ export class Canvas {
       } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
         this.canvasImage.init();
       }
-    } else {
-      this.initImageCanvas([pen]);
-    }
+    } 
+    // else {
+    //   this.initImageCanvas([pen]);
+    // }
     // if (data.template !== undefined || pen.template) {
     //   this.initTemplateCanvas([pen]);
     // }
@@ -7422,7 +7444,7 @@ export class Canvas {
       this.initTemplateCanvas([pen]);
     }
     if(data.zIndex !== undefined){
-      pen.calculative.singleton.div &&
+      pen.calculative.singleton?.div &&
       setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
@@ -7662,7 +7684,14 @@ export class Canvas {
   }
 
   activeToPng(padding: Padding = 2) {
-    const allPens = this.getAllByPens(this.store.active);
+    return this.pensToPng(this.store.active,padding);
+  }
+
+  pensToPng(pens:Pen[] = this.store.active,padding:Padding=2){
+    if(pens.length === 0){
+      return;
+    }
+    const allPens = this.getAllByPens(pens);
     let ids = allPens.map((pen) => pen.id);
     const rect = getRect(allPens);
     if (!isFinite(rect.width)) {

@@ -98,7 +98,7 @@ export class Meta2d {
       topic?: string;
       url?: string;
     }
-  ) => boolean;
+  ) => boolean | string;
   events: Record<number, (pen: Pen, e: Event) => void> = {};
   map: ViewMap;
   mapTimer: any;
@@ -282,7 +282,9 @@ export class Meta2d {
         const pens = e.params ? this.find(e.params) : this.find(pen.id);
         pens.forEach((pen: Pen) => {
           if (value.hasOwnProperty('visible')) {
-            this.setVisible(pen, value.visible);
+            if(pen.visible !== value.visible) {
+              this.setVisible(pen, value.visible);
+            }
           }
           this.setValue(
             { id: pen.id, ...value },
@@ -321,6 +323,16 @@ export class Meta2d {
     };
     this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
+        if(e.value){
+          let _pen = this.findOne((e.value as string));
+          if(!this.store.animates.has(_pen)){
+            return;
+          }
+        }else{
+          if(!this.store.animates.has(pen)){
+            return;
+          }
+        }
         this.stopAnimate((e.value as string) || [pen]);
         return;
       }
@@ -1034,11 +1046,11 @@ export class Meta2d {
     sessionStorage.removeItem('page');
     this.store.clipboard = undefined;
 
-    // 非必要，为的是 open 时重绘 背景与网格
-    // this.store.patchFlagsBackground = true;
+  
     if (!this.store.sameTemplate) {
       this.canvas.canvasTemplate.bgPatchFlags = true;
     }
+    this.store.patchFlagsBackground = true;
     this.store.patchFlagsTop = true;
     this.setBackgroundImage(undefined);
     render && this.render();
@@ -1147,6 +1159,9 @@ export class Meta2d {
     } else {
       pens = idOrTagOrPens;
     }
+    if(!pens.length){
+      return;
+    }
     pens.forEach((pen) => {
       if (pen.calculative.pause) {
         const d = Date.now() - pen.calculative.pause;
@@ -1205,8 +1220,9 @@ export class Meta2d {
         }
       }
     });
-    this.canvas.canvasImage.init();
-    this.canvas.canvasImageBottom.init();
+    // this.canvas.canvasImage.init();
+    // this.canvas.canvasImageBottom.init();
+    this.initImageCanvas(pens);
     this.canvas.animate();
   }
 
@@ -1466,6 +1482,27 @@ export class Meta2d {
       this.store.histories[this.store.histories.length - 1].step = step;
     }
     this.inactive();
+  }
+
+  appendChild(pens: Pen[] = this.store.active){
+    if(!pens){
+      return;
+    }
+    if(pens.length < 2){
+      return;
+    }
+    const pIdx = pens.findIndex(pen=>pen.name === 'combine'&&pen.showChild !== undefined);
+    if(pIdx !== -1){
+      let parent = pens[pIdx];
+      this.pushChildren(parent,[...pens.slice(0, pIdx), ...pens.slice(pIdx + 1)]);
+      pens.forEach((pen) => {
+        calcInView(pen, true);
+      });
+      this.initImageCanvas(pens);
+      this.render();
+    }else{
+      console.warn('Invalid operation!');
+    }
   }
 
   isCombine(pen: Pen) {
@@ -2027,23 +2064,27 @@ export class Meta2d {
     if (req.url) {
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
-          let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
-          if (keys) {
-            req.headers[i] = req.headers[i].replace(
-              `\${${keys[0]}}`,
-              this.getDynamicParam(keys[0])
-            );
+          if(typeof req.headers[i] === 'string'){
+            let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            if (keys) {
+              req.headers[i] = req.headers[i].replace(
+                `\${${keys[0]}}`,
+                this.getDynamicParam(keys[0])
+              );
+            }
           }
         }
       }
       if (typeof req.body === 'object') {
         for (let i in req.body) {
-          let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
-          if (keys) {
-            req.body[i] = req.body[i].replace(
-              `\${${keys[0]}}`,
-              this.getDynamicParam(keys[0])
-            );
+          if(typeof req.body[i] === 'string'){
+            let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
+            if (keys) {
+              req.body[i] = req.body[i].replace(
+                `\${${keys[0]}}`,
+                this.getDynamicParam(keys[0])
+              );
+            }
           }
         }
       }
@@ -2085,25 +2126,29 @@ export class Meta2d {
     context?: { type?: string; topic?: string; url?: string }
   ) {
     this.store.emitter.emit('socket', { message, context });
-
+    let _message:any = message;
     if (
-      this.socketFn &&
-      !this.socketFn(message, {
+      this.socketFn
+    ) {
+      _message =  this.socketFn(message, {
         meta2d: this,
         type: context.type,
         topic: context.topic,
         url: context.url,
       })
-    ) {
-      return;
+      if(!_message){
+        return;
+      }
     }
-
+    if(_message===true){
+      _message = message;
+    }
     let data: any;
-    if (message.constructor === Object || message.constructor === Array) {
-      data = message;
-    } else if (typeof message === 'string') {
+    if (_message.constructor === Object || _message.constructor === Array) {
+      data = _message;
+    } else if (typeof _message === 'string') {
       try {
-        data = JSON.parse(message);
+        data = JSON.parse(_message);
       } catch (error) {
         console.warn('Invalid socket data:', data, error);
       }
@@ -2351,6 +2396,10 @@ export class Meta2d {
     this.canvas.clearDropdownList();
   }
 
+  clearRuleLines(){
+    this.canvas.clearRuleLines();
+  }
+
   private onEvent = (eventName: string, e: any) => {
     switch (eventName) {
       case 'add':
@@ -2414,13 +2463,35 @@ export class Meta2d {
       case 'resizePens':
         this.onSizeUpdate();
         break;
+      case 'navigator':
+        if(!this.store.data.id){
+          console.warn('请先保存当前图纸');
+        }
+        this.navigatorTo(e.params);
+        break;
     }
 
     if (this.store.messageEvents[eventName]) {
       this.store.messageEvents[eventName].forEach((item) => {
-        item.event.actions.forEach((action) => {
-          this.events[action.action](item.pen, action);
-        });
+        let flag = false;
+        if (item.event.conditions && item.event.conditions.length) {
+          if (item.event.conditionType === 'and') {
+            flag = item.event.conditions.every((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          } else if (item.event.conditionType === 'or') {
+            flag = item.event.conditions.some((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          }
+        } else {
+          flag = true;
+        }
+        if (flag) {
+          item.event.actions.forEach((action) => {
+            this.events[action.action](item.pen, action);
+          });
+        }
       });
     }
   };
@@ -2771,6 +2842,10 @@ export class Meta2d {
 
   activeToPng(padding?: Padding) {
     return this.canvas.activeToPng(padding);
+  }
+
+  pensToPng(pens: Pen[] = this.store.active, padding?: Padding) {
+    return this.canvas.pensToPng(pens, padding);
   }
 
   /**
@@ -3294,6 +3369,8 @@ export class Meta2d {
     for (const item of pens) {
       this.alignPen(align, item, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3316,6 +3393,9 @@ export class Meta2d {
     for (const item of pens) {
       this.alignPen(align, item, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
+    this.render();
     this.pushHistory({
       type: EditType.Update,
       initPens,
@@ -3336,6 +3416,8 @@ export class Meta2d {
       const pen = pens[i];
       this.alignPen(align, pen, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3357,6 +3439,8 @@ export class Meta2d {
       const pen = pens[i];
       this.alignPen(align, pen, rect);
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3444,6 +3528,8 @@ export class Meta2d {
         { render: false, doEvent: false }
       );
     }
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,
@@ -3508,6 +3594,8 @@ export class Meta2d {
         currentY += maxHeight + space;
       }
     });
+    this.initImageCanvas(pens);
+    this.initTemplateCanvas(pens);
     this.render();
     this.pushHistory({
       type: EditType.Update,

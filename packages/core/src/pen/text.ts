@@ -333,9 +333,9 @@ export function calcTextAutoWidth(pen: Pen) {
     pen.y = pen.y - (textHeight - pen.height) / 2;
   }
   // if (textHeight > pen.height) {
-  pen.height = textHeight;
+  pen.height = textHeight + 2;
   // }
-  pen.width = textWidth;
+  pen.width = textWidth + 2; //误差
   pen.calculative.canvas.updatePenRect(pen);
   pen.calculative.canvas.calcActiveRect();
 }

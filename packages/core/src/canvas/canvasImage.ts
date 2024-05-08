@@ -85,8 +85,11 @@ export class CanvasImage {
         pen.calculative.imageDrawed = false;
       }
     }
-    // this.store.patchFlagsBackground = true;
-    this.store.patchFlagsTop = true;
+    if(this.isBottom){
+      this.store.patchFlagsBackground = true;
+    }else{
+      this.store.patchFlagsTop = true;
+    }
   }
 
   clear() {
@@ -134,7 +137,7 @@ export class CanvasImage {
       }
     }
 
-    // const patchFlagsBackground = this.store.patchFlagsBackground;
+    const patchFlagsBackground = this.store.patchFlagsBackground;
     // if (patchFlagsBackground && this.isBottom) {
     //   const ctx = this.otherOffsreen.getContext('2d');
     //   ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -269,13 +272,13 @@ export class CanvasImage {
     if (
       patchFlags ||
       patchFlagsAnimate ||
-      // (patchFlagsBackground && this.isBottom) ||
-      this.isBottom ||
+      (patchFlagsBackground && this.isBottom) ||
+      // this.isBottom ||
       (patchFlagsTop && !this.isBottom)
     ) {
       const ctxCanvas = this.canvas.getContext('2d');
       ctxCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      // if (this.isBottom) {
+      if (this.isBottom) {
       //   ctxCanvas.drawImage(
       //     this.otherOffsreen,
       //     0,
@@ -283,8 +286,8 @@ export class CanvasImage {
       //     this.canvas.width,
       //     this.canvas.height
       //   );
-      //   this.store.patchFlagsBackground = false;
-      // }
+        this.store.patchFlagsBackground = false;
+      }
       ctxCanvas.drawImage(
         this.offscreen,
         0,

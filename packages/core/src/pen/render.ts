@@ -1345,7 +1345,7 @@ export function renderPen(
     let back: string | CanvasGradient | CanvasPattern;
     if (pen.calculative.bkType === Gradient.Linear) {
       if (pen.calculative.gradientColors) {
-        if (!pen.type) {
+        // if (!pen.type) {
           //连线不考虑渐进背景
           if (pen.calculative.gradient) {
             //位置变化/放大缩小操作不会触发重新计算
@@ -1354,7 +1354,7 @@ export function renderPen(
             back = getBkGradient(ctx, pen);
             pen.calculative.gradient = back;
           }
-        }
+        // }
       } else {
         back = drawBkLinearGradient(ctx, pen);
       }
@@ -1403,6 +1403,7 @@ export function renderPen(
     ctxDrawLinearGradientPath(ctx, pen);
     ctxDrawLinePath(true, ctx, pen, store);
   } else {
+    console.log("进入",fill,ctx.fillStyle);
     ctxDrawPath(true, ctx, pen, store, fill);
 
     ctxDrawCanvas(ctx, pen);
@@ -1678,6 +1679,7 @@ export function ctxDrawPath(
          fill && ctx.fill(path);
         }
       }else{
+        //svgPath
         fill && ctx.fill(path);
       }
     } else {
@@ -1735,7 +1737,9 @@ export function ctxDrawPath(
 
     if (pen.calculative.lineWidth) {
       if (path instanceof Path2D) {
-        ctx.stroke(path);
+        if(store.options.svgPathStroke || pen.name!=='svgPath'){
+          ctx.stroke(path);
+        }
       } else {
         path(pen, ctx);
         ctx.stroke();
@@ -1770,7 +1774,7 @@ export function ctxDrawPath(
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
 
-      if (pen.calculative.active && !pen.calculative.pencil) {
+      if (pen.calculative.active && !pen.calculative.pencil && !store.options.disableAnchor && !store.data.locked) {
         renderLineAnchors(ctx, pen);
       }
     }
@@ -1827,7 +1831,7 @@ export function ctxDrawLinePath(
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
       //TODO 锚点处渐进色的过渡
-      if (pen.calculative.active && !pen.calculative.pencil) {
+      if (pen.calculative.active && !pen.calculative.pencil && !store.options.disableAnchor && !store.data.locked) {
         renderLineAnchors(ctx, pen);
       }
     }
