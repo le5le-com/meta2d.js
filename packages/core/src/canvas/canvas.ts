@@ -978,6 +978,9 @@ export class Canvas {
               pen.close = !pen.close;
               this.store.path2dMap.set(pen, globalStore.path2dDraws.line(pen));
               getLineLength(pen);
+            }else{
+              //图元进入编辑模式
+              pen.calculative.focus = !pen.calculative.focus;
             }
           });
           this.render();
@@ -2119,8 +2122,12 @@ export class Canvas {
           }
           if (this.store.active.length === 1) {
             const activePen = this.store.active[0];
-            if (activePen.locked < LockState.DisableMove) {
+            if (activePen.locked === undefined || activePen.locked < LockState.DisableMove) {
               activePen?.onMouseMove?.(activePen, this.mousePos);
+            }
+            if(activePen.calculative.focus){
+              //执行图元的操作
+              return;
             }
           }
           this.movePens(e);
@@ -2253,11 +2260,16 @@ export class Canvas {
     }
 
     if (this.mouseRight === MouseRight.Down) {
-      this.store.emitter.emit('contextmenu', {
-        e,
-        clientRect: this.clientRect,
-        pen: this.store.hover,
-      });
+      if(this.store.hover&&this.store.hover.calculative.focus){
+        this.store.hover.onContextmenu &&
+        this.store.hover.onContextmenu(this.store.hover, e);
+      }else{
+        this.store.emitter.emit('contextmenu', {
+          e,
+          clientRect: this.clientRect,
+          pen: this.store.hover,
+        });
+      }
     }
     this.mouseRight = MouseRight.None;
 
@@ -6669,6 +6681,7 @@ export class Canvas {
 
       return;
     }
+
     //过滤table2图元
     if (!rect && !pen.dbInput) {
       this.setInputStyle(pen);
@@ -6679,7 +6692,7 @@ export class Canvas {
     const textRect = rect || pen.calculative.worldTextRect;
 
     //value和innerText问题
-    const preInputText = pen.calculative.tempText || pen.text + '' || '';
+    const preInputText = pen.calculative.tempText === undefined? (pen.text + '' || '') : pen.calculative.tempText;
     const textArr = preInputText.replace(/\x20/g, '&nbsp;').split(/[\s\n]/);
     const finalText = `${textArr.join('</div><div>')}</div>`
       .replace('</div>', '')

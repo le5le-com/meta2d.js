@@ -6,6 +6,10 @@ import { calcRightBottom, Rect } from '@meta2d/core';
 export interface Pos {
   row: number;
   col: number;
+  lineRow?: number;
+  lineCol?: number;
+  allRow?:number;
+  allCol?:number;
 }
 
 export enum ReplaceMode {
