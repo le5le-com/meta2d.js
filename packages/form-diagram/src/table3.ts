@@ -1933,7 +1933,7 @@ function scroll(pen: TablePen, offset: number) {
   }
   //子节点
   pen.children?.forEach((item) => {
-    const _pen: TablePen = pen.calculative.canvas.store.pens[item];
+    const _pen: any = pen.calculative.canvas.store.pens[item];
     changeChildVisible(pen, _pen);
   });
   pen.calculative.canvas.render();
@@ -2127,7 +2127,7 @@ function createInterval(pen: TablePen) {
 function initChildrenStyle(pen: TablePen) {
   pen.children?.forEach((item) => {
     const rowHeight = pen.rowHeight; //*scale;
-    const _pen: TablePen = pen.calculative.canvas.store.pens[item];
+    const _pen: any = pen.calculative.canvas.store.pens[item];
     if (!_pen) {
       return;
     }
