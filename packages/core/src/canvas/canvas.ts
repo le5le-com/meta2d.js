@@ -5395,8 +5395,16 @@ export class Canvas {
           offsetY = pt.y - this.store.activeAnchor.y;
         }
       } else {
-        offsetX = pt.x - this.store.activeAnchor.x;
-        offsetY = pt.y - this.store.activeAnchor.y;
+        if(!keyOptions.ctrlKey && keyOptions.shiftKey){
+          offsetX = pt.x - this.store.activeAnchor.x;
+          offsetY = 0;
+        }else if(keyOptions.ctrlKey && !keyOptions.shiftKey){
+          offsetX = 0;
+          offsetY = pt.y - this.store.activeAnchor.y;
+        }else{
+          offsetX = pt.x - this.store.activeAnchor.x;
+          offsetY = pt.y - this.store.activeAnchor.y;
+        }
       }
       translatePoint(this.store.activeAnchor, offsetX, offsetY);
       if (
