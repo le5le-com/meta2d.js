@@ -137,6 +137,7 @@ import { Dialog } from '../dialog';
 import { setter } from '../utils/object';
 import { Title } from '../title';
 import { CanvasTemplate } from './canvasTemplate';
+import { getLinePoints } from '../diagrams/line';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -977,6 +978,9 @@ export class Canvas {
           this.store.active.forEach((pen) => {
             if (pen.type) {
               pen.close = !pen.close;
+              if(pen.close){
+                getLinePoints(pen);
+              }
               this.store.path2dMap.set(pen, globalStore.path2dDraws.line(pen));
               getLineLength(pen);
             }else{
