@@ -157,7 +157,9 @@ function lerp(pt1: Point, pt2: Point, t: number) {
 export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
   let from = pen.calculative.worldAnchors[index];
   let to = pen.calculative.worldAnchors[index + 1];
-
+  if(!to && pen.close){
+    to = pen.calculative.worldAnchors[0];
+  }
   const t = pt.step;
   let anchor: Point;
   if (from.next && to.prev) {

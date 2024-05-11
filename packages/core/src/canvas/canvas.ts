@@ -137,6 +137,7 @@ import { Dialog } from '../dialog';
 import { setter } from '../utils/object';
 import { Title } from '../title';
 import { CanvasTemplate } from './canvasTemplate';
+import { getLinePoints } from '../diagrams/line';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -977,6 +978,9 @@ export class Canvas {
           this.store.active.forEach((pen) => {
             if (pen.type) {
               pen.close = !pen.close;
+              if(pen.close){
+                getLinePoints(pen);
+              }
               this.store.path2dMap.set(pen, globalStore.path2dDraws.line(pen));
               getLineLength(pen);
             }else{
@@ -2135,6 +2139,8 @@ export class Canvas {
             }
           }
           this.movePens(e);
+          //图元是否进入容器图元
+          this.getContainerHover(e);
           return;
         }
       } else if (this.pencil) {
@@ -2969,6 +2975,32 @@ export class Canvas {
     this.store.hover = null;
     this.store.hoverAnchor = null;
   }
+
+  private getContainerHover = (pt: Point) => {
+    if (this.dragRect) {
+      return;
+    }
+    const containerPens:Pen[] = this.store.data.pens.filter((pen)=>pen.container||this.store.options.containerShapes?.includes(pen.name));
+    if(containerPens.length){
+      for(let i=containerPens.length-1;i>=0;--i){
+        const pen = containerPens[i];
+        if (
+          pen.visible == false ||
+          pen.calculative.inView == false ||
+          pen.locked === LockState.Disable ||
+          pen.calculative.active
+        ) {
+          continue;
+        }
+
+        if (
+          pointInRect(pt, pen.calculative.worldRect)
+        ) {
+          pen?.onMouseMove?.(pen, pt);
+        }
+      }
+    }
+  };
 
   private getHover = (pt: Point) => {
     if (this.dragRect) {
@@ -5395,8 +5427,16 @@ export class Canvas {
           offsetY = pt.y - this.store.activeAnchor.y;
         }
       } else {
-        offsetX = pt.x - this.store.activeAnchor.x;
-        offsetY = pt.y - this.store.activeAnchor.y;
+        if(!keyOptions.ctrlKey && keyOptions.shiftKey){
+          offsetX = pt.x - this.store.activeAnchor.x;
+          offsetY = 0;
+        }else if(keyOptions.ctrlKey && !keyOptions.shiftKey){
+          offsetX = 0;
+          offsetY = pt.y - this.store.activeAnchor.y;
+        }else{
+          offsetX = pt.x - this.store.activeAnchor.x;
+          offsetY = pt.y - this.store.activeAnchor.y;
+        }
       }
       translatePoint(this.store.activeAnchor, offsetX, offsetY);
       if (

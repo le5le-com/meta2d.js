@@ -94,6 +94,7 @@ export interface Options {
   polylineSpace?: number;
   defaultFormat?: Pen; //默认格式刷
   domShapes?: string[]; //扩展的dom节点
+  containerShapes?: string[]; //容器节点
   textFlip?: boolean; //文字镜像
   textRotate?: boolean; //文字旋转
   cacheLength?: number; //缓存数据长度
@@ -173,6 +174,7 @@ export const defaultOptions: Options = {
   cdn: '',
   polylineSpace: 10,
   domShapes: [],
+  containerShapes:['table'],
   textFlip: true,
   textRotate: true,
   unavailableKeys: [],

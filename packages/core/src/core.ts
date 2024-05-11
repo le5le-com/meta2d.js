@@ -4452,6 +4452,8 @@ export class Meta2d {
         child && this.setVisible(child, visible, false);
       }
     }
+    let allPens = getAllChildren(pen,this.store);
+    this.initImageCanvas(allPens);
     render && this.render();
   }
 

@@ -117,7 +117,7 @@ export function table3(ctx: CanvasRenderingContext2D, pen: TablePen) {
     pen.onResize = onResize;
     pen.onMove = onMove;
   }
-  console.time('table3');
+  // console.time('table3');
   if (pen.data.length !== pen.rowPos.length) {
     pen.initWorldRect = null;
     pen.calculative.isUpdateData = true;
@@ -163,7 +163,7 @@ export function table3(ctx: CanvasRenderingContext2D, pen: TablePen) {
   drawActiceCol(ctx, pen);
 
   pen.isFirstTime = false;
-  console.timeEnd('table3');
+  // console.timeEnd('table3');
 }
 
 function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
@@ -1033,7 +1033,6 @@ function onInput(pen: TablePen, text: string) {
 }
 
 function onMouseMove(pen: TablePen, e: Point) {
-  console.log(1);
   if (pen.timer) {
     pen.calculative.isHover = false;
     clearTimeout(pen.timer);
@@ -1042,7 +1041,6 @@ function onMouseMove(pen: TablePen, e: Point) {
     pen.calculative.isHover = true;
     pen.calculative.canvas.render();
   }, 500);
-  console.log(2);
 
   if (
     pen.calculative.focus && pen.calculative.canvas.externalElements.style.cursor.indexOf('resize') !==
@@ -1137,7 +1135,6 @@ function onMouseMove(pen: TablePen, e: Point) {
     pen.calculative.canvas.render();
     return;
   }
-  console.log(4);
 
   if (pen.calculative.focus&& pen.calculative.canvas.mouseDown) {
     if (pen.calculative.activeCell.row <= 0) {
@@ -1153,11 +1150,9 @@ function onMouseMove(pen: TablePen, e: Point) {
     }
     return;
   }
-  console.log(3);
 
   pen.calculative.hoverCell = getCellIndex(pen, e);
   if (pen.calculative.focus&&!pen.locked && !pen.calculative.canvas.store.data.locked) {
-    console.log("进入")
     if (pen.calculative.hoverCell.lineCol !== undefined) {
       pen.calculative.canvas.externalElements.style.cursor = 'col-resize';
       // pen.calculative.focus = true;
@@ -1630,7 +1625,11 @@ function getCellRect(pen: TablePen, rowIndex: number, colIndex: number) {
   if (colIndex > -1) {
     ex = pen.colPos[colIndex] * scaleX;
   } else if (colIndex === -1) {
-    ex = rowHeadersWidth * scaleX;
+    if(pen.rowHeaders){
+      ex = rowHeadersWidth * scaleX;
+    }else{
+      ex =0;
+    }
   }
   if (colIndex > 0) {
     x = pen.colPos[colIndex - 1] * scaleX;
@@ -1640,7 +1639,11 @@ function getCellRect(pen: TablePen, rowIndex: number, colIndex: number) {
   }
   if (cells?.length) {
     if (cells[0].col < 1) {
-      x = rowHeadersWidth * scaleX;
+      if(pen.rowHeaders){
+        x = rowHeadersWidth * scaleX;
+      }else{
+        x = 0;
+      }
     } else {
       x = pen.colPos[cells[0].col - 1] * scaleX;
     }
@@ -1933,7 +1936,7 @@ function scroll(pen: TablePen, offset: number) {
   }
   //子节点
   pen.children?.forEach((item) => {
-    const _pen: TablePen = pen.calculative.canvas.store.pens[item];
+    const _pen: any = pen.calculative.canvas.store.pens[item];
     changeChildVisible(pen, _pen);
   });
   pen.calculative.canvas.render();
@@ -2127,7 +2130,7 @@ function createInterval(pen: TablePen) {
 function initChildrenStyle(pen: TablePen) {
   pen.children?.forEach((item) => {
     const rowHeight = pen.rowHeight; //*scale;
-    const _pen: TablePen = pen.calculative.canvas.store.pens[item];
+    const _pen: any = pen.calculative.canvas.store.pens[item];
     if (!_pen) {
       return;
     }
@@ -2625,6 +2628,9 @@ export class TableContextMenu {
             this.pen.mergeCells.splice(i, 1);
             i--;
           }
+        }
+        if(!this.pen.mergeCells){
+          this.pen.mergeCells = [];
         }
         this.pen.mergeCells.push(deepClone(mergeCell));
         this.pen.calculative.canvas.render();
