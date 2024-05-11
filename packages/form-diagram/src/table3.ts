@@ -1625,7 +1625,11 @@ function getCellRect(pen: TablePen, rowIndex: number, colIndex: number) {
   if (colIndex > -1) {
     ex = pen.colPos[colIndex] * scaleX;
   } else if (colIndex === -1) {
-    ex = rowHeadersWidth * scaleX;
+    if(pen.rowHeaders){
+      ex = rowHeadersWidth * scaleX;
+    }else{
+      ex =0;
+    }
   }
   if (colIndex > 0) {
     x = pen.colPos[colIndex - 1] * scaleX;
@@ -1635,7 +1639,11 @@ function getCellRect(pen: TablePen, rowIndex: number, colIndex: number) {
   }
   if (cells?.length) {
     if (cells[0].col < 1) {
-      x = rowHeadersWidth * scaleX;
+      if(pen.rowHeaders){
+        x = rowHeadersWidth * scaleX;
+      }else{
+        x = 0;
+      }
     } else {
       x = pen.colPos[cells[0].col - 1] * scaleX;
     }
@@ -2620,6 +2628,9 @@ export class TableContextMenu {
             this.pen.mergeCells.splice(i, 1);
             i--;
           }
+        }
+        if(!this.pen.mergeCells){
+          this.pen.mergeCells = [];
         }
         this.pen.mergeCells.push(deepClone(mergeCell));
         this.pen.calculative.canvas.render();
