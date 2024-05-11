@@ -990,6 +990,9 @@ function onShowInput(pen: any, e: Point) {
   if (!pen.calculative.hoverCell) {
     return;
   }
+  if(!pen.calculative.hoverCell.row||!pen.calculative.hoverCell.col){
+    return;
+  }
 
   const { value: cell, mergeCell } = getCell(
     pen,
@@ -2487,13 +2490,26 @@ export class TableContextMenu {
     for (let i = 0; i < this.pen.colPos.length; i++) {
       row.push('');
     }
+    //数据
     this.pen.data.splice(rowIndex, 0, row);
-    this.pen.rowPos.splice(rowIndex, 0, this.pen.rowPos[rowIndex]);
+    //行位置
+    this.pen.rowPos.splice(rowIndex, 0, this.pen.rowPos[rowIndex-1]+this.pen.rowHeight);
     for (let i = rowIndex + 1; i < this.pen.rowPos.length; i++) {
       this.pen.rowPos[i] += this.pen.rowHeight;
     }
-    this.pen.calculative.maxOffsetY +=
-      this.pen.rowHeight * this.pen.calculative.canvas.store.data.scale;
+    if(this.pen.maxNum){
+      this.pen.calculative.maxOffsetY +=
+        this.pen.rowHeight * this.pen.calculative.canvas.store.data.scale;
+    }else{
+      this.pen.tableHeight += this.pen.rowHeight;
+      this.pen.height += this.pen.rowHeight;
+      this.pen.calculative.worldRect.height += this.pen.rowHeight;
+      this.pen.calculative.worldRect.center.y += this.pen.rowHeight / 2;
+      this.pen.calculative.worldRect.ey += this.pen.rowHeight;
+      this.pen.initWorldRect.height += this.pen.rowHeight;
+      this.pen.calculative.endIndex+=1;
+    }
+
     this.pen.calculative.activeRow += 1;
     //有合并单元格情况
     if (this.pen.mergeCells?.length) {
@@ -2519,14 +2535,27 @@ export class TableContextMenu {
     }
     this.pen.data.splice(rowIndex + 1, 0, row);
     //TODO initRect?
-    this.pen.rowPos.splice(rowIndex + 1, 0, this.pen.rowPos[rowIndex + 1]);
+    let pos = this.pen.rowPos[rowIndex + 1];
+    if(rowIndex === this.pen.rowPos.length - 1){
+      pos = this.pen.rowPos[rowIndex] + this.pen.rowHeight;
+    }
+    this.pen.rowPos.splice(rowIndex + 1, 0, pos);
     for (let i = rowIndex + 2; i < this.pen.rowPos.length; i++) {
       this.pen.rowPos[i] += this.pen.rowHeight;
     }
     // this.pen.tableHeight += this.pen.rowHeight;
-    this.pen.calculative.maxOffsetY +=
-      this.pen.rowHeight * this.pen.calculative.canvas.store.data.scale;
-
+    if(this.pen.maxNum){
+      this.pen.calculative.maxOffsetY +=
+        this.pen.rowHeight * this.pen.calculative.canvas.store.data.scale;
+    }else{
+      this.pen.tableHeight += this.pen.rowHeight;
+      this.pen.height += this.pen.rowHeight;
+      this.pen.calculative.worldRect.height += this.pen.rowHeight;
+      this.pen.calculative.worldRect.center.y += this.pen.rowHeight / 2;
+      this.pen.calculative.worldRect.ey += this.pen.rowHeight;
+      this.pen.initWorldRect.height += this.pen.rowHeight;
+      this.pen.calculative.endIndex+=1;
+    }
     //有合并单元格情况
     if (this.pen.mergeCells?.length) {
       this.pen.mergeCells.forEach((item) => {
