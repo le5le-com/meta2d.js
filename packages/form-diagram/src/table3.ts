@@ -117,7 +117,7 @@ export function table3(ctx: CanvasRenderingContext2D, pen: TablePen) {
     pen.onResize = onResize;
     pen.onMove = onMove;
   }
-  console.time('table3');
+  // console.time('table3');
   if (pen.data.length !== pen.rowPos.length) {
     pen.initWorldRect = null;
     pen.calculative.isUpdateData = true;
@@ -163,7 +163,7 @@ export function table3(ctx: CanvasRenderingContext2D, pen: TablePen) {
   drawActiceCol(ctx, pen);
 
   pen.isFirstTime = false;
-  console.timeEnd('table3');
+  // console.timeEnd('table3');
 }
 
 function drawNote(ctx: CanvasRenderingContext2D, pen: any) {
@@ -1033,7 +1033,6 @@ function onInput(pen: TablePen, text: string) {
 }
 
 function onMouseMove(pen: TablePen, e: Point) {
-  console.log(1);
   if (pen.timer) {
     pen.calculative.isHover = false;
     clearTimeout(pen.timer);
@@ -1042,7 +1041,6 @@ function onMouseMove(pen: TablePen, e: Point) {
     pen.calculative.isHover = true;
     pen.calculative.canvas.render();
   }, 500);
-  console.log(2);
 
   if (
     pen.calculative.focus && pen.calculative.canvas.externalElements.style.cursor.indexOf('resize') !==
@@ -1137,7 +1135,6 @@ function onMouseMove(pen: TablePen, e: Point) {
     pen.calculative.canvas.render();
     return;
   }
-  console.log(4);
 
   if (pen.calculative.focus&& pen.calculative.canvas.mouseDown) {
     if (pen.calculative.activeCell.row <= 0) {
@@ -1153,11 +1150,9 @@ function onMouseMove(pen: TablePen, e: Point) {
     }
     return;
   }
-  console.log(3);
 
   pen.calculative.hoverCell = getCellIndex(pen, e);
   if (pen.calculative.focus&&!pen.locked && !pen.calculative.canvas.store.data.locked) {
-    console.log("进入")
     if (pen.calculative.hoverCell.lineCol !== undefined) {
       pen.calculative.canvas.externalElements.style.cursor = 'col-resize';
       // pen.calculative.focus = true;
