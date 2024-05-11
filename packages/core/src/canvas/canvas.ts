@@ -2139,6 +2139,8 @@ export class Canvas {
             }
           }
           this.movePens(e);
+          //图元是否进入容器图元
+          this.getContainerHover(e);
           return;
         }
       } else if (this.pencil) {
@@ -2973,6 +2975,32 @@ export class Canvas {
     this.store.hover = null;
     this.store.hoverAnchor = null;
   }
+
+  private getContainerHover = (pt: Point) => {
+    if (this.dragRect) {
+      return;
+    }
+    const containerPens:Pen[] = this.store.data.pens.filter((pen)=>pen.container||this.store.options.containerShapes?.includes(pen.name));
+    if(containerPens.length){
+      for(let i=containerPens.length-1;i>=0;--i){
+        const pen = containerPens[i];
+        if (
+          pen.visible == false ||
+          pen.calculative.inView == false ||
+          pen.locked === LockState.Disable ||
+          pen.calculative.active
+        ) {
+          continue;
+        }
+
+        if (
+          pointInRect(pt, pen.calculative.worldRect)
+        ) {
+          pen?.onMouseMove?.(pen, pt);
+        }
+      }
+    }
+  };
 
   private getHover = (pt: Point) => {
     if (this.dragRect) {

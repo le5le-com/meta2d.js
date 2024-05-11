@@ -357,6 +357,7 @@ export interface Pen extends Rect {
   apiHeaders?: any;
   apiBody?: any;
   apiEnable?: boolean;
+  container?:boolean; //是否是容器组件
   calculative?: {
     x?: number;
     y?: number;
