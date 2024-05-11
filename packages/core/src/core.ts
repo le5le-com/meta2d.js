@@ -3288,7 +3288,34 @@ export class Meta2d {
       pens,
     });
   }
+  /**
+   * 格式刷（样式相同，大小无需一致。）
+   * @param pens 画笔们
+   */
+  formatPainterByLast(pens: Pen[] = this.store.data.pens) {
+    const initPens = deepClone(pens); // 原 pens ，深拷贝一下
+    const firstPen = pens[pens.length - 1];
+    // 格式刷修改的属性，除开宽高
+    const attrs = {};
+    formatAttrs.forEach((attr) => {
+      attrs[attr] = firstPen[attr];
+    });
 
+    for (let i = 0; i < pens.length - 1; i++) {
+      const pen = pens[i];
+      this.setValue(
+        { id: pen.id, ...attrs },
+        { render: false, doEvent: false }
+      );
+    }
+    this.render();
+
+    this.pushHistory({
+      type: EditType.Update,
+      initPens,
+      pens,
+    });
+  }
   setFormatPainter() {
     const pens = this.store.active;
     const attrs = {};
