@@ -990,7 +990,7 @@ function onShowInput(pen: any, e: Point) {
   if (!pen.calculative.hoverCell) {
     return;
   }
-  if(!pen.calculative.hoverCell.row||!pen.calculative.hoverCell.col){
+  if(pen.calculative.hoverCell.row===undefined||pen.calculative.hoverCell.col===undefined){
     return;
   }
 
@@ -1350,7 +1350,9 @@ function getCellIndex(pen: TablePen, e: Point): Pos {
             pen.offsetY * pen.calculative.canvas.store.data.scale -
             lineGap
       ) {
-        pos.lineRow = i;
+        if (i < pen.rowPos.length) {
+          pos.lineRow = i;
+        }
       }
       // }
     }
