@@ -109,6 +109,8 @@ export interface Options {
   padding?: Padding; //大屏padding区域
   resizeMode?: boolean;
   svgPathStroke?:boolean; //svg path是否显示边框
+  disabledColor?: string;
+  disabledBackground?: string;
 }
 
 export const defaultOptions: Options = {

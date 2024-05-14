@@ -2428,29 +2428,29 @@ export class Meta2d {
         }
         break;
       case 'click':
-        e.pen && e.pen.onClick && e.pen.onClick(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        e.pen && e.pen.onClick && (!e.pen.disabled) && e.pen.onClick(e.pen, this.canvas.mousePos);
+        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;
       case 'contextmenu':
         e.pen &&
-          e.pen.onContextmenu &&
+          e.pen.onContextmenu && (!e.pen.disabled) &&
           e.pen.onContextmenu(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;
       case 'mousedown':
         e.pen &&
-          e.pen.onMouseDown &&
+          e.pen.onMouseDown && (!e.pen.disabled) &&
           e.pen.onMouseDown(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;
       case 'mouseup':
         e.pen &&
-          e.pen.onMouseUp &&
+          e.pen.onMouseUp && (!e.pen.disabled) && 
           e.pen.onMouseUp(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;
       case 'dblclick':
-        this.store.data.locked && e.pen && this.doEvent(e.pen, eventName);
+        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;
       case 'valueUpdate':
         this.store.data.locked && this.doEvent(e, eventName);

@@ -33,7 +33,7 @@ import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '@meta2d/core';
-import { rgba } from '../utils';
+import { pSBC, rgba } from '../utils';
 import { Canvas } from '../canvas';
 
 /**
@@ -925,7 +925,9 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.shadowOffsetY = 0;
   }
   let fill: string = undefined;
-  if (pen.calculative.hover) {
+  if(pen.calculative.disabled){
+    fill = pen.disabledTextColor || pen.disabledColor || pSBC(0.4, getTextColor(pen, store));
+  }else if (pen.calculative.hover) {
     fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
   } else if (pen.calculative.active) {
     fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
@@ -1288,7 +1290,10 @@ export function renderPen(
   // let setBack = true;
   let lineGradientFlag = false;
   let _stroke = undefined;
-  if (pen.calculative.hover) {
+  if(pen.calculative.disabled){
+    _stroke = pen.disabledColor || store.options.disabledColor || pSBC(0.4, pen.calculative.color || getGlobalColor(store));
+    fill = pen.disabledBackground || store.options.disabledBackground || pSBC(0.4, pen.calculative.background || store.data.penBackground);
+  } else if (pen.calculative.hover) {
     _stroke = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
     //  ctx.fillStyle = fill;

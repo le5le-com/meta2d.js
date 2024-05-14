@@ -3188,6 +3188,9 @@ export class Canvas {
           } else {
             this.externalElements.style.cursor = this.store.options.hoverCursor;
           }
+          if(pen.calculative.disabled){
+            this.externalElements.style.cursor = 'not-allowed';
+          }
 
           this.store.hover = pen;
           this.store.pointAt = pos.point;
@@ -3233,6 +3236,9 @@ export class Canvas {
             }
           } else {
             this.externalElements.style.cursor = this.store.options.hoverCursor;
+          }
+          if(pen.calculative.disabled){
+            this.externalElements.style.cursor = 'not-allowed';
           }
 
           this.store.hover = pen;
@@ -6733,7 +6739,8 @@ export class Canvas {
       !this.store.hover ||
       this.store.hover.locked ||
       this.store.hover.externElement ||
-      this.store.hover.disableInput
+      this.store.hover.disableInput ||
+      this.store.hover.disabled
     ) {
       return;
     }
