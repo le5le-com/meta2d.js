@@ -1,6 +1,7 @@
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 import { calcRightBottom, calcTextRect } from '@meta2d/core';
+import { pSBC } from '../../core';
 
 export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -23,7 +24,11 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   // calcBallRect(pen);
 
   // draw bar
-  ctx.fillStyle = pen.background;
+  let background = pen.background;
+  if(pen.disabled){
+    background = pen.disabledBackground || pSBC(0.6,background);
+  }
+  ctx.fillStyle = background;
   ctx.beginPath();
   let x = pen.calculative.worldRect.x + pen.calculative.barRect.x;
   let y = pen.calculative.worldRect.y + pen.calculative.barRect.y;
@@ -39,7 +44,11 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
 
   // draw active bar
   // ctx.fillStyle = pen.activeColor || data.activeColor || options.activeColor;
-  ctx.fillStyle = pen.activeColor || options.activeColor;
+  let activeColor =  pen.activeColor || options.activeColor;
+  if(pen.disabled){
+    activeColor = pen.disabledColor || pSBC(0.6,activeColor);
+  }
+  ctx.fillStyle = activeColor;
   ctx.beginPath();
   w = pen.calculative.ballRect.x;
   ctx.moveTo(x + r, y);
@@ -50,8 +59,8 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.fill();
 
   // draw ball
-  ctx.fillStyle = pen.btnBackground || '#000000';
-  ctx.strokeStyle = pen.activeColor || options.activeColor;
+  ctx.fillStyle = pen.btnBackground || '#fff';
+  ctx.strokeStyle = activeColor;
   ctx.lineWidth = 2;
   ctx.beginPath();
   x = pen.calculative.worldRect.x + pen.calculative.ballRect.x;
@@ -123,6 +132,9 @@ function calcBallRect(pen: formPen) {
 }
 
 function mouseDown(pen: formPen, e: Point) {
+  if(pen.disabled){
+    return;
+  }
   const pos = e.x - pen.calculative.worldRect.x;
   if (pos > pen.calculative.barRect.width) {
     return;
