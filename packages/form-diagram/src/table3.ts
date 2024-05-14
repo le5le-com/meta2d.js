@@ -76,14 +76,14 @@ export interface TablePen extends Pen {
     stap?: number;
     startIndex?: number; //可视范围开始行索引
     endIndex?: number; //可视范围结束行索引
-    mergeCell: MergeCell; //待合并的单元格
+    mergeCell?: MergeCell; //待合并的单元格
     // childrenArr?:Pen[][];//存储子节点
   } & Pen['calculative'];
   initWorldRect?: Rect;
   isFirstTime?: boolean;
   initScale?: number;
   timer?: any;
-  mergeCells: MergeCell[]; //记录table合并的单元格
+  mergeCells?: MergeCell[]; //记录table合并的单元格
 
   insertColLeft?: (index: number) => void;
   insertColRight?: (index: number) => void;
