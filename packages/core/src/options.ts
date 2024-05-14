@@ -29,6 +29,8 @@ export interface Options {
   textAlign?: TextAlign;
   textBaseline?: TextBaseline;
   rotateCursor?: string;
+  rightCursor?: string; // table 右箭 选中行
+  downCursor?: string; // table 下箭 选中列
   hoverCursor?: string;
   disableInput?: boolean;
   disableRotate?: boolean;
@@ -127,6 +129,8 @@ export const defaultOptions: Options = {
   dockPenColor: '#1890FF',
   dragColor: '#1890ff',
   rotateCursor: 'rotate.cur',
+  rightCursor: 'right.cur',
+  downCursor: 'down.cur',
   hoverCursor: 'pointer',
   minScale: 0.1,
   maxScale: 10,

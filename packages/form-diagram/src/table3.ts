@@ -1166,12 +1166,12 @@ function onMouseMove(pen: TablePen, e: Point) {
     }
     if (pen.calculative.hoverCell.allRow !== undefined) {
       pen.calculative.canvas.externalElements.style.cursor =
-        'url("right.png") 8 8, auto';
+        `url("${pen.calculative.canvas.store.options.rightCursor}") 8 8, auto`;
       // pen.calculative.focus = true;
     }
 
     if (pen.calculative.hoverCell.allCol !== undefined) {
-      pen.calculative.canvas.externalElements.style.cursor = `url("down.png") 8 8, auto`;
+      pen.calculative.canvas.externalElements.style.cursor = `url("${pen.calculative.canvas.store.options.downCursor}") 8 8, auto`;
       // pen.calculative.focus = true;
     }
   }
