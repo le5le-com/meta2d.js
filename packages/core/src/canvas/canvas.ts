@@ -6304,6 +6304,10 @@ export class Canvas {
       activePen.copyIndex = this.store.data.pens.findIndex(
         (pen) => pen.id === activePen.id
       );
+      if(activePen.pathId){
+        //复制svgpath
+        activePen.path = this.store.data.paths[activePen.pathId];
+      }
     });
     copyPens.sort((a: any, b: any) => {
       return a.copyIndex - b.copyIndex;
