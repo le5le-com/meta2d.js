@@ -2579,10 +2579,10 @@ export class Meta2d {
                   can = !valueInRange(+pen[key], value);
                   break;
                 case '[]':
-                  can = valueInArray(+pen[key], value);
+                  can = valueInArray(pen[key], value);
                   break;
                 case '![]':
-                  can = !valueInArray(+pen[key], value);
+                  can = !valueInArray(pen[key], value);
                   break;
               }
             }
@@ -2765,10 +2765,10 @@ export class Meta2d {
           can = !valueInRange(+compareValue, value);
           break;
         case '[]':
-          can = valueInArray(+compareValue, value);
+          can = valueInArray(compareValue, value);
           break;
         case '![]':
-          can = !valueInArray(+compareValue, value);
+          can = !valueInArray(compareValue, value);
           break;
       }
     }
