@@ -362,6 +362,7 @@ export interface Pen extends Rect {
   disabledColor?:string; //禁用颜色
   disabledBackground?:string; //禁用背景色
   disabledTextColor?:string; //禁用文字颜色
+  inputType?:string; //输入框类型
   calculative?: {
     x?: number;
     y?: number;

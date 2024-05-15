@@ -1032,11 +1032,14 @@ function onShowInput(pen: any, e: Point) {
   );
   pen.calculative.tempText = cell.text || cell + '';
   pen.dropdownList = undefined;
+  pen.inputType = undefined;
   if(pen.calculative.hoverCell.row !== 0){
     let columnCell:Column|string =  pen.data[0][pen.calculative.hoverCell.col];
     if(typeof columnCell=== 'object'){
       if(columnCell.type === 'select'){
         pen.dropdownList = columnCell.dropdownList;
+      }else if(columnCell.type === 'numeric'){
+        pen.inputType = 'number';
       }
     }
   }
