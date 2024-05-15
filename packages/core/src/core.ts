@@ -2326,6 +2326,7 @@ export class Meta2d {
       let binds = [];
       for (let key in data) {
         binds.push({
+          dataId:key,
           id:key,
           value:data[key]
         })
