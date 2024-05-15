@@ -7189,7 +7189,8 @@ export class Canvas {
 
   private setDropdownList = (search?: boolean) => {
     this.clearDropdownList();
-    if (!this.store.data.locked) {
+    const pen = this.store.pens[this.inputDiv.dataset.penId];
+    if (!this.store.data.locked&&!['table'].includes(pen.name)) {
       return;
     }
     this.dropdown.style.display = 'block';
@@ -7198,7 +7199,6 @@ export class Canvas {
       this.inputRight.style.transform = 'rotate(315deg)';
       (this.inputRight.style as any).zoom = this.store.data.scale;
     });
-    const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!pen || !pen.dropdownList) {
       this.dropdown.style.display = 'none';
       this.inputRight.style.display = 'none';
