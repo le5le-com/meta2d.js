@@ -1,6 +1,7 @@
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 import { getTextColor, getFont } from '../../core';
+import { pSBC } from '../../core';
 
 export function checkbox(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onMouseDown) {
@@ -27,9 +28,9 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: formPen) {
     ctx.strokeStyle = pen.background || '#1890ff';
   }
 
-  if (pen.isForbidden) {
-    ctx.fillStyle = '#ebebeb';
-    ctx.strokeStyle = '#d9d9d9';
+  if (pen.isForbidden || pen.disabled) {
+    ctx.fillStyle = pen.disabledBackground || pSBC(0.6 ,pen.background)|| '#ebebeb';
+    ctx.strokeStyle = pen.disabledColor || pSBC(0.6 ,pen.color)||'#d9d9d9';
   }
   ctx.closePath();
   ctx.fill();
@@ -48,8 +49,8 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: formPen) {
 
   //文字
   ctx.save();
-  ctx.fillStyle = pen.isForbidden
-    ? '#00000040'
+  ctx.fillStyle = (pen.disabled || pen.isForbidden)
+    ? pen.disabledTextColor || pSBC(0.6,pen.textColor||pen.color)||'#00000040'
     : getTextColor(pen, pen.calculative.canvas.parent.store) || '#000000d9';
   ctx.textAlign = 'start';
   ctx.textBaseline = 'middle';

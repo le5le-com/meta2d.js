@@ -71,10 +71,11 @@ export function valueInRange(realValue: number, collection: unknown): boolean {
  * @returns undefined 说明参数不规范 ，true 说明在范围内，false 说明不在范围内
  */
 export function valueInArray(realValue: number, collection: unknown): boolean {
-  if (isNaN(realValue)) {
-    console.warn(`realValue not number`);
-    return;
-  }
+  // if (isNaN(realValue)) {
+  //   console.warn(`realValue not number`);
+  //   return;
+  // }
+  //允许字符串的情况
   if (typeof collection !== 'string') {
     console.warn('collection must be string');
     return;
@@ -99,7 +100,17 @@ export function valueInArray(realValue: number, collection: unknown): boolean {
       }
     } else {
       // 单个值
-      const num = +numStr;
+      let num:any = +numStr;
+      if(Number.isNaN(num)){
+        num = numStr;
+        const [start, end] = [num[0], num[num.length - 1]];
+        if (!((start !== '"' && end !== '"')||(start !== "'" && end !== "'"))) {
+          console.warn('Not a valid string');
+          return;
+        }else{
+          num = num.substring(1, num.length - 1)
+        }
+      }
       if (realValue === num) {
         return true;
       }

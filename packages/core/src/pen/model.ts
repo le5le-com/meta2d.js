@@ -358,6 +358,10 @@ export interface Pen extends Rect {
   apiBody?: any;
   apiEnable?: boolean;
   container?:boolean; //是否是容器组件
+  disabled?:boolean; //是否禁用
+  disabledColor?:string; //禁用颜色
+  disabledBackground?:string; //禁用背景色
+  disabledTextColor?:string; //禁用文字颜色
   calculative?: {
     x?: number;
     y?: number;
@@ -548,6 +552,10 @@ export interface Pen extends Rect {
     cssDisplay?: string; //css display
     animations?: any[];
     imageRadius?: number;
+    disabled?: boolean; //是否禁用
+    disabledColor?: string;
+    disabledBackground?: string;
+    disabledTextColor?:string; //禁用文字颜色
   };
   lastConnected?:any;
   // 下划线相关配置属性
