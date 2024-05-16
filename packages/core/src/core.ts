@@ -1571,6 +1571,7 @@ export class Meta2d {
         }
       }
     }
+    data.dataPoints = [...Object.keys(this.store.bind),...Object.keys(this.store.bindDatas)];
     return data;
   }
 

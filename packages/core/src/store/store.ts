@@ -69,6 +69,7 @@ export interface Meta2dData {
   theme?: string; //主题
   smoothNum?:number;//平滑量 值越大，平滑效果越好
   triggers?:Trigger[]; //全局状态
+  dataPoints?: string[]; //数据点
 }
 
 export interface Network {
