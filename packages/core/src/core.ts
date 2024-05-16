@@ -2324,6 +2324,21 @@ export class Meta2d {
     } else if (data.tag) {
       pens = this.find(data.tag);
     } else {
+      let binds = [];
+      for (let key in data) {
+        binds.push({
+          dataId:key,
+          id:key,
+          value:data[key]
+        })
+      };
+      if(binds.length){
+        this.setDatas(binds as any, {
+          render,
+          doEvent,
+          history,
+        });
+      }
       return;
     }
 

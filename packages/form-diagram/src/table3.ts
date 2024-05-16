@@ -6,6 +6,7 @@ import {
   calcTextLines,
   deepClone,
   calcCenter,
+  Dropdown
 } from '../../core';
 import { Pen } from '../../core';
 
@@ -16,6 +17,12 @@ export interface MergeCell {
   col: number;
   rowspan: number;
   colspan: number;
+}
+
+export interface Column {
+  text:string;
+  type:'select'|'numeric'|'date'|'time'|'checkbox',
+  dropdownList?:Dropdown[]
 }
 
 export interface TablePen extends Pen {
@@ -798,37 +805,42 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: TablePen) {
 
       if (rowText[j] == null) {
         if (typeof cell === 'object') {
-          // TODO 配置 {} 代表添加节点 考虑是否有表头
-          const _colPen =
-            pen.styles &&
-            pen.styles.filter((item) => {
-              return item.col === j && item.row === undefined && item.pens;
-            });
-          if (_colPen.length > 0) {
-            rowText[j] = '';
-            if (pen.isFirstTime) {
-              if (pen.maxNum) {
-                if (pen.colHeaders && i >= pen.maxNum) {
-                  cell.visible = false;
-                }
-              }
-              let childrenPen = JSON.parse(JSON.stringify(_colPen[0].pens));
-              childrenPen.forEach((item: TablePen) => {
-                Object.assign(item, { row: i, col: j }, cell);
-                item.activeBackground = item.background;
-                item.hoverBackground = item.background;
-                item.activeColor = item.color;
-                item.hoverColor = item.color;
-                item.activeTextColor = item.textColor;
-                item.hoverTextColor = item.textColor;
-                item.height *= pen.calculative.canvas.store.data.scale;
-                item.width *= pen.calculative.canvas.store.data.scale;
+          if(i===0){
+            //表头
+            rowText[j] = cell.text;
+          }else{
+            // TODO 配置 {} 代表添加节点 考虑是否有表头
+            const _colPen =
+              pen.styles &&
+              pen.styles.filter((item) => {
+                return item.col === j && item.row === undefined && item.pens;
               });
-              calcChildrenRect(pen, rect, childrenPen);
-              pen.calculative.canvas.parent.pushChildren(pen, childrenPen);
-              // pen.calculative.childrenArr[i][j]= childrenPen;
+            if (_colPen.length > 0) {
+              rowText[j] = '';
+              if (pen.isFirstTime) {
+                if (pen.maxNum) {
+                  if (pen.colHeaders && i >= pen.maxNum) {
+                    cell.visible = false;
+                  }
+                }
+                let childrenPen = JSON.parse(JSON.stringify(_colPen[0].pens));
+                childrenPen.forEach((item: TablePen) => {
+                  Object.assign(item, { row: i, col: j }, cell);
+                  item.activeBackground = item.background;
+                  item.hoverBackground = item.background;
+                  item.activeColor = item.color;
+                  item.hoverColor = item.color;
+                  item.activeTextColor = item.textColor;
+                  item.hoverTextColor = item.textColor;
+                  item.height *= pen.calculative.canvas.store.data.scale;
+                  item.width *= pen.calculative.canvas.store.data.scale;
+                });
+                calcChildrenRect(pen, rect, childrenPen);
+                pen.calculative.canvas.parent.pushChildren(pen, childrenPen);
+                // pen.calculative.childrenArr[i][j]= childrenPen;
+              }
+              continue;
             }
-            continue;
           }
         } else if (cell === undefined) {
           rowText[j] = '';
@@ -1001,7 +1013,10 @@ function onShowInput(pen: any, e: Point) {
   );
   // 子节点，非文本
   if (typeof cell === 'object') {
-    return;
+    if(pen.calculative.hoverCell.row !== 0){
+      //非表头
+      return;
+    }
   }
   pen.calculative.isHover = false;
   pen.calculative.isInput = true;
@@ -1016,6 +1031,18 @@ function onShowInput(pen: any, e: Point) {
     pen.calculative.hoverCell.col
   );
   pen.calculative.tempText = cell.text || cell + '';
+  pen.dropdownList = undefined;
+  pen.inputType = undefined;
+  if(pen.calculative.hoverCell.row !== 0){
+    let columnCell:Column|string =  pen.data[0][pen.calculative.hoverCell.col];
+    if(typeof columnCell=== 'object'){
+      if(columnCell.type === 'select'){
+        pen.dropdownList = columnCell.dropdownList;
+      }else if(columnCell.type === 'numeric'){
+        pen.inputType = 'number';
+      }
+    }
+  }
   pen.calculative.canvas.showInput(pen, rect, '#ffffff');
 }
 
@@ -1606,6 +1633,7 @@ function setCellText(
   }
 
   if (rowData[colIndex] instanceof Object) {
+    rowData[colIndex].text = text;
   } else {
     rowData[colIndex] = text;
   }

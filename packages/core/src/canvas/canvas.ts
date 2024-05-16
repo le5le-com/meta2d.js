@@ -7130,6 +7130,16 @@ export class Canvas {
       },300)
     }
     this.inputDiv.oninput = (e: any) => {
+      const pen = this.store.pens[this.inputDiv.dataset.penId];
+      if(pen.inputType === 'number'){
+        const value = e.target.innerText;
+        const numericValue = value.replace(/[^0-9]/g, ''); // 移除非数字字符
+        // 如果输入的值不是纯数字，则替换为纯数字
+        if (value !== numericValue) {
+            e.preventDefault();
+            e.target.innerText = numericValue;
+        } 
+      }
       // //无文本时，光标确保居中
       if (navigator.userAgent.includes('Firefox')) {
         if (!e.target.innerText.trim()) {
@@ -7200,7 +7210,8 @@ export class Canvas {
 
   private setDropdownList = (search?: boolean) => {
     this.clearDropdownList();
-    if (!this.store.data.locked) {
+    const pen = this.store.pens[this.inputDiv.dataset.penId];
+    if (!this.store.data.locked&&!['table'].includes(pen.name)) {
       return;
     }
     this.dropdown.style.display = 'block';
@@ -7209,7 +7220,6 @@ export class Canvas {
       this.inputRight.style.transform = 'rotate(315deg)';
       (this.inputRight.style as any).zoom = this.store.data.scale;
     });
-    const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!pen || !pen.dropdownList) {
       this.dropdown.style.display = 'none';
       this.inputRight.style.display = 'none';
