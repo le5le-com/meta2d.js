@@ -4394,10 +4394,10 @@ export class Canvas {
         : pen.textHeight * scale;
     pen.calculative.textLeft =
       pen.textLeft < 1 && pen.textLeft > -1
-        ? pen.textLeft
+        ? pen.textLeft * pen.calculative.worldRect.width
         : pen.textLeft * scale;
     pen.calculative.textTop =
-      pen.textTop < 1 && pen.textTop > -1 ? pen.textTop : pen.textTop * scale;
+      pen.textTop < 1 && pen.textTop > -1 ? pen.textTop * pen.calculative.worldRect.height : pen.textTop * scale;
 
     if (pen.type === PenType.Line && pen.borderWidth) {
       pen.calculative.borderWidth = pen.borderWidth * scale;
