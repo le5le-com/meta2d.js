@@ -31,6 +31,7 @@ import {
   CanvasLayer,
   validationPlugin,
   setLifeCycleFunc,
+  getAllFollowers
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -1555,6 +1556,14 @@ export class Meta2d {
 
   getParent(pen: Pen, root?: boolean) {
     return getParent(pen, root);
+  }
+
+  getAllChildren(pen: Pen) {
+    return getAllChildren(pen, this.store);
+  }
+
+  getAllFollowers(pen: Pen) {
+    return getAllFollowers(pen, this.store);
   }
 
   data(): Meta2dData {

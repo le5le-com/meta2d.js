@@ -83,6 +83,21 @@ export function getAllChildren(pen: Pen, store: Meta2dStore): Pen[] {
   return children;
 }
 
+export function getAllFollowers(pen: Pen, store: Meta2dStore): Pen[] {
+  if (!pen || !pen.followers) {
+    return [];
+  }
+  const followers: Pen[] = [];
+  pen.followers.forEach((id) => {
+    const follower = store.pens[id];
+    if (follower&&!follower.parentId) {
+      followers.push(follower);
+      followers.push(...getAllFollowers(follower, store));
+    }
+  });
+  return followers;
+}
+
 function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   const { worldRect, gradientFromColor, gradientToColor, gradientAngle } =
     pen.calculative;

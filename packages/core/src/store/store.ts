@@ -133,6 +133,8 @@ export interface Meta2dStore {
   active?: Pen[];
   hover?: Pen;
   lastHover?: Pen;
+  hoverContainer?:Pen;
+  lastHoverContainer?:Pen;
   activeAnchor?: Point;
   hoverAnchor?: Point;
   pointAt?: Point;
