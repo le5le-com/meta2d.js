@@ -1604,7 +1604,7 @@ export function renderPenRaw(
     ctxDrawLinearGradientPath(ctx, pen);
     ctxDrawLinePath(true, ctx, pen, store);
   } else {
-    ctxDrawPath(true, ctx, pen, store, fill);
+    ctxDrawPath(false, ctx, pen, store, fill);
 
     ctxDrawCanvas(ctx, pen);
   }
