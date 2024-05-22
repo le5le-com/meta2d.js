@@ -58,6 +58,7 @@ import {
   setGlobalAlpha,
   drawImage,
   setElemPosition,
+  getAllFollowers,
 } from '../pen';
 import {
   calcRotate,
@@ -2494,6 +2495,11 @@ export class Canvas {
         y: e.y,
         pen: this.store.hover,
       });
+      this.store.emitter.emit('mouseup', {
+        x: e.x,
+        y: e.y,
+        pen: this.store.hoverContainer,
+      });
     }
 
     if (this.willInactivePen) {
@@ -2637,13 +2643,19 @@ export class Canvas {
    */
   private movedActivePens(readyConnect?: boolean) {
     // 鼠标松手才更新，此处是更新前的值
-    const initPens = deepClone(this.store.active, true);
+    //follower
+    let movedPens:Pen[] = this.getAllFollowersByPens(this.store.active,false);
+    const initPens = deepClone(movedPens, true);
     // const pens = deepClone(this.store.active, true);
     const gridSize = this.store.data.gridSize || this.store.options.gridSize;
     const { origin, scale } = this.store.data;
     const autoAlignGrid =
       this.store.options.autoAlignGrid && this.store.data.grid;
-    this.store.active.forEach((pen, i: number) => {
+      movedPens.forEach((pen) => {
+      const i = this.movingPens.findIndex((item) => item.id === pen.id+movingSuffix);
+      if(i<0){
+        return;
+      }
       const { x, y } = this.movingPens[i];
       const obj = { x, y };
       // 根据是否开启了自动网格对齐，来修正坐标
@@ -2980,6 +2992,7 @@ export class Canvas {
     if (this.dragRect) {
       return;
     }
+    this.store.hoverContainer = undefined;
     const containerPens:Pen[] = this.store.data.pens.filter((pen)=>pen.container||this.store.options.containerShapes?.includes(pen.name));
     if(containerPens.length){
       for(let i=containerPens.length-1;i>=0;--i){
@@ -2996,7 +3009,30 @@ export class Canvas {
         if (
           pointInRect(pt, pen.calculative.worldRect)
         ) {
+          this.store.hoverContainer = pen;
           pen?.onMouseMove?.(pen, pt);
+          if (this.store.lastHoverContainer !== this.store.hoverContainer) {
+            this.patchFlags = true;
+            if (this.store.lastHoverContainer) {
+              this.store.lastHoverContainer.calculative.containerHover = false;
+              this.store.emitter.emit('leave', this.store.lastHoverContainer);
+            }
+            if (this.store.hoverContainer) {
+              this.store.hoverContainer.calculative.containerHover = true;
+              this.store.emitter.emit('enter', this.store.hoverContainer);
+            }
+            this.store.lastHoverContainer = this.store.hoverContainer;
+          }
+        }else{
+          this.store.hoverContainer = undefined;
+          if(this.store.lastHoverContainer !== this.store.hoverContainer){
+            this.patchFlags = true;
+            if (this.store.lastHoverContainer) {
+              this.store.lastHoverContainer.calculative.containerHover = false;
+              this.store.emitter.emit('leave', this.store.lastHoverContainer);
+            }
+            this.store.lastHoverContainer = this.store.hoverContainer;
+          }
         }
       }
     }
@@ -5322,7 +5358,7 @@ export class Canvas {
     }
 
     this.movingPens = deepClone(this.store.active, true);
-
+    this.movingPens = this.getAllFollowersByPens(this.movingPens);
     const containChildPens = this.getAllByPens(this.movingPens);
     const copyContainChildPens = deepClone(containChildPens, true);
     // 考虑父子关系，修改 id
@@ -6430,6 +6466,23 @@ export class Canvas {
     }
     return retPens.concat(pens);
   }
+
+  getAllFollowersByPens(pens: Pen[], deep:boolean = true): Pen[] {
+    const retPens: Pen[] = pens;
+    for (const pen of pens) {
+      let followers = getAllFollowers(pen, this.store);
+      if(deep){
+        followers = deepClone(followers,true);
+      }
+      for(const follower of followers){
+        if(!retPens.find(p=>p.id === follower.id)){
+          retPens.push(follower);
+        }
+      }
+    }
+    return retPens
+  }
+  
 
   /**
    *

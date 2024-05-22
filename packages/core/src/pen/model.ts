@@ -243,6 +243,7 @@ export interface Pen extends Rect {
   strokeImage?: string;
 
   children?: string[];
+  followers?: string[];
 
   anchors?: Point[];
   anchorRadius?: number;
@@ -473,6 +474,7 @@ export interface Pen extends Rect {
     active?: boolean;
     focus?: boolean; //聚焦图元
     hover?: boolean;
+    containerHover?: boolean; //容器组件hover
     isDock?: boolean; // 是否是对齐参考画笔
     pencil?: boolean;
     activeAnchor?: Point;

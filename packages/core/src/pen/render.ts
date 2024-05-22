@@ -83,6 +83,21 @@ export function getAllChildren(pen: Pen, store: Meta2dStore): Pen[] {
   return children;
 }
 
+export function getAllFollowers(pen: Pen, store: Meta2dStore): Pen[] {
+  if (!pen || !pen.followers) {
+    return [];
+  }
+  const followers: Pen[] = [];
+  pen.followers.forEach((id) => {
+    const follower = store.pens[id];
+    if (follower&&!follower.parentId) {
+      followers.push(follower);
+      followers.push(...getAllFollowers(follower, store));
+    }
+  });
+  return followers;
+}
+
 function drawBkLinearGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   const { worldRect, gradientFromColor, gradientToColor, gradientAngle } =
     pen.calculative;
@@ -1481,6 +1496,7 @@ export function renderPenRaw(
   // for canvas2svg
   (ctx as any).setAttrs?.(pen);
   // end
+  let lineGradientFlag = false;
   const store = pen.calculative.canvas.store;
   const textFlip = pen.textFlip || store.options.textFlip;
   const textRotate = pen.textRotate || store.options.textRotate;
@@ -1542,7 +1558,13 @@ export function renderPenRaw(
         fill = true;
       }
     } else {
-      ctx.strokeStyle = pen.calculative.color || getGlobalColor(store);
+      let stroke: string | CanvasGradient | CanvasPattern;
+      if (pen.calculative.strokeType&&pen.calculative.lineGradientColors&&pen.name === 'line') {
+        lineGradientFlag = true;
+      } else {
+        stroke = pen.calculative.color || getGlobalColor(store);
+      }
+      ctx.strokeStyle = stroke;
     }
 
     if (pen.backgroundImage) {
@@ -1578,9 +1600,14 @@ export function renderPenRaw(
     ctx.shadowBlur = pen.calculative.shadowBlur;
   }
 
-  ctxDrawPath(false, ctx, pen, store, fill);
+  if (lineGradientFlag) {
+    ctxDrawLinearGradientPath(ctx, pen);
+    ctxDrawLinePath(true, ctx, pen, store);
+  } else {
+    ctxDrawPath(false, ctx, pen, store, fill);
 
-  ctxDrawCanvas(ctx, pen);
+    ctxDrawCanvas(ctx, pen);
+  }
 
   // renderPenRaw 用在 downloadPng svg , echarts 等图形需要
   if (pen.calculative.img) {
