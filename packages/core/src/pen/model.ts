@@ -364,6 +364,7 @@ export interface Pen extends Rect {
   disabledBackground?:string; //禁用背景色
   disabledTextColor?:string; //禁用文字颜色
   inputType?:string; //输入框类型
+  deviceId?:string;//关联的设备id
   calculative?: {
     x?: number;
     y?: number;
