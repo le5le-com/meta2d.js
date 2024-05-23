@@ -1878,19 +1878,23 @@ export class Canvas {
               if (pen.calculative.active) {
                 this.willInactivePen = pen;
               } else {
-                pen.calculative.active = true;
-                setChildrenActive(pen); // 子节点也设置为active
-                this.store.active.push(pen);
-                this.store.emitter.emit('active', this.store.active);
+                if(this.store.active.length > 0){
+                  pen.calculative.active = true;
+                  setChildrenActive(pen); // 子节点也设置为active
+                  this.store.active.push(pen);
+                  this.store.emitter.emit('active', this.store.active);
+                }
               }
               this.patchFlags = true;
             } else if (e.ctrlKey && e.shiftKey && this.store.hover.parentId) {
               this.active([this.store.hover]);
             } else {
-              if (!pen.calculative.active) {
-                this.active([pen]);
-                if (this.store.options.resizeMode) {
-                  this.hotkeyType = HotkeyType.Resize;
+              if(!(this.activeRect && pointInRect({x:e.x,y:e.y},this.activeRect))) {
+                if (!pen.calculative.active) {
+                  this.active([pen]);
+                  if (this.store.options.resizeMode) {
+                    this.hotkeyType = HotkeyType.Resize;
+                  }
                 }
               }
             }
@@ -2046,7 +2050,7 @@ export class Canvas {
         }
 
         // 框选
-        if (e.buttons === 1 && !this.hoverType && !this.hotkeyType) {
+        if (e.buttons === 1 &&( e.ctrlKey || !this.hoverType && !this.hotkeyType)) {
           this.dragRect = {
             x: Math.min(this.mouseDown.x, e.x),
             y: Math.min(this.mouseDown.y, e.y),
@@ -2464,7 +2468,7 @@ export class Canvas {
           rectInRect(
             pen.calculative.worldRect,
             this.dragRect,
-            this.store.options.dragAllIn
+            e.ctrlKey || this.store.options.dragAllIn
           )
         ) {
           // 先判断在区域内，若不在区域内，则锚点肯定不在框选区域内，避免每条连线过度计算
