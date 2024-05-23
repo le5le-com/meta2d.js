@@ -466,6 +466,9 @@ export class Meta2d {
             }
           }
           value.id = _pen.id;
+          if(_pen.deviceId){
+            value.deviceId = _pen.deviceId;
+          }
           this.sendDataToNetWork(value, e.network);
           return;
         }
