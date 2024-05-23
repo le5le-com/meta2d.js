@@ -14,10 +14,12 @@ export function panel(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
     pen.onMouseLeave = mouseLeave;
     pen.onMouseMove = mouseMove;
     pen.onMouseUp = mouseUp;
+    pen.onInput = input;
   }
   let wr = pen.calculative.borderRadius || 0,
     hr = wr;
   const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
+  const { x: textX } = pen.calculative.worldTextRect;
   if (wr < 1) {
     wr = width * wr;
     hr = height * hr;
@@ -29,8 +31,11 @@ export function panel(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if (height < 2 * r) {
     r = height / 2;
   }
-
+  const textWidth = getTextWidth(pen.text, pen.calculative.fontSize);
   path.moveTo(x + r, y);
+  path.lineTo(textX - 5, y);
+  path.moveTo(textX + textWidth + 5, y);
+  path.lineTo(textX + textWidth + 5, y);
   path.arcTo(ex, y, ex, ey, r);
   path.arcTo(ex, ey, x, ey, r);
   path.arcTo(x, ey, x, y, r);
@@ -38,6 +43,27 @@ export function panel(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if (path instanceof Path2D) {
     return path;
   }
+}
+
+function getTextWidth(text: string, fontSize: number) {
+  // 近似计算
+  const chinese = text.match(/[^\x00-\xff]/g) || '';
+  const chineseWidth = chinese.length * fontSize; // 中文占用的宽度
+  const spaces = text.match(/\s/g) || '';
+  const spaceWidth = spaces.length * fontSize * 0.3; // 空格占用的宽度
+  const otherWidth =
+    (text.length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
+  const currentWidth = chineseWidth + spaceWidth + otherWidth;
+  return currentWidth;
+}
+
+function input(pen: Pen, text: string) {
+  pen.text = text;
+  pen.calculative.text = pen.text;
+  // this.inputDiv.dataset.penId = undefined;
+  pen.calculative.canvas.updatePenRect(pen);
+  // this.patchFlags = true;
+  // this.store.emitter.emit('valueUpdate', pen);
 }
 
 function destory(pen: Pen) {}
@@ -100,13 +126,12 @@ function mouseUp(pen: Pen) {
       const movingPen =
         pen.calculative.canvas.store.pens[activePen.id + movingSuffix];
       if (movingPen && movingPen.calculative) {
-        if (
-          rectInRect(
-            movingPen.calculative.worldRect,
-            pen.calculative.worldRect,
-            true
-          )
-        ) {
+        let inRect = deepClone(pen.calculative.worldRect);
+        inRect.x -= 1;
+        inRect.y -= 1;
+        inRect.width += 2;
+        inRect.height += 2;
+        if (rectInRect(movingPen.calculative.worldRect, inRect, true)) {
           if (!pen.followers) {
             pen.followers = [];
           }
