@@ -466,6 +466,9 @@ export class Meta2d {
             }
           }
           value.id = _pen.id;
+          if(_pen.deviceId){
+            value.deviceId = _pen.deviceId;
+          }
           this.sendDataToNetWork(value, e.network);
           return;
         }
@@ -2577,37 +2580,41 @@ export class Meta2d {
                 can = event.where.fn(pen, { meta2d: this });
               }
             } else {
+              let pValue = pen[key];
+              if(['x','y','width','height'].includes(key)){
+                pValue = this.getPenRect(pen)[key];
+              }
               switch (comparison) {
                 case '>':
-                  can = pen[key] > +value;
+                  can = pValue > +value;
                   break;
                 case '>=':
-                  can = pen[key] >= +value;
+                  can = pValue >= +value;
                   break;
                 case '<':
-                  can = pen[key] < +value;
+                  can = pValue < +value;
                   break;
                 case '<=':
-                  can = pen[key] <= +value;
+                  can = pValue <= +value;
                   break;
                 case '=':
                 case '==':
-                  can = pen[key] == value;
+                  can = pValue == value;
                   break;
                 case '!=':
-                  can = pen[key] != value;
+                  can = pValue != value;
                   break;
                 case '[)':
-                  can = valueInRange(+pen[key], value);
+                  can = valueInRange(+pValue, value);
                   break;
                 case '![)':
-                  can = !valueInRange(+pen[key], value);
+                  can = !valueInRange(+pValue, value);
                   break;
                 case '[]':
-                  can = valueInArray(pen[key], value);
+                  can = valueInArray(pValue, value);
                   break;
                 case '![]':
-                  can = !valueInArray(pen[key], value);
+                  can = !valueInArray(pValue, value);
                   break;
               }
             }
@@ -2763,6 +2770,9 @@ export class Meta2d {
         value = this.store.pens[target][condition.value];
       }
       let compareValue = getter(pen, key);
+      if(['x','y','width','height'].includes(key)){
+        compareValue = this.getPenRect(pen)[key];
+      }
       switch (operator) {
         case '>':
           can = compareValue > +value;
