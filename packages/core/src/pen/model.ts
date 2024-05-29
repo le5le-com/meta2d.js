@@ -365,6 +365,7 @@ export interface Pen extends Rect {
   disabledTextColor?:string; //禁用文字颜色
   inputType?:string; //输入框类型
   deviceId?:string;//关联的设备id
+  pivot?:Point; //旋转中心 
   calculative?: {
     x?: number;
     y?: number;
