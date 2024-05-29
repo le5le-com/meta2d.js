@@ -1893,7 +1893,7 @@ export class Canvas {
             } else if (e.ctrlKey && e.shiftKey && this.store.hover.parentId) {
               this.active([this.store.hover]);
             } else {
-              if(!(this.activeRect && pointInRect({x:e.x,y:e.y},this.activeRect))) {
+              if(!(this.activeRect && pointInRect({x:e.x,y:e.y},this.activeRect)) || this.store.active.length == 1){ 
                 if (!pen.calculative.active) {
                   this.active([pen]);
                   if (this.store.options.resizeMode) {
