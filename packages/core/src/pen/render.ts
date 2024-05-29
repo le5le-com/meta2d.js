@@ -27,6 +27,7 @@ import {
   rectInRect,
   scaleRect,
   translateRect,
+  calcPivot
 } from '../rect';
 import { globalStore, Meta2dStore } from '../store';
 import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
@@ -1260,7 +1261,7 @@ export function ctxRotate(
   pen: Pen,
   noFlip: boolean = false
 ) {
-  const { x, y } = pen.calculative.worldRect.center;
+  const { x, y } = pen.calculative.worldRect.pivot || pen.calculative.worldRect.center;
   ctx.translate(x, y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
   // 目前只有水平和垂直翻转，都需要 * -1
@@ -2058,6 +2059,9 @@ export function calcWorldRects(pen: Pen) {
     rect.rotate = pen.rotate;
     calcRightBottom(rect);
     calcCenter(rect);
+    if(pen.pivot){
+      calcPivot(rect, pen.pivot);
+    }
   } else {
     const parent = store.pens[pen.parentId];
     let parentRect = parent.calculative.worldRect;
@@ -2084,6 +2088,9 @@ export function calcWorldRects(pen: Pen) {
 
     rect.rotate = parentRect.rotate + pen.rotate;
     calcCenter(rect);
+    if(pen.pivot){
+      calcPivot(rect, pen.pivot);
+    }
   }
 
   pen.calculative.worldRect = rect;
@@ -2110,7 +2117,8 @@ export function calcPadding(pen: Pen, rect: Rect) {
 }
 
 export function calcPenRect(pen: Pen) {
-  const worldRect = pen.calculative.worldRect;
+  const worldRect = deepClone(pen.calculative.worldRect);
+  delete worldRect.pivot;
   if (!pen.parentId) {
     Object.assign(pen, worldRect);
     return;
@@ -2162,7 +2170,7 @@ export function calcWorldAnchors(pen: Pen) {
       rotatePoint(
         anchor,
         pen.calculative.rotate,
-        pen.calculative.worldRect.center
+        pen.calculative.worldRect.pivot || pen.calculative.worldRect.center
       );
     });
   }
@@ -2249,10 +2257,10 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
 }
 
 export function scalePen(pen: Pen, scale: number, center: Point) {
-  scaleRect(pen.calculative.worldRect, scale, center);
+  scaleRect(pen.calculative.worldRect, scale, center, pen.pivot);
 
   if (pen.calculative.initRect) {
-    scaleRect(pen.calculative.initRect, scale, center);
+    scaleRect(pen.calculative.initRect, scale, center, pen.pivot);
   }
   if (pen.calculative.x) {
     scalePoint(pen.calculative as any as Point, scale, center);
@@ -3079,7 +3087,7 @@ function initLineRect(pen: Pen) {
  * @returns
  */
 export function getPensDisableResize(pens: Pen[]): boolean {
-  return pens.every((pen) => pen.disableSize);
+  return pens.every((pen) => pen.disableSize || pen.pivot); //旋转中心点图元不允许改变大小
 }
 
 export function getFrameValue(pen: Pen, prop: string, frameIndex: number) {

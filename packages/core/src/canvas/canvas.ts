@@ -3082,7 +3082,7 @@ export class Canvas {
           y: this.activeRect.y - 30,
         };
         if (this.activeRect.rotate) {
-          rotatePoint(rotatePt, this.activeRect.rotate, this.activeRect.center);
+          rotatePoint(rotatePt, this.activeRect.rotate, this.activeRect.pivot || this.activeRect.center);
         }
         // 旋转控制点
         if (!this.hotkeyType && hitPoint(pt, rotatePt, this.pointSize)) {
@@ -4584,10 +4584,11 @@ export class Canvas {
         const ctx = this.offscreen.getContext('2d');
         ctx.save();
         ctx.translate(0.5, 0.5);
+        const pivot = this.activeRect.pivot || this.activeRect.center;
         if (this.activeRect.rotate) {
-          ctx.translate(this.activeRect.center.x, this.activeRect.center.y);
+          ctx.translate( pivot.x, pivot.y);
           ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
-          ctx.translate(-this.activeRect.center.x, -this.activeRect.center.y);
+          ctx.translate(-pivot.x, -pivot.y);
         }
         ctx.strokeStyle = this.store.options.activeColor;
 
