@@ -627,16 +627,8 @@ export class Canvas {
       (e.target as HTMLElement).tagName !== 'TEXTAREA' &&
       !(e.target as HTMLElement).dataset.meta2dIgnore
     ) {
-      const containers = this.store.data.pens.filter((pen) => pen.container);
-      const hasDetail = [];
       this.store.active.forEach((pen) => {
         pen.onKeyDown?.(pen, e.key);
-        containers.forEach((container) => {
-          if(rectInRect(pen.calculative.worldRect, container.calculative.worldRect,false) && hasDetail.includes(container.id)){ 
-            container.onKeyDown?.(container, e.key);
-            hasDetail.push(container.id);
-          }
-        });
       });
     }
     if (
