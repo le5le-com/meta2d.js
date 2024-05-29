@@ -1060,6 +1060,10 @@ export class Canvas {
         //置顶
         this.parent.top();
         break;
+      case 'F':
+      case 'f':
+        this.setFollowers();
+        break;
     }
 
     this.render(false);
@@ -6486,6 +6490,29 @@ export class Canvas {
       }
     }
     return retPens
+  }
+
+  setFollowers(pens: Pen[] = this.store.active){
+    if (!pens) {
+      return;
+    }
+    if(pens.length < 2){
+      pens[0].followers = [];
+    }else{
+      //以最后一个
+      let ids = pens.map((pen)=>pen.id);
+      ids.pop();
+      const lastPen = pens[pens.length-1];
+      if(!lastPen.followers){
+        lastPen.followers = ids;
+      }else{
+        ids.forEach((id)=>{
+          if(!lastPen.followers.includes(id)){
+            lastPen.followers.push(id);
+          }
+        });
+      }
+    }
   }
   
 
