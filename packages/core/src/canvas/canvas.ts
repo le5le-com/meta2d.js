@@ -627,8 +627,16 @@ export class Canvas {
       (e.target as HTMLElement).tagName !== 'TEXTAREA' &&
       !(e.target as HTMLElement).dataset.meta2dIgnore
     ) {
+      const containers = this.store.data.pens.filter((pen) => pen.container);
+      const hasDetail = [];
       this.store.active.forEach((pen) => {
         pen.onKeyDown?.(pen, e.key);
+        containers.forEach((container) => {
+          if(rectInRect(pen.calculative.worldRect, container.calculative.worldRect,false) && hasDetail.includes(container.id)){ 
+            container.onKeyDown?.(container, e.key);
+            hasDetail.push(container.id);
+          }
+        });
       });
     }
     if (
@@ -1889,7 +1897,7 @@ export class Canvas {
             } else if (e.ctrlKey && e.shiftKey && this.store.hover.parentId) {
               this.active([this.store.hover]);
             } else {
-              if(!(this.activeRect && pointInRect({x:e.x,y:e.y},this.activeRect))) {
+              if(!(this.activeRect && pointInRect({x:e.x,y:e.y},this.activeRect)) || this.store.active.length == 1){ 
                 if (!pen.calculative.active) {
                   this.active([pen]);
                   if (this.store.options.resizeMode) {
