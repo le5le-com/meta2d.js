@@ -2818,6 +2818,9 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
           } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
             pen.calculative.canvas.canvasImage.init();
           }
+        } else if(pen.children?.length) {
+          const childs = getAllChildren(pen, pen.calculative.canvas.store);
+          pen.calculative.canvas.initImageCanvas(childs);
         }
       }
       pen.calculative[k] = frame[k];

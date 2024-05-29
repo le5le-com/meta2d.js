@@ -4488,6 +4488,7 @@ export class Meta2d {
       }
     }
     let allPens = getAllChildren(pen,this.store);
+    allPens.push(pen)
     this.initImageCanvas(allPens);
     render && this.render();
   }
