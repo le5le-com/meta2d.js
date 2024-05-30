@@ -29,7 +29,7 @@ import { leftArrow, rightArrow, twowayArrow } from './arrow';
 import { message } from './message';
 import { cloud } from './cloud';
 import { file } from './file';
-import { cube } from './cube';
+// import { cube } from './cube';
 import { people } from './people';
 import { line } from './line';
 import { iframe } from './iframe';
