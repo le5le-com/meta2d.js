@@ -111,6 +111,7 @@ export interface Options {
   svgPathStroke?:boolean; //svg path是否显示边框
   disabledColor?: string;
   disabledBackground?: string;
+  scaleOff?: number; //缩放偏移量
 }
 
 export const defaultOptions: Options = {
