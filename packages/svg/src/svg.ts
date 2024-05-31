@@ -41,6 +41,15 @@ export function parseSvg(svg: string): Pen[] {
     }
 
     const children: any[] = svg.svg;
+    const replaceMap:any = {};// 暂时存储改动，避免对遍历产生影响
+    for(let i = 0; i < children.length; i++) {
+      if(children[i].g) {
+        replaceMap[i] = flatSvg(children[i]);
+      }
+    }
+    for(let i in replaceMap) {// 替换children中的对应数据
+      children.splice(Number(i),1,...replaceMap[i]);
+    }
     const combinePens: Pen[] = transformCombines(selfProperty, children);
 
     pens.push(...combinePens);
@@ -48,7 +57,15 @@ export function parseSvg(svg: string): Pen[] {
   setAnchor(pens[0]);
   return pens;
 }
-
+function flatSvg(children) {
+  if (children.g && children.g.length == 1 && children.g[0][selfName]){
+    const childKeys = Object.keys(children.g[0][selfName]);
+    if(childKeys.length == 2 && childKeys[0] == 'id' && childKeys[1] == 'data-name') {
+      return flatSvg(children.g[0]);
+    }
+  } 
+  return children.g;
+}
 function setAnchor(pen: Pen) {
   anchorsArr = anchorsArr.map((item, index) => {
     return {
