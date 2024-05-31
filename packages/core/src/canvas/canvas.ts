@@ -596,25 +596,31 @@ export class Canvas {
     }
 
     let scaleOff = 0.015;
-    let isMac = /mac os /i.test(navigator.userAgent);
-    if (isMac) {
-      if (!e.ctrlKey) {
-        scaleOff *= (e as any).wheelDeltaY / 240;
-      } else if (e.deltaY > 0) {
-        scaleOff *= -1;
-      }
-    } else {
-      let offset = 0.2;
-      if (e.deltaY.toString().indexOf('.') !== -1) {
-        offset = 0.01;
-      }
+    if(this.store.options.scaleOff){
+      scaleOff = this.store.options.scaleOff;
       if (e.deltaY > 0) {
-        scaleOff = -offset;
+        scaleOff = - this.store.options.scaleOff;
+      }
+    }else{
+      let isMac = /mac os /i.test(navigator.userAgent);
+      if (isMac) {
+        if (!e.ctrlKey) {
+          scaleOff *= (e as any).wheelDeltaY / 240;
+        } else if (e.deltaY > 0) {
+          scaleOff *= -1;
+        }
       } else {
-        scaleOff = offset;
+        let offset = 0.2;
+        if (e.deltaY.toString().indexOf('.') !== -1) {
+          offset = 0.01;
+        }
+        if (e.deltaY > 0) {
+          scaleOff = -offset;
+        } else {
+          scaleOff = offset;
+        }
       }
     }
-
     const { offsetX: x, offsetY: y } = e;
     this.scale(this.store.data.scale + scaleOff, { x, y });
     this.externalElements.focus(); // 聚焦
