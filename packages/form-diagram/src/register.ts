@@ -5,7 +5,6 @@ import { checkbox } from './checkbox';
 import { radio } from './radio';
 import { table2 } from './table2';
 import { time } from './time';
-import { table3 } from './table3';
 
 export function formPens() {
   return {
@@ -13,8 +12,8 @@ export function formPens() {
     switch: le5leSwitch,
     slider,
     checkbox,
-    table:table3,
-    table2:table3,
+    table:table2,
+    table2:table2,
   };
 }
 
