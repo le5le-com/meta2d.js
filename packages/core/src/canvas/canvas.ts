@@ -1287,15 +1287,29 @@ export class Canvas {
     //   // 组合节点才需要提前计算
     //   Array.isArray(pen.children) && pen.children.length > 0 && this.updatePenRect(pen);
     // }
+    let num = 0;
+    let lastH = 0;
+    let lastW = 0;
     for (const pen of pens) {
       if (!pen.parentId) {
         pen.width *= this.store.data.scale;
         pen.height *= this.store.data.scale;
-        pen.x = e.x - pen.width / 2;
-        pen.y = e.y - pen.height / 2;
+        pen.x = e.x - pen.width / 2 + lastW;
+        pen.y = e.y - pen.height / 2 + lastH;
         if (pen.tags && pen.tags.includes('meta3d')) {
           pen.x = this.store.data.origin.x;
           pen.y = this.store.data.origin.y;
+        }
+        if((pen as any).dataset){
+          if(num % 2 === 0){
+            lastW = pen.width+10;
+          }else{
+            lastW = 0;
+          }
+          num ++;
+          if(num % 2 === 0){
+            lastH += pen.height + 10;
+          }
         }
       }
     }

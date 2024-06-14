@@ -70,6 +70,17 @@ export interface Meta2dData {
   smoothNum?:number;//平滑量 值越大，平滑效果越好
   triggers?:Trigger[]; //全局状态
   dataPoints?: string[]; //数据点
+  dataset?:{
+    devices?: DataMock[]; //数据模拟
+  }
+}
+
+export interface DataMock {
+  id: string;
+  label?: string;
+  mock?: string;
+  type?: string;
+  enableMock?: boolean;
 }
 
 export interface Network {

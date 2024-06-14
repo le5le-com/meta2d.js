@@ -1880,115 +1880,162 @@ export class Meta2d {
     }
     return n;
   }
+  
+  mockValue(data){
+    let value = undefined;
+    if (data.enableMock && data.mock !== undefined) {
+      if (data.type === 'float') {
+        if (data.mock && data.mock.indexOf(',') !== -1) {
+          let arr = data.mock.split(',');
+          let rai = Math.floor(Math.random() * arr.length);
+          value = parseFloat(arr[rai]);
+        } else if (data.mock && data.mock.indexOf('-') !== -1) {
+          let max;
+          let min;
+          let len;
+          let arr = data.mock.split('-');
+          if (data.mock.charAt(0) === '-') {
+            //负数
+            if (arr.length === 4) {
+              max = -parseFloat(arr[3]);
+              min = -parseFloat(arr[1]);
+              len = arr[3];
+            } else {
+              max = parseFloat(arr[2]);
+              min = -parseFloat(arr[1]);
+              len = arr[2];
+            }
+          } else {
+            max = parseFloat(arr[1]);
+            min = parseFloat(arr[0]);
+            len = arr[1];
+          }
+          if ((len + '').indexOf('.') !== -1) {
+            let length = (len + '').split('.')[1].length;
+            value = (Math.random() * (max - min) + min).toFixed(
+              length
+            );
+          } else {
+            value = Math.random() * (max - min) + min;
+          }
+        } else {
+          value = parseFloat(data.mock);
+        }
+      } else if (data.type === 'integer') {
+        if (data.mock && data.mock.indexOf(',') !== -1) {
+          let arr = data.mock.split(',');
+          let rai = Math.floor(Math.random() * arr.length);
+          value = parseInt(arr[rai]);
+        } else if (data.mock && data.mock.indexOf('-') !== -1) {
+          let max;
+          let min;
+          let arr = data.mock.split('-');
+          if (data.mock.charAt(0) === '-') {
+            if (arr.length === 4) {
+              max = -parseFloat(arr[3]);
+              min = -parseFloat(arr[1]);
+            } else {
+              max = parseFloat(arr[2]);
+              min = -parseFloat(arr[1]);
+            }
+          } else {
+            max = parseInt(arr[1]);
+            min = parseInt(arr[0]);
+          }
+          value= parseInt(
+            Math.random() * (max - min) + min + ''
+          );
+        } else {
+          value = parseInt(data.mock);
+        }
+      } else if (data.type === 'bool') {
+        if (typeof data.mock === 'boolean') {
+          value = data.mock;
+        } else if ('true' === data.mock) {
+          value = true;
+        } else if ('false' === data.mock) {
+          value = false;
+        } else {
+          value = Math.random() < 0.5;
+        }
+      } else if (data.type === 'object' || data.type === 'array') {
+        if (data.mock) {
+          //对象or数组 不mock
+          // _d[realTime.key] = realTime.value;
+        }
+      } else {
+        //if (realTime.type === 'string')
+        if (data.mock && data.mock.indexOf(',') !== -1) {
+          let str = data.mock.substring(1, data.mock.length - 1);
+          let arr = str.split(',');
+          let rai = Math.floor(Math.random() * arr.length);
+          value = arr[rai];
+        } else if (
+          data.mock &&
+          data.mock.startsWith('[') &&
+          data.mock.endsWith(']')
+        ) {
+          let len = parseInt(
+            data.mock.substring(1, data.mock.length - 1)
+          );
+          value = this.randomString(len);
+        } else {
+          value = data.mock;
+        }
+      }
+    }
+    return value;
+  }
+
+  //数据模拟
+  dataMock(){
+    let arr = [];
+    this.store.data.dataset?.devices?.forEach((data)=>{
+      let value = this.mockValue(data);
+      if(value!==undefined){
+        arr.push({
+          id: data.id,
+          value
+        })
+      }
+    });
+    if(arr.length){
+      this.setDatas(arr, {
+        render:true,
+        doEvent:true,
+        history:false,
+      });
+    }
+  }
+
+  startDataMock(){
+    let enable = this.store.data.enableMock;
+    if(enable){
+      this.stopDataMock();
+      this.initBinds();
+      this.updateTimer = setInterval(() => {
+        //本地调试
+        this.store.data.pens.forEach((pen) => {
+          this.penMock(pen);
+        });
+        this.dataMock();
+        this.render();
+      }, this.store.data.networkInterval || 1000);
+    }
+  }
+
+  stopDataMock(){
+    clearInterval(this.updateTimer);
+    this.updateTimer = undefined;
+  }
 
   penMock(pen: Pen) {
     if (pen.realTimes) {
       let _d: any = {};
       pen.realTimes.forEach((realTime) => {
-        if (realTime.enableMock && realTime.mock !== undefined) {
-          if (realTime.type === 'float') {
-            if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
-              let arr = realTime.mock.split(',');
-              let rai = Math.floor(Math.random() * arr.length);
-              _d[realTime.key] = parseFloat(arr[rai]);
-            } else if (realTime.mock && realTime.mock.indexOf('-') !== -1) {
-              let max;
-              let min;
-              let len;
-              let arr = realTime.mock.split('-');
-              if (realTime.mock.charAt(0) === '-') {
-                //负数
-                if (arr.length === 4) {
-                  max = -parseFloat(arr[3]);
-                  min = -parseFloat(arr[1]);
-                  len = arr[3];
-                } else {
-                  max = parseFloat(arr[2]);
-                  min = -parseFloat(arr[1]);
-                  len = arr[2];
-                }
-              } else {
-                max = parseFloat(arr[1]);
-                min = parseFloat(arr[0]);
-                len = arr[1];
-              }
-              if ((len + '').indexOf('.') !== -1) {
-                let length = (len + '').split('.')[1].length;
-                _d[realTime.key] = (Math.random() * (max - min) + min).toFixed(
-                  length
-                );
-              } else {
-                _d[realTime.key] = Math.random() * (max - min) + min;
-              }
-            } else {
-              _d[realTime.key] = parseFloat(realTime.mock);
-            }
-          } else if (realTime.type === 'integer') {
-            if (realTime.mock && realTime.mock.indexOf(',') !== -1) {
-              let arr = realTime.mock.split(',');
-              let rai = Math.floor(Math.random() * arr.length);
-              _d[realTime.key] = parseInt(arr[rai]);
-            } else if (realTime.mock && realTime.mock.indexOf('-') !== -1) {
-              let max;
-              let min;
-              let arr = realTime.mock.split('-');
-              if (realTime.mock.charAt(0) === '-') {
-                if (arr.length === 4) {
-                  max = -parseFloat(arr[3]);
-                  min = -parseFloat(arr[1]);
-                } else {
-                  max = parseFloat(arr[2]);
-                  min = -parseFloat(arr[1]);
-                }
-              } else {
-                max = parseInt(arr[1]);
-                min = parseInt(arr[0]);
-              }
-              _d[realTime.key] = parseInt(
-                Math.random() * (max - min) + min + ''
-              );
-            } else {
-              _d[realTime.key] = parseInt(realTime.mock);
-            }
-          } else if (realTime.type === 'bool') {
-            if (typeof realTime.mock === 'boolean') {
-              _d[realTime.key] = realTime.mock;
-            } else if ('true' === realTime.mock) {
-              _d[realTime.key] = true;
-            } else if ('false' === realTime.mock) {
-              _d[realTime.key] = false;
-            } else {
-              _d[realTime.key] = Math.random() < 0.5;
-            }
-          } else if (realTime.type === 'object' || realTime.type === 'array') {
-            if (realTime.mock) {
-              //对象or数组 不mock
-              // _d[realTime.key] = realTime.value;
-            }
-          } else {
-            //if (realTime.type === 'string')
-            if (
-              realTime.mock &&
-              realTime.mock.startsWith('{') &&
-              realTime.mock.endsWith('}')
-            ) {
-              let str = realTime.mock.substring(1, realTime.mock.length - 1);
-              let arr = str.split(',');
-              let rai = Math.floor(Math.random() * arr.length);
-              _d[realTime.key] = arr[rai];
-            } else if (
-              realTime.mock &&
-              realTime.mock.startsWith('[') &&
-              realTime.mock.endsWith(']')
-            ) {
-              let len = parseInt(
-                realTime.mock.substring(1, realTime.mock.length - 1)
-              );
-              _d[realTime.key] = this.randomString(len);
-            } else {
-              _d[realTime.key] = realTime.mock;
-            }
-          }
+        let value = this.mockValue(realTime);
+        if(value !== undefined){
+          _d[realTime.key] = value;
         }
       });
       if (Object.keys(_d).length) {
@@ -2036,8 +2083,8 @@ export class Meta2d {
   }
 
   onNetworkConnect(https: Network[]) {
-    let enable = this.store.data.enableMock;
-    if (!(https && https.length) && !enable) {
+    // let enable = this.store.data.enableMock;
+    if (!(https && https.length)) {
       return;
     }
     if (this.store.pensNetwork) {
@@ -2050,20 +2097,20 @@ export class Meta2d {
         this.requestHttp(_item);
       });
     }
-    if( enable ){
-      this.updateTimer = setInterval(() => {
-        //模拟数据
+    // if( enable ){
+    //   this.updateTimer = setInterval(() => {
+    //     //模拟数据
       
-        this.store.data.pens.forEach((pen) => {
-          this.penMock(pen);
-        });
+    //     this.store.data.pens.forEach((pen) => {
+    //       this.penMock(pen);
+    //     });
 
-        // https.forEach(async (_item) => {
-        //   this.requestHttp(_item);
-        // });
-        this.render();
-      }, this.store.data.networkInterval || 1000);
-    }
+    //     // https.forEach(async (_item) => {
+    //     //   this.requestHttp(_item);
+    //     // });
+    //     this.render();
+    //   }, this.store.data.networkInterval || 1000);
+    // }
 
     https.forEach((_item,index) => {
       this.updateTimerList[index] = setInterval(async () => {
@@ -2125,7 +2172,7 @@ export class Meta2d {
       });
     this.mqttClients = undefined;
     this.websockets = undefined;
-    clearInterval(this.updateTimer);
+    // clearInterval(this.updateTimer);
     this.updateTimer = undefined;
     this.updateTimerList &&
     this.updateTimerList.forEach((_updateTimer) => {
