@@ -786,6 +786,7 @@ export class Meta2d {
     this.listenSocket();
     this.connectSocket();
     this.connectNetwork();
+    this.startDataMock();
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
