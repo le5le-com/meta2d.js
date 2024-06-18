@@ -786,6 +786,7 @@ export class Meta2d {
     this.listenSocket();
     this.connectSocket();
     this.connectNetwork();
+    this.startDataMock();
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
@@ -2173,7 +2174,7 @@ export class Meta2d {
     this.mqttClients = undefined;
     this.websockets = undefined;
     // clearInterval(this.updateTimer);
-    this.updateTimer = undefined;
+    // this.updateTimer = undefined;
     this.updateTimerList &&
     this.updateTimerList.forEach((_updateTimer) => {
       clearInterval(_updateTimer);
