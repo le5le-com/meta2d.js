@@ -2308,6 +2308,7 @@ export class Meta2d {
       });
     });
 
+    this.store.data.locked && this.doDataEvent(datas);
     let initPens: Pen[];
     let pens: Pen[];
     if (history) {
@@ -2755,6 +2756,44 @@ export class Meta2d {
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
 
+  doDataEvent = ( datas: { dataId?: string; id?: string; value: any }[]) => {
+    if(!(this.store.data.dataEvents?.length)) {
+      return;
+    }
+    const data = datas.reduce((accumulator,{dataId,id,value}) => {
+      accumulator[id||dataId] = value;
+      return accumulator;
+    }, {});
+    let indexArr = [];
+    this.store.data.dataEvents?.forEach((event,index)=>{
+      let flag = false;
+      if (event.conditions && event.conditions.length) {
+        if (event.conditionType === 'and') {
+          flag = event.conditions.every((condition) => {
+            return this.dataJudegeCondition(data, condition.key, condition);
+          });
+        } else if (event.conditionType === 'or') {
+          flag = event.conditions.some((condition) => {
+            return this.dataJudegeCondition(data, condition.key, condition);
+          });
+        }
+      } else {
+        flag = true;
+      }
+      if (flag) {
+        indexArr.push(index);
+      }
+    });
+
+    this.store.data.dataEvents?.forEach((event,index) => {
+      if(indexArr.includes(index)){
+        event.actions?.forEach((action) => {
+          this.events[action.action](data, action);
+        });
+      }
+    });
+  }
+
   initGlobalTriggers(){
     this.store.globalTriggers = {};
     this.store.data.triggers?.forEach((trigger) => {
@@ -2786,6 +2825,72 @@ export class Meta2d {
         }
       });
     });
+  }
+
+  dataJudegeCondition(data: any, key: string, condition: TriggerCondition) {
+    const { type, target, fnJs, fn, operator, valueType } = condition;
+    let can = false;
+    if (type === 'fn') {
+      //方法
+      if (fn) {
+        can = fn(data, { meta2d: this });
+      } else if (fnJs) {
+        try {
+          condition.fn = new Function('data', 'context', fnJs) as (
+            data: any,
+            context?: {
+              meta2d: Meta2d;
+            }
+          ) => boolean;
+        } catch (err) {
+          console.error('Error: make function:', err);
+        }
+        if (condition.fn) {
+          can = condition.fn(data, { meta2d: this });
+        }
+      }
+    } else {
+      //TODO boolean类型 数字类型
+      let value = condition.value;
+      if (valueType === 'prop') {
+        value = data[condition.value];
+      }
+      let compareValue = data[key];
+      switch (operator) {
+        case '>':
+          can = compareValue > +value;
+          break;
+        case '>=':
+          can = compareValue >= +value;
+          break;
+        case '<':
+          can = compareValue < +value;
+          break;
+        case '<=':
+          can = compareValue <= +value;
+          break;
+        case '=':
+        case '==':
+          can = compareValue == value;
+          break;
+        case '!=':
+          can = compareValue != value;
+          break;
+        case '[)':
+          can = valueInRange(+compareValue, value);
+          break;
+        case '![)':
+          can = !valueInRange(+compareValue, value);
+          break;
+        case '[]':
+          can = valueInArray(compareValue, value);
+          break;
+        case '![]':
+          can = !valueInArray(compareValue, value);
+          break;
+      }
+    }
+    return can;
   }
 
   judgeCondition(pen: Pen, key: string, condition: TriggerCondition) {

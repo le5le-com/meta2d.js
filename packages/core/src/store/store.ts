@@ -72,7 +72,8 @@ export interface Meta2dData {
   dataPoints?: string[]; //数据点
   dataset?:{
     devices?: DataMock[]; //数据模拟
-  }
+  };
+  dataEvents?:Event[]; //数据点事件
 }
 
 export interface DataMock {
