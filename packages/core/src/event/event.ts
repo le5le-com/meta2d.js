@@ -117,6 +117,7 @@ export interface Trigger {
   conditionType?: string; //'and'/'or'
   conditions?: TriggerCondition[];
   actions?: Event[];
+  status?: Trigger[]; //所有状态
 }
 
 export interface Bind {

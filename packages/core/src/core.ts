@@ -2700,14 +2700,19 @@ export class Meta2d {
         let indexArr = [];
         realTime.triggers?.forEach((trigger,index) => {
           let flag = false;
-          if (trigger.conditionType === 'and') {
-            flag = trigger.conditions.every((condition) => {
-              return this.judgeCondition(pen, realTime.key, condition);
-            });
-          } else if (trigger.conditionType === 'or') {
-            flag = trigger.conditions.some((condition) => {
-              return this.judgeCondition(pen, realTime.key, condition);
-            });
+          if(trigger.conditions?.length){
+            if (trigger.conditionType === 'and') {
+              flag = trigger.conditions.every((condition) => {
+                return this.judgeCondition(pen, realTime.key, condition);
+              });
+            } else if (trigger.conditionType === 'or') {
+              flag = trigger.conditions.some((condition) => {
+                return this.judgeCondition(pen, realTime.key, condition);
+              });
+            }
+          }else {
+            //无条件
+            flag = true;
           }
           if (flag) {
             indexArr.push(index);
@@ -2731,14 +2736,19 @@ export class Meta2d {
       let indexArr = [];
       this.store.globalTriggers[pen.id]?.forEach((trigger,index) => {
         let flag = false;
-        if (trigger.conditionType === 'and') {
-          flag = trigger.conditions.every((condition) => {
-            return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
-          });
-        } else if (trigger.conditionType === 'or') {
-          flag = trigger.conditions.some((condition) => {
-            return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
-          });
+        if(trigger.conditions?.length){
+          if (trigger.conditionType === 'and') {
+            flag = trigger.conditions.every((condition) => {
+              return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+            });
+          } else if (trigger.conditionType === 'or') {
+            flag = trigger.conditions.some((condition) => {
+              return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+            });
+          }
+        }else{
+          //无条件
+          flag = true;
         }
         if (flag) {
           indexArr.push(index);
@@ -2751,6 +2761,35 @@ export class Meta2d {
           });
         }
       });
+
+      //triggers
+      if( pen.triggers?.length ){
+        for(let trigger of pen.triggers){
+          for(let state of trigger.status){
+            let flag = false;
+            if(state.conditions?.length){
+              if (state.conditionType === 'and') {
+                flag = state.conditions.every((condition) => {
+                  return this.judgeCondition(pen, condition.key, condition);
+                });
+              } else if (trigger.conditionType === 'or') {
+                flag = state.conditions.some((condition) => {
+                  return this.judgeCondition(pen, condition.key, condition);
+                });
+              }
+            }else{
+              //无条件
+              flag = true;
+            }
+            if (flag) {
+              state.actions?.forEach((event) => {
+                this.events[event.action](pen, event);
+              });
+              break;
+            }
+          }
+        }
+      }
     }
 
     // 事件冒泡，子执行完，父执行

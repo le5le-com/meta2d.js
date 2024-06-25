@@ -1,6 +1,6 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
-import { Event, RealTime } from '../event';
+import { Event, RealTime, Trigger } from '../event';
 import { Canvas } from '../canvas';
 
 export enum PenType {
@@ -338,6 +338,7 @@ export interface Pen extends Rect {
   animations?: any[]; //动画数组
   currentAnimation?: number; //当前动画索引
   realTimes?: RealTime[];
+  triggers?:  Trigger[]; //状态
   crossOrigin?: string;
   imageRadius?: number; //图片圆角
   textFlip?: boolean; //文字是否镜像
