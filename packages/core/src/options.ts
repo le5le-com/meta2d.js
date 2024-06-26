@@ -112,6 +112,7 @@ export interface Options {
   disabledColor?: string;
   disabledBackground?: string;
   scaleOff?: number; //缩放偏移量
+  scrollButScale?: boolean; //滚动条滚动，鼠标缩放
 }
 
 export const defaultOptions: Options = {

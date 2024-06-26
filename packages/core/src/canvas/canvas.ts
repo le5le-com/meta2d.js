@@ -584,7 +584,7 @@ export class Canvas {
     }
     if (Math.abs((e as any).wheelDelta) > 100) {
       //鼠标滚轮滚动 scroll模式下是上下滚动而不是缩放
-      if (this.store.options.scroll && this.scroll) {
+      if (this.store.options.scroll && this.scroll && !this.store.options.scrollButScale) {
         this.scroll.wheel(e.deltaY < 0);
         return;
       }
