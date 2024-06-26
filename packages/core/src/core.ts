@@ -2765,27 +2765,29 @@ export class Meta2d {
       //triggers
       if( pen.triggers?.length ){
         for(let trigger of pen.triggers){
-          for(let state of trigger.status){
-            let flag = false;
-            if(state.conditions?.length){
-              if (state.conditionType === 'and') {
-                flag = state.conditions.every((condition) => {
-                  return this.judgeCondition(pen, condition.key, condition);
-                });
-              } else if (trigger.conditionType === 'or') {
-                flag = state.conditions.some((condition) => {
-                  return this.judgeCondition(pen, condition.key, condition);
-                });
+          if(trigger.status?.length){
+            for(let state of trigger.status){
+              let flag = false;
+              if(state.conditions?.length){
+                if (state.conditionType === 'and') {
+                  flag = state.conditions.every((condition) => {
+                    return this.judgeCondition(pen, condition.key, condition);
+                  });
+                } else if (trigger.conditionType === 'or') {
+                  flag = state.conditions.some((condition) => {
+                    return this.judgeCondition(pen, condition.key, condition);
+                  });
+                }
+              }else{
+                //无条件
+                flag = true;
               }
-            }else{
-              //无条件
-              flag = true;
-            }
-            if (flag) {
-              state.actions?.forEach((event) => {
-                this.events[event.action](pen, event);
-              });
-              break;
+              if (flag) {
+                state.actions?.forEach((event) => {
+                  this.events[event.action](pen, event);
+                });
+                break;
+              }
             }
           }
         }
