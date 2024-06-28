@@ -469,7 +469,7 @@ export class Meta2d {
           if(_pen.deviceId){
             value.deviceId = _pen.deviceId;
           }
-          this.sendDataToNetWork(value, e.network);
+          this.sendDataToNetWork(value, pen, e);
           return;
         }
       }
@@ -545,8 +545,8 @@ export class Meta2d {
     this.store.emitter.emit('sendData', data);
   }
 
-  async sendDataToNetWork(value: any, _network: Network) {
-    const network = deepClone(_network);
+  async sendDataToNetWork(value: any, pen: Pen, e: any) {
+    const network = deepClone(e.network);
     if(network.data){
       Object.assign(network,network.data);
       delete network.data;
@@ -580,6 +580,25 @@ export class Meta2d {
         body: network.method === 'POST' ? JSON.stringify(value) : undefined,
       });
       if (res.ok) {
+        if(e.callback){
+          const data = await res.text();
+          if(!e.fn){
+            try {
+              if (typeof e.callback !== 'string') {
+                throw new Error('[meta2d] Function callback must be string');
+              }
+              const fnJs = e.callback;
+              e.fn = new Function('pen', 'data', 'context', fnJs) as (
+                pen: Pen,
+                data: string,
+                context?: { meta2d: Meta2d; e:any }
+              ) => void;
+            } catch (err) {
+              console.error('[meta2d]: Error on make a function:', err);
+            }
+          }
+          e.fn?.(pen, data, { meta2d: this, e });
+        }
         console.info('http消息发送成功');
       }
     } else if (network.protocol === 'mqtt') {
@@ -2765,27 +2784,29 @@ export class Meta2d {
       //triggers
       if( pen.triggers?.length ){
         for(let trigger of pen.triggers){
-          for(let state of trigger.status){
-            let flag = false;
-            if(state.conditions?.length){
-              if (state.conditionType === 'and') {
-                flag = state.conditions.every((condition) => {
-                  return this.judgeCondition(pen, condition.key, condition);
-                });
-              } else if (trigger.conditionType === 'or') {
-                flag = state.conditions.some((condition) => {
-                  return this.judgeCondition(pen, condition.key, condition);
-                });
+          if(trigger.status?.length){
+            for(let state of trigger.status){
+              let flag = false;
+              if(state.conditions?.length){
+                if (state.conditionType === 'and') {
+                  flag = state.conditions.every((condition) => {
+                    return this.judgeCondition(pen, condition.key, condition);
+                  });
+                } else if (trigger.conditionType === 'or') {
+                  flag = state.conditions.some((condition) => {
+                    return this.judgeCondition(pen, condition.key, condition);
+                  });
+                }
+              }else{
+                //无条件
+                flag = true;
               }
-            }else{
-              //无条件
-              flag = true;
-            }
-            if (flag) {
-              state.actions?.forEach((event) => {
-                this.events[event.action](pen, event);
-              });
-              break;
+              if (flag) {
+                state.actions?.forEach((event) => {
+                  this.events[event.action](pen, event);
+                });
+                break;
+              }
             }
           }
         }
