@@ -3879,6 +3879,9 @@ export class Meta2d {
     this.store.data.x = x;
     this.store.data.y = y;
 
+    for (const pen of this.store.data.pens) {
+      calcInView(pen);
+    }
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
     this.render();
