@@ -2280,7 +2280,7 @@ export class Meta2d {
 
           let penValue = penValues.get(pen);
 
-          if (typeof pen.onBinds === 'function') {
+          if (!pen.noOnBinds && typeof pen.onBinds === 'function') {
             // 已经计算了
             if (penValue) {
               return;
@@ -2365,6 +2365,9 @@ export class Meta2d {
     } = {}
   ) {
     let pens: Pen[] = [];
+    if(!data){
+      return;
+    }
     if (data.id) {
       if (data.id === this.store.data.id) {
         this.setDatabyOptions(data);
@@ -3900,6 +3903,9 @@ export class Meta2d {
     this.store.data.x = x;
     this.store.data.y = y;
 
+    for (const pen of this.store.data.pens) {
+      calcInView(pen);
+    }
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
     this.render();

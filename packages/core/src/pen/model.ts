@@ -367,6 +367,7 @@ export interface Pen extends Rect {
   inputType?:string; //输入框类型
   deviceId?:string;//关联的设备id
   pivot?:Point; //旋转中心 
+  noOnBinds?:boolean; //是否禁用绑定事件
   calculative?: {
     x?: number;
     y?: number;
