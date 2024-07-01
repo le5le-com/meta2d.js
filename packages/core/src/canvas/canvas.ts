@@ -5436,7 +5436,7 @@ export class Canvas {
         this.store.activeAnchor
       );
     }
-    let anchorId = this.store.activeAnchor.id;
+    let anchorId = this.store.activeAnchor?.id;
     let connectedLine = this.store.pens[
       this.store.activeAnchor.penId
     ]?.connectedLines?.filter((item) => item.anchor === anchorId);
@@ -7236,7 +7236,7 @@ export class Canvas {
     }
     this.inputDiv.oninput = (e: any) => {
       const pen = this.store.pens[this.inputDiv.dataset.penId];
-      if(pen.inputType === 'number'){
+      if(pen && pen.inputType === 'number'){
         const value = e.target.innerText;
         const numericValue = value.replace(/[^0-9]/g, ''); // 移除非数字字符
         // 如果输入的值不是纯数字，则替换为纯数字
