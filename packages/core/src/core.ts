@@ -465,7 +465,7 @@ export class Meta2d {
               value[key] = _pen[key];
             }
           }
-          value.id = _pen.id;
+          // value.id = _pen.id;
           if(_pen.deviceId){
             value.deviceId = _pen.deviceId;
           }
@@ -557,16 +557,19 @@ export class Meta2d {
     if (network.protocol === 'http') {
       if (typeof network.headers === 'object') {
         for (let i in network.headers) {
-          let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
-          if (keys) {
-            network.headers[i] = network.headers[i].replace(
-              `\${${keys[0]}}`,
-              this.getDynamicParam(keys[0])
-            );
+          if(typeof network.headers[i] === 'string'){
+            let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            if (keys) {
+              network.headers[i] = network.headers[i].replace(
+                `\${${keys[0]}}`,
+                this.getDynamicParam(keys[0])
+              );
+            }
           }
         }
       }
       let params = undefined;
+      let url = network.url;
       if (network.method === 'GET') {
         params =
           '?' +
@@ -574,7 +577,17 @@ export class Meta2d {
             .map((key) => key + '=' + value[key])
             .join('&');
       }
-      const res: Response = await fetch(network.url + (params ? params : ''), {
+      if(network.method === 'POST'){
+        if(url.indexOf('${') > -1){
+          let keys = url.match(/(?<=\$\{).*?(?=\})/g);
+          if(keys){
+            keys.forEach((key) => {
+              url = url.replace(`\${${key}}`, getter(pen, key) || this.getDynamicParam(key));
+            });
+          }
+        }
+      }
+      const res: Response = await fetch(url + (params ? params : ''), {
         headers: network.headers || {},
         method: network.method,
         body: network.method === 'POST' ? JSON.stringify(value) : undefined,
