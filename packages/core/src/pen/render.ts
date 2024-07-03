@@ -3159,7 +3159,7 @@ export function setGlobalAlpha(
  * @param pen 画笔
  */
 function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const canvasDraw = globalStore.canvasDraws[pen.name];
+  const canvasDraw =  drawFuncGenerator(ctx,pen) || globalStore.canvasDraws[pen.name];
   if (canvasDraw) {
     // TODO: 后续考虑优化 save / restore
     ctx.save();
@@ -3168,7 +3168,233 @@ function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 }
+function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: Pen) {
+  // 进行数据的预处理
+  const drawCommand:Array<any> = pen.drawCommand;
+  if(!drawCommand || pen.name === 'line')return ;
+  // 单位转换 将其他单位转换为px
 
+  // 执行自定义绘画函数
+  return (ctx: CanvasRenderingContext2D,pen: Pen)=> {
+    // TODO  绘制命令的转换 （能否兼容多种指令？？）
+    drawCommand.forEach((command)=> {
+      try {
+        command.steps.reduce((calculate,step)=>{
+          const cs = commandTransfer(step,pen,calculate.x,calculate.y);
+          // 应当保证顺序的正确
+          try {
+            if(cs.c){
+              let l = [];
+              for (const csKey in cs.v) {
+                l.push(cs.v[csKey]);
+              }
+              // ctx.beginPath();
+              ctx[cs.c](...l);
+              ctx.moveTo(cs.startX || cs.v.x,cs.startY || cs.v.y);
+              // command.prop.NoFill === '0'?ctx.fill():'';
+              return {x:cs.startX || cs.v.x, y:cs.startY||cs.v.y};
+            }
+            return {x:calculate.x,y:calculate.y};
+          }catch (e) {
+            // pass
+          }
+        },{});
+      }
+      catch (e) {
+      }
+    });
+    ctx.stroke();
+  };
+}
+
+function commandTransfer(command,pen,startX,startY){
+
+  // TODO 是否支持扩展更多的命令？用于兼容未来的其他解析格式？
+  //1. 进行简单的命令解析
+  // VISIO
+  const map = {
+    'visio':dealWithVisio,
+    'dxf':dealWithDXF
+  };
+  // CAD
+  return map[pen.parseType](command,pen,startX,startY);
+}
+
+function dealWithDXF(command,pen,startX,startY) {
+  const { x, y, width, height } = pen.calculative.worldRect;
+  switch (command.c) {
+    case "moveTo":
+      return {
+        c:'moveTo',
+        v:{
+          x:command.v.x * meta2d.store.data.scale,
+          y:window.innerHeight - (command.v.y * meta2d.store.data.scale)
+        }
+      };
+    case "lineTo":
+      return {
+        c:'lineTo',
+        v:{
+          x:command.v.x * meta2d.store.data.scale,
+          y:window.innerHeight - (command.v.y * meta2d.store.data.scale)
+        }
+      };
+    case "arc":
+      return {
+        c:'arc',
+        v:{
+          x:command.v.x * meta2d.store.data.scale,
+          y:window.innerHeight - (command.v.y * meta2d.store.data.scale),
+          r:command.v.r * meta2d.store.data.scale,
+          startAngle:command.v.startAngle,
+          endAngle: command.v.endAngle
+        }
+      };
+  }
+  return command;
+}
+function dealWithVisio(command,pen,startX,startY) {
+  const { x, y, width, height } = pen.calculative.worldRect;
+  const { width:originWidth, height:originHeight} = pen.origin;
+  switch (command.c) {
+    case "MoveTo":
+      return {
+          c:"moveTo",
+        v:{
+          x:+ command.v.X * (100) * (width / originWidth) + x,
+          y:+ command.v.Y * (100) * (height / originHeight) + y
+        }
+      };
+    case "RelMoveTo":
+      return {
+        c:"moveTo",
+        v:{
+          x:+ command.v.X * originWidth * (width / originWidth) + x,
+          y:+ command.v.Y * originHeight * (height / originHeight) + y
+        }
+      };
+    case "LineTo":
+      return {
+        c: "lineTo",
+        v:{
+          x:+ command.v.X * (100) * (width / originWidth) + x,
+          y:+ command.v.Y * (100) * (height / originHeight) + y
+        }
+      };
+    case "RelLineTo":
+      return {
+        c: "lineTo",
+        v:{
+          x:+ command.v.X * originWidth * (width / originWidth) + x,
+          y:+ command.v.Y * originHeight * (height / originHeight) + y
+        }
+      };
+    case "Ellipse":
+      let centerX1 = command.v.X;
+      let centerY1 = command.v.Y;
+      let longAxis = Math.abs(command.v.A - command.v.C);
+      let shortAxis = Math.abs(command.v.B - command.v.D);
+
+      return {
+        c: "ellipse",
+        v: {
+          x: centerX1 * (100) * (width / originWidth) + x,
+          y: centerY1 * (100) * (height / originHeight) + y,
+          radiuX: longAxis * (100) * (width / originWidth),
+          radiuY: shortAxis * (100) * (height / originHeight),
+          rotation: 0,
+          startAngle: 0,
+          endAngle: Math.PI *2,
+          anticlockwise: true
+        }
+      };
+    case "EllipticalArcTo":
+      const endX = command.v.X * 100 * (width / originWidth) + x; // 弧上结束顶点的 x 坐标
+      const endY = command.v.Y * 100 * (height / originHeight) + y; // 弧上结束顶点的 y 坐标
+      const ctrlX = command.v.A * 100 * (width / originWidth) + x; // 控制点的 x 坐标
+      const ctrlY = command.v.B * 100 * (height / originHeight) + y; // 控制点的 y 坐标
+      const angleDeg = command.v.C; // 主轴相对于 x 轴的角度 (度)
+      const axisRatio = command.v.D * (width / height) * (originHeight / originWidth); // 长轴和短轴的比率
+      //
+      const params = calculateEllipseParameters(startX,startY,endX,endY,ctrlX,ctrlY,axisRatio);
+// 开始绘制路径
+      !command.orign && (command.orign = {});
+      !command.orign.startA && ( command.orign.startA = calculateAngleInRadians(params.x0,params.y0,startX,startY));
+      !command.orign.endA && ( command.orign.endA = calculateAngleInRadians(params.x0,params.y0,endX,endY));
+      return {
+        c:"ellipse",
+        v:{
+          centerX: params.x0,
+          centerY: params.y0 ,
+          radiuX: params.a ,
+          radiuY: params.b,
+          // rotation:radiansToDegrees(angleDeg),
+          rotation:0,
+          startAngle:command.orign.startA,
+          endAngle: command.orign.endA,
+          // startAngle: 0,
+          // endAngle: Math.PI * 2,
+          // anticlockwise: startA > 0 && startA>endA
+          anticlockwise: + angleDeg < 0
+          // anticlockwise: Math.abs(endA - startA) < Math.PI
+        },
+        startX:endX,
+        startY:endY,
+      };
+    case "ArcTo":
+      let endX2 = command.v.X * 100 * width / originWidth + x;
+      let endY2 = command.v.Y * 100 * height / originHeight + y;
+      let h = command.v.A * 100 *  (width / height) * (originHeight / originWidth);
+      // 计算弦的中点
+      let xm = (startX + endX2) / 2;
+      let ym = (startY + endY2) / 2;
+
+      // 计算弦的长度
+      let d = Math.sqrt((endX2 - startX) ** 2 + (endY2 - startY) ** 2);
+
+      // 计算圆弧的半径
+      let R = (d ** 2) / (8 * h) + h / 2;
+
+      // 计算单位垂直向量
+      let ux = -(endY2 - startY) / d;
+      let uy = (endX2 - startX) / d;
+
+      // 计算两个可能的圆心
+      let xc1 = xm + ux * R;
+      let yc1 = ym + uy * R;
+      let xc2 = xm - ux * R;
+      let yc2 = ym - uy * R;
+
+      // 选择一个圆心
+      let xc = xc1;
+      let yc = yc1;
+
+      // 计算起点和终点到圆心的角度
+      let startAngle = Math.atan2(startY - yc, startX - xc);
+      let endAngle = Math.atan2(endY2 - yc, endX2 - xc);
+      return {
+        c:'arc',
+        v:{
+          x:xc,
+          y:yc,
+          radius:R,
+          startAngle:startAngle,
+          endAngle: endAngle,
+          aclockwise: true,
+        }
+      };
+    // case "RelCubBezTo":
+    //   return {
+    //     c:"bezierCurveTo",
+    //     v:{
+    //
+    //     }
+    //   };
+    default:
+      // console.log(command.c);
+      return {};
+  }
+}
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
     if (inheritanceProps.includes(k)) {
@@ -3191,4 +3417,40 @@ export function setChildValue(pen: Pen, data: IValue) {
       child && setChildValue(child, data);
     });
   }
+}
+
+
+function calculateEllipseParameters(x1, y1, x2, y2, x3, y3, D) {
+  // Calculate x₀ using equation ⑥
+  let numeratorX0 = (x1 - x2) * (x1 + x2) * (y2 - y3) - (x2 - x3) * (x2 + x3) * (y1 - y2) + D*D * (y1 - y2) * (y2 - y3) * (y1 - y3);
+  let denominatorX0 = 2 * ((x1 - x2) * (y2 - y3) - (x2 - x3) * (y1 - y2));
+  let x0 = numeratorX0 / denominatorX0;
+
+  // Calculate y₀ using equation ⑦
+  let numeratorY0 = (x1 - x2) * (x2 - x3) * (x1 - x3) + D*D * ((x2 - x3) * (y1 - y2) * (y1 + y2) - (x1 - x2) * (y2 - y3) * (y2 + y3)) ;
+  let denominatorY0 = 2 * D*D * ((x2 - x3) * (y1 - y2) - (x1 - x2) * (y2 - y3));
+  let y0 = numeratorY0 / denominatorY0;
+
+  // Calculate 'a' using equation ⑧, substituting x₀ and y₀
+  let a = Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(D * (y1 - y0), 2));
+
+  // Calculate 'b' using equation ⑨
+  let b = a / D;
+
+  return {x0, y0, a, b};
+}
+
+function calculateAngleInRadians(x1, y1, x2, y2) {
+  // 计算两个点的差值
+  let dx = x2 - x1;
+  let dy = y2 - y1;
+
+  // 使用 atan2 计算角度，结果为弧度
+  let angleRadians = Math.atan2(dy, dx);
+
+  // 如果角度为负值，加上2π
+  if (angleRadians < 0) {
+    angleRadians += 2 * Math.PI;
+  }
+  return angleRadians;
 }

@@ -1338,7 +1338,7 @@ export class Meta2d {
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
    */
-  combine(pens: Pen[] = this.store.active, showChild?: number) {
+  combine(pens: Pen[] = this.store.active, showChild?: number):any {
     if (!pens || !pens.length) {
       return;
     }
@@ -1437,6 +1437,7 @@ export class Meta2d {
     }
     this.store.emitter.emit('combine', [parent]);
     this.render();
+    return parent;
   }
 
   uncombine(pen?: Pen) {
