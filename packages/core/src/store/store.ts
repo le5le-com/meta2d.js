@@ -69,6 +69,19 @@ export interface Meta2dData {
   theme?: string; //主题
   smoothNum?:number;//平滑量 值越大，平滑效果越好
   triggers?:Trigger[]; //全局状态
+  dataPoints?: string[]; //数据点
+  dataset?:{
+    devices?: DataMock[]; //数据模拟
+  };
+  dataEvents?:Event[]; //数据点事件
+}
+
+export interface DataMock {
+  id: string;
+  label?: string;
+  mock?: string;
+  type?: string;
+  enableMock?: boolean;
 }
 
 export interface Network {
@@ -132,6 +145,8 @@ export interface Meta2dStore {
   active?: Pen[];
   hover?: Pen;
   lastHover?: Pen;
+  hoverContainer?:Pen;
+  lastHoverContainer?:Pen;
   activeAnchor?: Point;
   hoverAnchor?: Point;
   pointAt?: Point;

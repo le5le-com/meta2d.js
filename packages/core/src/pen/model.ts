@@ -1,6 +1,6 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
-import { Event, RealTime } from '../event';
+import { Event, RealTime, Trigger } from '../event';
 import { Canvas } from '../canvas';
 
 export enum PenType {
@@ -243,6 +243,7 @@ export interface Pen extends Rect {
   strokeImage?: string;
 
   children?: string[];
+  followers?: string[];
 
   anchors?: Point[];
   anchorRadius?: number;
@@ -337,6 +338,7 @@ export interface Pen extends Rect {
   animations?: any[]; //动画数组
   currentAnimation?: number; //当前动画索引
   realTimes?: RealTime[];
+  triggers?:  Trigger[]; //状态
   crossOrigin?: string;
   imageRadius?: number; //图片圆角
   textFlip?: boolean; //文字是否镜像
@@ -358,6 +360,14 @@ export interface Pen extends Rect {
   apiBody?: any;
   apiEnable?: boolean;
   container?:boolean; //是否是容器组件
+  disabled?:boolean; //是否禁用
+  disabledColor?:string; //禁用颜色
+  disabledBackground?:string; //禁用背景色
+  disabledTextColor?:string; //禁用文字颜色
+  inputType?:string; //输入框类型
+  deviceId?:string;//关联的设备id
+  pivot?:Point; //旋转中心 
+  noOnBinds?:boolean; //是否禁用绑定事件
   calculative?: {
     x?: number;
     y?: number;
@@ -468,6 +478,7 @@ export interface Pen extends Rect {
     active?: boolean;
     focus?: boolean; //聚焦图元
     hover?: boolean;
+    containerHover?: boolean; //容器组件hover
     isDock?: boolean; // 是否是对齐参考画笔
     pencil?: boolean;
     activeAnchor?: Point;
@@ -548,6 +559,10 @@ export interface Pen extends Rect {
     cssDisplay?: string; //css display
     animations?: any[];
     imageRadius?: number;
+    disabled?: boolean; //是否禁用
+    disabledColor?: string;
+    disabledBackground?: string;
+    disabledTextColor?:string; //禁用文字颜色
   };
   lastConnected?:any;
   // 下划线相关配置属性

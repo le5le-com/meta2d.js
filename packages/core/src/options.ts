@@ -29,6 +29,8 @@ export interface Options {
   textAlign?: TextAlign;
   textBaseline?: TextBaseline;
   rotateCursor?: string;
+  rightCursor?: string; // table 右箭 选中行
+  downCursor?: string; // table 下箭 选中列
   hoverCursor?: string;
   disableInput?: boolean;
   disableRotate?: boolean;
@@ -107,6 +109,10 @@ export interface Options {
   padding?: Padding; //大屏padding区域
   resizeMode?: boolean;
   svgPathStroke?:boolean; //svg path是否显示边框
+  disabledColor?: string;
+  disabledBackground?: string;
+  scaleOff?: number; //缩放偏移量
+  scrollButScale?: boolean; //滚动条滚动，鼠标缩放
 }
 
 export const defaultOptions: Options = {
@@ -127,6 +133,8 @@ export const defaultOptions: Options = {
   dockPenColor: '#1890FF',
   dragColor: '#1890ff',
   rotateCursor: 'rotate.cur',
+  rightCursor: 'right.cur',
+  downCursor: 'down.cur',
   hoverCursor: 'pointer',
   minScale: 0.1,
   maxScale: 10,

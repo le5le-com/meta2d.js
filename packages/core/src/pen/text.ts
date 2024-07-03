@@ -15,12 +15,12 @@ export function calcTextRect(pen: Pen) {
   let { textLeft, textTop, textWidth, textHeight } = pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;
-  if (textLeft && Math.abs(textLeft) < 1) {
-    textLeft *= worldRect.width;
-  }
-  if (textTop && Math.abs(textTop) < 1) {
-    textTop *= worldRect.height;
-  }
+  // if (textLeft && Math.abs(textLeft) < 1) {
+  //   textLeft *= worldRect.width;
+  // }
+  // if (textTop && Math.abs(textTop) < 1) {
+  //   textTop *= worldRect.height;
+  // }
 
   const width =
     worldRect.width -

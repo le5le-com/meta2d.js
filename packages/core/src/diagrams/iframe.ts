@@ -35,6 +35,7 @@ export function iframe(pen: Pen) {
     iframe.style.height = '100%';
     iframe.scrolling = pen.scrolling || 'no';
     iframe.frameBorder = '0';
+    iframe.style.border = 'none';
     iframe.src = pen.iframe;
     pen.calculative.iframe = pen.iframe;
     div.appendChild(iframe);
@@ -52,6 +53,7 @@ export function iframe(pen: Pen) {
 }
 
 function destory(pen: Pen) {
+  updatePointerEvents(pen);
   if (pen.calculative.singleton && pen.calculative.singleton.div) {
     pen.calculative.singleton.div.remove();
     delete pen.calculative.singleton.div;

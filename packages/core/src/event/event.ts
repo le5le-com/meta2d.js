@@ -35,6 +35,7 @@ export interface Event {
   conditions?: TriggerCondition[];
   conditionType?: string;
   message?: string; //消息名称
+  callback?: string; //回调函数 仅http
 }
 
 export enum EventAction {
@@ -117,6 +118,7 @@ export interface Trigger {
   conditionType?: string; //'and'/'or'
   conditions?: TriggerCondition[];
   actions?: Event[];
+  status?: Trigger[]; //所有状态
 }
 
 export interface Bind {

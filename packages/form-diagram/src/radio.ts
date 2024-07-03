@@ -2,6 +2,7 @@ import { getTextLength, initOptions } from './common';
 import { formPen } from './common';
 import { Point } from '../../core/src/point';
 import { getTextColor, getFont } from '../../core';
+import { pSBC } from '../../core';
 
 export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -27,7 +28,7 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
     // const optionHeight = (pen.optionHeight * h) / pen.checkboxHeight;
     for (let i = 0; i < pen.optionPos.length; i++) {
       const gap = (pen.optionPos[i] * w) / pen.checkboxWidth;
-      const isForbidden = pen.options[i].isForbidden;
+      const isForbidden = pen.options[i].isForbidden || pen.disabled;
       ctx.beginPath();
       ctx.arc(x + gap + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#d9d9d9';
@@ -37,24 +38,33 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
           pen.options[i].background || pen.background || '#1890ff';
       }
       if (isForbidden) {
-        ctx.fillStyle = '#ebebeb';
-        ctx.strokeStyle = '#d9d9d9';
+        ctx.fillStyle = pen.disabledBackground || pSBC(0.6 ,pen.background)|| '#ebebeb';
+        ctx.strokeStyle = pen.disabledColor || pSBC(0.6 ,pen.color)||'#d9d9d9';
+        if (pen.options[i].text === pen.checked) {
+           ctx.fillStyle = '#ffffff00';
+        }
       }
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
       ctx.save();
-      if (!isForbidden && pen.options[i].text === pen.checked) {
+      if (pen.options[i].text === pen.checked) {
         ctx.beginPath();
         ctx.strokeStyle = pen.options[i].background
           ? pen.options[i].background + '20'
           : pen.background || '#1890ff20';
+        if(isForbidden){
+          ctx.strokeStyle =pen.disabledBackground || pSBC(0.6 ,pen.background)|| '#ebebeb';
+        }
         ctx.arc(x + h / 2 + gap, y + h / 2, h / 2 + 1.5, 0, Math.PI * 2);
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
         ctx.fillStyle =
           pen.options[i].background || pen.background || '#1890ff';
+        if(isForbidden){
+          ctx.fillStyle =pen.disabledBackground || pSBC(0.6 ,pen.background)|| '#ebebeb';
+        }
         ctx.arc(x + h / 2 + gap, y + h / 2, h / 4, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
@@ -64,7 +74,7 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
       //文字
       ctx.save();
       ctx.fillStyle = isForbidden
-        ? '#00000040'
+        ? (pen.disabledTextColor||'#00000040')
         : getTextColor(pen, pen.calculative.canvas.parent.store) || '#000000d9';
       const textScale = (pen.calculative.worldRect.height * 14) / 16;
 

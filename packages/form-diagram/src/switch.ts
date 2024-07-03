@@ -1,4 +1,5 @@
 import { formPen } from './common';
+import { pSBC } from '../../core';
 
 export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onClick) {
@@ -18,8 +19,8 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.lineTo(x + h / 2, y + h);
   if (pen.checked) {
     ctx.fillStyle = pen.onColor;
-    if (pen.disable) {
-      ctx.fillStyle = pen.disableOnColor;
+    if (pen.disabled || pen.disable) {
+      ctx.fillStyle = pen.disableOnColor || pSBC(0.6,pen.onColor);
     }
     ctx.fill();
     ctx.closePath();
@@ -37,8 +38,8 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
     ctx.fill();
   } else {
     ctx.fillStyle = pen.offColor;
-    if (pen.disable) {
-      ctx.fillStyle = pen.disableOffColor;
+    if (pen.disabled || pen.disable) {
+      ctx.fillStyle = pen.disableOffColor || pSBC(0.6,pen.offColor);
     }
     ctx.fill();
     ctx.closePath();
@@ -52,7 +53,7 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
 }
 
 function click(pen: formPen) {
-  if (pen.disable) {
+  if (pen.disabled || pen.disable) {
     return;
   }
   pen.checked = !pen.checked;

@@ -381,18 +381,37 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       let { value: cell, style: cellStyle } = getCell(pen, i, j);
       let isSuccess = true;
       //样式条件成立
-      if (
-        (cellStyle as any).wheres &&
-        Array.isArray((cellStyle as any).wheres)
-      ) {
-        isSuccess = false;
-        isSuccess = (cellStyle as any).wheres.every(function (where: any) {
-          const fn = new Function(
-            'attr',
-            `return attr ${where.comparison} ${where.value}`
-          );
-          return fn(cell);
+      if(Array.isArray(cellStyle) && cellStyle.length > 0){
+        let successIdx = 0;
+        cellStyle.forEach((item: any, idx: number) => {
+          if(item.wheres){
+            let success = item.wheres.every((where: any) => {
+              const fn = new Function(
+                'attr',
+                `return attr ${where.comparison} ${where.value}`
+              );
+              return fn(cell);
+            });
+            if(success){
+              successIdx = idx;
+            }
+          }
         });
+        cellStyle = cellStyle[successIdx];
+      }else{
+        if (
+          (cellStyle as any).wheres &&
+          Array.isArray((cellStyle as any).wheres)
+        ) {
+          isSuccess = false;
+          isSuccess = (cellStyle as any).wheres.every(function (where: any) {
+            const fn = new Function(
+              'attr',
+              `return attr ${where.comparison} ${where.value}`
+            );
+            return fn(cell);
+          });
+        }
       }
       let color = pen.color;
       let textColor = pen.textColor || pen.color;
@@ -732,7 +751,7 @@ function getCell(pen: formPen, rowIndex: number, colIndex: number) {
       return item.row === rowIndex && item.col === colIndex;
     });
   if (Array.isArray(row)) {
-    return { value: row[colIndex], style: style?.length > 0 ? style[0] : {} };
+    return { value: row[colIndex], style: style?.length > 0 ? (style.length>1?style : style[0]) : {} };
   } else if (!row.data || !Array.isArray(row.data)) {
     return;
   }

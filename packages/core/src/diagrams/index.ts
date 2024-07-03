@@ -15,6 +15,7 @@ export * from './people';
 export * from './line';
 export * from './iframe';
 export * from './video';
+export * from './panel';
 
 import { rectangle, square } from './rectangle';
 import { circle } from './circle';
@@ -28,7 +29,7 @@ import { leftArrow, rightArrow, twowayArrow } from './arrow';
 import { message } from './message';
 import { cloud } from './cloud';
 import { file } from './file';
-import { cube } from './cube';
+// import { cube } from './cube';
 import { people } from './people';
 import { line } from './line';
 import { iframe } from './iframe';
@@ -36,6 +37,7 @@ import { video } from './video';
 import { gif } from './gif';
 import { mindNode, mindNodeAnchors } from './mindNode';
 import { mindLine, mindLineAnchors } from './mindLine';
+import { panel } from './panel';
 
 export function commonPens() {
   return {
@@ -61,7 +63,8 @@ export function commonPens() {
     gif,
     mindNode,
     mindLine,
-    mindNode2:rectangle
+    mindNode2:rectangle,
+    panel
   };
 }
 

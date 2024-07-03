@@ -11,6 +11,7 @@ export interface Rect {
   height?: number;
   rotate?: number;
   center?: Point;
+  pivot?: Point; //旋转中心
 }
 
 export function pointInRect(pt: Point, rect: Rect) {
@@ -41,7 +42,7 @@ export function pointInRect(pt: Point, rect: Rect) {
     { x: rect.x, y: rect.ey },
   ];
   pts.forEach((item: Point) => {
-    rotatePoint(item, rect.rotate, rect.center);
+    rotatePoint(item, rect.rotate, rect.pivot || rect.center);
   });
 
   return pointInVertices(pt, pts);
@@ -63,6 +64,14 @@ export function calcCenter(rect: Rect) {
 export function calcRightBottom(rect: Rect) {
   rect.ex = rect.x + rect.width;
   rect.ey = rect.y + rect.height;
+}
+
+export function calcPivot(rect: Rect, pivot:Point) {
+  if (!rect.pivot) {
+    rect.pivot = {} as Point;
+  }
+  rect.pivot.x = rect.x + rect.width * pivot.x;
+  rect.pivot.y = rect.y + rect.height * pivot.y;
 }
 
 export function pointInVertices(
@@ -122,7 +131,7 @@ export function rectToPoints(rect: Rect) {
       calcCenter(rect);
     }
     pts.forEach((pt) => {
-      rotatePoint(pt, rect.rotate, rect.center);
+      rotatePoint(pt, rect.rotate, rect.pivot || rect.center);
     });
   }
   return pts;
@@ -203,6 +212,11 @@ export function translateRect(rect: Rect | Pen, x: number, y: number) {
   if (rect.center) {
     rect.center.x += x;
     rect.center.y += y;
+  }
+
+  if(rect.pivot){
+    rect.pivot.x += x;
+    rect.pivot.y += y;
   }
 }
 
@@ -419,7 +433,7 @@ export function resizeRect(
   }
 }
 
-export function scaleRect(rect: Rect, scale: number, center: Point) {
+export function scaleRect(rect: Rect, scale: number, center: Point, pivot?: Point) {
   if (!rect) {
     return;
   }
@@ -429,6 +443,9 @@ export function scaleRect(rect: Rect, scale: number, center: Point) {
 
   calcRightBottom(rect);
   calcCenter(rect);
+  if(pivot){
+    calcPivot(rect, pivot);
+  }
 }
 
 export function calcRelativeRect(rect: Rect, worldRect: Rect) {
