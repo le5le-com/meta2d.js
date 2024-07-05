@@ -3995,7 +3995,11 @@ export class Canvas {
       }
       globalStore.anchors[pen.name](pen);
     }
-
+    if(!pen.anchors){
+      const anchors = deepClone(this.store.options.defaultAnchors)
+      anchors.forEach((item,index)=>{item.id = `${index}`;item.penId = pen.id});
+      pen.anchors = anchors;
+    }
     this.updatePenRect(pen);
     if (!pen.anchors && pen.calculative.worldAnchors) {
       pen.anchors = pen.calculative.worldAnchors.map((pt) => {
