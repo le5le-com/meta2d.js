@@ -22,6 +22,10 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
     if (pen.disabled || pen.disable) {
       ctx.fillStyle = pen.disableOnColor || pSBC(0.6,pen.onColor);
     }
+    if(pen.lineWidth){
+      ctx.strokeStyle = pen.onStrokeColor;
+      ctx.stroke();
+    }
     ctx.fill();
     ctx.closePath();
     ctx.beginPath();
@@ -40,6 +44,10 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
     ctx.fillStyle = pen.offColor;
     if (pen.disabled || pen.disable) {
       ctx.fillStyle = pen.disableOffColor || pSBC(0.6,pen.offColor);
+    }
+    if(pen.lineWidth){
+      ctx.strokeStyle = pen.offStrokeColor;
+      ctx.stroke();
     }
     ctx.fill();
     ctx.closePath();

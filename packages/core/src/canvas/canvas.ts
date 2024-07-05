@@ -2309,7 +2309,6 @@ export class Canvas {
 
     if (this.mouseRight === MouseRight.Down) {
       if(this.store.hover&&this.store.hover.calculative.focus){
-        console.log("执行，执行");
         this.store.hover.onContextmenu &&
         this.store.hover.onContextmenu(this.store.hover, e);
       }else{
