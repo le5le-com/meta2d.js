@@ -992,7 +992,7 @@ export class Canvas {
               getLineLength(pen);
             }else{
               //图元进入编辑模式
-              pen.calculative.focus = !pen.calculative.focus;
+              pen.calculative.focus = true;
             }
           });
           this.render();
@@ -1004,6 +1004,15 @@ export class Canvas {
         }
         this.drawingLineName = undefined;
         this.stopPencil();
+        if (this.store.active) {
+          this.store.active.forEach((pen) => {
+            if (pen.type) {
+            }else{
+              //图元退出编辑模式
+              pen.calculative.focus = false;
+            }
+          });
+        }
         if (this.movingPens) {
           this.getAllByPens(this.movingPens).forEach((pen) => {
             this.store.pens[pen.id] = undefined;
@@ -2300,6 +2309,7 @@ export class Canvas {
 
     if (this.mouseRight === MouseRight.Down) {
       if(this.store.hover&&this.store.hover.calculative.focus){
+        console.log("执行，执行");
         this.store.hover.onContextmenu &&
         this.store.hover.onContextmenu(this.store.hover, e);
       }else{
