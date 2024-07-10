@@ -7528,6 +7528,9 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
+        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height'].includes(k)){
+          willRenderImage = true;
+        }
       } else {
         // 复合属性，如abc.def.ghi
         delete pen[k];
