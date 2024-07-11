@@ -1311,7 +1311,7 @@ export class Canvas {
         }
         if((pen as any).dataset){
           if(num % 2 === 0){
-            lastW = pen.width+10;
+            lastW = pen.width - 40;
           }else{
             lastW = 0;
           }
