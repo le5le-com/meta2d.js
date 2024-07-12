@@ -1962,6 +1962,9 @@ export class Canvas {
           });
           break;
       }
+      if(this.store.hover){
+        this.store.hover.calculative.mouseDown = true;
+      }
       this.store.emitter.emit('mousedown', {
         x: e.x,
         y: e.y,
@@ -2527,6 +2530,9 @@ export class Canvas {
         });
       }
 
+      if(this.store.hover){
+        this.store.hover.calculative.mouseDown = false;
+      }
       this.store.emitter.emit('mouseup', {
         x: e.x,
         y: e.y,
