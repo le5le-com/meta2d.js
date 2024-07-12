@@ -7329,7 +7329,7 @@ export class Canvas {
   private setDropdownList = (search?: boolean) => {
     this.clearDropdownList();
     const pen = this.store.pens[this.inputDiv.dataset.penId];
-    if (!this.store.data.locked&&!['table'].includes(pen.name)) {
+    if (!this.store.data.locked&&!['tablePlus'].includes(pen.name)) {
       return;
     }
     this.dropdown.style.display = 'block';
@@ -7877,11 +7877,11 @@ export class Canvas {
     return canvas.toDataURL();
   }
 
-  activeToPng(padding: Padding = 2) {
-    return this.pensToPng(this.store.active,padding);
+  activeToPng(padding: Padding = 2, maxWidth?: number) {
+    return this.pensToPng(this.store.active,padding, maxWidth);
   }
 
-  pensToPng(pens:Pen[] = this.store.active,padding:Padding=2){
+  pensToPng(pens:Pen[] = this.store.active, padding:Padding=2, maxWidth?: number){
     if(pens.length === 0){
       return;
     }
@@ -7898,6 +7898,11 @@ export class Canvas {
     rect.width += p[3] + p[1];
     rect.height += p[0] + p[2];
     calcRightBottom(rect);
+
+    const scale = (maxWidth || rect.width) / rect.width;
+    rect.width *= scale;
+    rect.height *= scale;
+    
     const canvas = document.createElement('canvas');
     canvas.width = rect.width;
     canvas.height = rect.height;
@@ -7915,9 +7920,24 @@ export class Canvas {
     }
     const ctx = canvas.getContext('2d');
     ctx.textBaseline = 'middle'; // 默认垂直居中
+    ctx.scale(scale, scale);
 
+    const background =
+    this.store.data.background || this.store.options.background;
+    if (background) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        oldRect.width + (p[3] + p[1]),
+        oldRect.height + (p[0] + p[2]) 
+      );
+      ctx.restore();
+    }
     // // 平移画布，画笔的 worldRect 不变化
-    ctx.translate(-oldRect.x, -oldRect.y);
+    ctx.translate(-oldRect.x + p[3], -oldRect.y + p[0]);
 
     for (const pen of this.store.data.pens) {
       if (ids.includes(pen.id)) {

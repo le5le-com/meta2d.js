@@ -182,7 +182,7 @@ export const defaultOptions: Options = {
   cdn: '',
   polylineSpace: 10,
   domShapes: [],
-  containerShapes:['table'],
+  containerShapes:['tablePlus'],
   textFlip: true,
   textRotate: true,
   unavailableKeys: [],

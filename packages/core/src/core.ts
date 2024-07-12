@@ -3105,12 +3105,12 @@ export class Meta2d {
     return this.canvas.toPng(padding, callback, containBkImg, maxWidth);
   }
 
-  activeToPng(padding?: Padding) {
-    return this.canvas.activeToPng(padding);
+  activeToPng(padding?: Padding, maxWidth?: number) {
+    return this.canvas.activeToPng(padding, maxWidth);
   }
 
-  pensToPng(pens: Pen[] = this.store.active, padding?: Padding) {
-    return this.canvas.pensToPng(pens, padding);
+  pensToPng(pens: Pen[] = this.store.active, padding?: Padding, maxWidth?: number) {
+    return this.canvas.pensToPng(pens, padding, maxWidth);
   }
 
   /**
