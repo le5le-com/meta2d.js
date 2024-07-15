@@ -146,6 +146,9 @@ export interface Pen extends Rect {
   hoverBackground?: string;
   activeColor?: string;
   activeBackground?: string;
+  mouseDownValid?: boolean; // 是否鼠标按下是否有样式效果
+  mouseDownColor?: string;
+  mouseDownBackground?: string;
   bkType?: Gradient;
   /**
    * @deprecated 改用 gradientColors
@@ -478,6 +481,7 @@ export interface Pen extends Rect {
     active?: boolean;
     focus?: boolean; //聚焦图元
     hover?: boolean;
+    mouseDown?: boolean; //是否鼠标按下
     containerHover?: boolean; //容器组件hover
     isDock?: boolean; // 是否是对齐参考画笔
     pencil?: boolean;

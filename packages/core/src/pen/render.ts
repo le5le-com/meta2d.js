@@ -1309,6 +1309,9 @@ export function renderPen(
   if(pen.calculative.disabled){
     _stroke = pen.disabledColor || store.options.disabledColor || pSBC(0.4, pen.calculative.color || getGlobalColor(store));
     fill = pen.disabledBackground || store.options.disabledBackground || pSBC(0.4, pen.calculative.background || store.data.penBackground);
+  } else if (pen.mouseDownValid && pen.calculative.mouseDown){
+    _stroke = pen.mouseDownColor || pSBC(-0.4, pen.calculative.color || getGlobalColor(store));
+    fill = pen.mouseDownBackground || pSBC(-0.4, pen.calculative.background || store.data.penBackground);
   } else if (pen.calculative.hover) {
     _stroke = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
