@@ -792,9 +792,10 @@ export class Meta2d {
       for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
-      for (const pen of data.pens) {
-        this.canvas.updateLines(pen);
-      }
+      //首次计算连线bug
+      // for (const pen of data.pens) {
+      //   this.canvas.updateLines(pen);
+      // }
     }
 
     this.canvas.patchFlagsLines.forEach((pen) => {
