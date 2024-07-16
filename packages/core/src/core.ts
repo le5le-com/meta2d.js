@@ -792,9 +792,10 @@ export class Meta2d {
       for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
-      for (const pen of data.pens) {
-        this.canvas.updateLines(pen);
-      }
+      //首次计算连线bug
+      // for (const pen of data.pens) {
+      //   this.canvas.updateLines(pen);
+      // }
     }
 
     this.canvas.patchFlagsLines.forEach((pen) => {
@@ -3105,12 +3106,12 @@ export class Meta2d {
     return this.canvas.toPng(padding, callback, containBkImg, maxWidth);
   }
 
-  activeToPng(padding?: Padding) {
-    return this.canvas.activeToPng(padding);
+  activeToPng(padding?: Padding, maxWidth?: number) {
+    return this.canvas.activeToPng(padding, maxWidth);
   }
 
-  pensToPng(pens: Pen[] = this.store.active, padding?: Padding) {
-    return this.canvas.pensToPng(pens, padding);
+  pensToPng(pens: Pen[] = this.store.active, padding?: Padding, maxWidth?: number) {
+    return this.canvas.pensToPng(pens, padding, maxWidth);
   }
 
   /**

@@ -424,7 +424,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
       (pen.lineName === 'curve' || pen.lineName === 'mind') &&
       anchors[i].curvePoints
     ) {
-      if (i > 0) {
+            if (i > 0) {
         let lastCurvePoints = anchors[i - 1].curvePoints;
         if (lastCurvePoints) {
           //上一个存在锚点
@@ -492,7 +492,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
             anchors[i + 1]
           );
         } else {
-          smoothTransition(
+                    smoothTransition(
             ctx,
             pen,
             smoothLenth,
@@ -500,7 +500,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
             anchors[i],
             anchors[i + 1]
           );
-        }
+                  }
       }
       if (i > 0 && i < anchors.length - 1) {
         _next = getSmoothAdjacent(smoothLenth, anchors[i], anchors[i + 1]);
@@ -508,7 +508,40 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
       if (i < anchors.length - 2) {
         _last = getSmoothAdjacent(smoothLenth, anchors[i + 1], anchors[i]);
       }
+      let flag = false;
+      if(i === 0){
+        if( pen.fromLineCap && pen.fromLineCap !== 'butt'){
+          ctx.save();
+          flag = true;
+          ctx.lineCap = pen.fromLineCap;
+        }
+      }
+      if(i !== 0 && i === anchors.length - 2){
+        if( pen.toLineCap && pen.toLineCap !== 'butt'){
+          ctx.save();
+          flag = true;
+          ctx.lineCap = pen.toLineCap;
+        }
+      }
+
       drawLinearGradientLine(ctx, pen, [_next, _last]);
+      if(flag){
+        ctx.restore();
+      }
+      if(anchors.length===2&&i===0){
+        ctx.save();
+        flag = true;
+        ctx.lineCap = pen.toLineCap;
+        let _y = 0.1;
+        let _x = 0.1;
+        if(_next.x-_last.x===0){
+          _x =0
+        }else{
+          _y = (_next.y-_last.y)/(_next.x-_last.x)*0.1;
+        }
+        drawLinearGradientLine(ctx, pen, [{x:_last.x-_x,y:_last.y-_y}, _last]);
+        ctx.restore();
+      }
     }
   }
 }
@@ -1309,6 +1342,9 @@ export function renderPen(
   if(pen.calculative.disabled){
     _stroke = pen.disabledColor || store.options.disabledColor || pSBC(0.4, pen.calculative.color || getGlobalColor(store));
     fill = pen.disabledBackground || store.options.disabledBackground || pSBC(0.4, pen.calculative.background || store.data.penBackground);
+  } else if (pen.mouseDownValid && pen.calculative.mouseDown){
+    _stroke = pen.mouseDownColor || pSBC(-0.4, pen.calculative.color || getGlobalColor(store));
+    fill = pen.mouseDownBackground || pSBC(-0.4, pen.calculative.background || store.data.penBackground);
   } else if (pen.calculative.hover) {
     _stroke = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
@@ -1688,6 +1724,24 @@ export function ctxDrawPath(
   const path = canUsePath
     ? store.path2dMap.get(pen)
     : globalStore.path2dDraws[pen.name];
+
+  let path_from = null;
+  let path_to = null;
+  if(pen.type === PenType.Line){
+    //线段的起始和结束线帽 分别配置
+    if( pen.fromLineCap && pen.fromLineCap !== 'butt'){
+      ctx.lineCap = 'butt';
+      path_from = new Path2D();
+      path_from.moveTo(pen.calculative.worldAnchors[0].x, pen.calculative.worldAnchors[0].y);
+      path_from.lineTo(pen.calculative.worldAnchors[0].x, pen.calculative.worldAnchors[0].y);
+    }
+    if( pen.toLineCap && pen.toLineCap !== 'butt'){
+      ctx.lineCap = 'butt';
+      path_to = new Path2D();
+      path_to.moveTo(pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].x, pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].y);
+      path_to.lineTo(pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].x, pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].y);
+    }
+  }
   if (path) {
     if (pen.type === PenType.Line && pen.borderWidth) {
       ctx.save();
@@ -1695,6 +1749,12 @@ export function ctxDrawPath(
       const lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = pen.borderColor;
+      if( path_from ){
+        ctx.save();
+        ctx.lineCap = pen.fromLineCap;
+        ctx.stroke(path_from);
+        ctx.restore();
+      }
       if (path instanceof Path2D) {
         fill && ctx.fill(path);
         lineWidth && ctx.stroke(path);
@@ -1702,6 +1762,12 @@ export function ctxDrawPath(
         path(pen, ctx);
         fill && ctx.fill();
         lineWidth && ctx.stroke();
+      }
+      if( path_to){
+        ctx.save();
+        ctx.lineCap = pen.toLineCap;
+        ctx.stroke(path_to);
+        ctx.restore();
       }
       ctx.restore();
     }
@@ -1770,14 +1836,26 @@ export function ctxDrawPath(
     if (pen.calculative.lineWidth) {
       if (path instanceof Path2D) {
         if(store.options.svgPathStroke || pen.name!=='svgPath'){
+          if(path_from){
+            ctx.save();
+            ctx.lineCap = pen.fromLineCap;           
+            ctx.stroke(path_from);
+            ctx.restore();
+          }
           ctx.stroke(path);
+          if( path_to ){
+            ctx.save();
+            ctx.lineCap = pen.toLineCap;
+            ctx.stroke(path_to);
+            ctx.restore();
+          }
         }
       } else {
         path(pen, ctx);
         ctx.stroke();
       }
     }
-
+  
     if (pen.type) {
       if (pen.calculative.animatePos) {
         ctx.save();
@@ -1794,8 +1872,15 @@ export function ctxDrawPath(
           }
         }else{
           if (path instanceof Path2D) {
+            if(path_from&&!pen.lineAnimateType){
+              ctx.save();
+              ctx.lineCap = pen.fromLineCap;           
+              ctx.stroke(path_from);
+              ctx.restore();
+            }
+            ctx.lineCap = pen.lineCap;
             ctx.stroke(path);
-          } else {
+                      } else {
             path(pen, ctx);
             ctx.stroke();
           }
