@@ -731,6 +731,7 @@ export const formatAttrs: Set<string> = new Set([
   'animateLineWidth',
   'gradientSmooth',
   'lineSmooth',
+  'animations'
 ]);
 
 /**
