@@ -3592,9 +3592,9 @@ export class Meta2d {
       const firstPen = pens[0];
       formatAttrs.forEach((attr) => {
         attrs[attr] =
-          firstPen[attr] ||
-          this.store.options.defaultFormat[attr] ||
-          this.store.options[attr];
+          firstPen[attr] !== undefined ? firstPen[attr] :
+          (this.store.options.defaultFormat[attr] ||
+          this.store.options[attr]);
       });
     } else {
       //默认值
