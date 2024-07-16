@@ -195,7 +195,7 @@ export class Meta2d {
     }
     if (opts.width !== undefined || opts.height !== undefined) {
       this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
-      if(this.canvas.canvasTemplate.canvas.style.backgroundImage) {
+      if(this.canvas && this.canvas.canvasTemplate.canvas.style.backgroundImage) {
         this.canvas.canvasTemplate.canvas.style.backgroundImage = '';
       }
     }
