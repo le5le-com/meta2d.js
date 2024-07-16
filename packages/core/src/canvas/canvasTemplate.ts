@@ -99,7 +99,6 @@ export class CanvasTemplate {
   }
 
   render() {
-    console.log('render',this.bgPatchFlags);
     if (this.bgPatchFlags) {
       const ctx = this.bgOffscreen.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -140,9 +139,6 @@ export class CanvasTemplate {
           height * this.store.data.scale
         );
         ctx.restore();
-        if(this.canvas.style.backgroundImage){
-          this.canvas.style.backgroundImage = '';
-        }
       }
       this.renderGrid(ctx);
     }
