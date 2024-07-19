@@ -1311,13 +1311,13 @@ export class Canvas {
         }
         if((pen as any).dataset){
           if(num % 2 === 0){
-            lastW = pen.width - 40;
+            lastW = pen.width - 40 * this.store.data.scale;
           }else{
             lastW = 0;
           }
           num ++;
           if(num % 2 === 0){
-            lastH += pen.height + 10;
+            lastH += pen.height + 10 * this.store.data.scale;
           }
         }
       }
