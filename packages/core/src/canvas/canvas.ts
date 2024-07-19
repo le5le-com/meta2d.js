@@ -2086,7 +2086,7 @@ export class Canvas {
         }
 
         // 框选
-        if (e.buttons === 1 &&( e.ctrlKey || !this.hoverType && !this.hotkeyType)) {
+        if (e.buttons === 1 &&((e.ctrlKey && this.hoverType != HoverType.LineAnchor) || (!this.hoverType && !this.hotkeyType))) {
           this.dragRect = {
             x: Math.min(this.mouseDown.x, e.x),
             y: Math.min(this.mouseDown.y, e.y),
@@ -2548,10 +2548,10 @@ export class Canvas {
     if (this.willInactivePen) {
       this.willInactivePen.calculative.active = undefined;
       setChildrenActive(this.willInactivePen, false); // 子节点取消激活
-      this.store.active.splice(
-        this.store.active.findIndex((p) => p === this.willInactivePen),
-        1
-      );
+      const index = this.store.active.findIndex((p) => p === this.willInactivePen);
+      if(index >= 0) {
+        this.store.active.splice(index,1);
+      }
       this.calcActiveRect();
       this.willInactivePen = undefined;
       this.store.emitter.emit('inactive', [this.willInactivePen]);
