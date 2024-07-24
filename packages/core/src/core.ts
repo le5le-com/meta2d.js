@@ -3271,12 +3271,12 @@ export class Meta2d {
           let left = fit.leftValue;
           let right = fit.rightValue;
           if(left){
-            left = left<1?left*this.canvas.width:left;
+            left = Math.abs(left)<1?left*this.canvas.width:left;
           }else{
             left = 0;
           }
           if(right){
-            right = right<1?right*this.canvas.width:right;
+            right = Math.abs(right)<1?right*this.canvas.width:right;
           }else{
             right = 0;
           }
@@ -3304,13 +3304,13 @@ export class Meta2d {
           //左移
           r = -r
           if(fit.leftValue){
-            r += (fit.leftValue<1?fit.leftValue*this.canvas.width:fit.leftValue);
+            r += (Math.abs(fit.leftValue)<1?fit.leftValue*this.canvas.width:fit.leftValue);
           }
           this.translatePens(pens, r, 0); 
         }else if(fit.right){
           //右移
           if(fit.rightValue){
-            r = r - (fit.rightValue<1?fit.rightValue*this.canvas.width:fit.rightValue);
+            r = r - (Math.abs(fit.rightValue)<1?fit.rightValue*this.canvas.width:fit.rightValue);
           }
           this.translatePens(pens, r, 0); 
         }
@@ -3350,12 +3350,12 @@ export class Meta2d {
           let top = fit.topValue;
           let bottom = fit.bottomValue;
           if(top){
-            top = top<1?top*this.canvas.height:top;
+            top = Math.abs(top)<1?top*this.canvas.height:top;
           }else{
             top = 0;
           }
           if(bottom){
-            bottom = bottom<1?bottom*this.canvas.height:bottom;
+            bottom = Math.abs(bottom)<1?bottom*this.canvas.height:bottom;
           }else{
             bottom = 0;
           }
@@ -3383,12 +3383,12 @@ export class Meta2d {
         }else if(fit.top){
           r = -r
           if(fit.topValue){
-            r += (fit.topValue<1?fit.topValue*this.canvas.height:fit.topValue);
+            r += (Math.abs(fit.topValue)<1?fit.topValue*this.canvas.height:fit.topValue);
           }
           this.translatePens(pens, 0, r); 
         }else if(fit.bottom){
           if(fit.bottomValue){
-            r = r - (fit.bottomValue<1?fit.bottomValue*this.canvas.height:fit.bottomValue);
+            r = r - (Math.abs(fit.bottomValue)<1?fit.bottomValue*this.canvas.height:fit.bottomValue);
           }
           this.translatePens(pens, 0, r); 
         }
