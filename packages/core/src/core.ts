@@ -3240,11 +3240,185 @@ export class Meta2d {
     } else {
       ratio = w > h ? w : h;
     }
+    if(this.store.data.fits?.length){
+      this.canvas.opening = true;
+    }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
     this.scale(ratio * this.store.data.scale);
 
     // 5. 居中
     this.centerView();
+    if(this.store.data.fits?.length){
+      this.fillView();
+    }
+  }
+
+  fillView(){
+    const rect = this.getRect();
+    const wGap = this.canvas.width - rect.width;
+    const hGap = this.canvas.height - rect.height;
+    //宽度拉伸
+    if (Math.abs(wGap) > 10) {
+      this.store.data.fits?.forEach((fit)=>{
+        let pens = [];
+        fit.children.forEach((id)=>{
+          this.store.pens[id].locked = LockState.None;
+          pens.push(this.store.pens[id]);
+        });
+        let r = wGap/2;
+        if(fit.left&&fit.right){
+          //整体拉伸
+          let left = fit.leftValue;
+          let right = fit.rightValue;
+          if(left){
+            left = left<1?left*this.canvas.width:left;
+          }else{
+            left = 0;
+          }
+          if(right){
+            right = right<1?right*this.canvas.width:right;
+          }else{
+            right = 0;
+          }
+          let ratio = (this.canvas.width - left - right)/(rect.width- left - right);
+          pens.forEach((pen)=>{  
+            if(pen.image && pen.imageRatio){
+              if(pen.calculative.worldRect.width/this.canvas.width>0.1){
+                pen.imageRatio = false;
+              }
+            }
+            pen.calculative.worldRect.x  = rect.x - wGap/2 + left + (pen.calculative.worldRect.x-rect.x)*ratio;//(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
+            pen.calculative.worldRect.width *= ratio
+            pen.calculative.worldRect.ex = pen.calculative.worldRect.x + pen.calculative.worldRect.width;
+            pen.calculative.width = pen.calculative.worldRect.width;
+            pen.calculative.x = pen.calculative.worldRect.x;
+            pen.width = pen.calculative.worldRect.width;
+            pen.x = pen.calculative.worldRect.x;
+            this.canvas.updatePenRect(pen, { worldRectIsReady: false });
+            if(pen.externElement){
+              pen.onResize?.(pen);
+            }
+          });
+        
+        }else if(fit.left){
+          //左移
+          r = -r
+          if(fit.leftValue){
+            r += (fit.leftValue<1?fit.leftValue*this.canvas.width:fit.leftValue);
+          }
+          this.translatePens(pens, r, 0); 
+        }else if(fit.right){
+          //右移
+          if(fit.rightValue){
+            r = r - (fit.rightValue<1?fit.rightValue*this.canvas.width:fit.rightValue);
+          }
+          this.translatePens(pens, r, 0); 
+        }
+      });
+      const iframePens = this.store.data.pens.filter((pen) => pen.name === 'iframe');
+      iframePens?.forEach((pen)=>{
+        const worldRect = pen.calculative.worldRect;
+        if(worldRect.width/this.store.data.scale>rect.width*0.8){
+          let bfW = worldRect.width;
+          pen.calculative.worldRect.x = worldRect.x - wGap/2;
+          pen.calculative.worldRect.width =
+            worldRect.width + wGap;
+          pen.calculative.worldRect.ex = worldRect.ex + wGap;
+          pen.operationalRect.x =
+            (pen.operationalRect.x * bfW) / pen.calculative.worldRect.width;
+          pen.operationalRect.width =
+            (pen.calculative.worldRect.width -
+              (1 - pen.operationalRect.width) * bfW) /
+            pen.calculative.worldRect.width;
+          pen.onBeforeValue?.(pen, {
+            operationalRect: pen.operationalRect,
+          } as any);
+          pen.onResize?.(pen);
+        }
+      })
+    }
+    //高度拉伸
+    if (Math.abs(hGap) > 10) {
+      this.store.data.fits?.forEach((fit)=>{
+        let pens = [];
+        fit.children.forEach((id)=>{
+          this.store.pens[id].locked = LockState.None;
+          pens.push(this.store.pens[id]);
+        });
+        let r = hGap/2;
+        if(fit.top&&fit.bottom){
+          let top = fit.topValue;
+          let bottom = fit.bottomValue;
+          if(top){
+            top = top<1?top*this.canvas.height:top;
+          }else{
+            top = 0;
+          }
+          if(bottom){
+            bottom = bottom<1?bottom*this.canvas.height:bottom;
+          }else{
+            bottom = 0;
+          }
+
+          let ratio = (this.canvas.height - top - bottom)/(rect.height- top - bottom);
+          pens.forEach((pen)=>{  
+            if(pen.image && pen.imageRatio){
+              if(pen.calculative.worldRect.height/this.canvas.height>0.1){
+                pen.imageRatio = false;
+              }
+            }
+            pen.calculative.worldRect.y  = rect.y - hGap/2 + top + (pen.calculative.worldRect.y-rect.y)*ratio;//(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
+            pen.calculative.worldRect.height *= ratio
+            pen.calculative.worldRect.ey = pen.calculative.worldRect.y + pen.calculative.worldRect.height;
+            pen.calculative.height = pen.calculative.worldRect.height;
+            pen.calculative.y = pen.calculative.worldRect.y;
+            pen.height = pen.calculative.worldRect.height;
+            pen.y = pen.calculative.worldRect.y;
+            this.canvas.updatePenRect(pen, { worldRectIsReady: false });
+            if(pen.externElement){
+              pen.onResize?.(pen);
+            }
+          });
+        
+        }else if(fit.top){
+          r = -r
+          if(fit.topValue){
+            r += (fit.topValue<1?fit.topValue*this.canvas.height:fit.topValue);
+          }
+          this.translatePens(pens, 0, r); 
+        }else if(fit.bottom){
+          if(fit.bottomValue){
+            r = r - (fit.bottomValue<1?fit.bottomValue*this.canvas.height:fit.bottomValue);
+          }
+          this.translatePens(pens, 0, r); 
+        }
+      });
+      const iframePens = this.store.data.pens.filter((pen) => pen.name === 'iframe');
+      iframePens?.forEach((pen)=>{
+        const worldRect = pen.calculative.worldRect;
+        if(worldRect.height/this.store.data.scale>rect.height*0.8){
+          let bfH = worldRect.height;
+          pen.calculative.worldRect.y = worldRect.y - hGap/2;
+          pen.calculative.worldRect.height =
+            worldRect.height + hGap;
+          pen.calculative.worldRect.ey = worldRect.ey + hGap;
+          pen.operationalRect.y =
+            (pen.operationalRect.y * bfH) / pen.calculative.worldRect.width;
+          pen.operationalRect.height =
+            (pen.calculative.worldRect.height -
+              (1 - pen.operationalRect.height) * bfH) /
+            pen.calculative.worldRect.height;
+          pen.onBeforeValue?.(pen, {
+            operationalRect: pen.operationalRect,
+          } as any);
+          pen.onResize?.(pen);
+        }
+      })
+    }
+    this.canvas.canvasTemplate.init();
+    this.canvas.canvasImage.init();
+    this.canvas.canvasImageBottom.init();
+    this.render(true);
   }
 
   trimPens() {
@@ -3331,11 +3505,17 @@ export class Meta2d {
         ratio = w > h ? w : h;
       }
     }
+    if(this.store.data.fits?.length){
+      this.canvas.opening = true;
+    }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
     this.scale(ratio * this.store.data.scale);
 
     // 5. 居中
     this.centerSizeView();
+    if(this.store.data.fits?.length){
+      this.fillView();
+    }
   }
 
   centerSizeView() {

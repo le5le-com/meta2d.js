@@ -74,6 +74,28 @@ export interface Meta2dData {
     devices?: DataMock[]; //数据模拟
   };
   dataEvents?:Event[]; //数据点事件
+  fits?: Fit[];
+}
+
+export interface Fit {
+  id?:string;
+  name?:string;
+  x?:number;
+  y?:number;
+  ex?:number;
+  ey?:number;
+  width?:number;
+  height?:number;
+  children?:string[];
+  active?:boolean;
+  left?:boolean;
+  right?:boolean;
+  top?:boolean;
+  bottom?:boolean;
+  leftValue?:number;
+  rightValue?:number;
+  topValue?:number;
+  bottomValue?:number;
 }
 
 export interface DataMock {
