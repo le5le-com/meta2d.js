@@ -8215,13 +8215,13 @@ export class Canvas {
     const scale = this.store.data.scale;
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
-    let x = (Math.ceil(_rect.x) - this.store.data.origin.x) / scale / width;
-    let y = (Math.ceil(_rect.y) - this.store.data.origin.y) / scale / height;
+    let x = (Math.floor(_rect.x) - this.store.data.origin.x) / scale / width;
+    let y = (Math.floor(_rect.y) - this.store.data.origin.y) / scale / height;
     let rect:Fit = {
       x,
       y,
-      width: Math.ceil(_rect.width) / scale / width,
-      height: Math.ceil(_rect.height) / scale / height,
+      width: (Math.ceil(_rect.width) + 1) / scale / width,
+      height: (Math.ceil(_rect.height) + 1) / scale / height,
       children:pens.map(pen=>pen.id),
       id:s8(),
       active:true
