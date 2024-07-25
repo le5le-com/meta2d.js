@@ -623,7 +623,34 @@ export class Canvas {
         }
       }
     }
-    const { offsetX: x, offsetY: y } = e;
+    let { offsetX: x, offsetY: y } = e;
+    if (this.parent.map && e.target === this.parent.map?.box) {
+      //放大镜缩放
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height) {
+        //大屏
+        x =
+          (x / this.parent.map.boxWidth) * width * this.store.data.scale +
+          this.store.data.origin.x;
+        y =
+          (y / this.parent.map.boxHeight) * height * this.store.data.scale +
+          this.store.data.origin.y;
+        const rect = this.canvas.getBoundingClientRect();
+        x = x + rect.left;
+        y = y + rect.top;
+      } else {
+        const rect = this.parent.getRect();
+        x =
+          (x / this.parent.map.boxWidth) * rect.width +
+          rect.x +
+          this.store.data.x;
+        y =
+          (y / this.parent.map.boxHeight) * rect.height +
+          rect.y +
+          this.store.data.y;
+      }
+    }
     this.scale(this.store.data.scale + scaleOff, { x, y });
     this.externalElements.focus(); // 聚焦
   };
@@ -8102,9 +8129,20 @@ export class Canvas {
   }
 
   gotoView(x: number, y: number) {
-    const rect = getRect(this.store.data.pens);
+    let rect = getRect(this.store.data.pens);
     if (!isFinite(rect.width)) {
       throw new Error('can not move view, because width is not finite');
+    }
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (width && height) {
+      //大屏
+      rect = {
+        x: this.store.data.origin.x,
+        y: this.store.data.origin.y,
+        width: width * this.store.data.scale,
+        height: height * this.store.data.scale,
+      };
     }
     this.store.data.x = this.canvas.clientWidth / 2 - x * rect.width - rect.x;
     this.store.data.y = this.canvas.clientHeight / 2 - y * rect.height - rect.y;

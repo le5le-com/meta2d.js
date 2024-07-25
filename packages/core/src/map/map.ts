@@ -80,7 +80,20 @@ export class ViewMap {
   setView() {
     const data = this.parent.store.data;
     if (data.pens.length) {
-      const rect = getRect(data.pens);
+      let rect = getRect(data.pens);
+      const vW =
+        this.parent.store.data.width || this.parent.store.options.width;
+      const vH =
+        this.parent.store.data.height || this.parent.store.options.height;
+      if (vW && vH) {
+        //大屏
+        rect = {
+          x: this.parent.store.data.origin.x,
+          y: this.parent.store.data.origin.y,
+          width: vW * this.parent.store.data.scale,
+          height: vH * this.parent.store.data.scale,
+        };
+      }
       // rect += data.x y 得到相对坐标
       translateRect(rect, data.x, data.y);
       const rectRatio = rect.width / rect.height;
