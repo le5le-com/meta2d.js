@@ -2140,7 +2140,7 @@ export class Canvas {
         }
 
         // 框选
-        if (e.buttons === 1 &&((e.ctrlKey && this.hoverType != HoverType.LineAnchor) || (!this.hoverType && !this.hotkeyType))) {
+        if (e.buttons === 1 &&( e.ctrlKey || !this.hoverType && !this.hotkeyType) && !( e.ctrlKey && (this.store.activeAnchor || this.store.active?.length))) {
           this.dragRect = {
             x: Math.min(this.mouseDown.x, e.x),
             y: Math.min(this.mouseDown.y, e.y),
