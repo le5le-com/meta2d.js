@@ -7,7 +7,7 @@ import {
   getParent,
   CanvasLayer,
 } from '../pen';
-import { Meta2dStore } from '../store';
+import { Fit, Meta2dStore } from '../store';
 import { rgba } from '../utils';
 import { createOffscreen } from './offscreen';
 
@@ -21,6 +21,10 @@ export class CanvasImage {
   otherOffsreen = createOffscreen(); // 非图片的
   offscreen = createOffscreen();
   animateOffsScreen = createOffscreen();
+  fitOffscreen = createOffscreen();
+  fitFlag = false; //开启自定义填充
+  currentFit:string;
+  activeFit: Fit;
 
   constructor(
     public parentElement: HTMLElement,
@@ -54,6 +58,9 @@ export class CanvasImage {
     this.animateOffsScreen.width = w;
     this.animateOffsScreen.height = h;
 
+    this.fitOffscreen.width = w;
+    this.fitOffscreen.height = h;
+
     this.otherOffsreen
       .getContext('2d')
       .scale(this.store.dpiRatio, this.store.dpiRatio);
@@ -69,6 +76,11 @@ export class CanvasImage {
       .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.animateOffsScreen.getContext('2d').textBaseline = 'middle';
 
+    this.fitOffscreen
+      .getContext('2d')
+      .scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.fitOffscreen.getContext('2d').textBaseline = 'middle';
+
     this.init();
   }
 
@@ -77,6 +89,9 @@ export class CanvasImage {
       .getContext('2d')
       .clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.animateOffsScreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.fitOffscreen
       .getContext('2d')
       .clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (const pen of this.store.data.pens) {
@@ -100,6 +115,9 @@ export class CanvasImage {
       .getContext('2d')
       .clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.animateOffsScreen
+      .getContext('2d')
+      .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.fitOffscreen
       .getContext('2d')
       .clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.canvas
@@ -269,6 +287,44 @@ export class CanvasImage {
       ctx.restore();
     }
 
+    if (!this.isBottom && !this.store.data.locked && this.fitFlag) {
+      const width =
+        (this.store.data.width || this.store.options.width) *
+        this.store.data.scale;
+      const height =
+        (this.store.data.height || this.store.options.height) *
+        this.store.data.scale;
+      const x =
+        this.store.data.origin.x + this.store.data.x ||
+        this.store.options.x ||
+        0;
+      const y =
+        this.store.data.origin.y + this.store.data.y ||
+        this.store.options.y ||
+        0;
+      const ctx = this.fitOffscreen.getContext('2d');
+      ctx.save();
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      ctx.fillStyle = '#ffffff66';
+      ctx.strokeStyle = this.store.options.activeColor;
+      this.store.data.fits?.forEach((item, index) => {
+        ctx.fillRect(
+          x + width * item.x,
+          y + height * item.y,
+          width * item.width,
+          height * item.height
+        );
+        if (item.active) {
+          ctx.strokeRect(
+            x + width * item.x,
+            y + height * item.y,
+            width * item.width,
+            height * item.height
+          );
+        }
+      });
+      ctx.restore();
+    }
     if (
       patchFlags ||
       patchFlagsAnimate ||
@@ -311,6 +367,15 @@ export class CanvasImage {
           this.canvas.height
         );
         this.store.patchFlagsTop = false;
+        if (!this.store.data.locked && this.fitFlag) {
+          ctxCanvas.drawImage(
+            this.fitOffscreen,
+            0,
+            0,
+            this.canvas.width,
+            this.canvas.height
+          );
+        }
       }
     }
   }

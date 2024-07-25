@@ -67,9 +67,9 @@ export class MagnifierCanvas {
     ctx.save();
     ctx.arc(r, r, r, 0, Math.PI * 2, false);
     ctx.clip();
-    ctx.fillStyle =
-      this.store.data.background || this.store.options.background || '#f4f4f4';
-    ctx.fillRect(0, 0, size, size);
+    // ctx.fillStyle =
+    //   this.store.data.background || this.store.options.background || '#f4f4f4';
+    // ctx.fillRect(0, 0, size, size);
     ctx.translate(-r, -r);
     ctx.scale(2, 2);
     const pt = {
@@ -81,6 +81,8 @@ export class MagnifierCanvas {
         this.store.dpiRatio,
     };
     const drawOffscreens = [
+      this.parentCanvas.canvasTemplate.bgOffscreen,
+      this.parentCanvas.canvasTemplate.offscreen,
       this.parentCanvas.canvasImageBottom.offscreen,
       this.parentCanvas.canvasImageBottom.animateOffsScreen,
       this.parentCanvas.offscreen,
