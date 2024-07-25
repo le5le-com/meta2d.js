@@ -1736,21 +1736,33 @@ export class Meta2d {
       ) {
         this.store.data.mqttOptions.clientId = s8();
       }
-
-      this.mqttClient = mqtt.connect(
-        this.store.data.mqtt,
-        this.store.data.mqttOptions
-      );
-      this.mqttClient.on('message', (topic: string, message: Buffer) => {
-        this.socketCallback(message.toString(), {
-          topic,
-          type: 'mqtt',
-          url: this.store.data.mqtt,
+      const mqttOptions = {...this.store.data.mqttOptions};
+      // 如果没有username/password或为空字符串则删除username/password
+      if(!mqttOptions.username) {
+        delete mqttOptions.username;
+      }
+      if(!mqttOptions.password) {
+        delete mqttOptions.password;
+      }
+      const {username, password} = mqttOptions;
+      // username 和 password 必须同时存在或者同时不存在才去建立mqtt连接
+      if ((username && password)|| (!username && !password)) {
+        this.mqttClient = mqtt.connect(
+          this.store.data.mqtt,
+          mqttOptions
+        );
+        this.mqttClient.on('message', (topic: string, message: Buffer) => {
+          this.socketCallback(message.toString(), {
+            topic,
+            type: 'mqtt',
+            url: this.store.data.mqtt,
+          });
         });
-      });
-
-      if (this.store.data.mqttTopics) {
-        this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
+        if (this.store.data.mqttTopics) {
+          this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
+        }
+      } else {
+        console.warn('缺少用户名或密码');
       }
     }
   }
