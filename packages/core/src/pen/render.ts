@@ -2801,10 +2801,10 @@ export function setNodeAnimate(pen: Pen, now: number) {
       // 以初始位置为参考点。因为网页在后台时，不执行动画帧，网页恢复显示时，位置不确定
       pen.calculative.x = pen.calculative.initRect.x;
       pen.calculative.y = pen.calculative.initRect.y;
-      if (pen.children?.length) {
+      if (pen.children?.length && !pen.parentId) {
         pen.calculative.canvas.rotatePen(
           pen,
-          (pen.calculative.initRect.rotate || 0) - pen.calculative.rotate,
+          (pen.calculative.initRect.rotate || 0) - (pen.calculative.rotate||0),
           pen.calculative.initRect
         );
       } else {
@@ -3591,8 +3591,8 @@ export function setChildValue(pen: Pen, data: IValue) {
     }
   }
   if (
-    pen.calculative.canvas.parent.isCombine(pen) &&
-    pen.showChild === undefined
+    pen.calculative.canvas.parent.isCombine(pen) 
+    //&& pen.showChild === undefined
   ) {
     const children = pen.children;
     children?.forEach((childId) => {
