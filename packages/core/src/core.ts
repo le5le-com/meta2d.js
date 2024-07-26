@@ -1429,7 +1429,7 @@ export class Meta2d {
       if (index < minIndex) {
         minIndex = index;
       }
-      if (pen === parent || pen.parentId === parent.id) {
+      if (pen === parent || pen.parentId === parent.id || pen.id === parent.id) {
         return;
       }
       // pen 来自于 store.active ，不存在有 parentId 的情况
