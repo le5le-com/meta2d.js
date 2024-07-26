@@ -7552,6 +7552,9 @@ export class Canvas {
         calcWorldAnchors(line);
       });
     }
+    //锚点
+    pen.anchors?.forEach((anchor) => anchor.penId = newId);
+    pen.calculative.worldAnchors?.forEach((anchor) => anchor.penId = newId);
   }
 
   updateValue(pen: Pen, data: IValue): void {
