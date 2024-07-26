@@ -2279,7 +2279,7 @@ export function calcChildrenInitRect(pen:Pen){
     let parentRect = pen.calculative.worldRect;
     pen.children.forEach((id) => {
       const child = pen.calculative.canvas.store.pens[id];
-      if (child.calculative.initRect) {
+      if (child.calculative.initRect && child.calculative.initRelativeRect) {
         child.calculative.initRect.x =
           parentRect.x +
           parentRect.width * child.calculative.initRelativeRect.x;
