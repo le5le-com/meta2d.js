@@ -59,6 +59,7 @@ import {
   drawImage,
   setElemPosition,
   getAllFollowers,
+  calcChildrenInitRect,
 } from '../pen';
 import {
   calcRotate,
@@ -2792,6 +2793,7 @@ export class Canvas {
         pen.calculative.initRect.ey =
           pen.calculative.y + pen.calculative.height;
       }
+      calcChildrenInitRect(pen);
     });
     // active 消息表示拖拽结束
     // this.store.emitter.emit('active', this.store.active);
