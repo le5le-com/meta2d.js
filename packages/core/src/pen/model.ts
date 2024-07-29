@@ -392,6 +392,8 @@ export interface Pen extends Rect {
 
     // 执行动画前的初始位置
     initRect?: Rect;
+    // 执行动画前的初始相对位置
+    initRelativeRect?: Rect;
 
     rotate?: number;
     lineWidth?: number;

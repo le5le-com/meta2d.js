@@ -2273,6 +2273,33 @@ export function calcWorldAnchors(pen: Pen) {
   pen.calculative.gradientAnimatePath = undefined;
 }
 
+export function calcChildrenInitRect(pen:Pen){
+  // 重新计算子节点初始化坐标
+  if (pen.children?.length) {
+    let parentRect = pen.calculative.worldRect;
+    pen.children.forEach((id) => {
+      const child = pen.calculative.canvas.store.pens[id];
+      if (child.calculative.initRect && child.calculative.initRelativeRect) {
+        child.calculative.initRect.x =
+          parentRect.x +
+          parentRect.width * child.calculative.initRelativeRect.x;
+        child.calculative.initRect.y =
+          parentRect.y +
+          parentRect.height * child.calculative.initRelativeRect.y;
+        child.calculative.initRect.ex =
+          child.calculative.initRect.x +
+          parentRect.width * child.calculative.initRelativeRect.width;
+        child.calculative.initRect.ey =
+          child.calculative.initRect.y +
+          parentRect.height +
+          child.calculative.initRelativeRect.height;
+        calcCenter(child.calculative.initRect);
+      }
+      calcChildrenInitRect(child);
+    });
+  }
+}
+
 export function calcWorldPointOfPen(pen: Pen, pt: Point) {
   const p: Point = { ...pt };
   const { x, y, width, height } = pen.calculative.worldRect;
@@ -2347,12 +2374,32 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
   if (pen.calculative.initRect) {
     scaleRect(pen.calculative.initRect, scale, center, pen.pivot);
   }
+  scaleChildrenInitRect(pen, scale, center);
   if (pen.calculative.x) {
     scalePoint(pen.calculative as any as Point, scale, center);
   }
 
   if (pen.type) {
     calcWorldAnchors(pen);
+  }
+}
+
+export function scaleChildrenInitRect(pen: Pen, scale: number, center: Point) {
+  if (pen.children?.length) {
+    pen.children.forEach((id) => {
+      const child = pen.calculative.canvas.store.pens[id];
+      if (
+        child &&
+        child.calculative.initRect
+      ) {
+        scaleRect(
+          child.calculative.initRect,
+          scale,
+          center
+        );
+      }
+      scaleChildrenInitRect(child, scale, center);
+    });
   }
 }
 
@@ -2697,6 +2744,14 @@ export function setNodeAnimate(pen: Pen, now: number) {
     pen.calculative.x = pen.calculative.worldRect.x;
     pen.calculative.y = pen.calculative.worldRect.y;
     pen.calculative.initRect = deepClone(pen.calculative.worldRect);
+    if (pen.parentId) {
+      pen.calculative.initRelativeRect = {
+        x: pen.x,
+        y: pen.y,
+        width: pen.width,
+        height: pen.height,
+      };
+    }
     pen.calculative.initRect.rotate = pen.calculative.rotate || 0;
 
     initPrevFrame(pen);
@@ -2746,10 +2801,10 @@ export function setNodeAnimate(pen: Pen, now: number) {
       // 以初始位置为参考点。因为网页在后台时，不执行动画帧，网页恢复显示时，位置不确定
       pen.calculative.x = pen.calculative.initRect.x;
       pen.calculative.y = pen.calculative.initRect.y;
-      if (pen.children?.length) {
+      if (pen.children?.length && !pen.parentId) {
         pen.calculative.canvas.rotatePen(
           pen,
-          (pen.calculative.initRect.rotate || 0) - pen.calculative.rotate,
+          (pen.calculative.initRect.rotate || 0) - (pen.calculative.rotate||0),
           pen.calculative.initRect
         );
       } else {
@@ -3536,8 +3591,8 @@ export function setChildValue(pen: Pen, data: IValue) {
     }
   }
   if (
-    pen.calculative.canvas.parent.isCombine(pen) &&
-    pen.showChild === undefined
+    pen.calculative.canvas.parent.isCombine(pen) 
+    //&& pen.showChild === undefined
   ) {
     const children = pen.children;
     children?.forEach((childId) => {

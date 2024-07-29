@@ -834,6 +834,9 @@ function getCellRect(pen: formPen, rowIndex: number, colIndex: number) {
 
 // 计算cell子节点的世界坐标区域
 function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
+  if(!(children&&children.length)){
+    return;
+  }
   const scaleX = pen.calculative.worldRect.width / pen.tableWidth;
   const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
   let resizeX = 1;
@@ -883,8 +886,8 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
     children[0].y = rect.y + (rect.height - children[0].height) / 2;
   }
   children.forEach((item: formPen) => {
-    item.width = item.width * resizeX / scale;
-    item.height = item.height * resizeY / scale;
+    item.width = item.width * resizeX;
+    item.height = item.height * resizeY;
   });
 }
 
@@ -947,8 +950,9 @@ function beforeValue(pen: formPen, value: any) {
       return Object.assign(value, { data });
     }
 
-    if (value.data || value.styles || value.maxNum) {
+    if (value.data || value.styles || value.maxNum || value.rowHeight || value.colWidth) {
       pen.calculative.isUpdateData = true;
+      pen.initWorldRect = null;
     }
     for (let key of Object.keys(value)) {
       if (key.includes('data.')) {

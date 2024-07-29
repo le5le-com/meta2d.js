@@ -59,6 +59,7 @@ import {
   drawImage,
   setElemPosition,
   getAllFollowers,
+  calcChildrenInitRect,
 } from '../pen';
 import {
   calcRotate,
@@ -624,33 +625,33 @@ export class Canvas {
       }
     }
     let { offsetX: x, offsetY: y } = e;
-    if (this.parent.map && e.target === this.parent.map?.box) {
-      //放大镜缩放
-      const width = this.store.data.width || this.store.options.width;
-      const height = this.store.data.height || this.store.options.height;
-      if (width && height) {
-        //大屏
-        x =
-          (x / this.parent.map.boxWidth) * width * this.store.data.scale +
-          this.store.data.origin.x;
-        y =
-          (y / this.parent.map.boxHeight) * height * this.store.data.scale +
-          this.store.data.origin.y;
-        const rect = this.canvas.getBoundingClientRect();
-        x = x + rect.left;
-        y = y + rect.top;
-      } else {
-        const rect = this.parent.getRect();
-        x =
-          (x / this.parent.map.boxWidth) * rect.width +
-          rect.x +
-          this.store.data.x;
-        y =
-          (y / this.parent.map.boxHeight) * rect.height +
-          rect.y +
-          this.store.data.y;
-      }
-    }
+    // if (this.parent.map && e.target === this.parent.map?.box) {
+    //   //放大镜缩放
+    //   const width = this.store.data.width || this.store.options.width;
+    //   const height = this.store.data.height || this.store.options.height;
+    //   if (width && height) {
+    //     //大屏
+    //     x =
+    //       (x / this.parent.map.boxWidth) * width * this.store.data.scale +
+    //       this.store.data.origin.x;
+    //     y =
+    //       (y / this.parent.map.boxHeight) * height * this.store.data.scale +
+    //       this.store.data.origin.y;
+    //     const rect = this.canvas.getBoundingClientRect();
+    //     x = x + rect.left;
+    //     y = y + rect.top;
+    //   } else {
+    //     const rect = this.parent.getRect();
+    //     x =
+    //       (x / this.parent.map.boxWidth) * rect.width +
+    //       rect.x +
+    //       this.store.data.x;
+    //     y =
+    //       (y / this.parent.map.boxHeight) * rect.height +
+    //       rect.y +
+    //       this.store.data.y;
+    //   }
+    // }
     this.scale(this.store.data.scale + scaleOff, { x, y });
     this.externalElements.focus(); // 聚焦
   };
@@ -2149,7 +2150,7 @@ export class Canvas {
         }
 
         // 框选
-        if (e.buttons === 1 &&((e.ctrlKey && this.hoverType != HoverType.LineAnchor) || (!this.hoverType && !this.hotkeyType))) {
+        if (e.buttons === 1 &&( e.ctrlKey || !this.hoverType && !this.hotkeyType) && !( e.ctrlKey && (this.store.activeAnchor || this.store.active?.length))) {
           this.dragRect = {
             x: Math.min(this.mouseDown.x, e.x),
             y: Math.min(this.mouseDown.y, e.y),
@@ -2803,6 +2804,7 @@ export class Canvas {
         pen.calculative.initRect.ey =
           pen.calculative.y + pen.calculative.height;
       }
+      calcChildrenInitRect(pen);
     });
     // active 消息表示拖拽结束
     // this.store.emitter.emit('active', this.store.active);
@@ -7562,6 +7564,9 @@ export class Canvas {
         calcWorldAnchors(line);
       });
     }
+    //锚点
+    pen.anchors?.forEach((anchor) => anchor.penId = newId);
+    pen.calculative.worldAnchors?.forEach((anchor) => anchor.penId = newId);
   }
 
   updateValue(pen: Pen, data: IValue): void {
