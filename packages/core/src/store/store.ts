@@ -127,6 +127,7 @@ export interface Network {
   body?: any;
   data?: Network
   interval?: number; // http 请求间隔
+  times?: number; // 临时 重连次数
 }
 
 export interface HttpOptions {
@@ -135,6 +136,7 @@ export interface HttpOptions {
   httpHeaders?: HeadersInit; //请求头
   method?: string;
   body?: BodyInit | null;
+  times?: number; // 临时 重连次数
 }
 
 export enum EditType {

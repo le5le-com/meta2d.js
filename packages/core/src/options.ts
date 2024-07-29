@@ -113,6 +113,7 @@ export interface Options {
   disabledBackground?: string;
   scaleOff?: number; //缩放偏移量
   scrollButScale?: boolean; //滚动条滚动，鼠标缩放
+  reconnetTimes?: number; //通信重连次数
 }
 
 export const defaultOptions: Options = {

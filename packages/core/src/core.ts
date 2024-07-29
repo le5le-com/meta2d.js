@@ -1681,6 +1681,7 @@ export class Meta2d {
     return true;
   }
 
+  websocketTimes = 0;
   connectWebsocket(websocket?: string) {
     this.closeWebsocket();
     if (websocket) {
@@ -1698,7 +1699,19 @@ export class Meta2d {
         });
       };
 
+      this.websocket.onerror = (error) => {
+        this.store.emitter.emit('error', { type: 'websocket', error });
+      }
+
       this.websocket.onclose = () => {
+        if (this.store.options.reconnetTimes) {
+          this.websocketTimes++;
+          if (this.websocketTimes >= this.store.options.reconnetTimes) {
+            this.websocketTimes = 0;
+            this.closeWebsocket();
+            return;
+          }
+        }
         console.info('Canvas websocket closed and reconneting...');
         this.connectWebsocket();
       };
@@ -1713,6 +1726,7 @@ export class Meta2d {
     }
   }
 
+  mqttTimes = 0;
   connectMqtt(params?: {
     mqtt: string;
     mqttTopics: string;
@@ -1758,6 +1772,21 @@ export class Meta2d {
             url: this.store.data.mqtt,
           });
         });
+        
+        this.mqttClient.on('error', (error) => {
+          this.store.emitter.emit('error', { type: 'mqtt', error });
+        });
+
+        this.mqttClient.on('close', () => {
+          if (this.store.options.reconnetTimes) {
+            this.mqttTimes++;
+            if (this.mqttTimes >= this.store.options.reconnetTimes) {
+              this.mqttTimes = 0;
+              this.closeMqtt();
+            }
+          }
+        });
+
         if (this.store.data.mqttTopics) {
           this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
         }
@@ -1784,9 +1813,18 @@ export class Meta2d {
       }
       https.forEach((item, index) => {
         if (item.http) {
+          item.times = 0;
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
             this.oldRequestHttp(item);
+            if (this.store.options.reconnetTimes) {
+              item.times++;
+              if (item.times >= this.store.options.reconnetTimes) {
+                item.times = 0;
+                clearInterval(this.httpTimerList[index]);
+                this.httpTimerList[index] = undefined;
+              }
+            }
           }, item.httpTimeInterval || 1000);
         }
       });
@@ -1818,6 +1856,8 @@ export class Meta2d {
       if (res.ok) {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.http });
+      } else {
+        this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
   }
@@ -1880,6 +1920,7 @@ export class Meta2d {
             if (net.options.clientId && !net.options.customClientId) {
               net.options.clientId = s8();
             }
+            net.times = 0;
             this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
             this.mqttClients[mqttIndex].on(
               'message',
@@ -1891,7 +1932,19 @@ export class Meta2d {
                 });
               }
             );
+            this.mqttClients[mqttIndex].on('error', (error) => {
+              this.store.emitter.emit('error', { type: 'mqtt', error });
+            });
 
+            this.mqttClients[mqttIndex].on('close', () => {
+              if (this.store.options.reconnetTimes) {
+                net.times++;
+                if (net.times >= this.store.options.reconnetTimes) {
+                  net.times = 0;
+                  this.mqttClients[mqttIndex].end();
+                }
+              }
+            });
             if (net.topics) {
               this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
             }
@@ -1904,6 +1957,19 @@ export class Meta2d {
             this.websockets[websocketIndex].onmessage = (e) => {
               this.socketCallback(e.data, { type: 'websocket', url: net.url });
             };
+            this.websockets[websocketIndex].onerror = (error) => {
+              this.store.emitter.emit('error', { type: 'websocket', error });
+            };
+            this.websockets[websocketIndex].onclose = () => {
+              if (this.store.options.reconnetTimes) {
+                net.times++;
+                if (net.times >= this.store.options.reconnetTimes) {
+                  net.times = 0;
+                  this.websockets[websocketIndex].close();
+                }
+              }
+            };
+
             websocketIndex += 1;
           } else if (net.protocol === 'http') {
             https.push({
@@ -2163,8 +2229,17 @@ export class Meta2d {
     // }
 
     https.forEach((_item,index) => {
+      _item.times = 0;
       this.updateTimerList[index] = setInterval(async () => {
         this.requestHttp(_item);
+        if (this.store.options.reconnetTimes) {
+          _item.times++;
+          if (_item.times >= this.store.options.reconnetTimes) {
+            _item.times = 0;
+            clearInterval(this.updateTimerList[index]);
+            this.updateTimerList[index] = undefined;
+          }
+        }
       }, _item.interval || 1000);
     });
   }
@@ -2207,6 +2282,8 @@ export class Meta2d {
       if (res.ok) {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.url });
+      } else {
+        this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
   }
