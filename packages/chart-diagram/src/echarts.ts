@@ -9,7 +9,7 @@ import {
   setElemPosition,
 } from '@meta2d/core';
 import type { EChartOption } from 'echarts';
-import { getter } from '@meta2d/core/src/utils/object';
+import { getter, setter } from '@meta2d/core/src/utils/object';
 import { formatTime } from '@meta2d/core/src/utils/time';
 
 export enum ReplaceMode {
@@ -58,6 +58,9 @@ export interface ChartPen extends Pen {
     geoJson?: any;
     geoUrl?: string;
   };
+  calculative?: {
+    partialOption?:any; // 部分更新的 option
+  } & Pen['calculative'];
   // beforeScale: number;
 }
 
@@ -212,14 +215,24 @@ function value(pen: ChartPen) {
     return;
   }
   setElemPosition(pen, pen.calculative.singleton.div);
-  pen.calculative.singleton.echartsReady &&
-    pen.calculative.singleton.echart.setOption(
-      updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
-      true
-    );
+  if(pen.calculative.singleton.echartsReady){
+    if(pen.calculative.partialOption){
+      //部分更新
+      const option =  pen.calculative.partialOption.echarts.option;
+      pen.calculative.singleton.echart.setOption(
+        deepClone(option)
+      );
+    }else{
+      pen.calculative.singleton.echart.setOption(
+        updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
+        true
+      );
+    }
+  }
 }
 
 function beforeValue(pen: ChartPen, value: any) {
+  pen.calculative.partialOption = null;
   if ((value as any).echarts) {
     let echarts = globalThis.echarts;
     if (value.echarts.geoName && !echarts.getMap(value.echarts.geoName)) {
@@ -253,7 +266,7 @@ function beforeValue(pen: ChartPen, value: any) {
   if (pen.realTimes && pen.realTimes.length) {
     const { xAxis, yAxis } = pen.echarts.option;
     const { max, replaceMode, timeFormat } = pen.echarts;
-
+    let dataDotArr = []; //记录只更新一个点的数据
     for (let key in value) {
       if (key.includes('echarts.option')) {
         let beforeV = getter(pen, key);
@@ -278,8 +291,21 @@ function beforeValue(pen: ChartPen, value: any) {
           }
           value[_key] = _value;
         }
+        if(key.includes('.data.')){
+          //例如data.1 需要更新 data
+          let _key = key.substring(0, key.indexOf('.data.') + 5);
+          if(!dataDotArr.includes(_key)){
+            dataDotArr.push(_key)
+          }
+        }
       }
     }
+    const _value = deepClone(value);
+    pen.calculative.partialOption = dotNotationToObject(_value);
+    dataDotArr.forEach((key)=>{
+      let value = getter(pen, key);
+      setter(pen.calculative.partialOption, key, value);
+    })
     return value;
   }
   if (!value.dataX && !value.dataY) {
@@ -292,6 +318,10 @@ function beforeValue(pen: ChartPen, value: any) {
   // x，y 需要判空, 此处不转换数组
   let x = value.dataX;
   let y = value.dataY;
+  let dataArr = []; //记录只更新数据
+  if(y){
+    dataArr.push('echarts.option.series');
+  }
   const series = echarts.option.series;
   // 确认有几条线，即多折线的场景
   const length = series.length;
@@ -313,6 +343,7 @@ function beforeValue(pen: ChartPen, value: any) {
       xData.push(...x);
       // 删除开头的多余数据
       xData.splice(0, xData.length - max);
+      dataArr.push('echarts.option.xAxis');
     }
 
     if (y) {
@@ -375,6 +406,11 @@ function beforeValue(pen: ChartPen, value: any) {
           oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
         !Array.isArray(x) && (x = [x]);
         !Array.isArray(y) && (y = [y]);
+        if(oneXAxis.type === 'category' ){
+          dataArr.push('echarts.option.xAxis');
+        }else{
+          dataArr.push('echarts.option.yAxis');
+        }
         if (length === 1) {
           y.forEach((yItem, index: number) => {
             const xIndex = categoryData.indexOf(x[index]);
@@ -397,6 +433,7 @@ function beforeValue(pen: ChartPen, value: any) {
       // TODO: Y 轴是分类，x 轴是值，替换全部不考虑
       oneXAxis.data = x;
       oneXAxis.data.splice(0, oneXAxis.data.length - max);
+      dataArr.push('echarts.option.xAxis');
     }
     if (y) {
       if (length === 1) {
@@ -411,7 +448,11 @@ function beforeValue(pen: ChartPen, value: any) {
       }
     }
   }
-  // 3. 设置完后，清空
+  pen.calculative.partialOption = {};
+  dataArr.forEach((key)=>{
+    let value = getter(pen, key);
+    setter(pen.calculative.partialOption, key, value);
+  })
   delete value.dataX;
   delete value.dataY;
   return Object.assign(value, { echarts });
@@ -637,4 +678,49 @@ function updateOption(_option, ratio) {
   }
   deepSetValue(option, keyWords, ratio);
   return option;
+}
+
+function dotNotationToObject(dotNotationObj) {
+  const result = {};
+  Object.keys(dotNotationObj).forEach((dotNotationStr) => {
+    const keys = dotNotationStr.split('.');
+    let current = result;
+    keys.forEach((key, index) => {
+      const isArrayIndex = !isNaN(parseInt(key));
+      // 如果是最后一个 key，直接赋值
+      if (index === keys.length - 1) {
+        if (isArrayIndex) {
+          if (!Array.isArray(current)) {
+            current = [];
+          }
+          current[parseInt(key)] = dotNotationObj[dotNotationStr];
+        } else {
+          current[key] = dotNotationObj[dotNotationStr];
+        }
+      } else {
+        if (isArrayIndex) {
+          const arrayIndex = parseInt(key);
+          if (!Array.isArray(current)) {
+            if (!current[keys[index - 1]]) {
+            }
+          }
+          if (!current[arrayIndex]) {
+            current[arrayIndex] = {};
+          }
+          current = current[arrayIndex];
+        } else {
+          if (!current[key]) {
+            if (key === 'series') {
+              current[key] = [];
+            } else {
+              current[key] = {};
+            }
+          }
+          current = current[key];
+        }
+      }
+    });
+  });
+
+  return result;
 }
