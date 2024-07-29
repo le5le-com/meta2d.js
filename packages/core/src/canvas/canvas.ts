@@ -1292,6 +1292,15 @@ export class Canvas {
       this.calibrateMouse(pt);
       this.dropPens(obj, pt);
       this.addCaches = [];
+      // 拖拽新增图元判断是否是在容器上
+      this.getContainerHover(pt);
+      this.mousePos.x = pt.x;
+      this.mousePos.y = pt.y;
+      this.store.emitter.emit('mouseup', {
+        x: pt.x,
+        y: pt.y,
+        pen: this.store.hoverContainer,
+      });
     }
 
     this.store.emitter.emit('drop', obj || json);
@@ -2592,11 +2601,13 @@ export class Canvas {
       if(this.store.hover){
         this.store.hover.calculative.mouseDown = false;
       }
-      this.store.emitter.emit('mouseup', {
-        x: e.x,
-        y: e.y,
-        pen: this.store.hover,
-      });
+      if(this.store.hover != this.store.hoverContainer) {
+        this.store.emitter.emit('mouseup', {
+          x: e.x,
+          y: e.y,
+          pen: this.store.hover,
+        });
+      } 
       this.store.emitter.emit('mouseup', {
         x: e.x,
         y: e.y,
@@ -3103,8 +3114,7 @@ export class Canvas {
         if (
           pen.visible == false ||
           pen.calculative.inView == false ||
-          pen.locked === LockState.Disable ||
-          pen.calculative.active
+          pen.locked === LockState.Disable
         ) {
           continue;
         }
@@ -3130,7 +3140,9 @@ export class Canvas {
           this.store.hoverContainer = undefined;
           if(this.store.lastHoverContainer !== this.store.hoverContainer){
             this.patchFlags = true;
-            if (this.store.lastHoverContainer) {
+            const movingPen =
+            this.store.lastHoverContainer.calculative.canvas.store.pens[this.store.lastHoverContainer.id + movingSuffix];
+            if (this.store.lastHoverContainer && !movingPen) {
               this.store.lastHoverContainer.calculative.containerHover = false;
               this.store.emitter.emit('leave', this.store.lastHoverContainer);
             }
