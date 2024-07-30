@@ -1917,6 +1917,7 @@ export class Meta2d {
       networks.forEach((net) => {
         if (net.type === 'subscribe') {
           if (net.protocol === 'mqtt') {
+            net.index = mqttIndex;
             if (net.options.clientId && !net.options.customClientId) {
               net.options.clientId = s8();
             }
@@ -1941,7 +1942,7 @@ export class Meta2d {
                 net.times++;
                 if (net.times >= this.store.options.reconnetTimes) {
                   net.times = 0;
-                  this.mqttClients[mqttIndex].end();
+                  this.mqttClients && this.mqttClients[net.index]?.end();
                 }
               }
             });
@@ -1950,25 +1951,29 @@ export class Meta2d {
             }
             mqttIndex += 1;
           } else if (net.protocol === 'websocket') {
-            this.websockets[websocketIndex] = new WebSocket(
-              net.url,
-              net.protocols || undefined
-            );
-            this.websockets[websocketIndex].onmessage = (e) => {
-              this.socketCallback(e.data, { type: 'websocket', url: net.url });
-            };
-            this.websockets[websocketIndex].onerror = (error) => {
-              this.store.emitter.emit('error', { type: 'websocket', error });
-            };
-            this.websockets[websocketIndex].onclose = () => {
-              if (this.store.options.reconnetTimes) {
-                net.times++;
-                if (net.times >= this.store.options.reconnetTimes) {
-                  net.times = 0;
-                  this.websockets[websocketIndex].close();
-                }
-              }
-            };
+            net.index = websocketIndex;
+            this.connectNetWebSocket(net);
+            // this.websockets[websocketIndex] = new WebSocket(
+            //   net.url,
+            //   net.protocols || undefined
+            // );
+            // this.websockets[websocketIndex].onmessage = (e) => {
+            //   this.socketCallback(e.data, { type: 'websocket', url: net.url });
+            // };
+            // this.websockets[websocketIndex].onerror = (error) => {
+            //   this.store.emitter.emit('error', { type: 'websocket', error });
+            // };
+            // this.websockets[websocketIndex].onclose = () => {
+            //   if (this.store.options.reconnetTimes) {
+            //     net.times++;
+            //     if (net.times >= this.store.options.reconnetTimes) {
+            //       net.times = 0;
+            //       this.websockets[net.index]?.close();
+            //       return;
+            //     }
+            //   }
+              // console.info('Canvas websocket closed and reconneting...');
+            // };
 
             websocketIndex += 1;
           } else if (net.protocol === 'http') {
@@ -1984,6 +1989,41 @@ export class Meta2d {
       });
     }
     this.onNetworkConnect(https);
+  }
+
+  
+  connectNetWebSocket(net:Network){
+    if(this.websockets[net.index]){
+      this.websockets[net.index].onclose = undefined;
+      this.websockets[net.index]?.close();
+      this.websockets[net.index] = undefined;
+    }
+    this.websockets[net.index] = new WebSocket(
+      net.url,
+      net.protocols || undefined
+    );
+    this.websockets[net.index].onmessage = (e) => {
+      this.socketCallback(e.data, { type: 'websocket', url: net.url });
+    };
+    this.websockets[net.index].onerror = (error) => {
+      this.store.emitter.emit('error', { type: 'websocket', error });
+    };
+    this.websockets[net.index].onclose = () => {
+      if (this.store.options.reconnetTimes) {
+        net.times++;
+        if (net.times >= this.store.options.reconnetTimes) {
+          net.times = 0;
+          this.websockets[net.index].onclose = undefined;
+          this.websockets[net.index]?.close();
+          this.websockets[net.index] = undefined;
+          return;
+        }
+      }
+      setTimeout(() => {
+        console.info('Canvas websocket closed and reconneting...');
+        this.connectNetWebSocket(net);
+      },2000);
+    };
   }
 
   randomString(e: number) {
@@ -2295,7 +2335,11 @@ export class Meta2d {
       });
     this.websockets &&
       this.websockets.forEach((websocket) => {
-        websocket.close();
+        if(websocket){
+          websocket.onclose = undefined;
+          websocket.close();
+          websocket = undefined;
+        }
       });
     this.mqttClients = undefined;
     this.websockets = undefined;

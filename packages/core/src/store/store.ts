@@ -128,6 +128,7 @@ export interface Network {
   data?: Network
   interval?: number; // http 请求间隔
   times?: number; // 临时 重连次数
+  index?: number; // 临时 索引
 }
 
 export interface HttpOptions {
