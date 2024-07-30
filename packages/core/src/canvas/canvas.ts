@@ -6086,7 +6086,7 @@ export class Canvas {
     if (!pen.connectedLines) {
       return;
     }
-    pen.connectedLines.forEach((item) => {
+    pen.connectedLines.forEach((item,index) => {
       const line = this.store.pens[item.lineId];
       // 活动层的线不需要更新，会在活动层处理
       if (!line || line.calculative.active) {
@@ -6095,6 +6095,11 @@ export class Canvas {
 
       const lineAnchor = getAnchor(line, item.lineAnchor);
       if (!lineAnchor) {
+        return;
+      }
+      if(!lineAnchor.connectTo){
+        // 如果pen有连接关系但连线中没有连接关系，删除pen的连接关系
+        pen.connectedLines.splice(index,1);
         return;
       }
 
