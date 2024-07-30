@@ -985,7 +985,8 @@ export class Meta2d {
     //恢复可选状态
     this.store.data.pens.forEach((pen) => {
       if (pen.externElement === true) {
-        pen.onMove && pen.onMove(pen);
+        // pen.onMove && pen.onMove(pen);
+        pen.calculative.singleton?.div && setElemPosition(pen, pen.calculative.singleton.div);
       }
     });
     if (lock > 0) {
