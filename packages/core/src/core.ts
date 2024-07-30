@@ -2946,7 +2946,7 @@ export class Meta2d {
                   flag = state.conditions.every((condition) => {
                     return this.judgeCondition(pen, condition.key, condition);
                   });
-                } else if (trigger.conditionType === 'or') {
+                } else if (state.conditionType === 'or') {
                   flag = state.conditions.some((condition) => {
                     return this.judgeCondition(pen, condition.key, condition);
                   });
