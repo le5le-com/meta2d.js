@@ -2720,6 +2720,12 @@ export class Meta2d {
         }
         this.navigatorTo(e.params);
         break;
+      case 'input':
+        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        break;
+      case 'change':
+        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        break;
     }
 
     if (this.store.messageEvents[eventName]) {
