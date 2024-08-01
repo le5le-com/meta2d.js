@@ -985,7 +985,8 @@ export class Meta2d {
     //恢复可选状态
     this.store.data.pens.forEach((pen) => {
       if (pen.externElement === true) {
-        pen.onMove && pen.onMove(pen);
+        // pen.onMove && pen.onMove(pen);
+        pen.calculative.singleton?.div && setElemPosition(pen, pen.calculative.singleton.div);
       }
     });
     if (lock > 0) {
@@ -2719,6 +2720,12 @@ export class Meta2d {
         }
         this.navigatorTo(e.params);
         break;
+      case 'input':
+        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        break;
+      case 'change':
+        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        break;
     }
 
     if (this.store.messageEvents[eventName]) {
@@ -2946,7 +2953,7 @@ export class Meta2d {
                   flag = state.conditions.every((condition) => {
                     return this.judgeCondition(pen, condition.key, condition);
                   });
-                } else if (trigger.conditionType === 'or') {
+                } else if (state.conditionType === 'or') {
                   flag = state.conditions.some((condition) => {
                     return this.judgeCondition(pen, condition.key, condition);
                   });

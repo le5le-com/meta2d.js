@@ -3309,7 +3309,8 @@ export function calcInView(pen: Pen, calcChild = false) {
   }
   // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
   // 更改 view 后，修改 dom 节点的显示隐藏
-  pen.onMove?.(pen);
+  // pen.onMove?.(pen);
+  pen.calculative.singleton?.div && setElemPosition(pen, pen.calculative.singleton.div);
 }
 
 /**

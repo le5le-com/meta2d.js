@@ -15,7 +15,9 @@ export type EventName =
   | 'dblclick'
   | 'valueUpdate'
   | 'message'
-  | 'contextmenu';
+  | 'contextmenu'
+  | 'input'
+  | 'change';
 
 export interface Event {
   name: EventName;

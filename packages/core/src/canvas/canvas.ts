@@ -3878,8 +3878,8 @@ export class Canvas {
               this.store.data.pens[i].lastConnected
             ) {
               for (let key in this.store.data.pens[i].lastConnected) {
-                this.store.pens[key].connectedLines =
-                  this.store.data.pens[i].lastConnected[key];
+                this.store.pens[key] && (this.store.pens[key].connectedLines =
+                  this.store.data.pens[i].lastConnected[key]);
               }
             }
             this.store.data.pens[i] = pen;
@@ -3924,7 +3924,7 @@ export class Canvas {
           this.store.pens[pen.id] = pen;
           if (pen.type && pen.lastConnected) {
             for (let key in pen.lastConnected) {
-              this.store.pens[key].connectedLines = pen.lastConnected[key];
+              this.store.pens[key]&&(this.store.pens[key].connectedLines = pen.lastConnected[key]);
             }
           }
           pen.calculative.canvas = this;
@@ -3984,7 +3984,7 @@ export class Canvas {
           this.store.pens[pen.id] = pen;
           if(pen.type&&pen.lastConnected){
             for(let key  in pen.lastConnected){
-              this.store.pens[key].connectedLines = pen.lastConnected[key];
+              this.store.pens[key]&&(this.store.pens[key].connectedLines = pen.lastConnected[key]);
             }
           }
           pen.calculative.canvas = this;
@@ -7238,6 +7238,7 @@ export class Canvas {
           pens: [deepClone(pen, true)],
           initPens,
         });
+        this.store.emitter.emit('change', pen);
         this.store.emitter.emit('valueUpdate', pen);
       } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines.length == 0) {
         calcTextRect(pen);
@@ -7367,6 +7368,7 @@ export class Canvas {
           this.inputDiv.style.paddingTop = '';
         }
       }
+      this.store.emitter.emit('input',pen);
     };
     this.inputDiv.onclick = (e) => {
       e.stopPropagation();
@@ -7516,6 +7518,7 @@ export class Canvas {
       initPens,
     });
     this.render();
+    this.store.emitter.emit('change', pen);
     this.store.emitter.emit('valueUpdate', pen);
   };
 
