@@ -2752,6 +2752,13 @@ export function setNodeAnimate(pen: Pen, now: number) {
         height: pen.height,
       };
     }
+    if (pen.children?.length) {
+      const store = pen.calculative.canvas.store;
+      pen.calculative.childrenVisible = {};
+      pen.children.forEach((id) => {
+        pen.calculative.childrenVisible[id] = store.pens[id].visible;
+      });
+    }
     pen.calculative.initRect.rotate = pen.calculative.rotate || 0;
 
     initPrevFrame(pen);
@@ -3596,8 +3603,14 @@ export function setChildValue(pen: Pen, data: IValue) {
   ) {
     const children = pen.children;
     children?.forEach((childId) => {
+      let _data = deepClone(data);
+      if(pen.calculative.childrenVisible){
+        if(pen.calculative.childrenVisible[childId]===false){
+          delete _data.visible;
+        }
+      }
       const child = pen.calculative.canvas.store.pens[childId];
-      child && setChildValue(child, data);
+      child && setChildValue(child, _data);
     });
   }
 }
