@@ -2198,8 +2198,9 @@ export class Meta2d {
       if (Object.keys(_d).length) {
         let data = pen.onBeforeValue ? pen.onBeforeValue(pen, _d) : _d;
         this.canvas.updateValue(pen, data);
-        this.store.emitter.emit('valueUpdate', pen);
+        // this.store.emitter.emit('valueUpdate', pen);
         pen.onValue?.(pen);
+        this.store.emitter.emit('valueUpdate', pen);
       }
     }
   }

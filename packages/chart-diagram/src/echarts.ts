@@ -707,6 +707,14 @@ function dotNotationToObject(dotNotationObj) {
           if (!current[arrayIndex]) {
             current[arrayIndex] = {};
           }
+          if(Array.isArray(current)){
+            //series 空数组问题
+            for(let i=0;i<parseInt(key);i++){
+              if(!current[i]){
+                current[i] = {};
+              }
+            }
+          }
           current = current[arrayIndex];
         } else {
           if (!current[key]) {
