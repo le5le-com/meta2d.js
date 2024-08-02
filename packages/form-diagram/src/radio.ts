@@ -5,6 +5,9 @@ import { getTextColor, getFont } from '../../core';
 import { pSBC } from '../../core';
 
 export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
+  if(!pen.options){
+    pen.options = pen.data;
+  }
   if (!pen.onAdd) {
     pen.onAdd = onAdd;
     if (!pen.optionPos) {
