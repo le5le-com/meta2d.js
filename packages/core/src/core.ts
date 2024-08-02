@@ -31,7 +31,8 @@ import {
   CanvasLayer,
   validationPlugin,
   setLifeCycleFunc,
-  getAllFollowers
+  getAllFollowers,
+  isInteraction
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -1439,6 +1440,7 @@ export class Meta2d {
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+      pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
     });
     //将组合后的父节点置底
     this.store.data.pens.splice(minIndex, 0, parent);

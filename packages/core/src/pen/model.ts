@@ -373,6 +373,7 @@ export interface Pen extends Rect {
   deviceId?:string;//关联的设备id
   pivot?:Point; //旋转中心 
   noOnBinds?:boolean; //是否禁用绑定事件
+  interaction?:boolean; //是否开启交互 组合时将不会被锁定
   calculative?: {
     x?: number;
     y?: number;
@@ -658,6 +659,17 @@ export const isDomShapes = [
   'highcharts',
   'lightningCharts',
 ];
+
+/**
+ *  交互图元
+ */
+export const isInteraction = [
+  'radio',
+  'checkbox',
+  'button',
+  'inputDom',
+  'slider'
+]
 
 // 格式刷同步的属性
 export const formatAttrs: Set<string> = new Set([
