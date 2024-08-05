@@ -267,8 +267,10 @@ function beforeValue(pen: ChartPen, value: any) {
     const { xAxis, yAxis } = pen.echarts.option;
     const { max, replaceMode, timeFormat } = pen.echarts;
     let dataDotArr = []; //记录只更新一个点的数据
+    let chartFlag = false;
     for (let key in value) {
       if (key.includes('echarts.option')) {
+        chartFlag = true;
         let beforeV = getter(pen, key);
         if (Array.isArray(beforeV) && replaceMode === ReplaceMode.Add) {
           //追加
@@ -300,12 +302,14 @@ function beforeValue(pen: ChartPen, value: any) {
         }
       }
     }
-    const _value = deepClone(value);
-    pen.calculative.partialOption = dotNotationToObject(_value);
-    dataDotArr.forEach((key)=>{
-      let value = getter(pen, key);
-      setter(pen.calculative.partialOption, key, value);
-    })
+    if(chartFlag){
+      const _value = deepClone(value);
+      pen.calculative.partialOption = dotNotationToObject(_value);
+      dataDotArr.forEach((key)=>{
+        let value = getter(pen, key);
+        setter(pen.calculative.partialOption, key, value);
+      });
+    }
     return value;
   }
   if (!value.dataX && !value.dataY) {
