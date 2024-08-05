@@ -668,7 +668,8 @@ export const isInteraction = [
   'checkbox',
   'button',
   'inputDom',
-  'slider'
+  'slider',
+  'echarts',
 ]
 
 // 格式刷同步的属性

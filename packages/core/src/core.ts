@@ -3216,6 +3216,7 @@ export class Meta2d {
       );
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+      pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
       if (!oldPen) {
         addPens.push(deepClone(pen, true));
       } else {
