@@ -2385,20 +2385,22 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
 }
 
 export function scaleChildrenInitRect(pen: Pen, scale: number, center: Point) {
+  if(!pen){
+    return;
+  }
   if (pen.children?.length) {
     pen.children.forEach((id) => {
       const child = pen.calculative.canvas.store.pens[id];
-      if (
-        child &&
-        child.calculative.initRect
-      ) {
-        scaleRect(
-          child.calculative.initRect,
-          scale,
-          center
-        );
+      if(child){
+        if ( child.calculative.initRect ) {
+          scaleRect(
+            child.calculative.initRect,
+            scale,
+            center
+          );
+        }
+        scaleChildrenInitRect(child, scale, center);
       }
-      scaleChildrenInitRect(child, scale, center);
     });
   }
 }
