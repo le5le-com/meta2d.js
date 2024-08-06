@@ -3137,16 +3137,18 @@ export class Canvas {
             this.store.lastHoverContainer = this.store.hoverContainer;
           }
         }else{
-          this.store.hoverContainer = undefined;
-          if(this.store.lastHoverContainer !== this.store.hoverContainer){
-            this.patchFlags = true;
-            const movingPen =
-            this.store.lastHoverContainer.calculative.canvas.store.pens[this.store.lastHoverContainer.id + movingSuffix];
-            if (this.store.lastHoverContainer && !movingPen) {
-              this.store.lastHoverContainer.calculative.containerHover = false;
-              this.store.emitter.emit('leave', this.store.lastHoverContainer);
+          if(pen === this.store.hoverContainer){
+            this.store.hoverContainer = undefined;
+            if(this.store.lastHoverContainer !== this.store.hoverContainer){
+              this.patchFlags = true;
+              const movingPen =
+              this.store.lastHoverContainer.calculative.canvas.store.pens[this.store.lastHoverContainer.id + movingSuffix];
+              if (this.store.lastHoverContainer && !movingPen) {
+                this.store.lastHoverContainer.calculative.containerHover = false;
+                this.store.emitter.emit('leave', this.store.lastHoverContainer);
+              }
+              this.store.lastHoverContainer = this.store.hoverContainer;
             }
-            this.store.lastHoverContainer = this.store.hoverContainer;
           }
         }
       }

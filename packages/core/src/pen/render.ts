@@ -3040,7 +3040,7 @@ export function setLineAnimate(pen: Pen, now: number) {
 }
 
 export function setChildrenActive(pen: Pen, active = true) {
-  if (!pen.children) {
+  if (!pen.children || pen.childActive === false) {
     return;
   }
   const store = pen.calculative.canvas.store;
@@ -3060,6 +3060,9 @@ export function setHover(pen: Pen, hover = true) {
   }
   const store = pen.calculative.canvas.store;
   pen.calculative.hover = hover;
+  if(pen.childHover === false){
+    return;
+  }
   if (pen.children) {
     pen.children.forEach((id) => {
       // 子节点没有自己的独立hover，继承父节点hover
