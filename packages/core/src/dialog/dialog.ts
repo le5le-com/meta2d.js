@@ -4,8 +4,10 @@ export class Dialog {
   dialog: HTMLElement;
   close: HTMLElement;
   title: HTMLElement;
+  body: HTMLElement;
   x: number;
   y: number;
+  url: string;
   constructor(public parentElement: HTMLElement) {
     this.box = document.createElement('div');
     this.dialog = document.createElement('div');
@@ -20,21 +22,21 @@ export class Dialog {
         fill-opacity="0.9"
       ></path>
     </svg>`;
-    let body = document.createElement('div');
+    this.body = document.createElement('div');
     this.iframe = document.createElement('iframe');
     this.iframe.setAttribute('frameborder', '0');
     this.box.className = 'meta2d-dialog_mask';
     this.dialog.className = 'meta2d-dialog';
-    body.className = 'meta2d-dialog_body';
+    this.body.className = 'meta2d-dialog_body';
     header.className = 'meta2d-dialog_header';
     this.title.className = 'meta2d-dialog-content';
     this.close.className = 'meta2d-dialog-close';
 
     header.appendChild(this.title);
     header.appendChild(this.close);
-    body.appendChild(this.iframe);
+    this.body.appendChild(this.iframe);
     this.dialog.appendChild(header);
-    this.dialog.appendChild(body);
+    this.dialog.appendChild(this.body);
     this.box.appendChild(this.dialog);
     parentElement.appendChild(this.box);
 
@@ -82,6 +84,7 @@ export class Dialog {
             top: 15vh;
             left: 10%;
             width: 80%;
+            height:420px;
             padding: 16px 20px;
             border-radius: 9px;
             background-color: #1e2430;
@@ -100,6 +103,7 @@ export class Dialog {
             font-weight: 600;
             font-size: 14px;
             color: #bdc7db;
+            padding-bottom:8px;
         }`
       );
       sheet.insertRule(
@@ -109,6 +113,9 @@ export class Dialog {
             line-height: 20px;
             text-align: center;
             color: #617b91;
+            position: absolute;
+            right:20px;
+            top:18px;
         }`
       );
       sheet.insertRule(
@@ -118,22 +125,42 @@ export class Dialog {
       );
       sheet.insertRule(
         `.meta2d-dialog_body{
-            margin-top: 4px;
+            // margin-top: 4px;
         } `
       );
       sheet.insertRule(
         `.meta2d-dialog_body iframe{
             width: 100%;
-            height: 400px;
+            height: 100%;
         }`
       );
     }
   }
 
-  show(title?: string, url?: string) {
-    this.box.style.display = 'block';
-    url && this.iframe.setAttribute('src', url);
+  show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number}) {
+    if(!url){
+      return;
+    }
+    if(url !== this.url){
+      this.iframe.setAttribute('src', url);
+      this.url = url;
+    }
     title && (this.title.innerText = title);
+    if(!title){
+      this.dialog.style.padding = '0px';
+      this.title.style.display = 'none';
+      this.body.style.height = '100%';
+      this.body.style.overflow= 'hidden';
+    }else{
+      this.dialog.style.padding = '16px 20px';
+      this.title.style.display = 'block';
+      this.body.style.height = 'calc(100% - 26px)';
+    }
+    this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
+    this.dialog.style.left = rect.x? (rect.x + 'px'): '10%';
+    this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
+    this.dialog.style.height = rect.height?(rect.height + 'px'): '420px';
+    this.box.style.display = 'block';
   }
 
   hide() {

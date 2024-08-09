@@ -452,11 +452,18 @@ export class Meta2d {
     this.events[EventAction.Dialog] = (pen: Pen, e: Event) => {
       if (
         e.params &&
-        typeof e.params === 'string' &&
-        e.value &&
-        typeof e.value === 'string'
+        typeof e.params === 'string'
       ) {
-        this.canvas.dialog.show(e.value, e.params);
+        let url = e.params;
+        if(e.params.includes('${')){
+          let keys = e.params.match(/(?<=\$\{).*?(?=\})/g);
+          if(keys){
+            keys?.forEach((key)=>{
+              url = url.replace(`\${${key}}`,pen[key]);
+            })
+          }
+        }
+        this.canvas.dialog.show(e.value as any, url, e.extend);
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
