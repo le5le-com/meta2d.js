@@ -75,6 +75,8 @@ export interface Meta2dData {
   };
   dataEvents?:Event[]; //数据点事件
   fits?: Fit[];
+  disableTranslate?: boolean; //禁止平移
+  disableScale?: boolean; //禁止缩放
 }
 
 export interface Fit {

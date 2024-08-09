@@ -572,7 +572,7 @@ export class Canvas {
         return;
       }
     }
-    if (this.store.options.disableScale) {
+    if (this.store.data.disableScale || this.store.options.disableScale) {
       return;
     }
 
@@ -1619,7 +1619,7 @@ export class Canvas {
       }
 
       if (this.touchScaling) {
-        if (this.store.options.disableScale) {
+        if (this.store.data.disableScale || this.store.options.disableScale) {
           return;
         }
         const scale =
@@ -1634,7 +1634,8 @@ export class Canvas {
         if (
           (this.store.data.locked >= LockState.DisableMove &&
             this.store.data.locked !== LockState.DisableScale) ||
-          this.store.options.disableScale
+            this.store.data.disableScale ||
+            this.store.options.disableScale
         ) {
           return;
         }
@@ -2103,7 +2104,7 @@ export class Canvas {
       }
     }
 
-    if (this.mouseDown && !this.store.options.disableTranslate) {
+    if (this.mouseDown && !this.store.options.disableTranslate && !this.store.data.disableTranslate) {
       // 画布平移前提
       if (this.mouseRight === MouseRight.Down) {
         this.mouseRight = MouseRight.Translate;
