@@ -2758,29 +2758,7 @@ export class Meta2d {
         break;
     }
 
-    if (this.store.messageEvents[eventName]) {
-      this.store.messageEvents[eventName].forEach((item) => {
-        let flag = false;
-        if (item.event.conditions && item.event.conditions.length) {
-          if (item.event.conditionType === 'and') {
-            flag = item.event.conditions.every((condition) => {
-              return this.judgeCondition(item.pen, condition.key, condition);
-            });
-          } else if (item.event.conditionType === 'or') {
-            flag = item.event.conditions.some((condition) => {
-              return this.judgeCondition(item.pen, condition.key, condition);
-            });
-          }
-        } else {
-          flag = true;
-        }
-        if (flag) {
-          item.event.actions.forEach((action) => {
-            this.events[action.action](item.pen, action);
-          });
-        }
-      });
-    }
+    this.doMessageEvent(eventName);
   };
 
   private doEvent = (pen: Pen, eventName: EventName) => {
@@ -3007,6 +2985,32 @@ export class Meta2d {
     // 事件冒泡，子执行完，父执行
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
+
+  doMessageEvent(eventName: string) {
+    if (this.store.messageEvents[eventName]) {
+      this.store.messageEvents[eventName].forEach((item) => {
+        let flag = false;
+        if (item.event.conditions && item.event.conditions.length) {
+          if (item.event.conditionType === 'and') {
+            flag = item.event.conditions.every((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          } else if (item.event.conditionType === 'or') {
+            flag = item.event.conditions.some((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          }
+        } else {
+          flag = true;
+        }
+        if (flag) {
+          item.event.actions.forEach((action) => {
+            this.events[action.action](item.pen, action);
+          });
+        }
+      });
+    }
+  }
 
   doDataEvent = ( datas: { dataId?: string; id?: string; value: any }[]) => {
     if(!(this.store.data.dataEvents?.length)) {

@@ -330,6 +330,7 @@ export class Canvas {
 
     window?.addEventListener('resize', this.onResize);
     window?.addEventListener('scroll', this.onScroll);
+    window?.addEventListener('message', this.onMessage);
   }
 
   curve = curve;
@@ -535,6 +536,23 @@ export class Canvas {
       this.paste();
     }
   };
+
+  onMessage = (e: MessageEvent) => {
+    if (
+      typeof e.data !== 'string' ||
+      !e.data ||
+      e.data.startsWith('setImmediate')
+    ) {
+      return;
+    }
+
+    let data = JSON.parse(e.data);
+    if (typeof data === 'object') {
+      this.parent.doMessageEvent(data.name);
+    }else{
+      this.parent.doMessageEvent(data);
+    }
+  }
 
   onwheel = (e: WheelEvent) => {
     //输入模式不允许滚动
@@ -8611,6 +8629,7 @@ export class Canvas {
     document.removeEventListener('copy', this.onCopy);
     document.removeEventListener('cut', this.onCut);
     document.removeEventListener('paste', this.onPaste);
+    window && window.removeEventListener('message', this.onMessage);
     window && window.removeEventListener('resize', this.onResize);
     window && window.removeEventListener('scroll', this.onScroll);
   }
