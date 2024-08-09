@@ -827,6 +827,7 @@ export class Meta2d {
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
+    this.doInitFn();
     if (this.store.data.iconUrls) {
       for (const item of this.store.data.iconUrls) {
         loadCss(item, () => {
@@ -960,6 +961,25 @@ export class Meta2d {
       } catch (e) {
         console.warn('initJs error', e);
       }
+    }
+  }
+
+  doInitFn() {
+    let params = queryURLParams();
+    let binds = [];
+    for (let key in params) {
+      if (params.hasOwnProperty(key)) {
+        if(key.startsWith('bind-')){
+          binds.push({
+            id:key.replace('bind-',''),
+            dataId:key.replace('bind-',''),
+            value:params[key]
+          })
+        }
+      }
+    }
+    if(binds.length){
+      this.setDatas(binds,{history:false});
     }
   }
 
