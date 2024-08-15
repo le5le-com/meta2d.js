@@ -1838,7 +1838,7 @@ export function ctxDrawPath(
         if(store.options.svgPathStroke || pen.name!=='svgPath'){
           if(path_from){
             ctx.save();
-            ctx.lineCap = pen.fromLineCap;           
+            ctx.lineCap = pen.fromLineCap;
             ctx.stroke(path_from);
             ctx.restore();
           }
@@ -1855,7 +1855,7 @@ export function ctxDrawPath(
         ctx.stroke();
       }
     }
-  
+
     if (pen.type) {
       if (pen.calculative.animatePos) {
         ctx.save();
@@ -1874,7 +1874,7 @@ export function ctxDrawPath(
           if (path instanceof Path2D) {
             if(path_from&&!pen.lineAnimateType){
               ctx.save();
-              ctx.lineCap = pen.fromLineCap;           
+              ctx.lineCap = pen.fromLineCap;
               ctx.stroke(path_from);
               ctx.restore();
             }
@@ -3375,17 +3375,24 @@ function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
     // TODO  绘制命令的转换 （能否兼容多种指令？？）
     drawCommand.forEach((command)=> {
       try {
+        command.steps = command.steps.flat(Infinity);
         command.steps.reduce((calculate,step)=>{
           const cs = commandTransfer(step,pen,calculate.x,calculate.y);
           // 应当保证顺序的正确
           try {
             if(cs.c){
+              if(cs.c.startsWith('_')){
+                const prop = cs.c.split('_')[1];
+                // debugger;
+                (cs.p || ctx)[prop] = cs.v.value;
+                return {x:calculate.x,y:calculate.y};
+              }
               let l = [];
               for (const csKey in cs.v) {
                 l.push(cs.v[csKey]);
               }
               // ctx.beginPath();
-              ctx[cs.c](...l);
+              (cs.p || ctx)[cs.c](...l);
               ctx.moveTo(cs.startX || cs.v.x,cs.startY || cs.v.y);
               // command.prop.NoFill === '0'?ctx.fill():'';
               return {x:cs.startX || cs.v.x, y:cs.startY||cs.v.y};
@@ -3393,6 +3400,7 @@ function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
             return {x:calculate.x,y:calculate.y};
           }catch (e) {
             // pass
+            console.log(e,'error',cs);
           }
         },{});
       }
@@ -3418,36 +3426,89 @@ function commandTransfer(command,pen,startX,startY){
 
 function dealWithDXF(command,pen,startX,startY) {
   const { x, y, width, height } = pen.calculative.worldRect;
+  const {originWidth,originHeight} = pen.dxfOrigin;
   switch (command.c) {
+    case "beginPath":
+      return {
+        c:'beginPath',
+        v:{}
+      };
+    case "closePath":
+      return {
+        c:'closePath',
+        v:{}
+      };
     case "moveTo":
       return {
         c:'moveTo',
         v:{
-          x:command.v.x * pen.calculative.canvas.store.data.scale,
-          y:window.innerHeight - (command.v.y * pen.calculative.canvas.store.data.scale)
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y
         }
       };
     case "lineTo":
       return {
         c:'lineTo',
         v:{
-          x:command.v.x * pen.calculative.canvas.store.data.scale,
-          y:window.innerHeight - (command.v.y * pen.calculative.canvas.store.data.scale)
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y
         }
       };
     case "arc":
       return {
-        c:'arc',
+        c:'ellipse',
         v:{
-          x:command.v.x * pen.calculative.canvas.store.data.scale,
-          y:window.innerHeight - (command.v.y * pen.calculative.canvas.store.data.scale),
-          r:command.v.r * pen.calculative.canvas.store.data.scale,
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
           startAngle:command.v.startAngle,
-          endAngle: command.v.endAngle
+          endAngle: command.v.endAngle,
+          a:command.v.aclockwise ?? true
         }
       };
+    case "ellipse":
+      return {
+        c:'ellipse',
+        v:{
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
+          startAngle:command.v.startAngle,
+          endAngle: command.v.endAngle,
+          a:command.v.aclockwise ?? true
+        }
+      };
+    case "_font":
+      return {
+        c:'_font',
+        v:{
+          value:command.v.fontSize * meta2d.store.data.scale + 'px ' + (command.v.fontFamily || meta2d.store.options.fontFamily)
+        }
+      };
+    case "_fillStyle":
+      return {
+        c:'_fillStyle',
+        v:{
+          value:pen.color || command.v.value
+        }
+      };
+      default:
+        const c = {
+          c:command.c,
+          v:{
+            ...command.v,
+            x:command.v.x * (width / originWidth) + x,
+            y:(command.v.y * (height / originHeight)) + y
+          }
+        };
+        !command.v.x && delete c.v.x;
+        !command.v.y && delete c.v.y;
+        return c;
   }
-  return command;
 }
 function dealWithVisio(command,pen,startX,startY) {
   const { x, y, width, height } = pen.calculative.worldRect;
@@ -3604,7 +3665,7 @@ export function setChildValue(pen: Pen, data: IValue) {
     }
   }
   if (
-    pen.calculative.canvas.parent.isCombine(pen) 
+    pen.calculative.canvas.parent.isCombine(pen)
     //&& pen.showChild === undefined
   ) {
     const children = pen.children;
