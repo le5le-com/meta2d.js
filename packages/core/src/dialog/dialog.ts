@@ -156,11 +156,13 @@ export class Dialog {
       this.title.style.display = 'block';
       this.body.style.height = 'calc(100% - 26px)';
     }
-    this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
-    this.dialog.style.left = rect.x? (rect.x + 'px'): '10%';
-    this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
-    this.dialog.style.height = rect.height?(rect.height + 'px'): '420px';
-    this.box.style.display = 'block';
+    if(rect) {
+      this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
+      this.dialog.style.left = rect.x? (rect.x + 'px'): '10%';
+      this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
+      this.dialog.style.height = rect.height?(rect.height + 'px'): '420px';
+      this.box.style.display = 'block';
+    }
   }
 
   hide() {
