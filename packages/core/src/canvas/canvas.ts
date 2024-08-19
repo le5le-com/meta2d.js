@@ -4070,7 +4070,9 @@ export class Canvas {
     }
     const { fontSize, lineHeight } = this.store.options;
     if (!pen.fontSize) {
-      pen.fontSize = fontSize;
+      pen.fontSize = fontSize >= 0 ? fontSize : 12;
+    } else if(pen.fontSize < 0) {
+      pen.fontSize = 0;
     }
     if (!pen.lineHeight) {
       pen.lineHeight = lineHeight;
@@ -4155,7 +4157,7 @@ export class Canvas {
     }
     const { fontSize, lineHeight } = this.store.options;
     if (!pen.fontSize) {
-      pen.fontSize = fontSize;
+      pen.fontSize = fontSize >= 0 ? fontSize : 12;
       pen.calculative.fontSize = pen.fontSize * this.store.data.scale;
     }
     if (!pen.lineHeight) {
@@ -4514,7 +4516,7 @@ export class Canvas {
     const scale = this.store.data.scale;
     pen.calculative.lineWidth = pen.lineWidth * scale;
     pen.calculative.fontSize = pen.fontSize * scale;
-    if (pen.fontSize < 1) {
+    if (pen.fontSize < 1 && pen.fontSize > 0) {
       pen.calculative.fontSize =
         pen.fontSize * pen.calculative.worldRect.height;
     }
@@ -7629,7 +7631,7 @@ export class Canvas {
         if (needCalcTextRectProps.includes(k)) {
           willCalcTextRect = true;
         }
-        if (['name', 'borderRadius','lineSmooth'].includes(k)) {
+        if (['name', 'borderRadius','lineSmooth', 'close'].includes(k)) {
           willUpdatePath = true;
         }
         if (needSetPenProps.includes(k)) {
@@ -7641,7 +7643,7 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
-        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height'].includes(k)){
+        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign'].includes(k)){
           willRenderImage = true;
         }
       } else {

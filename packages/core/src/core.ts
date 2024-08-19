@@ -767,7 +767,7 @@ export class Meta2d {
   } = {}) {
     this.store.data.grid = grid;
     this.store.data.gridColor = gridColor;
-    this.store.data.gridSize = gridSize;
+    this.store.data.gridSize = gridSize < 0 ? 0 : gridSize;
     this.store.data.gridRotate = gridRotate;
     // this.store.patchFlagsBackground = true;
     this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);

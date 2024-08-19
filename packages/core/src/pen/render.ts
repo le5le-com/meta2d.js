@@ -3213,9 +3213,12 @@ function initLineRect(pen: Pen) {
   }
   const { fontSize, lineHeight } = pen.calculative.canvas.store.options;
   if (!pen.fontSize) {
-    pen.fontSize = fontSize;
+    pen.fontSize = fontSize >= 0 ? fontSize : 12;
     pen.calculative.fontSize =
       pen.fontSize * pen.calculative.canvas.store.data.scale;
+  } else if(pen.fontSize < 0) {
+    pen.fontSize = 0;
+    pen.calculative.fontSize = 0;
   }
   if (!pen.lineHeight) {
     pen.lineHeight = lineHeight;
@@ -3655,6 +3658,9 @@ function dealWithVisio(command,pen,startX,startY) {
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
     if (inheritanceProps.includes(k)) {
+      if(k == 'fontSize'){
+        data[k] = 0;
+      }
       pen[k] = data[k];
       if (['fontSize','lineWidth'].includes(k)) {
         pen.calculative[k] = data[k] * pen.calculative.canvas.store.data.scale;
