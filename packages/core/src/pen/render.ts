@@ -3658,7 +3658,7 @@ function dealWithVisio(command,pen,startX,startY) {
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
     if (inheritanceProps.includes(k)) {
-      if(k == 'fontSize'){
+      if(k == 'fontSize' && data[k] < 0){
         data[k] = 0;
       }
       pen[k] = data[k];
