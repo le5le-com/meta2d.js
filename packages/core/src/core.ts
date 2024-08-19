@@ -4146,7 +4146,16 @@ export class Meta2d {
     pens: Pen[] = this.store.data.pens,
     distance?: number
   ) {
-    !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
+    //TODO 暂时修复，待优化
+    // !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
+    if(!distance) {
+      let start = Infinity, end = -Infinity, key = direction === 'width' ? 'x' : 'y';
+      pens.forEach((item) => {
+        start = Math.min(start, item.calculative.worldRect[key]);
+        end = Math.max(end, item.calculative.worldRect['e'+key]);
+      });
+      distance = (end - start) / this.store.data.scale;
+    }
     // 过滤出非父节点
     pens = pens.filter((item) => !item.parentId);
     if (pens.length <= 2) {
