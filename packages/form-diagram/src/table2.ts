@@ -381,18 +381,37 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
       let { value: cell, style: cellStyle } = getCell(pen, i, j);
       let isSuccess = true;
       //样式条件成立
-      if (
-        (cellStyle as any).wheres &&
-        Array.isArray((cellStyle as any).wheres)
-      ) {
-        isSuccess = false;
-        isSuccess = (cellStyle as any).wheres.every(function (where: any) {
-          const fn = new Function(
-            'attr',
-            `return attr ${where.comparison} ${where.value}`
-          );
-          return fn(cell);
+      if(Array.isArray(cellStyle) && cellStyle.length > 0){
+        let successIdx = 0;
+        cellStyle.forEach((item: any, idx: number) => {
+          if(item.wheres){
+            let success = item.wheres.every((where: any) => {
+              const fn = new Function(
+                'attr',
+                `return attr ${where.comparison} ${where.value}`
+              );
+              return fn(cell);
+            });
+            if(success){
+              successIdx = idx;
+            }
+          }
         });
+        cellStyle = cellStyle[successIdx];
+      }else{
+        if (
+          (cellStyle as any).wheres &&
+          Array.isArray((cellStyle as any).wheres)
+        ) {
+          isSuccess = false;
+          isSuccess = (cellStyle as any).wheres.every(function (where: any) {
+            const fn = new Function(
+              'attr',
+              `return attr ${where.comparison} ${where.value}`
+            );
+            return fn(cell);
+          });
+        }
       }
       let color = pen.color;
       let textColor = pen.textColor || pen.color;
@@ -732,7 +751,7 @@ function getCell(pen: formPen, rowIndex: number, colIndex: number) {
       return item.row === rowIndex && item.col === colIndex;
     });
   if (Array.isArray(row)) {
-    return { value: row[colIndex], style: style?.length > 0 ? style[0] : {} };
+    return { value: row[colIndex], style: style?.length > 0 ? (style.length>1?style : style[0]) : {} };
   } else if (!row.data || !Array.isArray(row.data)) {
     return;
   }
@@ -815,6 +834,9 @@ function getCellRect(pen: formPen, rowIndex: number, colIndex: number) {
 
 // 计算cell子节点的世界坐标区域
 function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
+  if(!(children&&children.length)){
+    return;
+  }
   const scaleX = pen.calculative.worldRect.width / pen.tableWidth;
   const scaleY = pen.calculative.worldRect.height / pen.tableHeight;
   let resizeX = 1;
@@ -864,8 +886,8 @@ function calcChildrenRect(pen: formPen, rect: Rect, children: formPen[]) {
     children[0].y = rect.y + (rect.height - children[0].height) / 2;
   }
   children.forEach((item: formPen) => {
-    item.width = item.width * resizeX / scale;
-    item.height = item.height * resizeY / scale;
+    item.width = item.width * resizeX;
+    item.height = item.height * resizeY;
   });
 }
 
@@ -928,8 +950,9 @@ function beforeValue(pen: formPen, value: any) {
       return Object.assign(value, { data });
     }
 
-    if (value.data || value.styles || value.maxNum) {
+    if (value.data || value.styles || value.maxNum || value.rowHeight || value.colWidth) {
       pen.calculative.isUpdateData = true;
+      pen.initWorldRect = null;
     }
     for (let key of Object.keys(value)) {
       if (key.includes('data.')) {

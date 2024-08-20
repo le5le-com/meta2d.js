@@ -15,7 +15,9 @@ export type EventName =
   | 'dblclick'
   | 'valueUpdate'
   | 'message'
-  | 'contextmenu';
+  | 'contextmenu'
+  | 'input'
+  | 'change';
 
 export interface Event {
   name: EventName;
@@ -23,7 +25,7 @@ export interface Event {
   where?: Where; // 若无条件，必须为 undefined or null，不可为空对象
   value?: EventValue; // 不同 action 下，该值含义不同，例如：动画相关的，即为 节点 tag; Function 类型即为 字符串函数
   params?: string;
-  extend?: string;
+  extend?: any;
   fn?: (
     pen: Pen,
     params: string,
@@ -35,6 +37,7 @@ export interface Event {
   conditions?: TriggerCondition[];
   conditionType?: string;
   message?: string; //消息名称
+  callback?: string; //回调函数 仅http
 }
 
 export enum EventAction {
@@ -117,6 +120,7 @@ export interface Trigger {
   conditionType?: string; //'and'/'or'
   conditions?: TriggerCondition[];
   actions?: Event[];
+  status?: Trigger[]; //所有状态
 }
 
 export interface Bind {

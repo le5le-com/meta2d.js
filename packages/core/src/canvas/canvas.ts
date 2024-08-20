@@ -59,6 +59,7 @@ import {
   drawImage,
   setElemPosition,
   getAllFollowers,
+  calcChildrenInitRect,
 } from '../pen';
 import {
   calcRotate,
@@ -92,6 +93,7 @@ import {
 import {
   EditAction,
   EditType,
+  Fit,
   globalStore,
   Meta2dClipboard,
   Meta2dStore,
@@ -192,6 +194,7 @@ export class Canvas {
 
   private lastMouseTime = 0;
   private hoverTimer: number = 0;
+  private fitTimer: number = 0;
   // 即将取消活动状态的画笔，用于Ctrl选中/取消选中画笔
   private willInactivePen: Pen;
 
@@ -327,6 +330,7 @@ export class Canvas {
 
     window?.addEventListener('resize', this.onResize);
     window?.addEventListener('scroll', this.onScroll);
+    window?.addEventListener('message', this.onMessage);
   }
 
   curve = curve;
@@ -533,6 +537,23 @@ export class Canvas {
     }
   };
 
+  onMessage = (e: MessageEvent) => {
+    if (
+      typeof e.data !== 'string' ||
+      !e.data ||
+      e.data.startsWith('setImmediate')
+    ) {
+      return;
+    }
+
+    let data = JSON.parse(e.data);
+    if (typeof data === 'object') {
+      this.parent.doMessageEvent(data.name);
+    }else{
+      this.parent.doMessageEvent(data);
+    }
+  }
+
   onwheel = (e: WheelEvent) => {
     //输入模式不允许滚动
     if (this.inputDiv.contentEditable === 'true') {
@@ -551,7 +572,7 @@ export class Canvas {
         return;
       }
     }
-    if (this.store.options.disableScale) {
+    if (this.store.data.disableScale || this.store.options.disableScale) {
       return;
     }
 
@@ -583,8 +604,8 @@ export class Canvas {
       return;
     }
     if (Math.abs((e as any).wheelDelta) > 100) {
-      //鼠标滚轮滚动 scroll模式下是上下滚动而不是缩放
-      if (this.store.options.scroll && this.scroll) {
+      //鼠标滚轮滚动 scroll模式下是上下滚动而不是缩放 ctrl可以控制缩放
+      if (this.store.options.scroll && this.scroll && !this.store.options.scrollButScale && !(e.ctrlKey||e.metaKey)) {
         this.scroll.wheel(e.deltaY < 0);
         return;
       }
@@ -621,7 +642,34 @@ export class Canvas {
         }
       }
     }
-    const { offsetX: x, offsetY: y } = e;
+    let { offsetX: x, offsetY: y } = e;
+    // if (this.parent.map && e.target === this.parent.map?.box) {
+    //   //放大镜缩放
+    //   const width = this.store.data.width || this.store.options.width;
+    //   const height = this.store.data.height || this.store.options.height;
+    //   if (width && height) {
+    //     //大屏
+    //     x =
+    //       (x / this.parent.map.boxWidth) * width * this.store.data.scale +
+    //       this.store.data.origin.x;
+    //     y =
+    //       (y / this.parent.map.boxHeight) * height * this.store.data.scale +
+    //       this.store.data.origin.y;
+    //     const rect = this.canvas.getBoundingClientRect();
+    //     x = x + rect.left;
+    //     y = y + rect.top;
+    //   } else {
+    //     const rect = this.parent.getRect();
+    //     x =
+    //       (x / this.parent.map.boxWidth) * rect.width +
+    //       rect.x +
+    //       this.store.data.x;
+    //     y =
+    //       (y / this.parent.map.boxHeight) * rect.height +
+    //       rect.y +
+    //       this.store.data.y;
+    //   }
+    // }
     this.scale(this.store.data.scale + scaleOff, { x, y });
     this.externalElements.focus(); // 聚焦
   };
@@ -736,6 +784,10 @@ export class Canvas {
         break;
       case 'Delete':
       case 'Backspace':
+        if(this.canvasImage.fitFlag && this.canvasImage.activeFit){
+          this.deleteFit();
+          break;
+        }
         !this.store.data.locked && this.delete();
         break;
       case 'ArrowLeft':
@@ -992,7 +1044,7 @@ export class Canvas {
               getLineLength(pen);
             }else{
               //图元进入编辑模式
-              pen.calculative.focus = !pen.calculative.focus;
+              pen.calculative.focus = true;
             }
           });
           this.render();
@@ -1004,6 +1056,15 @@ export class Canvas {
         }
         this.drawingLineName = undefined;
         this.stopPencil();
+        if (this.store.active) {
+          this.store.active.forEach((pen) => {
+            if (pen.type) {
+            }else{
+              //图元退出编辑模式
+              pen.calculative.focus = false;
+            }
+          });
+        }
         if (this.movingPens) {
           this.getAllByPens(this.movingPens).forEach((pen) => {
             this.store.pens[pen.id] = undefined;
@@ -1249,6 +1310,15 @@ export class Canvas {
       this.calibrateMouse(pt);
       this.dropPens(obj, pt);
       this.addCaches = [];
+      // 拖拽新增图元判断是否是在容器上
+      this.getContainerHover(pt);
+      this.mousePos.x = pt.x;
+      this.mousePos.y = pt.y;
+      this.store.emitter.emit('mouseup', {
+        x: pt.x,
+        y: pt.y,
+        pen: this.store.hoverContainer,
+      });
     }
 
     this.store.emitter.emit('drop', obj || json);
@@ -1302,13 +1372,13 @@ export class Canvas {
         }
         if((pen as any).dataset){
           if(num % 2 === 0){
-            lastW = pen.width+10;
+            lastW = pen.width - 40 * this.store.data.scale;
           }else{
             lastW = 0;
           }
           num ++;
           if(num % 2 === 0){
-            lastH += pen.height + 10;
+            lastH += pen.height + 10 * this.store.data.scale;
           }
         }
       }
@@ -1549,7 +1619,7 @@ export class Canvas {
       }
 
       if (this.touchScaling) {
-        if (this.store.options.disableScale) {
+        if (this.store.data.disableScale || this.store.options.disableScale) {
           return;
         }
         const scale =
@@ -1564,7 +1634,8 @@ export class Canvas {
         if (
           (this.store.data.locked >= LockState.DisableMove &&
             this.store.data.locked !== LockState.DisableScale) ||
-          this.store.options.disableScale
+            this.store.data.disableScale ||
+            this.store.options.disableScale
         ) {
           return;
         }
@@ -1707,7 +1778,13 @@ export class Canvas {
 
     this.mouseDown = e;
     this.lastMouseTime = performance.now();
-
+    if(this.canvasImage.fitFlag){
+      if(!this.canvasImage.currentFit){
+        //选中布局容器
+        this.calcuActiveFit();
+      }
+      return;
+    }
     // Set anchor of pen.
     if (this.hotkeyType === HotkeyType.AddAnchor) {
       this.setAnchor(this.store.pointAt);
@@ -1953,6 +2030,9 @@ export class Canvas {
           });
           break;
       }
+      if(this.store.hover){
+        this.store.hover.calculative.mouseDown = true;
+      }
       this.store.emitter.emit('mousedown', {
         x: e.x,
         y: e.y,
@@ -2008,8 +2088,23 @@ export class Canvas {
       this.render();
       return;
     }
+    if(this.canvasImage.fitFlag){
+      if(this.canvasImage.activeFit){
+        const now = performance.now();
+        if (now - this.fitTimer > 100) {
+          if (this.mouseDown) {
+            // 容器大小变化
+            this.updateFit(e);
+          } else {
+            this.inFitBorder(this.mousePos);
+          }
+          this.fitTimer = now;
+        }
+        return;
+      }
+    }
 
-    if (this.mouseDown && !this.store.options.disableTranslate) {
+    if (this.mouseDown && !this.store.options.disableTranslate && !this.store.data.disableTranslate) {
       // 画布平移前提
       if (this.mouseRight === MouseRight.Down) {
         this.mouseRight = MouseRight.Translate;
@@ -2074,7 +2169,7 @@ export class Canvas {
         }
 
         // 框选
-        if (e.buttons === 1 &&( e.ctrlKey || !this.hoverType && !this.hotkeyType)) {
+        if (e.buttons === 1 &&( e.ctrlKey || !this.hoverType && !this.hotkeyType) && !( e.ctrlKey && (this.store.activeAnchor || this.store.active?.length))) {
           this.dragRect = {
             x: Math.min(this.mouseDown.x, e.x),
             y: Math.min(this.mouseDown.y, e.y),
@@ -2480,30 +2575,34 @@ export class Canvas {
     this.patchFlagsLines.clear();
 
     if (this.dragRect) {
-      const pens = this.store.data.pens.filter((pen) => {
-        if (
-          pen.visible === false ||
-          pen.locked >= LockState.DisableMove ||
-          pen.parentId || pen.isRuleLine
-        ) {
-          return false;
-        }
-        if (
-          rectInRect(
-            pen.calculative.worldRect,
-            this.dragRect,
-            e.ctrlKey || this.store.options.dragAllIn
-          )
-        ) {
-          // 先判断在区域内，若不在区域内，则锚点肯定不在框选区域内，避免每条连线过度计算
-          if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
-            return lineInRect(pen, this.dragRect);
+      if(this.canvasImage.fitFlag){
+        this.makeFit();
+      }else{
+        const pens = this.store.data.pens.filter((pen) => {
+          if (
+            pen.visible === false ||
+            pen.locked >= LockState.DisableMove ||
+            pen.parentId || pen.isRuleLine
+          ) {
+            return false;
           }
-          return true;
-        }
-      });
-      //框选
-      this.active(pens);
+          if (
+            rectInRect(
+              pen.calculative.worldRect,
+              this.dragRect,
+              e.ctrlKey || this.store.options.dragAllIn
+            )
+          ) {
+            // 先判断在区域内，若不在区域内，则锚点肯定不在框选区域内，避免每条连线过度计算
+            if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
+              return lineInRect(pen, this.dragRect);
+            }
+            return true;
+          }
+        });
+        //框选
+        this.active(pens);
+      }
     }
 
     if (e.button !== 2) {
@@ -2518,11 +2617,16 @@ export class Canvas {
         });
       }
 
-      this.store.emitter.emit('mouseup', {
-        x: e.x,
-        y: e.y,
-        pen: this.store.hover,
-      });
+      if(this.store.hover){
+        this.store.hover.calculative.mouseDown = false;
+      }
+      if(this.store.hover != this.store.hoverContainer) {
+        this.store.emitter.emit('mouseup', {
+          x: e.x,
+          y: e.y,
+          pen: this.store.hover,
+        });
+      } 
       this.store.emitter.emit('mouseup', {
         x: e.x,
         y: e.y,
@@ -2533,10 +2637,10 @@ export class Canvas {
     if (this.willInactivePen) {
       this.willInactivePen.calculative.active = undefined;
       setChildrenActive(this.willInactivePen, false); // 子节点取消激活
-      this.store.active.splice(
-        this.store.active.findIndex((p) => p === this.willInactivePen),
-        1
-      );
+      const index = this.store.active.findIndex((p) => p === this.willInactivePen);
+      if(index >= 0) {
+        this.store.active.splice(index,1);
+      }
       this.calcActiveRect();
       this.willInactivePen = undefined;
       this.store.emitter.emit('inactive', [this.willInactivePen]);
@@ -2719,6 +2823,7 @@ export class Canvas {
         pen.calculative.initRect.ey =
           pen.calculative.y + pen.calculative.height;
       }
+      calcChildrenInitRect(pen);
     });
     // active 消息表示拖拽结束
     // this.store.emitter.emit('active', this.store.active);
@@ -3028,8 +3133,7 @@ export class Canvas {
         if (
           pen.visible == false ||
           pen.calculative.inView == false ||
-          pen.locked === LockState.Disable ||
-          pen.calculative.active
+          pen.locked === LockState.Disable
         ) {
           continue;
         }
@@ -3052,14 +3156,18 @@ export class Canvas {
             this.store.lastHoverContainer = this.store.hoverContainer;
           }
         }else{
-          this.store.hoverContainer = undefined;
-          if(this.store.lastHoverContainer !== this.store.hoverContainer){
-            this.patchFlags = true;
-            if (this.store.lastHoverContainer) {
-              this.store.lastHoverContainer.calculative.containerHover = false;
-              this.store.emitter.emit('leave', this.store.lastHoverContainer);
+          if(pen === this.store.hoverContainer){
+            this.store.hoverContainer = undefined;
+            if(this.store.lastHoverContainer !== this.store.hoverContainer){
+              this.patchFlags = true;
+              const movingPen =
+              this.store.lastHoverContainer.calculative.canvas.store.pens[this.store.lastHoverContainer.id + movingSuffix];
+              if (this.store.lastHoverContainer && !movingPen) {
+                this.store.lastHoverContainer.calculative.containerHover = false;
+                this.store.emitter.emit('leave', this.store.lastHoverContainer);
+              }
+              this.store.lastHoverContainer = this.store.hoverContainer;
             }
-            this.store.lastHoverContainer = this.store.hoverContainer;
           }
         }
       }
@@ -3068,6 +3176,9 @@ export class Canvas {
 
   private getHover = (pt: Point) => {
     if (this.dragRect) {
+      return;
+    }
+    if(this.canvasImage.fitFlag){
       return;
     }
     let hoverType = HoverType.None;
@@ -3788,8 +3899,8 @@ export class Canvas {
               this.store.data.pens[i].lastConnected
             ) {
               for (let key in this.store.data.pens[i].lastConnected) {
-                this.store.pens[key].connectedLines =
-                  this.store.data.pens[i].lastConnected[key];
+                this.store.pens[key] && (this.store.pens[key].connectedLines =
+                  this.store.data.pens[i].lastConnected[key]);
               }
             }
             this.store.data.pens[i] = pen;
@@ -3834,7 +3945,7 @@ export class Canvas {
           this.store.pens[pen.id] = pen;
           if (pen.type && pen.lastConnected) {
             for (let key in pen.lastConnected) {
-              this.store.pens[key].connectedLines = pen.lastConnected[key];
+              this.store.pens[key]&&(this.store.pens[key].connectedLines = pen.lastConnected[key]);
             }
           }
           pen.calculative.canvas = this;
@@ -3894,7 +4005,7 @@ export class Canvas {
           this.store.pens[pen.id] = pen;
           if(pen.type&&pen.lastConnected){
             for(let key  in pen.lastConnected){
-              this.store.pens[key].connectedLines = pen.lastConnected[key];
+              this.store.pens[key]&&(this.store.pens[key].connectedLines = pen.lastConnected[key]);
             }
           }
           pen.calculative.canvas = this;
@@ -3959,7 +4070,9 @@ export class Canvas {
     }
     const { fontSize, lineHeight } = this.store.options;
     if (!pen.fontSize) {
-      pen.fontSize = fontSize;
+      pen.fontSize = fontSize >= 0 ? fontSize : 12;
+    } else if(pen.fontSize < 0) {
+      pen.fontSize = 0;
     }
     if (!pen.lineHeight) {
       pen.lineHeight = lineHeight;
@@ -3995,7 +4108,11 @@ export class Canvas {
       }
       globalStore.anchors[pen.name](pen);
     }
-
+    if(!pen.anchors){
+      const anchors = deepClone(this.store.options.defaultAnchors)
+      anchors.forEach((item,index)=>{item.id = `${index}`;item.penId = pen.id});
+      pen.anchors = anchors;
+    }
     this.updatePenRect(pen);
     if (!pen.anchors && pen.calculative.worldAnchors) {
       pen.anchors = pen.calculative.worldAnchors.map((pt) => {
@@ -4040,7 +4157,7 @@ export class Canvas {
     }
     const { fontSize, lineHeight } = this.store.options;
     if (!pen.fontSize) {
-      pen.fontSize = fontSize;
+      pen.fontSize = fontSize >= 0 ? fontSize : 12;
       pen.calculative.fontSize = pen.fontSize * this.store.data.scale;
     }
     if (!pen.lineHeight) {
@@ -4399,7 +4516,7 @@ export class Canvas {
     const scale = this.store.data.scale;
     pen.calculative.lineWidth = pen.lineWidth * scale;
     pen.calculative.fontSize = pen.fontSize * scale;
-    if (pen.fontSize < 1) {
+    if (pen.fontSize < 1 && pen.fontSize > 0) {
       pen.calculative.fontSize =
         pen.fontSize * pen.calculative.worldRect.height;
     }
@@ -5436,7 +5553,7 @@ export class Canvas {
         this.store.activeAnchor
       );
     }
-    let anchorId = this.store.activeAnchor.id;
+    let anchorId = this.store.activeAnchor?.id;
     let connectedLine = this.store.pens[
       this.store.activeAnchor.penId
     ]?.connectedLines?.filter((item) => item.anchor === anchorId);
@@ -5992,7 +6109,7 @@ export class Canvas {
     if (!pen.connectedLines) {
       return;
     }
-    pen.connectedLines.forEach((item) => {
+    pen.connectedLines.forEach((item,index) => {
       const line = this.store.pens[item.lineId];
       // 活动层的线不需要更新，会在活动层处理
       if (!line || line.calculative.active) {
@@ -6001,6 +6118,11 @@ export class Canvas {
 
       const lineAnchor = getAnchor(line, item.lineAnchor);
       if (!lineAnchor) {
+        return;
+      }
+      if(!lineAnchor.connectTo){
+        // 如果pen有连接关系但连线中没有连接关系，删除pen的连接关系
+        pen.connectedLines.splice(index,1);
         return;
       }
 
@@ -7139,6 +7261,7 @@ export class Canvas {
           pens: [deepClone(pen, true)],
           initPens,
         });
+        this.store.emitter.emit('change', pen);
         this.store.emitter.emit('valueUpdate', pen);
       } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines.length == 0) {
         calcTextRect(pen);
@@ -7236,7 +7359,7 @@ export class Canvas {
     }
     this.inputDiv.oninput = (e: any) => {
       const pen = this.store.pens[this.inputDiv.dataset.penId];
-      if(pen.inputType === 'number'){
+      if(pen && pen.inputType === 'number'){
         const value = e.target.innerText;
         const numericValue = value.replace(/[^0-9]/g, ''); // 移除非数字字符
         // 如果输入的值不是纯数字，则替换为纯数字
@@ -7268,6 +7391,7 @@ export class Canvas {
           this.inputDiv.style.paddingTop = '';
         }
       }
+      this.store.emitter.emit('input',pen);
     };
     this.inputDiv.onclick = (e) => {
       e.stopPropagation();
@@ -7316,7 +7440,7 @@ export class Canvas {
   private setDropdownList = (search?: boolean) => {
     this.clearDropdownList();
     const pen = this.store.pens[this.inputDiv.dataset.penId];
-    if (!this.store.data.locked&&!['table'].includes(pen.name)) {
+    if (!this.store.data.locked&&!['tablePlus'].includes(pen.name)) {
       return;
     }
     this.dropdown.style.display = 'block';
@@ -7417,6 +7541,7 @@ export class Canvas {
       initPens,
     });
     this.render();
+    this.store.emitter.emit('change', pen);
     this.store.emitter.emit('valueUpdate', pen);
   };
 
@@ -7470,6 +7595,9 @@ export class Canvas {
         calcWorldAnchors(line);
       });
     }
+    //锚点
+    pen.anchors?.forEach((anchor) => anchor.penId = newId);
+    pen.calculative.worldAnchors?.forEach((anchor) => anchor.penId = newId);
   }
 
   updateValue(pen: Pen, data: IValue): void {
@@ -7503,7 +7631,7 @@ export class Canvas {
         if (needCalcTextRectProps.includes(k)) {
           willCalcTextRect = true;
         }
-        if (['name', 'borderRadius','lineSmooth'].includes(k)) {
+        if (['name', 'borderRadius','lineSmooth', 'close'].includes(k)) {
           willUpdatePath = true;
         }
         if (needSetPenProps.includes(k)) {
@@ -7514,6 +7642,9 @@ export class Canvas {
         }
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
+        }
+        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign'].includes(k)){
+          willRenderImage = true;
         }
       } else {
         // 复合属性，如abc.def.ghi
@@ -7861,11 +7992,11 @@ export class Canvas {
     return canvas.toDataURL();
   }
 
-  activeToPng(padding: Padding = 2) {
-    return this.pensToPng(this.store.active,padding);
+  activeToPng(padding: Padding = 2, maxWidth?: number) {
+    return this.pensToPng(this.store.active,padding, maxWidth);
   }
 
-  pensToPng(pens:Pen[] = this.store.active,padding:Padding=2){
+  pensToPng(pens:Pen[] = this.store.active, padding:Padding=2, maxWidth?: number){
     if(pens.length === 0){
       return;
     }
@@ -7882,6 +8013,11 @@ export class Canvas {
     rect.width += p[3] + p[1];
     rect.height += p[0] + p[2];
     calcRightBottom(rect);
+
+    const scale = (maxWidth || rect.width) / rect.width;
+    rect.width *= scale;
+    rect.height *= scale;
+    
     const canvas = document.createElement('canvas');
     canvas.width = rect.width;
     canvas.height = rect.height;
@@ -7899,9 +8035,24 @@ export class Canvas {
     }
     const ctx = canvas.getContext('2d');
     ctx.textBaseline = 'middle'; // 默认垂直居中
+    ctx.scale(scale, scale);
 
+    const background =
+    this.store.data.background || this.store.options.background;
+    if (background) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        oldRect.width + (p[3] + p[1]),
+        oldRect.height + (p[0] + p[2]) 
+      );
+      ctx.restore();
+    }
     // // 平移画布，画笔的 worldRect 不变化
-    ctx.translate(-oldRect.x, -oldRect.y);
+    ctx.translate(-oldRect.x + p[3], -oldRect.y + p[0]);
 
     for (const pen of this.store.data.pens) {
       if (ids.includes(pen.id)) {
@@ -8026,9 +8177,20 @@ export class Canvas {
   }
 
   gotoView(x: number, y: number) {
-    const rect = getRect(this.store.data.pens);
+    let rect = getRect(this.store.data.pens);
     if (!isFinite(rect.width)) {
       throw new Error('can not move view, because width is not finite');
+    }
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (width && height) {
+      //大屏
+      rect = {
+        x: this.store.data.origin.x,
+        y: this.store.data.origin.y,
+        width: width * this.store.data.scale,
+        height: height * this.store.data.scale,
+      };
     }
     this.store.data.x = this.canvas.clientWidth / 2 - x * rect.width - rect.x;
     this.store.data.y = this.canvas.clientHeight / 2 - y * rect.height - rect.y;
@@ -8049,6 +8211,382 @@ export class Canvas {
     this.magnifierCanvas.magnifier = false;
     this.externalElements.style.cursor = 'default';
     this.render();
+  }
+  
+  private inFitBorder = (pt: Point) => {
+    let current = undefined;
+    const width = (this.store.data.width || this.store.options.width);
+    const height = (this.store.data.height || this.store.options.height);
+    let point = {
+      x: (pt.x - this.store.data.origin.x) / this.store.data.scale,
+      y: (pt.y - this.store.data.origin.y) / this.store.data.scale,
+    }
+    const fit = this.canvasImage.activeFit;
+    // if (pointInRect(point, { x:fit.x-0.01, y:0, width, height })) {
+      this.externalElements.style.cursor = 'default';
+      if (point.y > height * fit.y - 10 && point.y < height * fit.y + 10) {
+        current = 'top';
+        this.externalElements.style.cursor = 'row-resize';
+      }
+      if (point.y > height * (fit.y + fit.height) - 10 && point.y < height * (fit.y + fit.height) + 10) {
+        current = 'bottom';
+        this.externalElements.style.cursor = 'row-resize';
+  
+      }
+      if (point.x > width * fit.x - 10 && point.x < width * fit.x) {
+        current = 'left';
+        this.externalElements.style.cursor = 'col-resize';
+  
+      }
+      if (point.x > width * (fit.x + fit.width) - 10 && point.x < width * (fit.x + fit.width) + 10) {
+        current = 'right';
+        this.externalElements.style.cursor = 'col-resize';
+  
+      }
+    // }
+    this.canvasImage.currentFit = current;
+  }
+
+  showFit() {
+    this.store.data.locked = 0;
+    this.canvasImage.fitFlag = true;
+    this.canvasImage.activeFit = undefined;
+    this.canvasImage.currentFit = undefined;
+    if(!this.store.data.fits){
+      this.store.data.fits =[];
+    }
+    this.store.data.fits.forEach((fit) => fit.active = false);
+    this.canvasImage.init();
+    this.canvasImage.render();
+  }
+
+  hideFit() {
+    this.canvasImage.fitFlag = false;
+    this.canvasImage.activeFit = undefined;
+    this.canvasImage.currentFit = undefined;
+    this.canvasImage.init();
+    this.canvasImage.render();
+  }
+
+  makeFit(){
+    if(this.dragRect.width<100 && this.dragRect.height<100){
+      return;
+    }
+    //将所有当前框选的图元设置到该容器中
+    const pens = this.store.data.pens.filter((pen)=>{
+      if (
+        // pen.locked >= LockState.DisableMove || 
+        pen.parentId || pen.isRuleLine
+      ) {
+        return false;
+      }
+      if (
+        rectInRect(
+          pen.calculative.worldRect,
+          this.dragRect,
+          true
+        )
+      ) {
+        // 先判断在区域内，若不在区域内，则锚点肯定不在框选区域内，避免每条连线过度计算
+        if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
+          return lineInRect(pen, this.dragRect);
+        }
+        return true;
+      }
+    });
+    if(!pens.length){
+      return;
+    }
+    const _rect = this.parent.getRect(pens);
+    const scale = this.store.data.scale;
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    let x = (Math.floor(_rect.x) - this.store.data.origin.x) / scale / width;
+    let y = (Math.floor(_rect.y) - this.store.data.origin.y) / scale / height;
+    let rect:Fit = {
+      x,
+      y,
+      width: (Math.ceil(_rect.width) + 1) / scale / width,
+      height: (Math.ceil(_rect.height) + 1) / scale / height,
+      children:pens.map(pen=>pen.id),
+      id:s8(),
+      active:true
+    }
+    if(rect.x < -0.1){
+      rect.x = -0.1;
+    }
+    if(rect.y < -0.1){
+      rect.y = -0.1;
+    }
+    if(rect.width > 0.5){
+      rect.left = true;
+      rect.right = true;
+      rect.leftValue = (rect.x-0)*scale*width;
+      rect.rightValue = (1 - (rect.x+rect.width))*scale*width;
+    }else{
+      if(rect.x < 0.5){
+        rect.left = true;
+        rect.leftValue = (rect.x-0)*scale*width;
+      }else{
+        rect.right = true;
+        rect.rightValue = (1 - (rect.x+rect.width))*scale*width;
+      }
+    }
+    if(rect.leftValue < 1){
+      rect.leftValue = 0;
+    }
+    if(rect.rightValue < 1){
+      rect.rightValue = 0;
+    }
+    if(rect.height > 0.5){
+      rect.top = true;
+      rect.bottom = true;
+      rect.topValue = (rect.y-0)*scale*height;
+      rect.bottomValue = (1 - (rect.y+rect.height))*scale*height;
+    }else{
+      if(rect.y < 0.5){
+        rect.top = true;
+        rect.topValue = (rect.y-0)*scale*height;
+      }else{
+        rect.bottom = true;
+        rect.bottomValue = (1 - (rect.y+rect.height))*scale*height;
+      }
+    }
+    if(rect.topValue < 1){
+      rect.topValue = 0;
+    }
+    if(rect.bottomValue < 1){
+      rect.bottomValue = 0;
+    }
+
+    if(!this.store.data.fits){
+      this.store.data.fits = [];
+    }
+    this.store.data.fits.forEach((fit)=>{fit.active = false});
+    this.store.data.fits.push(rect);
+    this.canvasImage.activeFit = rect;
+    this.store.emitter.emit('fit', rect);
+    this.canvasImage.init();
+    this.canvasImage.render();
+  }
+
+  updateFit(e:any){
+    const scale = this.store.data.scale;
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    let x = (e.x - this.store.data.origin.x) / scale / width;
+    let y = (e.y - this.store.data.origin.y) / scale / height;
+    if (this.canvasImage.currentFit) {
+      const fit = this.canvasImage.activeFit;
+      if (this.canvasImage.currentFit === 'top') {
+        if (y < -0.1) {
+          y = -0.1;
+        }
+        let gap = y - fit.y;
+        fit.height -= gap;
+        if (fit.height < 0.01) {
+          fit.height = 0.01 ;
+          return;
+        }
+        fit.y = y;
+      }
+      if (this.canvasImage.currentFit === 'bottom') {
+        if (y > 1.1) {
+          y = 1.1;
+        }
+        fit.height = y - fit.y;
+        if (fit.height <= 0.01) {
+          fit.height = 0.01;
+        }
+      }
+      if (this.canvasImage.currentFit === 'left') {
+        if (x < - 0.1) {
+          x = - 0.1;
+        }
+        let gap = x - fit.x;
+        fit.width -= gap;
+        if (fit.width < 0.01) {
+          fit.width = 0.01;
+          return;
+        }
+        fit.x = x;
+      }
+      if (this.canvasImage.currentFit === 'right') {
+        if (x > 1.1) {
+          x = 1.1;
+        }
+        fit.width = x - fit.x;
+        if (fit.width <= 0.01) {
+          fit.width = 0.01;
+        }
+      }    
+      let rect = {
+        x:fit.x * width * scale + this.store.data.origin.x,
+        y:fit.y * height * scale + this.store.data.origin.y,
+        width:fit.width* width * scale,
+        height:fit.height * height * scale,
+      };
+      calcRightBottom(rect);
+      const pens = this.store.data.pens.filter((pen)=>{
+        if (
+          // pen.locked >= LockState.DisableMove || 
+          pen.parentId || pen.isRuleLine
+        ) {
+          return false;
+        }
+        if (
+          rectInRect(
+            pen.calculative.worldRect,
+            rect,
+            true
+          )
+        ) {
+          if (pen.type === PenType.Line && !this.store.options.dragAllIn) {
+            return lineInRect(pen, rect);
+          }
+          return true;
+        }
+      });
+      fit.left = undefined;
+      fit.leftValue = undefined;
+      fit.right = undefined;
+      fit.rightValue = undefined;
+      fit.top = undefined;
+      fit.topValue = undefined;
+      fit.bottom = undefined;
+      fit.bottomValue = undefined;
+
+      if(fit.width > 0.5){
+        fit.left = true;
+        fit.right = true;
+        fit.leftValue =  (fit.x-0)*scale*width;
+        fit.rightValue = ((1 - (fit.x+fit.width))*scale*width);
+      }else{
+        if(fit.x < 0.5){
+          fit.left = true;
+          fit.leftValue = (fit.x-0)*scale*width;
+        }else{
+          fit.right = true;
+          fit.rightValue =  ((1 - (fit.x+fit.width))*scale*width);
+        }
+      }
+      if( Math.abs(fit.leftValue) < 1){
+        fit.leftValue = 0;
+      }
+      if(Math.abs(fit.rightValue) < 1){
+        fit.rightValue = 0;
+      }
+      if(fit.height > 0.5){
+        fit.top = true;
+        fit.bottom = true;
+        fit.topValue =  (fit.y-0)*scale*height;
+        fit.bottomValue = (1 - (fit.y+fit.height))*scale*height;
+      }else{
+        if(fit.y < 0.5){
+          fit.top = true;
+          fit.topValue =  (fit.y-0)*scale*height;
+        }else{
+          fit.bottom = true;
+          fit.bottomValue = (1 - (fit.y+fit.height))*scale*height;
+        }
+      }
+
+      if(Math.abs(fit.topValue) < 1){
+        fit.topValue = 0;
+      }
+      if(Math.abs(fit.bottomValue) < 1){
+        fit.bottomValue = 0;
+      }
+      fit.children = pens.map(pen=>pen.id);
+      this.store.emitter.emit('fit', fit);
+      this.mouseDown.x = e.x;
+      this.mouseDown.y = e.y;
+      this.canvasImage.init();
+      this.canvasImage.render();
+    }
+  }
+
+  updateFitRect(fit:Fit = this.canvasImage.activeFit){
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if(fit.left){
+      if(fit.leftValue){
+        fit.x =  Math.abs(fit.leftValue)<1?fit.leftValue:fit.leftValue/width;
+      }else{
+        fit.x = 0;
+      }
+    }
+    if(fit.right){
+      if(fit.rightValue){
+        fit.width = 1 - (Math.abs(fit.rightValue)<1?fit.rightValue:fit.rightValue/width) - fit.x;
+      }else{
+        fit.width = 1 - fit.x;
+      }
+    }
+    if(fit.top){
+      if(fit.topValue){
+        fit.y =  Math.abs(fit.topValue)<1?fit.topValue:fit.topValue/height;
+      }else{
+        fit.y = 0;
+      }
+    }
+    if(fit.bottom){
+      if(fit.bottomValue){
+        fit.height = 1 - (Math.abs(fit.bottomValue)<1?fit.bottomValue:fit.bottomValue/height) - fit.y;
+      }else{
+        fit.height = 1 - fit.y;
+      }
+    } 
+    this.canvasImage.init();
+    this.canvasImage.render();
+  }
+
+  deleteFit(fit = this.canvasImage.activeFit){
+    if(!fit){
+      return;
+    }
+    const index = this.store.data.fits.findIndex(item=>item.id===fit.id);
+
+    this.store.data.fits.splice(index, 1);
+    this.canvasImage.activeFit = undefined;
+    this.canvasImage.init();
+    this.canvasImage.render();
+    this.store.emitter.emit('fit',undefined);
+  }
+
+  calcuActiveFit(){
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    let downX = (this.mouseDown.x - this.store.data.origin.x) / this.store.data.scale / width;
+    let downY = (this.mouseDown.y - this.store.data.origin.y) / this.store.data.scale / height;
+   
+    let idx = -1;
+    let lastActiveIdx = -1;
+    this.store.data.fits?.forEach((fit,index)=>{
+      fit.ex = null;
+      fit.ey = null;
+      if(pointInRect({x: downX, y: downY}, fit)){
+        idx = index;
+      };
+      if(fit.active){
+        lastActiveIdx = index;
+      }
+    });
+    if(idx !== -1 && idx !== lastActiveIdx){
+      this.canvasImage.activeFit = this.store.data.fits[idx];
+      this.store.data.fits[idx].active = true;
+      if(lastActiveIdx !== -1){
+        this.store.data.fits[lastActiveIdx].active = false;
+      }
+      this.store.emitter.emit('fit', this.store.data.fits[idx]);
+    }else if(idx === -1&&lastActiveIdx !== -1){
+      this.store.data.fits[lastActiveIdx].active = false;
+      this.store.emitter.emit('fit', undefined);
+      this.canvasImage.activeFit = null;
+    }
+    this.inactive();
+    this.canvasImage.init();
+    this.canvasImage.render();
   }
 
   toggleMagnifier() {
@@ -8094,6 +8632,7 @@ export class Canvas {
     document.removeEventListener('copy', this.onCopy);
     document.removeEventListener('cut', this.onCut);
     document.removeEventListener('paste', this.onPaste);
+    window && window.removeEventListener('message', this.onMessage);
     window && window.removeEventListener('resize', this.onResize);
     window && window.removeEventListener('scroll', this.onScroll);
   }

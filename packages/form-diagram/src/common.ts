@@ -48,6 +48,8 @@ export interface formPen extends Pen {
   disable?: boolean;
   disableOnColor?: string;
   offColor?: string;
+  offStrokeColor?: string;
+  onStrokeColor?: string;
   disableOffColor?: string;
   _textWidth?: number;
   _fontSize?: number;

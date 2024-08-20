@@ -7,6 +7,9 @@ export function checkbox(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onMouseDown) {
     pen.onMouseDown = onMousedown;
   }
+  if(!pen.options){
+    pen.options = pen.data;
+  }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
   let h = pen.calculative.worldRect.height;

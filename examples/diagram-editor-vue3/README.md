@@ -4,6 +4,10 @@
 
 This is a diagram editor implemented based on vite+vue3+meta2d.js.
 
+# 教程
+
+https://doc.le5le.com/blog/136442377
+
 # 运行 How to run
 
 ```

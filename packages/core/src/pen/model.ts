@@ -1,6 +1,6 @@
 import { Point } from '../point';
 import { Rect } from '../rect';
-import { Event, RealTime } from '../event';
+import { Event, RealTime, Trigger } from '../event';
 import { Canvas } from '../canvas';
 
 export enum PenType {
@@ -146,6 +146,9 @@ export interface Pen extends Rect {
   hoverBackground?: string;
   activeColor?: string;
   activeBackground?: string;
+  mouseDownValid?: boolean; // 是否鼠标按下是否有样式效果
+  mouseDownColor?: string;
+  mouseDownBackground?: string;
   bkType?: Gradient;
   /**
    * @deprecated 改用 gradientColors
@@ -179,6 +182,8 @@ export interface Pen extends Rect {
   gradientColors?: string;
   lineGradientColors?: string;
   lineCap?: CanvasLineCap;
+  fromLineCap?: CanvasLineCap;
+  toLineCap?: CanvasLineCap;
   lineJoin?: CanvasLineJoin;
   shadowColor?: string;
   shadowBlur?: number;
@@ -338,6 +343,7 @@ export interface Pen extends Rect {
   animations?: any[]; //动画数组
   currentAnimation?: number; //当前动画索引
   realTimes?: RealTime[];
+  triggers?:  Trigger[]; //状态
   crossOrigin?: string;
   imageRadius?: number; //图片圆角
   textFlip?: boolean; //文字是否镜像
@@ -366,6 +372,10 @@ export interface Pen extends Rect {
   inputType?:string; //输入框类型
   deviceId?:string;//关联的设备id
   pivot?:Point; //旋转中心 
+  noOnBinds?:boolean; //是否禁用绑定事件
+  interaction?:boolean; //是否开启交互 组合时将不会被锁定
+  childHover?:boolean; //子元素hover和active是否生效
+  childActive?:boolean; 
   calculative?: {
     x?: number;
     y?: number;
@@ -385,7 +395,10 @@ export interface Pen extends Rect {
 
     // 执行动画前的初始位置
     initRect?: Rect;
-
+    // 执行动画前的初始相对位置
+    initRelativeRect?: Rect;
+    // 执行动画前存储子图元的显示隐藏情况
+    childrenVisible?: any;
     rotate?: number;
     lineWidth?: number;
     borderWidth?: number;
@@ -476,6 +489,7 @@ export interface Pen extends Rect {
     active?: boolean;
     focus?: boolean; //聚焦图元
     hover?: boolean;
+    mouseDown?: boolean; //是否鼠标按下
     containerHover?: boolean; //容器组件hover
     isDock?: boolean; // 是否是对齐参考画笔
     pencil?: boolean;
@@ -648,6 +662,18 @@ export const isDomShapes = [
   'lightningCharts',
 ];
 
+/**
+ *  交互图元
+ */
+export const isInteraction = [
+  'radio',
+  'checkbox',
+  'button',
+  'inputDom',
+  'slider',
+  'echarts',
+]
+
 // 格式刷同步的属性
 export const formatAttrs: Set<string> = new Set([
   'borderRadius',
@@ -723,6 +749,7 @@ export const formatAttrs: Set<string> = new Set([
   'animateLineWidth',
   'gradientSmooth',
   'lineSmooth',
+  'animations'
 ]);
 
 /**

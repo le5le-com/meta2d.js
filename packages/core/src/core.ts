@@ -31,7 +31,8 @@ import {
   CanvasLayer,
   validationPlugin,
   setLifeCycleFunc,
-  getAllFollowers
+  getAllFollowers,
+  isInteraction
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -195,6 +196,9 @@ export class Meta2d {
     }
     if (opts.width !== undefined || opts.height !== undefined) {
       this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
+      if(this.canvas && this.canvas.canvasTemplate.canvas.style.backgroundImage) {
+        this.canvas.canvasTemplate.canvas.style.backgroundImage = '';
+      }
     }
     this.store.options = Object.assign(this.store.options, opts);
     if (this.canvas && opts.scroll !== undefined) {
@@ -448,11 +452,18 @@ export class Meta2d {
     this.events[EventAction.Dialog] = (pen: Pen, e: Event) => {
       if (
         e.params &&
-        typeof e.params === 'string' &&
-        e.value &&
-        typeof e.value === 'string'
+        typeof e.params === 'string'
       ) {
-        this.canvas.dialog.show(e.value, e.params);
+        let url = e.params;
+        if(e.params.includes('${')){
+          let keys = e.params.match(/(?<=\$\{).*?(?=\})/g);
+          if(keys){
+            keys?.forEach((key)=>{
+              url = url.replace(`\${${key}}`,pen[key]);
+            })
+          }
+        }
+        this.canvas.dialog.show(e.value as any, url, e.extend);
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
@@ -465,11 +476,11 @@ export class Meta2d {
               value[key] = _pen[key];
             }
           }
-          value.id = _pen.id;
+          // value.id = _pen.id;
           if(_pen.deviceId){
             value.deviceId = _pen.deviceId;
           }
-          this.sendDataToNetWork(value, e.network);
+          this.sendDataToNetWork(value, pen, e);
           return;
         }
       }
@@ -545,8 +556,8 @@ export class Meta2d {
     this.store.emitter.emit('sendData', data);
   }
 
-  async sendDataToNetWork(value: any, _network: Network) {
-    const network = deepClone(_network);
+  async sendDataToNetWork(value: any, pen: Pen, e: any) {
+    const network = deepClone(e.network);
     if(network.data){
       Object.assign(network,network.data);
       delete network.data;
@@ -557,16 +568,19 @@ export class Meta2d {
     if (network.protocol === 'http') {
       if (typeof network.headers === 'object') {
         for (let i in network.headers) {
-          let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
-          if (keys) {
-            network.headers[i] = network.headers[i].replace(
-              `\${${keys[0]}}`,
-              this.getDynamicParam(keys[0])
-            );
+          if(typeof network.headers[i] === 'string'){
+            let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            if (keys) {
+              network.headers[i] = network.headers[i].replace(
+                `\${${keys[0]}}`,
+                this.getDynamicParam(keys[0])
+              );
+            }
           }
         }
       }
       let params = undefined;
+      let url = network.url;
       if (network.method === 'GET') {
         params =
           '?' +
@@ -574,12 +588,41 @@ export class Meta2d {
             .map((key) => key + '=' + value[key])
             .join('&');
       }
-      const res: Response = await fetch(network.url + (params ? params : ''), {
+      if(network.method === 'POST'){
+        if(url.indexOf('${') > -1){
+          let keys = url.match(/(?<=\$\{).*?(?=\})/g);
+          if(keys){
+            keys.forEach((key) => {
+              url = url.replace(`\${${key}}`, getter(pen, key) || this.getDynamicParam(key));
+            });
+          }
+        }
+      }
+      const res: Response = await fetch(url + (params ? params : ''), {
         headers: network.headers || {},
         method: network.method,
         body: network.method === 'POST' ? JSON.stringify(value) : undefined,
       });
       if (res.ok) {
+        if(e.callback){
+          const data = await res.text();
+          if(!e.fn){
+            try {
+              if (typeof e.callback !== 'string') {
+                throw new Error('[meta2d] Function callback must be string');
+              }
+              const fnJs = e.callback;
+              e.fn = new Function('pen', 'data', 'context', fnJs) as (
+                pen: Pen,
+                data: string,
+                context?: { meta2d: Meta2d; e:any }
+              ) => void;
+            } catch (err) {
+              console.error('[meta2d]: Error on make a function:', err);
+            }
+          }
+          e.fn?.(pen, data, { meta2d: this, e });
+        }
         console.info('http消息发送成功');
       }
     } else if (network.protocol === 'mqtt') {
@@ -724,7 +767,7 @@ export class Meta2d {
   } = {}) {
     this.store.data.grid = grid;
     this.store.data.gridColor = gridColor;
-    this.store.data.gridSize = gridSize;
+    this.store.data.gridSize = gridSize < 0 ? 0 : gridSize;
     this.store.data.gridRotate = gridRotate;
     // this.store.patchFlagsBackground = true;
     this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
@@ -760,9 +803,10 @@ export class Meta2d {
       for (const pen of data.pens) {
         this.canvas.makePen(pen);
       }
-      for (const pen of data.pens) {
-        this.canvas.updateLines(pen);
-      }
+      //首次计算连线bug
+      // for (const pen of data.pens) {
+      //   this.canvas.updateLines(pen);
+      // }
     }
 
     this.canvas.patchFlagsLines.forEach((pen) => {
@@ -790,6 +834,7 @@ export class Meta2d {
     this.startAnimate();
     this.startVideo();
     this.doInitJS();
+    this.doInitFn();
     if (this.store.data.iconUrls) {
       for (const item of this.store.data.iconUrls) {
         loadCss(item, () => {
@@ -926,6 +971,25 @@ export class Meta2d {
     }
   }
 
+  doInitFn() {
+    let params = queryURLParams();
+    let binds = [];
+    for (let key in params) {
+      if (params.hasOwnProperty(key)) {
+        if(key.startsWith('bind-')){
+          binds.push({
+            id:key.replace('bind-',''),
+            dataId:key.replace('bind-',''),
+            value:params[key]
+          })
+        }
+      }
+    }
+    if(binds.length){
+      this.setDatas(binds,{history:false});
+    }
+  }
+
   drawLine(lineName?: string) {
     lineName && lockedError(this.store);
     this.canvas.drawingLineName = lineName;
@@ -949,7 +1013,8 @@ export class Meta2d {
     //恢复可选状态
     this.store.data.pens.forEach((pen) => {
       if (pen.externElement === true) {
-        pen.onMove && pen.onMove(pen);
+        // pen.onMove && pen.onMove(pen);
+        pen.calculative.singleton?.div && setElemPosition(pen, pen.calculative.singleton.div);
       }
     });
     if (lock > 0) {
@@ -1343,7 +1408,7 @@ export class Meta2d {
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
    */
-  combine(pens: Pen[] = this.store.active, showChild?: number) {
+  combine(pens: Pen[] = this.store.active, showChild?: number):any {
     if (!pens || !pens.length) {
       return;
     }
@@ -1393,7 +1458,7 @@ export class Meta2d {
       if (index < minIndex) {
         minIndex = index;
       }
-      if (pen === parent || pen.parentId === parent.id) {
+      if (pen === parent || pen.parentId === parent.id || pen.id === parent.id) {
         return;
       }
       // pen 来自于 store.active ，不存在有 parentId 的情况
@@ -1402,6 +1467,7 @@ export class Meta2d {
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+      pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
     });
     //将组合后的父节点置底
     this.store.data.pens.splice(minIndex, 0, parent);
@@ -1442,6 +1508,7 @@ export class Meta2d {
     }
     this.store.emitter.emit('combine', [parent]);
     this.render();
+    return parent;
   }
 
   uncombine(pen?: Pen) {
@@ -1644,6 +1711,7 @@ export class Meta2d {
     return true;
   }
 
+  websocketTimes = 0;
   connectWebsocket(websocket?: string) {
     this.closeWebsocket();
     if (websocket) {
@@ -1661,7 +1729,19 @@ export class Meta2d {
         });
       };
 
+      this.websocket.onerror = (error) => {
+        this.store.emitter.emit('error', { type: 'websocket', error });
+      }
+
       this.websocket.onclose = () => {
+        if (this.store.options.reconnetTimes) {
+          this.websocketTimes++;
+          if (this.websocketTimes >= this.store.options.reconnetTimes) {
+            this.websocketTimes = 0;
+            this.closeWebsocket();
+            return;
+          }
+        }
         console.info('Canvas websocket closed and reconneting...');
         this.connectWebsocket();
       };
@@ -1676,6 +1756,7 @@ export class Meta2d {
     }
   }
 
+  mqttTimes = 0;
   connectMqtt(params?: {
     mqtt: string;
     mqttTopics: string;
@@ -1699,21 +1780,48 @@ export class Meta2d {
       ) {
         this.store.data.mqttOptions.clientId = s8();
       }
-
-      this.mqttClient = mqtt.connect(
-        this.store.data.mqtt,
-        this.store.data.mqttOptions
-      );
-      this.mqttClient.on('message', (topic: string, message: Buffer) => {
-        this.socketCallback(message.toString(), {
-          topic,
-          type: 'mqtt',
-          url: this.store.data.mqtt,
+      const mqttOptions = {...this.store.data.mqttOptions};
+      // 如果没有username/password或为空字符串则删除username/password
+      if(!mqttOptions.username) {
+        delete mqttOptions.username;
+      }
+      if(!mqttOptions.password) {
+        delete mqttOptions.password;
+      }
+      const {username, password} = mqttOptions;
+      // username 和 password 必须同时存在或者同时不存在才去建立mqtt连接
+      if ((username && password)|| (!username && !password)) {
+        this.mqttClient = mqtt.connect(
+          this.store.data.mqtt,
+          mqttOptions
+        );
+        this.mqttClient.on('message', (topic: string, message: Buffer) => {
+          this.socketCallback(message.toString(), {
+            topic,
+            type: 'mqtt',
+            url: this.store.data.mqtt,
+          });
         });
-      });
+        
+        this.mqttClient.on('error', (error) => {
+          this.store.emitter.emit('error', { type: 'mqtt', error });
+        });
 
-      if (this.store.data.mqttTopics) {
-        this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
+        this.mqttClient.on('close', () => {
+          if (this.store.options.reconnetTimes) {
+            this.mqttTimes++;
+            if (this.mqttTimes >= this.store.options.reconnetTimes) {
+              this.mqttTimes = 0;
+              this.closeMqtt();
+            }
+          }
+        });
+
+        if (this.store.data.mqttTopics) {
+          this.mqttClient.subscribe(this.store.data.mqttTopics.split(','));
+        }
+      } else {
+        console.warn('缺少用户名或密码');
       }
     }
   }
@@ -1735,9 +1843,18 @@ export class Meta2d {
       }
       https.forEach((item, index) => {
         if (item.http) {
+          item.times = 0;
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
             this.oldRequestHttp(item);
+            if (this.store.options.reconnetTimes) {
+              item.times++;
+              if (item.times >= this.store.options.reconnetTimes) {
+                item.times = 0;
+                clearInterval(this.httpTimerList[index]);
+                this.httpTimerList[index] = undefined;
+              }
+            }
           }, item.httpTimeInterval || 1000);
         }
       });
@@ -1769,6 +1886,8 @@ export class Meta2d {
       if (res.ok) {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.http });
+      } else {
+        this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
   }
@@ -1828,9 +1947,11 @@ export class Meta2d {
       networks.forEach((net) => {
         if (net.type === 'subscribe') {
           if (net.protocol === 'mqtt') {
+            net.index = mqttIndex;
             if (net.options.clientId && !net.options.customClientId) {
               net.options.clientId = s8();
             }
+            net.times = 0;
             this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
             this.mqttClients[mqttIndex].on(
               'message',
@@ -1842,19 +1963,48 @@ export class Meta2d {
                 });
               }
             );
+            this.mqttClients[mqttIndex].on('error', (error) => {
+              this.store.emitter.emit('error', { type: 'mqtt', error });
+            });
 
+            this.mqttClients[mqttIndex].on('close', () => {
+              if (this.store.options.reconnetTimes) {
+                net.times++;
+                if (net.times >= this.store.options.reconnetTimes) {
+                  net.times = 0;
+                  this.mqttClients && this.mqttClients[net.index]?.end();
+                }
+              }
+            });
             if (net.topics) {
               this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
             }
             mqttIndex += 1;
           } else if (net.protocol === 'websocket') {
-            this.websockets[websocketIndex] = new WebSocket(
-              net.url,
-              net.protocols || undefined
-            );
-            this.websockets[websocketIndex].onmessage = (e) => {
-              this.socketCallback(e.data, { type: 'websocket', url: net.url });
-            };
+            net.index = websocketIndex;
+            this.connectNetWebSocket(net);
+            // this.websockets[websocketIndex] = new WebSocket(
+            //   net.url,
+            //   net.protocols || undefined
+            // );
+            // this.websockets[websocketIndex].onmessage = (e) => {
+            //   this.socketCallback(e.data, { type: 'websocket', url: net.url });
+            // };
+            // this.websockets[websocketIndex].onerror = (error) => {
+            //   this.store.emitter.emit('error', { type: 'websocket', error });
+            // };
+            // this.websockets[websocketIndex].onclose = () => {
+            //   if (this.store.options.reconnetTimes) {
+            //     net.times++;
+            //     if (net.times >= this.store.options.reconnetTimes) {
+            //       net.times = 0;
+            //       this.websockets[net.index]?.close();
+            //       return;
+            //     }
+            //   }
+              // console.info('Canvas websocket closed and reconneting...');
+            // };
+
             websocketIndex += 1;
           } else if (net.protocol === 'http') {
             https.push({
@@ -1869,6 +2019,41 @@ export class Meta2d {
       });
     }
     this.onNetworkConnect(https);
+  }
+
+  
+  connectNetWebSocket(net:Network){
+    if(this.websockets[net.index]){
+      this.websockets[net.index].onclose = undefined;
+      this.websockets[net.index]?.close();
+      this.websockets[net.index] = undefined;
+    }
+    this.websockets[net.index] = new WebSocket(
+      net.url,
+      net.protocols || undefined
+    );
+    this.websockets[net.index].onmessage = (e) => {
+      this.socketCallback(e.data, { type: 'websocket', url: net.url });
+    };
+    this.websockets[net.index].onerror = (error) => {
+      this.store.emitter.emit('error', { type: 'websocket', error });
+    };
+    this.websockets[net.index].onclose = () => {
+      if (this.store.options.reconnetTimes) {
+        net.times++;
+        if (net.times >= this.store.options.reconnetTimes) {
+          net.times = 0;
+          this.websockets[net.index].onclose = undefined;
+          this.websockets[net.index]?.close();
+          this.websockets[net.index] = undefined;
+          return;
+        }
+      }
+      setTimeout(() => {
+        console.info('Canvas websocket closed and reconneting...');
+        this.connectNetWebSocket(net);
+      },2000);
+    };
   }
 
   randomString(e: number) {
@@ -2042,8 +2227,9 @@ export class Meta2d {
       if (Object.keys(_d).length) {
         let data = pen.onBeforeValue ? pen.onBeforeValue(pen, _d) : _d;
         this.canvas.updateValue(pen, data);
-        this.store.emitter.emit('valueUpdate', pen);
+        // this.store.emitter.emit('valueUpdate', pen);
         pen.onValue?.(pen);
+        this.store.emitter.emit('valueUpdate', pen);
       }
     }
   }
@@ -2114,8 +2300,17 @@ export class Meta2d {
     // }
 
     https.forEach((_item,index) => {
+      _item.times = 0;
       this.updateTimerList[index] = setInterval(async () => {
         this.requestHttp(_item);
+        if (this.store.options.reconnetTimes) {
+          _item.times++;
+          if (_item.times >= this.store.options.reconnetTimes) {
+            _item.times = 0;
+            clearInterval(this.updateTimerList[index]);
+            this.updateTimerList[index] = undefined;
+          }
+        }
       }, _item.interval || 1000);
     });
   }
@@ -2158,6 +2353,8 @@ export class Meta2d {
       if (res.ok) {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.url });
+      } else {
+        this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
   }
@@ -2169,7 +2366,11 @@ export class Meta2d {
       });
     this.websockets &&
       this.websockets.forEach((websocket) => {
-        websocket.close();
+        if(websocket){
+          websocket.onclose = undefined;
+          websocket.close();
+          websocket = undefined;
+        }
       });
     this.mqttClients = undefined;
     this.websockets = undefined;
@@ -2261,7 +2462,7 @@ export class Meta2d {
 
           let penValue = penValues.get(pen);
 
-          if (typeof pen.onBinds === 'function') {
+          if (!pen.noOnBinds && typeof pen.onBinds === 'function') {
             // 已经计算了
             if (penValue) {
               return;
@@ -2346,6 +2547,9 @@ export class Meta2d {
     } = {}
   ) {
     let pens: Pen[] = [];
+    if(!data){
+      return;
+    }
     if (data.id) {
       if (data.id === this.store.data.id) {
         this.setDatabyOptions(data);
@@ -2546,31 +2750,15 @@ export class Meta2d {
         }
         this.navigatorTo(e.params);
         break;
+      case 'input':
+        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        break;
+      case 'change':
+        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        break;
     }
 
-    if (this.store.messageEvents[eventName]) {
-      this.store.messageEvents[eventName].forEach((item) => {
-        let flag = false;
-        if (item.event.conditions && item.event.conditions.length) {
-          if (item.event.conditionType === 'and') {
-            flag = item.event.conditions.every((condition) => {
-              return this.judgeCondition(item.pen, condition.key, condition);
-            });
-          } else if (item.event.conditionType === 'or') {
-            flag = item.event.conditions.some((condition) => {
-              return this.judgeCondition(item.pen, condition.key, condition);
-            });
-          }
-        } else {
-          flag = true;
-        }
-        if (flag) {
-          item.event.actions.forEach((action) => {
-            this.events[action.action](item.pen, action);
-          });
-        }
-      });
-    }
+    this.doMessageEvent(eventName);
   };
 
   private doEvent = (pen: Pen, eventName: EventName) => {
@@ -2700,14 +2888,19 @@ export class Meta2d {
         let indexArr = [];
         realTime.triggers?.forEach((trigger,index) => {
           let flag = false;
-          if (trigger.conditionType === 'and') {
-            flag = trigger.conditions.every((condition) => {
-              return this.judgeCondition(pen, realTime.key, condition);
-            });
-          } else if (trigger.conditionType === 'or') {
-            flag = trigger.conditions.some((condition) => {
-              return this.judgeCondition(pen, realTime.key, condition);
-            });
+          if(trigger.conditions?.length){
+            if (trigger.conditionType === 'and') {
+              flag = trigger.conditions.every((condition) => {
+                return this.judgeCondition(pen, realTime.key, condition);
+              });
+            } else if (trigger.conditionType === 'or') {
+              flag = trigger.conditions.some((condition) => {
+                return this.judgeCondition(pen, realTime.key, condition);
+              });
+            }
+          }else {
+            //无条件
+            flag = true;
           }
           if (flag) {
             indexArr.push(index);
@@ -2731,14 +2924,19 @@ export class Meta2d {
       let indexArr = [];
       this.store.globalTriggers[pen.id]?.forEach((trigger,index) => {
         let flag = false;
-        if (trigger.conditionType === 'and') {
-          flag = trigger.conditions.every((condition) => {
-            return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
-          });
-        } else if (trigger.conditionType === 'or') {
-          flag = trigger.conditions.some((condition) => {
-            return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
-          });
+        if(trigger.conditions?.length){
+          if (trigger.conditionType === 'and') {
+            flag = trigger.conditions.every((condition) => {
+              return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+            });
+          } else if (trigger.conditionType === 'or') {
+            flag = trigger.conditions.some((condition) => {
+              return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+            });
+          }
+        }else{
+          //无条件
+          flag = true;
         }
         if (flag) {
           indexArr.push(index);
@@ -2751,11 +2949,68 @@ export class Meta2d {
           });
         }
       });
+
+      //triggers
+      if( pen.triggers?.length ){
+        for(let trigger of pen.triggers){
+          if(trigger.status?.length){
+            for(let state of trigger.status){
+              let flag = false;
+              if(state.conditions?.length){
+                if (state.conditionType === 'and') {
+                  flag = state.conditions.every((condition) => {
+                    return this.judgeCondition(pen, condition.key, condition);
+                  });
+                } else if (state.conditionType === 'or') {
+                  flag = state.conditions.some((condition) => {
+                    return this.judgeCondition(pen, condition.key, condition);
+                  });
+                }
+              }else{
+                //无条件
+                flag = true;
+              }
+              if (flag) {
+                state.actions?.forEach((event) => {
+                  this.events[event.action](pen, event);
+                });
+                break;
+              }
+            }
+          }
+        }
+      }
     }
 
     // 事件冒泡，子执行完，父执行
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
+
+  doMessageEvent(eventName: string) {
+    if (this.store.messageEvents[eventName]) {
+      this.store.messageEvents[eventName].forEach((item) => {
+        let flag = false;
+        if (item.event.conditions && item.event.conditions.length) {
+          if (item.event.conditionType === 'and') {
+            flag = item.event.conditions.every((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          } else if (item.event.conditionType === 'or') {
+            flag = item.event.conditions.some((condition) => {
+              return this.judgeCondition(item.pen, condition.key, condition);
+            });
+          }
+        } else {
+          flag = true;
+        }
+        if (flag) {
+          item.event.actions.forEach((action) => {
+            this.events[action.action](item.pen, action);
+          });
+        }
+      });
+    }
+  }
 
   doDataEvent = ( datas: { dataId?: string; id?: string; value: any }[]) => {
     if(!(this.store.data.dataEvents?.length)) {
@@ -2992,6 +3247,7 @@ export class Meta2d {
       );
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+      pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
       if (!oldPen) {
         addPens.push(deepClone(pen, true));
       } else {
@@ -3028,12 +3284,12 @@ export class Meta2d {
     return this.canvas.toPng(padding, callback, containBkImg, maxWidth);
   }
 
-  activeToPng(padding?: Padding) {
-    return this.canvas.activeToPng(padding);
+  activeToPng(padding?: Padding, maxWidth?: number) {
+    return this.canvas.activeToPng(padding, maxWidth);
   }
 
-  pensToPng(pens: Pen[] = this.store.active, padding?: Padding) {
-    return this.canvas.pensToPng(pens, padding);
+  pensToPng(pens: Pen[] = this.store.active, padding?: Padding, maxWidth?: number) {
+    return this.canvas.pensToPng(pens, padding, maxWidth);
   }
 
   /**
@@ -3159,11 +3415,185 @@ export class Meta2d {
     } else {
       ratio = w > h ? w : h;
     }
+    if(this.store.data.fits?.length){
+      this.canvas.opening = true;
+    }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
     this.scale(ratio * this.store.data.scale);
 
     // 5. 居中
     this.centerView();
+    if(this.store.data.fits?.length){
+      this.fillView();
+    }
+  }
+
+  fillView(){
+    const rect = this.getRect();
+    const wGap = this.canvas.width - rect.width;
+    const hGap = this.canvas.height - rect.height;
+    //宽度拉伸
+    if (Math.abs(wGap) > 10) {
+      this.store.data.fits?.forEach((fit)=>{
+        let pens = [];
+        fit.children.forEach((id)=>{
+          this.store.pens[id].locked = LockState.None;
+          pens.push(this.store.pens[id]);
+        });
+        let r = wGap/2;
+        if(fit.left&&fit.right){
+          //整体拉伸
+          let left = fit.leftValue;
+          let right = fit.rightValue;
+          if(left){
+            left = Math.abs(left)<1?left*this.canvas.width:left;
+          }else{
+            left = 0;
+          }
+          if(right){
+            right = Math.abs(right)<1?right*this.canvas.width:right;
+          }else{
+            right = 0;
+          }
+          let ratio = (this.canvas.width - left - right)/(rect.width- left - right);
+          pens.forEach((pen)=>{  
+            if(pen.image && pen.imageRatio){
+              if(pen.calculative.worldRect.width/this.canvas.width>0.1){
+                pen.imageRatio = false;
+              }
+            }
+            pen.calculative.worldRect.x  = rect.x - wGap/2 + left + (pen.calculative.worldRect.x-rect.x)*ratio;//(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
+            pen.calculative.worldRect.width *= ratio
+            pen.calculative.worldRect.ex = pen.calculative.worldRect.x + pen.calculative.worldRect.width;
+            pen.calculative.width = pen.calculative.worldRect.width;
+            pen.calculative.x = pen.calculative.worldRect.x;
+            pen.width = pen.calculative.worldRect.width;
+            pen.x = pen.calculative.worldRect.x;
+            this.canvas.updatePenRect(pen, { worldRectIsReady: false });
+            if(pen.externElement){
+              pen.onResize?.(pen);
+            }
+          });
+        
+        }else if(fit.left){
+          //左移
+          r = -r
+          if(fit.leftValue){
+            r += (Math.abs(fit.leftValue)<1?fit.leftValue*this.canvas.width:fit.leftValue);
+          }
+          this.translatePens(pens, r, 0); 
+        }else if(fit.right){
+          //右移
+          if(fit.rightValue){
+            r = r - (Math.abs(fit.rightValue)<1?fit.rightValue*this.canvas.width:fit.rightValue);
+          }
+          this.translatePens(pens, r, 0); 
+        }
+      });
+      const iframePens = this.store.data.pens.filter((pen) => pen.name === 'iframe');
+      iframePens?.forEach((pen)=>{
+        const worldRect = pen.calculative.worldRect;
+        if(worldRect.width/this.store.data.scale>rect.width*0.8){
+          let bfW = worldRect.width;
+          pen.calculative.worldRect.x = worldRect.x - wGap/2;
+          pen.calculative.worldRect.width =
+            worldRect.width + wGap;
+          pen.calculative.worldRect.ex = worldRect.ex + wGap;
+          pen.operationalRect.x =
+            (pen.operationalRect.x * bfW) / pen.calculative.worldRect.width;
+          pen.operationalRect.width =
+            (pen.calculative.worldRect.width -
+              (1 - pen.operationalRect.width) * bfW) /
+            pen.calculative.worldRect.width;
+          pen.onBeforeValue?.(pen, {
+            operationalRect: pen.operationalRect,
+          } as any);
+          pen.onResize?.(pen);
+        }
+      })
+    }
+    //高度拉伸
+    if (Math.abs(hGap) > 10) {
+      this.store.data.fits?.forEach((fit)=>{
+        let pens = [];
+        fit.children.forEach((id)=>{
+          this.store.pens[id].locked = LockState.None;
+          pens.push(this.store.pens[id]);
+        });
+        let r = hGap/2;
+        if(fit.top&&fit.bottom){
+          let top = fit.topValue;
+          let bottom = fit.bottomValue;
+          if(top){
+            top = Math.abs(top)<1?top*this.canvas.height:top;
+          }else{
+            top = 0;
+          }
+          if(bottom){
+            bottom = Math.abs(bottom)<1?bottom*this.canvas.height:bottom;
+          }else{
+            bottom = 0;
+          }
+
+          let ratio = (this.canvas.height - top - bottom)/(rect.height- top - bottom);
+          pens.forEach((pen)=>{  
+            if(pen.image && pen.imageRatio){
+              if(pen.calculative.worldRect.height/this.canvas.height>0.1){
+                pen.imageRatio = false;
+              }
+            }
+            pen.calculative.worldRect.y  = rect.y - hGap/2 + top + (pen.calculative.worldRect.y-rect.y)*ratio;//(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
+            pen.calculative.worldRect.height *= ratio
+            pen.calculative.worldRect.ey = pen.calculative.worldRect.y + pen.calculative.worldRect.height;
+            pen.calculative.height = pen.calculative.worldRect.height;
+            pen.calculative.y = pen.calculative.worldRect.y;
+            pen.height = pen.calculative.worldRect.height;
+            pen.y = pen.calculative.worldRect.y;
+            this.canvas.updatePenRect(pen, { worldRectIsReady: false });
+            if(pen.externElement){
+              pen.onResize?.(pen);
+            }
+          });
+        
+        }else if(fit.top){
+          r = -r
+          if(fit.topValue){
+            r += (Math.abs(fit.topValue)<1?fit.topValue*this.canvas.height:fit.topValue);
+          }
+          this.translatePens(pens, 0, r); 
+        }else if(fit.bottom){
+          if(fit.bottomValue){
+            r = r - (Math.abs(fit.bottomValue)<1?fit.bottomValue*this.canvas.height:fit.bottomValue);
+          }
+          this.translatePens(pens, 0, r); 
+        }
+      });
+      const iframePens = this.store.data.pens.filter((pen) => pen.name === 'iframe');
+      iframePens?.forEach((pen)=>{
+        const worldRect = pen.calculative.worldRect;
+        if(worldRect.height/this.store.data.scale>rect.height*0.8){
+          let bfH = worldRect.height;
+          pen.calculative.worldRect.y = worldRect.y - hGap/2;
+          pen.calculative.worldRect.height =
+            worldRect.height + hGap;
+          pen.calculative.worldRect.ey = worldRect.ey + hGap;
+          pen.operationalRect.y =
+            (pen.operationalRect.y * bfH) / pen.calculative.worldRect.width;
+          pen.operationalRect.height =
+            (pen.calculative.worldRect.height -
+              (1 - pen.operationalRect.height) * bfH) /
+            pen.calculative.worldRect.height;
+          pen.onBeforeValue?.(pen, {
+            operationalRect: pen.operationalRect,
+          } as any);
+          pen.onResize?.(pen);
+        }
+      })
+    }
+    this.canvas.canvasTemplate.init();
+    this.canvas.canvasImage.init();
+    this.canvas.canvasImageBottom.init();
+    this.render(true);
   }
 
   trimPens() {
@@ -3250,11 +3680,17 @@ export class Meta2d {
         ratio = w > h ? w : h;
       }
     }
+    if(this.store.data.fits?.length){
+      this.canvas.opening = true;
+    }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
     this.scale(ratio * this.store.data.scale);
 
     // 5. 居中
     this.centerSizeView();
+    if(this.store.data.fits?.length){
+      this.fillView();
+    }
   }
 
   centerSizeView() {
@@ -3511,9 +3947,9 @@ export class Meta2d {
       const firstPen = pens[0];
       formatAttrs.forEach((attr) => {
         attrs[attr] =
-          firstPen[attr] ||
-          this.store.options.defaultFormat[attr] ||
-          this.store.options[attr];
+          firstPen[attr] !== undefined ? firstPen[attr] :
+          (this.store.options.defaultFormat[attr] ||
+          this.store.options[attr]);
       });
     } else {
       //默认值
@@ -3710,7 +4146,16 @@ export class Meta2d {
     pens: Pen[] = this.store.data.pens,
     distance?: number
   ) {
-    !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
+    //TODO 暂时修复，待优化
+    // !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
+    if(!distance) {
+      let start = Infinity, end = -Infinity, key = direction === 'width' ? 'x' : 'y';
+      pens.forEach((item) => {
+        start = Math.min(start, item.calculative.worldRect[key]);
+        end = Math.max(end, item.calculative.worldRect['e'+key]);
+      });
+      distance = (end - start) / this.store.data.scale;
+    }
     // 过滤出非父节点
     pens = pens.filter((item) => !item.parentId);
     if (pens.length <= 2) {
@@ -3840,6 +4285,9 @@ export class Meta2d {
     this.store.data.x = x;
     this.store.data.y = y;
 
+    for (const pen of this.store.data.pens) {
+      calcInView(pen);
+    }
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
     this.render();

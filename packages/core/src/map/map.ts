@@ -18,12 +18,13 @@ export class ViewMap {
 
     this.box.appendChild(this.img);
     this.box.appendChild(this.view);
-    this.parent.externalElements.appendChild(this.box);
+    this.parent.externalElements?.parentElement.appendChild(this.box);
 
     this.box.className = 'meta2d-map';
     this.box.onmousedown = this.onMouseDown;
     this.box.onmousemove = this.onMouseMove;
     this.box.onmouseup = this.onMouseUp;
+    this.box.onwheel = this.onWheel;
 
     let sheet: any;
     for (let i = 0; i < document.styleSheets.length; i++) {
@@ -80,7 +81,20 @@ export class ViewMap {
   setView() {
     const data = this.parent.store.data;
     if (data.pens.length) {
-      const rect = getRect(data.pens);
+      let rect = getRect(data.pens);
+      const vW =
+        this.parent.store.data.width || this.parent.store.options.width;
+      const vH =
+        this.parent.store.data.height || this.parent.store.options.height;
+      if (vW && vH) {
+        //大屏
+        rect = {
+          x: this.parent.store.data.origin.x,
+          y: this.parent.store.data.origin.y,
+          width: vW * this.parent.store.data.scale,
+          height: vH * this.parent.store.data.scale,
+        };
+      }
       // rect += data.x y 得到相对坐标
       translateRect(rect, data.x, data.y);
       const rectRatio = rect.width / rect.height;
@@ -168,5 +182,58 @@ export class ViewMap {
     } finally {
       this.isDown = false;
     }
+  };
+
+  private onWheel = (e: WheelEvent) => {
+    //放大镜缩放
+    let scaleOff = 0.015;
+    if (this.parent.store.options.scaleOff) {
+      scaleOff = this.parent.store.options.scaleOff;
+      if (e.deltaY > 0) {
+        scaleOff = -this.parent.store.options.scaleOff;
+      }
+    } else {
+      let isMac = /mac os /i.test(navigator.userAgent);
+      if (isMac) {
+        if (!e.ctrlKey) {
+          scaleOff *= (e as any).wheelDeltaY / 240;
+        } else if (e.deltaY > 0) {
+          scaleOff *= -1;
+        }
+      } else {
+        let offset = 0.2;
+        if (e.deltaY.toString().indexOf('.') !== -1) {
+          offset = 0.01;
+        }
+        if (e.deltaY > 0) {
+          scaleOff = -offset;
+        } else {
+          scaleOff = offset;
+        }
+      }
+    }
+    let { offsetX: x, offsetY: y } = e;
+
+    const width =
+      this.parent.store.data.width || this.parent.store.options.width;
+    const height =
+      this.parent.store.data.height || this.parent.store.options.height;
+    if (width && height) {
+      //大屏
+      x =
+        (x / this.boxWidth) * width * this.parent.store.data.scale +
+        this.parent.store.data.origin.x +
+        this.parent.store.data.x;
+      y =
+        (y / this.boxHeight) * height * this.parent.store.data.scale +
+        this.parent.store.data.origin.y +
+        this.parent.store.data.y;
+    } else {
+      const rect = this.parent.parent.getRect();
+      x = (x / this.boxWidth) * rect.width + rect.x + this.parent.store.data.x;
+      y =
+        (y / this.boxHeight) * rect.height + rect.y + this.parent.store.data.y;
+    }
+    this.parent.scale(this.parent.store.data.scale + scaleOff, { x, y });
   };
 }

@@ -112,6 +112,8 @@ export interface Options {
   disabledColor?: string;
   disabledBackground?: string;
   scaleOff?: number; //缩放偏移量
+  scrollButScale?: boolean; //滚动条滚动，鼠标缩放
+  reconnetTimes?: number; //通信重连次数
 }
 
 export const defaultOptions: Options = {
@@ -181,7 +183,7 @@ export const defaultOptions: Options = {
   cdn: '',
   polylineSpace: 10,
   domShapes: [],
-  containerShapes:['table'],
+  containerShapes:['tablePlus'],
   textFlip: true,
   textRotate: true,
   unavailableKeys: [],

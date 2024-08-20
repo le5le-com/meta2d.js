@@ -218,7 +218,8 @@ export class CanvasTemplate {
     ctx.lineWidth = 1;
     ctx.strokeStyle = gridColor || options.gridColor;
     ctx.beginPath();
-    const size = (gridSize || options.gridSize) * scale;
+    let size = (gridSize || options.gridSize) * scale;
+    size = size < 0 ? 0 : size;
     if (!width || !height) {
       const ratio = this.store.dpiRatio;
       const cW = this.canvas.width / ratio;

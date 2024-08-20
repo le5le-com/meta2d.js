@@ -74,6 +74,30 @@ export interface Meta2dData {
     devices?: DataMock[]; //数据模拟
   };
   dataEvents?:Event[]; //数据点事件
+  fits?: Fit[];
+  disableTranslate?: boolean; //禁止平移
+  disableScale?: boolean; //禁止缩放
+}
+
+export interface Fit {
+  id?:string;
+  name?:string;
+  x?:number;
+  y?:number;
+  ex?:number;
+  ey?:number;
+  width?:number;
+  height?:number;
+  children?:string[];
+  active?:boolean;
+  left?:boolean;
+  right?:boolean;
+  top?:boolean;
+  bottom?:boolean;
+  leftValue?:number;
+  rightValue?:number;
+  topValue?:number;
+  bottomValue?:number;
 }
 
 export interface DataMock {
@@ -105,6 +129,8 @@ export interface Network {
   body?: any;
   data?: Network
   interval?: number; // http 请求间隔
+  times?: number; // 临时 重连次数
+  index?: number; // 临时 索引
 }
 
 export interface HttpOptions {
@@ -113,6 +139,7 @@ export interface HttpOptions {
   httpHeaders?: HeadersInit; //请求头
   method?: string;
   body?: BodyInit | null;
+  times?: number; // 临时 重连次数
 }
 
 export enum EditType {
