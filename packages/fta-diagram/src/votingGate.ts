@@ -1,4 +1,4 @@
-import { Pen } from '@meta2d/core';
+import { Pen } from '../../core';
 
 export function votingGate(ctx: CanvasRenderingContext2D, pen: Pen) {
   const { x, y, width, height } = pen.calculative.worldRect;

@@ -1,4 +1,4 @@
-import { s8 } from '@meta2d/core';
+import { s8 } from '../utils';
 import { Pen } from './model';
 
 export function randomId(pen: Pen) {

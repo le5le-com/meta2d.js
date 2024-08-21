@@ -1,4 +1,4 @@
-import { ChartData, Pen, setElemPosition } from '@meta2d/core';
+import { ChartData, Pen, setElemPosition } from '../../core';
 // TODO: 只引入 Chart 作为类型，开发时使用，上传需注释
 // import { Chart } from 'highcharts';
 

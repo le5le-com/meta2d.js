@@ -33,7 +33,7 @@ import { globalStore, Meta2dStore } from '../store';
 import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
-import { Gradient, isEqual, PenType } from '@meta2d/core';
+import { Gradient, isEqual, PenType } from '../pen';
 import { pSBC, rgba } from '../utils';
 import { Canvas } from '../canvas';
 

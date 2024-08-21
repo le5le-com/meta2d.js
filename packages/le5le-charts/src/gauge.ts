@@ -1,5 +1,5 @@
 import { getValidValue, leChartPen } from './common';
-import {getFont} from "@meta2d/core";
+import {getFont} from "../../core";
 
 //仪表全盘
 export function gauge(ctx: CanvasRenderingContext2D, pen: leChartPen): void {

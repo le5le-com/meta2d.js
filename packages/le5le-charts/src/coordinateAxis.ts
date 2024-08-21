@@ -1,6 +1,6 @@
 import { scaleCompute, ScaleOption } from './normalizedAxis';
 import { leChartPen } from './common';
-import {getFont} from "@meta2d/core";
+import {getFont} from "../../core";
 
 //用于绘制坐标轴
 export function coordinateAxis(ctx: CanvasRenderingContext2D, pen: leChartPen) {

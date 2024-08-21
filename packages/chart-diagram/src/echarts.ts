@@ -7,10 +7,8 @@ import {
   Pen,
   deepSetValue,
   setElemPosition,
-} from '@meta2d/core';
+} from '../../core';
 import type { EChartOption } from 'echarts';
-import { getter, setter } from '@meta2d/core/src/utils/object';
-import { formatTime } from '@meta2d/core/src/utils/time';
 
 export enum ReplaceMode {
   Add,

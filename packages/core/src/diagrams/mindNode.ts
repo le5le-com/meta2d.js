@@ -1,4 +1,5 @@
-import { calcWorldAnchors, Pen, Point } from '@meta2d/core';
+import { calcWorldAnchors, Pen } from '../pen';
+import { Point } from '../point';
 import { rectangle } from '.';
 
 export function mindNode(pen: Pen, ctx?: CanvasRenderingContext2D) {

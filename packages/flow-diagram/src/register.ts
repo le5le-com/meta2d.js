@@ -1,4 +1,4 @@
-import { Pen } from '@meta2d/core';
+import { Pen } from '../../core';
 import { flowComment, flowCommentAnchors } from './comment';
 import { flowData, flowDataAnchors } from './data';
 import { flowDb } from './db';

@@ -1,4 +1,4 @@
-import { register as meta2dRegister } from '@meta2d/core';
+import { register as meta2dRegister } from '../../core';
 
 import { echarts } from './echarts';
 import { highcharts } from './highcharts';

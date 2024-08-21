@@ -1,4 +1,4 @@
-import { Pen } from '@meta2d/core';
+import { Pen } from '../../core';
 
 export function event(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;

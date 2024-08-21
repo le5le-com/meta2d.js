@@ -1,5 +1,5 @@
 import {mindBoxPlugin} from "../core/MindBoxPlugin";
-import {Meta2d} from "@meta2d/core";
+import {Meta2d} from "../../../core";
 
 declare const meta2d: Meta2d;
 

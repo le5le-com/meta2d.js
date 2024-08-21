@@ -5,7 +5,7 @@
  * email: hejin@le5le.com
  * date: 2022.09.09
 */
-import { s8 } from '@meta2d/core';
+import { s8 } from '../../core';
 enum PenType {
   Node,
   Line,

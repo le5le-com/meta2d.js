@@ -1,7 +1,7 @@
 import {mindBoxPlugin} from "../core/MindBoxPlugin";
 import {top} from "./top";
 import {bottom} from "./bottom";
-import {Meta2d} from "@meta2d/core";
+import {Meta2d} from "../../../core";
 declare const meta2d: Meta2d;
 
 export function sandglass(pen: any, recursion = true) {

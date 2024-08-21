@@ -1,4 +1,3 @@
-import { setElemPosition } from '@meta2d/core';
 import { Canvas } from '../canvas';
 import { getRect, Rect } from '../rect';
 

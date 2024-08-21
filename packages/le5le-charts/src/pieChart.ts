@@ -1,5 +1,5 @@
 import { leChartPen, ReplaceMode } from './common';
-import {getFont} from "@meta2d/core";
+import {getFont} from "../../core";
 //饼状图
 export function pieChart(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   if (!pen.onBeforeValue) {

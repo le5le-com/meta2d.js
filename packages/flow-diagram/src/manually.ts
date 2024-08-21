@@ -1,4 +1,3 @@
-import { Point } from '@meta2d/core/src/point';
 import { Pen } from '../../core/src/pen';
 export function flowManually(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;

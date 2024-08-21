@@ -6,3 +6,4 @@ export * from './clone';
 export * from './file';
 export * from './url';
 export * from './object';
+export * from './time';

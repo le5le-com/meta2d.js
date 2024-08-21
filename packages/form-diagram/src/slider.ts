@@ -1,7 +1,5 @@
 import { formPen } from './common';
-import { Point } from '../../core/src/point';
-import { calcRightBottom, calcTextRect } from '@meta2d/core';
-import { pSBC } from '../../core';
+import { Point, pSBC, calcRightBottom, calcTextRect } from '../../core';
 
 export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {

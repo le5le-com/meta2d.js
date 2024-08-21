@@ -1,6 +1,6 @@
 // 该文件为penPlugin的相关文件
 
-import {Pen} from "@meta2d/core";
+import {Pen} from "../pen";
 
 /**
  * @description 闭包 重写 pen的生命周期，为了追加回调函数

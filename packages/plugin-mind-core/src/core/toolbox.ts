@@ -8,7 +8,7 @@ import d, {
   toolboxStyle
 } from "../config/default";
 import {Scope} from "../parse";
-import {Pen, Point} from "@meta2d/core";
+import {Pen, Point} from "../../../core";
 
 const extra = 'extra';
 declare const toolbox:ToolBox;
