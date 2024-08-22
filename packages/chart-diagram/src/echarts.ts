@@ -7,7 +7,7 @@ import {
   Pen,
   deepSetValue,
   setElemPosition,
-} from '../../core';
+} from '@meta2d/core';
 import type { EChartOption } from 'echarts';
 
 export enum ReplaceMode {

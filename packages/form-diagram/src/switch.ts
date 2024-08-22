@@ -1,5 +1,5 @@
 import { formPen } from './common';
-import { pSBC } from '../../core';
+import { pSBC } from '@meta2d/core';
 
 export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onClick) {

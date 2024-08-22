@@ -1,7 +1,7 @@
 import { formPen, cellData, Pos, ReplaceMode } from './common';
-import { Point } from '../../core/src/point';
-import { Rect } from '../../core/src/rect';
-import { calcRightBottom, calcTextLines, deepClone } from '../../core';
+import { Point } from '@meta2d/core/src/point';
+import { Rect } from '@meta2d/core/src/rect';
+import { calcRightBottom, calcTextLines, deepClone } from '@meta2d/core';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {

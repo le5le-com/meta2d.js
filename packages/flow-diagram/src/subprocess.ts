@@ -1,4 +1,4 @@
-import { Pen } from '../../core/src/pen';
+import { Pen } from '@meta2d/core/src/pen';
 export function flowSubprocess(
   pen: Pen,
   ctx?: CanvasRenderingContext2D

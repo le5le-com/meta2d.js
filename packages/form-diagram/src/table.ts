@@ -1,5 +1,5 @@
 import { formPen, cellData, Pos } from './common';
-import { Point, Rect, calcRightBottom, calcTextLines } from '../../core';
+import { Point, Rect, calcRightBottom, calcTextLines } from '@meta2d/core';
 
 export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {

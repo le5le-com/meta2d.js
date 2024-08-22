@@ -1,4 +1,4 @@
-import {Pen} from "../../core";
+import {Pen} from "@meta2d/core";
 
 export function createDom(tag: string, config: {
   style?: object

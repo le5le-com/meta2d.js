@@ -1,4 +1,4 @@
-import { Meta2d } from '../../core';
+import { Meta2d } from '@meta2d/core';
 import { classPens } from '../../class-diagram';
 import { sequencePens, sequencePensbyCtx } from '../../sequence-diagram';
 import { activityDiagram, activityDiagramByCtx } from '../../activity-diagram';

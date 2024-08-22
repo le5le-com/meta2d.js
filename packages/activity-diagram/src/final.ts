@@ -1,4 +1,4 @@
-import { Pen } from '../../core';
+import { Pen } from '@meta2d/core';
 
 // 此方法只能绘制路径，在该图形不适用
 // export function activityFinal(pen: Pen): Path2D {

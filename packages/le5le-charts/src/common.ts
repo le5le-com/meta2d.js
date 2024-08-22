@@ -1,4 +1,4 @@
-import { Pen } from '../../core/src/pen';
+import { Pen } from '@meta2d/core/src/pen';
 
 // 坐标轴样式配置
 interface Axis {

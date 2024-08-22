@@ -1,7 +1,7 @@
 import { formPen } from './common';
-import { Point } from '../../core/src/point';
-import { getTextColor, getFont } from '../../core';
-import { pSBC } from '../../core';
+import { Point } from '@meta2d/core/src/point';
+import { getTextColor, getFont } from '@meta2d/core';
+import { pSBC } from '@meta2d/core';
 
 export function checkbox(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onMouseDown) {

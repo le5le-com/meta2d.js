@@ -1,4 +1,4 @@
-import { Pen, Point } from '../../core';
+import { Pen, Point } from '@meta2d/core';
 
 export function forbiddenGate(
   pen: Pen,

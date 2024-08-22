@@ -1,5 +1,5 @@
-import { getRectOfPoints, Pen, Rect, s8 } from '../../core';
-import { getRect, parseSvgPath } from '../../core/src/diagrams/svg/parse';
+import { getRectOfPoints, Pen, Rect, s8 } from '@meta2d/core';
+import { getRect, parseSvgPath } from '@meta2d/core/src/diagrams/svg/parse';
 import { XMLParser } from 'fast-xml-parser/src/fxp';
 
 const selfName = ':@';

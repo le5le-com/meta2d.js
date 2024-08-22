@@ -1,4 +1,4 @@
-import { Pen } from '../../core';
+import { Pen } from '@meta2d/core';
 import { andGate, andGateAnchors } from './andGate';
 import { basicEvent, basicEventAnchors } from './basicEvent';
 import { conditionalEvent, conditionalEventAnchors } from './conditionalEvent';

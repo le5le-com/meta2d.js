@@ -1,5 +1,5 @@
 import {collapseChildPlugin} from "./core/CollapseChildPlugin";
-import {Meta2d} from "../../core";
+import {Meta2d} from "@meta2d/core";
 import {isIntersection} from "@meta2d/plugin-mind-core";
 declare const meta2d: Meta2d;
 export function error(message) {

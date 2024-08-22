@@ -1,4 +1,4 @@
-import { calcRightBottom, Rect, ChartData, Pen } from '../../core';
+import { calcRightBottom, Rect, ChartData, Pen } from '@meta2d/core';
 
 export interface Pos {
   row: number;

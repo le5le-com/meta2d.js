@@ -1,7 +1,7 @@
 import {createDom} from "../utils";
 import {mindBoxPlugin} from "../core";
 import {Scope} from "../parse";
-import {Meta2d, Pen} from "../../../core";
+import {Meta2d, Pen} from "@meta2d/core";
 declare const meta2d:Meta2d;
 export interface FuncOption {
   key: string;

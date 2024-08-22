@@ -1,5 +1,5 @@
 // @ts-ignore
-import {disconnectLine, connectLine, deepClone, setLifeCycleFunc, Pen, Point, EditType, Meta2d} from "../../../core";
+import {disconnectLine, connectLine, deepClone, setLifeCycleFunc, Pen, Point, EditType, Meta2d} from "@meta2d/core";
 import {ToolBox} from "./toolbox";
 import {defaultFuncList, FuncOption, generateColor,funcList} from "../config/default";
 import {top, left, right, bottom, butterfly, sandglass} from "../layout";

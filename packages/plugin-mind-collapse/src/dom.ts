@@ -1,6 +1,6 @@
 import {collapseChildPlugin, _toolBoxPlugin, MyPen} from "./core/CollapseChildPlugin";
 import {defaultConfig, defaultStyle} from "./core/default";
-import {Meta2d} from "../../core";
+import {Meta2d} from "@meta2d/core";
 
 declare const meta2d: Meta2d;
 
