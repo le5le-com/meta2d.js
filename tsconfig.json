@@ -7,7 +7,7 @@
     "declaration": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "target": "es5",
+    "target": "esnext",
     "allowJs": true,
     "lib": [
       "es2018",

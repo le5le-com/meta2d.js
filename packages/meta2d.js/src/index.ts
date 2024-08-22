@@ -1,16 +1,19 @@
 import { Meta2d } from '@meta2d/core';
-import { classPens } from '../../class-diagram';
-import { sequencePens, sequencePensbyCtx } from '../../sequence-diagram';
-import { activityDiagram, activityDiagramByCtx } from '../../activity-diagram';
-import { flowPens, flowAnchors } from '../../flow-diagram';
+import { classPens } from '@meta2d/class-diagram';
+import { sequencePens, sequencePensbyCtx } from '@meta2d/sequence-diagram';
+import {
+  activityDiagram,
+  activityDiagramByCtx,
+} from '@meta2d/activity-diagram';
+import { flowPens, flowAnchors } from '@meta2d/flow-diagram';
 import {
   register as registerEcharts,
   registerHighcharts,
   registerLightningChart,
-} from '../../chart-diagram';
-import { formPens } from '../../form-diagram';
-import { ftaPens, ftaPensbyCtx, ftaAnchors } from '../../fta-diagram';
-import { chartsPens } from '../../le5le-charts';
+} from '@meta2d/chart-diagram';
+import { formPens } from '@meta2d/form-diagram';
+import { ftaPens, ftaPensbyCtx, ftaAnchors } from '@meta2d/fta-diagram';
+import { chartsPens } from '@meta2d/le5le-charts';
 
 globalThis.Meta2d = Meta2d;
 globalThis.registerCommonDiagram = function () {

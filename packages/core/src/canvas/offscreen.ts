@@ -1,4 +1,4 @@
-export function createOffscreen() {
+export function createOffscreen(): any {
   try {
     const offscreen = new OffscreenCanvas(0, 0);
     const context = offscreen.getContext('2d');

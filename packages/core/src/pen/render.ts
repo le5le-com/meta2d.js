@@ -27,7 +27,7 @@ import {
   rectInRect,
   scaleRect,
   translateRect,
-  calcPivot
+  calcPivot,
 } from '../rect';
 import { globalStore, Meta2dStore } from '../store';
 import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
@@ -91,7 +91,7 @@ export function getAllFollowers(pen: Pen, store: Meta2dStore): Pen[] {
   const followers: Pen[] = [];
   pen.followers.forEach((id) => {
     const follower = store.pens[id];
-    if (follower&&!follower.parentId) {
+    if (follower && !follower.parentId) {
       followers.push(follower);
       followers.push(...getAllFollowers(follower, store));
     }
@@ -418,13 +418,14 @@ function drawLinearGradientLine(
 function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
   let smoothLenth =
-    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || pen.calculative.lineSmooth || 0);
+    pen.calculative.lineWidth *
+    (pen.calculative.gradientSmooth || pen.calculative.lineSmooth || 0);
   for (let i = 0; i < anchors.length - 1; i++) {
     if (
       (pen.lineName === 'curve' || pen.lineName === 'mind') &&
       anchors[i].curvePoints
     ) {
-            if (i > 0) {
+      if (i > 0) {
         let lastCurvePoints = anchors[i - 1].curvePoints;
         if (lastCurvePoints) {
           //上一个存在锚点
@@ -492,7 +493,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
             anchors[i + 1]
           );
         } else {
-                    smoothTransition(
+          smoothTransition(
             ctx,
             pen,
             smoothLenth,
@@ -500,7 +501,7 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
             anchors[i],
             anchors[i + 1]
           );
-                  }
+        }
       }
       if (i > 0 && i < anchors.length - 1) {
         _next = getSmoothAdjacent(smoothLenth, anchors[i], anchors[i + 1]);
@@ -509,15 +510,15 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
         _last = getSmoothAdjacent(smoothLenth, anchors[i + 1], anchors[i]);
       }
       let flag = false;
-      if(i === 0){
-        if( pen.fromLineCap && pen.fromLineCap !== 'butt'){
+      if (i === 0) {
+        if (pen.fromLineCap && pen.fromLineCap !== 'butt') {
           ctx.save();
           flag = true;
           ctx.lineCap = pen.fromLineCap;
         }
       }
-      if(i !== 0 && i === anchors.length - 2){
-        if( pen.toLineCap && pen.toLineCap !== 'butt'){
+      if (i !== 0 && i === anchors.length - 2) {
+        if (pen.toLineCap && pen.toLineCap !== 'butt') {
           ctx.save();
           flag = true;
           ctx.lineCap = pen.toLineCap;
@@ -525,21 +526,24 @@ function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
       }
 
       drawLinearGradientLine(ctx, pen, [_next, _last]);
-      if(flag){
+      if (flag) {
         ctx.restore();
       }
-      if(anchors.length===2&&i===0){
+      if (anchors.length === 2 && i === 0) {
         ctx.save();
         flag = true;
         ctx.lineCap = pen.toLineCap;
         let _y = 0.1;
         let _x = 0.1;
-        if(_next.x-_last.x===0){
-          _x =0
-        }else{
-          _y = (_next.y-_last.y)/(_next.x-_last.x)*0.1;
+        if (_next.x - _last.x === 0) {
+          _x = 0;
+        } else {
+          _y = ((_next.y - _last.y) / (_next.x - _last.x)) * 0.1;
         }
-        drawLinearGradientLine(ctx, pen, [{x:_last.x-_x,y:_last.y-_y}, _last]);
+        drawLinearGradientLine(ctx, pen, [
+          { x: _last.x - _x, y: _last.y - _y },
+          _last,
+        ]);
         ctx.restore();
       }
     }
@@ -581,7 +585,12 @@ function smoothTransition(
   let next = getSmoothAdjacent(smoothLenth, p2, p3);
   let contrlPoint = { x: p2.x, y: p2.y };
 
-  let points = getBezierPoints(pen.calculative.canvas.store.data.smoothNum || 20, last, contrlPoint, next);
+  let points = getBezierPoints(
+    pen.calculative.canvas.store.data.smoothNum || 20,
+    last,
+    contrlPoint,
+    next
+  );
   for (let k = 0; k < points.length - 1; k++) {
     drawLinearGradientLine(ctx, pen, [
       {
@@ -611,7 +620,8 @@ function smoothAnimateTransition(
 export function getGradientAnimatePath(pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
   let smoothLenth =
-    pen.calculative.lineWidth * (pen.calculative.gradientSmooth || pen.calculative.lineSmooth || 0);
+    pen.calculative.lineWidth *
+    (pen.calculative.gradientSmooth || pen.calculative.lineSmooth || 0);
   //只创建一次
   const _path = new Path2D();
   for (let i = 0; i < anchors.length - 1; i++) {
@@ -974,9 +984,12 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.shadowOffsetY = 0;
   }
   let fill: string = undefined;
-  if(pen.calculative.disabled){
-    fill = pen.disabledTextColor || pen.disabledColor || pSBC(0.4, getTextColor(pen, store));
-  }else if (pen.calculative.hover) {
+  if (pen.calculative.disabled) {
+    fill =
+      pen.disabledTextColor ||
+      pen.disabledColor ||
+      pSBC(0.4, getTextColor(pen, store));
+  } else if (pen.calculative.hover) {
     fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
   } else if (pen.calculative.active) {
     fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
@@ -1294,7 +1307,8 @@ export function ctxRotate(
   pen: Pen,
   noFlip: boolean = false
 ) {
-  const { x, y } = pen.calculative.worldRect.pivot || pen.calculative.worldRect.center;
+  const { x, y } =
+    pen.calculative.worldRect.pivot || pen.calculative.worldRect.center;
   ctx.translate(x, y);
   let rotate = (pen.calculative.rotate * Math.PI) / 180;
   // 目前只有水平和垂直翻转，都需要 * -1
@@ -1339,12 +1353,22 @@ export function renderPen(
   // let setBack = true;
   let lineGradientFlag = false;
   let _stroke = undefined;
-  if(pen.calculative.disabled){
-    _stroke = pen.disabledColor || store.options.disabledColor || pSBC(0.4, pen.calculative.color || getGlobalColor(store));
-    fill = pen.disabledBackground || store.options.disabledBackground || pSBC(0.4, pen.calculative.background || store.data.penBackground);
-  } else if (pen.mouseDownValid && pen.calculative.mouseDown){
-    _stroke = pen.mouseDownColor || pSBC(-0.4, pen.calculative.color || getGlobalColor(store));
-    fill = pen.mouseDownBackground || pSBC(-0.4, pen.calculative.background || store.data.penBackground);
+  if (pen.calculative.disabled) {
+    _stroke =
+      pen.disabledColor ||
+      store.options.disabledColor ||
+      pSBC(0.4, pen.calculative.color || getGlobalColor(store));
+    fill =
+      pen.disabledBackground ||
+      store.options.disabledBackground ||
+      pSBC(0.4, pen.calculative.background || store.data.penBackground);
+  } else if (pen.mouseDownValid && pen.calculative.mouseDown) {
+    _stroke =
+      pen.mouseDownColor ||
+      pSBC(-0.4, pen.calculative.color || getGlobalColor(store));
+    fill =
+      pen.mouseDownBackground ||
+      pSBC(-0.4, pen.calculative.background || store.data.penBackground);
   } else if (pen.calculative.hover) {
     _stroke = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
@@ -1403,14 +1427,14 @@ export function renderPen(
     if (pen.calculative.bkType === Gradient.Linear) {
       if (pen.calculative.gradientColors) {
         // if (!pen.type) {
-          //连线不考虑渐进背景
-          if (pen.calculative.gradient) {
-            //位置变化/放大缩小操作不会触发重新计算
-            back = pen.calculative.gradient;
-          } else {
-            back = getBkGradient(ctx, pen);
-            pen.calculative.gradient = back;
-          }
+        //连线不考虑渐进背景
+        if (pen.calculative.gradient) {
+          //位置变化/放大缩小操作不会触发重新计算
+          back = pen.calculative.gradient;
+        } else {
+          back = getBkGradient(ctx, pen);
+          pen.calculative.gradient = back;
+        }
         // }
       } else {
         back = drawBkLinearGradient(ctx, pen);
@@ -1596,7 +1620,11 @@ export function renderPenRaw(
       }
     } else {
       let stroke: string | CanvasGradient | CanvasPattern;
-      if (pen.calculative.strokeType&&pen.calculative.lineGradientColors&&pen.name === 'line') {
+      if (
+        pen.calculative.strokeType &&
+        pen.calculative.lineGradientColors &&
+        pen.name === 'line'
+      ) {
         lineGradientFlag = true;
       } else {
         stroke = pen.calculative.color || getGlobalColor(store);
@@ -1727,19 +1755,31 @@ export function ctxDrawPath(
 
   let path_from = null;
   let path_to = null;
-  if(pen.type === PenType.Line){
+  if (pen.type === PenType.Line) {
     //线段的起始和结束线帽 分别配置
-    if( pen.fromLineCap && pen.fromLineCap !== 'butt'){
+    if (pen.fromLineCap && pen.fromLineCap !== 'butt') {
       ctx.lineCap = 'butt';
       path_from = new Path2D();
-      path_from.moveTo(pen.calculative.worldAnchors[0].x, pen.calculative.worldAnchors[0].y);
-      path_from.lineTo(pen.calculative.worldAnchors[0].x, pen.calculative.worldAnchors[0].y);
+      path_from.moveTo(
+        pen.calculative.worldAnchors[0].x,
+        pen.calculative.worldAnchors[0].y
+      );
+      path_from.lineTo(
+        pen.calculative.worldAnchors[0].x,
+        pen.calculative.worldAnchors[0].y
+      );
     }
-    if( pen.toLineCap && pen.toLineCap !== 'butt'){
+    if (pen.toLineCap && pen.toLineCap !== 'butt') {
       ctx.lineCap = 'butt';
       path_to = new Path2D();
-      path_to.moveTo(pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].x, pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].y);
-      path_to.lineTo(pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].x, pen.calculative.worldAnchors[pen.calculative.worldAnchors.length-1].y);
+      path_to.moveTo(
+        pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1].x,
+        pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1].y
+      );
+      path_to.lineTo(
+        pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1].x,
+        pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1].y
+      );
     }
   }
   if (path) {
@@ -1749,7 +1789,7 @@ export function ctxDrawPath(
       const lineWidth = pen.calculative.lineWidth + pen.calculative.borderWidth;
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = pen.borderColor;
-      if( path_from ){
+      if (path_from) {
         ctx.save();
         ctx.lineCap = pen.fromLineCap;
         ctx.stroke(path_from);
@@ -1763,7 +1803,7 @@ export function ctxDrawPath(
         fill && ctx.fill();
         lineWidth && ctx.stroke();
       }
-      if( path_to){
+      if (path_to) {
         ctx.save();
         ctx.lineCap = pen.toLineCap;
         ctx.stroke(path_to);
@@ -1772,11 +1812,11 @@ export function ctxDrawPath(
       ctx.restore();
     }
     if (path instanceof Path2D) {
-      if(pen.type){
-        if(pen.close){
-         fill && ctx.fill(path);
+      if (pen.type) {
+        if (pen.close) {
+          fill && ctx.fill(path);
         }
-      }else{
+      } else {
         //svgPath
         fill && ctx.fill(path);
       }
@@ -1835,15 +1875,15 @@ export function ctxDrawPath(
 
     if (pen.calculative.lineWidth) {
       if (path instanceof Path2D) {
-        if(store.options.svgPathStroke || pen.name!=='svgPath'){
-          if(path_from){
+        if (store.options.svgPathStroke || pen.name !== 'svgPath') {
+          if (path_from) {
             ctx.save();
             ctx.lineCap = pen.fromLineCap;
             ctx.stroke(path_from);
             ctx.restore();
           }
           ctx.stroke(path);
-          if( path_to ){
+          if (path_to) {
             ctx.save();
             ctx.lineCap = pen.toLineCap;
             ctx.stroke(path_to);
@@ -1860,19 +1900,22 @@ export function ctxDrawPath(
       if (pen.calculative.animatePos) {
         ctx.save();
         setCtxLineAnimate(ctx, pen, store);
-        if(pen.lineAnimateType === LineAnimateType.Arrow || pen.lineAnimateType === LineAnimateType.WaterDrop){
+        if (
+          pen.lineAnimateType === LineAnimateType.Arrow ||
+          pen.lineAnimateType === LineAnimateType.WaterDrop
+        ) {
           //箭头动画
-          let _path = drawArrow(pen,ctx);
-          if(_path instanceof Path2D){
+          let _path = drawArrow(pen, ctx);
+          if (_path instanceof Path2D) {
             ctx.stroke(_path);
             ctx.fill(_path);
-          }else{
+          } else {
             ctx.stroke();
             ctx.fill();
           }
-        }else{
+        } else {
           if (path instanceof Path2D) {
-            if(path_from&&!pen.lineAnimateType){
+            if (path_from && !pen.lineAnimateType) {
               ctx.save();
               ctx.lineCap = pen.fromLineCap;
               ctx.stroke(path_from);
@@ -1880,7 +1923,7 @@ export function ctxDrawPath(
             }
             ctx.lineCap = pen.lineCap;
             ctx.stroke(path);
-                      } else {
+          } else {
             path(pen, ctx);
             ctx.stroke();
           }
@@ -1891,7 +1934,12 @@ export function ctxDrawPath(
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
 
-      if (pen.calculative.active && !pen.calculative.pencil && !store.options.disableAnchor && !store.data.locked) {
+      if (
+        pen.calculative.active &&
+        !pen.calculative.pencil &&
+        !store.options.disableAnchor &&
+        !store.data.locked
+      ) {
         renderLineAnchors(ctx, pen);
       }
     }
@@ -1917,25 +1965,32 @@ export function ctxDrawLinePath(
         setCtxLineAnimate(ctx, pen, store);
         ctx.beginPath();
         if (path instanceof Path2D) {
-          if(pen.lineName === 'polyline' || pen.lineName === 'line'){
-            if(pen.lineAnimateType === LineAnimateType.Arrow || pen.lineAnimateType === LineAnimateType.WaterDrop){
+          if (pen.lineName === 'polyline' || pen.lineName === 'line') {
+            if (
+              pen.lineAnimateType === LineAnimateType.Arrow ||
+              pen.lineAnimateType === LineAnimateType.WaterDrop
+            ) {
               //箭头动画
               const _path = drawArrow(pen);
               ctx.stroke(_path);
               ctx.fill(_path);
-            }else{
-              if(pen.calculative.gradientSmooth || pen.calculative.lineSmooth){
+            } else {
+              if (
+                pen.calculative.gradientSmooth ||
+                pen.calculative.lineSmooth
+              ) {
                 if (!pen.calculative.gradientAnimatePath) {
-                  pen.calculative.gradientAnimatePath = getGradientAnimatePath(pen);
+                  pen.calculative.gradientAnimatePath =
+                    getGradientAnimatePath(pen);
                 }
                 if (pen.calculative.gradientAnimatePath instanceof Path2D) {
                   ctx.stroke(pen.calculative.gradientAnimatePath);
                 }
-              }else{
+              } else {
                 ctx.stroke(path);
               }
             }
-          }else {
+          } else {
             ctx.stroke(path);
           }
         } else {
@@ -1948,7 +2003,12 @@ export function ctxDrawLinePath(
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
       //TODO 锚点处渐进色的过渡
-      if (pen.calculative.active && !pen.calculative.pencil && !store.options.disableAnchor && !store.data.locked) {
+      if (
+        pen.calculative.active &&
+        !pen.calculative.pencil &&
+        !store.options.disableAnchor &&
+        !store.data.locked
+      ) {
         renderLineAnchors(ctx, pen);
       }
     }
@@ -1964,9 +2024,10 @@ export function setCtxLineAnimate(
   store: Meta2dStore
 ) {
   ctx.strokeStyle = pen.animateColor || store.options.animateColor;
-  if(pen.animateShadow){
+  if (pen.animateShadow) {
     ctx.shadowBlur = pen.animateShadowBlur || pen.animateLineWidth || 6;
-    ctx.shadowColor = pen.animateShadowColor || pen.animateColor || store.options.animateColor;
+    ctx.shadowColor =
+      pen.animateShadowColor || pen.animateColor || store.options.animateColor;
   }
   pen.calculative.animateLineWidth &&
     (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);
@@ -1998,7 +2059,7 @@ export function setCtxLineAnimate(
       if (len < 6) {
         len = 6;
       }
-      if(len > 40){
+      if (len > 40) {
         len = 40;
       }
       ctx.lineWidth =
@@ -2006,16 +2067,16 @@ export function setCtxLineAnimate(
       ctx.setLineDash([0.1, pen.length]);
       break;
     case LineAnimateType.Arrow:
-      ctx.fillStyle =   pen.animateColor || store.options.animateColor;
+      ctx.fillStyle = pen.animateColor || store.options.animateColor;
       ctx.lineWidth = 1;
       break;
     case LineAnimateType.WaterDrop:
-      ctx.fillStyle =   pen.animateColor || store.options.animateColor;
+      ctx.fillStyle = pen.animateColor || store.options.animateColor;
       ctx.lineWidth = 1;
       break;
     default:
       if (pen.animateReverse) {
-        ctx.lineDashOffset = Number.EPSILON;//防止在执行动画时会绘制多余的远点
+        ctx.lineDashOffset = Number.EPSILON; //防止在执行动画时会绘制多余的远点
         ctx.setLineDash([
           0,
           pen.length - pen.calculative.animatePos + 1,
@@ -2024,7 +2085,7 @@ export function setCtxLineAnimate(
       } else {
         ctx.setLineDash([
           pen.calculative.animatePos,
-          pen.length + 0.01 - pen.calculative.animatePos,//避免在缩放时，精度问题绘制多余圆点
+          pen.length + 0.01 - pen.calculative.animatePos, //避免在缩放时，精度问题绘制多余圆点
         ]);
       }
       break;
@@ -2144,7 +2205,7 @@ export function calcWorldRects(pen: Pen) {
     rect.rotate = pen.rotate;
     calcRightBottom(rect);
     calcCenter(rect);
-    if(pen.pivot){
+    if (pen.pivot) {
       calcPivot(rect, pen.pivot);
     }
   } else {
@@ -2173,7 +2234,7 @@ export function calcWorldRects(pen: Pen) {
 
     rect.rotate = parentRect.rotate + pen.rotate;
     calcCenter(rect);
-    if(pen.pivot){
+    if (pen.pivot) {
       calcPivot(rect, pen.pivot);
     }
   }
@@ -2273,7 +2334,7 @@ export function calcWorldAnchors(pen: Pen) {
   pen.calculative.gradientAnimatePath = undefined;
 }
 
-export function calcChildrenInitRect(pen:Pen){
+export function calcChildrenInitRect(pen: Pen) {
   // 重新计算子节点初始化坐标
   if (pen.children?.length) {
     let parentRect = pen.calculative.worldRect;
@@ -2385,19 +2446,15 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
 }
 
 export function scaleChildrenInitRect(pen: Pen, scale: number, center: Point) {
-  if(!pen){
+  if (!pen) {
     return;
   }
   if (pen.children?.length) {
     pen.children.forEach((id) => {
       const child = pen.calculative.canvas.store.pens[id];
-      if(child){
-        if ( child.calculative.initRect ) {
-          scaleRect(
-            child.calculative.initRect,
-            scale,
-            center
-          );
+      if (child) {
+        if (child.calculative.initRect) {
+          scaleRect(child.calculative.initRect, scale, center);
         }
         scaleChildrenInitRect(child, scale, center);
       }
@@ -2629,9 +2686,26 @@ export function connectLine(
     anchor,
   });
   // 新增连线生命周期
-  let fromPen = (line.calculative.worldAnchors?.length >= 2)? line.calculative.worldAnchors?.[0].connectTo : undefined;
-  let fromAnchor = (line.calculative.worldAnchors?.length >= 2)?line.calculative.canvas.store.pens[line.calculative.worldAnchors?.[0].connectTo]?.anchors.find(i=>i.id === line.calculative.worldAnchors?.[0].anchorId): undefined; // num
-  pen.onConnectLine?.(pen,{line,lineAnchor,pen,anchor,fromPen,fromAnchor});
+  let fromPen =
+    line.calculative.worldAnchors?.length >= 2
+      ? line.calculative.worldAnchors?.[0].connectTo
+      : undefined;
+  let fromAnchor =
+    line.calculative.worldAnchors?.length >= 2
+      ? line.calculative.canvas.store.pens[
+          line.calculative.worldAnchors?.[0].connectTo
+        ]?.anchors.find(
+          (i) => i.id === line.calculative.worldAnchors?.[0].anchorId
+        )
+      : undefined; // num
+  pen.onConnectLine?.(pen, {
+    line,
+    lineAnchor,
+    pen,
+    anchor,
+    fromPen,
+    fromAnchor,
+  });
   return true;
 }
 
@@ -2813,7 +2887,8 @@ export function setNodeAnimate(pen: Pen, now: number) {
       if (pen.children?.length && !pen.parentId) {
         pen.calculative.canvas.rotatePen(
           pen,
-          (pen.calculative.initRect.rotate || 0) - (pen.calculative.rotate||0),
+          (pen.calculative.initRect.rotate || 0) -
+            (pen.calculative.rotate || 0),
           pen.calculative.initRect
         );
       } else {
@@ -2967,7 +3042,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
           } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
             pen.calculative.canvas.canvasImage.init();
           }
-        } else if(pen.children?.length) {
+        } else if (pen.children?.length) {
           const childs = getAllChildren(pen, pen.calculative.canvas.store);
           pen.calculative.canvas.initImageCanvas(childs);
         }
@@ -3060,7 +3135,7 @@ export function setHover(pen: Pen, hover = true) {
   }
   const store = pen.calculative.canvas.store;
   pen.calculative.hover = hover;
-  if(pen.childHover === false){
+  if (pen.childHover === false) {
     return;
   }
   if (pen.children) {
@@ -3216,7 +3291,7 @@ function initLineRect(pen: Pen) {
     pen.fontSize = fontSize >= 0 ? fontSize : 12;
     pen.calculative.fontSize =
       pen.fontSize * pen.calculative.canvas.store.data.scale;
-  } else if(pen.fontSize < 0) {
+  } else if (pen.fontSize < 0) {
     pen.fontSize = 0;
     pen.calculative.fontSize = 0;
   }
@@ -3318,7 +3393,8 @@ export function calcInView(pen: Pen, calcChild = false) {
   // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
   // 更改 view 后，修改 dom 节点的显示隐藏
   // pen.onMove?.(pen);
-  pen.calculative.singleton?.div && setElemPosition(pen, pen.calculative.singleton.div);
+  pen.calculative.singleton?.div &&
+    setElemPosition(pen, pen.calculative.singleton.div);
 }
 
 /**
@@ -3358,7 +3434,8 @@ export function setGlobalAlpha(
  * @param pen 画笔
  */
 function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const canvasDraw =  drawFuncGenerator(ctx,pen) || globalStore.canvasDraws[pen.name];
+  const canvasDraw =
+    drawFuncGenerator(ctx, pen) || globalStore.canvasDraws[pen.name];
   if (canvasDraw) {
     // TODO: 后续考虑优化 save / restore
     ctx.save();
@@ -3369,26 +3446,26 @@ function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
   // 进行数据的预处理
-  const drawCommand:Array<any> = pen.drawCommand;
-  if(!drawCommand || pen.name === 'line')return ;
+  const drawCommand: Array<any> = pen.drawCommand;
+  if (!drawCommand || pen.name === 'line') return;
   // 单位转换 将其他单位转换为px
 
   // 执行自定义绘画函数
-  return (ctx: CanvasRenderingContext2D,pen: Pen)=> {
+  return (ctx: CanvasRenderingContext2D, pen: Pen) => {
     // TODO  绘制命令的转换 （能否兼容多种指令？？）
-    drawCommand.forEach((command)=> {
+    drawCommand.forEach((command) => {
       try {
         command.steps = command.steps.flat(Infinity);
-        command.steps.reduce((calculate,step)=>{
-          const cs = commandTransfer(step,pen,calculate.x,calculate.y);
+        command.steps.reduce((calculate, step) => {
+          const cs = commandTransfer(step, pen, calculate.x, calculate.y);
           // 应当保证顺序的正确
           try {
-            if(cs.c){
-              if(cs.c.startsWith('_')){
+            if (cs.c) {
+              if (cs.c.startsWith('_')) {
                 const prop = cs.c.split('_')[1];
                 // debugger;
                 (cs.p || ctx)[prop] = cs.v.value;
-                return {x:calculate.x,y:calculate.y};
+                return { x: calculate.x, y: calculate.y };
               }
               let l = [];
               for (const csKey in cs.v) {
@@ -3396,215 +3473,238 @@ function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
               }
               // ctx.beginPath();
               (cs.p || ctx)[cs.c](...l);
-              ctx.moveTo(cs.startX || cs.v.x,cs.startY || cs.v.y);
+              ctx.moveTo(cs.startX || cs.v.x, cs.startY || cs.v.y);
               // command.prop.NoFill === '0'?ctx.fill():'';
-              return {x:cs.startX || cs.v.x, y:cs.startY||cs.v.y};
+              return { x: cs.startX || cs.v.x, y: cs.startY || cs.v.y };
             }
-            return {x:calculate.x,y:calculate.y};
-          }catch (e) {
+            return { x: calculate.x, y: calculate.y };
+          } catch (e) {
             // pass
-            console.log(e,'error',cs);
+            console.log(e, 'error', cs);
           }
-        },{});
-      }
-      catch (e) {
-      }
+        }, {});
+      } catch (e) {}
     });
     ctx.stroke();
   };
 }
 
-function commandTransfer(command,pen,startX,startY){
-
+function commandTransfer(command, pen, startX, startY) {
   // TODO 是否支持扩展更多的命令？用于兼容未来的其他解析格式？
   //1. 进行简单的命令解析
   // VISIO
   const map = {
-    'visio':dealWithVisio,
-    'dxf':dealWithDXF
+    visio: dealWithVisio,
+    dxf: dealWithDXF,
   };
   // CAD
-  return map[pen.parseType](command,pen,startX,startY);
+  return map[pen.parseType](command, pen, startX, startY);
 }
 
-function dealWithDXF(command,pen,startX,startY) {
+function dealWithDXF(command, pen, startX, startY) {
   const { x, y, width, height } = pen.calculative.worldRect;
-  const {originWidth,originHeight} = pen.dxfOrigin;
+  const { originWidth, originHeight } = pen.dxfOrigin;
   switch (command.c) {
-    case "beginPath":
+    case 'beginPath':
       return {
-        c:'beginPath',
-        v:{}
+        c: 'beginPath',
+        v: {},
       };
-    case "closePath":
+    case 'closePath':
       return {
-        c:'closePath',
-        v:{}
+        c: 'closePath',
+        v: {},
       };
-    case "moveTo":
+    case 'moveTo':
       return {
-        c:'moveTo',
-        v:{
+        c: 'moveTo',
+        v: {
           x: command.v.x * (width / originWidth) + x,
-          y: command.v.y * (height / originHeight) + y
-        }
+          y: command.v.y * (height / originHeight) + y,
+        },
       };
-    case "lineTo":
+    case 'lineTo':
       return {
-        c:'lineTo',
-        v:{
+        c: 'lineTo',
+        v: {
           x: command.v.x * (width / originWidth) + x,
-          y: command.v.y * (height / originHeight) + y
-        }
+          y: command.v.y * (height / originHeight) + y,
+        },
       };
-    case "arc":
+    case 'arc':
       return {
-        c:'ellipse',
-        v:{
-          x:command.v.x * (width / originWidth) + x,
-          y:(command.v.y * (height / originHeight)) + y,
-          rx:command.v.xr * (width / originWidth),
-          ry:command.v.yr * (height / originHeight),
-          rotation:command.v.rotation || 0,
-          startAngle:command.v.startAngle,
+        c: 'ellipse',
+        v: {
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y,
+          rx: command.v.xr * (width / originWidth),
+          ry: command.v.yr * (height / originHeight),
+          rotation: command.v.rotation || 0,
+          startAngle: command.v.startAngle,
           endAngle: command.v.endAngle,
-          a:command.v.aclockwise ?? true
-        }
+          a: command.v.aclockwise ?? true,
+        },
       };
-    case "ellipse":
+    case 'ellipse':
       return {
-        c:'ellipse',
-        v:{
-          x:command.v.x * (width / originWidth) + x,
-          y:(command.v.y * (height / originHeight)) + y,
-          rx:command.v.xr * (width / originWidth),
-          ry:command.v.yr * (height / originHeight),
-          rotation:command.v.rotation || 0,
-          startAngle:command.v.startAngle,
+        c: 'ellipse',
+        v: {
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y,
+          rx: command.v.xr * (width / originWidth),
+          ry: command.v.yr * (height / originHeight),
+          rotation: command.v.rotation || 0,
+          startAngle: command.v.startAngle,
           endAngle: command.v.endAngle,
-          a:command.v.aclockwise ?? true
-        }
+          a: command.v.aclockwise ?? true,
+        },
       };
-    case "_font":
+    case '_font':
+      const store = pen.calculative.canvas.store;
       return {
-        c:'_font',
-        v:{
-          value:command.v.fontSize * meta2d.store.data.scale + 'px ' + (command.v.fontFamily || meta2d.store.options.fontFamily)
-        }
+        c: '_font',
+        v: {
+          value:
+            command.v.fontSize * store.data.scale +
+            'px ' +
+            (command.v.fontFamily || store.options.fontFamily),
+        },
       };
-    case "_fillStyle":
+    case '_fillStyle':
       return {
-        c:'_fillStyle',
-        v:{
-          value:pen.color || command.v.value
-        }
+        c: '_fillStyle',
+        v: {
+          value: pen.color || command.v.value,
+        },
       };
-      default:
-        const c = {
-          c:command.c,
-          v:{
-            ...command.v,
-            x:command.v.x * (width / originWidth) + x,
-            y:(command.v.y * (height / originHeight)) + y
-          }
-        };
-        !command.v.x && delete c.v.x;
-        !command.v.y && delete c.v.y;
-        return c;
+    default:
+      const c = {
+        c: command.c,
+        v: {
+          ...command.v,
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y,
+        },
+      };
+      !command.v.x && delete c.v.x;
+      !command.v.y && delete c.v.y;
+      return c;
   }
 }
-function dealWithVisio(command,pen,startX,startY) {
+function dealWithVisio(command, pen, startX, startY) {
   const { x, y, width, height } = pen.calculative.worldRect;
-  const { width:originWidth, height:originHeight} = pen.origin;
+  const { width: originWidth, height: originHeight } = pen.origin;
   switch (command.c) {
-    case "MoveTo":
+    case 'MoveTo':
       return {
-          c:"moveTo",
-        v:{
-          x:+ command.v.X * (100) * (width / originWidth) + x,
-          y:+ command.v.Y * (100) * (height / originHeight) + y
-        }
+        c: 'moveTo',
+        v: {
+          x: +command.v.X * 100 * (width / originWidth) + x,
+          y: +command.v.Y * 100 * (height / originHeight) + y,
+        },
       };
-    case "RelMoveTo":
+    case 'RelMoveTo':
       return {
-        c:"moveTo",
-        v:{
-          x:+ command.v.X * originWidth * (width / originWidth) + x,
-          y:+ command.v.Y * originHeight * (height / originHeight) + y
-        }
+        c: 'moveTo',
+        v: {
+          x: +command.v.X * originWidth * (width / originWidth) + x,
+          y: +command.v.Y * originHeight * (height / originHeight) + y,
+        },
       };
-    case "LineTo":
+    case 'LineTo':
       return {
-        c: "lineTo",
-        v:{
-          x:+ command.v.X * (100) * (width / originWidth) + x,
-          y:+ command.v.Y * (100) * (height / originHeight) + y
-        }
+        c: 'lineTo',
+        v: {
+          x: +command.v.X * 100 * (width / originWidth) + x,
+          y: +command.v.Y * 100 * (height / originHeight) + y,
+        },
       };
-    case "RelLineTo":
+    case 'RelLineTo':
       return {
-        c: "lineTo",
-        v:{
-          x:+ command.v.X * originWidth * (width / originWidth) + x,
-          y:+ command.v.Y * originHeight * (height / originHeight) + y
-        }
+        c: 'lineTo',
+        v: {
+          x: +command.v.X * originWidth * (width / originWidth) + x,
+          y: +command.v.Y * originHeight * (height / originHeight) + y,
+        },
       };
-    case "Ellipse":
+    case 'Ellipse':
       let centerX1 = command.v.X;
       let centerY1 = command.v.Y;
       let longAxis = Math.abs(command.v.A - command.v.C);
       let shortAxis = Math.abs(command.v.B - command.v.D);
 
       return {
-        c: "ellipse",
+        c: 'ellipse',
         v: {
-          x: centerX1 * (100) * (width / originWidth) + x,
-          y: centerY1 * (100) * (height / originHeight) + y,
-          radiuX: longAxis * (100) * (width / originWidth),
-          radiuY: shortAxis * (100) * (height / originHeight),
+          x: centerX1 * 100 * (width / originWidth) + x,
+          y: centerY1 * 100 * (height / originHeight) + y,
+          radiuX: longAxis * 100 * (width / originWidth),
+          radiuY: shortAxis * 100 * (height / originHeight),
           rotation: 0,
           startAngle: 0,
-          endAngle: Math.PI *2,
-          anticlockwise: true
-        }
+          endAngle: Math.PI * 2,
+          anticlockwise: true,
+        },
       };
-    case "EllipticalArcTo":
+    case 'EllipticalArcTo':
       const endX = command.v.X * 100 * (width / originWidth) + x; // 弧上结束顶点的 x 坐标
       const endY = command.v.Y * 100 * (height / originHeight) + y; // 弧上结束顶点的 y 坐标
       const ctrlX = command.v.A * 100 * (width / originWidth) + x; // 控制点的 x 坐标
       const ctrlY = command.v.B * 100 * (height / originHeight) + y; // 控制点的 y 坐标
       const angleDeg = command.v.C; // 主轴相对于 x 轴的角度 (度)
-      const axisRatio = command.v.D * (width / height) * (originHeight / originWidth); // 长轴和短轴的比率
+      const axisRatio =
+        command.v.D * (width / height) * (originHeight / originWidth); // 长轴和短轴的比率
       //
-      const params = calculateEllipseParameters(startX,startY,endX,endY,ctrlX,ctrlY,axisRatio);
-// 开始绘制路径
+      const params = calculateEllipseParameters(
+        startX,
+        startY,
+        endX,
+        endY,
+        ctrlX,
+        ctrlY,
+        axisRatio
+      );
+      // 开始绘制路径
       !command.orign && (command.orign = {});
-      !command.orign.startA && ( command.orign.startA = calculateAngleInRadians(params.x0,params.y0,startX,startY));
-      !command.orign.endA && ( command.orign.endA = calculateAngleInRadians(params.x0,params.y0,endX,endY));
+      !command.orign.startA &&
+        (command.orign.startA = calculateAngleInRadians(
+          params.x0,
+          params.y0,
+          startX,
+          startY
+        ));
+      !command.orign.endA &&
+        (command.orign.endA = calculateAngleInRadians(
+          params.x0,
+          params.y0,
+          endX,
+          endY
+        ));
       return {
-        c:"ellipse",
-        v:{
+        c: 'ellipse',
+        v: {
           centerX: params.x0,
-          centerY: params.y0 ,
-          radiuX: params.a ,
+          centerY: params.y0,
+          radiuX: params.a,
           radiuY: params.b,
           // rotation:radiansToDegrees(angleDeg),
-          rotation:0,
-          startAngle:command.orign.startA,
+          rotation: 0,
+          startAngle: command.orign.startA,
           endAngle: command.orign.endA,
           // startAngle: 0,
           // endAngle: Math.PI * 2,
           // anticlockwise: startA > 0 && startA>endA
-          anticlockwise: + angleDeg < 0
+          anticlockwise: +angleDeg < 0,
           // anticlockwise: Math.abs(endA - startA) < Math.PI
         },
-        startX:endX,
-        startY:endY,
+        startX: endX,
+        startY: endY,
       };
-    case "ArcTo":
-      let endX2 = command.v.X * 100 * width / originWidth + x;
-      let endY2 = command.v.Y * 100 * height / originHeight + y;
-      let h = command.v.A * 100 *  (width / height) * (originHeight / originWidth);
+    case 'ArcTo':
+      let endX2 = (command.v.X * 100 * width) / originWidth + x;
+      let endY2 = (command.v.Y * 100 * height) / originHeight + y;
+      let h =
+        command.v.A * 100 * (width / height) * (originHeight / originWidth);
       // 计算弦的中点
       let xm = (startX + endX2) / 2;
       let ym = (startY + endY2) / 2;
@@ -3613,7 +3713,7 @@ function dealWithVisio(command,pen,startX,startY) {
       let d = Math.sqrt((endX2 - startX) ** 2 + (endY2 - startY) ** 2);
 
       // 计算圆弧的半径
-      let R = (d ** 2) / (8 * h) + h / 2;
+      let R = d ** 2 / (8 * h) + h / 2;
 
       // 计算单位垂直向量
       let ux = -(endY2 - startY) / d;
@@ -3633,15 +3733,15 @@ function dealWithVisio(command,pen,startX,startY) {
       let startAngle = Math.atan2(startY - yc, startX - xc);
       let endAngle = Math.atan2(endY2 - yc, endX2 - xc);
       return {
-        c:'arc',
-        v:{
-          x:xc,
-          y:yc,
-          radius:R,
-          startAngle:startAngle,
+        c: 'arc',
+        v: {
+          x: xc,
+          y: yc,
+          radius: R,
+          startAngle: startAngle,
           endAngle: endAngle,
           aclockwise: true,
-        }
+        },
       };
     // case "RelCubBezTo":
     //   return {
@@ -3658,11 +3758,11 @@ function dealWithVisio(command,pen,startX,startY) {
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
     if (inheritanceProps.includes(k)) {
-      if(k == 'fontSize' && data[k] < 0){
+      if (k == 'fontSize' && data[k] < 0) {
         data[k] = 0;
       }
       pen[k] = data[k];
-      if (['fontSize','lineWidth'].includes(k)) {
+      if (['fontSize', 'lineWidth'].includes(k)) {
         pen.calculative[k] = data[k] * pen.calculative.canvas.store.data.scale;
         calcTextRect(pen);
       } else {
@@ -3677,8 +3777,8 @@ export function setChildValue(pen: Pen, data: IValue) {
     const children = pen.children;
     children?.forEach((childId) => {
       let _data = deepClone(data);
-      if(pen.calculative.childrenVisible){
-        if(pen.calculative.childrenVisible[childId]===false){
+      if (pen.calculative.childrenVisible) {
+        if (pen.calculative.childrenVisible[childId] === false) {
           delete _data.visible;
         }
       }
@@ -3688,16 +3788,23 @@ export function setChildValue(pen: Pen, data: IValue) {
   }
 }
 
-
 function calculateEllipseParameters(x1, y1, x2, y2, x3, y3, D) {
   // Calculate x₀ using equation ⑥
-  let numeratorX0 = (x1 - x2) * (x1 + x2) * (y2 - y3) - (x2 - x3) * (x2 + x3) * (y1 - y2) + D*D * (y1 - y2) * (y2 - y3) * (y1 - y3);
+  let numeratorX0 =
+    (x1 - x2) * (x1 + x2) * (y2 - y3) -
+    (x2 - x3) * (x2 + x3) * (y1 - y2) +
+    D * D * (y1 - y2) * (y2 - y3) * (y1 - y3);
   let denominatorX0 = 2 * ((x1 - x2) * (y2 - y3) - (x2 - x3) * (y1 - y2));
   let x0 = numeratorX0 / denominatorX0;
 
   // Calculate y₀ using equation ⑦
-  let numeratorY0 = (x1 - x2) * (x2 - x3) * (x1 - x3) + D*D * ((x2 - x3) * (y1 - y2) * (y1 + y2) - (x1 - x2) * (y2 - y3) * (y2 + y3)) ;
-  let denominatorY0 = 2 * D*D * ((x2 - x3) * (y1 - y2) - (x1 - x2) * (y2 - y3));
+  let numeratorY0 =
+    (x1 - x2) * (x2 - x3) * (x1 - x3) +
+    D *
+      D *
+      ((x2 - x3) * (y1 - y2) * (y1 + y2) - (x1 - x2) * (y2 - y3) * (y2 + y3));
+  let denominatorY0 =
+    2 * D * D * ((x2 - x3) * (y1 - y2) - (x1 - x2) * (y2 - y3));
   let y0 = numeratorY0 / denominatorY0;
 
   // Calculate 'a' using equation ⑧, substituting x₀ and y₀
@@ -3706,7 +3813,7 @@ function calculateEllipseParameters(x1, y1, x2, y2, x3, y3, D) {
   // Calculate 'b' using equation ⑨
   let b = a / D;
 
-  return {x0, y0, a, b};
+  return { x0, y0, a, b };
 }
 
 function calculateAngleInRadians(x1, y1, x2, y2) {

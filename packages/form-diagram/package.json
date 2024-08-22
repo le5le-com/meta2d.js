@@ -2,7 +2,7 @@
   "name": "@meta2d/form-diagram",
   "version": "1.0.0",
   "description": "The form library based on le5le meta2d.",
-  "main": "index.ts",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "copy": "shx cp package.build.json ../../dist/form-diagram/package.json",
@@ -23,8 +23,8 @@
     "url": "https://github.com/le5le-com/meta2d.js/issues"
   },
   "homepage": "https://github.com/le5le-com/meta2d.js#readme",
-  "peerDependencies": {
-    "@meta2d/core": "^1.0.0"
+  "dependencies": {
+    "@meta2d/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

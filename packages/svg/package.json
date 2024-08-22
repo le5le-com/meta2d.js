@@ -2,7 +2,7 @@
   "name": "@meta2d/svg",
   "version": "1.0.0",
   "description": "parse svg string to le5le meta2d pens.",
-  "main": "index.ts",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "copy": "shx cp package.build.json ../../dist/svg/package.json",
@@ -14,10 +14,8 @@
     "canvas"
   ],
   "author": "alsmile123@qq.com",
-  "peerDependencies": {
-    "@meta2d/core": "^1.0.0"
-  },
   "dependencies": {
+    "@meta2d/core": "workspace:*",
     "fast-xml-parser": "^4.0.1"
   },
   "publishConfig": {

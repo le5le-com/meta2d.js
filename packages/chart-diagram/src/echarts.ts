@@ -1,12 +1,14 @@
 import {
   BindId,
-  ChartData,
   deepClone,
   FormItem,
   IValue,
   Pen,
   deepSetValue,
   setElemPosition,
+  getter,
+  formatTime,
+  setter,
 } from '@meta2d/core';
 import type { EChartOption } from 'echarts';
 
@@ -19,8 +21,8 @@ let keyWords = [
   'fontSize',
   'nameGap',
   'margin',
-  'width'/*线条宽度*/,
-  'symbolSize'/*结点大小*/,
+  'width' /*线条宽度*/,
+  'symbolSize' /*结点大小*/,
   'itemWidth', // 图例宽度
   'itemHeight', // 图例高度
   'fontWeight',
@@ -57,7 +59,7 @@ export interface ChartPen extends Pen {
     geoUrl?: string;
   };
   calculative?: {
-    partialOption?:any; // 部分更新的 option
+    partialOption?: any; // 部分更新的 option
   } & Pen['calculative'];
   // beforeScale: number;
 }
@@ -213,16 +215,17 @@ function value(pen: ChartPen) {
     return;
   }
   setElemPosition(pen, pen.calculative.singleton.div);
-  if(pen.calculative.singleton.echartsReady){
-    if(pen.calculative.partialOption){
+  if (pen.calculative.singleton.echartsReady) {
+    if (pen.calculative.partialOption) {
       //部分更新
-      const option =  pen.calculative.partialOption.echarts.option;
+      const option = pen.calculative.partialOption.echarts.option;
+      pen.calculative.singleton.echart.setOption(deepClone(option));
+    } else {
       pen.calculative.singleton.echart.setOption(
-        deepClone(option)
-      );
-    }else{
-      pen.calculative.singleton.echart.setOption(
-        updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
+        updateOption(
+          pen.echarts.option,
+          pen.calculative.canvas.store.data.scale
+        ),
         true
       );
     }
@@ -251,7 +254,7 @@ function beforeValue(pen: ChartPen, value: any) {
             }
             echarts.registerMap(value.echarts.geoName, data);
             pen.calculative.singleton.echartsReady = true;
-           // @ts-ignore
+            // @ts-ignore
             pen.onValue(pen);
             return false;
           });
@@ -291,19 +294,19 @@ function beforeValue(pen: ChartPen, value: any) {
           }
           value[_key] = _value;
         }
-        if(key.includes('.data.')){
+        if (key.includes('.data.')) {
           //例如data.1 需要更新 data
           let _key = key.substring(0, key.indexOf('.data.') + 5);
-          if(!dataDotArr.includes(_key)){
-            dataDotArr.push(_key)
+          if (!dataDotArr.includes(_key)) {
+            dataDotArr.push(_key);
           }
         }
       }
     }
-    if(chartFlag){
+    if (chartFlag) {
       const _value = deepClone(value);
       pen.calculative.partialOption = dotNotationToObject(_value);
-      dataDotArr.forEach((key)=>{
+      dataDotArr.forEach((key) => {
         let value = getter(pen, key);
         setter(pen.calculative.partialOption, key, value);
       });
@@ -321,7 +324,7 @@ function beforeValue(pen: ChartPen, value: any) {
   let x = value.dataX;
   let y = value.dataY;
   let dataArr = []; //记录只更新数据
-  if(y){
+  if (y) {
     dataArr.push('echarts.option.series');
   }
   const series = echarts.option.series;
@@ -408,9 +411,9 @@ function beforeValue(pen: ChartPen, value: any) {
           oneXAxis.type === 'category' ? oneXAxis.data : oneYAxis.data;
         !Array.isArray(x) && (x = [x]);
         !Array.isArray(y) && (y = [y]);
-        if(oneXAxis.type === 'category' ){
+        if (oneXAxis.type === 'category') {
           dataArr.push('echarts.option.xAxis');
-        }else{
+        } else {
           dataArr.push('echarts.option.yAxis');
         }
         if (length === 1) {
@@ -451,10 +454,10 @@ function beforeValue(pen: ChartPen, value: any) {
     }
   }
   pen.calculative.partialOption = {};
-  dataArr.forEach((key)=>{
+  dataArr.forEach((key) => {
     let value = getter(pen, key);
     setter(pen.calculative.partialOption, key, value);
-  })
+  });
   delete value.dataX;
   delete value.dataY;
   return Object.assign(value, { echarts });
@@ -709,10 +712,10 @@ function dotNotationToObject(dotNotationObj) {
           if (!current[arrayIndex]) {
             current[arrayIndex] = {};
           }
-          if(Array.isArray(current)){
+          if (Array.isArray(current)) {
             //series 空数组问题
-            for(let i=0;i<parseInt(key);i++){
-              if(!current[i]){
+            for (let i = 0; i < parseInt(key); i++) {
+              if (!current[i]) {
                 current[i] = {};
               }
             }

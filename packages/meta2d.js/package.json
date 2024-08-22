@@ -1,0 +1,38 @@
+{
+  "name": "meta2d.js",
+  "version": "1.0.0",
+  "description": "The bundle of meta2d.",
+  "main": "meta2d.js",
+  "scripts": {
+    "copy": "shx cp package.json ../../dist/meta2d.js/package.json",
+    "build": "webpack && npm run copy "
+  },
+  "keywords": [
+    "meta2d.js"
+  ],
+  "author": "alsmile123@qq.com",
+  "license": "MIT",
+  "dependencies": {
+    "@meta2d/core": "workspace:*",
+    "@meta2d/class-diagram": "workspace:*",
+    "@meta2d/sequence-diagram": "workspace:*",
+    "@meta2d/activity-diagram": "workspace:*",
+    "@meta2d/flow-diagram": "workspace:*",
+    "@meta2d/chart-diagram": "workspace:*",
+    "@meta2d/form-diagram": "workspace:*",
+    "@meta2d/fta-diagram": "workspace:*",
+    "@meta2d/le5le-charts": "workspace:*"
+  },
+  "devDependencies": {
+    "copyfiles": "latest",
+    "path": "latest",
+    "ts-loader": "latest",
+    "typescript": "latest",
+    "webpack": "latest",
+    "webpack-cli": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+}
