@@ -1974,7 +1974,12 @@ export class Canvas {
         case HoverType.Node:
         case HoverType.Line:
           if (this.store.hover) {
-            const pen = getParent(this.store.hover, true) || this.store.hover;
+            const parentPen = getParent(this.store.hover, true);
+            let pen = parentPen || this.store.hover;
+            if(parentPen && (parentPen.container || this.store.options.containerShapes?.includes(parentPen.name))){
+              pen = this.store.hover;
+            }
+            // const pen = getParent(this.store.hover, true) || this.store.hover;
             if (e.ctrlKey && !e.shiftKey) {
               if (pen.calculative.active) {
                 this.willInactivePen = pen;
