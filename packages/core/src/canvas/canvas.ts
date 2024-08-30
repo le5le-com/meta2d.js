@@ -2274,9 +2274,7 @@ export class Canvas {
         }
       } else if (this.pencil) {
         const {x,y} = e;
-        const pt: Point = {};
-        pt.x = x;
-        pt.y = y;
+        const pt: Point = {x,y};
         pt.id = s8();
         pt.penId = this.pencilLine.id;
         this.pencilLine.calculative.worldAnchors.push(pt);
@@ -2290,9 +2288,7 @@ export class Canvas {
 
     if (this.drawingLine) {
       const {x,y} = e;
-      const pt: Point = {};
-      pt.x = x;
-      pt.y = y;
+      const pt: Point = {x,y};
       pt.id = s8();
       pt.penId = this.drawingLine.id;
 
