@@ -2273,7 +2273,10 @@ export class Canvas {
           return;
         }
       } else if (this.pencil) {
-        const pt: Point = { ...e };
+        const {x,y} = e;
+        const pt: Point = {};
+        pt.x = x;
+        pt.y = y;
         pt.id = s8();
         pt.penId = this.pencilLine.id;
         this.pencilLine.calculative.worldAnchors.push(pt);
@@ -2286,7 +2289,10 @@ export class Canvas {
     }
 
     if (this.drawingLine) {
-      const pt: Point = { ...e };
+      const {x,y} = e;
+      const pt: Point = {};
+      pt.x = x;
+      pt.y = y;
       pt.id = s8();
       pt.penId = this.drawingLine.id;
 
