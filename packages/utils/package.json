@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The sequence library based on le5le meta2d.",
   "main": "index.js",
   "types": "index.d.ts",
