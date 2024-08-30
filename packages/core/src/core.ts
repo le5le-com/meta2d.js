@@ -32,7 +32,8 @@ import {
   validationPlugin,
   setLifeCycleFunc,
   getAllFollowers,
-  isInteraction
+  isInteraction,
+  calcWorldAnchors
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -240,6 +241,8 @@ export class Meta2d {
       rule,
       ruleColor,
       textColor,
+      x = 0,
+      y = 0,
     } = options;
     this.setRule({ rule, ruleColor });
     this.setGrid({
@@ -254,6 +257,8 @@ export class Meta2d {
       activeBackground,
       fromArrow,
       toArrow,
+      x,
+      y
     });
   }
 
@@ -1566,9 +1571,26 @@ export class Meta2d {
     const pIdx = pens.findIndex(pen=>pen.name === 'combine'&&pen.showChild !== undefined);
     if(pIdx !== -1){
       let parent = pens[pIdx];
-      this.pushChildren(parent,[...pens.slice(0, pIdx), ...pens.slice(pIdx + 1)]);
+      // this.pushChildren(parent,[...pens.slice(0, pIdx), ...pens.slice(pIdx + 1)]);
+      const rect = getRect(pens);
+      Object.assign(parent, rect);
+      Object.assign(parent.calculative.worldRect, rect);
+      calcWorldAnchors(parent);
+      parent.children.forEach(penId => {
+        const pen = this.store.pens[penId];
+        const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
+        Object.assign(pen, childRect);
+      });
       pens.forEach((pen) => {
-        calcInView(pen, true);
+        if(pen.id !== parent.id){
+          parent.children.push(pen.id);
+          pen.parentId = parent.id;
+          const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
+          Object.assign(pen, childRect);
+          pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+          pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
+          calcInView(pen, true);
+        }
       });
       this.initImageCanvas(pens);
       this.render();

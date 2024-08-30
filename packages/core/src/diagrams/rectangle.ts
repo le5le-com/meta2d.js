@@ -16,12 +16,12 @@ export function rectangle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if (height < 2 * r) {
     r = height / 2;
   }
-
   path.moveTo(x + r, y);
   path.arcTo(ex, y, ex, ey, r);
   path.arcTo(ex, ey, x, ey, r);
   path.arcTo(x, ey, x, y, r);
   path.arcTo(x, y, ex, y, r);
+  path.closePath();
   if (path instanceof Path2D) {
     return path;
   }

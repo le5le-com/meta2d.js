@@ -28,7 +28,11 @@ export function line(
       from = pt;
     });
     if (pen.close) {
-      draw(path, from, worldAnchors[0]);
+      if(pen.lineName === 'curve') {  
+        draw(path, from, worldAnchors[0]);
+      } else {
+        path.closePath();
+      }
     }
   }
   if (path instanceof Path2D) return path;

@@ -25,13 +25,11 @@ export function calcTextRect(pen: Pen) {
   const width =
     worldRect.width -
     paddingLeft -
-    paddingRight -
-    ((pen.textAlign === 'right' ? -textLeft : textLeft) || 0);
+    paddingRight;
   const height =
     worldRect.height -
     paddingTop -
-    paddingBottom -
-    ((pen.textBaseline === 'bottom' ? -textTop : textTop) || 0);
+    paddingBottom;
   if (textWidth && textWidth < 1) {
     textWidth *= worldRect.width;
   }

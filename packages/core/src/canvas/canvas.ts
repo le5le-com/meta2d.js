@@ -7142,7 +7142,7 @@ export class Canvas {
           : pen.textHeight * font_scale
       }px;`;
     } else {
-      let tem = pen.calculative.worldRect.height / scale - (pen.textTop || 0);
+      let tem = pen.calculative.worldRect.height / scale;
       if (tem < 0) {
         tem = 0;
       }
@@ -7648,7 +7648,7 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
-        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign'].includes(k)){
+        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate'].includes(k)){
           willRenderImage = true;
         }
       } else {
