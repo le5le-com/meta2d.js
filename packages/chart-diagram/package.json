@@ -2,7 +2,7 @@
   "name": "@meta2d/chart-diagram",
   "version": "1.0.9",
   "description": "The charting library based on le5le meta2d and echarts/highcharts.",
-  "main": "index.js",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
     "copy": "shx cp package.build.json ../../dist/chart-diagram/package.json",
