@@ -1,11 +1,12 @@
 {
   "name": "@meta2d/core",
-  "version": "1.0.42",
+  "version": "1.0.0",
   "description": "@meta2d/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
-  "main": "index.ts",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "copy": "copyfiles  package.json ../../dist/core/",
+    "build": "tsc && npm run copy"
   },
   "keywords": [
     "meta2d",

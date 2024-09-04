@@ -3446,26 +3446,27 @@ function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
   // 进行数据的预处理
-  const drawCommand: Array<any> = pen.drawCommand;
-  if (!drawCommand || pen.name === 'line') return;
+  const drawCommand:Array<any> = pen.drawCommand;
+  if(!drawCommand || pen.name === 'line')return ;
   // 单位转换 将其他单位转换为px
 
   // 执行自定义绘画函数
-  return (ctx: CanvasRenderingContext2D, pen: Pen) => {
+  return (ctx: CanvasRenderingContext2D,pen: Pen)=> {
     // TODO  绘制命令的转换 （能否兼容多种指令？？）
-    drawCommand.forEach((command) => {
+    drawCommand.forEach((command)=> {
       try {
         command.steps = command.steps.flat(Infinity);
-        command.steps.reduce((calculate, step) => {
-          const cs = commandTransfer(step, pen, calculate.x, calculate.y);
+        command.steps.reduce((calculate,step)=>{
+          const cs = commandTransfer(step,pen,calculate.x,calculate.y);
           // 应当保证顺序的正确
           try {
-            if (cs.c) {
-              if (cs.c.startsWith('_')) {
+            if(cs.c){
+              if(cs.c.startsWith('_')){
                 const prop = cs.c.split('_')[1];
+                if(typeof cs.v.value === "number")cs.v.value *= pen.calculative.canvas.store.data.scale;
                 // debugger;
                 (cs.p || ctx)[prop] = cs.v.value;
-                return { x: calculate.x, y: calculate.y };
+                return {x:calculate.x,y:calculate.y};
               }
               let l = [];
               for (const csKey in cs.v) {
@@ -3473,121 +3474,118 @@ function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
               }
               // ctx.beginPath();
               (cs.p || ctx)[cs.c](...l);
-              ctx.moveTo(cs.startX || cs.v.x, cs.startY || cs.v.y);
+              // ctx.moveTo(cs.startX || cs.v.x,cs.startY || cs.v.y);
               // command.prop.NoFill === '0'?ctx.fill():'';
-              return { x: cs.startX || cs.v.x, y: cs.startY || cs.v.y };
+              return {x:cs.startX || cs.v.x, y:cs.startY||cs.v.y};
             }
-            return { x: calculate.x, y: calculate.y };
-          } catch (e) {
+            return {x:calculate.x,y:calculate.y};
+          }catch (e) {
             // pass
-            console.log(e, 'error', cs);
+            console.log(e,'error',cs);
           }
-        }, {});
-      } catch (e) {}
+        },{});
+      }
+      catch (e) {
+      }
     });
     ctx.stroke();
   };
 }
 
-function commandTransfer(command, pen, startX, startY) {
+function commandTransfer(command,pen,startX,startY){
+
   // TODO 是否支持扩展更多的命令？用于兼容未来的其他解析格式？
   //1. 进行简单的命令解析
   // VISIO
   const map = {
-    visio: dealWithVisio,
-    dxf: dealWithDXF,
+    'visio':dealWithVisio,
+    'dxf':dealWithDXF
   };
   // CAD
-  return map[pen.parseType](command, pen, startX, startY);
+  return map[pen.parseType](command,pen,startX,startY);
 }
 
-function dealWithDXF(command, pen, startX, startY) {
+function dealWithDXF(command,pen,startX,startY) {
   const { x, y, width, height } = pen.calculative.worldRect;
-  const { originWidth, originHeight } = pen.dxfOrigin;
+  const {originWidth,originHeight} = pen.dxfOrigin;
   switch (command.c) {
-    case 'beginPath':
+    case "beginPath":
       return {
-        c: 'beginPath',
-        v: {},
+        c:'beginPath',
+        v:{}
       };
-    case 'closePath':
+    case "closePath":
       return {
-        c: 'closePath',
-        v: {},
+        c:'closePath',
+        v:{}
       };
-    case 'moveTo':
+    case "moveTo":
       return {
-        c: 'moveTo',
-        v: {
+        c:'moveTo',
+        v:{
           x: command.v.x * (width / originWidth) + x,
-          y: command.v.y * (height / originHeight) + y,
-        },
+          y: command.v.y * (height / originHeight) + y
+        }
       };
-    case 'lineTo':
+    case "lineTo":
       return {
-        c: 'lineTo',
-        v: {
+        c:'lineTo',
+        v:{
           x: command.v.x * (width / originWidth) + x,
-          y: command.v.y * (height / originHeight) + y,
-        },
+          y: command.v.y * (height / originHeight) + y
+        }
       };
-    case 'arc':
+    case "arc":
       return {
-        c: 'ellipse',
-        v: {
-          x: command.v.x * (width / originWidth) + x,
-          y: command.v.y * (height / originHeight) + y,
-          rx: command.v.xr * (width / originWidth),
-          ry: command.v.yr * (height / originHeight),
-          rotation: command.v.rotation || 0,
-          startAngle: command.v.startAngle,
+        c:'ellipse',
+        v:{
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
+          startAngle:command.v.startAngle,
           endAngle: command.v.endAngle,
-          a: command.v.aclockwise ?? true,
-        },
+          a:command.v.aclockwise ?? true
+        }
       };
-    case 'ellipse':
+    case "ellipse":
       return {
-        c: 'ellipse',
-        v: {
-          x: command.v.x * (width / originWidth) + x,
-          y: command.v.y * (height / originHeight) + y,
-          rx: command.v.xr * (width / originWidth),
-          ry: command.v.yr * (height / originHeight),
-          rotation: command.v.rotation || 0,
-          startAngle: command.v.startAngle,
+        c:'ellipse',
+        v:{
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
+          startAngle:command.v.startAngle,
           endAngle: command.v.endAngle,
-          a: command.v.aclockwise ?? true,
-        },
+          a:command.v.aclockwise ?? true
+        }
       };
-    case '_font':
-      const store = pen.calculative.canvas.store;
+    case "_font":
       return {
-        c: '_font',
-        v: {
-          value:
-            command.v.fontSize * store.data.scale +
-            'px ' +
-            (command.v.fontFamily || store.options.fontFamily),
-        },
+        c:'_font',
+        v:{
+          value:command.v.fontSize * pen.calculative.canvas.store.data.scale + 'px ' + (command.v.fontFamily || pen.calculative.canvas.store.options.fontFamily)
+        }
       };
-    case '_fillStyle':
+    case "_fillStyle":
       return {
-        c: '_fillStyle',
-        v: {
-          value: pen.color || command.v.value,
-        },
+        c:'_fillStyle',
+        v:{
+          value:pen.color || command.v.value
+        }
       };
     default:
       const c = {
-        c: command.c,
-        v: {
+        c:command.c,
+        v:{
           ...command.v,
-          x: command.v.x * (width / originWidth) + x,
-          y: command.v.y * (height / originHeight) + y,
-        },
+        }
       };
-      !command.v.x && delete c.v.x;
-      !command.v.y && delete c.v.y;
+      if((c.v.x)!==undefined)c.v.x = command.v.x * (width / originWidth) + x;
+      if(c.v.y!==undefined)c.v.y = (command.v.y * (height / originHeight)) + y;
       return c;
   }
 }
