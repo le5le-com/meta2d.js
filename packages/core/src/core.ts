@@ -5131,6 +5131,7 @@ export class Meta2d {
   setLifeCycleFunc = setLifeCycleFunc;
   destroy(onlyData?: boolean) {
     this.clear(false);
+    this.stopDataMock();
     this.closeSocket();
     this.closeNetwork();
     this.store.emitter.all.clear(); // 内存释放
