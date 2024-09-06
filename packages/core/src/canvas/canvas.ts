@@ -6973,10 +6973,17 @@ export class Canvas {
       if (this.store.hover.onShowInput) {
         this.store.hover.onShowInput(this.store.hover, e as any);
       } else {
-        this.showInput(this.store.hover);
+        if(this.store.hover && this.store.hover.parentId){
+          this.store.pens[this.store.hover.parentId].children.forEach((id)=>{
+            this.store.pens[id].calculative.active = false;
+            this.store.pens[id].calculative.hover = false;
+          });
+          this.active([this.store.hover]);
+        }else{
+          this.showInput(this.store.hover);
+        }
       }
     }
-
     this.store.emitter.emit('dblclick', {
       x: e.x,
       y: e.y,
