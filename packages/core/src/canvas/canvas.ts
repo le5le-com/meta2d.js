@@ -3906,8 +3906,17 @@ export class Canvas {
               this.store.data.pens[i].lastConnected
             ) {
               for (let key in this.store.data.pens[i].lastConnected) {
-                this.store.pens[key] && (this.store.pens[key].connectedLines =
-                  this.store.data.pens[i].lastConnected[key]);
+                if(this.store.pens[key]){
+                  let connected = deepClone(this.store.data.pens[i].lastConnected[key]);
+                  this.store.pens[key].connectedLines = connected;
+                  pen.anchors.forEach((anchor) => {
+                    connected.forEach((item) => {
+                      if(anchor.id === item.lineAnchor){
+                        anchor.connectTo = key;
+                      }
+                    });
+                  });
+                }
               }
             }
             this.store.data.pens[i] = pen;
