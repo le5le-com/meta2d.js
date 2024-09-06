@@ -6907,6 +6907,10 @@ export class Canvas {
       this.store.data.pens.splice(i, 1);
       this.store.pens[pen.id] = undefined;
       delete this.store.pens[pen.id];
+      // 删除svgpath的数据
+      if(pen.pathId){
+        delete this.store.data.paths[pen.pathId];
+      }
     }
     this.store.animates.delete(pen);
     this.store.animateMap.delete(pen);
