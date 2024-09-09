@@ -61,6 +61,7 @@ import {
 import {
   calcCenter,
   calcRelativeRect,
+  calcRightBottom,
   getRect,
   Rect,
   rectInRect,
@@ -1597,6 +1598,49 @@ export class Meta2d {
     }else{
       console.warn('Invalid operation!');
     }
+  }
+
+  /***
+   * 修改子图元大小，更新整个组合图元
+   * @param rect 新的大小 世界坐标
+   * @param child 待更新子图元
+   * @param parent 父图元
+   */
+  updateRectbyChild(rect:Rect, child:Pen, parent:Pen){
+    calcRightBottom(rect);
+    calcCenter(rect);
+    child.calculative.worldRect = rect;
+    if(rectInRect(rect, parent.calculative.worldRect,true)){
+      const childRect = calcRelativeRect(rect, parent.calculative.worldRect);
+      Object.assign(child, childRect);
+    }else{
+      let x = Math.min(rect.x,parent.calculative.worldRect.x);
+      let y = Math.min(rect.y,parent.calculative.worldRect.y);
+      let ex = Math.max(rect.ex,parent.calculative.worldRect.ex);
+      let ey = Math.max(rect.ey,parent.calculative.worldRect.ey);
+      parent.calculative.worldRect = {
+        x:x,
+        y:y,
+        width:ex-x,
+        height:ey-y,
+        ex,
+        ey
+      }
+      if(!parent.parentId){
+        Object.assign(parent,parent.calculative.worldRect);
+      }
+      calcCenter(parent.calculative.worldRect);
+      parent.children.forEach((cid)=>{
+      const cPen = this.store.pens[cid];
+      const childRect = calcRelativeRect(cPen.calculative.worldRect, parent.calculative.worldRect);
+        Object.assign(cPen, childRect);
+      });
+      if(parent.parentId){
+       this.updateRectbyChild(parent.calculative.worldRect,parent,this.store.pens[parent.parentId]);
+      }
+    }
+    this.canvas.updatePenRect(parent);
+    this.render();
   }
 
   isCombine(pen: Pen) {
