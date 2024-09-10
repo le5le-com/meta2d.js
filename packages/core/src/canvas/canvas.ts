@@ -1974,6 +1974,13 @@ export class Canvas {
         case HoverType.Node:
         case HoverType.Line:
           if (this.store.hover) {
+            if(this.store.active?.length && this.store.active.length === 1){
+              if(this.store.hover.id === this.store.active[0].id){
+                //准备移动子图元
+                this.calcActiveRect();
+                break;
+              }
+            }
             const parentPen = getParent(this.store.hover, true);
             let pen = parentPen || this.store.hover;
             if(parentPen && (parentPen.container || this.store.options.containerShapes?.includes(parentPen.name))){
@@ -2831,6 +2838,10 @@ export class Canvas {
           pen.calculative.y + pen.calculative.height;
       }
       calcChildrenInitRect(pen);
+      if(pen.parentId){
+        //移动子图元，更新整个组件
+        this.parent.updateRectbyChild(pen.calculative.worldRect,pen,this.store.pens[pen.parentId]);
+      }
     });
     // active 消息表示拖拽结束
     // this.store.emitter.emit('active', this.store.active);
@@ -6974,11 +6985,15 @@ export class Canvas {
         this.store.hover.onShowInput(this.store.hover, e as any);
       } else {
         if(this.store.hover && this.store.hover.parentId){
-          this.store.pens[this.store.hover.parentId].children.forEach((id)=>{
-            this.store.pens[id].calculative.active = false;
-            this.store.pens[id].calculative.hover = false;
-          });
-          this.active([this.store.hover]);
+          if(this.store.active?.length===1 && this.store.active[0].id === this.store.hover.id){
+            this.showInput(this.store.hover);
+          }else{
+            this.store.pens[this.store.hover.parentId].children.forEach((id)=>{
+              this.store.pens[id].calculative.active = false;
+              this.store.pens[id].calculative.hover = false;
+            });
+            this.active([this.store.hover]);
+          }
         }else{
           this.showInput(this.store.hover);
         }

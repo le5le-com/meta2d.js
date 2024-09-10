@@ -1472,7 +1472,7 @@ export class Meta2d {
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
-      pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+      pen.locked = pen.lockedOnCombine ?? LockState.None;
       pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
     });
     //将组合后的父节点置底
