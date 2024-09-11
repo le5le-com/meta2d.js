@@ -480,6 +480,11 @@ export class Meta2d {
           for (let key in value) {
             if (value[key] === undefined || value[key] === '') {
               value[key] = _pen[key];
+            }else if(typeof value[key]=== 'string' && value[key]?.indexOf('${') > -1){
+              let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                value[key] = _pen[keys[0]]
+              }
             }
           }
           // value.id = _pen.id;
