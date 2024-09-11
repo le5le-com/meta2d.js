@@ -161,8 +161,8 @@ export class Dialog {
       this.dialog.style.left = rect.x? (rect.x + 'px'): '10%';
       this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
       this.dialog.style.height = rect.height?(rect.height + 'px'): '420px';
-      this.box.style.display = 'block';
     }
+    this.box.style.display = 'block';
   }
 
   hide() {
