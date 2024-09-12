@@ -2408,8 +2408,7 @@ export class Canvas {
     }
 
     if (this.mouseRight === MouseRight.Down) {
-      if(this.store.hover&&this.store.hover.calculative.focus){
-        this.store.hover.onContextmenu &&
+      if(this.store.hover && this.store.hover.onContextmenu){
         this.store.hover.onContextmenu(this.store.hover, e);
       }else{
         this.store.emitter.emit('contextmenu', {
@@ -4690,6 +4689,9 @@ export class Canvas {
       }
       // if (pen.template) {
       if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
+        continue;
+      }
+      if (pen.name === 'combine' && !pen.draw){
         continue;
       }
       if (pen.calculative.inView) {
