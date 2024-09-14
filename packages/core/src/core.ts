@@ -528,19 +528,45 @@ export class Meta2d {
     };
   }
 
-  navigatorTo(id: string) {
+  async navigatorTo(id: string) {
     if (!id) {
       return;
     }
-    let href = window.location.href;
-    let arr: string[] = href.split('id=');
-    if (arr.length > 1) {
-      let idx = arr[1].indexOf('&');
-      if (idx === -1) {
-        window.location.href = arr[0] + 'id=' + id;
-      } else {
-        window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx);
+    // let href = window.location.href;
+    // let arr: string[] = href.split('id=');
+    // if (arr.length > 1) {
+    //   let idx = arr[1].indexOf('&');
+    //   if (idx === -1) {
+    //     window.location.href = arr[0] + 'id=' + id;
+    //   } else {
+    //     window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx);
+    //   }
+    // }
+    //路径参数更新
+    const url = new URL(window.location as any);
+    url.searchParams.set('id', id);
+    history.pushState({}, '', url);
+    //图纸更新
+    const netWork = this.store.options.navigatorNetWork;
+    const collection = (location.href.includes('2d.')||location.href.includes('/2d'))?'2d':'v';
+    const res: Response = await fetch((netWork?.url||`/api/data/${collection}/get`) + (netWork?.method==='GET'?`?id=${id}`:''), {
+      headers: netWork?.headers || {},
+      method: netWork?.method || 'POST',
+      body: netWork?.method === 'GET' ?undefined : JSON.stringify({id:id}) as any,
+    });
+    if(res.ok){
+      let data:any = await res.text();
+      if (data.constructor === Object || data.constructor === Array) {
+        data = JSON.parse(JSON.stringify(data));
+      } else if (typeof data === 'string') {
+        data = JSON.parse(data);
       }
+      if(data.data){
+        data = data.data;
+      }
+      this.open(data);
+    }else{
+      this.store.emitter.emit('error', { type: 'http', error: res });
     }
   }
 
