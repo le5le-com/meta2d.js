@@ -550,7 +550,9 @@ export class Meta2d {
     const netWork = this.store.options.navigatorNetWork;
     const collection = (location.href.includes('2d.')||location.href.includes('/2d'))?'2d':'v';
     const res: Response = await fetch((netWork?.url||`/api/data/${collection}/get`) + (netWork?.method==='GET'?`?id=${id}`:''), {
-      headers: netWork?.headers || {},
+      headers: {
+        Authorization: `Bearer ${this.getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
+      },
       method: netWork?.method || 'POST',
       body: netWork?.method === 'GET' ?undefined : JSON.stringify({id:id}) as any,
     });
@@ -2350,19 +2352,20 @@ export class Meta2d {
     }
   }
 
+  getCookie(name: string) {
+    let arr: RegExpMatchArray | null;
+    const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
+    if ((arr = document.cookie.match(reg))) {
+      return decodeURIComponent(arr[2]);
+    } else {
+      return '';
+    }
+  }
+
   //获取动态参数
   getDynamicParam(key: string) {
-    function getCookie(name: string) {
-      let arr: RegExpMatchArray | null;
-      const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
-      if ((arr = document.cookie.match(reg))) {
-        return decodeURIComponent(arr[2]);
-      } else {
-        return '';
-      }
-    }
     let params = queryURLParams();
-    let value = params[key] || localStorage[key] || getCookie(key) || '';
+    let value = params[key] || localStorage[key] || this.getCookie(key) || '';
     return value;
   }
 
