@@ -1412,7 +1412,7 @@ export function renderPen(
         stroke = strokeLinearGradient(ctx, pen);
       }
     } else {
-      stroke = pen.calculative.color || getGlobalColor(store);
+      stroke = pen.calculative.color || (pen.type ? store.data.lineColor : '') || getGlobalColor(store);
     }
     ctx.strokeStyle = _stroke || stroke;
   }
