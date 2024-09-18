@@ -8679,5 +8679,6 @@ export class Canvas {
     window && window.removeEventListener('message', this.onMessage);
     window && window.removeEventListener('resize', this.onResize);
     window && window.removeEventListener('scroll', this.onScroll);
+    this.parentElement.innerHTML = '';
   }
 }
