@@ -114,6 +114,11 @@ export interface Options {
   scaleOff?: number; //缩放偏移量
   scrollButScale?: boolean; //滚动条滚动，鼠标缩放
   reconnetTimes?: number; //通信重连次数
+  navigatorNetWork?: {
+    url?: string,
+    headers?: any,
+    method?: string,
+  }
 }
 
 export const defaultOptions: Options = {

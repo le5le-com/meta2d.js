@@ -1974,6 +1974,13 @@ export class Canvas {
         case HoverType.Node:
         case HoverType.Line:
           if (this.store.hover) {
+            if(this.store.active?.length && this.store.active.length === 1){
+              if(this.store.hover.id === this.store.active[0].id){
+                //准备移动子图元
+                this.calcActiveRect();
+                break;
+              }
+            }
             const parentPen = getParent(this.store.hover, true);
             let pen = parentPen || this.store.hover;
             if(parentPen && (parentPen.container || this.store.options.containerShapes?.includes(parentPen.name))){
@@ -2401,8 +2408,7 @@ export class Canvas {
     }
 
     if (this.mouseRight === MouseRight.Down) {
-      if(this.store.hover&&this.store.hover.calculative.focus){
-        this.store.hover.onContextmenu &&
+      if(this.store.hover && this.store.hover.onContextmenu){
         this.store.hover.onContextmenu(this.store.hover, e);
       }else{
         this.store.emitter.emit('contextmenu', {
@@ -2831,6 +2837,10 @@ export class Canvas {
           pen.calculative.y + pen.calculative.height;
       }
       calcChildrenInitRect(pen);
+      if(pen.parentId){
+        //移动子图元，更新整个组件
+        this.parent.updateRectbyChild(pen.calculative.worldRect,pen,this.store.pens[pen.parentId]);
+      }
     });
     // active 消息表示拖拽结束
     // this.store.emitter.emit('active', this.store.active);
@@ -3906,8 +3916,17 @@ export class Canvas {
               this.store.data.pens[i].lastConnected
             ) {
               for (let key in this.store.data.pens[i].lastConnected) {
-                this.store.pens[key] && (this.store.pens[key].connectedLines =
-                  this.store.data.pens[i].lastConnected[key]);
+                if(this.store.pens[key]){
+                  let connected = deepClone(this.store.data.pens[i].lastConnected[key]);
+                  this.store.pens[key].connectedLines = connected;
+                  pen.anchors.forEach((anchor) => {
+                    connected.forEach((item) => {
+                      if(anchor.id === item.lineAnchor){
+                        anchor.connectTo = key;
+                      }
+                    });
+                  });
+                }
               }
             }
             this.store.data.pens[i] = pen;
@@ -4670,6 +4689,9 @@ export class Canvas {
       }
       // if (pen.template) {
       if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
+        continue;
+      }
+      if (pen.name === 'combine' && !pen.draw){
         continue;
       }
       if (pen.calculative.inView) {
@@ -6898,6 +6920,10 @@ export class Canvas {
       this.store.data.pens.splice(i, 1);
       this.store.pens[pen.id] = undefined;
       delete this.store.pens[pen.id];
+      // 删除svgpath的数据
+      if(pen.pathId){
+        delete this.store.data.paths[pen.pathId];
+      }
     }
     this.store.animates.delete(pen);
     this.store.animateMap.delete(pen);
@@ -6960,10 +6986,21 @@ export class Canvas {
       if (this.store.hover.onShowInput) {
         this.store.hover.onShowInput(this.store.hover, e as any);
       } else {
-        this.showInput(this.store.hover);
+        if(this.store.hover && this.store.hover.parentId){
+          if(this.store.active?.length===1 && this.store.active[0].id === this.store.hover.id){
+            this.showInput(this.store.hover);
+          }else{
+            this.store.pens[this.store.hover.parentId].children.forEach((id)=>{
+              this.store.pens[id].calculative.active = false;
+              this.store.pens[id].calculative.hover = false;
+            });
+            this.active([this.store.hover]);
+          }
+        }else{
+          this.showInput(this.store.hover);
+        }
       }
     }
-
     this.store.emitter.emit('dblclick', {
       x: e.x,
       y: e.y,
@@ -8642,5 +8679,6 @@ export class Canvas {
     window && window.removeEventListener('message', this.onMessage);
     window && window.removeEventListener('resize', this.onResize);
     window && window.removeEventListener('scroll', this.onScroll);
+    this.parentElement.innerHTML = '';
   }
 }

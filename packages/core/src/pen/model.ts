@@ -376,6 +376,7 @@ export interface Pen extends Rect {
   interaction?:boolean; //是否开启交互 组合时将不会被锁定
   childHover?:boolean; //子元素hover和active是否生效
   childActive?:boolean; 
+  draw?:boolean; //是否绘制 针对combine
   calculative?: {
     x?: number;
     y?: number;

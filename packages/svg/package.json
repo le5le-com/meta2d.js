@@ -2,7 +2,7 @@
   "name": "@meta2d/svg",
   "version": "1.0.6",
   "description": "parse svg string to le5le meta2d pens.",
-  "main": "index.js",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
     "copy": "shx cp package.build.json ../../dist/svg/package.json",

@@ -41,6 +41,7 @@ export interface Meta2dData {
   fromArrow?: string;
   toArrow?: string;
   lineWidth?: number;
+  lineColor?: string; // 线条默认颜色
   color?: string; // 画笔默认 color 优先级高于 options.color
   textColor?: string; // 画笔文字颜色
   penBackground?: string; // 画笔默认背景色

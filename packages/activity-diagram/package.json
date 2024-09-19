@@ -2,7 +2,7 @@
   "name": "@meta2d/activity-diagram",
   "version": "1.0.1",
   "description": "The activity library based on le5le meta2d.",
-  "main": "index.js",
+  "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
     "copy": "shx cp package.build.json ../../dist/activity-diagram/package.json",

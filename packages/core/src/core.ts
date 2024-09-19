@@ -61,6 +61,7 @@ import {
 import {
   calcCenter,
   calcRelativeRect,
+  calcRightBottom,
   getRect,
   Rect,
   rectInRect,
@@ -479,6 +480,11 @@ export class Meta2d {
           for (let key in value) {
             if (value[key] === undefined || value[key] === '') {
               value[key] = _pen[key];
+            }else if(typeof value[key]=== 'string' && value[key]?.indexOf('${') > -1){
+              let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                value[key] = _pen[keys[0]]
+              }
             }
           }
           // value.id = _pen.id;
@@ -522,19 +528,47 @@ export class Meta2d {
     };
   }
 
-  navigatorTo(id: string) {
+  async navigatorTo(id: string) {
     if (!id) {
       return;
     }
-    let href = window.location.href;
-    let arr: string[] = href.split('id=');
-    if (arr.length > 1) {
-      let idx = arr[1].indexOf('&');
-      if (idx === -1) {
-        window.location.href = arr[0] + 'id=' + id;
-      } else {
-        window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx);
+    // let href = window.location.href;
+    // let arr: string[] = href.split('id=');
+    // if (arr.length > 1) {
+    //   let idx = arr[1].indexOf('&');
+    //   if (idx === -1) {
+    //     window.location.href = arr[0] + 'id=' + id;
+    //   } else {
+    //     window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx);
+    //   }
+    // }
+    //路径参数更新
+    const url = new URL(window.location as any);
+    url.searchParams.set('id', id);
+    history.pushState({}, '', url);
+    //图纸更新
+    const netWork = this.store.options.navigatorNetWork;
+    const collection = (location.href.includes('2d.')||location.href.includes('/2d'))?'2d':'v';
+    const res: Response = await fetch((netWork?.url||`/api/data/${collection}/get`) + (netWork?.method==='GET'?`?id=${id}`:''), {
+      headers: {
+        Authorization: `Bearer ${this.getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
+      },
+      method: netWork?.method || 'POST',
+      body: netWork?.method === 'GET' ?undefined : JSON.stringify({id:id}) as any,
+    });
+    if(res.ok){
+      let data:any = await res.text();
+      if (data.constructor === Object || data.constructor === Array) {
+        data = JSON.parse(JSON.stringify(data));
+      } else if (typeof data === 'string') {
+        data = JSON.parse(data);
       }
+      if(data.data){
+        data = data.data;
+      }
+      this.open(data);
+    }else{
+      this.store.emitter.emit('error', { type: 'http', error: res });
     }
   }
 
@@ -1471,7 +1505,7 @@ export class Meta2d {
       pen.parentId = parent.id;
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
-      pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+      pen.locked = pen.lockedOnCombine ?? LockState.None;
       pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
     });
     //将组合后的父节点置底
@@ -1597,6 +1631,49 @@ export class Meta2d {
     }else{
       console.warn('Invalid operation!');
     }
+  }
+
+  /***
+   * 修改子图元大小，更新整个组合图元
+   * @param rect 新的大小 世界坐标
+   * @param child 待更新子图元
+   * @param parent 父图元
+   */
+  updateRectbyChild(rect:Rect, child:Pen, parent:Pen){
+    calcRightBottom(rect);
+    calcCenter(rect);
+    child.calculative.worldRect = rect;
+    if(rectInRect(rect, parent.calculative.worldRect,true)){
+      const childRect = calcRelativeRect(rect, parent.calculative.worldRect);
+      Object.assign(child, childRect);
+    }else{
+      let x = Math.min(rect.x,parent.calculative.worldRect.x);
+      let y = Math.min(rect.y,parent.calculative.worldRect.y);
+      let ex = Math.max(rect.ex,parent.calculative.worldRect.ex);
+      let ey = Math.max(rect.ey,parent.calculative.worldRect.ey);
+      parent.calculative.worldRect = {
+        x:x,
+        y:y,
+        width:ex-x,
+        height:ey-y,
+        ex,
+        ey
+      }
+      if(!parent.parentId){
+        Object.assign(parent,parent.calculative.worldRect);
+      }
+      calcCenter(parent.calculative.worldRect);
+      parent.children.forEach((cid)=>{
+      const cPen = this.store.pens[cid];
+      const childRect = calcRelativeRect(cPen.calculative.worldRect, parent.calculative.worldRect);
+        Object.assign(cPen, childRect);
+      });
+      if(parent.parentId){
+       this.updateRectbyChild(parent.calculative.worldRect,parent,this.store.pens[parent.parentId]);
+      }
+    }
+    this.canvas.updatePenRect(parent);
+    this.render();
   }
 
   isCombine(pen: Pen) {
@@ -2275,19 +2352,20 @@ export class Meta2d {
     }
   }
 
+  getCookie(name: string) {
+    let arr: RegExpMatchArray | null;
+    const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
+    if ((arr = document.cookie.match(reg))) {
+      return decodeURIComponent(arr[2]);
+    } else {
+      return '';
+    }
+  }
+
   //获取动态参数
   getDynamicParam(key: string) {
-    function getCookie(name: string) {
-      let arr: RegExpMatchArray | null;
-      const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
-      if ((arr = document.cookie.match(reg))) {
-        return decodeURIComponent(arr[2]);
-      } else {
-        return '';
-      }
-    }
     let params = queryURLParams();
-    let value = params[key] || localStorage[key] || getCookie(key) || '';
+    let value = params[key] || localStorage[key] || this.getCookie(key) || '';
     return value;
   }
 
@@ -5131,6 +5209,7 @@ export class Meta2d {
   setLifeCycleFunc = setLifeCycleFunc;
   destroy(onlyData?: boolean) {
     this.clear(false);
+    this.stopDataMock();
     this.closeSocket();
     this.closeNetwork();
     this.store.emitter.all.clear(); // 内存释放
