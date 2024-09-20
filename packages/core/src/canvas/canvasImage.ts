@@ -225,6 +225,9 @@ export class CanvasImage {
         if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
           continue;
         }
+        if (pen.name === 'combine' && !pen.draw){
+          continue;
+        }
         pen.calculative.imageDrawed = true;
         ctx.save();
         ctxFlip(ctx, pen);
