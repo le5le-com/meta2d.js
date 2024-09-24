@@ -4048,7 +4048,8 @@ export class Meta2d {
       formatAttrs.forEach((attr) => {
         attrs[attr] =
           firstPen[attr] !== undefined ? firstPen[attr] :
-          (this.store.options.defaultFormat[attr] ||
+          (this.store.options.defaultFormat[attr] || 
+          this.store.data[attr] ||
           this.store.options[attr]);
       });
     } else {
@@ -4057,6 +4058,7 @@ export class Meta2d {
       formatAttrs.forEach((attr) => {
         attrs[attr] =
           this.store.options.defaultFormat[attr] ||
+          this.store.data[attr] ||
           this.store.options[attr] ||
           undefined;
       });
