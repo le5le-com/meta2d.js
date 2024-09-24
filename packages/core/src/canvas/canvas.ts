@@ -7295,7 +7295,7 @@ export class Canvas {
         pen.text = this.inputDiv.dataset.value;
         pen.calculative.text = pen.text;
         this.inputDiv.dataset.penId = undefined;
-        if (pen.name === 'text' && pen.textAutoAdjust) {
+        if (pen.text && pen.textAutoAdjust) {
           calcTextAutoWidth(pen);
         }
         calcTextRect(pen);
