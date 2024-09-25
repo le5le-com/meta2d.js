@@ -4,7 +4,7 @@
   "description": "The bundle of meta2d.",
   "main": "meta2d.js",
   "scripts": {
-    "copy": "shx cp package.build.json ../../dist/meta2d.js/package.json",
+    "copy": "shx cp package.json ../../dist/meta2d.js/package.json",
     "build": "webpack && npm run copy "
   },
   "keywords": [
@@ -13,15 +13,6 @@
   "author": "alsmile123@qq.com",
   "license": "MIT",
   "dependencies": {
-    "@meta2d/core": "workspace:*",
-    "@meta2d/class-diagram": "workspace:*",
-    "@meta2d/sequence-diagram": "workspace:*",
-    "@meta2d/activity-diagram": "workspace:*",
-    "@meta2d/flow-diagram": "workspace:*",
-    "@meta2d/chart-diagram": "workspace:*",
-    "@meta2d/form-diagram": "workspace:*",
-    "@meta2d/fta-diagram": "workspace:*",
-    "@meta2d/le5le-charts": "workspace:*"
   },
   "devDependencies": {
     "copyfiles": "latest",

@@ -312,7 +312,7 @@ export class Meta2d {
       if(e.value){
         _pen = this.findOne((e.value as string));
       }
-      if(this.store.animates.has(_pen)&&!_pen.calculative.pause){
+      if(this.store.animates.has(_pen)&&!_pen.calculative.pause&&_pen.animateName===e.params){
         return;
       }
       if (e.targetType && e.params) {
@@ -1303,6 +1303,7 @@ export class Meta2d {
         }
         if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
+          animate.animateName = animate.name;
           delete animate.name;
           animate.currentAnimation = index;
           if (!pen.type && animate.frames) {

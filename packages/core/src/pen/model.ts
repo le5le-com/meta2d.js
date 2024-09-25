@@ -291,7 +291,7 @@ export interface Pen extends Rect {
   keepAnimateState?: boolean;
 
   lineAnimateType?: LineAnimateType;
-
+  animateName?: string; // 当前执行的动画名称
   frames?: Pen[];
   // 提前预置的不同效果的动画组
   animateList?: Pen[][];
