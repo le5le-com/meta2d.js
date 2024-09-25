@@ -265,6 +265,7 @@ function beforeValue(pen: ChartPen, value: any) {
     return value;
   }
   if (pen.realTimes && pen.realTimes.length) {
+    let keys = Object.keys(value);
     const { xAxis, yAxis } = pen.echarts.option;
     const { max, replaceMode, timeFormat } = pen.echarts;
     let dataDotArr = []; //记录只更新一个点的数据
@@ -280,19 +281,22 @@ function beforeValue(pen: ChartPen, value: any) {
             beforeV.splice(0, beforeV.length - max);
           }
           value[key] = beforeV;
-          let _key = 'echarts.option.xAxis.data';
-          if (Array.isArray(xAxis) && xAxis.length) {
-            _key = 'echarts.option.xAxis.0.data';
+          if(!keys.includes('echarts.option.xAxis.data')){
+            //x轴时间  避免影响x轴历史趋势
+            let _key = 'echarts.option.xAxis.data';
+            if (Array.isArray(xAxis) && xAxis.length) {
+              _key = 'echarts.option.xAxis.0.data';
+            }
+            let _value = getter(pen, _key);
+            let _time = formatTime(
+              timeFormat || '`${hours}:${minutes}:${seconds}`'
+            );
+            _value.push(_time);
+            if (max) {
+              _value.splice(0, _value.length - max);
+            }
+            value[_key] = _value;
           }
-          let _value = getter(pen, _key);
-          let _time = formatTime(
-            timeFormat || '`${hours}:${minutes}:${seconds}`'
-          );
-          _value.push(_time);
-          if (max) {
-            _value.splice(0, _value.length - max);
-          }
-          value[_key] = _value;
         }
         if (key.includes('.data.')) {
           //例如data.1 需要更新 data
