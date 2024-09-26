@@ -288,14 +288,14 @@ export class Canvas {
     this.canvasImage.canvas.style.zIndex = '4';
 
     this.magnifierCanvas = new MagnifierCanvas(this, parentElement, store);
-    this.magnifierCanvas.canvas.style.zIndex = '5';
+    this.magnifierCanvas.canvas.style.zIndex = '100'; //放大镜盖过dom图元
 
     this.externalElements.style.position = 'absolute';
     this.externalElements.style.left = '0';
     this.externalElements.style.top = '0';
     this.externalElements.style.outline = 'none';
     this.externalElements.style.background = 'transparent';
-    this.externalElements.style.zIndex = '5';
+    this.externalElements.style.zIndex = '101';
     parentElement.style.position = 'relative';
     parentElement.appendChild(this.externalElements);
     this.createInput();
@@ -8247,6 +8247,7 @@ export class Canvas {
 
   showMagnifier() {
     this.magnifierCanvas.magnifier = true;
+    this.magnifierCanvas.updateDomOffscreen();
     this.externalElements.style.cursor = 'default';
     this.render();
   }

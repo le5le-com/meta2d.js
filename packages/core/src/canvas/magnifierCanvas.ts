@@ -6,6 +6,7 @@ export class MagnifierCanvas {
   canvas = document.createElement('canvas');
   magnifierScreen = createOffscreen();
   offscreen = createOffscreen();
+  domOffscreen = createOffscreen();
   private magnifierSize: number = 300;
   magnifier: boolean;
 
@@ -39,6 +40,11 @@ export class MagnifierCanvas {
       .getContext('2d')
       .scale(this.store.dpiRatio, this.store.dpiRatio);
     this.offscreen.getContext('2d').textBaseline = 'middle';
+
+    this.domOffscreen.width = w;
+    this.domOffscreen.height = h;
+    this.domOffscreen.getContext('2d').scale(this.store.dpiRatio, this.store.dpiRatio);
+    this.domOffscreen.getContext('2d').textBaseline = 'middle';
 
     this.magnifierScreen.width = this.magnifierSize + 5;
     this.magnifierScreen.height = this.magnifierSize + 5;
@@ -88,6 +94,7 @@ export class MagnifierCanvas {
       this.parentCanvas.offscreen,
       this.parentCanvas.canvasImage.offscreen,
       this.parentCanvas.canvasImage.animateOffsScreen,
+      this.domOffscreen //dom元素的绘制层
     ];
     drawOffscreens.forEach((offscreen) => {
       ctx.drawImage(
@@ -128,6 +135,22 @@ export class MagnifierCanvas {
       (this.magnifierSize + 5) / this.store.dpiRatio,
       (this.magnifierSize + 5) / this.store.dpiRatio
     );
+  }
+
+  updateDomOffscreen(){
+    const domCtx =  this.domOffscreen.getContext('2d');
+    domCtx.clearRect(0, 0, this.domOffscreen.width, this.domOffscreen.height);
+    for (const pen of this.store.data.pens) {
+      if(pen.externElement||pen.name==='gif'){
+        if(pen.calculative.img){
+          domCtx.save();
+          domCtx.translate(this.store.data.x, this.store.data.y);
+          const { x, y, width, height } = pen.calculative.worldRect;
+          domCtx.drawImage(pen.calculative.img as HTMLImageElement, x, y, width, height);
+          domCtx.restore();
+        }
+      }
+    }
   }
 
   render() {
