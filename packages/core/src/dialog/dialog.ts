@@ -157,10 +157,10 @@ export class Dialog {
       this.body.style.height = 'calc(100% - 26px)';
     }
     if(rect) {
-      this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
-      this.dialog.style.left = rect.x? (rect.x + 'px'): '10%';
       this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
       this.dialog.style.height = rect.height?(rect.height + 'px'): '420px';
+      this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
+      this.dialog.style.left = rect.x? (rect.x + 'px'): `calc( 50% - ${rect.width? rect.width/2+'px': '40%'} )`;
     }
     this.box.style.display = 'block';
   }
