@@ -132,6 +132,9 @@ export interface Network {
   interval?: number; // http 请求间隔
   times?: number; // 临时 重连次数
   index?: number; // 临时 索引
+  devices?: any[]; //物联网设备,
+  dbId?: string; //数据库id
+  sql?: string; //sql语句
 }
 
 export interface HttpOptions {

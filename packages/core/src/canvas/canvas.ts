@@ -548,7 +548,7 @@ export class Canvas {
 
     let data = JSON.parse(e.data);
     if (typeof data === 'object') {
-      this.parent.doMessageEvent(data.name);
+      this.parent.doMessageEvent(data.name, data.value);
     }else{
       this.parent.doMessageEvent(data);
     }
