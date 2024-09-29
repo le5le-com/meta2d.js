@@ -3482,7 +3482,7 @@ function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
             return {x:calculate.x,y:calculate.y};
           }catch (e) {
             // pass
-            console.log(e,'error',cs);
+            // console.log(e,'error',cs);
           }
         },{});
       }
