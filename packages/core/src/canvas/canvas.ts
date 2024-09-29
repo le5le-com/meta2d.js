@@ -7054,7 +7054,7 @@ export class Canvas {
       textRect.x + this.store.data.x - (pen.textLeft || 0) + 'px'; //+ 5
     this.inputParent.style.top =
       textRect.y + this.store.data.y - (pen.textTop || 0) + 'px'; //+ 5
-    let _width = textRect.width + (pen.textLeft || 0);
+    let _width = textRect.width ;//+ (pen.textLeft || 0);
     this.inputParent.style.width = (_width < 0 ? 12 : _width) + 'px'; //(textRect.width < pen.width ? 0 : 10)
     this.inputParent.style.height = textRect.height + (pen.textTop || 0) + 'px'; //   (textRect.height < pen.height ? 0 : 10)
     this.inputParent.style.zIndex = '9999';
@@ -7073,6 +7073,8 @@ export class Canvas {
       if (!this.store.data.locked) {
         this.inputRight.style.display = 'none';
       }
+      this.dropdown.style.background = pen.dropdownBackground || '#fff';
+      this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.setDropdownList();
     } else {
       this.inputRight.style.display = 'none';
@@ -7550,6 +7552,15 @@ export class Canvas {
     li.onmousedown = this.stopPropagation;
     li.dataset.i = index + '';
     li.onclick = this.selectDropdown;
+    const pen = this.store.pens[this.inputDiv.dataset.penId];
+    li.onmouseenter = () => {
+      li.style.background = pen.dropdownHoverBackground || '#eee';
+      li.style.color = pen.dropdownHoverColor || '#bdc7db';
+    };
+    li.onmouseleave = () => {
+      li.style.background = pen.dropdownBackground || '#fff';
+      li.style.color = pen.dropdownColor || '#bdc7db';
+    };
     this.dropdown.appendChild(li);
   }
 

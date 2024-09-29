@@ -301,7 +301,10 @@ export interface Pen extends Rect {
   animateShadowBlur?: number;
   input?: boolean;
   dropdownList?: Dropdown[];
-
+  dropdownBackground?: string;
+  dropdownColor?: string;
+  dropdownHoverColor?: string;
+  dropdownHoverBackground?: string;
   events?: Event[];
 
   iframe?: string;
