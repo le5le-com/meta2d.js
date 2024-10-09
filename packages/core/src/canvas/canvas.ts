@@ -247,7 +247,7 @@ export class Canvas {
   inputParent = document.createElement('div');
   // input = document.createElement('textarea');
   inputDiv = document.createElement('div');
-  inputRight = document.createElement('div');
+  // inputRight = document.createElement('div');
   dropdown = document.createElement('ul');
 
   tooltip: Tooltip;
@@ -7070,14 +7070,14 @@ export class Canvas {
       pen.disableInput == undefined ? 'true' : pen.disableInput.toString();
 
     if (pen.dropdownList && this.dropdown.style.display !== 'block') {
-      if (!this.store.data.locked) {
-        this.inputRight.style.display = 'none';
-      }
+      // if (!this.store.data.locked) {
+      //   this.inputRight.style.display = 'none';
+      // }
       this.dropdown.style.background = pen.dropdownBackground || '#fff';
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.setDropdownList();
     } else {
-      this.inputRight.style.display = 'none';
+      // this.inputRight.style.display = 'none';
     }
     this.inputDiv.contentEditable = 'true';
     this.inputDiv.focus();
@@ -7323,10 +7323,10 @@ export class Canvas {
 
   private createInput() {
     this.inputParent.classList.add('meta2d-input');
-    this.inputRight.classList.add('right');
+    // this.inputRight.classList.add('right');
     this.inputDiv.classList.add('input-div');
     this.inputParent.appendChild(this.inputDiv);
-    this.inputParent.appendChild(this.inputRight);
+    // this.inputParent.appendChild(this.inputRight);
     this.dropdown.onmouseleave = () => {
       this.store.hover = null;
     };
@@ -7335,9 +7335,9 @@ export class Canvas {
     this.inputParent.onmousedown = this.stopPropagation;
     this.inputDiv.onmousedown = this.stopPropagation;
     this.inputDiv.contentEditable = 'false';
-    this.inputRight.onmousedown = this.stopPropagation;
+    // this.inputRight.onmousedown = this.stopPropagation;
     this.dropdown.onmousedown = this.stopPropagation;
-    this.inputRight.style.transform = 'rotate(135deg)';
+    // this.inputRight.style.transform = 'rotate(135deg)';
 
     let sheet: any;
     for (let i = 0; i < document.styleSheets.length; i++) {
@@ -7444,10 +7444,10 @@ export class Canvas {
       const pen = this.store.pens[this.inputDiv.dataset.penId];
       if (this.dropdown.style.display === 'block') {
         this.dropdown.style.display = 'none';
-        this.inputRight.style.transform = 'rotate(135deg)';
+        // this.inputRight.style.transform = 'rotate(135deg)';
       } else if (pen?.dropdownList && this.store.data.locked) {
         this.dropdown.style.display = 'block';
-        this.inputRight.style.transform = 'rotate(315deg)';
+        // this.inputRight.style.transform = 'rotate(315deg)';
       }
       this.store.emitter.emit('clickInput', pen);
     };
@@ -7490,15 +7490,15 @@ export class Canvas {
       return;
     }
     this.dropdown.style.display = 'block';
-    this.inputRight.style.display = 'block';
-    setTimeout(() => {
-      this.inputRight.style.transform = 'rotate(315deg)';
-      (this.inputRight.style as any).zoom = this.store.data.scale;
-    });
+    // this.inputRight.style.display = 'block';
+    // setTimeout(() => {
+    //   this.inputRight.style.transform = 'rotate(315deg)';
+    //   (this.inputRight.style as any).zoom = this.store.data.scale;
+    // });
     if (!pen || !pen.dropdownList) {
       this.dropdown.style.display = 'none';
-      this.inputRight.style.display = 'none';
-      this.inputRight.style.transform = 'rotate(135deg)';
+      // this.inputRight.style.display = 'none';
+      // this.inputRight.style.transform = 'rotate(135deg)';
       return;
     }
     if (!pen.dropdownList.length) {

@@ -1270,6 +1270,28 @@ export function drawIcon(
   ctx.restore();
 }
 
+export function drawDropdown(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+){
+  const scale = pen.calculative.canvas.store.data.scale;
+  const inputPenId = pen.calculative.canvas.inputDiv.dataset.penId;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  ctx.save();
+  ctx.beginPath();
+  if(pen.id === inputPenId){
+    ctx.moveTo(x+width-20*scale, y+height/2+2*scale);
+    ctx.lineTo(x+width-14*scale, y+height/2-4*scale);
+    ctx.lineTo(x+width-8*scale, y+height/2+2*scale);
+  }else{
+    ctx.moveTo(x+width-20*scale, y+height/2-4*scale);
+    ctx.lineTo(x+width-14*scale, y+height/2+2*scale);
+    ctx.lineTo(x+width-8*scale, y+height/2-4*scale);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
 /**
  * canvas2svg 中对 font 的解析规则比 canvas 中简单，能识别的类型很少
  * @returns ctx.font
@@ -1503,6 +1525,10 @@ export function renderPen(
     drawIcon(ctx, pen);
   }
 
+  if(pen.dropdownList){
+    drawDropdown(ctx, pen);
+  }
+
   if (!textFlip || !textRotate) {
     ctx.restore();
   }
@@ -1696,6 +1722,10 @@ export function renderPenRaw(
     ctx.restore();
   } else if (pen.calculative.icon) {
     drawIcon(ctx, pen);
+  }
+
+  if(pen.dropdownList){
+    drawDropdown(ctx, pen);
   }
 
   if (!textFlip || !textRotate) {
