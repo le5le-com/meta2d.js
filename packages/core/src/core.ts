@@ -2947,6 +2947,14 @@ export class Meta2d {
         }
         break;
       case 'click':
+        if(this.store.data.locked && e.pen && (!e.pen.disabled)){
+          if(e.pen.switch){
+            e.pen.checked =  !e.pen.checked;
+            e.pen.calculative.checked = e.pen.checked;
+            e.pen.calculative.gradient = undefined;
+            e.pen.calculative.radialGradient = undefined;
+          }
+        }
         e.pen && e.pen.onClick && (!e.pen.disabled) && e.pen.onClick(e.pen, this.canvas.mousePos);
         this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;

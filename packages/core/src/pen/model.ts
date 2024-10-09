@@ -180,6 +180,10 @@ export interface Pen extends Rect {
   lineGradientAngle?: number;
 
   gradientColors?: string;
+  switch?: boolean; // 图元是否有开关状态
+  checked?: boolean; // 是否选中
+  onBackground?: string;
+  onGradientColors?: string;
   lineGradientColors?: string;
   lineCap?: CanvasLineCap;
   fromLineCap?: CanvasLineCap;
@@ -562,6 +566,9 @@ export interface Pen extends Rect {
     // 不应该被deepClone多份的数据，例如外部第三方组件库挂载点，
     singleton?: any;
     gradientColors?: string;
+    onBackground?: string;
+    onGradientColors?: string;
+    checked?: boolean;
     lineGradientColors?: string;
     gradient?: CanvasGradient; //临时渐进色 防止每次都计算
     lineGradient?: CanvasGradient;
