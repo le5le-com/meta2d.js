@@ -104,7 +104,7 @@ export class Meta2d {
       method?: string;
     }
   ) => boolean | string;
-  events: Record<number, (pen: Pen, e: Event) => void> = {};
+  events: Record<number, (pen: Pen, e: Event, params?:any) => void> = {};
   map: ViewMap;
   mapTimer: any;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
@@ -371,7 +371,7 @@ export class Meta2d {
       }
       console.warn('[meta2d] StopVideo event value is not a string');
     };
-    this.events[EventAction.JS] = (pen: Pen, e: Event) => {
+    this.events[EventAction.JS] = (pen: Pen, e: Event, params?:any) => {
       if (e.value && !e.fn) {
         try {
           if (typeof e.value !== 'string') {
@@ -387,7 +387,7 @@ export class Meta2d {
           console.error('[meta2d]: Error on make a function:', err);
         }
       }
-      e.fn?.(pen, e.params, { meta2d: this, eventName: e.name });
+      e.fn?.(pen, params || e.params, { meta2d: this, eventName: e.name });
     };
     this.events[EventAction.GlobalFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
