@@ -768,7 +768,7 @@ function getRow(pen: formPen, rowIndex: number) {
   const style =
     pen.styles &&
     pen.styles.filter((item) => {
-      return item.row === rowIndex && !item.col;
+      return item.row === rowIndex && item.col === undefined;
     });
   if (Array.isArray(row)) {
     return { value: row, style: style?.length > 0 ? style[0] : {} };
