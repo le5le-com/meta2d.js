@@ -115,6 +115,7 @@ export function echarts(pen: ChartPen): Path2D {
     // 3. 解析echarts数据
     pen.calculative.singleton.div = div;
     pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
+    initEvent(pen);
     pen.calculative.singleton.echartsReady = true;
     if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) {
       if (pen.echarts.geoJson) {
@@ -167,6 +168,54 @@ export function echarts(pen: ChartPen): Path2D {
   }
 
   return path;
+}
+
+
+export function initEvent(pen: Pen) {
+  const _chart = pen.calculative.singleton.echart;
+  const eventNames = ['click', 'dblclick', 'mousedown', 'mousemove', 'mouseup', 'mouseover', 'mouseout', 'globalout', 'contextmenu'];
+  eventNames.forEach((eventName) => {
+    _chart.off(eventName);
+  });
+  pen.events?.forEach((event)=>{
+    if (event.actions && event.actions.length) {
+      if(eventNames.includes(event.name)){
+        _chart.on(event.name, (params) => {
+          let flag = false;
+          if (event.conditions && event.conditions.length) {
+            if (event.conditionType === 'and') {
+              flag = event.conditions.every((condition) => {
+                return  pen.calculative.canvas.parent.judgeCondition(pen, condition.key, condition);
+              });
+            } else if (event.conditionType === 'or') {
+              flag = event.conditions.some((condition) => {
+                return  pen.calculative.canvas.parent.judgeCondition(pen, condition.key, condition);
+              });
+            }
+          } else {
+            flag = true;
+          }
+          if (flag) {
+            event.actions.forEach((action) => {
+              if(action.timeout){
+                let timer = setTimeout(()=>{
+                  if ( pen.calculative.canvas.parent.events[action.action]) {
+                    pen.calculative.canvas.parent.events[action.action](pen, action, params);
+                    clearTimeout(timer);
+                    timer = null;
+                  }
+                },action.timeout);
+              }else{
+                if (pen.calculative.canvas.parent.events[action.action]) {
+                  pen.calculative.canvas.parent.events[action.action](pen, action, params);
+                }
+              }
+            });
+          }
+        });
+      }
+    }
+  })
 }
 
 // function onAdd(pen: ChartPen) {
@@ -265,6 +314,7 @@ function beforeValue(pen: ChartPen, value: any) {
     return value;
   }
   if (pen.realTimes && pen.realTimes.length) {
+    let keys = Object.keys(value);
     const { xAxis, yAxis } = pen.echarts.option;
     const { max, replaceMode, timeFormat } = pen.echarts;
     let dataDotArr = []; //记录只更新一个点的数据
@@ -280,19 +330,22 @@ function beforeValue(pen: ChartPen, value: any) {
             beforeV.splice(0, beforeV.length - max);
           }
           value[key] = beforeV;
-          let _key = 'echarts.option.xAxis.data';
-          if (Array.isArray(xAxis) && xAxis.length) {
-            _key = 'echarts.option.xAxis.0.data';
+          if(!keys.includes('echarts.option.xAxis.data')){
+            //x轴时间  避免影响x轴历史趋势
+            let _key = 'echarts.option.xAxis.data';
+            if (Array.isArray(xAxis) && xAxis.length) {
+              _key = 'echarts.option.xAxis.0.data';
+            }
+            let _value = getter(pen, _key);
+            let _time = formatTime(
+              timeFormat || '`${hours}:${minutes}:${seconds}`'
+            );
+            _value.push(_time);
+            if (max) {
+              _value.splice(0, _value.length - max);
+            }
+            value[_key] = _value;
           }
-          let _value = getter(pen, _key);
-          let _time = formatTime(
-            timeFormat || '`${hours}:${minutes}:${seconds}`'
-          );
-          _value.push(_time);
-          if (max) {
-            _value.splice(0, _value.length - max);
-          }
-          value[_key] = _value;
         }
         if (key.includes('.data.')) {
           //例如data.1 需要更新 data

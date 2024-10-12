@@ -64,7 +64,8 @@ export function commonPens() {
     mindNode,
     mindLine,
     mindNode2:rectangle,
-    panel
+    panel,
+    combine:rectangle,
   };
 }
 

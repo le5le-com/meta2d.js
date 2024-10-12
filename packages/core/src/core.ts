@@ -101,9 +101,10 @@ export class Meta2d {
       type?: string;
       topic?: string;
       url?: string;
+      method?: string;
     }
   ) => boolean | string;
-  events: Record<number, (pen: Pen, e: Event) => void> = {};
+  events: Record<number, (pen: Pen, e: Event, params?:any) => void> = {};
   map: ViewMap;
   mapTimer: any;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
@@ -312,7 +313,7 @@ export class Meta2d {
       if(e.value){
         _pen = this.findOne((e.value as string));
       }
-      if(this.store.animates.has(_pen)&&!_pen.calculative.pause){
+      if(this.store.animates.has(_pen)&&!_pen.calculative.pause&&_pen.animateName===e.params){
         return;
       }
       if (e.targetType && e.params) {
@@ -370,7 +371,7 @@ export class Meta2d {
       }
       console.warn('[meta2d] StopVideo event value is not a string');
     };
-    this.events[EventAction.JS] = (pen: Pen, e: Event) => {
+    this.events[EventAction.JS] = (pen: Pen, e: Event, params?:any) => {
       if (e.value && !e.fn) {
         try {
           if (typeof e.value !== 'string') {
@@ -386,7 +387,7 @@ export class Meta2d {
           console.error('[meta2d]: Error on make a function:', err);
         }
       }
-      e.fn?.(pen, e.params, { meta2d: this, eventName: e.name });
+      e.fn?.(pen, params || e.params, { meta2d: this, eventName: e.name });
     };
     this.events[EventAction.GlobalFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
@@ -473,6 +474,31 @@ export class Meta2d {
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
+      if(e.list?.length){
+        // if (e.targetType === 'id') {
+          const value:any = {};
+          e.list.forEach((item:any)=>{
+            const _pen = item.params ? this.findOne(item.params) : pen;
+            for (let key in item.value) {
+              if (item.value[key] === undefined || item.value[key] === '') {
+                value[key] = _pen[key];
+              }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
+                let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+                if(keys?.length){
+                  value[key] = _pen[keys[0]]
+                }
+              }else{
+                value[key] = item.value[key];
+              }
+            }
+          });
+          if(pen.deviceId){
+            value.deviceId = pen.deviceId;
+          }
+          this.sendDataToNetWork(value, pen, e);
+          return;
+        // }
+      }
       const value = deepClone(e.value);
       if (value && typeof value === 'object') {
         if (e.targetType === 'id') {
@@ -480,6 +506,11 @@ export class Meta2d {
           for (let key in value) {
             if (value[key] === undefined || value[key] === '') {
               value[key] = _pen[key];
+            }else if(typeof value[key]=== 'string' && value[key]?.indexOf('${') > -1){
+              let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                value[key] = _pen[keys[0]]
+              }
             }
           }
           // value.id = _pen.id;
@@ -502,12 +533,31 @@ export class Meta2d {
         return;
       }
       let params = queryURLParams(_pen.iframe.split('?')[1]);
+      const value:any = {};
+      if(e.list?.length){
+        e.list.forEach((item:any)=>{
+          const _pen = item.params ? this.findOne(item.params) : pen;
+          for (let key in item.value) {
+            if (item.value[key] === undefined || item.value[key] === '') {
+              value[key] = _pen[key];
+            }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
+              let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                value[key] = _pen[keys[0]]
+              }
+            }else{
+              value[key] = item.value[key];
+            }
+          }
+        });
+      }
       (
         _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
       ).contentWindow.postMessage(
         JSON.stringify({
           name: e.value,
           id: params.id,
+          value
         }),
         '*'
       );
@@ -518,24 +568,70 @@ export class Meta2d {
         console.warn('[meta2d] Emit value must be a string');
         return;
       }
-      window.parent.postMessage(JSON.stringify(e.value), '*');
+      const value:any = {};
+      if(e.list?.length){
+        e.list.forEach((item:any)=>{
+          const _pen = item.params ? this.findOne(item.params) : pen;
+          for (let key in item.value) {
+            if (item.value[key] === undefined || item.value[key] === '') {
+              value[key] = _pen[key];
+            }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
+              let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                value[key] = _pen[keys[0]]
+              }
+            }else{
+              value[key] = item.value[key];
+            }
+          }
+        });
+      }
+      window.parent.postMessage(JSON.stringify({name:e.value,value}), '*');
       return;
     };
   }
 
-  navigatorTo(id: string) {
+  async navigatorTo(id: string) {
     if (!id) {
       return;
     }
-    let href = window.location.href;
-    let arr: string[] = href.split('id=');
-    if (arr.length > 1) {
-      let idx = arr[1].indexOf('&');
-      if (idx === -1) {
-        window.location.href = arr[0] + 'id=' + id;
-      } else {
-        window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx);
+    // let href = window.location.href;
+    // let arr: string[] = href.split('id=');
+    // if (arr.length > 1) {
+    //   let idx = arr[1].indexOf('&');
+    //   if (idx === -1) {
+    //     window.location.href = arr[0] + 'id=' + id;
+    //   } else {
+    //     window.location.href = arr[0] + 'id=' + id + arr[1].slice(idx);
+    //   }
+    // }
+    //路径参数更新
+    const url = new URL(window.location as any);
+    url.searchParams.set('id', id);
+    history.pushState({}, '', url);
+    //图纸更新
+    const netWork = this.store.options.navigatorNetWork;
+    const collection = (location.href.includes('2d.')||location.href.includes('/2d'))?'2d':'v';
+    const res: Response = await fetch((netWork?.url||`/api/data/${collection}/get`) + (netWork?.method==='GET'?`?id=${id}`:''), {
+      headers: {
+        Authorization: `Bearer ${this.getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
+      },
+      method: netWork?.method || 'POST',
+      body: netWork?.method === 'GET' ?undefined : JSON.stringify({id:id}) as any,
+    });
+    if(res.ok){
+      let data:any = await res.text();
+      if (data.constructor === Object || data.constructor === Array) {
+        data = JSON.parse(JSON.stringify(data));
+      } else if (typeof data === 'string') {
+        data = JSON.parse(data);
       }
+      if(data.data){
+        data = data.data;
+      }
+      this.open(data);
+    }else{
+      this.store.emitter.emit('error', { type: 'http', error: res });
     }
   }
 
@@ -1270,6 +1366,7 @@ export class Meta2d {
         }
         if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
+          animate.animateName = animate.name;
           delete animate.name;
           animate.currentAnimation = index;
           if (!pen.type && animate.frames) {
@@ -2001,6 +2098,7 @@ export class Meta2d {
 
   updateTimer: any;
   updateTimerList: any[] = [];
+  sqlTimerList: any[] = [];
   connectNetwork() {
     this.closeNetwork();
     const { networks } = this.store.data;
@@ -2009,9 +2107,10 @@ export class Meta2d {
       let mqttIndex = 0;
       this.mqttClients = [];
       let websocketIndex = 0;
+      let sqlIndex = 0;
       this.websockets = [];
-      networks.forEach((net) => {
-        if (net.type === 'subscribe') {
+      networks.forEach(async (net) => {
+        // if (net.type === 'subscribe') {
           if (net.protocol === 'mqtt') {
             net.index = mqttIndex;
             if (net.options.clientId && !net.options.customClientId) {
@@ -2080,13 +2179,54 @@ export class Meta2d {
               method: net.method,
               body: net.body,
             });
+          }else if(net.protocol === 'iot'){
+            const token = await this.getIotToken(net.devices);
+            //物联网设备
+            if(net.method === 'mqtt'){
+              net.index = mqttIndex;
+              this.mqttClients[mqttIndex] = mqtt.connect(net.url);
+              this.mqttClients[mqttIndex].on('message', (topic: string, message: Buffer) => {
+                this.socketCallback(message.toString(), {
+                  topic:`le5le-iot/properties/${token}`,
+                  type: 'iot',
+                  url: net.url,
+                  method: 'mqtt'
+                });
+              })
+              this.mqttClients[mqttIndex].on('error', (error) => {
+                this.store.emitter.emit('error', { type: 'mqtt', error });
+              });
+              this.mqttClients[mqttIndex].subscribe(`le5le-iot/properties/${token}`);
+              mqttIndex += 1;
+            }else if(net.method === 'websocket'){
+              net.index = websocketIndex;
+              this.websockets[websocketIndex] = new WebSocket(
+                `${location.protocol === 'https:'?'wss':'ws'}://${location.host}/api/ws/iot/properties`,
+                token
+              );
+              this.websockets[websocketIndex].onmessage = (e) => {
+                this.socketCallback(e.data, { type: 'iot', method: 'websocket' });   
+              };
+              this.websockets[websocketIndex].onerror = (error) => {
+                this.store.emitter.emit('error', { type: 'websocket', error });
+              };
+              websocketIndex += 1;
+            }
+          }else if(net.protocol === 'sql'){
+            await this.doSqlCode('list',net.dbId,net.sql);
+            if(net.interval){
+              net.index = sqlIndex;
+              this.sqlTimerList[sqlIndex] = setInterval(async () => {
+                await this.doSqlCode('list',net.dbId,net.sql);
+              }, net.interval);
+              sqlIndex += 1;
+            }
           }
-        }
+        // }
       });
     }
     this.onNetworkConnect(https);
   }
-
   
   connectNetWebSocket(net:Network){
     if(this.websockets[net.index]){
@@ -2121,6 +2261,31 @@ export class Meta2d {
       },2000);
     };
   }
+
+  async getIotToken(devices:any){
+    const res: Response = await fetch('/api/iot/subscribe/properties', {
+      method: 'POST',
+      body:JSON.stringify({devices: devices}),
+    });
+    if (res.ok) {
+      const data = await res.text();
+      return JSON.parse(data).token;
+    }
+  }
+
+    
+  async doSqlCode(type:string, dbid:string,sql:string){
+    const res: Response = await fetch( `/api/iot/data/sql/${type}`, {
+      method: 'POST',
+      body:JSON.stringify({ dbid,sql,}),
+    });
+    if (res.ok) {
+      const data = await res.text();
+      if(data){
+        this.socketCallback(data, { type: 'sql', url: `/api/iot/data/sql/${type}` });
+      }
+    }
+  }  
 
   randomString(e: number) {
     e = e || 32;
@@ -2319,19 +2484,20 @@ export class Meta2d {
     }
   }
 
+  getCookie(name: string) {
+    let arr: RegExpMatchArray | null;
+    const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
+    if ((arr = document.cookie.match(reg))) {
+      return decodeURIComponent(arr[2]);
+    } else {
+      return '';
+    }
+  }
+
   //获取动态参数
   getDynamicParam(key: string) {
-    function getCookie(name: string) {
-      let arr: RegExpMatchArray | null;
-      const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
-      if ((arr = document.cookie.match(reg))) {
-        return decodeURIComponent(arr[2]);
-      } else {
-        return '';
-      }
-    }
     let params = queryURLParams();
-    let value = params[key] || localStorage[key] || getCookie(key) || '';
+    let value = params[key] || localStorage[key] || this.getCookie(key) || '';
     return value;
   }
 
@@ -2447,11 +2613,16 @@ export class Meta2d {
       clearInterval(_updateTimer);
       _updateTimer = undefined;
     });
+    this.sqlTimerList &&
+    this.sqlTimerList.forEach((_sqlTimer) => {
+      clearInterval(_sqlTimer);
+      _sqlTimer = undefined
+    });
   }
 
   socketCallback(
     message: string,
-    context?: { type?: string; topic?: string; url?: string }
+    context?: { type?: string; topic?: string; url?: string, method?: string }
   ) {
     this.store.emitter.emit('socket', { message, context });
     let _message:any = message;
@@ -2463,6 +2634,7 @@ export class Meta2d {
         type: context.type,
         topic: context.topic,
         url: context.url,
+        method: context.method
       })
       if(!_message){
         return;
@@ -2548,7 +2720,7 @@ export class Meta2d {
           }
         }
       );
-      this.store.bind[v.id]?.forEach((p: { id: string; key: string }) => {
+      this.store.bind[v.id || v.dataId]?.forEach((p: { id: string; key: string }) => {
         const pen = this.store.pens[p.id];
         if (!pen) {
           return;
@@ -2775,6 +2947,14 @@ export class Meta2d {
         }
         break;
       case 'click':
+        if(this.store.data.locked && e.pen && (!e.pen.disabled)){
+          if(e.pen.switch){
+            e.pen.checked =  !e.pen.checked;
+            e.pen.calculative.checked = e.pen.checked;
+            e.pen.calculative.gradient = undefined;
+            e.pen.calculative.radialGradient = undefined;
+          }
+        }
         e.pen && e.pen.onClick && (!e.pen.disabled) && e.pen.onClick(e.pen, this.canvas.mousePos);
         this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;
@@ -2941,8 +3121,18 @@ export class Meta2d {
       pen.events?.forEach((event,index) => {
         if(indexArr.includes(index)){
           event.actions.forEach((action) => {
-            if (this.events[action.action]) {
-              this.events[action.action](pen, action);
+            if(action.timeout){
+              let timer = setTimeout(()=>{
+                if (this.events[action.action]) {
+                  this.events[action.action](pen, action);
+                  clearTimeout(timer);
+                  timer = null;
+                }
+              },action.timeout);
+            }else{
+              if (this.events[action.action]) {
+                this.events[action.action](pen, action);
+              }
             }
           });
         }
@@ -2980,7 +3170,17 @@ export class Meta2d {
         realTime.triggers?.forEach((trigger,index) => {
           if(indexArr.includes(index)){
             trigger.actions?.forEach((event) => {
-              this.events[event.action](pen, event);
+              if(event.timeout){
+                let timer = setTimeout(()=>{
+                  if (this.events[event.action]) {
+                    this.events[event.action](pen, event);
+                    clearTimeout(timer);
+                    timer = null;
+                  }
+                },event.timeout);
+              }else{
+                this.events[event.action](pen, event);
+              }
             });
           }
         });
@@ -3011,7 +3211,17 @@ export class Meta2d {
       this.store.globalTriggers[pen.id]?.forEach((trigger,index) => {
         if(indexArr.includes(index)){
           trigger.actions?.forEach((event) => {
-            this.events[event.action](pen, event);
+            if(event.timeout){
+              let timer = setTimeout(()=>{
+                if (this.events[event.action]) {
+                  this.events[event.action](pen, event);
+                  clearTimeout(timer);
+                  timer = null;
+                }
+              },event.timeout);
+            }else{
+              this.events[event.action](pen, event);
+            }
           });
         }
       });
@@ -3038,7 +3248,17 @@ export class Meta2d {
               }
               if (flag) {
                 state.actions?.forEach((event) => {
-                  this.events[event.action](pen, event);
+                  if(event.timeout){
+                    let timer = setTimeout(()=>{
+                      if (this.events[event.action]) {
+                        this.events[event.action](pen, event);
+                        clearTimeout(timer);
+                        timer = null;
+                      }
+                    },event.timeout);
+                  }else{
+                    this.events[event.action](pen, event);
+                  }
                 });
                 break;
               }
@@ -3052,7 +3272,7 @@ export class Meta2d {
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
 
-  doMessageEvent(eventName: string) {
+  doMessageEvent(eventName: string, data?:any) {
     if (this.store.messageEvents[eventName]) {
       this.store.messageEvents[eventName].forEach((item) => {
         let flag = false;
@@ -4014,7 +4234,8 @@ export class Meta2d {
       formatAttrs.forEach((attr) => {
         attrs[attr] =
           firstPen[attr] !== undefined ? firstPen[attr] :
-          (this.store.options.defaultFormat[attr] ||
+          (this.store.options.defaultFormat[attr] || 
+          this.store.data[attr] ||
           this.store.options[attr]);
       });
     } else {
@@ -4023,6 +4244,7 @@ export class Meta2d {
       formatAttrs.forEach((attr) => {
         attrs[attr] =
           this.store.options.defaultFormat[attr] ||
+          this.store.data[attr] ||
           this.store.options[attr] ||
           undefined;
       });

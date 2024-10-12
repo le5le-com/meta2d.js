@@ -111,9 +111,8 @@ export class CanvasTemplate {
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
+        ctx.globalAlpha = this.store.data.globalAlpha ?? this.store.options.globalAlpha;
         if (width && height) {
-          ctx.globalAlpha =
-            this.store.data.globalAlpha ?? this.store.options.globalAlpha;
           ctx.shadowOffsetX = this.store.options.shadowOffsetX;
           ctx.shadowOffsetY = this.store.options.shadowOffsetY;
           ctx.shadowBlur = this.store.options.shadowBlur;
@@ -155,6 +154,9 @@ export class CanvasTemplate {
           // pen.template 
           pen.canvasLayer===CanvasLayer.CanvasTemplate
           && pen.calculative.inView) {
+          if (pen.name === 'combine' && !pen.draw){
+            continue;
+          }
           //非图片
           renderPen(ctx, pen);
           //图片
