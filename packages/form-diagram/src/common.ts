@@ -40,7 +40,7 @@ export interface formPen extends Pen {
     maxOffsetY?:number;
     stap?:number;
   } & Pen['calculative'];
-  checked?: boolean | string;
+  checked?: any;
   onColor?: string;
   disable?: boolean;
   disableOnColor?: string;
