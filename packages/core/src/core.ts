@@ -724,12 +724,12 @@ export class Meta2d {
    *
    * @param emit 是否发送消息
    */
-  async addPen(pen: Pen, history?: boolean, emit = true) {
-    return await this.canvas.addPen(pen, history, emit);
+  async addPen(pen: Pen, history?: boolean, emit = true, abs = false) {
+    return await this.canvas.addPen(pen, history, emit, abs);
   }
 
-  async addPens(pens: Pen[], history?: boolean) {
-    return await this.canvas.addPens(pens, history);
+  async addPens(pens: Pen[], history?: boolean, abs = false) {
+    return await this.canvas.addPens(pens, history, abs);
   }
 
   render(patchFlags?: boolean | number) {

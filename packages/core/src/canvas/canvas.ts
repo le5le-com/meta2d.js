@@ -1485,7 +1485,7 @@ export class Canvas {
     return pen;
   }
 
-  async addPens(pens: Pen[], history?: boolean): Promise<Pen[]> {
+  async addPens(pens: Pen[], history?: boolean, abs?:boolean): Promise<Pen[]> {
     if (this.beforeAddPens && (await this.beforeAddPens(pens)) != true) {
       return [];
     }
@@ -1493,6 +1493,12 @@ export class Canvas {
     for (const pen of pens) {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;
+      }
+      if(abs) {
+        pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+        pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+        pen.width = pen.width * this.store.data.scale;
+        pen.height = pen.height * this.store.data.scale;
       }
       this.makePen(pen);
       list.push(pen);
@@ -3742,7 +3748,7 @@ export class Canvas {
     this.canvasImageBottom.clear();
   }
 
-  async addPen(pen: Pen, history?: boolean, emit?: boolean): Promise<Pen> {
+  async addPen(pen: Pen, history?: boolean, emit?: boolean, abs?:boolean): Promise<Pen> {
     if (this.beforeAddPens && (await this.beforeAddPens([pen])) != true) {
       return;
     }
@@ -3750,7 +3756,12 @@ export class Canvas {
     if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
       return;
     }
-
+    if(abs) {
+      pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+      pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+      pen.width = pen.width * this.store.data.scale;
+      pen.height = pen.height * this.store.data.scale;
+    }
     this.makePen(pen);
     this.active([pen]);
     this.render();
@@ -7663,14 +7674,20 @@ export class Canvas {
       // 单属性
       if (k.indexOf('.') === -1) {
         if (k === 'rotate') {
-          oldRotate = pen.calculative.rotate || 0;
+          if(pen.disableRotate) { //当图元禁止旋转时不重新设置旋转角度
+            pen.rotate = pen.calculative.rotate || 0;
+          } else {
+            oldRotate = pen.calculative.rotate || 0;
+          }
         } else if (k === 'canvasLayer' || k === 'isBottom' || k === 'showChild') {
           containIsBottom = true;
         } else if (k === 'image') {
           willRenderImage = true;
         }
         if (typeof pen[k] !== 'object' || k === 'lineDash') {
-          pen.calculative[k] = data[k];
+          if(!pen.disableRotate || k !== 'rotate'){//当图元禁止旋转时不重新设置旋转角度
+            pen.calculative[k] = data[k];
+          }
         }
         if (needCalcTextRectProps.includes(k)) {
           willCalcTextRect = true;
@@ -7700,7 +7717,6 @@ export class Canvas {
         calcWorldAnchors(pen);
       }
     }
-
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
     if (isChangedName) {
       pen.onDestroy?.(pen);
