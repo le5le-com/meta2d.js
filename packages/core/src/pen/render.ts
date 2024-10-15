@@ -171,7 +171,10 @@ function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (!gradientColors) {
     return;
   }
-
+  let color = pen.calculative.gradientColors;
+  if(pen.calculative.checked){
+    color = pen.calculative.onGradientColors;
+  }
   const { width, height, center } = worldRect;
   const { x: centerX, y: centerY } = center;
   let r = width;
@@ -179,7 +182,7 @@ function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
     r = height;
   }
   r *= 0.5;
-  const { colors } = formatGradient(gradientColors);
+  const { colors } = formatGradient(color);
   const grd = ctx.createRadialGradient(
     centerX,
     centerY,
@@ -201,7 +204,11 @@ function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
   ];
-  const { angle, colors } = formatGradient(pen.calculative.gradientColors);
+  let color = pen.calculative.gradientColors;
+  if(pen.calculative.checked){
+    color = pen.calculative.onGradientColors;
+  }
+  const { angle, colors } = formatGradient(color);
   let r = getGradientR(angle, width, height);
   points.forEach((point) => {
     rotatePoint(point, angle, center);
@@ -1263,6 +1270,28 @@ export function drawIcon(
   ctx.restore();
 }
 
+export function drawDropdown(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+){
+  const scale = pen.calculative.canvas.store.data.scale;
+  const inputPenId = pen.calculative.canvas.inputDiv.dataset.penId;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  ctx.save();
+  ctx.beginPath();
+  if(pen.id === inputPenId){
+    ctx.moveTo(x+width-20*scale, y+height/2+2*scale);
+    ctx.lineTo(x+width-14*scale, y+height/2-4*scale);
+    ctx.lineTo(x+width-8*scale, y+height/2+2*scale);
+  }else{
+    ctx.moveTo(x+width-20*scale, y+height/2-4*scale);
+    ctx.lineTo(x+width-14*scale, y+height/2+2*scale);
+    ctx.lineTo(x+width-8*scale, y+height/2-4*scale);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
 /**
  * canvas2svg 中对 font 的解析规则比 canvas 中简单，能识别的类型很少
  * @returns ctx.font
@@ -1369,6 +1398,10 @@ export function renderPen(
     fill =
       pen.mouseDownBackground ||
       pSBC(-0.4, pen.calculative.background || store.data.penBackground);
+  } else if (pen.switch && pen.calculative.checked) {
+    if(!pen.calculative.bkType){
+      fill = pen.onBackground;
+    }
   } else if (pen.calculative.hover) {
     _stroke = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
@@ -1490,6 +1523,10 @@ export function renderPen(
   }
   if (!(pen.image && pen.calculative.img) && pen.calculative.icon) {
     drawIcon(ctx, pen);
+  }
+
+  if(pen.dropdownList){
+    drawDropdown(ctx, pen);
   }
 
   if (!textFlip || !textRotate) {
@@ -1687,6 +1724,10 @@ export function renderPenRaw(
     drawIcon(ctx, pen);
   }
 
+  if(pen.dropdownList){
+    drawDropdown(ctx, pen);
+  }
+
   if (!textFlip || !textRotate) {
     ctx.restore();
   }
@@ -1749,6 +1790,7 @@ export function ctxDrawPath(
   store: Meta2dStore,
   fill: boolean
 ) {
+  if(pen.name === 'drawCommand')return;
   const path = canUsePath
     ? store.path2dMap.get(pen)
     : globalStore.path2dDraws[pen.name];
@@ -3481,7 +3523,7 @@ function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
             return {x:calculate.x,y:calculate.y};
           }catch (e) {
             // pass
-            console.log(e,'error',cs);
+            // console.log(e,'error',cs);
           }
         },{});
       }
@@ -3653,6 +3695,9 @@ function dealWithVisio(command, pen, startX, startY) {
       const axisRatio =
         command.v.D * (width / height) * (originHeight / originWidth); // 长轴和短轴的比率
       //
+
+      const crossProduct = (endX - startX) * (ctrlY - startY) - (endY - startY) * (ctrlX - startX) > 0;
+
       const params = calculateEllipseParameters(
         startX,
         startY,
@@ -3692,11 +3737,67 @@ function dealWithVisio(command, pen, startX, startY) {
           // startAngle: 0,
           // endAngle: Math.PI * 2,
           // anticlockwise: startA > 0 && startA>endA
-          anticlockwise: +angleDeg < 0,
+          anticlockwise: crossProduct,
           // anticlockwise: Math.abs(endA - startA) < Math.PI
         },
         startX: endX,
         startY: endY,
+      };
+    case "RelEllipticalArcTo":
+      const endX3 = command.v.X * originWidth * (width / originWidth) + x; // 弧上结束顶点的 x 坐标
+      const endY3 = command.v.Y * originHeight * (height / originHeight) + y; // 弧上结束顶点的 y 坐标
+      const ctrlX3 = command.v.A * originWidth * (width / originWidth) + x; // 控制点的 x 坐标
+      const ctrlY3 = command.v.B * originHeight * (height / originHeight) + y; // 控制点的 y 坐标
+      const angleDeg3 = command.v.C; // 主轴相对于 x 轴的角度 (度)
+      const axisRatio3 =
+        command.v.D * (width / height) * (originHeight / originWidth); // 长轴和短轴的比率
+      //
+      const crossProduct2 = (endX3 - startX) * (ctrlY3 - startY) - (endY3 - startY) * (ctrlX3 - startX) > 0;
+
+      const params2 = calculateEllipseParameters(
+        startX,
+        startY,
+        endX3,
+        endY3,
+        ctrlX3,
+        ctrlY3,
+        axisRatio3
+      );
+      // 开始绘制路径
+      !command.orign && (command.orign = {});
+      !command.orign.startA &&
+      (command.orign.startA = calculateAngleInRadians(
+        params2.x0,
+        params2.y0,
+        startX,
+        startY
+      ));
+      !command.orign.endA &&
+      (command.orign.endA = calculateAngleInRadians(
+        params2.x0,
+        params2.y0,
+        endX3,
+        endY3
+      ));
+      return {
+        c: 'ellipse',
+        v: {
+          centerX: params2.x0,
+          centerY: params2.y0,
+          radiuX: params2.a,
+          radiuY: params2.b,
+          // rotation:radiansToDegrees(angleDeg),
+          rotation: 0,
+          startAngle: command.orign.startA,
+          endAngle: command.orign.endA,
+          // startAngle: 0,
+          // endAngle: Math.PI * 2,
+          // anticlockwise: startA > 0 && startA>endA
+          anticlockwise: crossProduct2
+          // anticlockwise: Math.abs(endA - startA) < Math.PI
+        },
+        startX: endX3,
+        startY: endY3,
       };
     case 'ArcTo':
       let endX2 = (command.v.X * 100 * width) / originWidth + x;
@@ -3741,16 +3842,19 @@ function dealWithVisio(command, pen, startX, startY) {
           aclockwise: true,
         },
       };
-    // case "RelCubBezTo":
-    //   return {
-    //     c:"bezierCurveTo",
-    //     v:{
-    //
-    //     }
-    //   };
     default:
-      // console.log(command.c);
-      return {};
+      const cloneCommand = deepClone(command)
+      Object.entries(cloneCommand.v).forEach(([k,v]:any)=>{
+        // 表明此类型为
+          if(k.endsWith?.('_x')){
+            if(typeof v === "number") cloneCommand.v[k] = v * (width / originWidth) + x;
+          } else if(k.endsWith?.("_y")){
+            if(typeof v === "number") cloneCommand.v[k] = v * (height / originHeight) + y;
+          }else {
+            if(typeof v === "number") cloneCommand.v[k] = v
+          }
+      })
+      return cloneCommand;
   }
 }
 export function setChildValue(pen: Pen, data: IValue) {

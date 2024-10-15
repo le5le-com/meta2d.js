@@ -111,7 +111,7 @@ export interface DataMock {
 
 export interface Network {
   name?: string;
-  protocol?: 'mqtt' | 'websocket' | 'http';
+  protocol?: 'mqtt' | 'websocket' | 'http' | 'iot' | 'sql';
   type?: string; //subscribe
   url?: string;
   //websocket
@@ -132,6 +132,9 @@ export interface Network {
   interval?: number; // http 请求间隔
   times?: number; // 临时 重连次数
   index?: number; // 临时 索引
+  devices?: any[]; //物联网设备,
+  dbId?: string; //数据库id
+  sql?: string; //sql语句
 }
 
 export interface HttpOptions {

@@ -38,6 +38,11 @@ export interface Event {
   conditionType?: string;
   message?: string; //消息名称
   callback?: string; //回调函数 仅http
+  list?:{ 
+    params?: string;
+    value?: EventValue; 
+  }[] //多个图元对象
+  timeout?: number; //延时执行
 }
 
 export enum EventAction {
