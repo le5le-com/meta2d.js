@@ -4319,7 +4319,7 @@ export class Meta2d {
   }
 
   //对齐大屏
-  alignNodesV(align: string, pens: Pen[] = this.store.data.pens) {
+  alignNodesV(align: string, pens: Pen[] = this.store.data.pens, whole:boolean=false) {
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
     let rect = {
@@ -4329,8 +4329,40 @@ export class Meta2d {
       height,
     };
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
-    for (const item of pens) {
-      this.alignPen(align, item, rect);
+    if(whole){
+      const scale = this.store.data.scale;
+      const rect = this.getRect(pens);
+      const x  = (rect.x-this.store.data.origin.x) / scale;
+      const y = (rect.y-this.store.data.origin.y) / scale;
+      const w = rect.width / scale;
+      const h = rect.height / scale;
+      let moveX = 0;
+      let moveY = 0;
+      switch (align) {
+        case 'left':
+          moveX =-x;
+          break;
+        case 'right':
+          moveX = width - (x+w);
+          break;
+        case 'top':
+          moveY = -y;
+          break;
+        case 'bottom':
+          moveY = height - (y+h);
+          break;
+        case 'center':
+          moveX = width/2 - (x+w/2);
+          break;
+        case 'middle':
+          moveY = height/2 - (y+h/2);
+          break;
+      }      
+      this.translatePens(pens, moveX*scale, moveY*scale);
+    }else{
+      for (const item of pens) {
+        this.alignPen(align, item, rect);
+      }
     }
     this.initImageCanvas(pens);
     this.initTemplateCanvas(pens);

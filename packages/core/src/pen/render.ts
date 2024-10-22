@@ -1878,7 +1878,7 @@ export function ctxDrawPath(
       ctx.save();
       const { ex, x, y, width, height, ey } = pen.calculative.worldRect;
       let grd = null;
-      if (!pen.verticalProgress) {
+      if (!pen.calculative.verticalProgress) {
         grd = !pen.reverseProgress
           ? ctx.createLinearGradient(x, y, x + width * progress, y)
           : ctx.createLinearGradient(ex, y, x + width * (1 - progress), y);

@@ -394,6 +394,7 @@ export interface Pen extends Rect {
     progress?: number;
     progressColor?: string;
     progressGradientColors?: string;
+    verticalProgress?: boolean;
     worldRect?: Rect;
     worldAnchors?: Point[];
     worldIconRect?: Rect;
