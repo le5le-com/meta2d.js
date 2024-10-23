@@ -476,6 +476,50 @@ export class Meta2d {
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
       if(e.list?.length){
         // if (e.targetType === 'id') {
+          if(e.network&&e.network.protocol === "jetLinks"){
+            const list:any = [];
+            e.list.forEach((item:any,index)=>{
+              const _pen = item.params ? this.findOne(item.params) : pen;
+              list[index] = {
+                deviceId:_pen.deviceId,
+                productId:_pen.productId,
+                properties:{}
+              };
+              for (let key in item.value) {
+                if (item.value[key] === undefined || item.value[key] === '') {
+                  //找到绑定了这个设备属性的图元属性
+                  const realTime = _pen.realTimes?.find((item:any)=>item.propertyId === key);
+                  if(realTime){
+                    list[index].properties[key] = _pen[realTime.key];
+                  }
+                }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
+                  let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+                  if(keys?.length){
+                    list[index].properties[key] = _pen[keys[0]]
+                  }
+                }else{
+                  list[index].properties[key] = item.value[key];
+                }
+              }
+            });
+            if(this.jetLinksClient && list.length){
+              list.forEach((item)=>{
+                this.jetLinksClient.send(JSON.stringify({
+                    "type": "sub", 
+                    "topic": `/device-message-sender/${item.productId}/${item.deviceId}`, 
+                    "parameter": {
+                        "messageType":"WRITE_PROPERTY",
+                        "properties":item.properties,
+                        "headers":{
+                          "async":false 
+                        }
+                    },
+                    "id": item.productId+'/'+item.deviceId+s8()
+                }));
+              })
+            }
+            return;
+          }
           const value:any = {};
           e.list.forEach((item:any)=>{
             const _pen = item.params ? this.findOne(item.params) : pen;
@@ -1033,7 +1077,11 @@ export class Meta2d {
     });
   }
 
+  jetLinksList: any[] = [];
+  jetLinksClient: any;
+  
   initBinds() {
+    this.jetLinksList = [];
     this.store.bind = {};
     this.store.data.pens.forEach((pen) => {
       pen.realTimes?.forEach((realTime) => {
@@ -1045,6 +1093,26 @@ export class Meta2d {
             id: pen.id,
             key: realTime.key,
           });
+
+          //JetLinks
+          const productId = realTime.productId || pen.productId;
+          const deviceId = realTime.deviceId || pen.deviceId;
+          const propertyId = realTime.propertyId;
+          if(productId && deviceId && propertyId){
+            const index = this.jetLinksList.findIndex((item)=>item.topic.startsWith(`/${productId}/${deviceId}`));
+            if(index>-1){
+              const properties = this.jetLinksList[index].properties;
+              if(!properties.includes(realTime.propertyId)){
+                this.jetLinksList[index].properties.push(realTime.propertyId);
+              }
+            }else{
+              this.jetLinksList.push({
+                topic:`/${productId}/${deviceId}`,
+                deviceId,
+                properties:[realTime.propertyId]
+              });
+            }
+          }
         }
       });
     });
@@ -2221,8 +2289,44 @@ export class Meta2d {
               }, net.interval);
               sqlIndex += 1;
             }
+          }else if(net.protocol === 'jetLinks'){
+            if(this.jetLinksList.length){
+              this.jetLinksClient = new WebSocket(
+                `${net.url}/${localStorage.getItem('X-Access-Token') || this.getCookie('X-Access-Token') ||  new URLSearchParams(location.search).get('X-Access-Token') || ''}`,
+                // 'ws://8.134.86.52:29000/api/messaging/961d8b395298d3ec3a021df70d6b6ca4'
+              );
+              //消息接收
+              this.jetLinksClient.onmessage = (e) => {
+                const mess = JSON.parse(e.data);
+                if(mess.payload.success&&mess.payload?.properties){
+                  const data = [];
+                  for(let key in mess.payload.properties){
+                    if(!key.startsWith('_')){
+                      data.push({
+                        id:`${mess.payload.headers.productId}#${mess.payload.deviceId}#${key}`,
+                        value:mess.payload.properties[key]
+                      })
+                    }
+                  }
+                  this.setDatas(data,{history:false});
+                }
+              }
+              this.jetLinksClient.onopen = ()=>{
+                this.jetLinksList.forEach((item)=>{
+                  this.jetLinksClient.send(JSON.stringify({
+                      "type": "sub",
+                      "topic": `/device${item.topic}/message/property/report`,
+                      "parameter": {
+                        "deviceId":item.deviceId,
+                        "properties":item.properties,
+                        "history":1
+                      },
+                      "id": item.topic+s8()
+                    }));
+                })
+              }
+            }
           }
-        // }
       });
     }
     this.onNetworkConnect(https);
@@ -3110,8 +3214,13 @@ export class Meta2d {
         }
       });
     }else{
-      pen.events?.forEach((event,index) => {
+      pen.events?.forEach(async(event,index) => {
         if(indexArr.includes(index)){
+          if(event.confirm){
+            if(!await this.canvas.popconfirm.showModal(pen,this.canvas.mousePos,event.confirmTitle)){
+              return;
+            }
+          }
           event.actions.forEach((action) => {
             if(action.timeout){
               let timer = setTimeout(()=>{

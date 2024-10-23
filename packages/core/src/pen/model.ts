@@ -373,6 +373,7 @@ export interface Pen extends Rect {
   disabledBackground?:string; //禁用背景色
   disabledTextColor?:string; //禁用文字颜色
   inputType?:string; //输入框类型
+  productId?:string; //产品id
   deviceId?:string;//关联的设备id
   pivot?:Point; //旋转中心 
   noOnBinds?:boolean; //是否禁用绑定事件
