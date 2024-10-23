@@ -43,6 +43,8 @@ export interface Event {
     value?: EventValue; 
   }[] //多个图元对象
   timeout?: number; //延时执行
+  confirm?: string; //确认提示
+  confirmTitle?: string; //确认提示标题
 }
 
 export enum EventAction {
@@ -144,4 +146,7 @@ export interface RealTime {
   value?: string;
   enableMock?: boolean;
   mock?: any;
+  productId?: string;
+  deviceId?: string;
+  propertyId?: string;
 }

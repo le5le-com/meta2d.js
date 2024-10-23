@@ -141,6 +141,7 @@ import { setter } from '../utils/object';
 import { Title } from '../title';
 import { CanvasTemplate } from './canvasTemplate';
 import { getLinePoints } from '../diagrams/line';
+import { Popconfirm } from '../popconfirm';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -251,6 +252,7 @@ export class Canvas {
   dropdown = document.createElement('ul');
 
   tooltip: Tooltip;
+  popconfirm: Popconfirm;
   title: Title;
   mousePos: Point = { x: 0, y: 0 };
 
@@ -309,6 +311,7 @@ export class Canvas {
       );
       setHover(hover, false);
     };
+    this.popconfirm = new Popconfirm(parentElement, store);
 
     this.dialog = new Dialog(parentElement);
     this.title = new Title(parentElement);
@@ -1760,6 +1763,7 @@ export class Canvas {
       this.mouseRight = MouseRight.Down;
     }
     this.hideInput();
+    this.popconfirm.hide();
     if (
       this.store.data.locked === LockState.Disable ||
       (e.buttons !== 1 && e.buttons !== 2)
@@ -8658,6 +8662,7 @@ export class Canvas {
     this.tooltip?.destroy();
     this.dialog?.destroy();
     this.title?.destroy();
+    this.popconfirm?.destroy();
 
     // ios
     this.externalElements.removeEventListener(
