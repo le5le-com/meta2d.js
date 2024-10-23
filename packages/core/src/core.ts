@@ -104,7 +104,7 @@ export class Meta2d {
       method?: string;
     }
   ) => boolean | string;
-  events: Record<number, (pen: Pen, e: Event) => void> = {};
+  events: Record<number, (pen: Pen, e: Event, params?:any) => void> = {};
   map: ViewMap;
   mapTimer: any;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
@@ -371,7 +371,7 @@ export class Meta2d {
       }
       console.warn('[meta2d] StopVideo event value is not a string');
     };
-    this.events[EventAction.JS] = (pen: Pen, e: Event) => {
+    this.events[EventAction.JS] = (pen: Pen, e: Event, params?:any) => {
       if (e.value && !e.fn) {
         try {
           if (typeof e.value !== 'string') {
@@ -387,7 +387,7 @@ export class Meta2d {
           console.error('[meta2d]: Error on make a function:', err);
         }
       }
-      e.fn?.(pen, e.params, { meta2d: this, eventName: e.name });
+      e.fn?.(pen, params || e.params, { meta2d: this, eventName: e.name });
     };
     this.events[EventAction.GlobalFn] = (pen: Pen, e: Event) => {
       if (typeof e.value !== 'string') {
@@ -831,12 +831,12 @@ export class Meta2d {
    *
    * @param emit 是否发送消息
    */
-  async addPen(pen: Pen, history?: boolean, emit = true) {
-    return await this.canvas.addPen(pen, history, emit);
+  async addPen(pen: Pen, history?: boolean, emit = true, abs = false) {
+    return await this.canvas.addPen(pen, history, emit, abs);
   }
 
-  async addPens(pens: Pen[], history?: boolean) {
-    return await this.canvas.addPens(pens, history);
+  async addPens(pens: Pen[], history?: boolean, abs = false) {
+    return await this.canvas.addPens(pens, history, abs);
   }
 
   render(patchFlags?: boolean | number) {
@@ -3051,6 +3051,14 @@ export class Meta2d {
         }
         break;
       case 'click':
+        if(this.store.data.locked && e.pen && (!e.pen.disabled)){
+          if(e.pen.switch){
+            e.pen.checked =  !e.pen.checked;
+            e.pen.calculative.checked = e.pen.checked;
+            e.pen.calculative.gradient = undefined;
+            e.pen.calculative.radialGradient = undefined;
+          }
+        }
         e.pen && e.pen.onClick && (!e.pen.disabled) && e.pen.onClick(e.pen, this.canvas.mousePos);
         this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
         break;
@@ -4420,7 +4428,7 @@ export class Meta2d {
   }
 
   //对齐大屏
-  alignNodesV(align: string, pens: Pen[] = this.store.data.pens) {
+  alignNodesV(align: string, pens: Pen[] = this.store.data.pens, whole:boolean=false) {
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
     let rect = {
@@ -4430,8 +4438,40 @@ export class Meta2d {
       height,
     };
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
-    for (const item of pens) {
-      this.alignPen(align, item, rect);
+    if(whole){
+      const scale = this.store.data.scale;
+      const rect = this.getRect(pens);
+      const x  = (rect.x-this.store.data.origin.x) / scale;
+      const y = (rect.y-this.store.data.origin.y) / scale;
+      const w = rect.width / scale;
+      const h = rect.height / scale;
+      let moveX = 0;
+      let moveY = 0;
+      switch (align) {
+        case 'left':
+          moveX =-x;
+          break;
+        case 'right':
+          moveX = width - (x+w);
+          break;
+        case 'top':
+          moveY = -y;
+          break;
+        case 'bottom':
+          moveY = height - (y+h);
+          break;
+        case 'center':
+          moveX = width/2 - (x+w/2);
+          break;
+        case 'middle':
+          moveY = height/2 - (y+h/2);
+          break;
+      }      
+      this.translatePens(pens, moveX*scale, moveY*scale);
+    }else{
+      for (const item of pens) {
+        this.alignPen(align, item, rect);
+      }
     }
     this.initImageCanvas(pens);
     this.initTemplateCanvas(pens);

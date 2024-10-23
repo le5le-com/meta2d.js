@@ -171,7 +171,10 @@ function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   if (!gradientColors) {
     return;
   }
-
+  let color = pen.calculative.gradientColors;
+  if(pen.calculative.checked){
+    color = pen.calculative.onGradientColors;
+  }
   const { width, height, center } = worldRect;
   const { x: centerX, y: centerY } = center;
   let r = width;
@@ -179,7 +182,7 @@ function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
     r = height;
   }
   r *= 0.5;
-  const { colors } = formatGradient(gradientColors);
+  const { colors } = formatGradient(color);
   const grd = ctx.createRadialGradient(
     centerX,
     centerY,
@@ -201,7 +204,11 @@ function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
   ];
-  const { angle, colors } = formatGradient(pen.calculative.gradientColors);
+  let color = pen.calculative.gradientColors;
+  if(pen.calculative.checked){
+    color = pen.calculative.onGradientColors;
+  }
+  const { angle, colors } = formatGradient(color);
   let r = getGradientR(angle, width, height);
   points.forEach((point) => {
     rotatePoint(point, angle, center);
@@ -1263,6 +1270,28 @@ export function drawIcon(
   ctx.restore();
 }
 
+export function drawDropdown(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen
+){
+  const scale = pen.calculative.canvas.store.data.scale;
+  const inputPenId = pen.calculative.canvas.inputDiv.dataset.penId;
+  const { x, y, width, height } = pen.calculative.worldRect;
+  ctx.save();
+  ctx.beginPath();
+  if(pen.id === inputPenId){
+    ctx.moveTo(x+width-20*scale, y+height/2+2*scale);
+    ctx.lineTo(x+width-14*scale, y+height/2-4*scale);
+    ctx.lineTo(x+width-8*scale, y+height/2+2*scale);
+  }else{
+    ctx.moveTo(x+width-20*scale, y+height/2-4*scale);
+    ctx.lineTo(x+width-14*scale, y+height/2+2*scale);
+    ctx.lineTo(x+width-8*scale, y+height/2-4*scale);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
 /**
  * canvas2svg 中对 font 的解析规则比 canvas 中简单，能识别的类型很少
  * @returns ctx.font
@@ -1369,6 +1398,10 @@ export function renderPen(
     fill =
       pen.mouseDownBackground ||
       pSBC(-0.4, pen.calculative.background || store.data.penBackground);
+  } else if (pen.switch && pen.calculative.checked) {
+    if(!pen.calculative.bkType){
+      fill = pen.onBackground;
+    }
   } else if (pen.calculative.hover) {
     _stroke = pen.hoverColor || store.options.hoverColor;
     fill = pen.hoverBackground || store.options.hoverBackground;
@@ -1490,6 +1523,10 @@ export function renderPen(
   }
   if (!(pen.image && pen.calculative.img) && pen.calculative.icon) {
     drawIcon(ctx, pen);
+  }
+
+  if(pen.dropdownList){
+    drawDropdown(ctx, pen);
   }
 
   if (!textFlip || !textRotate) {
@@ -1687,6 +1724,10 @@ export function renderPenRaw(
     drawIcon(ctx, pen);
   }
 
+  if(pen.dropdownList){
+    drawDropdown(ctx, pen);
+  }
+
   if (!textFlip || !textRotate) {
     ctx.restore();
   }
@@ -1837,7 +1878,7 @@ export function ctxDrawPath(
       ctx.save();
       const { ex, x, y, width, height, ey } = pen.calculative.worldRect;
       let grd = null;
-      if (!pen.verticalProgress) {
+      if (!pen.calculative.verticalProgress) {
         grd = !pen.reverseProgress
           ? ctx.createLinearGradient(x, y, x + width * progress, y)
           : ctx.createLinearGradient(ex, y, x + width * (1 - progress), y);
