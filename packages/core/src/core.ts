@@ -981,6 +981,12 @@ export class Meta2d {
     this.startVideo();
     this.doInitJS();
     this.doInitFn();
+    setTimeout(()=>{
+      const pen =  this.store.data.pens.find((pen)=>pen.autofocus);
+      if(pen){
+        this.focus(pen.id);
+      }     
+    },100);
     if (this.store.data.iconUrls) {
       for (const item of this.store.data.iconUrls) {
         loadCss(item, () => {
@@ -1835,6 +1841,14 @@ export class Meta2d {
     this.render();
   }
 
+  focus(id:string){
+    const pen = this.findOne(id);
+    if(pen){
+      this.store.hover = pen;
+      this.store.hover.calculative.hover = true;
+      this.showInput(pen);
+    }
+  }
   /**
    * 删除画笔
    * @param pens 需要删除的画笔们
