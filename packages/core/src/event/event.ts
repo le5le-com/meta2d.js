@@ -66,6 +66,7 @@ export enum EventAction {
   SendData, //数据源选择
   PostMessage, //发送场景数据
   PostMessageToParent, //向父窗口发送消息
+  Message, //消息提示
 }
 
 export interface Where {

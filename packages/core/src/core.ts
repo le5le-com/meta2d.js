@@ -79,6 +79,7 @@ import { Scroll } from './scroll';
 import { getter } from './utils/object';
 import { queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
+import { Message, MessageOptions, messageList } from './message';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -633,6 +634,24 @@ export class Meta2d {
       window.parent.postMessage(JSON.stringify({name:e.value,value}), '*');
       return;
     };
+    this.events[EventAction.Message] = (pen: Pen, e: Event) => {
+      this.message({
+        theme: e.params as any,
+        content: e.value as any,
+        ...e.extend
+      });
+    }
+  }
+
+  message(options:MessageOptions){
+    const message = new Message(this.canvas.parentElement, options);
+    message.init();
+  }
+
+  closeAll(){
+    for(let key in messageList){
+      messageList[key].close();
+    }
   }
 
   async navigatorTo(id: string) {
@@ -5555,6 +5574,7 @@ export class Meta2d {
     this.stopDataMock();
     this.closeSocket();
     this.closeNetwork();
+    this.closeAll();
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     this.canvas = undefined;
