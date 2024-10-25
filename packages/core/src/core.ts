@@ -515,7 +515,7 @@ export class Meta2d {
                           "async":false 
                         }
                     },
-                    "id": item.productId+'/'+item.deviceId+s8()
+                    "id": item.productId+'/'+item.deviceId+'-'+s8()
                 }));
               })
             }
@@ -2331,7 +2331,7 @@ export class Meta2d {
               //消息接收
               this.jetLinksClient.onmessage = (e) => {
                 const mess = JSON.parse(e.data);
-                if(mess.payload.success&&mess.payload?.properties){
+                if(mess.payload&&mess.payload.success&&mess.payload?.properties){
                   const data = [];
                   for(let key in mess.payload.properties){
                     if(!key.startsWith('_')){
@@ -2354,7 +2354,7 @@ export class Meta2d {
                         "properties":item.properties,
                         "history":1
                       },
-                      "id": item.topic+s8()
+                      "id": item.topic+'-'+s8()
                     }));
                 })
               }
