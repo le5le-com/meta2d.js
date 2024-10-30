@@ -358,7 +358,7 @@ function beforeValue(pen: ChartPen, value: any) {
     }
     if (chartFlag) {
       const _value = deepClone(value);
-      pen.calculative.partialOption = dotNotationToObject(_value);
+      pen.calculative.partialOption = dotNotationToObject(_value,pen);
       dataDotArr.forEach((key) => {
         let value = getter(pen, key);
         setter(pen.calculative.partialOption, key, value);
@@ -738,7 +738,7 @@ function updateOption(_option, ratio) {
   return option;
 }
 
-function dotNotationToObject(dotNotationObj) {
+function dotNotationToObject(dotNotationObj,pen) {
   const result = {};
   Object.keys(dotNotationObj).forEach((dotNotationStr) => {
     const keys = dotNotationStr.split('.');
@@ -746,7 +746,14 @@ function dotNotationToObject(dotNotationObj) {
     keys.forEach((key, index) => {
       const isArrayIndex = !isNaN(parseInt(key));
       // 如果是最后一个 key，直接赋值
-      if (index === keys.length - 1) {
+      if(index===6){
+        let _key =  keys.slice(0,7).join('.');
+        setter(pen,dotNotationStr,dotNotationObj[dotNotationStr]);
+        let value = getter(pen,_key);
+        current[keys[index]] =value;
+      }else if(index > 6){
+        return;
+      }else if (index === keys.length - 1) {
         if (isArrayIndex) {
           if (!Array.isArray(current)) {
             current = [];
