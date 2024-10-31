@@ -4018,6 +4018,7 @@ export class Meta2d {
         }
       })
     }
+    this.canvas.canvasTemplate.fit = true;
     this.canvas.canvasTemplate.init();
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
