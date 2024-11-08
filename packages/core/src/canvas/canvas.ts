@@ -473,7 +473,7 @@ export class Canvas {
     this.cut();
   };
 
-  onPaste = (event: ClipboardEvent) => {
+  onPaste = async (event: ClipboardEvent) => {
     if (this.store.data.locked || this.store.options.disableClipboard) {
       return;
     }
@@ -508,29 +508,39 @@ export class Canvas {
             const blob = items[i].getAsFile();
             let name = items[i].type.slice(6) === 'gif' ? 'gif' : 'image';
             if (blob !== null) {
-              let base64_str: any;
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                base64_str = e.target.result;
-                const image = new Image();
-                image.src = base64_str;
-                image.onload = () => {
-                  const { width, height } = image;
-                  const pen = {
-                    name,
-                    x: x - 50 / 2,
-                    y: y - (height / width) * 50,
-                    externElement: name === 'gif',
-                    width: 100,
-                    height: (height / width) * 100,
-                    image: base64_str as any,
-                  };
-                  this.addPens([pen]);
-                  this.active([pen]);
-                  this.copy([pen]);
-                };
-              };
-              reader.readAsDataURL(blob);
+              const isGif = name === 'gif';
+              const pen = await this.fileToPen(blob, isGif);
+              pen.height = (pen.height / pen.width) * 100,
+              pen.width = 100;
+              pen.x = x - 50 / 2,
+              pen.y = y - (pen.height / pen.width) * 50,
+              pen.externElement = isGif,
+              this.addPens([pen]);
+              this.active([pen]);
+              this.copy([pen]);
+              // let base64_str: any;
+              // const reader = new FileReader();
+              // reader.onload = (e) => {
+              //   base64_str = e.target.result;
+              //   const image = new Image();
+              //   image.src = base64_str;
+              //   image.onload = () => {
+              //     const { width, height } = image;
+              //     const pen = {
+              //       name,
+              //       x: x - 50 / 2,
+              //       y: y - (height / width) * 50,
+              //       externElement: name === 'gif',
+              //       width: 100,
+              //       height: (height / width) * 100,
+              //       image: base64_str as any,
+              //     };
+              //     this.addPens([pen]);
+              //     this.active([pen]);
+              //     this.copy([pen]);
+              //   };
+              // };
+              // reader.readAsDataURL(blob);
             }
           }
         }
