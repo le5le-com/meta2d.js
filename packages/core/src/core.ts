@@ -496,7 +496,7 @@ export class Meta2d {
                 }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
                   let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
                   if(keys?.length){
-                    list[index].properties[key] = _pen[keys[0]]
+                    list[index].properties[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
                   }
                 }else{
                   list[index].properties[key] = item.value[key];
@@ -530,7 +530,7 @@ export class Meta2d {
               }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
                 let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
                 if(keys?.length){
-                  value[key] = _pen[keys[0]]
+                  value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
                 }
               }else{
                 value[key] = item.value[key];
@@ -554,7 +554,7 @@ export class Meta2d {
             }else if(typeof value[key]=== 'string' && value[key]?.indexOf('${') > -1){
               let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
               if(keys?.length){
-                value[key] = _pen[keys[0]]
+                value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
               }
             }
           }
