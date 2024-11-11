@@ -7101,6 +7101,7 @@ export class Canvas {
       this.dropdown.style.background = pen.dropdownBackground || '#fff';
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.setDropdownList();
+      this.externalElements.style.zIndex = '9999';
     } else {
       // this.inputRight.style.display = 'none';
     }
@@ -7299,6 +7300,7 @@ export class Canvas {
   }
 
   hideInput = () => {
+    this.externalElements.style.zIndex = '5';
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
       const pen = this.store.pens[this.inputDiv.dataset.penId];
@@ -7339,6 +7341,7 @@ export class Canvas {
       }
       this.initTemplateCanvas([pen]);
     }
+  
     this.inputDiv.dataset.penId = undefined;
     this.dropdown.style.display = 'none';
     this.inputDiv.dataset.isInput = 'false';
