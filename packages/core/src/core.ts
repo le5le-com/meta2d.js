@@ -33,7 +33,8 @@ import {
   setLifeCycleFunc,
   getAllFollowers,
   isInteraction,
-  calcWorldAnchors
+  calcWorldAnchors,
+  getGlobalColor
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -3759,8 +3760,12 @@ export class Meta2d {
     rect.y -= 10;
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
+    ctx.strokeStyle = getGlobalColor(this.store);
     for (const pen of this.store.data.pens) {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
+        continue;
+      }
+      if (pen.name === 'combine' && !pen.draw){
         continue;
       }
       renderPenRaw(ctx, pen, rect, true);

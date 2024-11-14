@@ -8063,6 +8063,9 @@ export class Canvas {
       if (!isShowChild(pen, this.store) || pen.visible == false) {
         continue;
       }
+      if (pen.name === 'combine' && !pen.draw){
+        continue;
+      }
       // TODO: hover 待考虑，若出现再补上
       const { active } = pen.calculative;
       pen.calculative.active = false;
