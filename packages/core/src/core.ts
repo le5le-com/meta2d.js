@@ -33,7 +33,8 @@ import {
   setLifeCycleFunc,
   getAllFollowers,
   isInteraction,
-  calcWorldAnchors
+  calcWorldAnchors,
+  getGlobalColor
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -79,6 +80,7 @@ import { Scroll } from './scroll';
 import { getter } from './utils/object';
 import { queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
+import { Message, MessageOptions, messageList } from './message';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -476,6 +478,50 @@ export class Meta2d {
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
       if(e.list?.length){
         // if (e.targetType === 'id') {
+          if(e.network&&e.network.protocol === "jetLinks"){
+            const list:any = [];
+            e.list.forEach((item:any,index)=>{
+              const _pen = item.params ? this.findOne(item.params) : pen;
+              list[index] = {
+                deviceId:_pen.deviceId,
+                productId:_pen.productId,
+                properties:{}
+              };
+              for (let key in item.value) {
+                if (item.value[key] === undefined || item.value[key] === '') {
+                  //找到绑定了这个设备属性的图元属性
+                  const realTime = _pen.realTimes?.find((item:any)=>item.propertyId === key);
+                  if(realTime){
+                    list[index].properties[key] = _pen[realTime.key];
+                  }
+                }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
+                  let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+                  if(keys?.length){
+                    list[index].properties[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
+                  }
+                }else{
+                  list[index].properties[key] = item.value[key];
+                }
+              }
+            });
+            if(this.jetLinksClient && list.length){
+              list.forEach((item)=>{
+                this.jetLinksClient.send(JSON.stringify({
+                    "type": "sub", 
+                    "topic": `/device-message-sender/${item.productId}/${item.deviceId}`, 
+                    "parameter": {
+                        "messageType":"WRITE_PROPERTY",
+                        "properties":item.properties,
+                        "headers":{
+                          "async":false 
+                        }
+                    },
+                    "id": item.productId+'/'+item.deviceId+'-'+s8()
+                }));
+              })
+            }
+            return;
+          }
           const value:any = {};
           e.list.forEach((item:any)=>{
             const _pen = item.params ? this.findOne(item.params) : pen;
@@ -485,7 +531,7 @@ export class Meta2d {
               }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
                 let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
                 if(keys?.length){
-                  value[key] = _pen[keys[0]]
+                  value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
                 }
               }else{
                 value[key] = item.value[key];
@@ -509,7 +555,7 @@ export class Meta2d {
             }else if(typeof value[key]=== 'string' && value[key]?.indexOf('${') > -1){
               let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
               if(keys?.length){
-                value[key] = _pen[keys[0]]
+                value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
               }
             }
           }
@@ -589,6 +635,24 @@ export class Meta2d {
       window.parent.postMessage(JSON.stringify({name:e.value,value}), '*');
       return;
     };
+    this.events[EventAction.Message] = (pen: Pen, e: Event) => {
+      this.message({
+        theme: e.params as any,
+        content: e.value as any,
+        ...e.extend
+      });
+    }
+  }
+
+  message(options:MessageOptions){
+    const message = new Message(this.canvas.parentElement, options);
+    message.init();
+  }
+
+  closeAll(){
+    for(let key in messageList){
+      messageList[key].close();
+    }
   }
 
   async navigatorTo(id: string) {
@@ -787,12 +851,12 @@ export class Meta2d {
    *
    * @param emit 是否发送消息
    */
-  async addPen(pen: Pen, history?: boolean, emit = true) {
-    return await this.canvas.addPen(pen, history, emit);
+  async addPen(pen: Pen, history?: boolean, emit = true, abs = false) {
+    return await this.canvas.addPen(pen, history, emit, abs);
   }
 
-  async addPens(pens: Pen[], history?: boolean) {
-    return await this.canvas.addPens(pens, history);
+  async addPens(pens: Pen[], history?: boolean, abs = false) {
+    return await this.canvas.addPens(pens, history, abs);
   }
 
   render(patchFlags?: boolean | number) {
@@ -937,6 +1001,12 @@ export class Meta2d {
     this.startVideo();
     this.doInitJS();
     this.doInitFn();
+    setTimeout(()=>{
+      const pen =  this.store.data.pens.find((pen)=>pen.autofocus);
+      if(pen){
+        this.focus(pen.id);
+      }     
+    },100);
     if (this.store.data.iconUrls) {
       for (const item of this.store.data.iconUrls) {
         loadCss(item, () => {
@@ -1033,7 +1103,11 @@ export class Meta2d {
     });
   }
 
+  jetLinksList: any[] = [];
+  jetLinksClient: any;
+  
   initBinds() {
+    this.jetLinksList = [];
     this.store.bind = {};
     this.store.data.pens.forEach((pen) => {
       pen.realTimes?.forEach((realTime) => {
@@ -1045,6 +1119,26 @@ export class Meta2d {
             id: pen.id,
             key: realTime.key,
           });
+
+          //JetLinks
+          const productId = realTime.productId || pen.productId;
+          const deviceId = realTime.deviceId || pen.deviceId;
+          const propertyId = realTime.propertyId;
+          if(productId && deviceId && propertyId){
+            const index = this.jetLinksList.findIndex((item)=>item.topic.startsWith(`/${productId}/${deviceId}`));
+            if(index>-1){
+              const properties = this.jetLinksList[index].properties;
+              if(!properties.includes(realTime.propertyId)){
+                this.jetLinksList[index].properties.push(realTime.propertyId);
+              }
+            }else{
+              this.jetLinksList.push({
+                topic:`/${productId}/${deviceId}`,
+                deviceId,
+                properties:[realTime.propertyId]
+              });
+            }
+          }
         }
       });
     });
@@ -1767,6 +1861,14 @@ export class Meta2d {
     this.render();
   }
 
+  focus(id:string){
+    const pen = this.findOne(id);
+    if(pen){
+      this.store.hover = pen;
+      this.store.hover.calculative.hover = true;
+      this.showInput(pen);
+    }
+  }
   /**
    * 删除画笔
    * @param pens 需要删除的画笔们
@@ -2221,8 +2323,44 @@ export class Meta2d {
               }, net.interval);
               sqlIndex += 1;
             }
+          }else if(net.protocol === 'jetLinks'){
+            if(this.jetLinksList.length){
+              this.jetLinksClient = new WebSocket(
+                `${net.url}/${localStorage.getItem('X-Access-Token') || this.getCookie('X-Access-Token') ||  new URLSearchParams(location.search).get('X-Access-Token') || ''}`,
+                // 'ws://8.134.86.52:29000/api/messaging/961d8b395298d3ec3a021df70d6b6ca4'
+              );
+              //消息接收
+              this.jetLinksClient.onmessage = (e) => {
+                const mess = JSON.parse(e.data);
+                if(mess.payload&&mess.payload.success&&mess.payload?.properties){
+                  const data = [];
+                  for(let key in mess.payload.properties){
+                    if(!key.startsWith('_')){
+                      data.push({
+                        id:`${mess.payload.headers.productId}#${mess.payload.deviceId}#${key}`,
+                        value:mess.payload.properties[key]
+                      })
+                    }
+                  }
+                  this.setDatas(data,{history:false});
+                }
+              }
+              this.jetLinksClient.onopen = ()=>{
+                this.jetLinksList.forEach((item)=>{
+                  this.jetLinksClient.send(JSON.stringify({
+                      "type": "sub",
+                      "topic": `/device${item.topic}/message/property/report`,
+                      "parameter": {
+                        "deviceId":item.deviceId,
+                        "properties":item.properties,
+                        "history":1
+                      },
+                      "id": item.topic+'-'+s8()
+                    }));
+                })
+              }
+            }
           }
-        // }
       });
     }
     this.onNetworkConnect(https);
@@ -3118,8 +3256,13 @@ export class Meta2d {
         }
       });
     }else{
-      pen.events?.forEach((event,index) => {
+      pen.events?.forEach(async(event,index) => {
         if(indexArr.includes(index)){
+          if(event.confirm){
+            if(!await this.canvas.popconfirm.showModal(pen,this.canvas.mousePos,event.confirmTitle)){
+              return;
+            }
+          }
           event.actions.forEach((action) => {
             if(action.timeout){
               let timer = setTimeout(()=>{
@@ -3617,8 +3760,12 @@ export class Meta2d {
     rect.y -= 10;
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
+    ctx.strokeStyle = getGlobalColor(this.store);
     for (const pen of this.store.data.pens) {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
+        continue;
+      }
+      if (pen.name === 'combine' && !pen.draw){
         continue;
       }
       renderPenRaw(ctx, pen, rect, true);
@@ -3876,6 +4023,7 @@ export class Meta2d {
         }
       })
     }
+    this.canvas.canvasTemplate.fit = true;
     this.canvas.canvasTemplate.init();
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
@@ -4319,7 +4467,7 @@ export class Meta2d {
   }
 
   //对齐大屏
-  alignNodesV(align: string, pens: Pen[] = this.store.data.pens) {
+  alignNodesV(align: string, pens: Pen[] = this.store.data.pens, whole:boolean=false) {
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
     let rect = {
@@ -4329,8 +4477,40 @@ export class Meta2d {
       height,
     };
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
-    for (const item of pens) {
-      this.alignPen(align, item, rect);
+    if(whole){
+      const scale = this.store.data.scale;
+      const rect = this.getRect(pens);
+      const x  = (rect.x-this.store.data.origin.x) / scale;
+      const y = (rect.y-this.store.data.origin.y) / scale;
+      const w = rect.width / scale;
+      const h = rect.height / scale;
+      let moveX = 0;
+      let moveY = 0;
+      switch (align) {
+        case 'left':
+          moveX =-x;
+          break;
+        case 'right':
+          moveX = width - (x+w);
+          break;
+        case 'top':
+          moveY = -y;
+          break;
+        case 'bottom':
+          moveY = height - (y+h);
+          break;
+        case 'center':
+          moveX = width/2 - (x+w/2);
+          break;
+        case 'middle':
+          moveY = height/2 - (y+h/2);
+          break;
+      }      
+      this.translatePens(pens, moveX*scale, moveY*scale);
+    }else{
+      for (const item of pens) {
+        this.alignPen(align, item, rect);
+      }
     }
     this.initImageCanvas(pens);
     this.initTemplateCanvas(pens);
@@ -5400,6 +5580,7 @@ export class Meta2d {
     this.stopDataMock();
     this.closeSocket();
     this.closeNetwork();
+    this.closeAll();
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     this.canvas = undefined;

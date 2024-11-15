@@ -18,6 +18,7 @@ export class CanvasTemplate {
   bgOffscreen = createOffscreen();
   patchFlags: boolean;
   bgPatchFlags: boolean;
+  fit: boolean; //是否自适应布局 
   constructor(public parentElement: HTMLElement, public store: Meta2dStore) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
@@ -112,7 +113,7 @@ export class CanvasTemplate {
         ctx.save();
         ctx.fillStyle = background;
         ctx.globalAlpha = this.store.data.globalAlpha ?? this.store.options.globalAlpha;
-        if (width && height) {
+        if (width && height&& !this.fit) {
           ctx.shadowOffsetX = this.store.options.shadowOffsetX;
           ctx.shadowOffsetY = this.store.options.shadowOffsetY;
           ctx.shadowBlur = this.store.options.shadowBlur;
@@ -130,13 +131,17 @@ export class CanvasTemplate {
       }
       if (width && height && this.store.bkImg) {
         ctx.save();
-        ctx.drawImage(
-          this.store.bkImg,
-          this.store.data.origin.x + x,
-          this.store.data.origin.y + y,
-          width * this.store.data.scale,
-          height * this.store.data.scale
-        );
+        if(this.fit){
+          ctx.drawImage(this.store.bkImg,0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight);
+        }else{
+          ctx.drawImage(
+            this.store.bkImg,
+            this.store.data.origin.x + x,
+            this.store.data.origin.y + y,
+            width * this.store.data.scale,
+            height * this.store.data.scale
+          );
+        }
         ctx.restore();
       }
       this.renderGrid(ctx);

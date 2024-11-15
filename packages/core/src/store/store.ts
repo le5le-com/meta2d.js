@@ -111,7 +111,7 @@ export interface DataMock {
 
 export interface Network {
   name?: string;
-  protocol?: 'mqtt' | 'websocket' | 'http' | 'iot' | 'sql';
+  protocol?: 'mqtt' | 'websocket' | 'http' | 'iot' | 'sql'| 'jetLinks';
   type?: string; //subscribe
   url?: string;
   //websocket

@@ -304,6 +304,7 @@ export interface Pen extends Rect {
   animateShadowColor?: string;
   animateShadowBlur?: number;
   input?: boolean;
+  autofocus?: boolean;
   dropdownList?: Dropdown[];
   dropdownBackground?: string;
   dropdownColor?: string;
@@ -377,6 +378,7 @@ export interface Pen extends Rect {
   disabledBackground?:string; //禁用背景色
   disabledTextColor?:string; //禁用文字颜色
   inputType?:string; //输入框类型
+  productId?:string; //产品id
   deviceId?:string;//关联的设备id
   pivot?:Point; //旋转中心 
   noOnBinds?:boolean; //是否禁用绑定事件
@@ -394,6 +396,7 @@ export interface Pen extends Rect {
     progress?: number;
     progressColor?: string;
     progressGradientColors?: string;
+    verticalProgress?: boolean;
     worldRect?: Rect;
     worldAnchors?: Point[];
     worldIconRect?: Rect;

@@ -141,6 +141,7 @@ import { setter } from '../utils/object';
 import { Title } from '../title';
 import { CanvasTemplate } from './canvasTemplate';
 import { getLinePoints } from '../diagrams/line';
+import { Popconfirm } from '../popconfirm';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -251,6 +252,7 @@ export class Canvas {
   dropdown = document.createElement('ul');
 
   tooltip: Tooltip;
+  popconfirm: Popconfirm;
   title: Title;
   mousePos: Point = { x: 0, y: 0 };
 
@@ -309,6 +311,7 @@ export class Canvas {
       );
       setHover(hover, false);
     };
+    this.popconfirm = new Popconfirm(parentElement, store);
 
     this.dialog = new Dialog(parentElement);
     this.title = new Title(parentElement);
@@ -470,7 +473,7 @@ export class Canvas {
     this.cut();
   };
 
-  onPaste = (event: ClipboardEvent) => {
+  onPaste = async (event: ClipboardEvent) => {
     if (this.store.data.locked || this.store.options.disableClipboard) {
       return;
     }
@@ -505,29 +508,39 @@ export class Canvas {
             const blob = items[i].getAsFile();
             let name = items[i].type.slice(6) === 'gif' ? 'gif' : 'image';
             if (blob !== null) {
-              let base64_str: any;
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                base64_str = e.target.result;
-                const image = new Image();
-                image.src = base64_str;
-                image.onload = () => {
-                  const { width, height } = image;
-                  const pen = {
-                    name,
-                    x: x - 50 / 2,
-                    y: y - (height / width) * 50,
-                    externElement: name === 'gif',
-                    width: 100,
-                    height: (height / width) * 100,
-                    image: base64_str as any,
-                  };
-                  this.addPens([pen]);
-                  this.active([pen]);
-                  this.copy([pen]);
-                };
-              };
-              reader.readAsDataURL(blob);
+              const isGif = name === 'gif';
+              const pen = await this.fileToPen(blob, isGif);
+              pen.height = (pen.height / pen.width) * 100,
+              pen.width = 100;
+              pen.x = x - 50 / 2,
+              pen.y = y - (pen.height / pen.width) * 50,
+              pen.externElement = isGif,
+              this.addPens([pen]);
+              this.active([pen]);
+              this.copy([pen]);
+              // let base64_str: any;
+              // const reader = new FileReader();
+              // reader.onload = (e) => {
+              //   base64_str = e.target.result;
+              //   const image = new Image();
+              //   image.src = base64_str;
+              //   image.onload = () => {
+              //     const { width, height } = image;
+              //     const pen = {
+              //       name,
+              //       x: x - 50 / 2,
+              //       y: y - (height / width) * 50,
+              //       externElement: name === 'gif',
+              //       width: 100,
+              //       height: (height / width) * 100,
+              //       image: base64_str as any,
+              //     };
+              //     this.addPens([pen]);
+              //     this.active([pen]);
+              //     this.copy([pen]);
+              //   };
+              // };
+              // reader.readAsDataURL(blob);
             }
           }
         }
@@ -1485,7 +1498,7 @@ export class Canvas {
     return pen;
   }
 
-  async addPens(pens: Pen[], history?: boolean): Promise<Pen[]> {
+  async addPens(pens: Pen[], history?: boolean, abs?:boolean): Promise<Pen[]> {
     if (this.beforeAddPens && (await this.beforeAddPens(pens)) != true) {
       return [];
     }
@@ -1493,6 +1506,12 @@ export class Canvas {
     for (const pen of pens) {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;
+      }
+      if(abs) {
+        pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+        pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+        pen.width = pen.width * this.store.data.scale;
+        pen.height = pen.height * this.store.data.scale;
       }
       this.makePen(pen);
       list.push(pen);
@@ -1760,6 +1779,7 @@ export class Canvas {
       this.mouseRight = MouseRight.Down;
     }
     this.hideInput();
+    this.popconfirm.hide();
     if (
       this.store.data.locked === LockState.Disable ||
       (e.buttons !== 1 && e.buttons !== 2)
@@ -3746,7 +3766,7 @@ export class Canvas {
     this.canvasImageBottom.clear();
   }
 
-  async addPen(pen: Pen, history?: boolean, emit?: boolean): Promise<Pen> {
+  async addPen(pen: Pen, history?: boolean, emit?: boolean, abs?:boolean): Promise<Pen> {
     if (this.beforeAddPens && (await this.beforeAddPens([pen])) != true) {
       return;
     }
@@ -3754,7 +3774,12 @@ export class Canvas {
     if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
       return;
     }
-
+    if(abs) {
+      pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+      pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+      pen.width = pen.width * this.store.data.scale;
+      pen.height = pen.height * this.store.data.scale;
+    }
     this.makePen(pen);
     this.active([pen]);
     this.render();
@@ -7080,6 +7105,7 @@ export class Canvas {
       this.dropdown.style.background = pen.dropdownBackground || '#fff';
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.setDropdownList();
+      this.externalElements.style.zIndex = '9999';
     } else {
       // this.inputRight.style.display = 'none';
     }
@@ -7278,6 +7304,7 @@ export class Canvas {
   }
 
   hideInput = () => {
+    this.externalElements.style.zIndex = '5';
     if (this.inputParent.style.display === 'flex') {
       this.inputParent.style.display = 'none';
       const pen = this.store.pens[this.inputDiv.dataset.penId];
@@ -7318,6 +7345,7 @@ export class Canvas {
       }
       this.initTemplateCanvas([pen]);
     }
+  
     this.inputDiv.dataset.penId = undefined;
     this.dropdown.style.display = 'none';
     this.inputDiv.dataset.isInput = 'false';
@@ -7678,14 +7706,20 @@ export class Canvas {
       // 单属性
       if (k.indexOf('.') === -1) {
         if (k === 'rotate') {
-          oldRotate = pen.calculative.rotate || 0;
+          if(pen.disableRotate) { //当图元禁止旋转时不重新设置旋转角度
+            pen.rotate = pen.calculative.rotate || 0;
+          } else {
+            oldRotate = pen.calculative.rotate || 0;
+          }
         } else if (k === 'canvasLayer' || k === 'isBottom' || k === 'showChild') {
           containIsBottom = true;
         } else if (k === 'image') {
           willRenderImage = true;
         }
         if (typeof pen[k] !== 'object' || k === 'lineDash') {
-          pen.calculative[k] = data[k];
+          if(!pen.disableRotate || k !== 'rotate'){//当图元禁止旋转时不重新设置旋转角度
+            pen.calculative[k] = data[k];
+          }
         }
         if (needCalcTextRectProps.includes(k)) {
           willCalcTextRect = true;
@@ -7715,7 +7749,6 @@ export class Canvas {
         calcWorldAnchors(pen);
       }
     }
-
     this.setCalculativeByScale(pen); // 该方法计算量并不大，所以每次修改都计算一次
     if (isChangedName) {
       pen.onDestroy?.(pen);
@@ -8032,6 +8065,9 @@ export class Canvas {
     for (const pen of this.store.data.pens) {
       // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
       if (!isShowChild(pen, this.store) || pen.visible == false) {
+        continue;
+      }
+      if (pen.name === 'combine' && !pen.draw){
         continue;
       }
       // TODO: hover 待考虑，若出现再补上
@@ -8666,6 +8702,7 @@ export class Canvas {
     this.tooltip?.destroy();
     this.dialog?.destroy();
     this.title?.destroy();
+    this.popconfirm?.destroy();
 
     // ios
     this.externalElements.removeEventListener(

@@ -43,6 +43,8 @@ export interface Event {
     value?: EventValue; 
   }[] //多个图元对象
   timeout?: number; //延时执行
+  confirm?: string; //确认提示
+  confirmTitle?: string; //确认提示标题
 }
 
 export enum EventAction {
@@ -64,6 +66,7 @@ export enum EventAction {
   SendData, //数据源选择
   PostMessage, //发送场景数据
   PostMessageToParent, //向父窗口发送消息
+  Message, //消息提示
 }
 
 export interface Where {
@@ -144,4 +147,7 @@ export interface RealTime {
   value?: string;
   enableMock?: boolean;
   mock?: any;
+  productId?: string;
+  deviceId?: string;
+  propertyId?: string;
 }
