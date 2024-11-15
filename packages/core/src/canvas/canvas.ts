@@ -2621,7 +2621,11 @@ export class Canvas {
     if (e.button !== 2) {
       if (distance(this.mouseDown, e) < 2) {
         if (this.store.hover && this.store.hover.input) {
-          this.showInput(this.store.hover);
+          if (this.store.hover.onShowInput) {
+            this.store.hover.onShowInput(this.store.hover, e as any);
+          } else {
+            this.showInput(this.store.hover);
+          }
         }
         this.store.emitter.emit('click', {
           x: e.x,
