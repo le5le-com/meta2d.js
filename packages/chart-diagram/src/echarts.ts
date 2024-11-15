@@ -57,6 +57,7 @@ export interface ChartPen extends Pen {
     geoName?: string;
     geoJson?: any;
     geoUrl?: string;
+    diabled?: boolean; //通过脚本setOption后，禁止默认拿到echarts.option去设置图元
   };
   calculative?: {
     partialOption?: any; // 部分更新的 option
@@ -89,6 +90,7 @@ export function echarts(pen: ChartPen): Path2D {
     pen.onMouseEnter = move;
     // pen.onAdd = onAdd;
     pen.onRenderPenRaw = onRenderPenRaw;
+    pen.onScale = scale;
   }
 
   if (!pen.calculative.singleton) {
@@ -239,6 +241,14 @@ function move(pen: Pen) {
 }
 
 function resize(pen: ChartPen) {
+  move(pen);
+  if (!pen.calculative.singleton?.echart) {
+    return;
+  }
+  pen.calculative.singleton.echart.resize();
+}
+
+function scale(pen: ChartPen) {
   if (!pen.calculative.singleton.echart) {
     return;
   }
@@ -251,10 +261,12 @@ function resize(pen: ChartPen) {
   // let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
   // updateOption(option, ratio);
   if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) return;
-  pen.calculative.singleton.echart.setOption(
-    updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
-    true
-  );
+  if(!pen.echarts.diabled){
+    pen.calculative.singleton.echart.setOption(
+      updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
+      true
+    );
+  }
   // pen.beforeScale = pen.calculative.canvas.store.data.scale;
   pen.calculative.singleton.echart.resize();
 }
