@@ -382,7 +382,7 @@ export class Meta2d {
           const fnJs = e.value;
           e.fn = new Function('pen', 'params', 'context', fnJs) as (
             pen: Pen,
-            params: string,
+            params: any,
             context?: { meta2d: Meta2d; eventName: string }
           ) => void;
         } catch (err) {
@@ -472,7 +472,8 @@ export class Meta2d {
             })
           }
         }
-        this.canvas.dialog.show(e.value as any, url, e.extend);
+        const data = this.getEventData(e.list,pen);
+        this.canvas.dialog.show(e.value as any, url, e.extend, data);
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
@@ -522,22 +523,7 @@ export class Meta2d {
             }
             return;
           }
-          const value:any = {};
-          e.list.forEach((item:any)=>{
-            const _pen = item.params ? this.findOne(item.params) : pen;
-            for (let key in item.value) {
-              if (item.value[key] === undefined || item.value[key] === '') {
-                value[key] = _pen[key];
-              }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
-                let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
-                if(keys?.length){
-                  value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
-                }
-              }else{
-                value[key] = item.value[key];
-              }
-            }
-          });
+          const value:any = this.getEventData(e.list,pen);
           if(pen.deviceId){
             value.deviceId = pen.deviceId;
           }
@@ -579,31 +565,14 @@ export class Meta2d {
         return;
       }
       let params = queryURLParams(_pen.iframe.split('?')[1]);
-      const value:any = {};
-      if(e.list?.length){
-        e.list.forEach((item:any)=>{
-          const _pen = item.params ? this.findOne(item.params) : pen;
-          for (let key in item.value) {
-            if (item.value[key] === undefined || item.value[key] === '') {
-              value[key] = _pen[key];
-            }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
-              let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
-              if(keys?.length){
-                value[key] = _pen[keys[0]]
-              }
-            }else{
-              value[key] = item.value[key];
-            }
-          }
-        });
-      }
+      const value:any = this.getEventData(e.list,_pen);
       (
         _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
       ).contentWindow.postMessage(
         JSON.stringify({
           name: e.value,
           id: params.id,
-          value
+          data: value
         }),
         '*'
       );
@@ -614,25 +583,8 @@ export class Meta2d {
         console.warn('[meta2d] Emit value must be a string');
         return;
       }
-      const value:any = {};
-      if(e.list?.length){
-        e.list.forEach((item:any)=>{
-          const _pen = item.params ? this.findOne(item.params) : pen;
-          for (let key in item.value) {
-            if (item.value[key] === undefined || item.value[key] === '') {
-              value[key] = _pen[key];
-            }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
-              let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
-              if(keys?.length){
-                value[key] = _pen[keys[0]]
-              }
-            }else{
-              value[key] = item.value[key];
-            }
-          }
-        });
-      }
-      window.parent.postMessage(JSON.stringify({name:e.value,value}), '*');
+      const value:any = this.getEventData(e.list,pen);
+      window.parent.postMessage(JSON.stringify({name:e.value,data:value}), '*');
       return;
     };
     this.events[EventAction.Message] = (pen: Pen, e: Event) => {
@@ -642,6 +594,30 @@ export class Meta2d {
         ...e.extend
       });
     }
+  }
+
+  getEventData(list:any,pen:Pen){
+    const value:any = {};
+    if(list?.length){
+      list.forEach((item:any)=>{
+        const _pen = item.params ? this.findOne(item.params) : pen;
+        for (let key in item.value) {
+          if (item.value[key] === undefined || item.value[key] === '') {
+            value[key] = _pen[key];
+          }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
+            let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+            if(keys?.length){
+              value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
+            }
+          }else{
+            value[key] = item.value[key];
+          }
+        }
+      });
+    }
+    if(Object.keys(value).length){
+      return value;
+    }else return null;
   }
 
   message(options:MessageOptions){
@@ -3434,7 +3410,7 @@ export class Meta2d {
         }
         if (flag) {
           item.event.actions.forEach((action) => {
-            this.events[action.action](item.pen, action);
+            this.events[action.action](item.pen, action, data);
           });
         }
       });

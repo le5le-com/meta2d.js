@@ -1,6 +1,6 @@
 export class Dialog {
   box: HTMLElement;
-  iframe: HTMLElement;
+  iframe: HTMLIFrameElement;
   dialog: HTMLElement;
   close: HTMLElement;
   title: HTMLElement;
@@ -137,7 +137,7 @@ export class Dialog {
     }
   }
 
-  show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number}) {
+  show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number},data?:any) {
     if(!url){
       return;
     }
@@ -162,6 +162,27 @@ export class Dialog {
       this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
       this.dialog.style.left = rect.x? (rect.x + 'px'): `calc( 50% - ${rect.width? rect.width/2+'px': '40%'} )`;
     }
+    if(data){
+      let timeout = 0;
+      const interval = setInterval(() => {
+        if((this.iframe.contentWindow as any).meta2d){
+          clearInterval(interval);
+          setTimeout(()=>{
+          this.iframe.contentWindow.postMessage(
+            JSON.stringify({
+              name:'dialog',
+              data
+            }),
+          '*');
+          },100);
+        }
+        timeout++;
+        if(timeout > 50){
+          clearInterval(interval);
+        }
+      },300);
+    }
+
     this.box.style.display = 'block';
   }
 
