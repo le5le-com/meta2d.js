@@ -1,3 +1,5 @@
+import { Meta2dStore } from '../store';
+
 export function queryURLParams(value?: string) {
   let url = value || window.location.search.split('?')[1];
   const urlSearchParams = new URLSearchParams(url);
@@ -28,3 +30,70 @@ export const getRootDomain = () => {
 
   return domain;
 };
+
+export function getCookie(name: string) {
+  let arr: RegExpMatchArray | null;
+  const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
+  if ((arr = document.cookie.match(reg))) {
+    return decodeURIComponent(arr[2]);
+  } else {
+    return '';
+  }
+}
+
+export async function getMeta2dData(store: Meta2dStore, id: string) {
+  const netWork = store.options.navigatorNetWork;
+  const collection =
+    location.href.includes('2d.') || location.href.includes('/2d') ? '2d' : 'v';
+  let url = `/api/data/${collection}/get`;
+  let hasId = queryURLParams('id') || url.includes('${id}');
+  if (!hasId) {
+    let d = queryURLParams('data');
+    if (d) {
+      //离线部署包
+      url = `./projects/${id}`;
+    }
+  }
+
+  if (netWork?.url) {
+    if (netWork.url.includes('${id}')) {
+      url = netWork.url.replace('${id}', id);
+    } else {
+      url = netWork.url + (netWork?.method === 'GET' ? `?id=${id}` : '');
+    }
+  }
+
+  let method = netWork?.method || 'POST';
+  if (!hasId) {
+    method = 'GET';
+  }
+  const res: Response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${
+        getCookie('token') ||
+        localStorage.getItem('token') ||
+        new URLSearchParams(location.search).get('token') ||
+        ''
+      }`,
+    },
+    method,
+    body:
+      netWork?.method === 'GET'
+        ? undefined
+        : (JSON.stringify({ id: id }) as any),
+  });
+  if (res.ok) {
+    let data: any = await res.text();
+    if (data.constructor === Object || data.constructor === Array) {
+      data = JSON.parse(JSON.stringify(data));
+    } else if (typeof data === 'string') {
+      data = JSON.parse(data);
+    }
+    if (data.data) {
+      data = data.data;
+    }
+    return data;
+  } else {
+    store.emitter.emit('error', { type: 'http', error: res });
+  }
+}

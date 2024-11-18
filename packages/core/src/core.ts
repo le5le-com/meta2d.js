@@ -78,7 +78,7 @@ import pkg from '../package.json';
 import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
-import { queryURLParams } from './utils/url';
+import { getCookie, getMeta2dData, queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
 
@@ -646,32 +646,16 @@ export class Meta2d {
     //   }
     // }
     //路径参数更新
-    const url = new URL(window.location as any);
-    url.searchParams.set('id', id);
-    history.pushState({}, '', url);
+    let hasId = queryURLParams("id") 
+    if(hasId){
+      const url = new URL(window.location as any);
+      url.searchParams.set('id', id);
+      history.pushState({}, '', url);
+    }
     //图纸更新
-    const netWork = this.store.options.navigatorNetWork;
-    const collection = (location.href.includes('2d.')||location.href.includes('/2d'))?'2d':'v';
-    const res: Response = await fetch((netWork?.url||`/api/data/${collection}/get`) + (netWork?.method==='GET'?`?id=${id}`:''), {
-      headers: {
-        Authorization: `Bearer ${this.getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
-      },
-      method: netWork?.method || 'POST',
-      body: netWork?.method === 'GET' ?undefined : JSON.stringify({id:id}) as any,
-    });
-    if(res.ok){
-      let data:any = await res.text();
-      if (data.constructor === Object || data.constructor === Array) {
-        data = JSON.parse(JSON.stringify(data));
-      } else if (typeof data === 'string') {
-        data = JSON.parse(data);
-      }
-      if(data.data){
-        data = data.data;
-      }
+    const data = await getMeta2dData(this.store, id);
+    if(data){
       this.open(data);
-    }else{
-      this.store.emitter.emit('error', { type: 'http', error: res });
     }
   }
 
@@ -2302,7 +2286,7 @@ export class Meta2d {
           }else if(net.protocol === 'jetLinks'){
             if(this.jetLinksList.length){
               this.jetLinksClient = new WebSocket(
-                `${net.url}/${localStorage.getItem('X-Access-Token') || this.getCookie('X-Access-Token') ||  new URLSearchParams(location.search).get('X-Access-Token') || ''}`,
+                `${net.url}/${localStorage.getItem('X-Access-Token') || getCookie('X-Access-Token') ||  new URLSearchParams(location.search).get('X-Access-Token') || ''}`,
                 // 'ws://8.134.86.52:29000/api/messaging/961d8b395298d3ec3a021df70d6b6ca4'
               );
               //消息接收
@@ -2598,20 +2582,20 @@ export class Meta2d {
     }
   }
 
-  getCookie(name: string) {
-    let arr: RegExpMatchArray | null;
-    const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
-    if ((arr = document.cookie.match(reg))) {
-      return decodeURIComponent(arr[2]);
-    } else {
-      return '';
-    }
-  }
+  // getCookie(name: string) {
+  //   let arr: RegExpMatchArray | null;
+  //   const reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)');
+  //   if ((arr = document.cookie.match(reg))) {
+  //     return decodeURIComponent(arr[2]);
+  //   } else {
+  //     return '';
+  //   }
+  // }
 
   //获取动态参数
   getDynamicParam(key: string) {
     let params = queryURLParams();
-    let value = params[key] || localStorage[key] || this.getCookie(key) || '';
+    let value = params[key] || localStorage[key] || getCookie(key) || '';
     return value;
   }
 

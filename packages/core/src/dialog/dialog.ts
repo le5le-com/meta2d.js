@@ -1,3 +1,6 @@
+import { Meta2d } from "../core";
+import { getMeta2dData } from "../utils";
+import { Meta2dStore } from '../store';
 export class Dialog {
   box: HTMLElement;
   iframe: HTMLIFrameElement;
@@ -8,7 +11,11 @@ export class Dialog {
   x: number;
   y: number;
   url: string;
-  constructor(public parentElement: HTMLElement) {
+  meta2dDiv: HTMLElement;
+  dialogMeta2d: Meta2d;
+  store: Meta2dStore;
+  constructor(public parentElement: HTMLElement, store: Meta2dStore) {
+    this.store = store;
     this.box = document.createElement('div');
     this.dialog = document.createElement('div');
     let header = document.createElement('div');
@@ -25,16 +32,20 @@ export class Dialog {
     this.body = document.createElement('div');
     this.iframe = document.createElement('iframe');
     this.iframe.setAttribute('frameborder', '0');
+    this.meta2dDiv = document.createElement('div');
+
     this.box.className = 'meta2d-dialog_mask';
     this.dialog.className = 'meta2d-dialog';
     this.body.className = 'meta2d-dialog_body';
     header.className = 'meta2d-dialog_header';
     this.title.className = 'meta2d-dialog-content';
     this.close.className = 'meta2d-dialog-close';
+    this.meta2dDiv.className = 'meta2d-dialog-meta2d';
 
     header.appendChild(this.title);
     header.appendChild(this.close);
     this.body.appendChild(this.iframe);
+    this.body.appendChild(this.meta2dDiv);
     this.dialog.appendChild(header);
     this.dialog.appendChild(this.body);
     this.box.appendChild(this.dialog);
@@ -95,6 +106,8 @@ export class Dialog {
       sheet.insertRule(
         `.meta2d-dialog_header {
             display: flex;
+            position: relative;
+            z-index: 999;
         }`
       );
       sheet.insertRule(
@@ -125,7 +138,8 @@ export class Dialog {
       );
       sheet.insertRule(
         `.meta2d-dialog_body{
-            // margin-top: 4px;
+          width: 100%;
+          height: 100%;
         } `
       );
       sheet.insertRule(
@@ -134,14 +148,29 @@ export class Dialog {
             height: 100%;
         }`
       );
+      sheet.insertRule(
+        `.meta2d-dialog_body .meta2d-dialog-meta2d{
+          width: 100%;
+          height: 100%;
+          display: none;
+      }`
+      );
     }
   }
 
-  show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number},data?:any) {
+  async show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number},data?:any) {
     if(!url){
       return;
     }
-    if(url !== this.url){
+    const isIframe = this.isUrl(url);
+    if(isIframe){
+      this.meta2dDiv.style.display = 'none';
+      this.iframe.style.display = 'block';
+    }else{
+      this.iframe.style.display = 'none';
+      this.meta2dDiv.style.display = 'block';
+    }
+    if(isIframe && url !== this.url){
       this.iframe.setAttribute('src', url);
       this.url = url;
     }
@@ -162,7 +191,7 @@ export class Dialog {
       this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
       this.dialog.style.left = rect.x? (rect.x + 'px'): `calc( 50% - ${rect.width? rect.width/2+'px': '40%'} )`;
     }
-    if(data){
+    if(isIframe&&data){
       let timeout = 0;
       const interval = setInterval(() => {
         if((this.iframe.contentWindow as any).meta2d){
@@ -182,17 +211,46 @@ export class Dialog {
         }
       },300);
     }
+    if(!this.dialogMeta2d||isIframe){
+     this.box.style.display = 'block';
+    }
+    if(!isIframe){
+      this.meta2dDiv.style.display = 'block';
+      if(!this.dialogMeta2d){
+        globalThis.mainMeta2d = globalThis.meta2d;
+        this.dialogMeta2d =  new Meta2d(this.meta2dDiv);
+        globalThis.meta2d = globalThis.mainMeta2d;
+      }
 
-    this.box.style.display = 'block';
+      const meta2dData = await getMeta2dData(this.store, url);
+      if(meta2dData){
+        this.box.style.display = 'block';
+        this.dialogMeta2d.clear(true);
+        this.dialogMeta2d.open(meta2dData,false);
+        this.dialogMeta2d.lock(1);
+        this.dialogMeta2d.resize();
+        this.dialogMeta2d.fitView(true, 0);
+        this.dialogMeta2d.render(true);
+      }
+    }
   }
 
   hide() {
     this.box.style.display = 'none';
   }
 
+  isUrl(url: string) {
+    if(url.startsWith('http') ||url.includes('?')||url.includes('/')){
+      return true;
+    }else{
+      return false;
+    }
+  }
+
   destroy() {
     this.dialog.onclick = undefined;
     this.box.onclick = undefined;
     this.close.onclick = undefined;
+    this.dialogMeta2d?.destroy(true);
   }
 }

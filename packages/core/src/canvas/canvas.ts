@@ -313,7 +313,7 @@ export class Canvas {
     };
     this.popconfirm = new Popconfirm(parentElement, store);
 
-    this.dialog = new Dialog(parentElement);
+    this.dialog = new Dialog(parentElement, store);
     this.title = new Title(parentElement);
 
     if (this.store.options.scroll) {
