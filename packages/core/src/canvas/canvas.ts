@@ -7080,9 +7080,9 @@ export class Canvas {
     // this.inputDiv.style.fontSize = pen.calculative.fontSize + 'px';
     // this.inputDiv.style.color = getTextColor(pen, this.store);
     this.inputParent.style.left =
-      textRect.x + this.store.data.x - (pen.textLeft || 0) + 'px'; //+ 5
+      textRect.x + this.store.data.x - (pen.calculative.textLeft || 0) + 'px'; //+ 5
     this.inputParent.style.top =
-      textRect.y + this.store.data.y - (pen.textTop || 0) + 'px'; //+ 5
+      textRect.y + this.store.data.y - (pen.calculative.textTop || 0) + 'px'; //+ 5
     let _width = textRect.width ;//+ (pen.textLeft || 0);
     this.inputParent.style.width = (_width < 0 ? 12 : _width) + 'px'; //(textRect.width < pen.width ? 0 : 10)
     this.inputParent.style.height = textRect.height + (pen.textTop || 0) + 'px'; //   (textRect.height < pen.height ? 0 : 10)
@@ -7104,6 +7104,8 @@ export class Canvas {
       // }
       this.dropdown.style.background = pen.dropdownBackground || '#fff';
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
+      this.dropdown.style.width = this.inputParent.style.width;
+      this.dropdown.style.fontSize = (pen.fontSize || 12) + 'px';
       this.setDropdownList();
       this.externalElements.style.zIndex = '9999';
     } else {
@@ -7392,7 +7394,7 @@ export class Canvas {
         '.meta2d-input .right{width:10px;height:10px;flex-shrink:0;border-top: 1px solid;border-right: 1px solid;margin-right: 5px;transition: all .3s cubic-bezier(.645,.045,.355,1);position:absolute;right:1px;}'
       );
       sheet.insertRule(
-        '.meta2d-input ul{position:absolute;top:100%;left:-5px;width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;max-height: 105px;overflow-y: auto;}'
+        '.meta2d-input ul{position:absolute;top:100%;margin-top:4px; width:calc(100% + 10px);min-height:30px;border-radius: 2px;box-shadow: 0 2px 8px #00000026;list-style-type: none;background-color: #fff;padding: 4px 0;max-height: 105px;overflow-y: auto;}'
       );
       sheet.insertRule(
         '.meta2d-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
