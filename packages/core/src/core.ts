@@ -646,7 +646,7 @@ export class Meta2d {
     //   }
     // }
     //路径参数更新
-    let hasId = queryURLParams("id") 
+    let hasId = queryURLParams()?.id;
     if(hasId){
       const url = new URL(window.location as any);
       url.searchParams.set('id', id);

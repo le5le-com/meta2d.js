@@ -46,9 +46,9 @@ export async function getMeta2dData(store: Meta2dStore, id: string) {
   const collection =
     location.href.includes('2d.') || location.href.includes('/2d') ? '2d' : 'v';
   let url = `/api/data/${collection}/get`;
-  let hasId = queryURLParams('id') || url.includes('${id}');
+  let hasId = queryURLParams()?.id || url.includes('${id}');
   if (!hasId) {
-    let d = queryURLParams('data');
+    let d = queryURLParams()?.data;
     if (d) {
       //离线部署包
       url = `./projects/${id}`;
