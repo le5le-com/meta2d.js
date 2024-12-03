@@ -752,7 +752,7 @@ export class Meta2d {
         console.info('http消息发送成功');
       }
     } else if (network.protocol === 'mqtt') {
-      const clients = this.mqttClients.filter(
+      const clients = this.mqttClients?.filter(
         (client) => (client.options as any).href === network.url
       );
       if (clients && clients.length) {
@@ -773,7 +773,7 @@ export class Meta2d {
         });
       }
     } else if (network.protocol === 'websocket') {
-      const websockets = this.websockets.filter(
+      const websockets = this.websockets?.filter(
         (socket) => socket.url === network.url
       );
       if (websockets && websockets.length) {
