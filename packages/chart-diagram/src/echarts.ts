@@ -281,7 +281,8 @@ function value(pen: ChartPen) {
     if (pen.calculative.partialOption) {
       //部分更新
       const option = pen.calculative.partialOption.echarts.option;
-      if (pen.echarts?.replaceMerge) {
+      let isReplaceMerge = Array.isArray(pen.echarts?.replaceMerge)?pen.echarts?.replaceMerge.some((key)=>option[key]):false;
+      if (isReplaceMerge) {
         pen.calculative.singleton.echart.setOption(deepClone(option), {
           replaceMerge: pen.echarts.replaceMerge,
         });
