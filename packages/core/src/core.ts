@@ -800,7 +800,9 @@ export class Meta2d {
           console.info('mqtt连接成功');
           network.topics.split(',').forEach((topic) => {
             mqttClient.publish(topic, JSON.stringify(value));
-            mqttClient?.end();
+            setTimeout(() => {
+              mqttClient?.end();
+            },1000);
           });
         });
       }
