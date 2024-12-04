@@ -790,7 +790,7 @@ export class Meta2d {
       if (clients && clients.length) {
         if (clients[0].connected) {
           network.topics.split(',').forEach((topic) => {
-            clients[0].publish(topic, value);
+            clients[0].publish(topic, JSON.stringify(value));
           });
         }
       } else {
@@ -799,7 +799,7 @@ export class Meta2d {
         mqttClient.on('connect', () => {
           console.info('mqtt连接成功');
           network.topics.split(',').forEach((topic) => {
-            mqttClient.publish(topic, value);
+            mqttClient.publish(topic, JSON.stringify(value));
             mqttClient?.end();
           });
         });
@@ -810,7 +810,7 @@ export class Meta2d {
       );
       if (websockets && websockets.length) {
         if (websockets[0].readyState === 1) {
-          websockets[0].send(value);
+          websockets[0].send(JSON.stringify(value));
         }
       } else {
         //临时建立连接
@@ -820,7 +820,7 @@ export class Meta2d {
         );
         websocket.onopen = function () {
           console.info('websocket连接成功');
-          websocket.send(value);
+          websocket.send(JSON.stringify(value));
           setTimeout(() => {
             websocket.close();
           }, 100);
