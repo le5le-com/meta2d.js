@@ -1600,8 +1600,9 @@ export class Meta2d {
    * 组合
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
+   * @param active 是否激活组合后的画笔
    */
-  combine(pens: Pen[] = this.store.active, showChild?: number): any {
+  combine(pens: Pen[] = this.store.active, showChild?: number, active = true): any {
     if (!pens || !pens.length) {
       return;
     }
@@ -1670,7 +1671,7 @@ export class Meta2d {
     //将组合后的父节点置底
     this.store.data.pens.splice(minIndex, 0, parent);
     this.store.data.pens.pop();
-    this.canvas.active([parent]);
+    active && this.canvas.active([parent]);
     let step = 1;
     // if (!oneIsParent) {
     //   step = 2;
