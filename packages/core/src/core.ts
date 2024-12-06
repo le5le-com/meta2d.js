@@ -784,13 +784,13 @@ export class Meta2d {
         console.info('http消息发送成功');
       }
     } else if (network.protocol === 'mqtt') {
-      const clients = this.mqttClients.filter(
+      const clients = this.mqttClients?.filter(
         (client) => (client.options as any).href === network.url
       );
       if (clients && clients.length) {
         if (clients[0].connected) {
           network.topics.split(',').forEach((topic) => {
-            clients[0].publish(topic, value);
+            clients[0].publish(topic, JSON.stringify(value));
           });
         }
       } else {
@@ -799,18 +799,20 @@ export class Meta2d {
         mqttClient.on('connect', () => {
           console.info('mqtt连接成功');
           network.topics.split(',').forEach((topic) => {
-            mqttClient.publish(topic, value);
-            mqttClient?.end();
+            mqttClient.publish(topic, JSON.stringify(value));
+            setTimeout(() => {
+              mqttClient?.end();
+            },1000);
           });
         });
       }
     } else if (network.protocol === 'websocket') {
-      const websockets = this.websockets.filter(
+      const websockets = this.websockets?.filter(
         (socket) => socket.url === network.url
       );
       if (websockets && websockets.length) {
         if (websockets[0].readyState === 1) {
-          websockets[0].send(value);
+          websockets[0].send(JSON.stringify(value));
         }
       } else {
         //临时建立连接
@@ -820,7 +822,7 @@ export class Meta2d {
         );
         websocket.onopen = function () {
           console.info('websocket连接成功');
-          websocket.send(value);
+          websocket.send(JSON.stringify(value));
           setTimeout(() => {
             websocket.close();
           }, 100);
@@ -1598,8 +1600,9 @@ export class Meta2d {
    * 组合
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
+   * @param active 是否激活组合后的画笔
    */
-  combine(pens: Pen[] = this.store.active, showChild?: number): any {
+  combine(pens: Pen[] = this.store.active, showChild?: number, active = true): any {
     if (!pens || !pens.length) {
       return;
     }
@@ -1668,7 +1671,7 @@ export class Meta2d {
     //将组合后的父节点置底
     this.store.data.pens.splice(minIndex, 0, parent);
     this.store.data.pens.pop();
-    this.canvas.active([parent]);
+    active && this.canvas.active([parent]);
     let step = 1;
     // if (!oneIsParent) {
     //   step = 2;
