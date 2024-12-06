@@ -2893,7 +2893,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
       return 0;
     }
 
-    const pos = (now - pen.calculative.start) % pen.calculative.duration;
+    const pos = (now - pen.calculative.start) % pen.calculative.duration || pen.calculative.duration;
     let d = 0;
     for (const frame of pen.frames) {
       d += frame.duration;
@@ -2907,20 +2907,24 @@ export function setNodeAnimate(pen: Pen, now: number) {
     if (!pen.frames[frameIndex]) {
       return true;
     }
-
-    pen.calculative.frameDuration = pen.frames[frameIndex].duration;
-    pen.calculative.frameStart =
-      pen.calculative.start + pen.calculative.duration * (cycleIndex - 1);
-    pen.calculative.frameEnd =
-      pen.calculative.frameStart + pen.calculative.frameDuration;
-
     // 换帧
-    const frameChanged = frameIndex !== pen.calculative.frameIndex;
+    let frameChanged = false;
+    if (frameIndex !== pen.calculative.frameIndex) {
+      frameChanged = true;
+      pen.calculative.frameIndex = frameIndex;
+      pen.calculative.frameDuration = pen.frames[frameIndex].duration;
+      if (frameIndex > 0) {
+        pen.calculative.frameStart += pen.frames[frameIndex-1].duration;
+      }
+      pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    }
     // 新循环播放
-    const cycleChanged = cycleIndex > pen.calculative.cycleIndex;
-
-    frameChanged && (pen.calculative.frameIndex = frameIndex);
-    cycleChanged && (pen.calculative.cycleIndex = cycleIndex);
+    let cycleChanged = false;
+    if (cycleIndex > pen.calculative.cycleIndex) {
+      pen.calculative.cycleIndex = cycleIndex;
+      pen.calculative.frameStart = pen.calculative.start + pen.calculative.duration * (cycleIndex - 1);
+      cycleChanged = true;
+    }
 
     if (frameChanged || cycleChanged) {
       // 以初始位置为参考点。因为网页在后台时，不执行动画帧，网页恢复显示时，位置不确定
@@ -2954,10 +2958,8 @@ export function setNodeAnimate(pen: Pen, now: number) {
     }
   }
 
-  const process =
-    ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
-  setNodeAnimateProcess(pen, process);
-
+  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
+  process  > 0 && setNodeAnimateProcess(pen, process);
   return true;
 }
 
@@ -3008,6 +3010,11 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
       pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
       pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
+      pen.calculative.worldRect.center.x = pen.calculative.initRect.center.x + lastVal;
+      if (pen.calculative.worldRect.pivot?.x) {
+        pen.calculative.worldRect.pivot.x =
+          pen.calculative.initRect.pivot?.x + lastVal;
+      }
       translateRect(
         pen.calculative.worldRect,
         frame[k] * process * pen.calculative.canvas.store.data.scale,
@@ -3018,6 +3025,14 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
       pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
       pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
+      pen.calculative.worldRect.center.y =
+        pen.calculative.initRect.center.y + lastVal;
+
+      if (pen.calculative.worldRect.pivot?.x) {
+        pen.calculative.worldRect.pivot.y =
+          pen.calculative.initRect.pivot?.y + lastVal;
+      }
+
       translateRect(
         pen.calculative.worldRect,
         0,
