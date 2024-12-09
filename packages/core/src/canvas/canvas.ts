@@ -222,6 +222,7 @@ export class Canvas {
     altKey?: boolean;
     ctrlKey?:boolean;
     metaKey?:boolean;
+    F?:boolean;
   }
   /**
    * @deprecated 改用 beforeAddPens
@@ -716,6 +717,10 @@ export class Canvas {
     this.keyOptions.shiftKey = e.shiftKey;
     this.keyOptions.ctrlKey = e.ctrlKey;
     this.keyOptions.metaKey = e.metaKey;
+    this.keyOptions.F = false;
+    if(e.key === 'F' || e.key === 'f'){
+      this.keyOptions.F = true;
+    }
     let x = 10;
     let y = 10;
     let vRect: Rect = null;
@@ -1142,6 +1147,10 @@ export class Canvas {
         break;
       case 'F':
       case 'f':
+        if(!this.store.data.locked && (e.ctrlKey || e.metaKey) && !this.store.options.disableClipboard){
+          //粘贴到被复制图元上一层
+          this.paste();
+        }
         this.setFollowers();
         break;
     }
@@ -4108,7 +4117,12 @@ export class Canvas {
       this.updatePenRect(pen);
       return;
     }
-    this.store.data.pens.push(pen);
+    if(pen.copyIndex){
+      this.store.data.pens.splice(pen.copyIndex + 1, 0, pen);
+      delete pen.copyIndex;
+    }else{
+      this.store.data.pens.push(pen);
+    }
     this.store.pens[pen.id] = pen;
     // 集中存储path，避免数据冗余过大
     if (pen.path) {
@@ -6557,9 +6571,9 @@ export class Canvas {
     copyPens.sort((a: any, b: any) => {
       return a.copyIndex - b.copyIndex;
     });
-    copyPens.forEach((activePen: any) => {
-      delete activePen.copyIndex;
-    });
+    // copyPens.forEach((activePen: any) => {
+    //   delete activePen.copyIndex;
+    // });
     const clipboard = {
       meta2d: true,
       pens: copyPens,
@@ -6651,7 +6665,11 @@ export class Canvas {
       offset && (this.store.clipboard.offset = offset);
       pos && (this.store.clipboard.pos = pos);
     }
-
+    if(!this.keyOptions.F){
+      this.store.clipboard.pens.forEach((pen: Pen) => {
+        delete pen.copyIndex;
+      });
+    }
     const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
     for (const pen of rootPens) {
       this.pastePen(pen, undefined);
@@ -6764,7 +6782,7 @@ export class Canvas {
       if(this.keyOptions && this.keyOptions.altKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
         pen.x =-this.store.data.x+ this.width / 2 - pen.width / 2;
         pen.y =-this.store.data.y+ this.height / 2 - pen.height / 2;
-      }else if(this.keyOptions && this.keyOptions.shiftKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey)){
+      }else if(this.keyOptions && this.keyOptions.shiftKey && (this.keyOptions.ctrlKey || this.keyOptions.metaKey || this.keyOptions.F)){
 
       }else{
         pen.x += this.store.clipboard.offset * this.store.data.scale;

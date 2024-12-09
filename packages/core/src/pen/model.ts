@@ -386,6 +386,7 @@ export interface Pen extends Rect {
   childHover?:boolean; //子元素hover和active是否生效
   childActive?:boolean; 
   draw?:boolean; //是否绘制 针对combine
+  copyIndex?:number; //复制的索引 临时属性
   calculative?: {
     x?: number;
     y?: number;
