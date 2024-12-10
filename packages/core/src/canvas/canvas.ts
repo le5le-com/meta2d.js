@@ -4735,6 +4735,9 @@ export class Canvas {
         continue;
       }
       if (pen.name === 'combine' && !pen.draw){
+        if(pen.id.endsWith('-moving')){
+      console.log("pen",pen);
+        }
         continue;
       }
       if (pen.calculative.inView) {
@@ -4771,7 +4774,11 @@ export class Canvas {
   };
 
   private renderPenContainChild = (ctx: CanvasRenderingContext2D, pen: Pen) => {
-    pen.calculative.inView && renderPen(ctx, pen); // 可见才绘制，组合为状态只显示其中一个
+    if(pen.calculative.inView){
+      if (!(pen.name === 'combine' && !pen.draw)){
+        renderPen(ctx, pen); // 可见才绘制，组合为状态只显示其中一个
+      }
+    }
     pen.children?.forEach((id) => {
       const child = this.store.pens[id];
       child && this.renderPenContainChild(ctx, child);
