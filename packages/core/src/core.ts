@@ -35,6 +35,7 @@ import {
   isInteraction,
   calcWorldAnchors,
   getGlobalColor,
+  isDomShapes,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -1070,6 +1071,34 @@ export class Meta2d {
       }
     });
     this.render();
+  }
+
+  statistics() {
+    const num = this.store.data.pens.length;
+    const imgNum = this.store.data.pens.filter((pen) => pen.image).length;
+    const domNum = this.store.data.pens.filter(
+      (pen) =>
+        pen.name.endsWith('Dom') ||
+        isDomShapes.includes(pen.name) ||
+        this.store.options.domShapes.includes(pen.name) ||
+        pen.externElement
+    ).length;
+    const aningNum = this.store.animates.size;
+    let dataPointsNum = 0;
+    Object.keys(this.store.bind).forEach((key) => {
+      dataPointsNum += this.store.bind[key].length;
+    });
+    Object.keys(this.store.bindDatas).forEach((key) => {
+      dataPointsNum += this.store.bindDatas[key].length;
+    });
+
+    return {
+      "图元总数量": num,
+      "图片图元数量": imgNum,
+      "dom图元数量": domNum,
+      "正在执行的动画数量": aningNum,
+      "数据点数量": dataPointsNum,
+    };
   }
 
   initBindDatas() {
