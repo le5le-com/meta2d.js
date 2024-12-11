@@ -6589,6 +6589,7 @@ export class Canvas {
       page,
       initRect: deepClone(this.activeRect),
       offset: 10,
+      mousePos: deepClone(this.mousePos),
     };
 
     if (
@@ -6662,7 +6663,13 @@ export class Canvas {
     this.store.clipboard = deepClone(clipboard);
 
     const curPage = sessionStorage.getItem('page');
-    if (curPage !== clipboard.page) {
+    const scale = this.store.data.scale;
+    if(this.store.clipboard.mousePos&&(Math.abs(this.store.clipboard.mousePos.x-this.mousePos.x)>100*scale||Math.abs(this.store.clipboard.mousePos.y-this.mousePos.y)>100*scale)){
+      const offsetX = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.width/2;
+      const offsetY = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.height/2;
+      this.store.clipboard.pos = { x: this.mousePos.x-offsetX, y: this.mousePos.y-offsetY };
+      this.store.clipboard.offset = 0;
+    }else if (curPage !== clipboard.page) {
       this.store.clipboard.pos = { x: this.mousePos.x, y: this.mousePos.y };
       this.store.clipboard.offset = 0;
     } else if (!this.pasteOffset) {

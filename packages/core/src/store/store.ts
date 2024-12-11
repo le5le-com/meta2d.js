@@ -216,6 +216,7 @@ export interface Meta2dClipboard {
   page: string;
   initRect?: Rect;
   pos?: Point;
+  mousePos?: Point;
 }
 
 export const createStore = () => {

@@ -193,7 +193,8 @@ export const defaultOptions: Options = {
   textRotate: true,
   unavailableKeys: [],
   diagramOptions: {},
-  svgPathStroke:true
+  svgPathStroke:true,
+  reconnetTimes:10,
 };
 
 export interface PenPlugin {
