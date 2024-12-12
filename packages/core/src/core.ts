@@ -1076,6 +1076,7 @@ export class Meta2d {
   statistics() {
     const num = this.store.data.pens.length;
     const imgNum = this.store.data.pens.filter((pen) => pen.image).length;
+    const imgDrawNum = this.store.data.pens.filter((pen) => pen.image&&pen.calculative.inView).length;
     const domNum = this.store.data.pens.filter(
       (pen) =>
         pen.name.endsWith('Dom') ||
@@ -1095,6 +1096,7 @@ export class Meta2d {
     return {
       "图元总数量": num,
       "图片图元数量": imgNum,
+      "图片图元绘制数量": imgDrawNum,
       "dom图元数量": domNum,
       "正在执行的动画数量": aningNum,
       "数据点数量": dataPointsNum,
