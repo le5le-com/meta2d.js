@@ -2747,6 +2747,16 @@ export class Meta2d {
   async requestHttp(_req: Network) {
     let req = deepClone(_req);
     if (req.url) {
+      if(req.url.indexOf('${') > -1){
+        let keys = req.url.match(/(?<=\$\{).*?(?=\})/g);
+          if (keys) {
+            keys.forEach((key) => {
+              req.url = req.url.replace(
+                `\${${key}}`,this.getDynamicParam(key)
+              );
+            });
+          }
+      }
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
           if (typeof req.headers[i] === 'string') {
