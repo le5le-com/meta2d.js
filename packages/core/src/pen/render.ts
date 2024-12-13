@@ -1899,7 +1899,8 @@ export function ctxDrawPath(
         const color =
           pen.calculative.progressColor ||
           pen.calculative.color ||
-          store.options.activeColor;
+          store.options.activeColor ||
+          store.data.color;
         grd.addColorStop(0, color);
         grd.addColorStop(1, color);
       }
