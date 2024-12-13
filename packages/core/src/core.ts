@@ -2582,8 +2582,7 @@ export class Meta2d {
       } else {
         //if (realTime.type === 'string')
         if (data.mock && data.mock.indexOf(',') !== -1) {
-          let str = data.mock.substring(1, data.mock.length - 1);
-          let arr = str.split(',');
+          let arr = data.mock.split(',');
           let rai = Math.floor(Math.random() * arr.length);
           value = arr[rai];
         } else if (
