@@ -35,6 +35,7 @@ import {
   isInteraction,
   calcWorldAnchors,
   getGlobalColor,
+  isDomShapes,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -784,13 +785,13 @@ export class Meta2d {
         console.info('http消息发送成功');
       }
     } else if (network.protocol === 'mqtt') {
-      const clients = this.mqttClients.filter(
+      const clients = this.mqttClients?.filter(
         (client) => (client.options as any).href === network.url
       );
       if (clients && clients.length) {
         if (clients[0].connected) {
           network.topics.split(',').forEach((topic) => {
-            clients[0].publish(topic, value);
+            clients[0].publish(topic, JSON.stringify(value));
           });
         }
       } else {
@@ -799,18 +800,20 @@ export class Meta2d {
         mqttClient.on('connect', () => {
           console.info('mqtt连接成功');
           network.topics.split(',').forEach((topic) => {
-            mqttClient.publish(topic, value);
-            mqttClient?.end();
+            mqttClient.publish(topic, JSON.stringify(value));
+            setTimeout(() => {
+              mqttClient?.end();
+            },1000);
           });
         });
       }
     } else if (network.protocol === 'websocket') {
-      const websockets = this.websockets.filter(
+      const websockets = this.websockets?.filter(
         (socket) => socket.url === network.url
       );
       if (websockets && websockets.length) {
         if (websockets[0].readyState === 1) {
-          websockets[0].send(value);
+          websockets[0].send(JSON.stringify(value));
         }
       } else {
         //临时建立连接
@@ -820,7 +823,7 @@ export class Meta2d {
         );
         websocket.onopen = function () {
           console.info('websocket连接成功');
-          websocket.send(value);
+          websocket.send(JSON.stringify(value));
           setTimeout(() => {
             websocket.close();
           }, 100);
@@ -1068,6 +1071,36 @@ export class Meta2d {
       }
     });
     this.render();
+  }
+
+  statistics() {
+    const num = this.store.data.pens.length;
+    const imgNum = this.store.data.pens.filter((pen) => pen.image).length;
+    const imgDrawNum = this.store.data.pens.filter((pen) => pen.image&&pen.calculative.inView).length;
+    const domNum = this.store.data.pens.filter(
+      (pen) =>
+        pen.name.endsWith('Dom') ||
+        isDomShapes.includes(pen.name) ||
+        this.store.options.domShapes.includes(pen.name) ||
+        pen.externElement
+    ).length;
+    const aningNum = this.store.animates.size;
+    let dataPointsNum = 0;
+    Object.keys(this.store.bind).forEach((key) => {
+      dataPointsNum += this.store.bind[key].length;
+    });
+    Object.keys(this.store.bindDatas).forEach((key) => {
+      dataPointsNum += this.store.bindDatas[key].length;
+    });
+
+    return {
+      "图元总数量": num,
+      "图片图元数量": imgNum,
+      "图片图元绘制数量": imgDrawNum,
+      "dom图元数量": domNum,
+      "正在执行的动画数量": aningNum,
+      "数据点数量": dataPointsNum,
+    };
   }
 
   initBindDatas() {
@@ -1598,8 +1631,9 @@ export class Meta2d {
    * 组合
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
+   * @param active 是否激活组合后的画笔
    */
-  combine(pens: Pen[] = this.store.active, showChild?: number): any {
+  combine(pens: Pen[] = this.store.active, showChild?: number, active = true): any {
     if (!pens || !pens.length) {
       return;
     }
@@ -1668,7 +1702,7 @@ export class Meta2d {
     //将组合后的父节点置底
     this.store.data.pens.splice(minIndex, 0, parent);
     this.store.data.pens.pop();
-    this.canvas.active([parent]);
+    active && this.canvas.active([parent]);
     let step = 1;
     // if (!oneIsParent) {
     //   step = 2;
@@ -2124,7 +2158,7 @@ export class Meta2d {
             // 默认每一秒请求一次
             this.oldRequestHttp(item);
             if (this.store.options.reconnetTimes) {
-              item.times++;
+              // item.times++;
               if (item.times >= this.store.options.reconnetTimes) {
                 item.times = 0;
                 clearInterval(this.httpTimerList[index]);
@@ -2163,6 +2197,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.http });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
@@ -2548,8 +2583,7 @@ export class Meta2d {
       } else {
         //if (realTime.type === 'string')
         if (data.mock && data.mock.indexOf(',') !== -1) {
-          let str = data.mock.substring(1, data.mock.length - 1);
-          let arr = str.split(',');
+          let arr = data.mock.split(',');
           let rai = Math.floor(Math.random() * arr.length);
           value = arr[rai];
         } else if (
@@ -2699,7 +2733,7 @@ export class Meta2d {
       this.updateTimerList[index] = setInterval(async () => {
         this.requestHttp(_item);
         if (this.store.options.reconnetTimes) {
-          _item.times++;
+          // _item.times++;
           if (_item.times >= this.store.options.reconnetTimes) {
             _item.times = 0;
             clearInterval(this.updateTimerList[index]);
@@ -2713,6 +2747,16 @@ export class Meta2d {
   async requestHttp(_req: Network) {
     let req = deepClone(_req);
     if (req.url) {
+      if(req.url.indexOf('${') > -1){
+        let keys = req.url.match(/(?<=\$\{).*?(?=\})/g);
+          if (keys) {
+            keys.forEach((key) => {
+              req.url = req.url.replace(
+                `\${${key}}`,this.getDynamicParam(key)
+              );
+            });
+          }
+      }
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
           if (typeof req.headers[i] === 'string') {
@@ -2749,6 +2793,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.url });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }

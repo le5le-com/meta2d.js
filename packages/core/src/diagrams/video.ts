@@ -75,6 +75,7 @@ export function video(pen: Pen) {
       media.src = pen.video;
     } else if (pen.audio) {
       media = document.createElement('audio');
+      media.controls = (pen as any).controls;
       media.src = pen.audio;
     }
     media.loop = pen.playLoop;
