@@ -37,7 +37,7 @@ export class ToolBox {
   parentHtml!: HTMLElement;
   box: HTMLElement = createDom('div', {style: {...toolboxStyle, left: '-9999px'}, className: 'toolBox'});
   _funcDom: any;
-
+  active: boolean = true;
   [key: string]: any
 
   constructor(parentHtml: HTMLElement, config = {},) {
@@ -247,9 +247,10 @@ export class ToolBox {
   }
 
   show() {// this.box.style.visibility = 'visible';
-    this.box.style.display = 'flex';
-
-    this.open = true;
+    if(this.active){
+      this.box.style.display = 'flex';
+      this.open = true;
+    }
   }
 
   destroy() {
