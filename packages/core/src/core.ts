@@ -2158,7 +2158,7 @@ export class Meta2d {
             // 默认每一秒请求一次
             this.oldRequestHttp(item);
             if (this.store.options.reconnetTimes) {
-              item.times++;
+              // item.times++;
               if (item.times >= this.store.options.reconnetTimes) {
                 item.times = 0;
                 clearInterval(this.httpTimerList[index]);
@@ -2197,6 +2197,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.http });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
@@ -2732,7 +2733,7 @@ export class Meta2d {
       this.updateTimerList[index] = setInterval(async () => {
         this.requestHttp(_item);
         if (this.store.options.reconnetTimes) {
-          _item.times++;
+          // _item.times++;
           if (_item.times >= this.store.options.reconnetTimes) {
             _item.times = 0;
             clearInterval(this.updateTimerList[index]);
@@ -2792,6 +2793,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.url });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
