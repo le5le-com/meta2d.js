@@ -254,6 +254,10 @@ export class CanvasImage {
         if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
           continue;
         }
+        if(pen.visible === false || pen.calculative.visible === false){
+          //动画控制显示隐藏
+          continue;
+        }
         pen.calculative.imageDrawed = true;
         ctx.save();
         ctxFlip(ctx, pen);
@@ -272,6 +276,9 @@ export class CanvasImage {
         }
         // if (pen.template) {
         if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
+          continue;
+        }
+        if(pen.visible === false || pen.calculative.visible === false){
           continue;
         }
         if (this.store.animates.has(getParent(pen, true))) {

@@ -4735,9 +4735,6 @@ export class Canvas {
         continue;
       }
       if (pen.name === 'combine' && !pen.draw){
-        if(pen.id.endsWith('-moving')){
-      console.log("pen",pen);
-        }
         continue;
       }
       if (pen.calculative.inView) {
