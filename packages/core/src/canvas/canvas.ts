@@ -6957,7 +6957,9 @@ export class Canvas {
     const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
     if (i > -1) {
       const delPen = this.store.pens[pen.id];
-      delPen.calculative.active = undefined;
+      if(delPen && delPen.calculative){
+        delPen.calculative.active = undefined;
+      }
       delPens.push(delPen);
     }
     if (pen.children) {
