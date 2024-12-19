@@ -242,6 +242,11 @@ export class Meta2d {
       ruleOptions: this.store.theme[theme].ruleOptions,
     });
     this.render();
+    // 更新pen的主题
+    for (let i = 0; i < this.store.data.pens.length; i++) {
+      const pen = this.store.data.pens[i];
+      pen.onSetTheme?.(theme,this.store.theme[theme]);
+    }
   }
 
   setDatabyOptions(options: Options = {}) {
