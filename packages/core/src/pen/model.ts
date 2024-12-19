@@ -618,6 +618,7 @@ export interface Pen extends Rect {
   onMouseMove?: (pen: Pen, e: Point) => void;
   onMouseUp?: (pen: Pen, e: Point) => void;
   onShowInput?: (pen: Pen, e: Point) => void;
+  onSetTheme?: (theme: string, config?: any) => void;
   onInput?: (pen: Pen, text: string) => void;
   onChangeId?: (pen: Pen, oldId: string, newId: string) => void;
   onBinds?: (pen: Pen, values: IValue[], formItem: FormItem) => IValue;
