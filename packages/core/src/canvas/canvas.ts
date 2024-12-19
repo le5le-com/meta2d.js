@@ -5053,6 +5053,7 @@ export class Canvas {
     ctx.restore();
   };
 
+  transTimeout: any;
   translate(x: number = 0, y: number = 0) {
     this.store.data.x += x * this.store.data.scale;
     this.store.data.y += y * this.store.data.scale;
@@ -5106,10 +5107,20 @@ export class Canvas {
     }
     //TODO 当初为什么加异步
     // setTimeout(() => {
+    if(this.store.data.asyncTranslate){
+      clearTimeout(this.transTimeout);
+      this.transTimeout = setTimeout( ()=> {
+        this.canvasTemplate.init();
+        this.canvasImage.init();
+        this.canvasImageBottom.init();
+        this.render();
+      }, 300);    
+    }else{
       this.canvasTemplate.init();
       this.canvasImage.init();
       this.canvasImageBottom.init();
       this.render();
+    } 
     // });
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
