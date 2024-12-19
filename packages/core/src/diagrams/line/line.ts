@@ -12,7 +12,7 @@ export function line(
   if (pen.lineName === 'line' || pen.lineName === 'polyline') {
     if (pen.calculative.lineSmooth) {
       let _path = getGradientAnimatePath(pen);
-      (path as Path2D).addPath(_path);
+      if (path instanceof Path2D) path.addPath(_path);
       if (path instanceof Path2D) return path;
     }
   }

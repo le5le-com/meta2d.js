@@ -3095,11 +3095,11 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
           // } else {
           //   pen.calculative.canvas.canvasImage.init();
           // }
-          if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
-            pen.calculative.canvas.canvasImageBottom.init();
-          } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
-            pen.calculative.canvas.canvasImage.init();
-          }
+          // if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
+          //   pen.calculative.canvas.canvasImageBottom.init();
+          // } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
+          //   pen.calculative.canvas.canvasImage.init();
+          // }
         } else if (pen.children?.length) {
           const childs = getAllChildren(pen, pen.calculative.canvas.store);
           pen.calculative.canvas.initImageCanvas(childs);
@@ -3428,13 +3428,18 @@ export function calcInView(pen: Pen, calcChild = false) {
   }
 
   pen.calculative.inView = true;
-  if (
-    !isShowChild(pen, store) ||
+  if(!isShowChild(pen, store)){
+    pen.calculative.inView = false;
+  }else if (
     pen.visible == false ||
     pen.calculative.visible == false
   ) {
     pen.calculative.inView = false;
-  } else {
+    if((pen.canvasLayer === CanvasLayer.CanvasImageBottom||pen.canvasLayer===CanvasLayer.CanvasImage)&& pen.frames?.length){
+      pen.calculative.inView = pen.frames.some(obj => obj.hasOwnProperty('visible'));
+    }
+  } 
+  if(pen.calculative.inView){
     const { x, y, width, height, rotate } = pen.calculative.worldRect;
     const penRect: Rect = {
       x: x + store.data.x,

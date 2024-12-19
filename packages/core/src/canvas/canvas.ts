@@ -4735,9 +4735,6 @@ export class Canvas {
         continue;
       }
       if (pen.name === 'combine' && !pen.draw){
-        if(pen.id.endsWith('-moving')){
-      console.log("pen",pen);
-        }
         continue;
       }
       if (pen.calculative.inView) {
@@ -5056,6 +5053,7 @@ export class Canvas {
     ctx.restore();
   };
 
+  transTimeout: any;
   translate(x: number = 0, y: number = 0) {
     this.store.data.x += x * this.store.data.scale;
     this.store.data.y += y * this.store.data.scale;
@@ -5109,10 +5107,20 @@ export class Canvas {
     }
     //TODO 当初为什么加异步
     // setTimeout(() => {
+    if(this.store.data.asyncTranslate){
+      clearTimeout(this.transTimeout);
+      this.transTimeout = setTimeout( ()=> {
+        this.canvasTemplate.init();
+        this.canvasImage.init();
+        this.canvasImageBottom.init();
+        this.render();
+      }, 300);    
+    }else{
       this.canvasTemplate.init();
       this.canvasImage.init();
       this.canvasImageBottom.init();
       this.render();
+    } 
     // });
     this.store.emitter.emit('translate', {
       x: this.store.data.x,
@@ -6949,7 +6957,9 @@ export class Canvas {
     const i = this.store.data.pens.findIndex((item) => item.id === pen.id);
     if (i > -1) {
       const delPen = this.store.pens[pen.id];
-      delPen.calculative.active = undefined;
+      if(delPen && delPen.calculative){
+        delPen.calculative.active = undefined;
+      }
       delPens.push(delPen);
     }
     if (pen.children) {
