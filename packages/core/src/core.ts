@@ -4742,7 +4742,7 @@ export class Meta2d {
       if (this.map && this.map.isShow) {
         this.map.show();
       }
-      if (this.canvas.scroll && this.canvas.scroll.isShow) {
+      if (this.canvas && this.canvas.scroll && this.canvas.scroll.isShow) {
         this.canvas.scroll.resize();
       }
     }, 500);
@@ -4796,7 +4796,7 @@ export class Meta2d {
    * @param pens 本次改变的 pens
    */
   initImageCanvas(pens: Pen[]) {
-    this.canvas.initImageCanvas(pens);
+    this.canvas && this.canvas.initImageCanvas(pens);
   }
 
   /**
@@ -4804,7 +4804,7 @@ export class Meta2d {
    * @param pens 本次改变的 pens
    */
   initTemplateCanvas(pens: Pen[]) {
-    this.canvas.initTemplateCanvas(pens);
+    this.canvas && this.canvas.initTemplateCanvas(pens);
   }
 
   /**
