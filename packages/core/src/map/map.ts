@@ -11,6 +11,7 @@ export class ViewMap {
   isShow: boolean;
   isDown: boolean;
   view: HTMLElement; // 可视区域外框
+  timer: any;
   constructor(public parent: Canvas) {
     this.box = document.createElement('div');
     this.img = new Image();
@@ -65,7 +66,7 @@ export class ViewMap {
     const data = this.parent.store.data;
     if (data.pens.length) {
       this.img.style.display = 'block';
-      this.img.src = this.parent.toPng();
+      this.img.src = this.parent.toPng(0, undefined, true);
       this.setView();
     } else {
       this.img.style.display = 'none';
@@ -94,6 +95,13 @@ export class ViewMap {
           width: vW * this.parent.store.data.scale,
           height: vH * this.parent.store.data.scale,
         };
+      }else{
+        clearTimeout(this.timer);
+        this.timer = setTimeout(()=>{
+          if(this.parent.store.bkImg){
+            this.img.src = this.parent.toPng(0, undefined, true);
+          }
+        },300);
       }
       // rect += data.x y 得到相对坐标
       translateRect(rect, data.x, data.y);
