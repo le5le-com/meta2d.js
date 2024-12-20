@@ -1,7 +1,7 @@
 import { commonAnchors, commonPens, cube } from './diagrams';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
-import {Options, PenPlugin, PluginOptions} from './options';
+import { Options, PenPlugin, PluginOptions } from './options';
 import {
   calcInView,
   calcTextDrawRect,
@@ -34,7 +34,8 @@ import {
   getAllFollowers,
   isInteraction,
   calcWorldAnchors,
-  getGlobalColor
+  getGlobalColor,
+  isDomShapes,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -89,12 +90,15 @@ export class Meta2d {
   mqttClient: MqttClient;
   websockets: WebSocket[];
   mqttClients: MqttClient[];
-  penPluginMap: Map<PenPlugin,{
-    tag?:string,
-    name?:string,
-    id?:string,
-    option:Object
-  }[]> = new Map();
+  penPluginMap: Map<
+    PenPlugin,
+    {
+      tag?: string;
+      name?: string;
+      id?: string;
+      option: Object;
+    }[]
+  > = new Map();
   socketFn: (
     e: string,
     // topic: string,
@@ -106,7 +110,7 @@ export class Meta2d {
       method?: string;
     }
   ) => boolean | string;
-  events: Record<number, (pen: Pen, e: Event, params?:any) => void> = {};
+  events: Record<number, (pen: Pen, e: Event, params?: any) => void> = {};
   map: ViewMap;
   mapTimer: any;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
@@ -178,20 +182,24 @@ export class Meta2d {
       // });
       this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     }
-    if (opts.rule !== undefined || opts.ruleColor !== undefined ||opts.ruleOptions !==undefined) {
+    if (
+      opts.rule !== undefined ||
+      opts.ruleColor !== undefined ||
+      opts.ruleOptions !== undefined
+    ) {
       // this.setRule({
       //   rule: opts.rule,
       //   ruleColor: opts.ruleColor,
       // });
       this.store.patchFlagsTop = true;
-      if(opts.ruleOptions){
-        if(this.store.options?.ruleOptions){
-          Object.assign(this.store.options.ruleOptions,opts.ruleOptions);
+      if (opts.ruleOptions) {
+        if (this.store.options?.ruleOptions) {
+          Object.assign(this.store.options.ruleOptions, opts.ruleOptions);
           opts.ruleOptions = this.store.options.ruleOptions;
         }
       }
     }
-    if(opts.background !== undefined){
+    if (opts.background !== undefined) {
       this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
     }
     if (opts.resizeMode !== undefined) {
@@ -201,7 +209,10 @@ export class Meta2d {
     }
     if (opts.width !== undefined || opts.height !== undefined) {
       this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
-      if(this.canvas && this.canvas.canvasTemplate.canvas.style.backgroundImage) {
+      if (
+        this.canvas &&
+        this.canvas.canvasTemplate.canvas.style.backgroundImage
+      ) {
         this.canvas.canvasTemplate.canvas.style.backgroundImage = '';
       }
     }
@@ -220,16 +231,22 @@ export class Meta2d {
     return this.store.options;
   }
 
-  setTheme(theme:string){
+  setTheme(theme: string) {
     this.store.data.theme = theme;
     this.setBackgroundColor(this.store.theme[theme].background);
-    this.canvas.parentElement.style.background = this.store.theme[theme].parentBackground;
+    this.canvas.parentElement.style.background =
+      this.store.theme[theme].parentBackground;
     this.store.data.color = this.store.theme[theme].color;
     this.setOptions({
-      ruleColor:this.store.theme[theme].ruleColor,
-      ruleOptions:this.store.theme[theme].ruleOptions
+      ruleColor: this.store.theme[theme].ruleColor,
+      ruleOptions: this.store.theme[theme].ruleOptions,
     });
     this.render();
+    // 更新pen的主题
+    for (let i = 0; i < this.store.data.pens.length; i++) {
+      const pen = this.store.data.pens[i];
+      pen.onSetTheme?.(theme,this.store.theme[theme]);
+    }
   }
 
   setDatabyOptions(options: Options = {}) {
@@ -262,7 +279,7 @@ export class Meta2d {
       fromArrow,
       toArrow,
       x,
-      y
+      y,
     });
   }
 
@@ -296,7 +313,7 @@ export class Meta2d {
         const pens = e.params ? this.find(e.params) : this.find(pen.id);
         pens.forEach((pen: Pen) => {
           if (value.hasOwnProperty('visible')) {
-            if(pen.visible !== value.visible) {
+            if (pen.visible !== value.visible) {
               this.setVisible(pen, value.visible);
             }
           }
@@ -312,10 +329,14 @@ export class Meta2d {
     };
     this.events[EventAction.StartAnimate] = (pen: Pen, e: Event) => {
       let _pen = pen;
-      if(e.value){
-        _pen = this.findOne((e.value as string));
+      if (e.value) {
+        _pen = this.findOne(e.value as string);
       }
-      if(this.store.animates.has(_pen)&&!_pen.calculative.pause&&_pen.animateName===e.params){
+      if (
+        this.store.animates.has(_pen) &&
+        !_pen.calculative.pause &&
+        _pen.animateName === e.params
+      ) {
         return;
       }
       if (e.targetType && e.params) {
@@ -337,13 +358,13 @@ export class Meta2d {
     };
     this.events[EventAction.StopAnimate] = (pen: Pen, e: Event) => {
       if (!e.value || typeof e.value === 'string') {
-        if(e.value){
-          let _pen = this.findOne((e.value as string));
-          if(!this.store.animates.has(_pen)){
+        if (e.value) {
+          let _pen = this.findOne(e.value as string);
+          if (!this.store.animates.has(_pen)) {
             return;
           }
-        }else{
-          if(!this.store.animates.has(pen)){
+        } else {
+          if (!this.store.animates.has(pen)) {
             return;
           }
         }
@@ -373,7 +394,7 @@ export class Meta2d {
       }
       console.warn('[meta2d] StopVideo event value is not a string');
     };
-    this.events[EventAction.JS] = (pen: Pen, e: Event, params?:any) => {
+    this.events[EventAction.JS] = (pen: Pen, e: Event, params?: any) => {
       if (e.value && !e.fn) {
         try {
           if (typeof e.value !== 'string') {
@@ -459,76 +480,81 @@ export class Meta2d {
       }
     };
     this.events[EventAction.Dialog] = (pen: Pen, e: Event) => {
-      if (
-        e.params &&
-        typeof e.params === 'string'
-      ) {
+      if (e.params && typeof e.params === 'string') {
         let url = e.params;
-        if(e.params.includes('${')){
+        if (e.params.includes('${')) {
           let keys = e.params.match(/(?<=\$\{).*?(?=\})/g);
-          if(keys){
-            keys?.forEach((key)=>{
-              url = url.replace(`\${${key}}`,pen[key]);
-            })
+          if (keys) {
+            keys?.forEach((key) => {
+              url = url.replace(`\${${key}}`, pen[key]);
+            });
           }
         }
-        const data = this.getEventData(e.list,pen);
+        const data = this.getEventData(e.list, pen);
         this.canvas.dialog.show(e.value as any, url, e.extend, data);
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
-      if(e.list?.length){
+      if (e.list?.length) {
         // if (e.targetType === 'id') {
-          if(e.network&&e.network.protocol === "jetLinks"){
-            const list:any = [];
-            e.list.forEach((item:any,index)=>{
-              const _pen = item.params ? this.findOne(item.params) : pen;
-              list[index] = {
-                deviceId:_pen.deviceId,
-                productId:_pen.productId,
-                properties:{}
-              };
-              for (let key in item.value) {
-                if (item.value[key] === undefined || item.value[key] === '') {
-                  //找到绑定了这个设备属性的图元属性
-                  const realTime = _pen.realTimes?.find((item:any)=>item.propertyId === key);
-                  if(realTime){
-                    list[index].properties[key] = _pen[realTime.key];
-                  }
-                }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
-                  let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
-                  if(keys?.length){
-                    list[index].properties[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
-                  }
-                }else{
-                  list[index].properties[key] = item.value[key];
+        if (e.network && e.network.protocol === 'jetLinks') {
+          const list: any = [];
+          e.list.forEach((item: any, index) => {
+            const _pen = item.params ? this.findOne(item.params) : pen;
+            list[index] = {
+              deviceId: _pen.deviceId,
+              productId: _pen.productId,
+              properties: {},
+            };
+            for (let key in item.value) {
+              if (item.value[key] === undefined || item.value[key] === '') {
+                //找到绑定了这个设备属性的图元属性
+                const realTime = _pen.realTimes?.find(
+                  (item: any) => item.propertyId === key
+                );
+                if (realTime) {
+                  list[index].properties[key] = _pen[realTime.key];
                 }
+              } else if (
+                typeof item.value[key] === 'string' &&
+                item.value[key]?.indexOf('${') > -1
+              ) {
+                let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+                if (keys?.length) {
+                  list[index].properties[key] =
+                    _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
+                }
+              } else {
+                list[index].properties[key] = item.value[key];
               }
-            });
-            if(this.jetLinksClient && list.length){
-              list.forEach((item)=>{
-                this.jetLinksClient.send(JSON.stringify({
-                    "type": "sub", 
-                    "topic": `/device-message-sender/${item.productId}/${item.deviceId}`, 
-                    "parameter": {
-                        "messageType":"WRITE_PROPERTY",
-                        "properties":item.properties,
-                        "headers":{
-                          "async":false 
-                        }
-                    },
-                    "id": item.productId+'/'+item.deviceId+'-'+s8()
-                }));
-              })
             }
-            return;
+          });
+          if (this.jetLinksClient && list.length) {
+            list.forEach((item) => {
+              this.jetLinksClient.send(
+                JSON.stringify({
+                  type: 'sub',
+                  topic: `/device-message-sender/${item.productId}/${item.deviceId}`,
+                  parameter: {
+                    messageType: 'WRITE_PROPERTY',
+                    properties: item.properties,
+                    headers: {
+                      async: false,
+                    },
+                  },
+                  id: item.productId + '/' + item.deviceId + '-' + s8(),
+                })
+              );
+            });
           }
-          const value:any = this.getEventData(e.list,pen);
-          if(pen.deviceId){
-            value.deviceId = pen.deviceId;
-          }
-          this.sendDataToNetWork(value, pen, e);
           return;
+        }
+        const value: any = this.getEventData(e.list, pen);
+        if (pen.deviceId) {
+          value.deviceId = pen.deviceId;
+        }
+        this.sendDataToNetWork(value, pen, e);
+        return;
         // }
       }
       const value = deepClone(e.value);
@@ -538,15 +564,18 @@ export class Meta2d {
           for (let key in value) {
             if (value[key] === undefined || value[key] === '') {
               value[key] = _pen[key];
-            }else if(typeof value[key]=== 'string' && value[key]?.indexOf('${') > -1){
+            } else if (
+              typeof value[key] === 'string' &&
+              value[key]?.indexOf('${') > -1
+            ) {
               let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
-              if(keys?.length){
-                value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
+              if (keys?.length) {
+                value[key] = _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
               }
             }
           }
           // value.id = _pen.id;
-          if(_pen.deviceId){
+          if (_pen.deviceId) {
             value.deviceId = _pen.deviceId;
           }
           this.sendDataToNetWork(value, pen, e);
@@ -565,14 +594,14 @@ export class Meta2d {
         return;
       }
       let params = queryURLParams(_pen.iframe.split('?')[1]);
-      const value:any = this.getEventData(e.list,_pen);
+      const value: any = this.getEventData(e.list, _pen);
       (
         _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
       ).contentWindow.postMessage(
         JSON.stringify({
           name: e.value,
           id: params.id,
-          data: value
+          data: value,
         }),
         '*'
       );
@@ -583,50 +612,56 @@ export class Meta2d {
         console.warn('[meta2d] Emit value must be a string');
         return;
       }
-      const value:any = this.getEventData(e.list,pen);
-      window.parent.postMessage(JSON.stringify({name:e.value,data:value}), '*');
+      const value: any = this.getEventData(e.list, pen);
+      window.parent.postMessage(
+        JSON.stringify({ name: e.value, data: value }),
+        '*'
+      );
       return;
     };
     this.events[EventAction.Message] = (pen: Pen, e: Event) => {
       this.message({
         theme: e.params as any,
         content: e.value as any,
-        ...e.extend
+        ...e.extend,
       });
-    }
+    };
   }
 
-  getEventData(list:any,pen:Pen){
-    const value:any = {};
-    if(list?.length){
-      list.forEach((item:any)=>{
+  getEventData(list: any, pen: Pen) {
+    const value: any = {};
+    if (list?.length) {
+      list.forEach((item: any) => {
         const _pen = item.params ? this.findOne(item.params) : pen;
         for (let key in item.value) {
           if (item.value[key] === undefined || item.value[key] === '') {
             value[key] = _pen[key];
-          }else if(typeof item.value[key]=== 'string' && item.value[key]?.indexOf('${') > -1){
+          } else if (
+            typeof item.value[key] === 'string' &&
+            item.value[key]?.indexOf('${') > -1
+          ) {
             let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
-            if(keys?.length){
-              value[key] = _pen[keys[0]]??this.getDynamicParam(keys[0]);
+            if (keys?.length) {
+              value[key] = _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
             }
-          }else{
+          } else {
             value[key] = item.value[key];
           }
         }
       });
     }
-    if(Object.keys(value).length){
+    if (Object.keys(value).length) {
       return value;
-    }else return null;
+    } else return null;
   }
 
-  message(options:MessageOptions){
+  message(options: MessageOptions) {
     const message = new Message(this.canvas.parentElement, options);
     message.init();
   }
 
-  closeAll(){
-    for(let key in messageList){
+  closeAll() {
+    for (let key in messageList) {
       messageList[key].close();
     }
   }
@@ -647,14 +682,14 @@ export class Meta2d {
     // }
     //路径参数更新
     let hasId = queryURLParams()?.id;
-    if(hasId){
+    if (hasId) {
       const url = new URL(window.location as any);
       url.searchParams.set('id', id);
       history.pushState({}, '', url);
     }
     //图纸更新
     const data = await getMeta2dData(this.store, id);
-    if(data){
+    if (data) {
       this.open(data);
     }
   }
@@ -684,8 +719,8 @@ export class Meta2d {
 
   async sendDataToNetWork(value: any, pen: Pen, e: any) {
     const network = deepClone(e.network);
-    if(network.data){
-      Object.assign(network,network.data);
+    if (network.data) {
+      Object.assign(network, network.data);
       delete network.data;
     }
     if (!network.url) {
@@ -694,7 +729,7 @@ export class Meta2d {
     if (network.protocol === 'http') {
       if (typeof network.headers === 'object') {
         for (let i in network.headers) {
-          if(typeof network.headers[i] === 'string'){
+          if (typeof network.headers[i] === 'string') {
             let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
             if (keys) {
               network.headers[i] = network.headers[i].replace(
@@ -714,12 +749,15 @@ export class Meta2d {
             .map((key) => key + '=' + value[key])
             .join('&');
       }
-      if(network.method === 'POST'){
-        if(url.indexOf('${') > -1){
+      if (network.method === 'POST') {
+        if (url.indexOf('${') > -1) {
           let keys = url.match(/(?<=\$\{).*?(?=\})/g);
-          if(keys){
+          if (keys) {
             keys.forEach((key) => {
-              url = url.replace(`\${${key}}`, getter(pen, key) || this.getDynamicParam(key));
+              url = url.replace(
+                `\${${key}}`,
+                getter(pen, key) || this.getDynamicParam(key)
+              );
             });
           }
         }
@@ -730,9 +768,9 @@ export class Meta2d {
         body: network.method === 'POST' ? JSON.stringify(value) : undefined,
       });
       if (res.ok) {
-        if(e.callback){
+        if (e.callback) {
           const data = await res.text();
-          if(!e.fn){
+          if (!e.fn) {
             try {
               if (typeof e.callback !== 'string') {
                 throw new Error('[meta2d] Function callback must be string');
@@ -741,7 +779,7 @@ export class Meta2d {
               e.fn = new Function('pen', 'data', 'context', fnJs) as (
                 pen: Pen,
                 data: string,
-                context?: { meta2d: Meta2d; e:any }
+                context?: { meta2d: Meta2d; e: any }
               ) => void;
             } catch (err) {
               console.error('[meta2d]: Error on make a function:', err);
@@ -752,13 +790,13 @@ export class Meta2d {
         console.info('http消息发送成功');
       }
     } else if (network.protocol === 'mqtt') {
-      const clients = this.mqttClients.filter(
+      const clients = this.mqttClients?.filter(
         (client) => (client.options as any).href === network.url
       );
       if (clients && clients.length) {
         if (clients[0].connected) {
           network.topics.split(',').forEach((topic) => {
-            clients[0].publish(topic, value);
+            clients[0].publish(topic, JSON.stringify(value));
           });
         }
       } else {
@@ -767,18 +805,20 @@ export class Meta2d {
         mqttClient.on('connect', () => {
           console.info('mqtt连接成功');
           network.topics.split(',').forEach((topic) => {
-            mqttClient.publish(topic, value);
-            mqttClient?.end();
+            mqttClient.publish(topic, JSON.stringify(value));
+            setTimeout(() => {
+              mqttClient?.end();
+            },1000);
           });
         });
       }
     } else if (network.protocol === 'websocket') {
-      const websockets = this.websockets.filter(
+      const websockets = this.websockets?.filter(
         (socket) => socket.url === network.url
       );
       if (websockets && websockets.length) {
         if (websockets[0].readyState === 1) {
-          websockets[0].send(value);
+          websockets[0].send(JSON.stringify(value));
         }
       } else {
         //临时建立连接
@@ -788,7 +828,7 @@ export class Meta2d {
         );
         websocket.onopen = function () {
           console.info('websocket连接成功');
-          websocket.send(value);
+          websocket.send(JSON.stringify(value));
           setTimeout(() => {
             websocket.close();
           }, 100);
@@ -948,25 +988,25 @@ export class Meta2d {
     if (!render) {
       this.canvas.opening = true;
     }
+    this.doInitJS();
+    this.doInitFn();
     this.initBindDatas();
     this.initBinds();
     this.initMessageEvents();
     this.initGlobalTriggers();
-    this.render();
+    this.startAnimate();
+    this.startVideo();
     this.listenSocket();
     this.connectSocket();
     this.connectNetwork();
     this.startDataMock();
-    this.startAnimate();
-    this.startVideo();
-    this.doInitJS();
-    this.doInitFn();
-    setTimeout(()=>{
-      const pen =  this.store.data.pens.find((pen)=>pen.autofocus);
-      if(pen){
+    this.render();
+    setTimeout(() => {
+      const pen = this.store.data.pens.find((pen) => pen.autofocus);
+      if (pen) {
         this.focus(pen.id);
-      }     
-    },100);
+      }
+    }, 100);
     if (this.store.data.iconUrls) {
       for (const item of this.store.data.iconUrls) {
         loadCss(item, () => {
@@ -1038,6 +1078,36 @@ export class Meta2d {
     this.render();
   }
 
+  statistics() {
+    const num = this.store.data.pens.length;
+    const imgNum = this.store.data.pens.filter((pen) => pen.image).length;
+    const imgDrawNum = this.store.data.pens.filter((pen) => pen.image&&pen.calculative.inView).length;
+    const domNum = this.store.data.pens.filter(
+      (pen) =>
+        pen.name.endsWith('Dom') ||
+        isDomShapes.includes(pen.name) ||
+        this.store.options.domShapes.includes(pen.name) ||
+        pen.externElement
+    ).length;
+    const aningNum = this.store.animates.size;
+    let dataPointsNum = 0;
+    Object.keys(this.store.bind).forEach((key) => {
+      dataPointsNum += this.store.bind[key].length;
+    });
+    Object.keys(this.store.bindDatas).forEach((key) => {
+      dataPointsNum += this.store.bindDatas[key].length;
+    });
+
+    return {
+      "图元总数量": num,
+      "图片图元数量": imgNum,
+      "图片图元绘制数量": imgDrawNum,
+      "dom图元数量": domNum,
+      "正在执行的动画数量": aningNum,
+      "数据点数量": dataPointsNum,
+    };
+  }
+
   initBindDatas() {
     this.store.bindDatas = {};
     this.store.data.pens.forEach((pen) => {
@@ -1065,7 +1135,7 @@ export class Meta2d {
 
   jetLinksList: any[] = [];
   jetLinksClient: any;
-  
+
   initBinds() {
     this.jetLinksList = [];
     this.store.bind = {};
@@ -1084,18 +1154,20 @@ export class Meta2d {
           const productId = realTime.productId || pen.productId;
           const deviceId = realTime.deviceId || pen.deviceId;
           const propertyId = realTime.propertyId;
-          if(productId && deviceId && propertyId){
-            const index = this.jetLinksList.findIndex((item)=>item.topic.startsWith(`/${productId}/${deviceId}`));
-            if(index>-1){
+          if (productId && deviceId && propertyId) {
+            const index = this.jetLinksList.findIndex((item) =>
+              item.topic.startsWith(`/${productId}/${deviceId}`)
+            );
+            if (index > -1) {
               const properties = this.jetLinksList[index].properties;
-              if(!properties.includes(realTime.propertyId)){
+              if (!properties.includes(realTime.propertyId)) {
                 this.jetLinksList[index].properties.push(realTime.propertyId);
               }
-            }else{
+            } else {
               this.jetLinksList.push({
-                topic:`/${productId}/${deviceId}`,
+                topic: `/${productId}/${deviceId}`,
                 deviceId,
-                properties:[realTime.propertyId]
+                properties: [realTime.propertyId],
               });
             }
           }
@@ -1132,17 +1204,17 @@ export class Meta2d {
     let binds = [];
     for (let key in params) {
       if (params.hasOwnProperty(key)) {
-        if(key.startsWith('bind-')){
+        if (key.startsWith('bind-')) {
           binds.push({
-            id:key.replace('bind-',''),
-            dataId:key.replace('bind-',''),
-            value:params[key]
-          })
+            id: key.replace('bind-', ''),
+            dataId: key.replace('bind-', ''),
+            value: params[key],
+          });
         }
       }
     }
-    if(binds.length){
-      this.setDatas(binds,{history:false});
+    if (binds.length) {
+      this.setDatas(binds, { history: false });
     }
   }
 
@@ -1170,7 +1242,8 @@ export class Meta2d {
     this.store.data.pens.forEach((pen) => {
       if (pen.externElement === true) {
         // pen.onMove && pen.onMove(pen);
-        pen.calculative.singleton?.div && setElemPosition(pen, pen.calculative.singleton.div);
+        pen.calculative.singleton?.div &&
+          setElemPosition(pen, pen.calculative.singleton.div);
       }
     });
     if (lock > 0) {
@@ -1272,7 +1345,6 @@ export class Meta2d {
     sessionStorage.removeItem('page');
     this.store.clipboard = undefined;
 
-  
     if (!this.store.sameTemplate) {
       this.canvas.canvasTemplate.bgPatchFlags = true;
     }
@@ -1385,7 +1457,7 @@ export class Meta2d {
     } else {
       pens = idOrTagOrPens;
     }
-    if(!pens.length){
+    if (!pens.length) {
       return;
     }
     pens.forEach((pen) => {
@@ -1564,8 +1636,9 @@ export class Meta2d {
    * 组合
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
+   * @param active 是否激活组合后的画笔
    */
-  combine(pens: Pen[] = this.store.active, showChild?: number):any {
+  combine(pens: Pen[] = this.store.active, showChild?: number, active = true): any {
     if (!pens || !pens.length) {
       return;
     }
@@ -1615,7 +1688,11 @@ export class Meta2d {
       if (index < minIndex) {
         minIndex = index;
       }
-      if (pen === parent || pen.parentId === parent.id || pen.id === parent.id) {
+      if (
+        pen === parent ||
+        pen.parentId === parent.id ||
+        pen.id === parent.id
+      ) {
         return;
       }
       // pen 来自于 store.active ，不存在有 parentId 的情况
@@ -1624,12 +1701,13 @@ export class Meta2d {
       const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.None;
-      pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
+      pen.locked =
+        pen.interaction || isInteraction.includes(pen.name) ? 0 : pen.locked;
     });
     //将组合后的父节点置底
     this.store.data.pens.splice(minIndex, 0, parent);
     this.store.data.pens.pop();
-    this.canvas.active([parent]);
+    active && this.canvas.active([parent]);
     let step = 1;
     // if (!oneIsParent) {
     //   step = 2;
@@ -1713,40 +1791,45 @@ export class Meta2d {
     this.inactive();
   }
 
-  appendChild(pens: Pen[] = this.store.active){
-    if(!pens){
+  appendChild(pens: Pen[] = this.store.active) {
+    if (!pens) {
       return;
     }
-    if(pens.length < 2){
+    if (pens.length < 2) {
       return;
     }
-    const pIdx = pens.findIndex(pen=>pen.name === 'combine'&&pen.showChild !== undefined);
-    if(pIdx !== -1){
+    const pIdx = pens.findIndex(
+      (pen) => pen.name === 'combine' && pen.showChild !== undefined
+    );
+    if (pIdx !== -1) {
       let parent = pens[pIdx];
       // this.pushChildren(parent,[...pens.slice(0, pIdx), ...pens.slice(pIdx + 1)]);
       const rect = getRect(pens);
       Object.assign(parent, rect);
       Object.assign(parent.calculative.worldRect, rect);
       calcWorldAnchors(parent);
-      parent.children.forEach(penId => {
+      parent.children.forEach((penId) => {
         const pen = this.store.pens[penId];
         const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
         Object.assign(pen, childRect);
       });
       pens.forEach((pen) => {
-        if(pen.id !== parent.id){
+        if (pen.id !== parent.id) {
           parent.children.push(pen.id);
           pen.parentId = parent.id;
           const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
           Object.assign(pen, childRect);
           pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
-          pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
+          pen.locked =
+            pen.interaction || isInteraction.includes(pen.name)
+              ? 0
+              : pen.locked;
           calcInView(pen, true);
         }
       });
       this.initImageCanvas(pens);
       this.render();
-    }else{
+    } else {
       console.warn('Invalid operation!');
     }
   }
@@ -1757,37 +1840,44 @@ export class Meta2d {
    * @param child 待更新子图元
    * @param parent 父图元
    */
-  updateRectbyChild(rect:Rect, child:Pen, parent:Pen){
+  updateRectbyChild(rect: Rect, child: Pen, parent: Pen) {
     calcRightBottom(rect);
     calcCenter(rect);
     child.calculative.worldRect = rect;
-    if(rectInRect(rect, parent.calculative.worldRect,true)){
+    if (rectInRect(rect, parent.calculative.worldRect, true)) {
       const childRect = calcRelativeRect(rect, parent.calculative.worldRect);
       Object.assign(child, childRect);
-    }else{
-      let x = Math.min(rect.x,parent.calculative.worldRect.x);
-      let y = Math.min(rect.y,parent.calculative.worldRect.y);
-      let ex = Math.max(rect.ex,parent.calculative.worldRect.ex);
-      let ey = Math.max(rect.ey,parent.calculative.worldRect.ey);
+    } else {
+      let x = Math.min(rect.x, parent.calculative.worldRect.x);
+      let y = Math.min(rect.y, parent.calculative.worldRect.y);
+      let ex = Math.max(rect.ex, parent.calculative.worldRect.ex);
+      let ey = Math.max(rect.ey, parent.calculative.worldRect.ey);
       parent.calculative.worldRect = {
-        x:x,
-        y:y,
-        width:ex-x,
-        height:ey-y,
+        x: x,
+        y: y,
+        width: ex - x,
+        height: ey - y,
         ex,
-        ey
-      }
-      if(!parent.parentId){
-        Object.assign(parent,parent.calculative.worldRect);
+        ey,
+      };
+      if (!parent.parentId) {
+        Object.assign(parent, parent.calculative.worldRect);
       }
       calcCenter(parent.calculative.worldRect);
-      parent.children.forEach((cid)=>{
-      const cPen = this.store.pens[cid];
-      const childRect = calcRelativeRect(cPen.calculative.worldRect, parent.calculative.worldRect);
+      parent.children.forEach((cid) => {
+        const cPen = this.store.pens[cid];
+        const childRect = calcRelativeRect(
+          cPen.calculative.worldRect,
+          parent.calculative.worldRect
+        );
         Object.assign(cPen, childRect);
       });
-      if(parent.parentId){
-       this.updateRectbyChild(parent.calculative.worldRect,parent,this.store.pens[parent.parentId]);
+      if (parent.parentId) {
+        this.updateRectbyChild(
+          parent.calculative.worldRect,
+          parent,
+          this.store.pens[parent.parentId]
+        );
       }
     }
     this.canvas.updatePenRect(parent);
@@ -1821,9 +1911,9 @@ export class Meta2d {
     this.render();
   }
 
-  focus(id:string){
+  focus(id: string) {
     const pen = this.findOne(id);
-    if(pen){
+    if (pen) {
       this.store.hover = pen;
       this.store.hover.calculative.hover = true;
       this.showInput(pen);
@@ -1876,7 +1966,10 @@ export class Meta2d {
         }
       }
     }
-    data.dataPoints = [...Object.keys(this.store.bind),...Object.keys(this.store.bindDatas)];
+    data.dataPoints = [
+      ...Object.keys(this.store.bind),
+      ...Object.keys(this.store.bindDatas),
+    ];
     return data;
   }
 
@@ -1956,7 +2049,7 @@ export class Meta2d {
 
       this.websocket.onerror = (error) => {
         this.store.emitter.emit('error', { type: 'websocket', error });
-      }
+      };
 
       this.websocket.onclose = () => {
         if (this.store.options.reconnetTimes) {
@@ -2005,21 +2098,18 @@ export class Meta2d {
       ) {
         this.store.data.mqttOptions.clientId = s8();
       }
-      const mqttOptions = {...this.store.data.mqttOptions};
+      const mqttOptions = { ...this.store.data.mqttOptions };
       // 如果没有username/password或为空字符串则删除username/password
-      if(!mqttOptions.username) {
+      if (!mqttOptions.username) {
         delete mqttOptions.username;
       }
-      if(!mqttOptions.password) {
+      if (!mqttOptions.password) {
         delete mqttOptions.password;
       }
-      const {username, password} = mqttOptions;
+      const { username, password } = mqttOptions;
       // username 和 password 必须同时存在或者同时不存在才去建立mqtt连接
-      if ((username && password)|| (!username && !password)) {
-        this.mqttClient = mqtt.connect(
-          this.store.data.mqtt,
-          mqttOptions
-        );
+      if ((username && password) || (!username && !password)) {
+        this.mqttClient = mqtt.connect(this.store.data.mqtt, mqttOptions);
         this.mqttClient.on('message', (topic: string, message: Buffer) => {
           this.socketCallback(message.toString(), {
             topic,
@@ -2027,7 +2117,7 @@ export class Meta2d {
             url: this.store.data.mqtt,
           });
         });
-        
+
         this.mqttClient.on('error', (error) => {
           this.store.emitter.emit('error', { type: 'mqtt', error });
         });
@@ -2073,7 +2163,7 @@ export class Meta2d {
             // 默认每一秒请求一次
             this.oldRequestHttp(item);
             if (this.store.options.reconnetTimes) {
-              item.times++;
+              // item.times++;
               if (item.times >= this.store.options.reconnetTimes) {
                 item.times = 0;
                 clearInterval(this.httpTimerList[index]);
@@ -2112,6 +2202,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.http });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
@@ -2173,161 +2264,179 @@ export class Meta2d {
       this.websockets = [];
       networks.forEach(async (net) => {
         // if (net.type === 'subscribe') {
-          if (net.protocol === 'mqtt') {
-            net.index = mqttIndex;
-            if (net.options.clientId && !net.options.customClientId) {
-              net.options.clientId = s8();
+        if (net.protocol === 'mqtt') {
+          net.index = mqttIndex;
+          if (net.options.clientId && !net.options.customClientId) {
+            net.options.clientId = s8();
+          }
+          net.times = 0;
+          this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
+          this.mqttClients[mqttIndex].on(
+            'message',
+            (topic: string, message: Buffer) => {
+              this.socketCallback(message.toString(), {
+                topic,
+                type: 'mqtt',
+                url: net.url,
+              });
             }
-            net.times = 0;
-            this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
+          );
+          this.mqttClients[mqttIndex].on('error', (error) => {
+            this.store.emitter.emit('error', { type: 'mqtt', error });
+          });
+
+          this.mqttClients[mqttIndex].on('close', () => {
+            if (this.store.options.reconnetTimes) {
+              net.times++;
+              if (net.times >= this.store.options.reconnetTimes) {
+                net.times = 0;
+                this.mqttClients && this.mqttClients[net.index]?.end();
+              }
+            }
+          });
+          if (net.topics) {
+            this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
+          }
+          mqttIndex += 1;
+        } else if (net.protocol === 'websocket') {
+          net.index = websocketIndex;
+          this.connectNetWebSocket(net);
+          // this.websockets[websocketIndex] = new WebSocket(
+          //   net.url,
+          //   net.protocols || undefined
+          // );
+          // this.websockets[websocketIndex].onmessage = (e) => {
+          //   this.socketCallback(e.data, { type: 'websocket', url: net.url });
+          // };
+          // this.websockets[websocketIndex].onerror = (error) => {
+          //   this.store.emitter.emit('error', { type: 'websocket', error });
+          // };
+          // this.websockets[websocketIndex].onclose = () => {
+          //   if (this.store.options.reconnetTimes) {
+          //     net.times++;
+          //     if (net.times >= this.store.options.reconnetTimes) {
+          //       net.times = 0;
+          //       this.websockets[net.index]?.close();
+          //       return;
+          //     }
+          //   }
+          // console.info('Canvas websocket closed and reconneting...');
+          // };
+
+          websocketIndex += 1;
+        } else if (net.protocol === 'http') {
+          https.push({
+            url: net.url,
+            interval: net.interval,
+            headers: net.headers || undefined,
+            method: net.method,
+            body: net.body,
+          });
+        } else if (net.protocol === 'iot') {
+          const token = await this.getIotToken(net.devices);
+          //物联网设备
+          if (net.method === 'mqtt') {
+            net.index = mqttIndex;
+            this.mqttClients[mqttIndex] = mqtt.connect(net.url);
             this.mqttClients[mqttIndex].on(
               'message',
               (topic: string, message: Buffer) => {
                 this.socketCallback(message.toString(), {
-                  topic,
-                  type: 'mqtt',
+                  topic: `le5le-iot/properties/${token}`,
+                  type: 'iot',
                   url: net.url,
+                  method: 'mqtt',
                 });
               }
             );
             this.mqttClients[mqttIndex].on('error', (error) => {
               this.store.emitter.emit('error', { type: 'mqtt', error });
             });
-
-            this.mqttClients[mqttIndex].on('close', () => {
-              if (this.store.options.reconnetTimes) {
-                net.times++;
-                if (net.times >= this.store.options.reconnetTimes) {
-                  net.times = 0;
-                  this.mqttClients && this.mqttClients[net.index]?.end();
-                }
-              }
-            });
-            if (net.topics) {
-              this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
-            }
+            this.mqttClients[mqttIndex].subscribe(
+              `le5le-iot/properties/${token}`
+            );
             mqttIndex += 1;
-          } else if (net.protocol === 'websocket') {
+          } else if (net.method === 'websocket') {
             net.index = websocketIndex;
-            this.connectNetWebSocket(net);
-            // this.websockets[websocketIndex] = new WebSocket(
-            //   net.url,
-            //   net.protocols || undefined
-            // );
-            // this.websockets[websocketIndex].onmessage = (e) => {
-            //   this.socketCallback(e.data, { type: 'websocket', url: net.url });
-            // };
-            // this.websockets[websocketIndex].onerror = (error) => {
-            //   this.store.emitter.emit('error', { type: 'websocket', error });
-            // };
-            // this.websockets[websocketIndex].onclose = () => {
-            //   if (this.store.options.reconnetTimes) {
-            //     net.times++;
-            //     if (net.times >= this.store.options.reconnetTimes) {
-            //       net.times = 0;
-            //       this.websockets[net.index]?.close();
-            //       return;
-            //     }
-            //   }
-              // console.info('Canvas websocket closed and reconneting...');
-            // };
-
+            this.websockets[websocketIndex] = new WebSocket(
+              `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
+                location.host
+              }/api/ws/iot/properties`,
+              token
+            );
+            this.websockets[websocketIndex].onmessage = (e) => {
+              this.socketCallback(e.data, { type: 'iot', method: 'websocket' });
+            };
+            this.websockets[websocketIndex].onerror = (error) => {
+              this.store.emitter.emit('error', { type: 'websocket', error });
+            };
             websocketIndex += 1;
-          } else if (net.protocol === 'http') {
-            https.push({
-              url: net.url,
-              interval: net.interval,
-              headers: net.headers || undefined,
-              method: net.method,
-              body: net.body,
-            });
-          }else if(net.protocol === 'iot'){
-            const token = await this.getIotToken(net.devices);
-            //物联网设备
-            if(net.method === 'mqtt'){
-              net.index = mqttIndex;
-              this.mqttClients[mqttIndex] = mqtt.connect(net.url);
-              this.mqttClients[mqttIndex].on('message', (topic: string, message: Buffer) => {
-                this.socketCallback(message.toString(), {
-                  topic:`le5le-iot/properties/${token}`,
-                  type: 'iot',
-                  url: net.url,
-                  method: 'mqtt'
-                });
-              })
-              this.mqttClients[mqttIndex].on('error', (error) => {
-                this.store.emitter.emit('error', { type: 'mqtt', error });
-              });
-              this.mqttClients[mqttIndex].subscribe(`le5le-iot/properties/${token}`);
-              mqttIndex += 1;
-            }else if(net.method === 'websocket'){
-              net.index = websocketIndex;
-              this.websockets[websocketIndex] = new WebSocket(
-                `${location.protocol === 'https:'?'wss':'ws'}://${location.host}/api/ws/iot/properties`,
-                token
-              );
-              this.websockets[websocketIndex].onmessage = (e) => {
-                this.socketCallback(e.data, { type: 'iot', method: 'websocket' });   
-              };
-              this.websockets[websocketIndex].onerror = (error) => {
-                this.store.emitter.emit('error', { type: 'websocket', error });
-              };
-              websocketIndex += 1;
-            }
-          }else if(net.protocol === 'sql'){
-            await this.doSqlCode('list',net.dbId,net.sql);
-            if(net.interval){
-              net.index = sqlIndex;
-              this.sqlTimerList[sqlIndex] = setInterval(async () => {
-                await this.doSqlCode('list',net.dbId,net.sql);
-              }, net.interval);
-              sqlIndex += 1;
-            }
-          }else if(net.protocol === 'jetLinks'){
-            if(this.jetLinksList.length){
-              this.jetLinksClient = new WebSocket(
-                `${net.url}/${localStorage.getItem('X-Access-Token') || getCookie('X-Access-Token') ||  new URLSearchParams(location.search).get('X-Access-Token') || ''}`,
-                // 'ws://8.134.86.52:29000/api/messaging/961d8b395298d3ec3a021df70d6b6ca4'
-              );
-              //消息接收
-              this.jetLinksClient.onmessage = (e) => {
-                const mess = JSON.parse(e.data);
-                if(mess.payload&&mess.payload.success&&mess.payload?.properties){
-                  const data = [];
-                  for(let key in mess.payload.properties){
-                    if(!key.startsWith('_')){
-                      data.push({
-                        id:`${mess.payload.headers.productId}#${mess.payload.deviceId}#${key}`,
-                        value:mess.payload.properties[key]
-                      })
-                    }
-                  }
-                  this.setDatas(data,{history:false});
-                }
-              }
-              this.jetLinksClient.onopen = ()=>{
-                this.jetLinksList.forEach((item)=>{
-                  this.jetLinksClient.send(JSON.stringify({
-                      "type": "sub",
-                      "topic": `/device${item.topic}/message/property/report`,
-                      "parameter": {
-                        "deviceId":item.deviceId,
-                        "properties":item.properties,
-                        "history":1
-                      },
-                      "id": item.topic+'-'+s8()
-                    }));
-                })
-              }
-            }
           }
+        } else if (net.protocol === 'sql') {
+          await this.doSqlCode('list', net.dbId, net.sql);
+          if (net.interval) {
+            net.index = sqlIndex;
+            this.sqlTimerList[sqlIndex] = setInterval(async () => {
+              await this.doSqlCode('list', net.dbId, net.sql);
+            }, net.interval);
+            sqlIndex += 1;
+          }
+        } else if (net.protocol === 'jetLinks') {
+          if (this.jetLinksList.length) {
+            this.jetLinksClient = new WebSocket(
+              `${net.url}/${
+                localStorage.getItem('X-Access-Token') ||
+                getCookie('X-Access-Token') ||
+                new URLSearchParams(location.search).get('X-Access-Token') ||
+                ''
+              }`
+              // 'ws://8.134.86.52:29000/api/messaging/961d8b395298d3ec3a021df70d6b6ca4'
+            );
+            //消息接收
+            this.jetLinksClient.onmessage = (e) => {
+              const mess = JSON.parse(e.data);
+              if (
+                mess.payload &&
+                mess.payload.success &&
+                mess.payload?.properties
+              ) {
+                const data = [];
+                for (let key in mess.payload.properties) {
+                  if (!key.startsWith('_')) {
+                    data.push({
+                      id: `${mess.payload.headers.productId}#${mess.payload.deviceId}#${key}`,
+                      value: mess.payload.properties[key],
+                    });
+                  }
+                }
+                this.setDatas(data, { history: false });
+              }
+            };
+            this.jetLinksClient.onopen = () => {
+              this.jetLinksList.forEach((item) => {
+                this.jetLinksClient.send(
+                  JSON.stringify({
+                    type: 'sub',
+                    topic: `/device${item.topic}/message/property/report`,
+                    parameter: {
+                      deviceId: item.deviceId,
+                      properties: item.properties,
+                      history: 1,
+                    },
+                    id: item.topic + '-' + s8(),
+                  })
+                );
+              });
+            };
+          }
+        }
       });
     }
     this.onNetworkConnect(https);
   }
-  
-  connectNetWebSocket(net:Network){
-    if(this.websockets[net.index]){
+
+  connectNetWebSocket(net: Network) {
+    if (this.websockets[net.index]) {
       this.websockets[net.index].onclose = undefined;
       this.websockets[net.index]?.close();
       this.websockets[net.index] = undefined;
@@ -2356,14 +2465,14 @@ export class Meta2d {
       setTimeout(() => {
         console.info('Canvas websocket closed and reconneting...');
         this.connectNetWebSocket(net);
-      },2000);
+      }, 2000);
     };
   }
 
-  async getIotToken(devices:any){
+  async getIotToken(devices: any) {
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
-      body:JSON.stringify({devices: devices}),
+      body: JSON.stringify({ devices: devices }),
     });
     if (res.ok) {
       const data = await res.text();
@@ -2371,19 +2480,21 @@ export class Meta2d {
     }
   }
 
-    
-  async doSqlCode(type:string, dbid:string,sql:string){
-    const res: Response = await fetch( `/api/iot/data/sql/${type}`, {
+  async doSqlCode(type: string, dbid: string, sql: string) {
+    const res: Response = await fetch(`/api/iot/data/sql/${type}`, {
       method: 'POST',
-      body:JSON.stringify({ dbid,sql,}),
+      body: JSON.stringify({ dbid, sql }),
     });
     if (res.ok) {
       const data = await res.text();
-      if(data){
-        this.socketCallback(data, { type: 'sql', url: `/api/iot/data/sql/${type}` });
+      if (data) {
+        this.socketCallback(data, {
+          type: 'sql',
+          url: `/api/iot/data/sql/${type}`,
+        });
       }
     }
-  }  
+  }
 
   randomString(e: number) {
     e = e || 32;
@@ -2395,8 +2506,8 @@ export class Meta2d {
     }
     return n;
   }
-  
-  mockValue(data){
+
+  mockValue(data) {
     let value = undefined;
     if (data.enableMock && data.mock !== undefined) {
       if (data.type === 'float') {
@@ -2427,9 +2538,7 @@ export class Meta2d {
           }
           if ((len + '').indexOf('.') !== -1) {
             let length = (len + '').split('.')[1].length;
-            value = (Math.random() * (max - min) + min).toFixed(
-              length
-            );
+            value = (Math.random() * (max - min) + min).toFixed(length);
           } else {
             value = Math.random() * (max - min) + min;
           }
@@ -2457,9 +2566,7 @@ export class Meta2d {
             max = parseInt(arr[1]);
             min = parseInt(arr[0]);
           }
-          value= parseInt(
-            Math.random() * (max - min) + min + ''
-          );
+          value = parseInt(Math.random() * (max - min) + min + '');
         } else {
           value = parseInt(data.mock);
         }
@@ -2481,8 +2588,7 @@ export class Meta2d {
       } else {
         //if (realTime.type === 'string')
         if (data.mock && data.mock.indexOf(',') !== -1) {
-          let str = data.mock.substring(1, data.mock.length - 1);
-          let arr = str.split(',');
+          let arr = data.mock.split(',');
           let rai = Math.floor(Math.random() * arr.length);
           value = arr[rai];
         } else if (
@@ -2490,9 +2596,7 @@ export class Meta2d {
           data.mock.startsWith('[') &&
           data.mock.endsWith(']')
         ) {
-          let len = parseInt(
-            data.mock.substring(1, data.mock.length - 1)
-          );
+          let len = parseInt(data.mock.substring(1, data.mock.length - 1));
           value = this.randomString(len);
         } else {
           value = data.mock;
@@ -2503,29 +2607,29 @@ export class Meta2d {
   }
 
   //数据模拟
-  dataMock(){
+  dataMock() {
     let arr = [];
-    this.store.data.dataset?.devices?.forEach((data)=>{
+    this.store.data.dataset?.devices?.forEach((data) => {
       let value = this.mockValue(data);
-      if(value!==undefined){
+      if (value !== undefined) {
         arr.push({
           id: data.id,
-          value
-        })
+          value,
+        });
       }
     });
-    if(arr.length){
+    if (arr.length) {
       this.setDatas(arr, {
-        render:true,
-        doEvent:true,
-        history:false,
+        render: true,
+        doEvent: true,
+        history: false,
       });
     }
   }
 
-  startDataMock(){
+  startDataMock() {
     let enable = this.store.data.enableMock;
-    if(enable){
+    if (enable) {
       this.stopDataMock();
       this.initBinds();
       this.updateTimer = setInterval(() => {
@@ -2539,7 +2643,7 @@ export class Meta2d {
     }
   }
 
-  stopDataMock(){
+  stopDataMock() {
     clearInterval(this.updateTimer);
     this.updateTimer = undefined;
   }
@@ -2549,7 +2653,7 @@ export class Meta2d {
       let _d: any = {};
       pen.realTimes.forEach((realTime) => {
         let value = this.mockValue(realTime);
-        if(value !== undefined){
+        if (value !== undefined) {
           _d[realTime.key] = value;
         }
       });
@@ -2577,7 +2681,7 @@ export class Meta2d {
         this.store.pensNetwork = {};
       }
       this.store.pensNetwork[pen.id] = penNetwork;
-    }else{
+    } else {
       delete this.store.pensNetwork[pen.id];
     }
   }
@@ -2617,7 +2721,7 @@ export class Meta2d {
     // if( enable ){
     //   this.updateTimer = setInterval(() => {
     //     //模拟数据
-      
+
     //     this.store.data.pens.forEach((pen) => {
     //       this.penMock(pen);
     //     });
@@ -2629,12 +2733,12 @@ export class Meta2d {
     //   }, this.store.data.networkInterval || 1000);
     // }
 
-    https.forEach((_item,index) => {
+    https.forEach((_item, index) => {
       _item.times = 0;
       this.updateTimerList[index] = setInterval(async () => {
         this.requestHttp(_item);
         if (this.store.options.reconnetTimes) {
-          _item.times++;
+          // _item.times++;
           if (_item.times >= this.store.options.reconnetTimes) {
             _item.times = 0;
             clearInterval(this.updateTimerList[index]);
@@ -2648,9 +2752,19 @@ export class Meta2d {
   async requestHttp(_req: Network) {
     let req = deepClone(_req);
     if (req.url) {
+      if(req.url.indexOf('${') > -1){
+        let keys = req.url.match(/(?<=\$\{).*?(?=\})/g);
+          if (keys) {
+            keys.forEach((key) => {
+              req.url = req.url.replace(
+                `\${${key}}`,this.getDynamicParam(key)
+              );
+            });
+          }
+      }
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
-          if(typeof req.headers[i] === 'string'){
+          if (typeof req.headers[i] === 'string') {
             let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
             if (keys) {
               req.headers[i] = req.headers[i].replace(
@@ -2663,7 +2777,7 @@ export class Meta2d {
       }
       if (typeof req.body === 'object') {
         for (let i in req.body) {
-          if(typeof req.body[i] === 'string'){
+          if (typeof req.body[i] === 'string') {
             let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
             if (keys) {
               req.body[i] = req.body[i].replace(
@@ -2684,6 +2798,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.url });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
@@ -2696,7 +2811,7 @@ export class Meta2d {
       });
     this.websockets &&
       this.websockets.forEach((websocket) => {
-        if(websocket){
+        if (websocket) {
           websocket.onclose = undefined;
           websocket.close();
           websocket = undefined;
@@ -2707,38 +2822,36 @@ export class Meta2d {
     // clearInterval(this.updateTimer);
     // this.updateTimer = undefined;
     this.updateTimerList &&
-    this.updateTimerList.forEach((_updateTimer) => {
-      clearInterval(_updateTimer);
-      _updateTimer = undefined;
-    });
+      this.updateTimerList.forEach((_updateTimer) => {
+        clearInterval(_updateTimer);
+        _updateTimer = undefined;
+      });
     this.sqlTimerList &&
-    this.sqlTimerList.forEach((_sqlTimer) => {
-      clearInterval(_sqlTimer);
-      _sqlTimer = undefined
-    });
+      this.sqlTimerList.forEach((_sqlTimer) => {
+        clearInterval(_sqlTimer);
+        _sqlTimer = undefined;
+      });
   }
 
   socketCallback(
     message: string,
-    context?: { type?: string; topic?: string; url?: string, method?: string }
+    context?: { type?: string; topic?: string; url?: string; method?: string }
   ) {
     this.store.emitter.emit('socket', { message, context });
-    let _message:any = message;
-    if (
-      this.socketFn
-    ) {
-      _message =  this.socketFn(message, {
+    let _message: any = message;
+    if (this.socketFn) {
+      _message = this.socketFn(message, {
         meta2d: this,
         type: context.type,
         topic: context.topic,
         url: context.url,
-        method: context.method
-      })
-      if(!_message){
+        method: context.method,
+      });
+      if (!_message) {
         return;
       }
     }
-    if(_message===true){
+    if (_message === true) {
       _message = message;
     }
     let data: any;
@@ -2818,32 +2931,34 @@ export class Meta2d {
           }
         }
       );
-      this.store.bind[v.id || v.dataId]?.forEach((p: { id: string; key: string }) => {
-        const pen = this.store.pens[p.id];
-        if (!pen) {
-          return;
-        }
-        let penValue = penValues.get(pen);
+      this.store.bind[v.id || v.dataId]?.forEach(
+        (p: { id: string; key: string }) => {
+          const pen = this.store.pens[p.id];
+          if (!pen) {
+            return;
+          }
+          let penValue = penValues.get(pen);
 
-        // if (typeof pen.onBinds === 'function') {
-        //   // 已经计算了
-        //   if (penValue) {
-        //     return;
-        //   }
-        //   //TODO onBinds的情况
-        //   penValues.set(pen, pen.onBinds(pen, datas));
-        //   return;
-        // }
-        if (penValue) {
-          penValue[p.key] = v.value;
-        } else {
-          penValue = {
-            id: p.id,
-            [p.key]: v.value,
-          };
-          penValues.set(pen, penValue);
+          // if (typeof pen.onBinds === 'function') {
+          //   // 已经计算了
+          //   if (penValue) {
+          //     return;
+          //   }
+          //   //TODO onBinds的情况
+          //   penValues.set(pen, pen.onBinds(pen, datas));
+          //   return;
+          // }
+          if (penValue) {
+            penValue[p.key] = v.value;
+          } else {
+            penValue = {
+              id: p.id,
+              [p.key]: v.value,
+            };
+            penValues.set(pen, penValue);
+          }
         }
-      });
+      );
     });
 
     this.store.data.locked && this.doDataEvent(datas);
@@ -2883,7 +2998,7 @@ export class Meta2d {
     } = {}
   ) {
     let pens: Pen[] = [];
-    if(!data){
+    if (!data) {
       return;
     }
     if (data.id) {
@@ -2928,12 +3043,12 @@ export class Meta2d {
       let binds = [];
       for (let key in data) {
         binds.push({
-          dataId:key,
-          id:key,
-          value:data[key]
-        })
-      };
-      if(binds.length){
+          dataId: key,
+          id: key,
+          value: data[key],
+        });
+      }
+      if (binds.length) {
         this.setDatas(binds as any, {
           render,
           doEvent,
@@ -3013,7 +3128,7 @@ export class Meta2d {
     this.canvas.clearDropdownList();
   }
 
-  clearRuleLines(){
+  clearRuleLines() {
     this.canvas.clearRuleLines();
   }
 
@@ -3045,37 +3160,58 @@ export class Meta2d {
         }
         break;
       case 'click':
-        if(this.store.data.locked && e.pen && (!e.pen.disabled)){
-          if(e.pen.switch){
-            e.pen.checked =  !e.pen.checked;
+        if (this.store.data.locked && e.pen && !e.pen.disabled) {
+          if (e.pen.switch) {
+            e.pen.checked = !e.pen.checked;
             e.pen.calculative.checked = e.pen.checked;
             e.pen.calculative.gradient = undefined;
             e.pen.calculative.radialGradient = undefined;
           }
         }
-        e.pen && e.pen.onClick && (!e.pen.disabled) && e.pen.onClick(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
+        e.pen &&
+          e.pen.onClick &&
+          !e.pen.disabled &&
+          e.pen.onClick(e.pen, this.canvas.mousePos);
+        this.store.data.locked &&
+          e.pen &&
+          !e.pen.disabled &&
+          this.doEvent(e.pen, eventName);
         break;
       case 'contextmenu':
         e.pen &&
-          e.pen.onContextmenu && (!e.pen.disabled) &&
+          e.pen.onContextmenu &&
+          !e.pen.disabled &&
           e.pen.onContextmenu(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
+        this.store.data.locked &&
+          e.pen &&
+          !e.pen.disabled &&
+          this.doEvent(e.pen, eventName);
         break;
       case 'mousedown':
         e.pen &&
-          e.pen.onMouseDown && (!e.pen.disabled) &&
+          e.pen.onMouseDown &&
+          !e.pen.disabled &&
           e.pen.onMouseDown(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
+        this.store.data.locked &&
+          e.pen &&
+          !e.pen.disabled &&
+          this.doEvent(e.pen, eventName);
         break;
       case 'mouseup':
         e.pen &&
-          e.pen.onMouseUp && (!e.pen.disabled) && 
+          e.pen.onMouseUp &&
+          !e.pen.disabled &&
           e.pen.onMouseUp(e.pen, this.canvas.mousePos);
-        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
+        this.store.data.locked &&
+          e.pen &&
+          !e.pen.disabled &&
+          this.doEvent(e.pen, eventName);
         break;
       case 'dblclick':
-        this.store.data.locked && e.pen && (!e.pen.disabled) && this.doEvent(e.pen, eventName);
+        this.store.data.locked &&
+          e.pen &&
+          !e.pen.disabled &&
+          this.doEvent(e.pen, eventName);
         break;
       case 'valueUpdate':
         this.store.data.locked && this.doEvent(e, eventName);
@@ -3089,16 +3225,22 @@ export class Meta2d {
         this.onSizeUpdate();
         break;
       case 'navigator':
-        if(!this.store.data.id){
+        if (!this.store.data.id) {
           console.warn('请先保存当前图纸');
         }
         this.navigatorTo(e.params);
         break;
       case 'input':
-        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        this.store.data.locked &&
+          e &&
+          !e.disabled &&
+          this.doEvent(e, eventName);
         break;
       case 'change':
-        this.store.data.locked && e && (!e.disabled) && this.doEvent(e, eventName);
+        this.store.data.locked &&
+          e &&
+          !e.disabled &&
+          this.doEvent(e, eventName);
         break;
     }
 
@@ -3111,7 +3253,7 @@ export class Meta2d {
     }
     let old = false; //是否是旧的事件
     let indexArr = []; //事件条件成立的索引
-    pen.events?.forEach((event,index) => {
+    pen.events?.forEach((event, index) => {
       if (event.actions && event.actions.length) {
         if (event.name === eventName) {
           //条件成立
@@ -3162,7 +3304,7 @@ export class Meta2d {
               }
             } else {
               let pValue = pen[key];
-              if(['x','y','width','height'].includes(key)){
+              if (['x', 'y', 'width', 'height'].includes(key)) {
                 pValue = this.getPenRect(pen)[key];
               }
               switch (comparison) {
@@ -3201,38 +3343,44 @@ export class Meta2d {
             }
           }
           // can && this.events[event.action](pen, event);
-          if(can){
+          if (can) {
             indexArr.push(index);
           }
         }
       }
     });
-    
+
     //所有的条件判断后，再统一执行条件成立的事件
-    if(old){
-      pen.events?.forEach((event,index) => {
-        if(indexArr.includes(index)){
+    if (old) {
+      pen.events?.forEach((event, index) => {
+        if (indexArr.includes(index)) {
           this.events[event.action](pen, event);
         }
       });
-    }else{
-      pen.events?.forEach(async(event,index) => {
-        if(indexArr.includes(index)){
-          if(event.confirm){
-            if(!await this.canvas.popconfirm.showModal(pen,this.canvas.mousePos,event.confirmTitle)){
+    } else {
+      pen.events?.forEach(async (event, index) => {
+        if (indexArr.includes(index)) {
+          if (event.confirm) {
+            if (
+              !(await this.canvas.popconfirm.showModal(
+                pen,
+                this.canvas.mousePos,
+                event.confirmTitle
+              ))
+            ) {
               return;
             }
           }
           event.actions.forEach((action) => {
-            if(action.timeout){
-              let timer = setTimeout(()=>{
+            if (action.timeout) {
+              let timer = setTimeout(() => {
                 if (this.events[action.action]) {
                   this.events[action.action](pen, action);
                   clearTimeout(timer);
                   timer = null;
                 }
-              },action.timeout);
-            }else{
+              }, action.timeout);
+            } else {
               if (this.events[action.action]) {
                 this.events[action.action](pen, action);
               }
@@ -3241,13 +3389,13 @@ export class Meta2d {
         }
       });
     }
-    
-    if(eventName === 'valueUpdate'){
+
+    if (eventName === 'valueUpdate') {
       pen.realTimes?.forEach((realTime) => {
         let indexArr = [];
-        realTime.triggers?.forEach((trigger,index) => {
+        realTime.triggers?.forEach((trigger, index) => {
           let flag = false;
-          if(trigger.conditions?.length){
+          if (trigger.conditions?.length) {
             if (trigger.conditionType === 'and') {
               flag = trigger.conditions.every((condition) => {
                 return this.judgeCondition(pen, realTime.key, condition);
@@ -3257,7 +3405,7 @@ export class Meta2d {
                 return this.judgeCondition(pen, realTime.key, condition);
               });
             }
-          }else {
+          } else {
             //无条件
             flag = true;
           }
@@ -3270,18 +3418,18 @@ export class Meta2d {
         });
 
         //执行
-        realTime.triggers?.forEach((trigger,index) => {
-          if(indexArr.includes(index)){
+        realTime.triggers?.forEach((trigger, index) => {
+          if (indexArr.includes(index)) {
             trigger.actions?.forEach((event) => {
-              if(event.timeout){
-                let timer = setTimeout(()=>{
+              if (event.timeout) {
+                let timer = setTimeout(() => {
                   if (this.events[event.action]) {
                     this.events[event.action](pen, event);
                     clearTimeout(timer);
                     timer = null;
                   }
-                },event.timeout);
-              }else{
+                }, event.timeout);
+              } else {
                 this.events[event.action](pen, event);
               }
             });
@@ -3291,19 +3439,27 @@ export class Meta2d {
 
       //全局
       let indexArr = [];
-      this.store.globalTriggers[pen.id]?.forEach((trigger,index) => {
+      this.store.globalTriggers[pen.id]?.forEach((trigger, index) => {
         let flag = false;
-        if(trigger.conditions?.length){
+        if (trigger.conditions?.length) {
           if (trigger.conditionType === 'and') {
             flag = trigger.conditions.every((condition) => {
-              return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+              return this.judgeCondition(
+                this.store.pens[condition.source],
+                condition.key,
+                condition
+              );
             });
           } else if (trigger.conditionType === 'or') {
             flag = trigger.conditions.some((condition) => {
-              return this.judgeCondition(this.store.pens[condition.source], condition.key, condition);
+              return this.judgeCondition(
+                this.store.pens[condition.source],
+                condition.key,
+                condition
+              );
             });
           }
-        }else{
+        } else {
           //无条件
           flag = true;
         }
@@ -3311,18 +3467,18 @@ export class Meta2d {
           indexArr.push(index);
         }
       });
-      this.store.globalTriggers[pen.id]?.forEach((trigger,index) => {
-        if(indexArr.includes(index)){
+      this.store.globalTriggers[pen.id]?.forEach((trigger, index) => {
+        if (indexArr.includes(index)) {
           trigger.actions?.forEach((event) => {
-            if(event.timeout){
-              let timer = setTimeout(()=>{
+            if (event.timeout) {
+              let timer = setTimeout(() => {
                 if (this.events[event.action]) {
                   this.events[event.action](pen, event);
                   clearTimeout(timer);
                   timer = null;
                 }
-              },event.timeout);
-            }else{
+              }, event.timeout);
+            } else {
               this.events[event.action](pen, event);
             }
           });
@@ -3330,12 +3486,12 @@ export class Meta2d {
       });
 
       //triggers
-      if( pen.triggers?.length ){
-        for(let trigger of pen.triggers){
-          if(trigger.status?.length){
-            for(let state of trigger.status){
+      if (pen.triggers?.length) {
+        for (let trigger of pen.triggers) {
+          if (trigger.status?.length) {
+            for (let state of trigger.status) {
               let flag = false;
-              if(state.conditions?.length){
+              if (state.conditions?.length) {
                 if (state.conditionType === 'and') {
                   flag = state.conditions.every((condition) => {
                     return this.judgeCondition(pen, condition.key, condition);
@@ -3345,21 +3501,21 @@ export class Meta2d {
                     return this.judgeCondition(pen, condition.key, condition);
                   });
                 }
-              }else{
+              } else {
                 //无条件
                 flag = true;
               }
               if (flag) {
                 state.actions?.forEach((event) => {
-                  if(event.timeout){
-                    let timer = setTimeout(()=>{
+                  if (event.timeout) {
+                    let timer = setTimeout(() => {
                       if (this.events[event.action]) {
                         this.events[event.action](pen, event);
                         clearTimeout(timer);
                         timer = null;
                       }
-                    },event.timeout);
-                  }else{
+                    }, event.timeout);
+                  } else {
                     this.events[event.action](pen, event);
                   }
                 });
@@ -3375,7 +3531,7 @@ export class Meta2d {
     this.doEvent(this.store.pens[pen.parentId], eventName);
   };
 
-  doMessageEvent(eventName: string, data?:any) {
+  doMessageEvent(eventName: string, data?: any) {
     if (this.store.messageEvents[eventName]) {
       this.store.messageEvents[eventName].forEach((item) => {
         let flag = false;
@@ -3401,16 +3557,16 @@ export class Meta2d {
     }
   }
 
-  doDataEvent = ( datas: { dataId?: string; id?: string; value: any }[]) => {
-    if(!(this.store.data.dataEvents?.length)) {
+  doDataEvent = (datas: { dataId?: string; id?: string; value: any }[]) => {
+    if (!this.store.data.dataEvents?.length) {
       return;
     }
-    const data = datas.reduce((accumulator,{dataId,id,value}) => {
-      accumulator[id||dataId] = value;
+    const data = datas.reduce((accumulator, { dataId, id, value }) => {
+      accumulator[id || dataId] = value;
       return accumulator;
     }, {});
     let indexArr = [];
-    this.store.data.dataEvents?.forEach((event,index)=>{
+    this.store.data.dataEvents?.forEach((event, index) => {
       let flag = false;
       if (event.conditions && event.conditions.length) {
         if (event.conditionType === 'and') {
@@ -3430,28 +3586,28 @@ export class Meta2d {
       }
     });
 
-    this.store.data.dataEvents?.forEach((event,index) => {
-      if(indexArr.includes(index)){
+    this.store.data.dataEvents?.forEach((event, index) => {
+      if (indexArr.includes(index)) {
         event.actions?.forEach((action) => {
           this.events[action.action](data, action);
         });
       }
     });
-  }
+  };
 
-  initGlobalTriggers(){
+  initGlobalTriggers() {
     this.store.globalTriggers = {};
     this.store.data.triggers?.forEach((trigger) => {
       trigger.conditions.forEach((condition) => {
-        if(condition.source){
-          if(!this.store.globalTriggers[condition.source]){
+        if (condition.source) {
+          if (!this.store.globalTriggers[condition.source]) {
             this.store.globalTriggers[condition.source] = [];
           }
-          if(!this.store.globalTriggers[condition.source].includes(trigger)){
+          if (!this.store.globalTriggers[condition.source].includes(trigger)) {
             this.store.globalTriggers[condition.source].push(trigger);
           }
         }
-      })
+      });
     });
   }
 
@@ -3567,7 +3723,7 @@ export class Meta2d {
         value = this.store.pens[target][condition.value];
       }
       let compareValue = getter(pen, key);
-      if(['x','y','width','height'].includes(key)){
+      if (['x', 'y', 'width', 'height'].includes(key)) {
         compareValue = this.getPenRect(pen)[key];
       }
       switch (operator) {
@@ -3636,7 +3792,8 @@ export class Meta2d {
       );
       Object.assign(pen, childRect);
       pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
-      pen.locked = (pen.interaction || isInteraction.includes(pen.name)) ? 0 : pen.locked;
+      pen.locked =
+        pen.interaction || isInteraction.includes(pen.name) ? 0 : pen.locked;
       if (!oldPen) {
         addPens.push(deepClone(pen, true));
       } else {
@@ -3677,7 +3834,11 @@ export class Meta2d {
     return this.canvas.activeToPng(padding, maxWidth);
   }
 
-  pensToPng(pens: Pen[] = this.store.active, padding?: Padding, maxWidth?: number) {
+  pensToPng(
+    pens: Pen[] = this.store.active,
+    padding?: Padding,
+    maxWidth?: number
+  ) {
     return this.canvas.pensToPng(pens, padding, maxWidth);
   }
 
@@ -3714,18 +3875,90 @@ export class Meta2d {
       );
       throw new Error('请先加载乐吾乐官网下的canvas2svg.js');
     }
-
+    let isV = false;
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (width && height && !this.store.data.component) {
+      isV = true;
+    }
     const rect = this.getRect();
+    if (isV) {
+      rect.x = this.store.data.origin.x;
+      rect.y = this.store.data.origin.y;
+      rect.width = width * this.store.data.scale;
+      rect.height = height * this.store.data.scale;
+    }
+    //TODO 不考虑无画布尺寸时背景图片
+    // if(this.store.bkImg&&!isV){
+    //   rect.x = rect.x < 0 ? -rect.x : 0;
+    //   rect.y = rect.y < 0 ? -rect.y : 0;
+    //   rect.width = this.canvas.canvasRect.width;
+    //   rect.height =  this.canvas.canvasRect.height;
+    // }
     rect.x -= 10;
     rect.y -= 10;
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
     ctx.strokeStyle = getGlobalColor(this.store);
+    const background =
+    this.store.data.background || this.store.options.background;
+    if (background && isV) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        rect.width,
+        rect.height
+      );
+      ctx.restore();
+    }
+    if (this.store.bkImg) {
+      if (isV) {
+        ctx.drawImage(
+          this.store.bkImg,
+          0,
+          0,
+          rect.width,
+          rect.height
+        );
+      } else {
+        // const x = rect.x < 0 ? -rect.x : 0;
+        // const y = rect.y < 0 ? -rect.y : 0;
+        // ctx.drawImage(
+        //   this.store.bkImg,
+        //   x,
+        //   y,
+        //   this.canvas.canvasRect.width,
+        //   this.canvas.canvasRect.height
+        // );
+      }
+    }
+    if (background && !isV) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        rect.width+20,
+        rect.height+20
+      );
+      ctx.restore();
+
+    }
+    // if(this.store.bkImg&&!isV){
+    //   ctx.translate(
+    //     this.store.data.x,
+    //     this.store.data.y
+    //   );
+    // }
     for (const pen of this.store.data.pens) {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
       }
-      if (pen.name === 'combine' && !pen.draw){
+      if (pen.name === 'combine' && !pen.draw) {
         continue;
       }
       renderPenRaw(ctx, pen, rect, true);
@@ -3808,7 +4041,7 @@ export class Meta2d {
     } else {
       ratio = w > h ? w : h;
     }
-    if(this.store.data.fits?.length){
+    if (this.store.data.fits?.length) {
       this.canvas.opening = true;
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
@@ -3816,81 +4049,94 @@ export class Meta2d {
 
     // 5. 居中
     this.centerView();
-    if(this.store.data.fits?.length){
+    if (this.store.data.fits?.length) {
       this.fillView();
     }
   }
 
-  fillView(){
+  fillView() {
     const rect = this.getRect();
     const wGap = this.canvas.width - rect.width;
     const hGap = this.canvas.height - rect.height;
     //宽度拉伸
     if (Math.abs(wGap) > 10) {
-      this.store.data.fits?.forEach((fit)=>{
+      this.store.data.fits?.forEach((fit) => {
         let pens = [];
-        fit.children.forEach((id)=>{
+        fit.children.forEach((id) => {
           this.store.pens[id].locked = LockState.None;
           pens.push(this.store.pens[id]);
         });
-        let r = wGap/2;
-        if(fit.left&&fit.right){
+        let r = wGap / 2;
+        if (fit.left && fit.right) {
           //整体拉伸
           let left = fit.leftValue;
           let right = fit.rightValue;
-          if(left){
-            left = Math.abs(left)<1?left*this.canvas.width:left;
-          }else{
+          if (left) {
+            left = Math.abs(left) < 1 ? left * this.canvas.width : left;
+          } else {
             left = 0;
           }
-          if(right){
-            right = Math.abs(right)<1?right*this.canvas.width:right;
-          }else{
+          if (right) {
+            right = Math.abs(right) < 1 ? right * this.canvas.width : right;
+          } else {
             right = 0;
           }
-          let ratio = (this.canvas.width - left - right)/(rect.width- left - right);
-          pens.forEach((pen)=>{  
-            if(pen.image && pen.imageRatio){
-              if(pen.calculative.worldRect.width/this.canvas.width>0.1){
+          let ratio =
+            (this.canvas.width - left - right) / (rect.width - left - right);
+          pens.forEach((pen) => {
+            if (pen.image && pen.imageRatio) {
+              if (pen.calculative.worldRect.width / this.canvas.width > 0.1) {
                 pen.imageRatio = false;
               }
             }
-            pen.calculative.worldRect.x  = rect.x - wGap/2 + left + (pen.calculative.worldRect.x-rect.x)*ratio;//(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
-            pen.calculative.worldRect.width *= ratio
-            pen.calculative.worldRect.ex = pen.calculative.worldRect.x + pen.calculative.worldRect.width;
+            pen.calculative.worldRect.x =
+              rect.x -
+              wGap / 2 +
+              left +
+              (pen.calculative.worldRect.x - rect.x) * ratio; //(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
+            pen.calculative.worldRect.width *= ratio;
+            pen.calculative.worldRect.ex =
+              pen.calculative.worldRect.x + pen.calculative.worldRect.width;
             pen.calculative.width = pen.calculative.worldRect.width;
             pen.calculative.x = pen.calculative.worldRect.x;
             pen.width = pen.calculative.worldRect.width;
             pen.x = pen.calculative.worldRect.x;
             this.canvas.updatePenRect(pen, { worldRectIsReady: false });
-            if(pen.externElement){
+            if (pen.externElement) {
               pen.onResize?.(pen);
             }
           });
-        
-        }else if(fit.left){
+        } else if (fit.left) {
           //左移
-          r = -r
-          if(fit.leftValue){
-            r += (Math.abs(fit.leftValue)<1?fit.leftValue*this.canvas.width:fit.leftValue);
+          r = -r;
+          if (fit.leftValue) {
+            r +=
+              Math.abs(fit.leftValue) < 1
+                ? fit.leftValue * this.canvas.width
+                : fit.leftValue;
           }
-          this.translatePens(pens, r, 0); 
-        }else if(fit.right){
+          this.translatePens(pens, r, 0);
+        } else if (fit.right) {
           //右移
-          if(fit.rightValue){
-            r = r - (Math.abs(fit.rightValue)<1?fit.rightValue*this.canvas.width:fit.rightValue);
+          if (fit.rightValue) {
+            r =
+              r -
+              (Math.abs(fit.rightValue) < 1
+                ? fit.rightValue * this.canvas.width
+                : fit.rightValue);
           }
-          this.translatePens(pens, r, 0); 
+          this.translatePens(pens, r, 0);
         }
       });
-      const iframePens = this.store.data.pens.filter((pen) => pen.name === 'iframe');
-      iframePens?.forEach((pen)=>{
+      const iframePens = this.store.data.pens.filter(
+        (pen) => pen.name === 'iframe'
+      );
+      iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if(worldRect.width/this.store.data.scale>rect.width*0.8){
+        if (worldRect.width / this.store.data.scale > rect.width * 0.8) {
           let bfW = worldRect.width;
-          pen.calculative.worldRect.x = worldRect.x - wGap/2;
-          pen.calculative.worldRect.width =
-            worldRect.width + wGap;
+          pen.calculative.worldRect.x = worldRect.x - wGap / 2;
+          pen.calculative.worldRect.width = worldRect.width + wGap;
           pen.calculative.worldRect.ex = worldRect.ex + wGap;
           pen.operationalRect.x =
             (pen.operationalRect.x * bfW) / pen.calculative.worldRect.width;
@@ -3903,72 +4149,86 @@ export class Meta2d {
           } as any);
           pen.onResize?.(pen);
         }
-      })
+      });
     }
     //高度拉伸
     if (Math.abs(hGap) > 10) {
-      this.store.data.fits?.forEach((fit)=>{
+      this.store.data.fits?.forEach((fit) => {
         let pens = [];
-        fit.children.forEach((id)=>{
+        fit.children.forEach((id) => {
           this.store.pens[id].locked = LockState.None;
           pens.push(this.store.pens[id]);
         });
-        let r = hGap/2;
-        if(fit.top&&fit.bottom){
+        let r = hGap / 2;
+        if (fit.top && fit.bottom) {
           let top = fit.topValue;
           let bottom = fit.bottomValue;
-          if(top){
-            top = Math.abs(top)<1?top*this.canvas.height:top;
-          }else{
+          if (top) {
+            top = Math.abs(top) < 1 ? top * this.canvas.height : top;
+          } else {
             top = 0;
           }
-          if(bottom){
-            bottom = Math.abs(bottom)<1?bottom*this.canvas.height:bottom;
-          }else{
+          if (bottom) {
+            bottom =
+              Math.abs(bottom) < 1 ? bottom * this.canvas.height : bottom;
+          } else {
             bottom = 0;
           }
 
-          let ratio = (this.canvas.height - top - bottom)/(rect.height- top - bottom);
-          pens.forEach((pen)=>{  
-            if(pen.image && pen.imageRatio){
-              if(pen.calculative.worldRect.height/this.canvas.height>0.1){
+          let ratio =
+            (this.canvas.height - top - bottom) / (rect.height - top - bottom);
+          pens.forEach((pen) => {
+            if (pen.image && pen.imageRatio) {
+              if (pen.calculative.worldRect.height / this.canvas.height > 0.1) {
                 pen.imageRatio = false;
               }
             }
-            pen.calculative.worldRect.y  = rect.y - hGap/2 + top + (pen.calculative.worldRect.y-rect.y)*ratio;//(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
-            pen.calculative.worldRect.height *= ratio
-            pen.calculative.worldRect.ey = pen.calculative.worldRect.y + pen.calculative.worldRect.height;
+            pen.calculative.worldRect.y =
+              rect.y -
+              hGap / 2 +
+              top +
+              (pen.calculative.worldRect.y - rect.y) * ratio; //(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
+            pen.calculative.worldRect.height *= ratio;
+            pen.calculative.worldRect.ey =
+              pen.calculative.worldRect.y + pen.calculative.worldRect.height;
             pen.calculative.height = pen.calculative.worldRect.height;
             pen.calculative.y = pen.calculative.worldRect.y;
             pen.height = pen.calculative.worldRect.height;
             pen.y = pen.calculative.worldRect.y;
             this.canvas.updatePenRect(pen, { worldRectIsReady: false });
-            if(pen.externElement){
+            if (pen.externElement) {
               pen.onResize?.(pen);
             }
           });
-        
-        }else if(fit.top){
-          r = -r
-          if(fit.topValue){
-            r += (Math.abs(fit.topValue)<1?fit.topValue*this.canvas.height:fit.topValue);
+        } else if (fit.top) {
+          r = -r;
+          if (fit.topValue) {
+            r +=
+              Math.abs(fit.topValue) < 1
+                ? fit.topValue * this.canvas.height
+                : fit.topValue;
           }
-          this.translatePens(pens, 0, r); 
-        }else if(fit.bottom){
-          if(fit.bottomValue){
-            r = r - (Math.abs(fit.bottomValue)<1?fit.bottomValue*this.canvas.height:fit.bottomValue);
+          this.translatePens(pens, 0, r);
+        } else if (fit.bottom) {
+          if (fit.bottomValue) {
+            r =
+              r -
+              (Math.abs(fit.bottomValue) < 1
+                ? fit.bottomValue * this.canvas.height
+                : fit.bottomValue);
           }
-          this.translatePens(pens, 0, r); 
+          this.translatePens(pens, 0, r);
         }
       });
-      const iframePens = this.store.data.pens.filter((pen) => pen.name === 'iframe');
-      iframePens?.forEach((pen)=>{
+      const iframePens = this.store.data.pens.filter(
+        (pen) => pen.name === 'iframe'
+      );
+      iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if(worldRect.height/this.store.data.scale>rect.height*0.8){
+        if (worldRect.height / this.store.data.scale > rect.height * 0.8) {
           let bfH = worldRect.height;
-          pen.calculative.worldRect.y = worldRect.y - hGap/2;
-          pen.calculative.worldRect.height =
-            worldRect.height + hGap;
+          pen.calculative.worldRect.y = worldRect.y - hGap / 2;
+          pen.calculative.worldRect.height = worldRect.height + hGap;
           pen.calculative.worldRect.ey = worldRect.ey + hGap;
           pen.operationalRect.y =
             (pen.operationalRect.y * bfH) / pen.calculative.worldRect.width;
@@ -3981,7 +4241,7 @@ export class Meta2d {
           } as any);
           pen.onResize?.(pen);
         }
-      })
+      });
     }
     this.canvas.canvasTemplate.fit = true;
     this.canvas.canvasTemplate.init();
@@ -4074,7 +4334,7 @@ export class Meta2d {
         ratio = w > h ? w : h;
       }
     }
-    if(this.store.data.fits?.length){
+    if (this.store.data.fits?.length) {
       this.canvas.opening = true;
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
@@ -4082,7 +4342,7 @@ export class Meta2d {
 
     // 5. 居中
     this.centerSizeView();
-    if(this.store.data.fits?.length){
+    if (this.store.data.fits?.length) {
       this.fillView();
     }
   }
@@ -4341,10 +4601,11 @@ export class Meta2d {
       const firstPen = pens[0];
       formatAttrs.forEach((attr) => {
         attrs[attr] =
-          firstPen[attr] !== undefined ? firstPen[attr] :
-          (this.store.options.defaultFormat[attr] || 
-          this.store.data[attr] ||
-          this.store.options[attr]);
+          firstPen[attr] !== undefined
+            ? firstPen[attr]
+            : this.store.options.defaultFormat[attr] ||
+              this.store.data[attr] ||
+              this.store.options[attr];
       });
     } else {
       //默认值
@@ -4427,7 +4688,11 @@ export class Meta2d {
   }
 
   //对齐大屏
-  alignNodesV(align: string, pens: Pen[] = this.store.data.pens, whole:boolean=false) {
+  alignNodesV(
+    align: string,
+    pens: Pen[] = this.store.data.pens,
+    whole: boolean = false
+  ) {
     const width = this.store.data.width || this.store.options.width;
     const height = this.store.data.height || this.store.options.height;
     let rect = {
@@ -4437,37 +4702,37 @@ export class Meta2d {
       height,
     };
     const initPens = deepClone(pens); // 原 pens ，深拷贝一下
-    if(whole){
+    if (whole) {
       const scale = this.store.data.scale;
       const rect = this.getRect(pens);
-      const x  = (rect.x-this.store.data.origin.x) / scale;
-      const y = (rect.y-this.store.data.origin.y) / scale;
+      const x = (rect.x - this.store.data.origin.x) / scale;
+      const y = (rect.y - this.store.data.origin.y) / scale;
       const w = rect.width / scale;
       const h = rect.height / scale;
       let moveX = 0;
       let moveY = 0;
       switch (align) {
         case 'left':
-          moveX =-x;
+          moveX = -x;
           break;
         case 'right':
-          moveX = width - (x+w);
+          moveX = width - (x + w);
           break;
         case 'top':
           moveY = -y;
           break;
         case 'bottom':
-          moveY = height - (y+h);
+          moveY = height - (y + h);
           break;
         case 'center':
-          moveX = width/2 - (x+w/2);
+          moveX = width / 2 - (x + w / 2);
           break;
         case 'middle':
-          moveY = height/2 - (y+h/2);
+          moveY = height / 2 - (y + h / 2);
           break;
-      }      
-      this.translatePens(pens, moveX*scale, moveY*scale);
-    }else{
+      }
+      this.translatePens(pens, moveX * scale, moveY * scale);
+    } else {
       for (const item of pens) {
         this.alignPen(align, item, rect);
       }
@@ -4576,11 +4841,13 @@ export class Meta2d {
   ) {
     //TODO 暂时修复，待优化
     // !distance && (distance = this.getPenRect(this.getRect(pens))[direction]);
-    if(!distance) {
-      let start = Infinity, end = -Infinity, key = direction === 'width' ? 'x' : 'y';
+    if (!distance) {
+      let start = Infinity,
+        end = -Infinity,
+        key = direction === 'width' ? 'x' : 'y';
       pens.forEach((item) => {
         start = Math.min(start, item.calculative.worldRect[key]);
-        end = Math.max(end, item.calculative.worldRect['e'+key]);
+        end = Math.max(end, item.calculative.worldRect['e' + key]);
       });
       distance = (end - start) / this.store.data.scale;
     }
@@ -4982,7 +5249,7 @@ export class Meta2d {
         this.specificLayerMove(pen, 'up');
       }
     }
-    this.store.emitter.emit('layer', { type: 'up' , pens});
+    this.store.emitter.emit('layer', { type: 'up', pens });
   }
 
   /**
@@ -5409,14 +5676,14 @@ export class Meta2d {
       ];
     }
     //如果本身就是 一个 组合图元
-    const parents = components.filter((pen)=>!pen.parentId);
+    const parents = components.filter((pen) => !pen.parentId);
     const p = components.find((pen) => {
       return pen.width === rect.width && pen.height === rect.height;
     });
     const oneIsParent = p && showChild === undefined;
-    if(parents.length===1){
-      parent =parents[0];
-    }else if (oneIsParent) {
+    if (parents.length === 1) {
+      parent = parents[0];
+    } else if (oneIsParent) {
       if (!p.children) {
         p.children = [];
       }
@@ -5442,42 +5709,49 @@ export class Meta2d {
       // pen.type = PenType.Node;
     });
 
-    return (oneIsParent||parents.length===1)
+    return oneIsParent || parents.length === 1
       ? deepClone(components)
       : deepClone([parent, ...components]);
   }
-// TODO 安装pen插件 此处是否应当进行相关的适配？不再让插件内部处理install的目标逻辑？
+  // TODO 安装pen插件 此处是否应当进行相关的适配？不再让插件内部处理install的目标逻辑？
   /**
    * @description 安装插件方法
    * @param plugins 插件列表及其配置项
    * @param pen {string | Pen} 接受tag、name、或者Pen对象*/
-  installPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: PluginOptions[] ){
-    if(!pen.tag && !pen.name && !pen.id)return;
+  installPenPlugins(
+    pen: { tag?: string; name?: string; id?: string },
+    plugins: PluginOptions[]
+  ) {
+    if (!pen.tag && !pen.name && !pen.id) return;
     let type;
-    pen.id?type = 'id':
-      pen.tag?type = 'tag':
-        pen.name?type = 'name':'';
-    plugins.forEach(pluginConfig=>{
+    pen.id
+      ? (type = 'id')
+      : pen.tag
+      ? (type = 'tag')
+      : pen.name
+      ? (type = 'name')
+      : '';
+    plugins.forEach((pluginConfig) => {
       let plugin = pluginConfig.plugin;
       let option = pluginConfig.options;
-      if(!plugin)return;
+      if (!plugin) return;
       // 插件校验
-      if(validationPlugin(plugin) && type){
-        plugin.install(pen,option);
+      if (validationPlugin(plugin) && type) {
+        plugin.install(pen, option);
         // 若当前不存在此插件
-        if(!this.penPluginMap.has(plugin)){
-          this.penPluginMap.set(plugin,[{[type]:pen[type],option}]);
-        }else {
-          let op = this.penPluginMap.get(plugin).find((i)=>{
+        if (!this.penPluginMap.has(plugin)) {
+          this.penPluginMap.set(plugin, [{ [type]: pen[type], option }]);
+        } else {
+          let op = this.penPluginMap.get(plugin).find((i) => {
             return i[type] === pen[type];
           });
           // 存在替换
-          if(op){
+          if (op) {
             op.option = option;
-          }else{
+          } else {
             this.penPluginMap.get(plugin).push({
-              [type]:pen[type],
-              option
+              [type]: pen[type],
+              option,
             });
           }
         }
@@ -5485,27 +5759,33 @@ export class Meta2d {
     });
   }
 
-  uninstallPenPlugins(pen: {tag?:string,name?:string,id?:string},plugins: PluginOptions[] ) {
+  uninstallPenPlugins(
+    pen: { tag?: string; name?: string; id?: string },
+    plugins: PluginOptions[]
+  ) {
     let type;
-    pen.id?type = 'id':
-      pen.tag?type = 'tag':
-        pen.name?type = 'name':'';
-    if(!type)return;
-    plugins.forEach(pluginConfig=>{
+    pen.id
+      ? (type = 'id')
+      : pen.tag
+      ? (type = 'tag')
+      : pen.name
+      ? (type = 'name')
+      : '';
+    if (!type) return;
+    plugins.forEach((pluginConfig) => {
       let plugin = pluginConfig.plugin;
-      plugin.uninstall(pen,pluginConfig.options);
+      plugin.uninstall(pen, pluginConfig.options);
       let mapList = this.penPluginMap.get(plugin);
-      let op = mapList.findIndex(i=>i[type] === pen[type]);
-      if(op!==-1){
-        mapList.splice(op,1);
+      let op = mapList.findIndex((i) => i[type] === pen[type]);
+      if (op !== -1) {
+        mapList.splice(op, 1);
         // TODO 在运行时 插件卸载后是否需要移除？
-        if(mapList.length === 0){
+        if (mapList.length === 0) {
           this.penPluginMap.delete(plugin);
         }
       }
     });
   }
-
 
   setVisible(pen: Pen, visible: boolean, render = true) {
     this.onSizeUpdate();
@@ -5516,8 +5796,8 @@ export class Meta2d {
         child && this.setVisible(child, visible, false);
       }
     }
-    let allPens = getAllChildren(pen,this.store);
-    allPens.push(pen)
+    let allPens = getAllChildren(pen, this.store);
+    allPens.push(pen);
     this.initImageCanvas(allPens);
     render && this.render();
   }

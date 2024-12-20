@@ -386,6 +386,7 @@ export interface Pen extends Rect {
   childHover?:boolean; //子元素hover和active是否生效
   childActive?:boolean; 
   draw?:boolean; //是否绘制 针对combine
+  copyIndex?:number; //复制的索引 临时属性
   calculative?: {
     x?: number;
     y?: number;
@@ -617,6 +618,7 @@ export interface Pen extends Rect {
   onMouseMove?: (pen: Pen, e: Point) => void;
   onMouseUp?: (pen: Pen, e: Point) => void;
   onShowInput?: (pen: Pen, e: Point) => void;
+  onSetTheme?: (theme: string, config?: any) => void;
   onInput?: (pen: Pen, text: string) => void;
   onChangeId?: (pen: Pen, oldId: string, newId: string) => void;
   onBinds?: (pen: Pen, values: IValue[], formItem: FormItem) => IValue;

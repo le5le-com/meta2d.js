@@ -188,7 +188,7 @@ export class Dialog {
     if(rect) {
       this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
       this.dialog.style.height = rect.height?(rect.height + 'px'): '420px';
-      this.dialog.style.top = rect.y?(rect.y + 'px'): '15vh';
+      this.dialog.style.top = rect.y?(rect.y + 'px'):(rect.height? `calc( 50% - ${rect.height/2}px )` : '15vh');
       this.dialog.style.left = rect.x? (rect.x + 'px'): `calc( 50% - ${rect.width? rect.width/2+'px': '40%'} )`;
     }
     if(isIframe&&data){

@@ -58,6 +58,7 @@ export interface ChartPen extends Pen {
     geoJson?: any;
     geoUrl?: string;
     diabled?: boolean; //通过脚本setOption后，禁止默认拿到echarts.option去设置图元
+    replaceMerge?: string; // 替换合并
   };
   calculative?: {
     partialOption?: any; // 部分更新的 option
@@ -280,7 +281,14 @@ function value(pen: ChartPen) {
     if (pen.calculative.partialOption) {
       //部分更新
       const option = pen.calculative.partialOption.echarts.option;
-      pen.calculative.singleton.echart.setOption(deepClone(option));
+      let isReplaceMerge = Array.isArray(pen.echarts?.replaceMerge)?pen.echarts?.replaceMerge.some((key)=>option[key]):false;
+      if (isReplaceMerge) {
+        pen.calculative.singleton.echart.setOption(deepClone(option), {
+          replaceMerge: pen.echarts.replaceMerge,
+        });
+      } else {
+        pen.calculative.singleton.echart.setOption(deepClone(option));
+      }
     } else {
       pen.calculative.singleton.echart.setOption(
         updateOption(

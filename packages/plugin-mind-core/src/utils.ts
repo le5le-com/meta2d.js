@@ -45,6 +45,9 @@ export function debounce(fn: Function, delay: number) {
 
 
 export function deepMerge(obj1: any, obj2: any) {
+  if(Array.isArray(obj1) && Array.isArray(obj2)) {
+    return obj2;
+  }
   let newObj = Object.assign({}, obj1);
 
   for (let key in obj2) {

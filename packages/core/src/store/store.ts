@@ -78,6 +78,7 @@ export interface Meta2dData {
   fits?: Fit[];
   disableTranslate?: boolean; //禁止平移
   disableScale?: boolean; //禁止缩放
+  asyncTranslate?: boolean; //异步平移
 }
 
 export interface Fit {
@@ -216,6 +217,7 @@ export interface Meta2dClipboard {
   page: string;
   initRect?: Rect;
   pos?: Point;
+  mousePos?: Point;
 }
 
 export const createStore = () => {
