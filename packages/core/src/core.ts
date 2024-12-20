@@ -3875,13 +3875,85 @@ export class Meta2d {
       );
       throw new Error('请先加载乐吾乐官网下的canvas2svg.js');
     }
-
+    let isV = false;
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (width && height && !this.store.data.component) {
+      isV = true;
+    }
     const rect = this.getRect();
+    if (isV) {
+      rect.x = this.store.data.origin.x;
+      rect.y = this.store.data.origin.y;
+      rect.width = width * this.store.data.scale;
+      rect.height = height * this.store.data.scale;
+    }
+    //TODO 不考虑无画布尺寸时背景图片
+    // if(this.store.bkImg&&!isV){
+    //   rect.x = rect.x < 0 ? -rect.x : 0;
+    //   rect.y = rect.y < 0 ? -rect.y : 0;
+    //   rect.width = this.canvas.canvasRect.width;
+    //   rect.height =  this.canvas.canvasRect.height;
+    // }
     rect.x -= 10;
     rect.y -= 10;
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
     ctx.strokeStyle = getGlobalColor(this.store);
+    const background =
+    this.store.data.background || this.store.options.background;
+    if (background && isV) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        rect.width,
+        rect.height
+      );
+      ctx.restore();
+    }
+    if (this.store.bkImg) {
+      if (isV) {
+        ctx.drawImage(
+          this.store.bkImg,
+          0,
+          0,
+          rect.width,
+          rect.height
+        );
+      } else {
+        // const x = rect.x < 0 ? -rect.x : 0;
+        // const y = rect.y < 0 ? -rect.y : 0;
+        // ctx.drawImage(
+        //   this.store.bkImg,
+        //   x,
+        //   y,
+        //   this.canvas.canvasRect.width,
+        //   this.canvas.canvasRect.height
+        // );
+      }
+    }
+    if (background && !isV) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        rect.width+20,
+        rect.height+20
+      );
+      ctx.restore();
+
+    }
+    // if(this.store.bkImg&&!isV){
+    //   ctx.translate(
+    //     this.store.data.x,
+    //     this.store.data.y
+    //   );
+    // }
     for (const pen of this.store.data.pens) {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
