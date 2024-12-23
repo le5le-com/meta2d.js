@@ -387,6 +387,11 @@ export interface Pen extends Rect {
   childActive?:boolean; 
   draw?:boolean; //是否绘制 针对combine
   copyIndex?:number; //复制的索引 临时属性
+  formId?:string; //表单id
+  formData?:any; //表单数据
+  formKey?:string; //表单key
+  formValue?:string; //表单值对应的属性key
+  formType?:string; //表单类型 reset or submit
   calculative?: {
     x?: number;
     y?: number;

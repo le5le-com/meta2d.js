@@ -1,4 +1,4 @@
-import { commonAnchors, commonPens, cube } from './diagrams';
+import { commonAnchors, commonPens, cube, reset, updateFormData } from './diagrams';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options, PenPlugin, PluginOptions } from './options';
@@ -553,6 +553,10 @@ export class Meta2d {
         if (pen.deviceId) {
           value.deviceId = pen.deviceId;
         }
+        if(pen.formId && pen.formData){
+          //表单数据
+          Object.assign(value,pen.formData);
+        }
         this.sendDataToNetWork(value, pen, e);
         return;
         // }
@@ -652,7 +656,7 @@ export class Meta2d {
     }
     if (Object.keys(value).length) {
       return value;
-    } else return null;
+    } else return {};
   }
 
   message(options: MessageOptions) {
@@ -3168,6 +3172,15 @@ export class Meta2d {
             e.pen.calculative.radialGradient = undefined;
           }
         }
+        if(e.pen && e.pen.formId){
+          const formPen = this.store.pens[e.pen.formId];
+          if(e.pen.formType === 'submit'){
+            this.store.data.locked && formPen && !formPen.disabled && this.doEvent(formPen, 'submit');
+          }else if(e.pen.formType ==='reset'){
+            reset(e.pen);
+            this.store.data.locked && formPen && !formPen.disabled && this.doEvent(formPen, 'reset');
+          }
+        }
         e.pen &&
           e.pen.onClick &&
           !e.pen.disabled &&
@@ -3214,6 +3227,7 @@ export class Meta2d {
           this.doEvent(e.pen, eventName);
         break;
       case 'valueUpdate':
+        e && updateFormData(e,e.formValue);
         this.store.data.locked && this.doEvent(e, eventName);
         this.canvas.tooltip.updateText(e as Pen);
         break;
@@ -3237,6 +3251,7 @@ export class Meta2d {
           this.doEvent(e, eventName);
         break;
       case 'change':
+        e.pen && updateFormData(e.pen)
         this.store.data.locked &&
           e &&
           !e.disabled &&

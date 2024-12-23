@@ -7715,6 +7715,13 @@ export class Canvas {
       const child = this.store.pens[childId];
       child.parentId = newId;
     });
+    //form表单关系
+    if(pen.formId){
+      pen.followers.forEach((id)=>{
+        const followerPen = this.store.pens[id];
+        followerPen.formId = newId;
+      });
+    }
     // 连接关系
     if (pen.type === PenType.Line) {
       // TODO: 仍然存在 节点类型的 连线，此处判断需要更改
