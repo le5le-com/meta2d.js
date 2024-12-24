@@ -15,7 +15,7 @@ export * from './people';
 export * from './line';
 export * from './iframe';
 export * from './video';
-export * from './panel';
+export * from './form';
 
 import { rectangle, square } from './rectangle';
 import { circle } from './circle';
@@ -37,7 +37,7 @@ import { video } from './video';
 import { gif } from './gif';
 import { mindNode, mindNodeAnchors } from './mindNode';
 import { mindLine, mindLineAnchors } from './mindLine';
-import { panel } from './panel';
+import { form } from './form';
 
 export function commonPens() {
   return {
@@ -64,7 +64,7 @@ export function commonPens() {
     mindNode,
     mindLine,
     mindNode2:rectangle,
-    panel,
+    form,
     combine:rectangle,
   };
 }

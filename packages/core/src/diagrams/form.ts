@@ -4,7 +4,7 @@ import { Point } from '../point';
 import { rectInRect } from '../rect';
 import { deepClone } from '../utils';
 
-export function panel(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
+export function form(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
@@ -16,6 +16,7 @@ export function panel(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
     pen.onMouseUp = mouseUp;
     pen.onInput = input;
   }
+  pen.formId = pen.id;
   let wr = pen.calculative.borderRadius || 0,
     hr = wr;
   const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
@@ -31,11 +32,14 @@ export function panel(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if (height < 2 * r) {
     r = height / 2;
   }
-  const textWidth = getTextWidth(pen.text, pen.calculative.fontSize);
+  // let textWidth = -5;
+  // if(pen.text){
+  //   textWidth = getTextWidth(pen.text, pen.calculative.fontSize);
+  // }
   path.moveTo(x + r, y);
-  path.lineTo(textX - 5, y);
-  path.moveTo(textX + textWidth + 5, y);
-  path.lineTo(textX + textWidth + 5, y);
+  // path.lineTo(textX - 5, y);
+  // path.moveTo(textX + textWidth + 5, y);
+  // path.lineTo(textX + textWidth + 5, y);
   path.arcTo(ex, y, ex, ey, r);
   path.arcTo(ex, ey, x, ey, r);
   path.arcTo(x, ey, x, y, r);
@@ -111,6 +115,7 @@ function mouseLeave(pen: Pen) {
             );
             if (!isIn) {
               pen.followers.splice(idx, 1);
+              delete activePen.formId;
             }
           }
         }
@@ -138,6 +143,7 @@ function mouseUp(pen: Pen) {
           if (!pen.followers.includes(activePen.id)) {
             pen.followers.push(activePen.id);
           }
+          activePen.formId = pen.id;
         }
       }
     });
@@ -146,4 +152,42 @@ function mouseUp(pen: Pen) {
 
 function mouseMove(pen: Pen, e: Point) {
   //  console.log(e,pen.calculative.canvas.store.active);
+}
+
+//更新表单数据
+export function updateFormData(pen, key?:string){
+  if(pen.formId && pen.formKey && pen.formValue){
+    //表单图元更新值
+    const leaderPen = pen.calculative.canvas.store.pens[pen.formId];
+    if(leaderPen){
+      if(!leaderPen.formData){
+        leaderPen.formData = {};
+      }
+      leaderPen.formData[pen.formKey] = pen[pen.formValue];
+    }
+  }
+}
+
+//提交表单
+export function submit(pen:Pen){
+}
+
+//重置表单
+export function reset(pen:Pen){
+  const formPen = pen.calculative.canvas.store.pens[pen.formId];
+  formPen.followers.forEach((id:string)=>{
+    const follower = pen.calculative.canvas.store.pens[id];
+    if(follower.formId && follower.formKey && formPen.formData[follower.formKey]){
+      const value = follower[follower.formValue];
+      let data:any = '';
+      if(Array.isArray(value)){
+        data = [];
+      }
+      // follower[follower.formValue] = data;
+      // follower.calculative[follower.formValue] = data;
+      pen.calculative.canvas.parent.setValue({id:follower.id,[follower.formValue]:data},{render:false,doEvent:false,history:false});
+    }
+  });
+  formPen.formData = {};
+  pen.calculative.canvas.parent.render();
 }

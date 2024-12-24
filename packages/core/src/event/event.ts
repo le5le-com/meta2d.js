@@ -17,7 +17,9 @@ export type EventName =
   | 'message'
   | 'contextmenu'
   | 'input'
-  | 'change';
+  | 'change'
+  | 'submit'
+  | 'reset';
 
 export interface Event {
   name: EventName;

@@ -7715,6 +7715,13 @@ export class Canvas {
       const child = this.store.pens[childId];
       child.parentId = newId;
     });
+    //form表单关系
+    if(pen.formId){
+      pen.followers.forEach((id)=>{
+        const followerPen = this.store.pens[id];
+        followerPen.formId = newId;
+      });
+    }
     // 连接关系
     if (pen.type === PenType.Line) {
       // TODO: 仍然存在 节点类型的 连线，此处判断需要更改
@@ -7964,7 +7971,7 @@ export class Canvas {
     const storeData = this.store.data;
     // TODO: 目前背景颜色优先级更高
     const isDrawBkImg =
-      containBkImg && !storeData.background && this.store.bkImg;
+      containBkImg && this.store.bkImg;
     // 主体在背景的右侧，下侧
     let isRight = false,
       isBottom = false;
@@ -8047,25 +8054,16 @@ export class Canvas {
 
     const background =
       this.store.data.background || this.store.options.background;
-    if (background) {
+    if (background && isV) {
       // 绘制背景颜色
       ctx.save();
       ctx.fillStyle = background;
-      if (isV) {
-        ctx.fillRect(
-          0,
-          0,
-          vRect.width + (p[1] + p[3]) * _scale,
-          vRect.height + (p[0] + p[2]) * _scale
-        );
-      } else {
-        ctx.fillRect(
-          0,
-          0,
-          oldRect.width + (p[3] + p[1]) * _scale,
-          oldRect.height + (p[0] + p[2]) * _scale
-        );
-      }
+      ctx.fillRect(
+        0,
+        0,
+        vRect.width + (p[1] + p[3]) * _scale,
+        vRect.height + (p[0] + p[2]) * _scale
+      );
       ctx.restore();
     }
 
@@ -8090,6 +8088,33 @@ export class Canvas {
         );
       }
     }
+    if (background && !isV) {
+      // 绘制背景颜色
+      if (isDrawBkImg) {
+        const x = rect.x < 0 ? -rect.x : 0;
+        const y = rect.y < 0 ? -rect.y : 0;
+        ctx.save();
+        ctx.fillStyle = background;
+        ctx.fillRect(
+          x,
+          y,
+          this.canvasRect.width,
+          this.canvasRect.height
+        );
+        ctx.restore();
+      }else{
+        ctx.save();
+        ctx.fillStyle = background;
+        ctx.fillRect(
+          0,
+          0,
+          oldRect.width + (p[3] + p[1]) * _scale,
+          oldRect.height + (p[0] + p[2]) * _scale
+        );
+        ctx.restore();
+      }
+    }
+
     if (!isDrawBkImg) {
       ctx.translate(-rect.x, -rect.y);
     } else {
