@@ -483,7 +483,7 @@ export class Meta2d {
       if (e.params && typeof e.params === 'string') {
         let url = e.params;
         if (e.params.includes('${')) {
-          let keys = e.params.match(/(?<=\$\{).*?(?=\})/g);
+          let keys = e.params.match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
           if (keys) {
             keys?.forEach((key) => {
               url = url.replace(`\${${key}}`, pen[key]);
@@ -519,7 +519,7 @@ export class Meta2d {
                 typeof item.value[key] === 'string' &&
                 item.value[key]?.indexOf('${') > -1
               ) {
-                let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+                let keys = item.value[key].match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
                 if (keys?.length) {
                   list[index].properties[key] =
                     _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
@@ -568,7 +568,7 @@ export class Meta2d {
               typeof value[key] === 'string' &&
               value[key]?.indexOf('${') > -1
             ) {
-              let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
+              let keys = value[key].match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
               if (keys?.length) {
                 value[key] = _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
               }
@@ -640,7 +640,7 @@ export class Meta2d {
             typeof item.value[key] === 'string' &&
             item.value[key]?.indexOf('${') > -1
           ) {
-            let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = item.value[key].match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
             if (keys?.length) {
               value[key] = _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
             }
@@ -730,7 +730,7 @@ export class Meta2d {
       if (typeof network.headers === 'object') {
         for (let i in network.headers) {
           if (typeof network.headers[i] === 'string') {
-            let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = network.headers[i].match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
             if (keys) {
               network.headers[i] = network.headers[i].replace(
                 `\${${keys[0]}}`,
@@ -751,7 +751,7 @@ export class Meta2d {
       }
       if (network.method === 'POST') {
         if (url.indexOf('${') > -1) {
-          let keys = url.match(/(?<=\$\{).*?(?=\})/g);
+          let keys = url.match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
           if (keys) {
             keys.forEach((key) => {
               url = url.replace(
@@ -2753,7 +2753,7 @@ export class Meta2d {
     let req = deepClone(_req);
     if (req.url) {
       if(req.url.indexOf('${') > -1){
-        let keys = req.url.match(/(?<=\$\{).*?(?=\})/g);
+        let keys = req.url.match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
           if (keys) {
             keys.forEach((key) => {
               req.url = req.url.replace(
@@ -2765,7 +2765,7 @@ export class Meta2d {
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
           if (typeof req.headers[i] === 'string') {
-            let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = req.headers[i].match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
             if (keys) {
               req.headers[i] = req.headers[i].replace(
                 `\${${keys[0]}}`,
@@ -2778,7 +2778,7 @@ export class Meta2d {
       if (typeof req.body === 'object') {
         for (let i in req.body) {
           if (typeof req.body[i] === 'string') {
-            let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = req.body[i].match(/\$\{([^}]+)\}/g).map(m => m.slice(2, -1));
             if (keys) {
               req.body[i] = req.body[i].replace(
                 `\${${keys[0]}}`,
