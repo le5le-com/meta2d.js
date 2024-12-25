@@ -22,7 +22,7 @@ let controlDom: any = {
   show: true,
 };
 // 此列表为，可供用户配置的属性列表
-let CONFIGS = ['showControl', 'offset', 'style'];
+let CONFIGS = ['showControl', 'offset', 'style','active'];
 
 function configValid(config: any) {
   if (config.key) return true;
@@ -48,8 +48,8 @@ export class ToolBox {
       return ToolBox.instance;
     }
     this.parentHtml = parentHtml;
-    this._init();
     this._loadOptions(config);
+    this._init();
     this.parentHtml.appendChild(this.box);
   }
 
@@ -75,6 +75,7 @@ export class ToolBox {
   }
 
   _init() {
+    if(!this.active)return
     this.box.id = 'toolbox';
     this._setControl();
     let funcContainer = createDom('div', {style: funcListStyle, className: 'toolbox_func'});
@@ -288,6 +289,7 @@ export class ToolBox {
   }
 
   renderFuncList() {
+    if(!this.active)return
     const fragmentChild = new DocumentFragment();
     this._funcDom.innerHTML = '';
     this.funcList.forEach((i: any) => {
@@ -378,6 +380,8 @@ export class ToolBox {
   }
 
   setFuncList(funcList: any[]) {
+    console.log(this.active,this);
+    if(!this.active)return
     this.funcList = funcList;
     this.renderFuncList();
   }

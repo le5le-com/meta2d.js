@@ -3562,10 +3562,11 @@ function commandTransfer(command,pen,startX,startY){
   // VISIO
   const map = {
     'visio':dealWithVisio,
-    'dxf':dealWithDXF
+    'dxf':dealWithDXF,
+    'canvas': dealWithCanvas
   };
   // CAD
-  return map[pen.parseType](command,pen,startX,startY);
+  return map[pen.parseType]?.(command,pen,startX,startY) || command;
 }
 
 function dealWithDXF(command,pen,startX,startY) {
@@ -3638,6 +3639,85 @@ function dealWithDXF(command,pen,startX,startY) {
         c:'_fillStyle',
         v:{
           value:pen.color || command.v.value
+        }
+      };
+    default:
+      const c = {
+        c:command.c,
+        v:{
+          ...command.v,
+        }
+      };
+      if((c.v.x)!==undefined)c.v.x = command.v.x * (width / originWidth) + x;
+      if(c.v.y!==undefined)c.v.y = (command.v.y * (height / originHeight)) + y;
+      return c;
+  }
+}
+
+function dealWithCanvas(command, pen, startX, startY) {
+
+  const { x, y, width, height } = pen.calculative.worldRect;
+  const {originWidth,originHeight} = pen.origin;
+  switch (command.c) {
+    case "beginPath":
+      return {
+        c:'beginPath',
+        v:{}
+      };
+    case "closePath":
+      return {
+        c:'closePath',
+        v:{}
+      };
+    case "moveTo":
+      return {
+        c:'moveTo',
+        v:{
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y
+        }
+      };
+    case "lineTo":
+      return {
+        c:'lineTo',
+        v:{
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y
+        }
+      };
+    case "arc":
+      return {
+        c:'ellipse',
+        v:{
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
+          startAngle:command.v.startAngle,
+          endAngle: command.v.endAngle,
+          a:command.v.aclockwise ?? true
+        }
+      };
+    case "ellipse":
+      return {
+        c:'ellipse',
+        v:{
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
+          startAngle:command.v.startAngle,
+          endAngle: command.v.endAngle,
+          a:command.v.aclockwise ?? true
+        }
+      };
+    case "_font":
+      return {
+        c:'_font',
+        v:{
+          value:command.v.fontSize * pen.calculative.canvas.store.data.scale + 'px ' + (command.v.fontFamily || pen.calculative.canvas.store.options.fontFamily)
         }
       };
     default:
