@@ -380,7 +380,6 @@ export class ToolBox {
   }
 
   setFuncList(funcList: any[]) {
-    console.log(this.active,this);
     if(!this.active)return
     this.funcList = funcList;
     this.renderFuncList();
