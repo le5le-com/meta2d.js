@@ -82,6 +82,7 @@ import { getter } from './utils/object';
 import { getCookie, getMeta2dData, queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
+import { le5leTheme } from './theme'
 
 export class Meta2d {
   store: Meta2dStore;
@@ -241,12 +242,9 @@ export class Meta2d {
       ruleColor: this.store.theme[theme].ruleColor,
       ruleOptions: this.store.theme[theme].ruleOptions,
     });
+    // 更新全局的主题css变量 
+    le5leTheme.updateCssRule(this.store.id, theme);
     this.render();
-    // 更新pen的主题
-    for (let i = 0; i < this.store.data.pens.length; i++) {
-      const pen = this.store.data.pens[i];
-      pen.onSetTheme?.(theme,this.store.theme[theme]);
-    }
   }
 
   setDatabyOptions(options: Options = {}) {
@@ -296,8 +294,12 @@ export class Meta2d {
 
     this.resize();
     this.canvas.listen();
-  }
 
+    // 创建主题样式表
+    if(this.store.data.theme){
+      le5leTheme.createThemeSheet(this.store.data.theme, this.store.id);
+    }
+  }
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
       if (window && e.value && typeof e.value === 'string') {
@@ -959,6 +961,10 @@ export class Meta2d {
     this.clear(false, data?.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
+      // 根据图纸的主题设置主题 
+      if(data.theme){
+        this.setTheme(data.theme);
+      }
       this.setBackgroundImage(data.bkImage, data);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
@@ -5836,6 +5842,7 @@ export class Meta2d {
     this.closeSocket();
     this.closeNetwork();
     this.closeAll();
+    le5leTheme.destroyThemeSheet(this.store.id);
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     this.canvas = undefined;
