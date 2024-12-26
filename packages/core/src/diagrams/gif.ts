@@ -18,8 +18,9 @@ export function gif(pen: Pen): Path2D {
   if (!pen.image) {
     return;
   }
-
-  if (!gifsList[pen.id]) {
+  const meta2dId = pen.calculative.canvas.store.id;
+  const id = meta2dId+'-'+ pen.id;
+  if (!gifsList[id]) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = pen.image;
@@ -33,9 +34,9 @@ export function gif(pen: Pen): Path2D {
     ) {
       img.src = pen.calculative.canvas.parent.store.options.cdn + pen.image;
     }
-    gifsList[pen.id] = img; // 提前赋值，避免重复创建
+    gifsList[id] = img; // 提前赋值，避免重复创建
     img.onload = () => {
-      if (gifsList[pen.id] !== img) {
+      if (gifsList[id] !== img) {
         return;
       }
       pen.calculative.img = img;
@@ -47,49 +48,58 @@ export function gif(pen: Pen): Path2D {
     };
   }
 
-  if (pen.calculative.patchFlags && gifsList[pen.id]) {
-    setImagePosition(pen, gifsList[pen.id]);
+  if (pen.calculative.patchFlags && gifsList[id]) {
+    setImagePosition(pen, gifsList[id]);
   }
   return path;
 }
 
 function destory(pen: Pen) {
-  if (gifsList[pen.id]) {
-    gifsList[pen.id].remove();
-    gifsList[pen.id] = undefined;
+  const meta2dId = pen.calculative.canvas.store.id;
+  const id = meta2dId+'-'+ pen.id;
+  if (gifsList[id]) {
+    gifsList[id].remove();
+    gifsList[id] = undefined;
   }
 }
 
 function move(pen: Pen) {
-  if (!gifsList[pen.id]) {
+  const meta2dId = pen.calculative.canvas.store.id;
+  const id = meta2dId+'-'+ pen.id;
+  if (!gifsList[id]) {
     return;
   }
-  setImagePosition(pen, gifsList[pen.id]);
+  setImagePosition(pen, gifsList[id]);
 }
 
 function resize(pen: Pen) {
-  if (!gifsList[pen.id]) {
+  const meta2dId = pen.calculative.canvas.store.id;
+  const id = meta2dId+'-'+ pen.id;
+  if (!gifsList[id]) {
     return;
   }
-  setImagePosition(pen, gifsList[pen.id]);
+  setImagePosition(pen, gifsList[id]);
 }
 
 function value(pen: Pen) {
-  if (!gifsList[pen.id]) {
+  const meta2dId = pen.calculative.canvas.store.id;
+  const id = meta2dId+'-'+ pen.id;
+  if (!gifsList[id]) {
     return;
   }
-  setImagePosition(pen, gifsList[pen.id]);
-  if (gifsList[pen.id].getAttribute('src') !== pen.image) {
-    gifsList[pen.id].src = pen.image;
+  setImagePosition(pen, gifsList[id]);
+  if (gifsList[id].getAttribute('src') !== pen.image) {
+    gifsList[id].src = pen.image;
   }
 }
 
 function changeId(pen: Pen, oldId: string, newId: string) {
-  if (!gifsList[oldId]) {
+  const meta2dId = pen.calculative.canvas.store.id;
+  if (!gifsList[meta2dId+'-'+oldId]) {
     return;
   }
-  gifsList[newId] = gifsList[oldId];
-  delete gifsList[oldId];
+  gifsList[meta2dId+'-'+newId] = gifsList[meta2dId+'-'+oldId];
+  delete gifsList[meta2dId+'-'+oldId];
 }
 
 /**

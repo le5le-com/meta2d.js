@@ -141,7 +141,8 @@ export let mindBoxPlugin = {
         meta2d.updateLineType(line, (meta2d.findOne(pen.mind.rootId) as any).mind.lineStyle);
         meta2d.setValue({
           id: line.id,
-          lineWidth: root.mind.lineWidth
+          lineWidth: root.mind.lineWidth,
+          ...(child.mind.line || {})
         }, {
           render: false
         });
@@ -623,7 +624,7 @@ export let mindBoxPlugin = {
         maxWidth += maxObj.maxWidth;
         maxHeight = maxHeight > maxObj.maxHeight ? maxHeight : maxObj.maxHeight;
       }
-      maxWidth += +mindBoxPlugin.childrenGap * (children.length - 1);
+      maxWidth += (+pen.mind.childrenGap || +mindBoxPlugin.childrenGap) * (children.length - 1);
       maxW = maxWidth > worldRect.width ? maxWidth : worldRect.width;
       pen.mind.maxHeight = maxHeight;
       pen.mind.maxWidth = maxW;
