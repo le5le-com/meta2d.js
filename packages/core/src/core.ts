@@ -2775,7 +2775,6 @@ export class Meta2d {
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
           if (typeof req.headers[i] === 'string') {
-            console.log("data", req.headers[i].match(/\$\{([^}]+)\}/g));
             let keys = req.headers[i].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys) {
               req.headers[i] = req.headers[i].replace(
