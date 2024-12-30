@@ -11,6 +11,27 @@ export interface Theme {
   };
 }
 
+export const themeKeys = [
+  'color',
+  'hoverColor',
+  'activeColor',
+  'disabledColor',
+  'background',
+  'activeBackground', //有无必要
+  'hoverBackground',
+  'disabledBackground',
+  'anchorColor',
+  'hoverAnchorColor',
+  'anchorBackground',
+  'animateColor',
+  'textColor',
+  'ruleColor',
+  'ruleLineColor',
+  'gridColor',
+  'lineColor',
+// "ruleOptions"
+] 
+
 export const defaultTheme: Theme = {
   dark: {
     color: '#bdc7db',
@@ -142,7 +163,7 @@ export const le5leTheme = {
     const styleSheets = document.styleSheets;
     for (let i = 0; i < styleSheets.length; i++) {
       const styleSheet = styleSheets[i];
-      if (styleSheet.ownerNode && styleSheet.ownerNode.id === id) {
+      if (styleSheet.ownerNode && (styleSheet.ownerNode as any).id === id) {
         return styleSheet;
       }
     }
