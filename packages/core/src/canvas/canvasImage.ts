@@ -316,7 +316,7 @@ export class CanvasImage {
       ctx.save();
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.fillStyle = '#ffffff66';
-      ctx.strokeStyle = this.store.options.activeColor;
+      ctx.strokeStyle = this.store.globalStyle.activeColor;
       this.store.data.fits?.forEach((item, index) => {
         ctx.fillRect(
           x + width * item.x,

@@ -244,6 +244,7 @@ export class Meta2d {
     });
     // 更新全局的主题css变量 
     le5leTheme.updateCssRule(this.store.id, theme);
+    this.canvas.initGlobalStyle();
     this.render();
   }
 
@@ -291,7 +292,7 @@ export class Meta2d {
     } else {
       this.canvas = new Canvas(this, parent, this.store);
     }
-
+    this.canvas.initGlobalStyle();
     this.resize();
     this.canvas.listen();
 
@@ -1010,6 +1011,7 @@ export class Meta2d {
     this.connectSocket();
     this.connectNetwork();
     this.startDataMock();
+    this.canvas.initGlobalStyle();
     this.render();
     setTimeout(() => {
       const pen = this.store.data.pens.find((pen) => pen.autofocus);
@@ -2167,7 +2169,7 @@ export class Meta2d {
         });
       }
       https.forEach((item, index) => {
-        if (item.http) {
+        if (item.http && item.httpTimeInterval !== 0) {
           item.times = 0;
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
@@ -2745,17 +2747,19 @@ export class Meta2d {
 
     https.forEach((_item, index) => {
       _item.times = 0;
-      this.updateTimerList[index] = setInterval(async () => {
-        this.requestHttp(_item);
-        if (this.store.options.reconnetTimes) {
-          // _item.times++;
-          if (_item.times >= this.store.options.reconnetTimes) {
-            _item.times = 0;
-            clearInterval(this.updateTimerList[index]);
-            this.updateTimerList[index] = undefined;
+      if(_item.interval !== 0){
+        this.updateTimerList[index] = setInterval(async () => {
+          this.requestHttp(_item);
+          if (this.store.options.reconnetTimes) {
+            // _item.times++;
+            if (_item.times >= this.store.options.reconnetTimes) {
+              _item.times = 0;
+              clearInterval(this.updateTimerList[index]);
+              this.updateTimerList[index] = undefined;
+            }
           }
-        }
-      }, _item.interval || 1000);
+        }, _item.interval || 1000);
+      }
     });
   }
 
@@ -3920,9 +3924,9 @@ export class Meta2d {
     rect.y -= 10;
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
-    ctx.strokeStyle = getGlobalColor(this.store);
-    const background =
-    this.store.data.background || this.store.options.background;
+    ctx.strokeStyle = this.store.globalStyle.color // getGlobalColor(this.store);
+    const background = this.store.globalStyle.background;
+    // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
       ctx.save();
