@@ -6711,7 +6711,7 @@ export class Canvas {
       offset && (this.store.clipboard.offset = offset);
       pos && (this.store.clipboard.pos = pos);
     }
-    if(!this.keyOptions.F){
+    if(!this.keyOptions?.F){
       this.store.clipboard.pens.forEach((pen: Pen) => {
         delete pen.copyIndex;
       });
