@@ -297,9 +297,9 @@ export class Meta2d {
     this.canvas.listen();
 
     // 创建主题样式表
-    if(this.store.data.theme){
+    // if(this.store.data.theme){
       le5leTheme.createThemeSheet(this.store.data.theme, this.store.id);
-    }
+    // }
   }
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
