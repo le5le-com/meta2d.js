@@ -3925,7 +3925,7 @@ export class Meta2d {
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
     ctx.strokeStyle = this.store.globalStyle.color // getGlobalColor(this.store);
-    const background = this.store.globalStyle.background;
+    const background = this.store.data.background || this.store.globalStyle.background;
     // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色

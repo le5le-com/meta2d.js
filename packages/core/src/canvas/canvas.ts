@@ -8076,7 +8076,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.globalStyle.background;
+    const background = this.store.data.background || this.store.globalStyle.background;
       // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
@@ -8144,10 +8144,11 @@ export class Canvas {
     } else {
       // 平移画布，画笔的 worldRect 不变化
       if (isV) {
-        ctx.translate(
-          -oldRect.x + p[3] * _scale || 0,
-          -oldRect.y + p[0] * _scale || 0
-        );
+        // ctx.translate(
+        //   -oldRect.x + p[3] * _scale || 0,
+        //   -oldRect.y + p[0] * _scale || 0
+        // );
+        ctx.translate(-rect.x, -rect.y);
       } else {
         ctx.translate(
           (isRight ? storeData.x : -oldRect.x) + p[3] * _scale || 0,
@@ -8225,7 +8226,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.globalStyle.background;
+    const background = this.store.data.background || this.store.globalStyle.background;
     // this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色
