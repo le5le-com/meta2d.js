@@ -4692,8 +4692,8 @@ export class Canvas {
         }
       }
     });
-    this.store.globalStyle = {};
-    Object.assign(this.store.globalStyle, options, data, theme);
+    this.store.styles = {};
+    Object.assign(this.store.styles, options, data, theme);
   }
 
   render = (patchFlags?: number | boolean) => {
@@ -4748,7 +4748,7 @@ export class Canvas {
 
   renderPens = () => {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
-    ctx.strokeStyle = this.store.globalStyle.color;//getGlobalColor(this.store);
+    ctx.strokeStyle = this.store.styles.color;//getGlobalColor(this.store);
 
     for (const pen of this.store.data.pens) {
       if (!isFinite(pen.x)) {
@@ -4823,7 +4823,7 @@ export class Canvas {
           ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
           ctx.translate(-pivot.x, -pivot.y);
         }
-        ctx.strokeStyle = this.store.globalStyle.activeColor;
+        ctx.strokeStyle = this.store.styles.activeColor;
 
         ctx.globalAlpha = this.store.options.activeGlobalAlpha === undefined ? 0.3 : this.store.options.activeGlobalAlpha;
         ctx.beginPath();
@@ -4855,7 +4855,7 @@ export class Canvas {
 
         // Draw rotate control points.
         ctx.beginPath();
-        ctx.strokeStyle = this.store.globalStyle.activeColor;
+        ctx.strokeStyle = this.store.styles.activeColor;
         ctx.fillStyle = '#ffffff';
         ctx.arc(
           this.activeRect.center.x,
@@ -4895,7 +4895,7 @@ export class Canvas {
       }
       if (anchors) {
         ctx.strokeStyle =
-          this.store.hover.anchorColor || this.store.globalStyle.anchorColor;
+          this.store.hover.anchorColor || this.store.styles.anchorColor;
         ctx.fillStyle =
           this.store.hover.anchorBackground ||
           this.store.options.anchorBackground;
@@ -4959,7 +4959,7 @@ export class Canvas {
           if (this.store.hover.type && this.store.hoverAnchor === anchor) {
             ctx.save();
             ctx.strokeStyle =
-              this.store.hover.activeColor || this.store.globalStyle.activeColor;
+              this.store.hover.activeColor || this.store.styles.activeColor;
             ctx.fillStyle = ctx.strokeStyle;
           } else if (anchor.color || anchor.background) {
             ctx.save();
@@ -5017,7 +5017,7 @@ export class Canvas {
         !getPensDisableResize(this.store.active) &&
         !this.store.options.disableSize
       ) {
-        ctx.strokeStyle = this.store.globalStyle.activeColor;
+        ctx.strokeStyle = this.store.styles.activeColor;
         ctx.fillStyle = '#ffffff';
         this.sizeCPs.forEach((pt, i) => {
           if (this.activeRect.rotate) {
@@ -8076,7 +8076,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.data.background || this.store.globalStyle.background;
+    const background = this.store.data.background || this.store.styles.background;
       // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
@@ -8226,7 +8226,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.data.background || this.store.globalStyle.background;
+    const background = this.store.data.background || this.store.styles.background;
     // this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色

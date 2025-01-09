@@ -206,7 +206,7 @@ export interface Meta2dStore {
     [key: string]: { url?: string; method?: string; headers?: any; body?: any };
   };
   globalTriggers?:{[key:string]:Trigger[]};
-  globalStyle: any;
+  styles: any;
 }
 
 export interface Meta2dClipboard {
