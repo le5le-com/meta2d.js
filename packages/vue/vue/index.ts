@@ -208,7 +208,6 @@ class Vue2Meta2d {
       const childTree = h(Component, props)
       childTree.appContext = app._context
 
-      // Creating a wrapper element here is clunky and ideally wouldn't be necessary
       const div = document.createElement('div')
       el.appendChild(div)
 
