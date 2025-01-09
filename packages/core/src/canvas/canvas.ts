@@ -8248,6 +8248,9 @@ export class Canvas {
         if (!isShowChild(pen, this.store) || pen.visible == false) {
           continue;
         }
+        if (pen.name === 'combine' && !pen.draw){
+          continue;
+        }
         const { active } = pen.calculative;
         pen.calculative.active = false;
         if (pen.calculative.img) {
