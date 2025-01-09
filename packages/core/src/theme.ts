@@ -29,6 +29,8 @@ export const themeKeys = [
   'ruleLineColor',
   'gridColor',
   'lineColor',
+  'penBackground',
+  'dockPenColor',
 // "ruleOptions"
 ] 
 

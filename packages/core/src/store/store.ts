@@ -206,6 +206,7 @@ export interface Meta2dStore {
     [key: string]: { url?: string; method?: string; headers?: any; body?: any };
   };
   globalTriggers?:{[key:string]:Trigger[]};
+  styles: any;
 }
 
 export interface Meta2dClipboard {
@@ -230,7 +231,7 @@ export const createStore = () => {
       origin: { x: 0, y: 0 },
       center: { x: 0, y: 0 },
       paths: {},
-      theme:'light'
+      // theme:'light'
     },
     histories: [],
     pens: {},

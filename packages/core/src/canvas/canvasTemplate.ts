@@ -107,8 +107,8 @@ export class CanvasTemplate {
       const height = this.store.data.height || this.store.options.height;
       const x = this.store.data.x || this.store.options.x || 0;
       const y = this.store.data.y || this.store.options.y || 0;
-      const background =
-        this.store.data.background || this.store.options.background;
+      const background =  this.store.data.background || this.store.styles.background;
+        // this.store.data.background || this.store.options.background;
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
