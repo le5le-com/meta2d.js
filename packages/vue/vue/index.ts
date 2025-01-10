@@ -70,7 +70,7 @@ class Vue2Meta2d {
   registerVueComponent(name:string,componentConfig:ComponentConfig){
     componentConfig.mode ??= 0
     componentConfig.props ??= {}
-    if(this.VueComponentMap.has(componentConfig)){
+    if(this.VueComponentMap.has(name)){
       return console.warn('组件已存在')
     }
     this.VueComponentMap.set(name,componentConfig)
