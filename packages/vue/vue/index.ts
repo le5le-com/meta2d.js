@@ -119,13 +119,13 @@ class Vue2Meta2d {
 
     return componentConfig.app?
       this.createVueFromApp(componentConfig, props,dom) :
-      this.createVueNoContext(componentConfig)
+      this.createVueNoContext(componentConfig,props)
   }
 
-  comEnv(component: any, props?: any, app?: App, dom?: string | HTMLElement){
+  comEnv(componentConfig: any, props?: any, dom?: string | HTMLElement){
     return componentConfig.app?
       this.createVueFromApp(componentConfig, props,dom) :
-      this.createVueNoContext(componentConfig)
+      this.createVueNoContext(componentConfig,props)
   }
 
   createVueNoContext(componentConfig:ComponentConfig,props:any) {
