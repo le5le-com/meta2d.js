@@ -955,12 +955,12 @@ export function drawImage(
  */
 export function getTextColor(pen: Pen, store: Meta2dStore) {
   const { textColor, color } = pen.calculative;
-  const { globalStyle } = store;
+  const { styles } = store;
   return (
     textColor ||
     color ||
-    globalStyle.textColor ||
-    globalStyle.color
+    styles.textColor ||
+    styles.color
   );
 }
 
@@ -995,9 +995,9 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
       pen.disabledColor ||
       pSBC(0.4, getTextColor(pen, store));
   } else if (pen.calculative.hover) {
-    fill = pen.hoverTextColor || pen.hoverColor || store.globalStyle.hoverColor;
+    fill = pen.hoverTextColor || pen.hoverColor || store.styles.hoverColor;
   } else if (pen.calculative.active) {
-    fill = pen.activeTextColor || pen.activeColor || store.globalStyle.activeColor;
+    fill = pen.activeTextColor || pen.activeColor || store.styles.activeColor;
   }
   let gradient = undefined;
   if (textType === Gradient.Linear) {
@@ -1132,9 +1132,9 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
 
   let fill: string = undefined;
   if (pen.calculative.hover) {
-    fill = pen.hoverTextColor || pen.hoverColor || store.globalStyle.hoverColor;
+    fill = pen.hoverTextColor || pen.hoverColor || store.styles.hoverColor;
   } else if (pen.calculative.active) {
-    fill = pen.activeTextColor || pen.activeColor || store.globalStyle.activeColor;
+    fill = pen.activeTextColor || pen.activeColor || store.styles.activeColor;
   }
   ctx.fillStyle = fill || getTextColor(pen, store);
 
@@ -1383,38 +1383,38 @@ export function renderPen(
   if (pen.calculative.disabled) {
     _stroke =
       pen.disabledColor ||
-      store.globalStyle.disabledColor ||
-      pSBC(0.4, pen.calculative.color || store.globalStyle.color);
+      store.styles.disabledColor ||
+      pSBC(0.4, pen.calculative.color || store.styles.color);
     fill =
       pen.disabledBackground ||
-      store.globalStyle.disabledBackground ||
-      pSBC(0.4, pen.calculative.background || store.globalStyle.penBackground);
+      store.styles.disabledBackground ||
+      pSBC(0.4, pen.calculative.background || store.styles.penBackground);
   } else if (pen.mouseDownValid && pen.calculative.mouseDown) {
     _stroke =
       pen.mouseDownColor ||
-      pSBC(-0.4, pen.calculative.color || store.globalStyle.color);
+      pSBC(-0.4, pen.calculative.color || store.styles.color);
     fill =
       pen.mouseDownBackground ||
-      pSBC(-0.4, pen.calculative.background || store.globalStyle.penBackground);
+      pSBC(-0.4, pen.calculative.background || store.styles.penBackground);
   } else if (pen.switch && pen.calculative.checked) {
     if(!pen.calculative.bkType){
       fill = pen.onBackground;
     }
   } else if (pen.calculative.hover) {
-    _stroke = pen.hoverColor || store.globalStyle.hoverColor;
-    fill = pen.hoverBackground || store.globalStyle.hoverBackground;
+    _stroke = pen.hoverColor || store.styles.hoverColor;
+    fill = pen.hoverBackground || store.styles.hoverBackground;
     //  ctx.fillStyle = fill;
     //  fill && (setBack = false);
   } else if (pen.calculative.active) {
-    _stroke = pen.activeColor || store.globalStyle.activeColor;
-    fill = pen.activeBackground || store.globalStyle.activeBackground;
+    _stroke = pen.activeColor || store.styles.activeColor;
+    fill = pen.activeBackground || store.styles.activeBackground;
     // ctx.fillStyle = fill;
     // fill && (setBack = false);
   } else if (pen.calculative.isDock) {
     if (pen.type === PenType.Line) {
-      _stroke = store.globalStyle.dockPenColor;
+      _stroke = store.styles.dockPenColor;
     } else {
-      fill = rgba(store.globalStyle.dockPenColor, 0.2);
+      fill = rgba(store.styles.dockPenColor, 0.2);
       //  ctx.fillStyle = fill;
       //  fill && (setBack = false);
     }
@@ -1443,7 +1443,7 @@ export function renderPen(
         stroke = strokeLinearGradient(ctx, pen);
       }
     } else {
-      stroke = pen.calculative.color || (pen.type ? store.data.lineColor : '') || store.globalStyle.color;
+      stroke = pen.calculative.color || (pen.type ? store.data.lineColor : '') || store.styles.color;
     }
     ctx.strokeStyle = _stroke || stroke;
   }
@@ -1482,7 +1482,7 @@ export function renderPen(
         back = drawBkRadialGradient(ctx, pen);
       }
     } else {
-      back = pen.calculative.background || store.globalStyle.penBackground;
+      back = pen.calculative.background || store.styles.penBackground;
     }
     ctx.fillStyle = fill || back;
     fill = !!back;
@@ -1637,13 +1637,13 @@ export function renderPenRaw(
   }
   let fill: any;
   if (pen.calculative.hover) {
-    ctx.strokeStyle = pen.hoverColor || store.globalStyle.hoverColor;
-    ctx.fillStyle = pen.hoverBackground || store.globalStyle.hoverBackground;
-    fill = pen.hoverBackground || store.globalStyle.hoverBackground;
+    ctx.strokeStyle = pen.hoverColor || store.styles.hoverColor;
+    ctx.fillStyle = pen.hoverBackground || store.styles.hoverBackground;
+    fill = pen.hoverBackground || store.styles.hoverBackground;
   } else if (pen.calculative.active) {
-    ctx.strokeStyle = pen.activeColor || store.globalStyle.activeColor;
-    ctx.fillStyle = pen.activeBackground || store.globalStyle.activeBackground;
-    fill = pen.activeBackground || store.globalStyle.activeBackground;
+    ctx.strokeStyle = pen.activeColor || store.styles.activeColor;
+    ctx.fillStyle = pen.activeBackground || store.styles.activeBackground;
+    fill = pen.activeBackground || store.styles.activeBackground;
   } else {
     if (pen.strokeImage) {
       if (pen.calculative.strokeImg) {
@@ -1662,7 +1662,7 @@ export function renderPenRaw(
       ) {
         lineGradientFlag = true;
       } else {
-        stroke = pen.calculative.color || store.globalStyle.color; //getGlobalColor(store);
+        stroke = pen.calculative.color || store.styles.color; //getGlobalColor(store);
       }
       ctx.strokeStyle = stroke;
     }
@@ -2064,11 +2064,11 @@ export function setCtxLineAnimate(
   pen: Pen,
   store: Meta2dStore
 ) {
-  ctx.strokeStyle = pen.animateColor || store.globalStyle.animateColor;
+  ctx.strokeStyle = pen.animateColor || store.styles.animateColor;
   if (pen.animateShadow) {
     ctx.shadowBlur = pen.animateShadowBlur || pen.animateLineWidth || 6;
     ctx.shadowColor =
-      pen.animateShadowColor || pen.animateColor || store.globalStyle.animateColor;
+      pen.animateShadowColor || pen.animateColor || store.styles.animateColor;
   }
   pen.calculative.animateLineWidth &&
     (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);
@@ -2108,11 +2108,11 @@ export function setCtxLineAnimate(
       ctx.setLineDash([0.1, pen.length]);
       break;
     case LineAnimateType.Arrow:
-      ctx.fillStyle = pen.animateColor || store.globalStyle.animateColor;
+      ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
     case LineAnimateType.WaterDrop:
-      ctx.fillStyle = pen.animateColor || store.globalStyle.animateColor;
+      ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
     default:
@@ -2146,7 +2146,7 @@ export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   ctx.save();
   ctx.lineWidth = 1;
-  ctx.fillStyle = pen.activeColor || store.globalStyle.activeColor;//store.options.activeColor;
+  ctx.fillStyle = pen.activeColor || store.styles.activeColor;//store.options.activeColor;
   pen.calculative.worldAnchors.forEach((pt) => {
     !pt.hidden && !pt.isTemp && renderAnchor(ctx, pt, pen);
   });

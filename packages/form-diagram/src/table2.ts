@@ -35,13 +35,13 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   const data = pen.calculative.canvas.store.data;
   const options = pen.calculative.canvas.store.options;
 
-  pen.color = pen.color || store.globalStyle.color;
+  pen.color = pen.color || store.styles.color;
   pen.textColor =
-    pen.textColor || pen.color || store.globalStyle.textColor;
-  pen.activeColor = pen.activeColor || store.globalStyle.activeColor;
-  pen.hoverColor = pen.hoverColor || store.globalStyle.hoverColor;
-  pen.activeBackground = pen.activeBackground || store.globalStyle.activeBackground;
-  pen.hoverBackground = pen.hoverBackground || store.globalStyle.hoverBackground;
+    pen.textColor || pen.color || store.styles.textColor;
+  pen.activeColor = pen.activeColor || store.styles.activeColor;
+  pen.hoverColor = pen.hoverColor || store.styles.hoverColor;
+  pen.activeBackground = pen.activeBackground || store.styles.activeBackground;
+  pen.hoverBackground = pen.hoverBackground || store.styles.hoverBackground;
   if (!pen.hasHeader) {
     ctx.save();
     ctx.beginPath();

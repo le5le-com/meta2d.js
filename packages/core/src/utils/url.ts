@@ -41,6 +41,27 @@ export function getCookie(name: string) {
   }
 }
 
+export enum TokenType {
+  None,
+  LocalStorage,
+  Cookie,
+}
+
+const isLe5le = location.host.indexOf('le5le.com') !== -1;
+
+export function getToken() {
+  const key = globalThis.le5leTokenName ?? 'token';
+  switch (globalThis.le5leTokenType) {
+    case TokenType.LocalStorage:
+      return localStorage.getItem(key);
+    case TokenType.Cookie:
+      return getCookie(key);
+    default:
+      const token = isLe5le ? getCookie(key) : localStorage.getItem(key);
+      return token;
+  }
+}
+
 export async function getMeta2dData(store: Meta2dStore, id: string) {
   const netWork = store.options.navigatorNetWork;
   const collection =
@@ -69,16 +90,11 @@ export async function getMeta2dData(store: Meta2dStore, id: string) {
   }
   const res: Response = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${
-        getCookie('token') ||
-        localStorage.getItem('token') ||
-        new URLSearchParams(location.search).get('token') ||
-        ''
-      }`,
+      Authorization: `Bearer ${getToken()}`,
     },
     method,
     body:
-      netWork?.method === 'GET'
+      method === 'GET'
         ? undefined
         : (JSON.stringify({ id: id }) as any),
   });
