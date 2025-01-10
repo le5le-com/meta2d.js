@@ -1,13 +1,14 @@
 import {Pen, setElemPosition} from "@meta2d/core";
 import Vue2meta2d from "../vue";
-import {Component, Plugin, reactive} from 'vue'
+import { Plugin, reactive} from 'vue'
 import {ChartPen} from "@meta2d/chart-diagram";
 interface VuePen extends Pen{
   vue: {
-    component: Component,
+    component: string,
     plugins: Plugin[]
     data:any,
-    app:string
+    app:string,
+    mode?:number
   },
   $el:HTMLElement
 }
@@ -36,8 +37,6 @@ export function vueDom(pen:VuePen){
     // 1. 创建父容器
     const div = document.createElement('div');
     const vue2meta2d =Vue2meta2d
-    const component = vue2meta2d.VueComponentMap.get(pen.vue.component)
-    const app = pen.vue.app && vue2meta2d.VueAppMap.get(pen.vue.app)
     div.style.position = 'absolute';
     div.style.outline = 'none';
     div.style.left = '-9999px';
@@ -49,9 +48,13 @@ export function vueDom(pen:VuePen){
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
     setElemPosition(pen, div);
     pen.calculative.singleton.div = div;
-    pen.vue.data = reactive(pen.vue.data)
-    pen.calculative.singleton.vm = vue2meta2d.parse(component,{pen,data:pen.vue.data,meta2d:(window as any).meta2d},app || pen.vue.component,div);
-    if(!pen.vue.app)pen.calculative.singleton.vm.mount(div)
+    pen.vue.props.penId = pen.id;
+    pen.vue.props = reactive(pen.vue.props)
+    pen.vue.mode && (vue2meta2d.config.mode = pen.vue.mode);
+    (async ()=>{
+      pen.calculative.singleton.vm = await vue2meta2d.parse(pen.vue.component,pen.vue.props,div,pen);
+      pen.calculative.singleton.vm.mount?.(div)
+    })()
   }
   return path;
 }

@@ -1,4 +1,5 @@
-import {createApp, compile, App, h, render, defineAsyncComponent, defineComponent, warn} from "vue"
+import {createApp, App, h, render, defineAsyncComponent, warn, Component} from "vue"
+import * as Vue from 'vue'
 import { loadModule } from 'vue3-sfc-loader'
 
 export enum VueMode {
@@ -9,12 +10,34 @@ export enum VueMode {
 type Config = {
   mode: number
 }
+type ComponentApp = App & {
+  render: (Component: any, props?: any, dom?: string | HTMLElement) => any;
+  unrender: (vm: any) => void;
+}
+
+type ComponentConfig = {
+  component: string | Component,  // 需要渲染的组件
+  mode?: VueMode,
+  props:{}, // 传递给组件的prop属性
+  app?: ComponentApp, // 需要渲染组件到哪个上下文，若不设置，会新创建一个app上下文
+  plugins?:any[], // 上下文依赖的插件
+  modules?:{
+    [key: string]: any,
+  }, // 组件依赖的包
+  files?:{ // 组件依赖的文件
+    [key:string]:{
+      getContentData: () => string,
+      type: string
+    }
+  },
+  options:{} // 对于vue3-sfc-loader的扩展配置
+}
+
+
 class Vue2Meta2d {
   config:{
     mode: VueMode
   }
-  VueAppMap = new Map()
-  VuePluginsMap = new Map()
   VueComponentMap = new Map()
 
   constructor(config:Config) {
@@ -23,168 +46,103 @@ class Vue2Meta2d {
     }
     Object.assign(this.config,config)
   }
-  parse(component:any, props:any,app?: any, dom?:string | HTMLElement){
+  async parse(componentName:string,props:any = {}, dom?:string | HTMLElement){
+    const componentConfig = this.VueComponentMap.get(componentName) // 获取组件配置
+
+    if({}.toString.call(props) !== '[object Object]')console.error('@meta2d/vue props参数必须为对象')
+
     let _app = null
-    switch (this.config.mode){
+    switch (componentConfig.mode){
       case VueMode.PACK: // 若为构建工具模式sfc文件
-        _app = this.packEnv(component,props,app,dom)
+        _app = this.packEnv(componentConfig,props,dom)
         break
       case VueMode.SFC: // 若为构普通sfc文件
-        _app = this.sfcEnv(component,props,app,dom)
+        _app = await this.sfcEnv(componentConfig,props,dom)
         break
       case VueMode.COM: // 若为defineComponent方式定义组件
-
+        _app = this.comEnv(componentConfig,props,dom)
         break
     }
     return _app
   }
-  registerVueComponent(name:string,component:any){
-    if(this.VueComponentMap.has(component)){
+
+
+  registerVueComponent(name:string,componentConfig:ComponentConfig){
+    componentConfig.mode ??= 0
+    componentConfig.props ??= {}
+    if(this.VueComponentMap.has(componentConfig)){
       return console.warn('组件已存在')
     }
-    this.VueComponentMap.set(name,component)
-  }
-  registerVueApp(name:string,app:App){
-    if(this.VueAppMap.has(name)){
-      return console.warn('app上下文已存在')
-    }
-    this.VueAppMap.set(name,app)
+    this.VueComponentMap.set(name,componentConfig)
   }
 
-  registerVuePlugins(name:string,plugins:any){
-    if(this.VuePluginsMap.has(plugins)){ // @bug 插件永远不会重复
-      return console.warn('插件已存在')
-    }
-    this.VuePluginsMap.set(name,plugins)
-  }
-  packEnv(component: any, props?: any, app?: App, dom?: string | HTMLElement) {
-    if(app && !dom)return warn('@meta2d/vue指定app参数时dom参数不能为空')
+  packEnv(componentConfig: ComponentConfig,props:any, dom?: string | HTMLElement) {
+    const app = componentConfig.app // 指定app上下文
+    if(typeof app === 'object' && !dom)return warn('@meta2d/vue指定app参数时dom参数不能为空')
+    if(typeof componentConfig.component === 'string') return console.error('@meta2d/vue','@meta2d/vue在cli环境下component参数必须为组件对象')
     return typeof app === "object" ?
-      this.createVueFromApp(app,component,props,dom) :
-      this.createVueNoContext(app,component,props)
+      this.createVueFromApp(componentConfig,props,dom) :
+      this.createVueNoContext(componentConfig,props)
   }
-  sfcEnv(component: string, props?: any, app?: App, dom?: string | HTMLElement){
-    let com = null
-    if(component.startsWith('.') || component.startsWith('/')){// 若component为组件的文件路径
-      const options:any = {
-      }
-      com = defineAsyncComponent(()=>loadModule(component,options))
+  async sfcEnv(componentConfig: ComponentConfig,props:any,dom?: string | HTMLElement){
+    const config = {
+      files:componentConfig.files
+    };
+
+    const options = {
+      moduleCache: {
+        vue: Vue,
+      },
+      getFile: async (url) => {
+        return config[url] || fetch(url).then(res => res.text());
+      },
+      addStyle(textContent) {
+
+        const style = Object.assign(document.createElement('style'), { textContent });
+        const ref = document.head.getElementsByTagName('style')[0] || null;
+        document.head.insertBefore(style, ref);
+      },
+      ...componentConfig.options
+    }
+    if(typeof componentConfig.component ==='string' && (componentConfig.component.startsWith('/') || componentConfig.component.startsWith('.'))){
+      return await loadModule(componentConfig.component, options)
+        .then(component => {
+          componentConfig.component = component
+          return componentConfig.app?
+            this.createVueFromApp(componentConfig, props,dom) :
+            this.createVueNoContext(componentConfig,props)
+        })
     }
 
-  return this.createVueNoContext(com,props)
+    const com = defineAsyncComponent(() => loadModule(componentConfig.component, options))
+    componentConfig.component = com
+
+    return componentConfig.app?
+      this.createVueFromApp(componentConfig, props,dom) :
+      this.createVueNoContext(componentConfig)
   }
 
   comEnv(component: any, props?: any, app?: App, dom?: string | HTMLElement){
-
+    return componentConfig.app?
+      this.createVueFromApp(componentConfig, props,dom) :
+      this.createVueNoContext(componentConfig)
   }
 
-  createVueNoContext(name:string,component:any,props?:any) {
+  createVueNoContext(componentConfig:ComponentConfig,props:any) {
     //TODO component 目前仅考虑为vue组件的情况，sfc文件目前还不支持
-
-    // if(typeof component === "string" && (component.startsWith('.') || component.startsWith('/'))){  // component可能是个路径或者组件文本 const options = {
-    //   const config = {
-    //     files: {
-    //
-    //       // note: Here, for convenience, we simply retrieve content from a string.
-    //
-    //       '/main.vue': {
-    //         getContentData: () => /* <!-- */`
-    //         <template>
-    //           <pre><b>'url!./circle.svg' -> </b>{{ require('url!./circle.svg') }}</pre>
-    //           <img width="50" height="50" src="~url!./circle.svg" />
-    //           <pre><b>'file!./circle.svg' -> </b>{{ require('file!./circle.svg') }}</pre>
-    //           <img width="50" height="50" src="~file!./circle.svg" /> <br><i>(image failed to load, this is expected since there is nothing behind this url)</i>
-    //         </template>
-    //       `/* --> */,
-    //         type: '.vue',
-    //       },
-    //       '/circle.svg': {
-    //         getContentData: () => /* <!-- */`
-    //         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    //           <circle cx="50" cy="50" r="50" />
-    //         </svg>
-    //       `/* --> */,
-    //         type: '.svg',
-    //       }
-    //     }
-    //   };
-    //   const options = {
-    //     moduleCache: {
-    //       'vue': Vue,
-    //       'file!'(content, path, type, options) {
-    //
-    //         return String(new URL(path, window.location));
-    //       },
-    //       'url!'(content, path, type, options) {
-    //
-    //         if ( type === '.svg' )
-    //           return `data:image/svg+xml;base64,${ btoa(content) }`;
-    //
-    //         throw new Error(`${ type } not handled by url!`);
-    //       },
-    //     },
-    //     handleModule(type, getContentData, path, options) {
-    //
-    //       switch (type) {
-    //         case '.svg': return getContentData(false);
-    //         default: return undefined; // let vue3-sfc-loader handle this
-    //       }
-    //     },
-    //     getFile(url, options) {
-    //
-    //       return config.files[url] || (() => { throw new Error('404 ' + url) })();
-    //     },
-    //     getResource({ refPath, relPath }, options) {
-    //
-    //       const { moduleCache, pathResolve, getFile } = options;
-    //
-    //       // split relPath into loaders[] and file path (eg. 'foo!bar!file.ext' => ['file.ext', 'bar!', 'foo!'])
-    //       const [ resourceRelPath, ...loaders ] = relPath.match(/([^!]+!)|[^!]+$/g).reverse();
-    //
-    //       // helper function: process a content through the loaders
-    //       const processContentThroughLoaders = (content, path, type, options) => {
-    //
-    //         return loaders.reduce((content, loader) => {
-    //
-    //           return moduleCache[loader](content, path, type, options);
-    //         }, content);
-    //       }
-    //
-    //       // get the actual path of the file
-    //       const path = pathResolve({ refPath, relPath: resourceRelPath }, options);
-    //
-    //       // the resource id must be unique in its path context
-    //       const id = loaders.join('') + path;
-    //
-    //       return {
-    //         id,
-    //         path,
-    //         async getContent() {
-    //
-    //           const { getContentData, type } = await getFile(path);
-    //           return {
-    //             getContentData: async (asBinary) => processContentThroughLoaders(await getContentData(asBinary), path, type, options),
-    //             type,
-    //           };
-    //         }
-    //       };
-    //     },
-    //     addStyle() { /* unused here */ },
-    //   }
-    //   _ = defineAsyncComponent(()=>loadModule(component,options))
-    // }
-
-    const app = createApp(component,props) // 单独创建一个vue实例  TODO 能否复用app？
-    this.installVuePlugins(app,this.VuePluginsMap.get(name))
+    if(componentConfig.component ==='string')return console.error('@meta2d/vue在cli环境下component参数必须为组件对象')
+    const app = createApp(componentConfig.component,props) // 单独创建一个vue实例
+    this.installVuePlugins(app,componentConfig.plugins)
     return app
   }
 
-  createVueFromApp(app: any,component:any, props:any, dom?:string | HTMLElement) {
-    this.setAppRender(app)
-    return app.render(component,props,dom)
+  createVueFromApp(componentConfig:ComponentConfig,props:any, dom?:string | HTMLElement) {
+    this.setAppRender(componentConfig.app)
+    const app = componentConfig.app.render(componentConfig.component,props,dom)
+    return app
   }
 
-  installVuePlugins(app:any,plugins:any[]){
+  installVuePlugins(app:any,plugins:any[] = []){
     plugins.forEach(i=>{
       app.use(i)
     })
