@@ -182,6 +182,7 @@ export const le5leTheme = {
     const theme = this.getTheme(themeName)
     const newCssDeclarations = theme;
     const styleSheet = this.findStyleSheet(this.style_prefix + id);
+    if(!styleSheet) return;
     let ruleExists = false;
     for (let i = 0; i < styleSheet.cssRules.length; i++) {
       const rule = styleSheet.cssRules[i];
