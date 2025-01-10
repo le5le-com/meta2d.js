@@ -2987,6 +2987,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
   }
 
   const frame = pen.frames[pen.calculative.frameIndex];
+  const scale = pen.calculative.canvas.store.data.scale;
   for (const k in frame) {
     if (k === 'duration') {
       continue;
@@ -3006,7 +3007,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       );
       pen.calculative.patchFlags = true;
     } else if (k === 'x') {
-      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
       pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
       pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
       pen.calculative.worldRect.center.x = pen.calculative.initRect.center.x + lastVal;
@@ -3016,12 +3017,12 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       }
       translateRect(
         pen.calculative.worldRect,
-        frame[k] * process * pen.calculative.canvas.store.data.scale,
+        frame[k] * process * scale,
         0
       );
       pen.calculative.patchFlags = true;
     } else if (k === 'y') {
-      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
       pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
       pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
       pen.calculative.worldRect.center.y =
@@ -3035,8 +3036,31 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       translateRect(
         pen.calculative.worldRect,
         0,
-        frame[k] * process * pen.calculative.canvas.store.data.scale
+        frame[k] * process * scale
       );
+      pen.calculative.patchFlags = true;
+    }else if (k === 'width') {
+      //仅考虑抽屉效果
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
+      pen.calculative.worldRect.width = pen.calculative.initRect.width + lastVal;
+      pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
+      pen.calculative.worldRect.center.x = pen.calculative.initRect.center.x + lastVal;
+
+      let value = frame[k] * process * scale;
+      pen.calculative.worldRect.width += value;
+      pen.calculative.worldRect.ex += value;
+      pen.calculative.worldRect.center.x += value;
+      pen.calculative.patchFlags = true;
+    }else if (k === 'height') {
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
+      pen.calculative.worldRect.height = pen.calculative.initRect.height + lastVal;
+      pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
+      pen.calculative.worldRect.center.y = pen.calculative.initRect.center.y + lastVal;
+
+      let value = frame[k] * process * scale;
+      pen.calculative.worldRect.height += value;
+      pen.calculative.worldRect.ey += value;
+      pen.calculative.worldRect.center.y += value;
       pen.calculative.patchFlags = true;
     } else if (k === 'rotate') {
       if (pen.prevFrame[k] >= 360) {
