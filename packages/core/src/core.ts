@@ -81,6 +81,7 @@ import { getter } from './utils/object';
 import { getCookie, getMeta2dData, queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
+import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
 
 export class Meta2d {
   store: Meta2dStore;
@@ -484,6 +485,15 @@ export class Meta2d {
             });
           }
         }
+        Object.keys(e.extend).forEach((key)=>{
+          if(!['x','y','width','height'].includes(key)){
+            if(url.indexOf('?')!==-1){
+              url+=`&${key}=${e.extend[key]}`
+            }else{
+              url+=`?${key}=${e.extend[key]}`
+            }
+          }
+        })
         const data = this.getEventData(e.list, pen);
         this.canvas.dialog.show(e.value as any, url, e.extend, data);
       }
@@ -491,55 +501,10 @@ export class Meta2d {
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
       if (e.list?.length) {
         // if (e.targetType === 'id') {
-        if (e.network && e.network.protocol === 'jetLinks') {
-          const list: any = [];
-          e.list.forEach((item: any, index) => {
-            const _pen = item.params ? this.findOne(item.params) : pen;
-            list[index] = {
-              deviceId: _pen.deviceId,
-              productId: _pen.productId,
-              properties: {},
-            };
-            for (let key in item.value) {
-              if (item.value[key] === undefined || item.value[key] === '') {
-                //找到绑定了这个设备属性的图元属性
-                const realTime = _pen.realTimes?.find(
-                  (item: any) => item.propertyId === key
-                );
-                if (realTime) {
-                  list[index].properties[key] = _pen[realTime.key];
-                }
-              } else if (
-                typeof item.value[key] === 'string' &&
-                item.value[key]?.indexOf('${') > -1
-              ) {
-                let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
-                if (keys?.length) {
-                  list[index].properties[key] =
-                    _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
-                }
-              } else {
-                list[index].properties[key] = item.value[key];
-              }
-            }
-          });
-          if (this.jetLinksClient && list.length) {
-            list.forEach((item) => {
-              this.jetLinksClient.send(
-                JSON.stringify({
-                  type: 'sub',
-                  topic: `/device-message-sender/${item.productId}/${item.deviceId}`,
-                  parameter: {
-                    messageType: 'WRITE_PROPERTY',
-                    properties: item.properties,
-                    headers: {
-                      async: false,
-                    },
-                  },
-                  id: item.productId + '/' + item.deviceId + '-' + s8(),
-                })
-              );
-            });
+        if (e.network && e.network.protocol === 'ADIIOT') {
+          const list: any = getSendData(this,pen,e);
+          if(list.length){
+            sendJetLinksData(this,list);
           }
           return;
         }
@@ -1106,6 +1071,43 @@ export class Meta2d {
     this.store.data.pens.forEach((pen) => {
       pen.realTimes?.forEach((realTime) => {
         if (realTime.bind && realTime.bind.id) {
+          // if (!this.store.bind[realTime.bind.id]) {
+          //   this.store.bind[realTime.bind.id] = [];
+          // }
+          // this.store.bind[realTime.bind.id].push({
+          //   id: pen.id,
+          //   key: realTime.key,
+          // });
+
+          //JetLinks
+          let productId = realTime.productId || pen.productId;
+          let deviceId = realTime.deviceId || pen.deviceId;
+          let propertyId = realTime.propertyId;
+          let flag = false;
+          if(productId.indexOf('${') > -1){
+            let keys = productId.match(/(?<=\$\{).*?(?=\})/g);
+            if(keys?.length){
+              productId = this.getDynamicParam(keys[0])||productId;
+            }
+            flag = true;
+          }
+          if(deviceId.indexOf('${') > -1){
+            let keys = deviceId.match(/(?<=\$\{).*?(?=\})/g);
+            if(keys?.length){
+              deviceId = this.getDynamicParam(keys[0])||deviceId;
+            }
+            flag = true;
+          }
+          if(propertyId.indexOf('${') > -1){
+            let keys = propertyId.match(/(?<=\$\{).*?(?=\})/g);
+            if(keys?.length){
+              propertyId = this.getDynamicParam(keys[0])||propertyId;
+            }
+            flag = true;
+          }
+          if(flag){
+            realTime.bind&&(realTime.bind.id = productId+'#'+deviceId+'#'+propertyId);
+          }
           if (!this.store.bind[realTime.bind.id]) {
             this.store.bind[realTime.bind.id] = [];
           }
@@ -1114,10 +1116,6 @@ export class Meta2d {
             key: realTime.key,
           });
 
-          //JetLinks
-          const productId = realTime.productId || pen.productId;
-          const deviceId = realTime.deviceId || pen.deviceId;
-          const propertyId = realTime.propertyId;
           if (productId && deviceId && propertyId) {
             const index = this.jetLinksList.findIndex((item) =>
               item.topic.startsWith(`/${productId}/${deviceId}`)
@@ -2343,54 +2341,8 @@ export class Meta2d {
             }, net.interval);
             sqlIndex += 1;
           }
-        } else if (net.protocol === 'jetLinks') {
-          if (this.jetLinksList.length) {
-            this.jetLinksClient = new WebSocket(
-              `${net.url}/${
-                localStorage.getItem('X-Access-Token') ||
-                getCookie('X-Access-Token') ||
-                new URLSearchParams(location.search).get('X-Access-Token') ||
-                ''
-              }`
-              // 'ws://8.134.86.52:29000/api/messaging/961d8b395298d3ec3a021df70d6b6ca4'
-            );
-            //消息接收
-            this.jetLinksClient.onmessage = (e) => {
-              const mess = JSON.parse(e.data);
-              if (
-                mess.payload &&
-                mess.payload.success &&
-                mess.payload?.properties
-              ) {
-                const data = [];
-                for (let key in mess.payload.properties) {
-                  if (!key.startsWith('_')) {
-                    data.push({
-                      id: `${mess.payload.headers.productId}#${mess.payload.deviceId}#${key}`,
-                      value: mess.payload.properties[key],
-                    });
-                  }
-                }
-                this.setDatas(data, { history: false });
-              }
-            };
-            this.jetLinksClient.onopen = () => {
-              this.jetLinksList.forEach((item) => {
-                this.jetLinksClient.send(
-                  JSON.stringify({
-                    type: 'sub',
-                    topic: `/device${item.topic}/message/property/report`,
-                    parameter: {
-                      deviceId: item.deviceId,
-                      properties: item.properties,
-                      history: 1,
-                    },
-                    id: item.topic + '-' + s8(),
-                  })
-                );
-              });
-            };
-          }
+        } else if (net.protocol === 'ADIIOT') {
+          connectJetLinks(this,net);
         }
       });
     }
@@ -2783,6 +2735,7 @@ export class Meta2d {
         clearInterval(_sqlTimer);
         _sqlTimer = undefined;
       });
+    closeJetLinks(this);
   }
 
   socketCallback(
