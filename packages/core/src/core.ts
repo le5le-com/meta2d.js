@@ -245,6 +245,12 @@ export class Meta2d {
     // 更新全局的主题css变量 
     le5leTheme.updateCssRule(this.store.id, theme);
     this.canvas.initGlobalStyle();
+
+    for (let i = 0; i < this.store.data.pens.length; i++) {
+      const pen = this.store.data.pens[i];
+      // 调用pen的主题设置函数,如果单个pen有主题的自定义设置的话
+      pen.setTheme && pen.setTheme(pen,this.store.styles)
+    }
     this.render();
   }
 
@@ -295,11 +301,10 @@ export class Meta2d {
     this.canvas.initGlobalStyle();
     this.resize();
     this.canvas.listen();
-
     // 创建主题样式表
-    if(this.store.data.theme){
-      le5leTheme.createThemeSheet(this.store.data.theme, this.store.id);
-    }
+    // if(this.store.data.theme){
+    le5leTheme.createThemeSheet(this.store.data.theme, this.store.id);
+    // }
   }
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
@@ -3924,8 +3929,8 @@ export class Meta2d {
     rect.y -= 10;
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
-    ctx.strokeStyle = this.store.globalStyle.color // getGlobalColor(this.store);
-    const background = this.store.globalStyle.background;
+    ctx.strokeStyle = this.store.styles.color // getGlobalColor(this.store);
+    const background = this.store.styles.background;
     // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色

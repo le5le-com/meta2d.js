@@ -324,6 +324,7 @@ export interface Pen extends Rect {
   externElement?: boolean;
 
   autoPolyline?: boolean;
+  affectByTheme?: boolean; // 是否被主题影响，true,希望被主题改变样式，false，不希望被主题改变样式
 
   // flip?: Flip;
   flipX?: boolean;
@@ -634,6 +635,7 @@ export interface Pen extends Rect {
   onKeyDown?: (pen: Pen, key: string) => void;
   onWheel?: (pen: Pen, e: WheelEvent) => void;
   onContextmenu?: (pen: Pen, e: Point) => void;
+  setTheme?: (pen:Pen,styles:any) => void;
   onConnectLine?: (line: Pen, e: {
     lineAnchor: Point;
     fromAnchor: Point;

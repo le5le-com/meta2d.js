@@ -15,11 +15,11 @@ export function table(ctx: CanvasRenderingContext2D, pen: formPen) {
   const store = pen.calculative.canvas.store;
   const data = pen.calculative.canvas.store.data;
   const options = pen.calculative.canvas.store.options;
-  pen.color = pen.color || store.globalStyle.color;
-  pen.activeColor = pen.activeColor || store.globalStyle.activeColor;
-  pen.hoverColor = pen.hoverColor || store.globalStyle.hoverColor;
-  pen.activeBackground = pen.activeBackground || store.globalStyle.activeBackground;
-  pen.hoverBackground = pen.hoverBackground || store.globalStyle.hoverBackground;
+  pen.color = pen.color || store.styles.color;
+  pen.activeColor = pen.activeColor || store.styles.activeColor;
+  pen.hoverColor = pen.hoverColor || store.styles.hoverColor;
+  pen.activeBackground = pen.activeBackground || store.styles.activeBackground;
+  pen.hoverBackground = pen.hoverBackground || store.styles.hoverBackground;
 
   // 画网格线
   drawGridLine(ctx, pen);

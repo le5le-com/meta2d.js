@@ -142,7 +142,7 @@ import { Title } from '../title';
 import { CanvasTemplate } from './canvasTemplate';
 import { getLinePoints } from '../diagrams/line';
 import { Popconfirm } from '../popconfirm';
-import { themeKeys } from '../theme';
+import { le5leTheme, themeKeys } from '../theme';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -4692,8 +4692,9 @@ export class Canvas {
         }
       }
     });
-    this.store.globalStyle = {};
-    Object.assign(this.store.globalStyle, options, data, theme);
+    this.store.styles = {};
+    const themeObj = le5leTheme.getThemeObj(this.store.data.theme);
+    Object.assign(this.store.styles, options, data, theme,themeObj);
   }
 
   render = (patchFlags?: number | boolean) => {
@@ -4748,7 +4749,7 @@ export class Canvas {
 
   renderPens = () => {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
-    ctx.strokeStyle = this.store.globalStyle.color;//getGlobalColor(this.store);
+    ctx.strokeStyle = this.store.styles.color;//getGlobalColor(this.store);
 
     for (const pen of this.store.data.pens) {
       if (!isFinite(pen.x)) {
@@ -4823,7 +4824,7 @@ export class Canvas {
           ctx.rotate((this.activeRect.rotate * Math.PI) / 180);
           ctx.translate(-pivot.x, -pivot.y);
         }
-        ctx.strokeStyle = this.store.globalStyle.activeColor;
+        ctx.strokeStyle = this.store.styles.activeColor;
 
         ctx.globalAlpha = this.store.options.activeGlobalAlpha === undefined ? 0.3 : this.store.options.activeGlobalAlpha;
         ctx.beginPath();
@@ -4855,7 +4856,7 @@ export class Canvas {
 
         // Draw rotate control points.
         ctx.beginPath();
-        ctx.strokeStyle = this.store.globalStyle.activeColor;
+        ctx.strokeStyle = this.store.styles.activeColor;
         ctx.fillStyle = '#ffffff';
         ctx.arc(
           this.activeRect.center.x,
@@ -4895,7 +4896,7 @@ export class Canvas {
       }
       if (anchors) {
         ctx.strokeStyle =
-          this.store.hover.anchorColor || this.store.globalStyle.anchorColor;
+          this.store.hover.anchorColor || this.store.styles.anchorColor;
         ctx.fillStyle =
           this.store.hover.anchorBackground ||
           this.store.options.anchorBackground;
@@ -4959,7 +4960,7 @@ export class Canvas {
           if (this.store.hover.type && this.store.hoverAnchor === anchor) {
             ctx.save();
             ctx.strokeStyle =
-              this.store.hover.activeColor || this.store.globalStyle.activeColor;
+              this.store.hover.activeColor || this.store.styles.activeColor;
             ctx.fillStyle = ctx.strokeStyle;
           } else if (anchor.color || anchor.background) {
             ctx.save();
@@ -5017,7 +5018,7 @@ export class Canvas {
         !getPensDisableResize(this.store.active) &&
         !this.store.options.disableSize
       ) {
-        ctx.strokeStyle = this.store.globalStyle.activeColor;
+        ctx.strokeStyle = this.store.styles.activeColor;
         ctx.fillStyle = '#ffffff';
         this.sizeCPs.forEach((pt, i) => {
           if (this.activeRect.rotate) {
@@ -7168,7 +7169,7 @@ export class Canvas {
       // if (!this.store.data.locked) {
       //   this.inputRight.style.display = 'none';
       // }
-      this.dropdown.style.background = pen.dropdownBackground || '#fff';
+      this.dropdown.style.background = pen.dropdownBackground || this.store.styles["popContentBg"] || '#fff';
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.dropdown.style.width = this.inputParent.style.width;
       this.dropdown.style.fontSize = (pen.fontSize || 12) + 'px';
@@ -7654,11 +7655,11 @@ export class Canvas {
     li.onclick = this.selectDropdown;
     const pen = this.store.pens[this.inputDiv.dataset.penId];
     li.onmouseenter = () => {
-      li.style.background = pen.dropdownHoverBackground || '#eee';
+      li.style.background = pen.dropdownHoverBackground||this.store.styles["activeBg"] || '#eee';
       li.style.color = pen.dropdownHoverColor || '#bdc7db';
     };
     li.onmouseleave = () => {
-      li.style.background = pen.dropdownBackground || '#fff';
+      li.style.background = pen.dropdownBackground||this.store.styles["popContentBg"]  || '#fff';
       li.style.color = pen.dropdownColor || '#bdc7db';
     };
     this.dropdown.appendChild(li);
@@ -8076,7 +8077,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.globalStyle.background;
+    const background = this.store.styles.background;
       // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
@@ -8225,7 +8226,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.globalStyle.background;
+    const background = this.store.styles.background;
     // this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色

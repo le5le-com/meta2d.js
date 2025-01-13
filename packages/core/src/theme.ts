@@ -62,45 +62,65 @@ export const le5leTheme = {
   "style_prefix": "le5le_",
   "vendor_css_prefix": "--le-",
   "dark": [
-    'text-color-primary: #7f838c',
-    'text-color-second: rgba(255,255,255,0.90)',
-    'text-color-disabled: rgba(255,255,255,0.40)',
+    'textColor: #e3e8f4',
+    'textPrimaryColor: #7f838c',
+    'textSecondColor: rgba(255,255,255,0.90)',
+    'textDisabledColor: rgba(255,255,255,0.40)',
+    'textActiveColor: #0052d9',
 
-    'container-bg: rgba(21,24,28,0.95)',
-    'form-bg: #2a2f36',
-    'date-picker-cell-active-with-range-bg: #2c4475',
-    'component-disabled-bg-color: #252b37',
-    'data-picker-cell-active-bg: #4583ff',
-    'active-bg: #25375b',
-    'popcontent-bg: #252b37',
+    'containerBg: rgba(21,24,28,0.95)',
+    'formBg: #2a2f36',
+    'datePickerCellActiveRangeBg: #2c4475',
+    'componentDisabledBgColor: #252b37',
+    'dataPickerCellActiveBg: #4583ff',
+    'activeBg: #25375b',
+    'popContentBg: #252b37',
+    'disabledBg: #7f838c',
 
-    'bdcolor-outside: #4583ff',
-    'bdcolor-form: #424b61',
-    'bdcolor-inside: rgba(255,255,255,0.40)',
+    'borderColor: #4583ff',
+    'borderOutsideColor: #4583ff',
+    'formBorderColor: #424b61',
+    'borderInsideColor: rgba(255,255,255,0.40)',
 
     'shadow: 0px 1px 10px 0px rgba(0,0,0,0.05), 0px 4px 5px 0px rgba(0,0,0,0.08), 0px 2px 4px -1px rgba(0,0,0,0.12)',
     'radius: 4px',
   ],
   "light": [
-    'text-color-primary: #7f838c',
-    'text-color-second: #171B27',
-    'text-color-disabled: rgba(0, 0, 0, 0.6)',
+    'textColor: #7f838c',
+    'textPrimaryColor: #7f838c',
+    'textSecondColor: #171B27',
+    'textDisabledColor: rgba(0, 0, 0, 0.6)',
+    'textActiveColor: #0052d9',
 
-    'container-bg: #ffffff',
-    'form-bg: #EFF1F4',
-    'date-picker-cell-active-with-range-bg: #f2f3ff',
-    'component-disabled-bg-color: #eee',
-    'data-picker-cell-active-bg: #0052d9',
-    'active-bg: #f2f3ff',
-    'popcontent-bg: #ffffff',
+    'containerBg: #ffffff',
+    'formBg: #EFF1F4',
+    'datePickerCellActiveRangeBg: #f2f3ff',
+    'componentDisabledBgColor: #eee',
+    'dataPickerCellActiveBg: #0052d9',
+    'activeBg: #f2f3ff',
+    'popContentBg: #ffffff',
+    'disabledBg: #7f838c',
 
-    'bdcolor-outside: transparent',
-    'bdcolor-form: #d4d6d9',
-    'bdcolor-inside: #e7e7e7',
+    'borderColor: #424B61',
+    'borderOutsideColor: transparent',
+    'formBorderColor: #d4d6d9',
+    'borderInsideColor: #e7e7e7',
 
     'shadow: 0px 2px 4px 0px rgba(107,113,121,0.25)',
     'radius: 4px',
   ],
+  /**
+   * @description 将单驼峰命名的字符串改成 小写单词加-的形式,从而将js单驼峰的规范改成css变量的规范
+   * @author Joseph Ho
+   * @date 08/01/2025
+   * @param {*} str
+   * @returns {*}  
+   */
+  camelCaseToHyphenated(str) {
+    return str.replace(/[A-Z]/g, (match) => {
+        return '-' + match.toLowerCase();
+    });
+  },
   /**
    * @description 添加厂商前缀，如：--le-text-color-primary: #7f838c
    * @author Joseph Ho
@@ -111,7 +131,7 @@ export const le5leTheme = {
   _addVendorCssPrefix(themeList) {
     return themeList.map(item =>{
       const [key, value] = item.split(':');
-      return `${this.vendor_css_prefix}${key.trim()}:${value.trim()}`;
+      return `${this.vendor_css_prefix}${this.camelCaseToHyphenated(key.trim())}:${value.trim()}`;
     })
   },
   /**
@@ -127,7 +147,7 @@ export const le5leTheme = {
     style.id = this.style_prefix + id;
     document.head.appendChild(style);
     // 设置初始样式变量
-    const _theme = theme || 'light';
+    const _theme = theme || 'dark';
     const cssDeclarations = this.getTheme(_theme);
     const newRuleText = `${this.cssRuleSelector} { ${cssDeclarations.join(';')} }`;
     style.innerHTML = newRuleText;
@@ -153,6 +173,16 @@ export const le5leTheme = {
    */
   getTheme(theme) {
     return this._addVendorCssPrefix(this[theme] || this.light);
+  },
+  getThemeObj(theme="dark"){
+    // 将theme的list转换为对象
+    const dot = ":";
+    const obj = this[theme].reduce((acc, curr) => {
+      const [key, value] = curr.split(dot);
+      acc[key] = value;
+      return acc;
+    }, {});
+    return obj;
   },
   /**
    * @description 根据id查找样式表
@@ -182,6 +212,7 @@ export const le5leTheme = {
     const theme = this.getTheme(themeName)
     const newCssDeclarations = theme;
     const styleSheet = this.findStyleSheet(this.style_prefix + id);
+    if(!styleSheet) return;
     let ruleExists = false;
     for (let i = 0; i < styleSheet.cssRules.length; i++) {
       const rule = styleSheet.cssRules[i];
