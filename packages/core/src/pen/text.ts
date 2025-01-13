@@ -119,6 +119,13 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
     return;
   }
   text = text.toString();
+  const keepDecimal = pen.calculative.keepDecimal;
+  if (keepDecimal != undefined) {
+    const textNum = Number(text);
+    if (!isNaN(textNum)) {
+      text = textNum.toFixed(keepDecimal)
+    }
+  }
   let lines: string[] = [];
   const oneRowHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
   const textHeight = pen.calculative.worldTextRect.height;
@@ -175,7 +182,7 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
       }
       break;
   }
-
+  /*
   const keepDecimal = pen.calculative.keepDecimal;
   if (keepDecimal != undefined) {
     lines.forEach((text, i) => {
@@ -185,6 +192,7 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
       }
     });
   }
+  */
 
   pen.calculative.textLines = lines;
 
