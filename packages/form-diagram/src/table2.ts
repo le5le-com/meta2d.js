@@ -31,16 +31,17 @@ export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.onValue(pen);
   }
 
+  const store = pen.calculative.canvas.store;
   const data = pen.calculative.canvas.store.data;
   const options = pen.calculative.canvas.store.options;
 
-  pen.color = pen.color || data.color || options.color;
+  pen.color = pen.color || store.styles.color;
   pen.textColor =
-    pen.textColor || pen.color || data.textColor || options.textColor;
-  pen.activeColor = pen.activeColor || options.activeColor;
-  pen.hoverColor = pen.hoverColor || options.hoverColor;
-  pen.activeBackground = pen.activeBackground || options.activeBackground;
-  pen.hoverBackground = pen.hoverBackground || options.hoverBackground;
+    pen.textColor || pen.color || store.styles.textColor;
+  pen.activeColor = pen.activeColor || store.styles.activeColor;
+  pen.hoverColor = pen.hoverColor || store.styles.hoverColor;
+  pen.activeBackground = pen.activeBackground || store.styles.activeBackground;
+  pen.hoverBackground = pen.hoverBackground || store.styles.hoverBackground;
   if (!pen.hasHeader) {
     ctx.save();
     ctx.beginPath();

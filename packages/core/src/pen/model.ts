@@ -380,12 +380,18 @@ export interface Pen extends Rect {
   inputType?:string; //输入框类型
   productId?:string; //产品id
   deviceId?:string;//关联的设备id
-  pivot?:Point; //旋转中心 
+  pivot?:Point; //旋转中心
   noOnBinds?:boolean; //是否禁用绑定事件
   interaction?:boolean; //是否开启交互 组合时将不会被锁定
   childHover?:boolean; //子元素hover和active是否生效
-  childActive?:boolean; 
+  childActive?:boolean;
   draw?:boolean; //是否绘制 针对combine
+  copyIndex?:number; //复制的索引 临时属性
+  formId?:string; //表单id
+  formData?:any; //表单数据
+  formKey?:string; //表单key
+  formValue?:string; //表单值对应的属性key
+  formType?:string; //表单类型 reset or submit
   calculative?: {
     x?: number;
     y?: number;
@@ -617,6 +623,7 @@ export interface Pen extends Rect {
   onMouseMove?: (pen: Pen, e: Point) => void;
   onMouseUp?: (pen: Pen, e: Point) => void;
   onShowInput?: (pen: Pen, e: Point) => void;
+  onSetTheme?: (theme: string, config?: any) => void;
   onInput?: (pen: Pen, text: string) => void;
   onChangeId?: (pen: Pen, oldId: string, newId: string) => void;
   onBinds?: (pen: Pen, values: IValue[], formItem: FormItem) => IValue;
@@ -674,6 +681,7 @@ export const isDomShapes = [
   'echarts',
   'highcharts',
   'lightningCharts',
+  'vue'
 ];
 
 /**

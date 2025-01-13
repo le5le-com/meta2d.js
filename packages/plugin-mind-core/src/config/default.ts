@@ -809,6 +809,7 @@ export let funcList =
         let rootDom = dom.querySelector('.main');
         let divs = rootDom!.querySelectorAll('div');
         let index = ['right', 'left', 'top', 'bottom', 'butterfly', 'sandglass'].findIndex(i => i === self.direction);
+        if(index === -1)return
         divs.forEach(i => {
           i.querySelectorAll('.toolbox_direction_svg').forEach(i => {
             i.setAttribute('fill', '#DDDDE1');

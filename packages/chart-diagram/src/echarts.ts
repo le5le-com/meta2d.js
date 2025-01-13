@@ -263,6 +263,17 @@ function scale(pen: ChartPen) {
   // updateOption(option, ratio);
   if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) return;
   if(!pen.echarts.diabled){
+    if(pen.echarts.option?.dataZoom){
+      //用户调整dataZoom后
+      const options =pen.calculative.singleton.echart.getOption();
+      const dataZoom = options.dataZoom;
+      pen.echarts.option.dataZoom?.forEach((item,index)=>{
+        if(dataZoom[index]){
+          item.start = dataZoom[index].start;
+          item.end = dataZoom[index].end;
+        }
+      })
+    }
     pen.calculative.singleton.echart.setOption(
       updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
       true

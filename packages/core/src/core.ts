@@ -1,4 +1,4 @@
-import { commonAnchors, commonPens, cube } from './diagrams';
+import { commonAnchors, commonPens, cube, reset, updateFormData } from './diagrams';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options, PenPlugin, PluginOptions } from './options';
@@ -35,6 +35,7 @@ import {
   isInteraction,
   calcWorldAnchors,
   getGlobalColor,
+  isDomShapes,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -82,6 +83,7 @@ import { getCookie, getMeta2dData, queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
 import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
+import { le5leTheme } from './theme'
 
 export class Meta2d {
   store: Meta2dStore;
@@ -241,6 +243,9 @@ export class Meta2d {
       ruleColor: this.store.theme[theme].ruleColor,
       ruleOptions: this.store.theme[theme].ruleOptions,
     });
+    // 更新全局的主题css变量 
+    le5leTheme.updateCssRule(this.store.id, theme);
+    this.canvas.initGlobalStyle();
     this.render();
   }
 
@@ -288,11 +293,15 @@ export class Meta2d {
     } else {
       this.canvas = new Canvas(this, parent, this.store);
     }
-
+    this.canvas.initGlobalStyle();
     this.resize();
     this.canvas.listen();
-  }
 
+    // 创建主题样式表
+    // if(this.store.data.theme){
+      le5leTheme.createThemeSheet(this.store.data.theme, this.store.id);
+    // }
+  }
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
       if (window && e.value && typeof e.value === 'string') {
@@ -478,7 +487,7 @@ export class Meta2d {
       if (e.params && typeof e.params === 'string') {
         let url = e.params;
         if (e.params.includes('${')) {
-          let keys = e.params.match(/(?<=\$\{).*?(?=\})/g);
+          let keys = e.params.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
             keys?.forEach((key) => {
               url = url.replace(`\${${key}}`, pen[key]);
@@ -512,6 +521,10 @@ export class Meta2d {
         if (pen.deviceId) {
           value.deviceId = pen.deviceId;
         }
+        if(pen.formId && pen.formData){
+          //表单数据
+          Object.assign(value,pen.formData);
+        }
         this.sendDataToNetWork(value, pen, e);
         return;
         // }
@@ -527,7 +540,7 @@ export class Meta2d {
               typeof value[key] === 'string' &&
               value[key]?.indexOf('${') > -1
             ) {
-              let keys = value[key].match(/(?<=\$\{).*?(?=\})/g);
+              let keys = value[key].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
               if (keys?.length) {
                 value[key] = _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
               }
@@ -599,7 +612,7 @@ export class Meta2d {
             typeof item.value[key] === 'string' &&
             item.value[key]?.indexOf('${') > -1
           ) {
-            let keys = item.value[key].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = item.value[key].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys?.length) {
               value[key] = _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
             }
@@ -611,7 +624,7 @@ export class Meta2d {
     }
     if (Object.keys(value).length) {
       return value;
-    } else return null;
+    } else return {};
   }
 
   message(options: MessageOptions) {
@@ -689,7 +702,7 @@ export class Meta2d {
       if (typeof network.headers === 'object') {
         for (let i in network.headers) {
           if (typeof network.headers[i] === 'string') {
-            let keys = network.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = network.headers[i].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys) {
               network.headers[i] = network.headers[i].replace(
                 `\${${keys[0]}}`,
@@ -710,7 +723,7 @@ export class Meta2d {
       }
       if (network.method === 'POST') {
         if (url.indexOf('${') > -1) {
-          let keys = url.match(/(?<=\$\{).*?(?=\})/g);
+          let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
             keys.forEach((key) => {
               url = url.replace(
@@ -914,6 +927,10 @@ export class Meta2d {
     this.clear(false, data?.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
+      // 根据图纸的主题设置主题 
+      if(data.theme){
+        this.setTheme(data.theme);
+      }
       this.setBackgroundImage(data.bkImage, data);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
@@ -959,6 +976,7 @@ export class Meta2d {
     this.connectSocket();
     this.connectNetwork();
     this.startDataMock();
+    this.canvas.initGlobalStyle();
     this.render();
     setTimeout(() => {
       const pen = this.store.data.pens.find((pen) => pen.autofocus);
@@ -1037,6 +1055,36 @@ export class Meta2d {
     this.render();
   }
 
+  statistics() {
+    const num = this.store.data.pens.length;
+    const imgNum = this.store.data.pens.filter((pen) => pen.image).length;
+    const imgDrawNum = this.store.data.pens.filter((pen) => pen.image&&pen.calculative.inView).length;
+    const domNum = this.store.data.pens.filter(
+      (pen) =>
+        pen.name.endsWith('Dom') ||
+        isDomShapes.includes(pen.name) ||
+        this.store.options.domShapes.includes(pen.name) ||
+        pen.externElement
+    ).length;
+    const aningNum = this.store.animates.size;
+    let dataPointsNum = 0;
+    Object.keys(this.store.bind).forEach((key) => {
+      dataPointsNum += this.store.bind[key].length;
+    });
+    Object.keys(this.store.bindDatas).forEach((key) => {
+      dataPointsNum += this.store.bindDatas[key].length;
+    });
+
+    return {
+      "图元总数量": num,
+      "图片图元数量": imgNum,
+      "图片图元绘制数量": imgDrawNum,
+      "dom图元数量": domNum,
+      "正在执行的动画数量": aningNum,
+      "数据点数量": dataPointsNum,
+    };
+  }
+
   initBindDatas() {
     this.store.bindDatas = {};
     this.store.data.pens.forEach((pen) => {
@@ -1084,21 +1132,21 @@ export class Meta2d {
           let deviceId = realTime.deviceId || pen.deviceId;
           let propertyId = realTime.propertyId;
           let flag = false;
-          if(productId.indexOf('${') > -1){
+          if(productId&&productId.indexOf('${') > -1){
             let keys = productId.match(/(?<=\$\{).*?(?=\})/g);
             if(keys?.length){
               productId = this.getDynamicParam(keys[0])||productId;
             }
             flag = true;
           }
-          if(deviceId.indexOf('${') > -1){
+          if(deviceId&&deviceId.indexOf('${') > -1){
             let keys = deviceId.match(/(?<=\$\{).*?(?=\})/g);
             if(keys?.length){
               deviceId = this.getDynamicParam(keys[0])||deviceId;
             }
             flag = true;
           }
-          if(propertyId.indexOf('${') > -1){
+          if(propertyId&&propertyId.indexOf('${') > -1){
             let keys = propertyId.match(/(?<=\$\{).*?(?=\})/g);
             if(keys?.length){
               propertyId = this.getDynamicParam(keys[0])||propertyId;
@@ -1598,8 +1646,9 @@ export class Meta2d {
    * 组合
    * @param pens 组合的画笔们
    * @param showChild 组合后展示第几个孩子
+   * @param active 是否激活组合后的画笔
    */
-  combine(pens: Pen[] = this.store.active, showChild?: number): any {
+  combine(pens: Pen[] = this.store.active, showChild?: number, active = true): any {
     if (!pens || !pens.length) {
       return;
     }
@@ -1668,7 +1717,7 @@ export class Meta2d {
     //将组合后的父节点置底
     this.store.data.pens.splice(minIndex, 0, parent);
     this.store.data.pens.pop();
-    this.canvas.active([parent]);
+    active && this.canvas.active([parent]);
     let step = 1;
     // if (!oneIsParent) {
     //   step = 2;
@@ -2118,13 +2167,13 @@ export class Meta2d {
         });
       }
       https.forEach((item, index) => {
-        if (item.http) {
+        if (item.http && item.httpTimeInterval !== 0) {
           item.times = 0;
           this.httpTimerList[index] = setInterval(async () => {
             // 默认每一秒请求一次
             this.oldRequestHttp(item);
             if (this.store.options.reconnetTimes) {
-              item.times++;
+              // item.times++;
               if (item.times >= this.store.options.reconnetTimes) {
                 item.times = 0;
                 clearInterval(this.httpTimerList[index]);
@@ -2163,6 +2212,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.http });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
@@ -2502,8 +2552,7 @@ export class Meta2d {
       } else {
         //if (realTime.type === 'string')
         if (data.mock && data.mock.indexOf(',') !== -1) {
-          let str = data.mock.substring(1, data.mock.length - 1);
-          let arr = str.split(',');
+          let arr = data.mock.split(',');
           let rai = Math.floor(Math.random() * arr.length);
           value = arr[rai];
         } else if (
@@ -2650,27 +2699,39 @@ export class Meta2d {
 
     https.forEach((_item, index) => {
       _item.times = 0;
-      this.updateTimerList[index] = setInterval(async () => {
-        this.requestHttp(_item);
-        if (this.store.options.reconnetTimes) {
-          _item.times++;
-          if (_item.times >= this.store.options.reconnetTimes) {
-            _item.times = 0;
-            clearInterval(this.updateTimerList[index]);
-            this.updateTimerList[index] = undefined;
+      if(_item.interval !== 0){
+        this.updateTimerList[index] = setInterval(async () => {
+          this.requestHttp(_item);
+          if (this.store.options.reconnetTimes) {
+            // _item.times++;
+            if (_item.times >= this.store.options.reconnetTimes) {
+              _item.times = 0;
+              clearInterval(this.updateTimerList[index]);
+              this.updateTimerList[index] = undefined;
+            }
           }
-        }
-      }, _item.interval || 1000);
+        }, _item.interval || 1000);
+      }
     });
   }
 
   async requestHttp(_req: Network) {
     let req = deepClone(_req);
     if (req.url) {
+      if(req.url.indexOf('${') > -1){
+        let keys = req.url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+          if (keys) {
+            keys.forEach((key) => {
+              req.url = req.url.replace(
+                `\${${key}}`,this.getDynamicParam(key)
+              );
+            });
+          }
+      }
       if (typeof req.headers === 'object') {
         for (let i in req.headers) {
           if (typeof req.headers[i] === 'string') {
-            let keys = req.headers[i].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = req.headers[i].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys) {
               req.headers[i] = req.headers[i].replace(
                 `\${${keys[0]}}`,
@@ -2683,7 +2744,7 @@ export class Meta2d {
       if (typeof req.body === 'object') {
         for (let i in req.body) {
           if (typeof req.body[i] === 'string') {
-            let keys = req.body[i].match(/(?<=\$\{).*?(?=\})/g);
+            let keys = req.body[i].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys) {
               req.body[i] = req.body[i].replace(
                 `\${${keys[0]}}`,
@@ -2703,6 +2764,7 @@ export class Meta2d {
         const data = await res.text();
         this.socketCallback(data, { type: 'http', url: req.url });
       } else {
+        _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
       }
     }
@@ -3073,6 +3135,15 @@ export class Meta2d {
             e.pen.calculative.radialGradient = undefined;
           }
         }
+        if(e.pen && e.pen.formId){
+          const formPen = this.store.pens[e.pen.formId];
+          if(e.pen.formType === 'submit'){
+            this.store.data.locked && formPen && !formPen.disabled && this.doEvent(formPen, 'submit');
+          }else if(e.pen.formType ==='reset'){
+            reset(e.pen);
+            this.store.data.locked && formPen && !formPen.disabled && this.doEvent(formPen, 'reset');
+          }
+        }
         e.pen &&
           e.pen.onClick &&
           !e.pen.disabled &&
@@ -3119,6 +3190,7 @@ export class Meta2d {
           this.doEvent(e.pen, eventName);
         break;
       case 'valueUpdate':
+        e && updateFormData(e,e.formValue);
         this.store.data.locked && this.doEvent(e, eventName);
         this.canvas.tooltip.updateText(e as Pen);
         break;
@@ -3142,6 +3214,7 @@ export class Meta2d {
           this.doEvent(e, eventName);
         break;
       case 'change':
+        e.pen && updateFormData(e.pen)
         this.store.data.locked &&
           e &&
           !e.disabled &&
@@ -3780,13 +3853,85 @@ export class Meta2d {
       );
       throw new Error('请先加载乐吾乐官网下的canvas2svg.js');
     }
-
+    let isV = false;
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (width && height && !this.store.data.component) {
+      isV = true;
+    }
     const rect = this.getRect();
+    if (isV) {
+      rect.x = this.store.data.origin.x;
+      rect.y = this.store.data.origin.y;
+      rect.width = width * this.store.data.scale;
+      rect.height = height * this.store.data.scale;
+    }
+    //TODO 不考虑无画布尺寸时背景图片
+    // if(this.store.bkImg&&!isV){
+    //   rect.x = rect.x < 0 ? -rect.x : 0;
+    //   rect.y = rect.y < 0 ? -rect.y : 0;
+    //   rect.width = this.canvas.canvasRect.width;
+    //   rect.height =  this.canvas.canvasRect.height;
+    // }
     rect.x -= 10;
     rect.y -= 10;
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
-    ctx.strokeStyle = getGlobalColor(this.store);
+    ctx.strokeStyle = this.store.styles.color // getGlobalColor(this.store);
+    const background = this.store.data.background || this.store.styles.background;
+    // this.store.data.background || this.store.options.background;
+    if (background && isV) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        rect.width,
+        rect.height
+      );
+      ctx.restore();
+    }
+    if (this.store.bkImg) {
+      if (isV) {
+        ctx.drawImage(
+          this.store.bkImg,
+          0,
+          0,
+          rect.width,
+          rect.height
+        );
+      } else {
+        // const x = rect.x < 0 ? -rect.x : 0;
+        // const y = rect.y < 0 ? -rect.y : 0;
+        // ctx.drawImage(
+        //   this.store.bkImg,
+        //   x,
+        //   y,
+        //   this.canvas.canvasRect.width,
+        //   this.canvas.canvasRect.height
+        // );
+      }
+    }
+    if (background && !isV) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      ctx.fillRect(
+        0,
+        0,
+        rect.width+20,
+        rect.height+20
+      );
+      ctx.restore();
+
+    }
+    // if(this.store.bkImg&&!isV){
+    //   ctx.translate(
+    //     this.store.data.x,
+    //     this.store.data.y
+    //   );
+    // }
     for (const pen of this.store.data.pens) {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
@@ -4842,7 +4987,7 @@ export class Meta2d {
       if (this.map && this.map.isShow) {
         this.map.show();
       }
-      if (this.canvas.scroll && this.canvas.scroll.isShow) {
+      if (this.canvas && this.canvas.scroll && this.canvas.scroll.isShow) {
         this.canvas.scroll.resize();
       }
     }, 500);
@@ -4896,7 +5041,7 @@ export class Meta2d {
    * @param pens 本次改变的 pens
    */
   initImageCanvas(pens: Pen[]) {
-    this.canvas.initImageCanvas(pens);
+    this.canvas && this.canvas.initImageCanvas(pens);
   }
 
   /**
@@ -4904,7 +5049,7 @@ export class Meta2d {
    * @param pens 本次改变的 pens
    */
   initTemplateCanvas(pens: Pen[]) {
-    this.canvas.initTemplateCanvas(pens);
+    this.canvas && this.canvas.initTemplateCanvas(pens);
   }
 
   /**
@@ -5654,6 +5799,7 @@ export class Meta2d {
     this.closeSocket();
     this.closeNetwork();
     this.closeAll();
+    le5leTheme.destroyThemeSheet(this.store.id);
     this.store.emitter.all.clear(); // 内存释放
     this.canvas.destroy();
     this.canvas = undefined;

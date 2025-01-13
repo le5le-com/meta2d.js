@@ -141,7 +141,8 @@ export let mindBoxPlugin = {
         meta2d.updateLineType(line, (meta2d.findOne(pen.mind.rootId) as any).mind.lineStyle);
         meta2d.setValue({
           id: line.id,
-          lineWidth: root.mind.lineWidth
+          lineWidth: root.mind.lineWidth,
+          ...(child.mind.line || {})
         }, {
           render: false
         });
@@ -483,12 +484,13 @@ export let mindBoxPlugin = {
           // TODO 此处还未考虑name与tag相等的情况
           let isAdd = isIntersection(mindBoxPlugin.target, pens[0].tags) || mindBoxPlugin.target.includes(pens[0].name);
           // 是否为根节点
-          if (isAdd && pens && pens.length === 1 && !pens[0].mind) {
+          if (isAdd && pens && pens.length === 1 && !pens[0].mind?.load) {
             let pen = pens[0];
             pen.disableAnchor = true;
             pen.disableRotate = true;
-            pen.mind = {
+            pen.mind = Object.assign({
               isRoot: true,
+              load: true,
               type: 'node',
               preNodeId: null,
               rootId: pen.id,
@@ -504,7 +506,7 @@ export let mindBoxPlugin = {
               visible: true,
               lineWidth: 2,
               level: 0,
-            };
+            },pen.mind || {});
             // 在根节点上新增
             pen.mind.mindboxOption = optionMap.get(isIntersection(mindBoxPlugin.target,pen.tags,true )?.[0])|| optionMap.get(pens[0].name);
             mindBoxPlugin.combineToolBox(pen);
@@ -622,7 +624,7 @@ export let mindBoxPlugin = {
         maxWidth += maxObj.maxWidth;
         maxHeight = maxHeight > maxObj.maxHeight ? maxHeight : maxObj.maxHeight;
       }
-      maxWidth += +mindBoxPlugin.childrenGap * (children.length - 1);
+      maxWidth += (+pen.mind.childrenGap || +mindBoxPlugin.childrenGap) * (children.length - 1);
       maxW = maxWidth > worldRect.width ? maxWidth : worldRect.width;
       pen.mind.maxHeight = maxHeight;
       pen.mind.maxWidth = maxW;
@@ -951,6 +953,44 @@ export let mindBoxPlugin = {
         this[option] = options[option];
       }
     }
+  },
+
+  /**
+   * @description 从json数据中创建脑图图形
+   * json数据结构
+   * [{
+   *    text:'',
+   *    name:'',
+   *    mind:{
+   *    }
+   *    childNodes:[{
+   *      pen
+   *    }]
+   * }]
+   * */
+  async _recursionLoad(node,father){
+    let _father = null
+    if(!father){ // 若无father 则代表为根节点
+      _father = await meta2d.addPen(node,true)
+    }else{
+      _father = await this.addNode(father,0,'mindNode2',node)
+    }
+
+    if(node.childNodes){
+      for (const childNode of node.childNodes) {
+        await this._recursionLoad(childNode, _father)
+      }
+    }
+    return _father
+  },
+  async loadFromJson(json: any[]) {
+    const res = []
+    if(json != null && typeof json[Symbol.iterator] === 'function'){
+      for (let rootNode of json) {
+        res.push(await this._recursionLoad(rootNode))
+      }
+    }
+    return res
   }
 };
 

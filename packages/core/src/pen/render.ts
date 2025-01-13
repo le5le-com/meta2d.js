@@ -955,14 +955,12 @@ export function drawImage(
  */
 export function getTextColor(pen: Pen, store: Meta2dStore) {
   const { textColor, color } = pen.calculative;
-  const { data, options } = store;
+  const { styles } = store;
   return (
     textColor ||
     color ||
-    data.textColor ||
-    data.color ||
-    options.textColor ||
-    options.color
+    styles.textColor ||
+    styles.color
   );
 }
 
@@ -997,9 +995,9 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
       pen.disabledColor ||
       pSBC(0.4, getTextColor(pen, store));
   } else if (pen.calculative.hover) {
-    fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
+    fill = pen.hoverTextColor || pen.hoverColor || store.styles.hoverColor;
   } else if (pen.calculative.active) {
-    fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
+    fill = pen.activeTextColor || pen.activeColor || store.styles.activeColor;
   }
   let gradient = undefined;
   if (textType === Gradient.Linear) {
@@ -1134,9 +1132,9 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
 
   let fill: string = undefined;
   if (pen.calculative.hover) {
-    fill = pen.hoverTextColor || pen.hoverColor || store.options.hoverColor;
+    fill = pen.hoverTextColor || pen.hoverColor || store.styles.hoverColor;
   } else if (pen.calculative.active) {
-    fill = pen.activeTextColor || pen.activeColor || store.options.activeColor;
+    fill = pen.activeTextColor || pen.activeColor || store.styles.activeColor;
   }
   ctx.fillStyle = fill || getTextColor(pen, store);
 
@@ -1385,38 +1383,38 @@ export function renderPen(
   if (pen.calculative.disabled) {
     _stroke =
       pen.disabledColor ||
-      store.options.disabledColor ||
-      pSBC(0.4, pen.calculative.color || getGlobalColor(store));
+      store.styles.disabledColor ||
+      pSBC(0.4, pen.calculative.color || store.styles.color);
     fill =
       pen.disabledBackground ||
-      store.options.disabledBackground ||
-      pSBC(0.4, pen.calculative.background || store.data.penBackground);
+      store.styles.disabledBackground ||
+      pSBC(0.4, pen.calculative.background || store.styles.penBackground);
   } else if (pen.mouseDownValid && pen.calculative.mouseDown) {
     _stroke =
       pen.mouseDownColor ||
-      pSBC(-0.4, pen.calculative.color || getGlobalColor(store));
+      pSBC(-0.4, pen.calculative.color || store.styles.color);
     fill =
       pen.mouseDownBackground ||
-      pSBC(-0.4, pen.calculative.background || store.data.penBackground);
+      pSBC(-0.4, pen.calculative.background || store.styles.penBackground);
   } else if (pen.switch && pen.calculative.checked) {
     if(!pen.calculative.bkType){
       fill = pen.onBackground;
     }
   } else if (pen.calculative.hover) {
-    _stroke = pen.hoverColor || store.options.hoverColor;
-    fill = pen.hoverBackground || store.options.hoverBackground;
+    _stroke = pen.hoverColor || store.styles.hoverColor;
+    fill = pen.hoverBackground || store.styles.hoverBackground;
     //  ctx.fillStyle = fill;
     //  fill && (setBack = false);
   } else if (pen.calculative.active) {
-    _stroke = pen.activeColor || store.options.activeColor;
-    fill = pen.activeBackground || store.options.activeBackground;
+    _stroke = pen.activeColor || store.styles.activeColor;
+    fill = pen.activeBackground || store.styles.activeBackground;
     // ctx.fillStyle = fill;
     // fill && (setBack = false);
   } else if (pen.calculative.isDock) {
     if (pen.type === PenType.Line) {
-      _stroke = store.options.dockPenColor;
+      _stroke = store.styles.dockPenColor;
     } else {
-      fill = rgba(store.options.dockPenColor, 0.2);
+      fill = rgba(store.styles.dockPenColor, 0.2);
       //  ctx.fillStyle = fill;
       //  fill && (setBack = false);
     }
@@ -1445,7 +1443,7 @@ export function renderPen(
         stroke = strokeLinearGradient(ctx, pen);
       }
     } else {
-      stroke = pen.calculative.color || (pen.type ? store.data.lineColor : '') || getGlobalColor(store);
+      stroke = pen.calculative.color || (pen.type ? store.data.lineColor : '') || store.styles.color;
     }
     ctx.strokeStyle = _stroke || stroke;
   }
@@ -1484,7 +1482,7 @@ export function renderPen(
         back = drawBkRadialGradient(ctx, pen);
       }
     } else {
-      back = pen.calculative.background || store.data.penBackground;
+      back = pen.calculative.background || store.styles.penBackground;
     }
     ctx.fillStyle = fill || back;
     fill = !!back;
@@ -1639,13 +1637,13 @@ export function renderPenRaw(
   }
   let fill: any;
   if (pen.calculative.hover) {
-    ctx.strokeStyle = pen.hoverColor || store.options.hoverColor;
-    ctx.fillStyle = pen.hoverBackground || store.options.hoverBackground;
-    fill = pen.hoverBackground || store.options.hoverBackground;
+    ctx.strokeStyle = pen.hoverColor || store.styles.hoverColor;
+    ctx.fillStyle = pen.hoverBackground || store.styles.hoverBackground;
+    fill = pen.hoverBackground || store.styles.hoverBackground;
   } else if (pen.calculative.active) {
-    ctx.strokeStyle = pen.activeColor || store.options.activeColor;
-    ctx.fillStyle = pen.activeBackground || store.options.activeBackground;
-    fill = pen.activeBackground || store.options.activeBackground;
+    ctx.strokeStyle = pen.activeColor || store.styles.activeColor;
+    ctx.fillStyle = pen.activeBackground || store.styles.activeBackground;
+    fill = pen.activeBackground || store.styles.activeBackground;
   } else {
     if (pen.strokeImage) {
       if (pen.calculative.strokeImg) {
@@ -1664,7 +1662,7 @@ export function renderPenRaw(
       ) {
         lineGradientFlag = true;
       } else {
-        stroke = pen.calculative.color || getGlobalColor(store);
+        stroke = pen.calculative.color || store.styles.color; //getGlobalColor(store);
       }
       ctx.strokeStyle = stroke;
     }
@@ -1899,7 +1897,8 @@ export function ctxDrawPath(
         const color =
           pen.calculative.progressColor ||
           pen.calculative.color ||
-          store.options.activeColor;
+          store.options.activeColor ||
+          store.data.color;
         grd.addColorStop(0, color);
         grd.addColorStop(1, color);
       }
@@ -2065,11 +2064,11 @@ export function setCtxLineAnimate(
   pen: Pen,
   store: Meta2dStore
 ) {
-  ctx.strokeStyle = pen.animateColor || store.options.animateColor;
+  ctx.strokeStyle = pen.animateColor || store.styles.animateColor;
   if (pen.animateShadow) {
     ctx.shadowBlur = pen.animateShadowBlur || pen.animateLineWidth || 6;
     ctx.shadowColor =
-      pen.animateShadowColor || pen.animateColor || store.options.animateColor;
+      pen.animateShadowColor || pen.animateColor || store.styles.animateColor;
   }
   pen.calculative.animateLineWidth &&
     (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);
@@ -2109,11 +2108,11 @@ export function setCtxLineAnimate(
       ctx.setLineDash([0.1, pen.length]);
       break;
     case LineAnimateType.Arrow:
-      ctx.fillStyle = pen.animateColor || store.options.animateColor;
+      ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
     case LineAnimateType.WaterDrop:
-      ctx.fillStyle = pen.animateColor || store.options.animateColor;
+      ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
     default:
@@ -2147,7 +2146,7 @@ export function renderLineAnchors(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   ctx.save();
   ctx.lineWidth = 1;
-  ctx.fillStyle = pen.activeColor || store.options.activeColor;
+  ctx.fillStyle = pen.activeColor || store.styles.activeColor;//store.options.activeColor;
   pen.calculative.worldAnchors.forEach((pt) => {
     !pt.hidden && !pt.isTemp && renderAnchor(ctx, pt, pen);
   });
@@ -2893,7 +2892,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
       return 0;
     }
 
-    const pos = (now - pen.calculative.start) % pen.calculative.duration;
+    const pos = (now - pen.calculative.start) % pen.calculative.duration || pen.calculative.duration;
     let d = 0;
     for (const frame of pen.frames) {
       d += frame.duration;
@@ -2907,20 +2906,24 @@ export function setNodeAnimate(pen: Pen, now: number) {
     if (!pen.frames[frameIndex]) {
       return true;
     }
-
-    pen.calculative.frameDuration = pen.frames[frameIndex].duration;
-    pen.calculative.frameStart =
-      pen.calculative.start + pen.calculative.duration * (cycleIndex - 1);
-    pen.calculative.frameEnd =
-      pen.calculative.frameStart + pen.calculative.frameDuration;
-
     // 换帧
-    const frameChanged = frameIndex !== pen.calculative.frameIndex;
+    let frameChanged = false;
+    if (frameIndex !== pen.calculative.frameIndex) {
+      frameChanged = true;
+      pen.calculative.frameIndex = frameIndex;
+      pen.calculative.frameDuration = pen.frames[frameIndex].duration;
+      if (frameIndex > 0) {
+        pen.calculative.frameStart += pen.frames[frameIndex-1].duration;
+      }
+      pen.calculative.frameEnd = pen.calculative.frameStart + pen.calculative.frameDuration;
+    }
     // 新循环播放
-    const cycleChanged = cycleIndex > pen.calculative.cycleIndex;
-
-    frameChanged && (pen.calculative.frameIndex = frameIndex);
-    cycleChanged && (pen.calculative.cycleIndex = cycleIndex);
+    let cycleChanged = false;
+    if (cycleIndex > pen.calculative.cycleIndex) {
+      pen.calculative.cycleIndex = cycleIndex;
+      pen.calculative.frameStart = pen.calculative.start + pen.calculative.duration * (cycleIndex - 1);
+      cycleChanged = true;
+    }
 
     if (frameChanged || cycleChanged) {
       // 以初始位置为参考点。因为网页在后台时，不执行动画帧，网页恢复显示时，位置不确定
@@ -2954,10 +2957,8 @@ export function setNodeAnimate(pen: Pen, now: number) {
     }
   }
 
-  const process =
-    ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
-  setNodeAnimateProcess(pen, process);
-
+  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
+  process  > 0 && setNodeAnimateProcess(pen, process);
   return true;
 }
 
@@ -2986,6 +2987,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
   }
 
   const frame = pen.frames[pen.calculative.frameIndex];
+  const scale = pen.calculative.canvas.store.data.scale;
   for (const k in frame) {
     if (k === 'duration') {
       continue;
@@ -3005,24 +3007,60 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
       );
       pen.calculative.patchFlags = true;
     } else if (k === 'x') {
-      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
       pen.calculative.worldRect.x = pen.calculative.initRect.x + lastVal;
       pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
+      pen.calculative.worldRect.center.x = pen.calculative.initRect.center.x + lastVal;
+      if (pen.calculative.worldRect.pivot?.x) {
+        pen.calculative.worldRect.pivot.x =
+          pen.calculative.initRect.pivot?.x + lastVal;
+      }
       translateRect(
         pen.calculative.worldRect,
-        frame[k] * process * pen.calculative.canvas.store.data.scale,
+        frame[k] * process * scale,
         0
       );
       pen.calculative.patchFlags = true;
     } else if (k === 'y') {
-      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex);
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
       pen.calculative.worldRect.y = pen.calculative.initRect.y + lastVal;
       pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
+      pen.calculative.worldRect.center.y =
+        pen.calculative.initRect.center.y + lastVal;
+
+      if (pen.calculative.worldRect.pivot?.x) {
+        pen.calculative.worldRect.pivot.y =
+          pen.calculative.initRect.pivot?.y + lastVal;
+      }
+
       translateRect(
         pen.calculative.worldRect,
         0,
-        frame[k] * process * pen.calculative.canvas.store.data.scale
+        frame[k] * process * scale
       );
+      pen.calculative.patchFlags = true;
+    }else if (k === 'width') {
+      //仅考虑抽屉效果
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
+      pen.calculative.worldRect.width = pen.calculative.initRect.width + lastVal;
+      pen.calculative.worldRect.ex = pen.calculative.initRect.ex + lastVal;
+      pen.calculative.worldRect.center.x = pen.calculative.initRect.center.x + lastVal;
+
+      let value = frame[k] * process * scale;
+      pen.calculative.worldRect.width += value;
+      pen.calculative.worldRect.ex += value;
+      pen.calculative.worldRect.center.x += value;
+      pen.calculative.patchFlags = true;
+    }else if (k === 'height') {
+      const lastVal = getFrameValue(pen, k, pen.calculative.frameIndex)*scale;
+      pen.calculative.worldRect.height = pen.calculative.initRect.height + lastVal;
+      pen.calculative.worldRect.ey = pen.calculative.initRect.ey + lastVal;
+      pen.calculative.worldRect.center.y = pen.calculative.initRect.center.y + lastVal;
+
+      let value = frame[k] * process * scale;
+      pen.calculative.worldRect.height += value;
+      pen.calculative.worldRect.ey += value;
+      pen.calculative.worldRect.center.y += value;
       pen.calculative.patchFlags = true;
     } else if (k === 'rotate') {
       if (pen.prevFrame[k] >= 360) {
@@ -3079,11 +3117,11 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
           // } else {
           //   pen.calculative.canvas.canvasImage.init();
           // }
-          if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
-            pen.calculative.canvas.canvasImageBottom.init();
-          } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
-            pen.calculative.canvas.canvasImage.init();
-          }
+          // if (pen.canvasLayer === CanvasLayer.CanvasImageBottom) {
+          //   pen.calculative.canvas.canvasImageBottom.init();
+          // } else if (pen.canvasLayer === CanvasLayer.CanvasImage) {
+          //   pen.calculative.canvas.canvasImage.init();
+          // }
         } else if (pen.children?.length) {
           const childs = getAllChildren(pen, pen.calculative.canvas.store);
           pen.calculative.canvas.initImageCanvas(childs);
@@ -3412,13 +3450,18 @@ export function calcInView(pen: Pen, calcChild = false) {
   }
 
   pen.calculative.inView = true;
-  if (
-    !isShowChild(pen, store) ||
+  if(!isShowChild(pen, store)){
+    pen.calculative.inView = false;
+  }else if (
     pen.visible == false ||
     pen.calculative.visible == false
   ) {
     pen.calculative.inView = false;
-  } else {
+    if((pen.canvasLayer === CanvasLayer.CanvasImageBottom||pen.canvasLayer===CanvasLayer.CanvasImage)&& pen.frames?.length){
+      pen.calculative.inView = pen.frames.some(obj => obj.hasOwnProperty('visible'));
+    }
+  } 
+  if(pen.calculative.inView){
     const { x, y, width, height, rotate } = pen.calculative.worldRect;
     const penRect: Rect = {
       x: x + store.data.x,
@@ -3541,10 +3584,11 @@ function commandTransfer(command,pen,startX,startY){
   // VISIO
   const map = {
     'visio':dealWithVisio,
-    'dxf':dealWithDXF
+    'dxf':dealWithDXF,
+    'canvas': dealWithCanvas
   };
   // CAD
-  return map[pen.parseType](command,pen,startX,startY);
+  return map[pen.parseType]?.(command,pen,startX,startY) || command;
 }
 
 function dealWithDXF(command,pen,startX,startY) {
@@ -3617,6 +3661,85 @@ function dealWithDXF(command,pen,startX,startY) {
         c:'_fillStyle',
         v:{
           value:pen.color || command.v.value
+        }
+      };
+    default:
+      const c = {
+        c:command.c,
+        v:{
+          ...command.v,
+        }
+      };
+      if((c.v.x)!==undefined)c.v.x = command.v.x * (width / originWidth) + x;
+      if(c.v.y!==undefined)c.v.y = (command.v.y * (height / originHeight)) + y;
+      return c;
+  }
+}
+
+function dealWithCanvas(command, pen, startX, startY) {
+
+  const { x, y, width, height } = pen.calculative.worldRect;
+  const {originWidth,originHeight} = pen.origin;
+  switch (command.c) {
+    case "beginPath":
+      return {
+        c:'beginPath',
+        v:{}
+      };
+    case "closePath":
+      return {
+        c:'closePath',
+        v:{}
+      };
+    case "moveTo":
+      return {
+        c:'moveTo',
+        v:{
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y
+        }
+      };
+    case "lineTo":
+      return {
+        c:'lineTo',
+        v:{
+          x: command.v.x * (width / originWidth) + x,
+          y: command.v.y * (height / originHeight) + y
+        }
+      };
+    case "arc":
+      return {
+        c:'ellipse',
+        v:{
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
+          startAngle:command.v.startAngle,
+          endAngle: command.v.endAngle,
+          a:command.v.aclockwise ?? true
+        }
+      };
+    case "ellipse":
+      return {
+        c:'ellipse',
+        v:{
+          x:command.v.x * (width / originWidth) + x,
+          y:(command.v.y * (height / originHeight)) + y,
+          rx:command.v.xr * (width / originWidth),
+          ry:command.v.yr * (height / originHeight),
+          rotation:command.v.rotation || 0,
+          startAngle:command.v.startAngle,
+          endAngle: command.v.endAngle,
+          a:command.v.aclockwise ?? true
+        }
+      };
+    case "_font":
+      return {
+        c:'_font',
+        v:{
+          value:command.v.fontSize * pen.calculative.canvas.store.data.scale + 'px ' + (command.v.fontFamily || pen.calculative.canvas.store.options.fontFamily)
         }
       };
     default:

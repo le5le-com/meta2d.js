@@ -17,7 +17,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
     // return;
   }
 
-  const data = pen.calculative.canvas.store.data;
+  const store = pen.calculative.canvas.store;
   const options = pen.calculative.canvas.store.options;
   // calcBallRect(pen);
 
@@ -42,7 +42,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
 
   // draw active bar
   // ctx.fillStyle = pen.activeColor || data.activeColor || options.activeColor;
-  let activeColor =  pen.activeColor || options.activeColor;
+  let activeColor =  pen.activeColor || store.styles.activeColor;
   if(pen.disabled){
     activeColor = pen.disabledColor || pSBC(0.6,activeColor);
   }

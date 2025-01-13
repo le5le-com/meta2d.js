@@ -254,6 +254,10 @@ export class CanvasImage {
         if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
           continue;
         }
+        if(pen.visible === false || pen.calculative.visible === false){
+          //动画控制显示隐藏
+          continue;
+        }
         pen.calculative.imageDrawed = true;
         ctx.save();
         ctxFlip(ctx, pen);
@@ -272,6 +276,9 @@ export class CanvasImage {
         }
         // if (pen.template) {
         if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
+          continue;
+        }
+        if(pen.visible === false || pen.calculative.visible === false){
           continue;
         }
         if (this.store.animates.has(getParent(pen, true))) {
@@ -309,7 +316,7 @@ export class CanvasImage {
       ctx.save();
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.fillStyle = '#ffffff66';
-      ctx.strokeStyle = this.store.options.activeColor;
+      ctx.strokeStyle = this.store.styles.activeColor;
       this.store.data.fits?.forEach((item, index) => {
         ctx.fillRect(
           x + width * item.x,

@@ -276,7 +276,9 @@ function variableParse(html: string) {
   // 匹配单独的属性
   const attributeRegex = /(\w+)\s*=\s*(['"])(.*?)\2/g;
   // 匹配双花括号中的变量
-  const variableRegex = /{{\s*([\w.+\-? :()']*)\s*}}/g;
+  const variableRegex = /{{\s*([^}]*)\s*}}/g;
+  // const variableRegex = /{{\s*([\w.+\-? :()'\u4e00-\u9fa5]*)\s*}}/g;
+  // const variableRegex = /{{\s*([\w.+\-? :()']*)\s*}}/g;
 
   let tagMatch;
   while ((tagMatch = tagRegex.exec(html)) !== null) {
