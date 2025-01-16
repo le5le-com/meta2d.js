@@ -63,6 +63,10 @@ export function getToken() {
 }
 
 export async function getMeta2dData(store: Meta2dStore, id: string) {
+  if(globalThis.getMeta2dData){
+    globalThis.getMeta2dData(id);
+    return;
+  }
   const netWork = store.options.navigatorNetWork;
   const collection =
     location.href.includes('2d.') || location.href.includes('/2d') ? '2d' : 'v';
