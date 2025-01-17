@@ -64,8 +64,7 @@ export function getToken() {
 
 export async function getMeta2dData(store: Meta2dStore, id: string) {
   if(globalThis.getMeta2dData){
-    globalThis.getMeta2dData(id);
-    return;
+    return globalThis.getMeta2dData(id);
   }
   const netWork = store.options.navigatorNetWork;
   const collection =
