@@ -76,6 +76,9 @@ export async function getMeta2dData(store: Meta2dStore, id: string) {
     if (d) {
       //离线部署包
       url = `./projects/${id}`;
+      const _url = new URL(window.location as any);
+      _url.searchParams.set('data', id);
+      history.pushState({}, '', _url);
     }
   }
 

@@ -663,6 +663,7 @@ export class Meta2d {
     const data = await getMeta2dData(this.store, id);
     if (data) {
       this.open(data);
+      this.fitView(true, 10);
     }
   }
 
