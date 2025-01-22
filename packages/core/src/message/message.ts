@@ -32,6 +32,7 @@ export interface MessageOptions {
   placement?: string; //位置
   duration?: number; //定时销毁时间 为0时不销毁
   closeBtn?: boolean; //是否显示关闭按钮
+  height?:number;
 }
 
 export const messageList: {
@@ -47,6 +48,7 @@ export class Message {
   content: string;
   theme: Theme; //主题
   placement: string; //位置
+  height:number;
   id: string;
   constructor(public parentElement: HTMLElement, options: MessageOptions) {
     this.box = document.createElement('div');
@@ -128,6 +130,7 @@ export class Message {
     this.duration = options.duration ?? 3000;
     this.placement = options.placement || 'top';
     this.theme = options.theme || 'info';
+    this.height = options.height;
     // this.init();
   }
 
@@ -152,19 +155,19 @@ export class Message {
   setPosition(placement: string, index: number = 0) {
     switch (placement) {
       case 'top':
-        this.box.style.top = `${30 + index * 60}px`;
+        this.box.style.top = `${30 + index * (this.height|| 60)}px`;
         this.box.style.left = '50%';
         break;
       case 'bottom':
-        this.box.style.bottom = `${30 + index * 60}px`;
+        this.box.style.bottom = `${30 + index * (this.height|| 60)}px`;
         this.box.style.left = '50%';
         break;
       case 'left':
-        this.box.style.top = `${30 + index * 60}px`;
+        this.box.style.top = `${30 + index * (this.height|| 60)}px`;
         this.box.style.left = '30px';
         break;
       case 'right':
-        this.box.style.top = `${30 + index * 60}px`;
+        this.box.style.top = `${30 + index * (this.height|| 60)}px`;
         this.box.style.right = '30px';
         break;
     }
