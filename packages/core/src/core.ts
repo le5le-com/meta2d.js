@@ -51,6 +51,7 @@ import {
   useStore,
   Network,
   HttpOptions,
+  Sql,
 } from './store';
 import {
   formatPadding,
@@ -1117,6 +1118,8 @@ export class Meta2d {
   initBinds() {
     this.jetLinksList = [];
     this.store.bind = {};
+    const devices = [];
+    const properties = [];
     this.store.data.pens.forEach((pen) => {
       pen.realTimes?.forEach((realTime) => {
         if (realTime.bind && realTime.bind.id) {
@@ -1182,9 +1185,53 @@ export class Meta2d {
               });
             }
           }
+          if(realTime.bind.class === 'iot'){
+            let bind = realTime.bind.id.split('#');
+            let idx = devices.findIndex((item) => item.deviceId === bind[0]);
+            if(idx > -1){
+              if (!devices[idx].properties.includes(bind[1])) {
+                devices[idx].properties.push(bind[1]);
+              }
+            }else{
+              devices.push({
+                deviceId: bind[0],
+                properties: [bind[1]],
+                token: realTime.bind.token
+              });
+            }
+            let index = properties.findIndex((item) => item.key === realTime.bind.id);
+            if (index === -1) {
+              properties.push({
+                key: realTime.bind.id,
+                label: realTime.bind.label,
+              });
+            }
+          }else if(realTime.bind.class === 'sql'){
+            let bind = realTime.bind.id.split('#');
+            const sql = this.store.data.sqls.find((item) => item.bindId === bind[0]);  
+            if(sql){
+              if(!sql.keys){
+                sql.keys = [];
+              }
+              bind.shift();
+              const key = bind.join('#');
+              if(!sql.keys.includes(key)){
+                sql.keys.push(key);
+              }
+            }
+          }
         }
       });
     });
+    if(devices.length){
+      if(!this.store.data.iot){
+        this.store.data.iot = {};
+      }
+      this.store.data.iot.devices = devices;
+    }
+    if(properties.length){
+      this.store.data.iot.list = properties;
+    }
   }
 
   connectSocket() {
@@ -2343,61 +2390,75 @@ export class Meta2d {
             method: net.method,
             body: net.body,
           });
-        } else if (net.protocol === 'iot') {
-          const token = await this.getIotToken(net.devices);
-          //物联网设备
-          if (net.method === 'mqtt') {
-            net.index = mqttIndex;
-            this.mqttClients[mqttIndex] = mqtt.connect(net.url);
-            this.mqttClients[mqttIndex].on(
-              'message',
-              (topic: string, message: Buffer) => {
-                this.socketCallback(message.toString(), {
-                  topic: `le5le-iot/properties/${token}`,
-                  type: 'iot',
-                  url: net.url,
-                  method: 'mqtt',
-                });
-              }
-            );
-            this.mqttClients[mqttIndex].on('error', (error) => {
-              this.store.emitter.emit('error', { type: 'mqtt', error });
-            });
-            this.mqttClients[mqttIndex].subscribe(
-              `le5le-iot/properties/${token}`
-            );
-            mqttIndex += 1;
-          } else if (net.method === 'websocket') {
-            net.index = websocketIndex;
-            this.websockets[websocketIndex] = new WebSocket(
-              `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
-                location.host
-              }/api/ws/iot/properties`,
-              token
-            );
-            this.websockets[websocketIndex].onmessage = (e) => {
-              this.socketCallback(e.data, { type: 'iot', method: 'websocket' });
-            };
-            this.websockets[websocketIndex].onerror = (error) => {
-              this.store.emitter.emit('error', { type: 'websocket', error });
-            };
-            websocketIndex += 1;
-          }
-        } else if (net.protocol === 'sql') {
-          await this.doSqlCode('list', net.dbId, net.sql);
-          if (net.interval) {
-            net.index = sqlIndex;
-            this.sqlTimerList[sqlIndex] = setInterval(async () => {
-              await this.doSqlCode('list', net.dbId, net.sql);
-            }, net.interval);
-            sqlIndex += 1;
-          }
-        } else if (net.protocol === 'ADIIOT') {
+        }else if (net.protocol === 'ADIIOT') {
           connectJetLinks(this,net);
         }
       });
     }
     this.onNetworkConnect(https);
+    this.connectIot();
+    this.connectSqls();
+  }
+
+  iotMqttClient:MqttClient;
+  iotTimer: any;
+  iotWebsocketClient:WebSocket;
+  async connectIot(){
+    const { iot } = this.store.data;
+    if(!(iot&&iot?.devices?.length)){
+      return;
+    }
+    const token = await this.getIotToken(iot.devices,iot.protocol==='websocket'?1:undefined);
+    //物联网设备
+    // if(iot.protocol === 'mqtt'){
+      const url ='ws://192.168.110.148:8083/mqtt'; //`${location.protocol === 'https:'?'wss':'ws'}://${iot.host}:${location.protocol === 'https:'?'8084':'8083'}/mqtt`
+      this.iotMqttClient = mqtt.connect(url);
+      this.iotMqttClient.on('message', (topic: string, message: Buffer) => {
+        this.socketCallback(message.toString(), {
+          topic:`le5le-iot/properties/${token}`,
+          type: 'iot', 
+          url,
+          method: 'mqtt'
+        });
+      })
+      this.iotMqttClient.on('error', (error) => {
+        this.store.emitter.emit('error', { type: 'mqtt', error });
+      });
+      this.iotMqttClient.subscribe(`le5le-iot/properties/${token}`);
+      this.iotTimer = setInterval(()=>{
+        this.iotMqttClient && this.iotMqttClient.publish(`le5le-iot/subscribe/ping`, token);
+      },600000);
+    // }else if(iot.protocol === 'websocket'){
+    //   const url = 'ws://192.168.110.6/api/ws/iot/properties'// `${location.protocol === 'https:'?'wss':'ws'}://${location.host}/api/ws/iot/properties`
+    //   this.iotWebsocketClient = new WebSocket(
+    //     url,
+    //     token
+    //   );
+    //   this.iotWebsocketClient.onmessage = (e) => {
+    //     this.socketCallback(e.data, { type: 'iot', method: 'websocket' });   
+    //   };
+    //   this.iotWebsocketClient.onerror = (error) => {
+    //     this.store.emitter.emit('error', { type: 'websocket', error });
+    //   };
+    // }
+  }
+  //  type SqlType = 'list' | 'get' | 'exec' | 'add' | 'update' | 'delete';
+  
+  connectSqls(){
+    const { sqls } = this.store.data;
+    if(sqls&&sqls.length){
+      let sqlIndex = 0;
+      sqls.forEach( async(sql)=>{
+        await this.doSqlCode(sql);
+        if(sql.interval){
+            sql.index = sqlIndex;
+            this.sqlTimerList[sqlIndex] = setInterval(async () => {
+              await this.doSqlCode(sql);
+            }, sql.interval);
+            sqlIndex += 1;
+          }
+        })
+    }
   }
 
   connectNetWebSocket(net: Network) {
@@ -2434,32 +2495,44 @@ export class Meta2d {
     };
   }
 
-  async getIotToken(devices: any) {
+  async getIotToken(devices:any, type:number){
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
-      body: JSON.stringify({ devices: devices }),
+      body:JSON.stringify({devices: devices,type}),
     });
     if (res.ok) {
       const data = await res.text();
       return JSON.parse(data).token;
     }
   }
-
-  async doSqlCode(type: string, dbid: string, sql: string) {
-    const res: Response = await fetch(`/api/iot/data/sql/${type}`, {
+  async doSqlCode(sql:Sql){
+    const method = sql.method || 'get';
+    let _sql = sql.sql;
+    if(method === 'list'){
+      _sql+= ` LIMIT ${sql.pageSize||20}`+(sql.current>1?(' OFFSET '+(sql.current-1)*sql.pageSize):'');
+    }
+    const res: Response = await fetch( `/api/iot/data/sql/${method}`, {
       method: 'POST',
-      body: JSON.stringify({ dbid, sql }),
+      headers:{
+         Authorization: `Bearer ${getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
+      },
+      body:JSON.stringify({ dbid:sql.dbid,sql:_sql,}),
     });
     if (res.ok) {
-      const data = await res.text();
-      if (data) {
-        this.socketCallback(data, {
-          type: 'sql',
-          url: `/api/iot/data/sql/${type}`,
+      let data = await res.text();
+      if(data){
+        const arr = [];
+        data = JSON.parse(data);
+        sql.keys?.forEach((key)=>{
+          arr.push({id: sql.bindId+'#'+ key,value:getter(data,key.split('#').join('.'))});
         });
+
+        arr.push({id:sql.bindId,value:data});
+        console.log("arr",arr);
+        this.socketCallback(JSON.stringify(arr), { type: 'sql', url: `/api/iot/data/sql/${method}`,method });
       }
     }
-  }
+  }  
 
   randomString(e: number) {
     e = e || 32;
@@ -2798,7 +2871,20 @@ export class Meta2d {
         clearInterval(_sqlTimer);
         _sqlTimer = undefined;
       });
+    if(this.iotMqttClient){
+      this.iotMqttClient.end();
+      this.iotMqttClient = undefined;
+    }
+    clearInterval(this.iotTimer);
+    this.iotTimer = undefined;
+    
+    // if(this.iotWebsocketClient){
+    //   this.iotWebsocketClient.onclose = undefined;
+    //   this.iotWebsocketClient.close();
+    //   this.iotWebsocketClient = undefined;
+    // }
     closeJetLinks(this);
+
   }
 
   socketCallback(

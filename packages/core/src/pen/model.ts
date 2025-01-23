@@ -372,6 +372,7 @@ export interface Pen extends Rect {
   apiHeaders?: any;
   apiBody?: any;
   apiEnable?: boolean;
+  sql?: string; // 数据源sql
   container?:boolean; //是否是容器组件
   disabled?:boolean; //是否禁用
   disabledColor?:string; //禁用颜色
