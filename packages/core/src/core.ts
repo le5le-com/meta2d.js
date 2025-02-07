@@ -2408,10 +2408,15 @@ export class Meta2d {
     if(!(iot&&iot?.devices?.length)){
       return;
     }
+    const url =  globalThis.iotUrl || await this.getMqttUrl();
+    if(!url){
+      console.warn('iot Request address error')
+      return;
+    }
     const token = await this.getIotToken(iot.devices,iot.protocol==='websocket'?1:undefined);
     //物联网设备
     // if(iot.protocol === 'mqtt'){
-      const url ='ws://192.168.110.148:8083/mqtt'; //`${location.protocol === 'https:'?'wss':'ws'}://${iot.host}:${location.protocol === 'https:'?'8084':'8083'}/mqtt`
+      // const url ='ws://192.168.110.148:8083/mqtt'; //`${location.protocol === 'https:'?'wss':'ws'}://${iot.host}:${location.protocol === 'https:'?'8084':'8083'}/mqtt`
       this.iotMqttClient = mqtt.connect(url);
       this.iotMqttClient.on('message', (topic: string, message: Buffer) => {
         this.socketCallback(message.toString(), {
@@ -2427,7 +2432,7 @@ export class Meta2d {
       this.iotMqttClient.subscribe(`le5le-iot/properties/${token}`);
       this.iotTimer = setInterval(()=>{
         this.iotMqttClient && this.iotMqttClient.publish(`le5le-iot/subscribe/ping`, token);
-      },600000);
+      },300000);
     // }else if(iot.protocol === 'websocket'){
     //   const url = 'ws://192.168.110.6/api/ws/iot/properties'// `${location.protocol === 'https:'?'wss':'ws'}://${location.host}/api/ws/iot/properties`
     //   this.iotWebsocketClient = new WebSocket(
@@ -2495,6 +2500,21 @@ export class Meta2d {
     };
   }
 
+  async getMqttUrl(){
+    const res: Response = await fetch('/api/iot/app/mqtt', {
+      method: 'GET',
+    });
+    if (res.ok) {
+      const data = await res.text();
+      let results = JSON.parse(data);
+      let port = results.wssPort||results.wsPort;
+      if(!port){
+        return 
+      }
+      return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}`
+    }
+  }
+
   async getIotToken(devices:any, type:number){
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
@@ -2505,6 +2525,7 @@ export class Meta2d {
       return JSON.parse(data).token;
     }
   }
+  
   async doSqlCode(sql:Sql){
     const method = sql.method || 'get';
     let _sql = sql.sql;
