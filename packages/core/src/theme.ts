@@ -62,22 +62,56 @@ export const le5leTheme = {
   "style_prefix": "le5le_",
   "vendor_css_prefix": "--le-",
   "dark": [
-    'textColor: #e3e8f4',
+    'textColor: rgba(255,255,255,0.90)',
+    'textColor-6: rgba(255,255,255,0.60)',
+    'textColor-1: rgba(255,255,255,1)',
+    'textTHColor: rgba(255,255,255,0.40)', //表格表头颜色
     'textPrimaryColor: #7f838c',
     'textSecondColor: rgba(255,255,255,0.90)',
     'textDisabledColor: rgba(255,255,255,0.40)',
     'textActiveColor: #0052d9',
 
+    'buttonBg: #4583ff',
+    'buttonDisabledBg: #0057CC',
+    'buttonDisabledColor: #FFFFFF26',
+    'buttonGradient: linear-gradient(360deg,#4583ff, #33ccff)',
+
     'containerBg: rgba(21,24,28,0.95)',
+    'tabBg: #303746',
+    'tabActiveBg: #4583ff',
+    'tabDisabledBg: #282e3b',
+    'tabDisabledColor: rgba(255,255,255,0.26)',
+    'tabActiveColor: rgba(255,255,255,0.90)',
     'formBg: #2a2f36',
     'datePickerCellActiveRangeBg: #2c4475',
-    'componentDisabledBgColor: #252b37',
-    'dataPickerCellActiveBg: #4583ff',
+    'componentDisabledBg: #282e3b',
+    'dataPickerCellActiveBg: #001b52',
     'activeBg: #25375b',
     'popContentBg: #252b37',
     'disabledBg: #7f838c',
+    'disabledBg-2: #282E3B',
 
-    'borderColor: #4583ff',
+    'tableStripeColor: rgba(150,192,255,0.10)', //表格斑马纹颜色
+    'tableMenuBg: #303746', //表格上方菜单的背景色
+    'tableMenuDividerBg: rgb(76 81 94)', //表格上方菜单的分割线的背景色
+    'tableMenuHandleBg: #454f64', //表格上方菜单手柄的背景色
+    'tableMenuColor: #bdc7db', //表格上方菜单的颜色
+    'tableMenuBorderColor: transparent', //表格上方菜单的颜色
+    'tableColRowBg: #303746', //表格上方菜单的颜色
+    'tableColRowActiveBg: #4A5263', //表格上方菜单的active颜色
+    'tableColRowColor: rgba(255,255,255,0.6)', //表格col和row的背景色
+
+    'paginationColor: rgba(255,255,255,0.6)', //分页器的颜色
+    'paginationActiveColor: #4583ff', //分页器的颜色
+    'paginationActiveBg: rgba(69,131,255,0.20)', //分页器的active颜色
+
+    'sliderBg: #303746', //分页器的active颜色
+    'sliderBtnBg: #000000', //分页器的active颜色
+
+    'notificationBorderColor: transparent', //分页器的active颜色
+    'notificationBg: #282e3b', //分页器的active颜色
+
+    'borderColor: #424b61',
     'borderOutsideColor: #4583ff',
     'formBorderColor: #424b61',
     'borderInsideColor: rgba(255,255,255,0.40)',
@@ -86,23 +120,57 @@ export const le5leTheme = {
     'radius: 4px',
   ],
   "light": [
-    'textColor: #7f838c',
+    'textColor: rgba(0,0,0,0.90)',
+    'textColor-6: rgba(0,0,0,0.60)',
+    'textColor-1: rgba(0,0,0,1)',
+    'textTHColor: rgba(0,0,0,0.40)',
     'textPrimaryColor: #7f838c',
     'textSecondColor: #171B27',
     'textDisabledColor: rgba(0, 0, 0, 0.6)',
     'textActiveColor: #0052d9',
 
+    'buttonBg: #4583ff',
+    'buttonDisabledBg: #b5c7ff',
+    'buttonDisabledColor: #FFFFFF',
+    'buttonGradient: linear-gradient(360deg,#4583ff, #33ccff)',
+
     'containerBg: #ffffff',
+    'tabBg: #f1f2f5',
+    'tabActiveBg: #4583ff',
+    'tabDisabledBg: #e2e6ea',
+    'tabDisabledColor: rgba(0,0,0,0.26)',
+    'tabActiveColor: #ffffff',
     'formBg: #EFF1F4',
     'datePickerCellActiveRangeBg: #f2f3ff',
-    'componentDisabledBgColor: #eee',
-    'dataPickerCellActiveBg: #0052d9',
+    'componentDisabledBg: #eee',
+    'dataPickerCellActiveBg: #edefff',
     'activeBg: #f2f3ff',
     'popContentBg: #ffffff',
     'disabledBg: #7f838c',
+    'disabledBg-2: #E2E6EA',
 
-    'borderColor: #424B61',
-    'borderOutsideColor: transparent',
+    'tableStripeColor: #f1f2f5',//表格斑马纹颜色
+    'tableMenuBg: #ffffff', //表格上方菜单的背景色
+    'tableMenuDividerBg: #e2e6ea', //表格上方菜单的分割线的背景色
+    'tableMenuHandleBg: #ebedf1', //表格上方菜单手柄的背景色
+    'tableMenuColor: rgba(0,0,0,0.60)', //表格上方菜单的颜色
+    'tableMenuBorderColor: #e2e6ea', //表格上方菜单的颜色
+    'tableColRowBg: #ebedf1', //表格col和row的背景色
+    'tableColRowActiveBg: #bcc4d0', //表格上方菜单的active颜色
+    'tableColRowColor: rgba(0,0,0,0.4)', //表格col和row的背景色
+
+    'paginationColor: rgba(0,0,0,0.6)', //分页器的颜色
+    'paginationActiveColor: #ffffff', //分页器的颜色
+    'paginationActiveBg: #4583ff', //分页器的active颜色
+
+    'sliderBg: #e2e6ea', //分页器的active颜色
+    'sliderBtnBg: #ffffff', //分页器的active颜色
+
+    'notificationBorderColor: transparent', //分页器的active颜色
+    'notificationBg: #ffffff', //分页器的active颜色
+
+    'borderColor: #d6dbe3',
+    'borderOutsideColor: #d6dbe3',
     'formBorderColor: #d4d6d9',
     'borderInsideColor: #e7e7e7',
 

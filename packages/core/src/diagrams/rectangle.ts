@@ -45,8 +45,14 @@ function setTheme(pen:any,styles:any){
     }
   }
   pen.hoverTextColor = styles["textPrimaryColor"];
-  pen.iconColor = styles["textPrimaryColor"];
+  pen.iconColor = styles["buttonBg"];
+  pen.calculative.iconColor = styles["buttonBg"];
+  // 很多input表单，全局消息都是复用的rectangle，这里的设置会互相影响，暂时不知如何区分
   pen.hoverBackground = styles["formBg"];
   pen.activeBackground = styles["activeBg"];
+  pen.color = styles["borderColor"]
+  pen.calculative.color = styles["borderColor"];
+  pen.textColor = styles["textColor"]
+  pen.calculative.textColor = styles["textColor"];
 }
 export const square = rectangle;
