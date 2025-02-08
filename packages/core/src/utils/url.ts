@@ -41,7 +41,31 @@ export function getCookie(name: string) {
   }
 }
 
+export enum TokenType {
+  None,
+  LocalStorage,
+  Cookie,
+}
+
+const isLe5le = location.host.indexOf('le5le.com') !== -1;
+
+export function getToken() {
+  const key = globalThis.le5leTokenName ?? 'token';
+  switch (globalThis.le5leTokenType) {
+    case TokenType.LocalStorage:
+      return localStorage.getItem(key);
+    case TokenType.Cookie:
+      return getCookie(key);
+    default:
+      const token = isLe5le ? getCookie(key) : localStorage.getItem(key);
+      return token;
+  }
+}
+
 export async function getMeta2dData(store: Meta2dStore, id: string) {
+  if(globalThis.getMeta2dData){
+    return await globalThis.getMeta2dData(id);
+  }
   const netWork = store.options.navigatorNetWork;
   const collection =
     location.href.includes('2d.') || location.href.includes('/2d') ? '2d' : 'v';
@@ -52,6 +76,9 @@ export async function getMeta2dData(store: Meta2dStore, id: string) {
     if (d) {
       //离线部署包
       url = `./projects/${id}`;
+      const _url = new URL(window.location as any);
+      _url.searchParams.set('data', id);
+      history.pushState({}, '', _url);
     }
   }
 
@@ -69,16 +96,11 @@ export async function getMeta2dData(store: Meta2dStore, id: string) {
   }
   const res: Response = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${
-        getCookie('token') ||
-        localStorage.getItem('token') ||
-        new URLSearchParams(location.search).get('token') ||
-        ''
-      }`,
+      Authorization: `Bearer ${getToken()}`,
     },
     method,
     body:
-      netWork?.method === 'GET'
+      method === 'GET'
         ? undefined
         : (JSON.stringify({ id: id }) as any),
   });

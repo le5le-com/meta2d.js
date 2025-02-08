@@ -6712,7 +6712,7 @@ export class Canvas {
       offset && (this.store.clipboard.offset = offset);
       pos && (this.store.clipboard.pos = pos);
     }
-    if(!this.keyOptions.F){
+    if(!this.keyOptions?.F){
       this.store.clipboard.pens.forEach((pen: Pen) => {
         delete pen.copyIndex;
       });
@@ -8077,7 +8077,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.styles.background;
+    const background = this.store.data.background || this.store.styles.background;
       // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
@@ -8145,10 +8145,11 @@ export class Canvas {
     } else {
       // 平移画布，画笔的 worldRect 不变化
       if (isV) {
-        ctx.translate(
-          -oldRect.x + p[3] * _scale || 0,
-          -oldRect.y + p[0] * _scale || 0
-        );
+        // ctx.translate(
+        //   -oldRect.x + p[3] * _scale || 0,
+        //   -oldRect.y + p[0] * _scale || 0
+        // );
+        ctx.translate(-rect.x, -rect.y);
       } else {
         ctx.translate(
           (isRight ? storeData.x : -oldRect.x) + p[3] * _scale || 0,
@@ -8226,7 +8227,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.styles.background;
+    const background = this.store.data.background || this.store.styles.background;
     // this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色
@@ -8247,6 +8248,9 @@ export class Canvas {
       if (ids.includes(pen.id)) {
         // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
         if (!isShowChild(pen, this.store) || pen.visible == false) {
+          continue;
+        }
+        if (pen.name === 'combine' && !pen.draw){
           continue;
         }
         const { active } = pen.calculative;

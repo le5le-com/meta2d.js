@@ -373,6 +373,7 @@ export interface Pen extends Rect {
   apiHeaders?: any;
   apiBody?: any;
   apiEnable?: boolean;
+  sql?: string; // 数据源sql
   container?:boolean; //是否是容器组件
   disabled?:boolean; //是否禁用
   disabledColor?:string; //禁用颜色
@@ -381,11 +382,11 @@ export interface Pen extends Rect {
   inputType?:string; //输入框类型
   productId?:string; //产品id
   deviceId?:string;//关联的设备id
-  pivot?:Point; //旋转中心 
+  pivot?:Point; //旋转中心
   noOnBinds?:boolean; //是否禁用绑定事件
   interaction?:boolean; //是否开启交互 组合时将不会被锁定
   childHover?:boolean; //子元素hover和active是否生效
-  childActive?:boolean; 
+  childActive?:boolean;
   draw?:boolean; //是否绘制 针对combine
   copyIndex?:number; //复制的索引 临时属性
   formId?:string; //表单id
@@ -683,6 +684,7 @@ export const isDomShapes = [
   'echarts',
   'highcharts',
   'lightningCharts',
+  'vue'
 ];
 
 /**

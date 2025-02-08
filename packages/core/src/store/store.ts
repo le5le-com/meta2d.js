@@ -58,6 +58,8 @@ export interface Meta2dData {
   height?: number;
   networkInterval?: number;
   networks?: Network[];
+  iot?:Iot;
+  sqls?:Sql[];
   iconUrls?: string[];
   mockData?: Function;
   name?: string;
@@ -112,7 +114,7 @@ export interface DataMock {
 
 export interface Network {
   name?: string;
-  protocol?: 'mqtt' | 'websocket' | 'http' | 'iot' | 'sql'| 'jetLinks';
+  protocol?: 'mqtt' | 'websocket' | 'http' | 'iot' | 'sql'| 'ADIIOT';
   type?: string; //subscribe
   url?: string;
   //websocket
@@ -134,8 +136,38 @@ export interface Network {
   times?: number; // 临时 重连次数
   index?: number; // 临时 索引
   devices?: any[]; //物联网设备,
-  dbId?: string; //数据库id
+  dbid?: string; //数据库id
   sql?: string; //sql语句
+}
+
+export interface Iot {
+  protocol?: 'mqtt' | 'websocket';
+  url?: string;
+  host?: string;
+  devices?:{
+    deviceId:string;
+    properties:string[];
+    token:string;
+  }[];
+  list?:{
+    label:string;
+    key:string;
+  }[];
+  tree?:any;
+}
+
+export interface Sql {
+  interval?: number;
+  sql?:string;
+  dbid?: string;
+  dbType?:string;
+  name?:string;
+  bindId?: string;
+  index?: number;
+  method?: string;
+  pageSize?: number;
+  current?: number;
+  keys?: string[]; // 子数据点key
 }
 
 export interface HttpOptions {
