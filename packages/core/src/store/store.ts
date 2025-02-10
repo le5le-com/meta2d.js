@@ -114,7 +114,7 @@ export interface DataMock {
 
 export interface Network {
   name?: string;
-  protocol?: 'mqtt' | 'websocket' | 'http' | 'iot' | 'sql'| 'ADIIOT';
+  protocol?: 'mqtt' | 'websocket' | 'http' | 'iot' | 'sql'| 'ADIIOT'|'SSE';
   type?: string; //subscribe
   url?: string;
   //websocket
@@ -131,6 +131,8 @@ export interface Network {
   headers?: any; //请求头
   method?: string;
   body?: any;
+  //SSE
+  withCredentials?:boolean;
   data?: Network
   interval?: number; // http 请求间隔
   times?: number; // 临时 重连次数

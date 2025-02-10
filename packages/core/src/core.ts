@@ -93,6 +93,7 @@ export class Meta2d {
   mqttClient: MqttClient;
   websockets: WebSocket[];
   mqttClients: MqttClient[];
+  eventSources: EventSource[];
   penPluginMap: Map<
     PenPlugin,
     {
@@ -2323,8 +2324,10 @@ export class Meta2d {
       let mqttIndex = 0;
       this.mqttClients = [];
       let websocketIndex = 0;
+      let sseIndex = 0;
       let sqlIndex = 0;
       this.websockets = [];
+      this.eventSources = [];
       networks.forEach(async (net) => {
         // if (net.type === 'subscribe') {
         if (net.protocol === 'mqtt') {
@@ -2397,6 +2400,10 @@ export class Meta2d {
           });
         }else if (net.protocol === 'ADIIOT') {
           connectJetLinks(this,net);
+        }else if (net.protocol === 'SSE'){
+          net.index = sseIndex;
+          this.connectSSE(net);
+          sseIndex += 1;
         }
       });
     }
@@ -2471,6 +2478,26 @@ export class Meta2d {
     }
   }
 
+  connectSSE(net:Network){
+    this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
+    this.eventSources[net.index].onmessage = (e) => {
+      this.socketCallback(e.data, { type: 'SSE', url: net.url });
+    };
+    this.eventSources[net.index].onerror = (error) => {
+      this.store.emitter.emit('error', { type: 'SSE', error });
+    };
+  }
+
+  closeSSE(){
+    this.eventSources &&
+    this.eventSources.forEach((es) => {
+      if (es) {
+        es.close();
+        es = undefined;
+      }
+    });
+  }
+
   connectNetWebSocket(net: Network) {
     if (this.websockets[net.index]) {
       this.websockets[net.index].onclose = undefined;
@@ -2516,7 +2543,7 @@ export class Meta2d {
       if(!port){
         return 
       }
-      return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}`
+      return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}${results.path}`
     }
   }
 
@@ -2554,7 +2581,6 @@ export class Meta2d {
         });
 
         arr.push({id:sql.bindId,value:data});
-        console.log("arr",arr);
         this.socketCallback(JSON.stringify(arr), { type: 'sql', url: `/api/iot/data/sql/${method}`,method });
       }
     }
@@ -2910,7 +2936,7 @@ export class Meta2d {
     //   this.iotWebsocketClient = undefined;
     // }
     closeJetLinks(this);
-
+    this.closeSSE();
   }
 
   socketCallback(
