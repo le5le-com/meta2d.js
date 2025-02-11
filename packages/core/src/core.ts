@@ -80,7 +80,7 @@ import pkg from '../package.json';
 import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
-import { getCookie, getMeta2dData, queryURLParams } from './utils/url';
+import { getCookie, getMeta2dData, getToken, queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
 import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
@@ -2535,6 +2535,9 @@ export class Meta2d {
   async getMqttUrl(){
     const res: Response = await fetch('/api/iot/app/mqtt', {
       method: 'GET',
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
     });
     if (res.ok) {
       const data = await res.text();
@@ -2550,6 +2553,9 @@ export class Meta2d {
   async getIotToken(devices:any, type:number){
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
       body:JSON.stringify({devices: devices,type}),
     });
     if (res.ok) {
