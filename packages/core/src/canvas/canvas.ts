@@ -142,7 +142,7 @@ import { Title } from '../title';
 import { CanvasTemplate } from './canvasTemplate';
 import { getLinePoints } from '../diagrams/line';
 import { Popconfirm } from '../popconfirm';
-import { themeKeys } from '../theme';
+import { le5leTheme, themeKeys } from '../theme';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -4693,7 +4693,8 @@ export class Canvas {
       }
     });
     this.store.styles = {};
-    Object.assign(this.store.styles, options, data, theme);
+    const themeObj = le5leTheme.getThemeObj(this.store.data.theme);
+    Object.assign(this.store.styles, options, data, theme,themeObj);
   }
 
   render = (patchFlags?: number | boolean) => {
@@ -7168,7 +7169,7 @@ export class Canvas {
       // if (!this.store.data.locked) {
       //   this.inputRight.style.display = 'none';
       // }
-      this.dropdown.style.background = pen.dropdownBackground || '#fff';
+      this.dropdown.style.background = pen.dropdownBackground || this.store.styles["popContentBg"] || '#fff';
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.dropdown.style.width = this.inputParent.style.width;
       this.dropdown.style.fontSize = (pen.fontSize || 12) + 'px';
@@ -7654,11 +7655,11 @@ export class Canvas {
     li.onclick = this.selectDropdown;
     const pen = this.store.pens[this.inputDiv.dataset.penId];
     li.onmouseenter = () => {
-      li.style.background = pen.dropdownHoverBackground || '#eee';
+      li.style.background = pen.dropdownHoverBackground||this.store.styles["activeBg"] || '#eee';
       li.style.color = pen.dropdownHoverColor || '#bdc7db';
     };
     li.onmouseleave = () => {
-      li.style.background = pen.dropdownBackground || '#fff';
+      li.style.background = pen.dropdownBackground||this.store.styles["popContentBg"]  || '#fff';
       li.style.color = pen.dropdownColor || '#bdc7db';
     };
     this.dropdown.appendChild(li);

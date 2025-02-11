@@ -137,6 +137,8 @@ export interface Bind {
   case?: string;
   id?: string;
   label?: string;
+  class?: string;
+  token?: string;
 }
 
 export interface RealTime {
