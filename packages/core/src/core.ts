@@ -229,6 +229,7 @@ export class Meta2d {
         this.canvas.scroll && this.canvas.scroll.hide();
       }
     }
+    this.canvas?.initGlobalStyle();
   }
 
   getOptions() {
