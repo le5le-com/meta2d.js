@@ -145,7 +145,14 @@ export function getSendData(meta2d:Meta2d, pen: Pen, e: Event){
 
 export async function sendJetLinksData(meta2d:Meta2d, list:any[]){
   list.forEach(async (item) => {
-    const res:any = await fetch(`/api/device-instance/${item.deviceId}/property`, {
+    let deviceId = item.deviceId;
+    if(deviceId&&deviceId.indexOf('${') > -1){
+      let keys = deviceId.match(/(?<=\$\{).*?(?=\})/g);
+      if(keys?.length){
+        deviceId = meta2d.getDynamicParam(keys[0])||deviceId;
+      }
+    }
+    const res:any = await fetch(`/api/device-instance/${deviceId}/property`, {
       headers: {'X-Access-Token':localStorage.getItem('X-Access-Token') ||new URLSearchParams(location.search).get('X-Access-Token') ||''
       ,'Content-Type': 'application/json'},
       method: 'put',

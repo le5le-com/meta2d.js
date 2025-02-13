@@ -2,6 +2,9 @@ import { Pen } from '../pen';
 
 export function rectangle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;
+  if(!pen.setTheme){
+    pen.setTheme = setTheme;
+  }
   let wr = pen.calculative.borderRadius || 0,
     hr = wr;
   const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
@@ -25,5 +28,31 @@ export function rectangle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if (path instanceof Path2D) {
     return path;
   }
+}
+function setTheme(pen:any,styles:any){
+  if(!pen.affectByTheme){
+    return;
+  }
+  for (const key in styles) {
+    if (Object.prototype.hasOwnProperty.call(styles, key)) {
+      const element = styles[key];
+        if(pen.hasOwnProperty(key)){
+          pen[key] = element;
+        }
+        if(pen.calculative.hasOwnProperty(key)){
+          pen.calculative[key] = element;
+        }
+    }
+  }
+  pen.hoverTextColor = styles["textPrimaryColor"];
+  pen.iconColor = styles["buttonBg"];
+  pen.calculative.iconColor = styles["buttonBg"];
+  // 很多input表单，全局消息都是复用的rectangle，这里的设置会互相影响，暂时不知如何区分
+  pen.hoverBackground = styles["formBg"];
+  pen.activeBackground = styles["activeBg"];
+  pen.color = styles["borderColor"]
+  pen.calculative.color = styles["borderColor"];
+  pen.textColor = styles["textColor"]
+  pen.calculative.textColor = styles["textColor"];
 }
 export const square = rectangle;

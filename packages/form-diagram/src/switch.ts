@@ -4,6 +4,7 @@ import { pSBC } from '@meta2d/core';
 export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onClick) {
     pen.onClick = click;
+    pen.setTheme = setTheme;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -67,4 +68,19 @@ function click(pen: formPen) {
   pen.checked = !pen.checked;
   pen.calculative.canvas.store.emitter.emit('valueUpdate', pen);
   pen.calculative.canvas.render();
+}
+function setTheme(pen:any,styles:any){
+  for (const key in styles) {
+    if (Object.prototype.hasOwnProperty.call(styles, key)) {
+      const element = styles[key];
+        if(pen.hasOwnProperty(key)){
+          pen[key] = element;
+        }
+        if(pen.calculative.hasOwnProperty(key)){
+          pen.calculative[key] = element;
+        }
+    }
+  }
+  pen.onStrokeColor = styles["borderColor"];
+  pen.offStrokeColor = styles["borderColor"];
 }

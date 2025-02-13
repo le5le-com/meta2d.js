@@ -10,6 +10,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.onMouseDown = mouseDown;
     pen.onValue = onValue;
     pen.onBeforeValue = beforeValue;
+    pen.setTheme = setTheme;
   }
 
   if (!pen.calculative.barRect) {
@@ -178,4 +179,23 @@ function beforeValue(pen: formPen, value: any) {
   }
 
   return value;
+}
+function setTheme(pen:any,styles:any){
+  for (const key in styles) {
+    if (Object.prototype.hasOwnProperty.call(styles, key)) {
+      const element = styles[key];
+        if(pen.hasOwnProperty(key)){
+          pen[key] = element;
+        }
+        if(pen.calculative.hasOwnProperty(key)){
+          pen.calculative[key] = element;
+        }
+    }
+  }
+  pen.background = styles["sliderBg"];
+  pen.calculative.background = styles["sliderBg"];
+  pen.btnBackground = styles["sliderBtnBg"];
+  pen.calculative.btnBackground = styles["sliderBtnBg"];
+  pen.activeColor = styles["tabActiveBg"];
+  pen.calculative.activeColor = styles["tabActiveBg"];
 }
