@@ -16,6 +16,7 @@ export function radio(ctx: CanvasRenderingContext2D, pen: formPen) {
     }
     pen.onMouseDown = onMousedown;
     pen.onValue = onValue;
+    pen.onBeforeValue = beforeValue;
   }
   let x = pen.calculative.worldRect.x;
   let y = pen.calculative.worldRect.y;
@@ -251,5 +252,15 @@ function onMousedown(pen: formPen, e: Point) {
 }
 
 function onValue(pen: formPen) {
-  initOptions(pen);
+  if((pen.calculative as any).flag){
+    initOptions(pen);
+  }
+}
+
+function beforeValue(pen: formPen, value) {
+  (pen.calculative as any).flag = false;
+  if(value.options!==undefined||value.direction!==undefined||value.optionInterval!==undefined||value.optionHeight!==undefined){
+    (pen.calculative as any).flag = true; 
+  }
+  return value;
 }
