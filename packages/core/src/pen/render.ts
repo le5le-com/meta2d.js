@@ -3292,6 +3292,14 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
     elem.style.userSelect = 'none';
     elem.style.pointerEvents = 'none';
   }
+  if(pen.className){
+    elem.className = pen.className;
+  }
+  if(pen.styles){
+    for(let key in pen.styles){
+      elem.style[key] = pen.styles[key];
+    }
+  }
 }
 
 export function setElemImg(pen: Pen, elem: HTMLElement) {

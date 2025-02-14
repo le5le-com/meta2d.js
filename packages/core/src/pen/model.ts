@@ -394,6 +394,8 @@ export interface Pen extends Rect {
   formKey?:string; //表单key
   formValue?:string; //表单值对应的属性key
   formType?:string; //表单类型 reset or submit
+  className?:string;//dom样式
+  styles?:Object;
   calculative?: {
     x?: number;
     y?: number;
