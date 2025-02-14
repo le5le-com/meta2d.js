@@ -128,7 +128,7 @@ export class Dialog {
             color: #617b91;
             position: absolute;
             right:20px;
-            top:18px;
+            top:2px;
         }`
       );
       sheet.insertRule(
