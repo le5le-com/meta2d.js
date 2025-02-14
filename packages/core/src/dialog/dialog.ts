@@ -132,6 +132,12 @@ export class Dialog {
         }`
       );
       sheet.insertRule(
+        `.meta2d-dialog-close svg{
+            width: 18px;
+            height: 18px;
+        }`
+      );
+      sheet.insertRule(
         `.meta2d-dialog-close :hover{
             cursor: pointer;
         }`
@@ -180,10 +186,14 @@ export class Dialog {
       this.title.style.display = 'none';
       this.body.style.height = '100%';
       this.body.style.overflow= 'hidden';
+      this.close.style.top = '18px';
+      this.close.style.right = '20px';
     }else{
       this.dialog.style.padding = '16px 20px';
       this.title.style.display = 'block';
       this.body.style.height = 'calc(100% - 26px)';
+      this.close.style.top = '2px';
+      this.close.style.right = '2px';
     }
     if(rect) {
       this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
