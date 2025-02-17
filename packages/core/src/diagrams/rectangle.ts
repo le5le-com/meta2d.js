@@ -52,7 +52,7 @@ function setTheme(pen:any,styles:any){
   pen.activeBackground = styles["activeBg"];
   pen.color = styles["borderColor"]
   pen.calculative.color = styles["borderColor"];
-  pen.textColor = styles["textColor"]
-  pen.calculative.textColor = styles["textColor"];
+  pen.textColor = styles["textColor-9"]
+  pen.calculative.textColor = styles["textColor-9"];
 }
 export const square = rectangle;

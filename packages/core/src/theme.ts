@@ -62,10 +62,10 @@ export const le5leTheme = {
   "style_prefix": "le5le_",
   "vendor_css_prefix": "--le-",
   "dark": [
-    'textColor: rgba(255,255,255,0.90)',
+    'textColor-9: rgba(255,255,255,0.90)',
     'textColor-6: rgba(255,255,255,0.60)',
     'textColor-1: rgba(255,255,255,1)',
-    'textTHColor: rgba(255,255,255,0.40)', //表格表头颜色
+    'textColor-4: rgba(255,255,255,0.40)',
     'textPrimaryColor: #7f838c',
     'textSecondColor: rgba(255,255,255,0.90)',
     'textDisabledColor: rgba(255,255,255,0.40)',
@@ -120,10 +120,10 @@ export const le5leTheme = {
     'radius: 4px',
   ],
   "light": [
-    'textColor: rgba(0,0,0,0.90)',
+    'textColor-9: rgba(0,0,0,0.90)',
     'textColor-6: rgba(0,0,0,0.60)',
     'textColor-1: rgba(0,0,0,1)',
-    'textTHColor: rgba(0,0,0,0.40)',
+    'textColor-4: rgba(0,0,0,0.40)',
     'textPrimaryColor: #7f838c',
     'textSecondColor: #171B27',
     'textDisabledColor: rgba(0, 0, 0, 0.6)',
