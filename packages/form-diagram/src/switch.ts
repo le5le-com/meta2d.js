@@ -62,6 +62,9 @@ export function le5leSwitch(ctx: CanvasRenderingContext2D, pen: formPen) {
 }
 
 function click(pen: formPen) {
+  if(pen.disableDefaultClick){
+    return;
+  }
   if (pen.disabled || pen.disable) {
     return;
   }

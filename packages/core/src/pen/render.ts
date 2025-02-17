@@ -946,7 +946,16 @@ export function drawImage(
     ctx.drawImage(img, x, y, width, height);
     ctx.restore();
   } else {
-    ctx.drawImage(img, x, y, width, height);
+    let _y = y;
+    let offsety = 0;
+    if(pen.thumbImg){
+      // 缩略图 宽度充满 高度居中绘制
+      let _width = img.naturalWidth;
+      let _height = img.naturalHeight;
+      offsety = (height/width*_width-_height)/2;
+      _y = y + offsety;
+    }
+    ctx.drawImage(img, x, _y, width, height-2*offsety);
   }
 }
 
@@ -3282,6 +3291,14 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
     // pen.locked LockState.Disable 不响应鼠标
     elem.style.userSelect = 'none';
     elem.style.pointerEvents = 'none';
+  }
+  if(pen.className){
+    elem.className = pen.className;
+  }
+  if(pen.styles){
+    for(let key in pen.styles){
+      elem.style[key] = pen.styles[key];
+    }
   }
 }
 

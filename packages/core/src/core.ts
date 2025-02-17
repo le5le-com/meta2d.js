@@ -80,7 +80,7 @@ import pkg from '../package.json';
 import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
-import { getCookie, getMeta2dData, queryURLParams } from './utils/url';
+import { getCookie, getMeta2dData, getToken, queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
 import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
@@ -93,6 +93,7 @@ export class Meta2d {
   mqttClient: MqttClient;
   websockets: WebSocket[];
   mqttClients: MqttClient[];
+  eventSources: EventSource[];
   penPluginMap: Map<
     PenPlugin,
     {
@@ -228,6 +229,7 @@ export class Meta2d {
         this.canvas.scroll && this.canvas.scroll.hide();
       }
     }
+    this.canvas?.initGlobalStyle();
   }
 
   getOptions() {
@@ -2323,8 +2325,10 @@ export class Meta2d {
       let mqttIndex = 0;
       this.mqttClients = [];
       let websocketIndex = 0;
+      let sseIndex = 0;
       let sqlIndex = 0;
       this.websockets = [];
+      this.eventSources = [];
       networks.forEach(async (net) => {
         // if (net.type === 'subscribe') {
         if (net.protocol === 'mqtt') {
@@ -2397,6 +2401,10 @@ export class Meta2d {
           });
         }else if (net.protocol === 'ADIIOT') {
           connectJetLinks(this,net);
+        }else if (net.protocol === 'SSE'){
+          net.index = sseIndex;
+          this.connectSSE(net);
+          sseIndex += 1;
         }
       });
     }
@@ -2471,6 +2479,26 @@ export class Meta2d {
     }
   }
 
+  connectSSE(net:Network){
+    this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
+    this.eventSources[net.index].onmessage = (e) => {
+      this.socketCallback(e.data, { type: 'SSE', url: net.url });
+    };
+    this.eventSources[net.index].onerror = (error) => {
+      this.store.emitter.emit('error', { type: 'SSE', error });
+    };
+  }
+
+  closeSSE(){
+    this.eventSources &&
+    this.eventSources.forEach((es) => {
+      if (es) {
+        es.close();
+        es = undefined;
+      }
+    });
+  }
+
   connectNetWebSocket(net: Network) {
     if (this.websockets[net.index]) {
       this.websockets[net.index].onclose = undefined;
@@ -2508,6 +2536,9 @@ export class Meta2d {
   async getMqttUrl(){
     const res: Response = await fetch('/api/iot/app/mqtt', {
       method: 'GET',
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
     });
     if (res.ok) {
       const data = await res.text();
@@ -2516,13 +2547,16 @@ export class Meta2d {
       if(!port){
         return 
       }
-      return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}`
+      return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}${results.path}`
     }
   }
 
   async getIotToken(devices:any, type:number){
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
       body:JSON.stringify({devices: devices,type}),
     });
     if (res.ok) {
@@ -2554,7 +2588,6 @@ export class Meta2d {
         });
 
         arr.push({id:sql.bindId,value:data});
-        console.log("arr",arr);
         this.socketCallback(JSON.stringify(arr), { type: 'sql', url: `/api/iot/data/sql/${method}`,method });
       }
     }
@@ -2910,7 +2943,7 @@ export class Meta2d {
     //   this.iotWebsocketClient = undefined;
     // }
     closeJetLinks(this);
-
+    this.closeSSE();
   }
 
   socketCallback(
