@@ -232,6 +232,9 @@ export const le5leTheme = {
       document.head.removeChild(styleSheet.ownerNode);
     }
   },
+  addTheme(name,theme){
+    Object.assign(this,{[name]:theme})
+  },
   /**
    * @description 根据主题名称获取主题变量
    * @author Joseph Ho
