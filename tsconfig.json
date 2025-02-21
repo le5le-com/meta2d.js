@@ -18,7 +18,7 @@
     "downlevelIteration": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports":true,
-    "types": ["node","offscreencanvas"],
+    "types": ["node","offscreencanvas","zrender"],
     "paths": {
       "@meta2d/*": ["packages/*"],
     }

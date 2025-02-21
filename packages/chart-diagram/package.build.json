@@ -35,6 +35,7 @@
     "highcharts": "^10.0.0"
   },
   "dependencies": {
+    "@types/zrender": "^4.0.0",
     "@types/echarts": "^4.9.15"
   }
 }
