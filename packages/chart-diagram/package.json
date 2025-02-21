@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@meta2d/core": "workspace:*",
-    "@types/echarts": "4.9.15"
+    "@types/zrender": "^5.0.0",
+    "@types/echarts": "^4.9.15"
   }
 }
