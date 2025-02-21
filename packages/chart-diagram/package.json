@@ -33,6 +33,6 @@
   },
   "dependencies": {
     "@meta2d/core": "workspace:*",
-    "@types/echarts": "^4.9.15"
+    "@types/echarts": "4.9.15"
   }
 }

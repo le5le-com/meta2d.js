@@ -35,6 +35,6 @@
     "highcharts": "^10.0.0"
   },
   "dependencies": {
-    "@types/echarts": "^4.9.15"
+    "@types/echarts": "4.9.15"
   }
 }
