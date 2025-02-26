@@ -516,6 +516,15 @@ export class Meta2d {
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
+      if(e.data?.length){
+        const value: any = this.getSendData(e.data);
+        if(pen.formId && pen.formData){
+          //表单数据
+          Object.assign(value,pen.formData);
+        }
+        this.sendDataToNetWork(value, pen, e);
+        return;
+      }
       if (e.list?.length) {
         // if (e.targetType === 'id') {
         if (e.network && e.network.protocol === 'ADIIOT') {
@@ -606,6 +615,19 @@ export class Meta2d {
         ...e.extend,
       });
     };
+  }
+
+  getSendData(data:any[]){
+    const value: any = {};
+    data.forEach((item: any) => {
+      if(item.id&&item.id!=='固定值'){
+        const pen = this.findOne(item.id);
+        value[item.prop] = pen[item.key];
+      }else{
+        value[item.prop] = item.value;
+      }
+    });
+    return value;
   }
 
   getEventData(list: any, pen: Pen) {
@@ -703,6 +725,10 @@ export class Meta2d {
     if (network.data) {
       Object.assign(network, network.data);
       delete network.data;
+    }
+    if(network.protocol === 'iot'){
+      this.iotMqttClient &&  this.iotMqttClient.publish(`le5le-iot/properties/${this.store.data.iot?.token}`, JSON.stringify(value));
+      return;
     }
     if (!network.url) {
       return;
@@ -2427,6 +2453,7 @@ export class Meta2d {
       return;
     }
     const token = await this.getIotToken(iot.devices,iot.protocol==='websocket'?1:undefined);
+    iot.token = token;
     //物联网设备
     // if(iot.protocol === 'mqtt'){
       // const url ='ws://192.168.110.148:8083/mqtt'; //`${location.protocol === 'https:'?'wss':'ws'}://${iot.host}:${location.protocol === 'https:'?'8084':'8083'}/mqtt`

@@ -47,6 +47,12 @@ export interface Event {
   timeout?: number; //延时执行
   confirm?: string; //确认提示
   confirmTitle?: string; //确认提示标题
+  data?:{
+    key?:string;
+    value?:string;
+    id?:string;
+    prop?:string;
+  }[]
 }
 
 export enum EventAction {
