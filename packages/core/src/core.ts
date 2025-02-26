@@ -235,7 +235,38 @@ export class Meta2d {
   getOptions() {
     return this.store.options;
   }
-
+  /**
+   * @description
+   * @author Joseph Ho
+   * @date 21/02/2025
+   * @param {string} themeName 主题名
+   * @param {object} theme 主题变量字符串数组
+   * @returns {*}  
+   * @memberof Meta2d
+   */
+  registerTheme(themeName: string, theme: object){
+    // 校验数据
+    if(!Array.isArray(theme)){
+      return;
+    }
+    // 写一个正则，中间必须有且仅有1个冒号，结尾不能有分号，符合"A:B"的形式，冒号两边必须非空，允许有空格
+    const regex = /^\s*\S+\s*:\s*\S+\s*$/;
+    const ret = theme.every(el=>regex.test(el));
+    if(!ret){
+      return;
+    }
+    const obj = {},newTheme = [];
+    for (let i = 0; i < theme.length; i++) {
+      const item = theme[i];
+      const kvs = item.split(":");
+      const kvs0 = kvs[0].trim();
+      const kvs1 = kvs[1].trim();
+      newTheme.push([kvs0,kvs1].join(":"));
+      obj[kvs0] = kvs1;
+    }
+    le5leTheme.addTheme(themeName,newTheme);
+    this.store.theme[themeName] = obj;
+  }
   setTheme(theme: string) {
     this.store.data.theme = theme;
     this.setBackgroundColor(this.store.theme[theme].background);
