@@ -758,7 +758,7 @@ export class Meta2d {
       delete network.data;
     }
     if(network.protocol === 'iot'){
-      this.iotMqttClient &&  this.iotMqttClient.publish(`le5le-iot/properties/${this.store.data.iot?.token}`, JSON.stringify(value));
+      this.iotMqttClient &&  this.iotMqttClient.publish(`le5le-iot/property/set/${this.store.data.iot?.token}`, JSON.stringify(value));
       return;
     }
     if (!network.url) {
