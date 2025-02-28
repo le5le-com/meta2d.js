@@ -1286,6 +1286,28 @@ export class Meta2d {
           }
         }
       });
+      pen.events?.forEach((event)=>{
+        const actions = event.actions?.filter((item)=>item.action === EventAction.SendData);
+        actions?.forEach((action)=>{
+          action.data?.forEach((item)=>{
+            if(item.class === 'iot'){
+              let bind = item.prop.split('#');
+              let idx = devices.findIndex((item) => item.deviceId === bind[0]);
+              if(idx > -1){
+                if (!devices[idx].properties.includes(bind[1])) {
+                  devices[idx].properties.push(bind[1]);
+                }
+              }else{
+                devices.push({
+                  deviceId: bind[0],
+                  properties: [bind[1]],
+                  token: item.token
+                });
+              }
+            }
+          });
+        })
+      })
     });
     if(devices.length){
       if(!this.store.data.iot){
