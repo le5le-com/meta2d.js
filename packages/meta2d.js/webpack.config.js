@@ -6,7 +6,7 @@ module.exports = {
   output: {
     filename: 'meta2d.js',
     path: path.resolve(__dirname, '../../dist/meta2d.js'),
-    library: 'Meta2d',
+    library: 'Meta2dLib',
     libraryTarget: 'umd',
   },
   resolve: {
