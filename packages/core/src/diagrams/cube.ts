@@ -7,7 +7,7 @@ export function cube(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   const z: number = (pen as any).z;
   if (z > 1) {
-    offset = z;
+    offset = z * pen.calculative.canvas.store.data.scale;
   } else if (z > 0) {
     offset = width * z;
   }
