@@ -651,13 +651,32 @@ export class Meta2d {
   getSendData(data:any[]){
     const value: any = {};
     data.forEach((item: any) => {
-      if(item.id&&item.id!=='固定值'){
-        const pen = this.findOne(item.id);
-        value[item.prop] = pen[item.key];
-      }else{
-        value[item.prop] = item.value;
+      if(item.prop){
+        if(item.id&&item.id!=='固定值'){
+          const pen = this.findOne(item.id);
+          value[item.prop] = pen[item.key];
+        }else{
+          value[item.prop] = this.convertType(item.value,item.type);
+        }
       }
     });
+    return value;
+  }
+
+  convertType(value: string, type:string) {
+    if(typeof value === 'string'){
+      if(['switch','bool','boolean'].includes(type)){
+        if (value === 'false') {
+          return false;
+        } else if (value === 'true') {
+          return true;
+        }
+      }else if( ['integer','number','int','enum','double','float'].includes(type)){
+        if(!isNaN(Number(value))){
+          return Number(value);
+        }
+      }
+    }
     return value;
   }
 
