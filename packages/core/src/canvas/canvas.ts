@@ -966,7 +966,7 @@ export class Canvas {
       case 'G':
         //组合/解组
         if (e.ctrlKey || e.metaKey) {
-          if (e.altKey){
+          if (e.shiftKey){
             this.parent.uncombine();
           }else{
             if(this.store.active.length > 1){
