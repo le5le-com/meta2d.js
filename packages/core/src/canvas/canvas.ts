@@ -7103,6 +7103,25 @@ export class Canvas {
               this.store.pens[id].calculative.active = false;
               this.store.pens[id].calculative.hover = false;
             });
+            if(this.store.hover.parentId){
+              //组合图元 找命中率高的子图元
+              let id = this.store.hover.id;
+              const pt = this.calibrateMouse({ x: e.offsetX, y: e.offsetY });
+              let distance = Infinity;
+              this.store.pens[this.store.hover.parentId]?.children?.forEach((_id)=>{
+                const pen = this.store.pens[_id];
+                if(pointInRect(pt, pen.calculative.worldRect)){
+                  const dis = Math.sqrt((pt.x - pen.calculative.worldRect.center.x) ** 2  +(pt.y - pen.calculative.worldRect.center.y) ** 2 );
+                  if(dis < distance){
+                    distance = dis;
+                    id = _id;
+                  }
+                }
+                
+              });
+              this.store.hover = this.store.pens[id];
+              this.store.pens[id].calculative.hover = true;
+            }
             this.active([this.store.hover]);
           }
         }else{
