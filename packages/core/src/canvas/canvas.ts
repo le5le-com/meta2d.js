@@ -964,6 +964,18 @@ export class Canvas {
         break;
       case 'g':
       case 'G':
+        //组合/解组
+        if (e.ctrlKey || e.metaKey) {
+          if (e.altKey){
+            this.parent.uncombine();
+          }else{
+            if(this.store.active.length > 1){
+              this.parent.combine(this.store.active);
+            }
+          }
+          e.preventDefault();
+          break;
+        }
         // 进入移动瞄点状态
         if (this.hoverType === HoverType.NodeAnchor) {
           this.movingAnchor = this.store.hoverAnchor;
