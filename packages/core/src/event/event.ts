@@ -52,6 +52,8 @@ export interface Event {
     value?:string;
     id?:string;
     prop?:string;
+    class?:string;
+    token?:string;
   }[]
 }
 

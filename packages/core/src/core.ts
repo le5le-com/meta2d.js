@@ -651,13 +651,32 @@ export class Meta2d {
   getSendData(data:any[]){
     const value: any = {};
     data.forEach((item: any) => {
-      if(item.id&&item.id!=='固定值'){
-        const pen = this.findOne(item.id);
-        value[item.prop] = pen[item.key];
-      }else{
-        value[item.prop] = item.value;
+      if(item.prop){
+        if(item.id&&item.id!=='固定值'){
+          const pen = this.findOne(item.id);
+          value[item.prop] = pen[item.key];
+        }else{
+          value[item.prop] = this.convertType(item.value,item.type);
+        }
       }
     });
+    return value;
+  }
+
+  convertType(value: string, type:string) {
+    if(typeof value === 'string'){
+      if(['switch','bool','boolean'].includes(type)){
+        if (value === 'false') {
+          return false;
+        } else if (value === 'true') {
+          return true;
+        }
+      }else if( ['integer','number','int','enum','double','float'].includes(type)){
+        if(!isNaN(Number(value))){
+          return Number(value);
+        }
+      }
+    }
     return value;
   }
 
@@ -758,7 +777,7 @@ export class Meta2d {
       delete network.data;
     }
     if(network.protocol === 'iot'){
-      this.iotMqttClient &&  this.iotMqttClient.publish(`le5le-iot/properties/${this.store.data.iot?.token}`, JSON.stringify(value));
+      this.iotMqttClient &&  this.iotMqttClient.publish(`le5le-iot/property/set/${this.store.data.iot?.token}`, JSON.stringify(value));
       return;
     }
     if (!network.url) {
@@ -1286,6 +1305,28 @@ export class Meta2d {
           }
         }
       });
+      pen.events?.forEach((event)=>{
+        const actions = event.actions?.filter((item)=>item.action === EventAction.SendData);
+        actions?.forEach((action)=>{
+          action.data?.forEach((item)=>{
+            if(item.class === 'iot'){
+              let bind = item.prop.split('#');
+              let idx = devices.findIndex((item) => item.deviceId === bind[0]);
+              if(idx > -1){
+                if (!devices[idx].properties.includes(bind[1])) {
+                  devices[idx].properties.push(bind[1]);
+                }
+              }else{
+                devices.push({
+                  deviceId: bind[0],
+                  properties: [bind[1]],
+                  token: item.token
+                });
+              }
+            }
+          });
+        })
+      })
     });
     if(devices.length){
       if(!this.store.data.iot){
