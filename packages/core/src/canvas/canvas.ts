@@ -4738,7 +4738,9 @@ export class Canvas {
     this.renderBorder();
     this.renderHoverPoint();
     offscreenCtx.restore();
-    this.magnifierCanvas.render();
+    if(this.magnifierCanvas.magnifier) {
+      this.magnifierCanvas.render();
+    }
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
