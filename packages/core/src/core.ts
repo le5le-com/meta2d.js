@@ -1953,6 +1953,44 @@ export class Meta2d {
     }
     this.inactive();
   }
+ 
+  clearCombine(pen?: Pen) {
+    if (!pen && this.store.active) {
+      pen = this.store.active[0];
+    }
+    if (!pen || !pen.children) {
+      return;
+    }
+    const children = getAllChildren(pen,this.store);
+    children.forEach((child) => {
+      child.parentId = undefined;
+      child.x = child.calculative.worldRect.x;
+      child.y = child.calculative.worldRect.y;
+      child.width = child.calculative.worldRect.width;
+      child.height = child.calculative.worldRect.height;
+      child.locked = LockState.None;
+      child.calculative.active = undefined;
+      child.calculative.hover = false;
+      if(child.showChild !== undefined){
+        this.setVisible(child, true);
+      }
+      child.children = undefined;
+    });
+    const combineArr = [];
+    children.forEach((child,index)=>{
+      if(child.name === 'combine'){
+        child.children = undefined;
+        combineArr.push(child);
+      }
+    });
+    this.delete(combineArr,true,false);
+    pen.children = undefined;
+    if (this.isCombine(pen)) {
+      this.delete([pen],true,false);
+    }
+    //未考虑历史记录
+    this.inactive();
+  }
 
   appendChild(pens: Pen[] = this.store.active) {
     if (!pens) {
