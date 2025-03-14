@@ -2458,48 +2458,15 @@ export class Meta2d {
     const { networks } = this.store.data;
     const https = [];
     if (networks) {
-      let mqttIndex = 0;
+      let mqttIndex = 0, httpIndex = 0, websocketIndex = 0, sseIndex = 0;
       this.mqttClients = [];
-      let websocketIndex = 0;
-      let sseIndex = 0;
-      let sqlIndex = 0;
       this.websockets = [];
       this.eventSources = [];
       networks.forEach(async (net) => {
         // if (net.type === 'subscribe') {
         if (net.protocol === 'mqtt') {
           net.index = mqttIndex;
-          if (net.options.clientId && !net.options.customClientId) {
-            net.options.clientId = s8();
-          }
-          net.times = 0;
-          this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
-          this.mqttClients[mqttIndex].on(
-            'message',
-            (topic: string, message: Buffer) => {
-              this.socketCallback(message.toString(), {
-                topic,
-                type: 'mqtt',
-                url: net.url,
-              });
-            }
-          );
-          this.mqttClients[mqttIndex].on('error', (error) => {
-            this.store.emitter.emit('error', { type: 'mqtt', error });
-          });
-
-          this.mqttClients[mqttIndex].on('close', () => {
-            if (this.store.options.reconnetTimes) {
-              net.times++;
-              if (net.times >= this.store.options.reconnetTimes) {
-                net.times = 0;
-                this.mqttClients && this.mqttClients[net.index]?.end();
-              }
-            }
-          });
-          if (net.topics) {
-            this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
-          }
+          this.connectNetMqtt(net);
           mqttIndex += 1;
         } else if (net.protocol === 'websocket') {
           net.index = websocketIndex;
@@ -2528,6 +2495,7 @@ export class Meta2d {
 
           websocketIndex += 1;
         } else if (net.protocol === 'http') {
+          net.index = httpIndex;
           https.push({
             url: net.url,
             interval: net.interval,
@@ -2535,6 +2503,7 @@ export class Meta2d {
             method: net.method,
             body: net.body,
           });
+          httpIndex += 1;
         }else if (net.protocol === 'ADIIOT') {
           connectJetLinks(this,net);
         }else if (net.protocol === 'SSE'){
@@ -2547,6 +2516,39 @@ export class Meta2d {
     this.onNetworkConnect(https);
     this.connectIot();
     this.connectSqls();
+  }
+
+  reconnectNetwork(index:number){
+    const net = this.store.data.networks[index];
+    if (net.protocol === 'mqtt') {
+      this.mqttClients && this.mqttClients[net.index]?.end();
+      this.connectNetMqtt(net);
+    } else if (net.protocol === 'websocket') {
+      if(this.websockets && this.websockets[net.index]){
+        this.websockets[net.index].onclose = undefined;
+        this.websockets[net.index].close();
+        this.websockets[net.index] = undefined;
+      }
+      this.connectNetWebSocket(net);
+    }else if(net.protocol === 'http'){
+      if(this.updateTimerList){
+        clearInterval(this.updateTimerList[net.index]);
+        this.updateTimerList[net.index] = undefined;
+      }
+      const http = deepClone(net);
+      if (!this.store.data.cancelFirstConnect) {
+        this.requestHttp(http);
+      }
+      this.updateTimerList[net.index] = setInterval(async () => {
+        this.requestHttp(http);
+      }, http.interval || 1000);
+    }else if(net.protocol === 'SSE'){
+      if(this.eventSources){
+        this.eventSources[net.index]?.close();
+        this.eventSources[net.index] = undefined;
+      }
+      this.connectSSE(net);
+    }
   }
 
   iotMqttClient:MqttClient;
@@ -2636,14 +2638,70 @@ export class Meta2d {
     });
   }
 
+  connectNetMqtt(net:Network){
+    if (net.options.clientId && !net.options.customClientId) {
+      net.options.clientId = s8();
+    }
+    let url = net.url;
+    if(url.indexOf('${') > -1){
+      let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          url = url.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
+    net.times = 0;
+    this.mqttClients[net.index] = mqtt.connect(url, net.options);
+    this.mqttClients[net.index].on(
+      'message',
+      (topic: string, message: Buffer) => {
+        this.socketCallback(message.toString(), {
+          topic,
+          type: 'mqtt',
+          url: net.url,
+        });
+      }
+    );
+    this.mqttClients[net.index].on('error', (error) => {
+      this.store.emitter.emit('error', { type: 'mqtt', error });
+    });
+
+    this.mqttClients[net.index].on('close', () => {
+      if (this.store.options.reconnetTimes) {
+        net.times++;
+        if (net.times >= this.store.options.reconnetTimes) {
+          net.times = 0;
+          this.mqttClients && this.mqttClients[net.index]?.end();
+        }
+      }
+    });
+    if (net.topics) {
+      this.mqttClients[net.index].subscribe(net.topics.split(','));
+    }
+  }
+
   connectNetWebSocket(net: Network) {
     if (this.websockets[net.index]) {
       this.websockets[net.index].onclose = undefined;
       this.websockets[net.index]?.close();
       this.websockets[net.index] = undefined;
     }
+    let url = net.url;
+    if(url.indexOf('${') > -1){
+      let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          url = url.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
     this.websockets[net.index] = new WebSocket(
-      net.url,
+      url,
       net.protocols || undefined
     );
     this.websockets[net.index].onmessage = (e) => {
@@ -2933,7 +2991,7 @@ export class Meta2d {
   //获取动态参数
   getDynamicParam(key: string) {
     let params = queryURLParams();
-    let value = params[key] || localStorage[key] || getCookie(key) || '';
+    let value = params[key] || localStorage[key] || getCookie(key) || globalThis[key] || '';
     return value;
   }
 
