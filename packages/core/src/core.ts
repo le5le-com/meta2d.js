@@ -241,7 +241,7 @@ export class Meta2d {
    * @date 21/02/2025
    * @param {string} themeName 主题名
    * @param {object} theme 主题变量字符串数组
-   * @returns {*}  
+   * @returns {*}
    * @memberof Meta2d
    */
   registerTheme(themeName: string, theme: object){
@@ -277,7 +277,7 @@ export class Meta2d {
       ruleColor: this.store.theme[theme].ruleColor,
       ruleOptions: this.store.theme[theme].ruleOptions,
     });
-    // 更新全局的主题css变量 
+    // 更新全局的主题css变量
     le5leTheme.updateCssRule(this.store.id, theme);
     this.canvas.initGlobalStyle();
 
@@ -1012,7 +1012,7 @@ export class Meta2d {
     this.clear(false, data?.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
-      // 根据图纸的主题设置主题 
+      // 根据图纸的主题设置主题
       if(data.theme){
         this.setTheme(data.theme);
       }
@@ -1291,7 +1291,7 @@ export class Meta2d {
             }
           }else if(realTime.bind.class === 'sql'){
             let bind = realTime.bind.id.split('#');
-            const sql = this.store.data.sqls.find((item) => item.bindId === bind[0]);  
+            const sql = this.store.data.sqls.find((item) => item.bindId === bind[0]);
             if(sql){
               if(!sql.keys){
                 sql.keys = [];
@@ -2573,7 +2573,7 @@ export class Meta2d {
       this.iotMqttClient.on('message', (topic: string, message: Buffer) => {
         this.socketCallback(message.toString(), {
           topic:`le5le-iot/properties/${token}`,
-          type: 'iot', 
+          type: 'iot',
           url,
           method: 'mqtt'
         });
@@ -2592,7 +2592,7 @@ export class Meta2d {
     //     token
     //   );
     //   this.iotWebsocketClient.onmessage = (e) => {
-    //     this.socketCallback(e.data, { type: 'iot', method: 'websocket' });   
+    //     this.socketCallback(e.data, { type: 'iot', method: 'websocket' });
     //   };
     //   this.iotWebsocketClient.onerror = (error) => {
     //     this.store.emitter.emit('error', { type: 'websocket', error });
@@ -2600,7 +2600,7 @@ export class Meta2d {
     // }
   }
   //  type SqlType = 'list' | 'get' | 'exec' | 'add' | 'update' | 'delete';
-  
+
   connectSqls(){
     const { sqls } = this.store.data;
     if(sqls&&sqls.length){
@@ -2740,7 +2740,7 @@ export class Meta2d {
       let results = JSON.parse(data);
       let port = results.wssPort||results.wsPort;
       if(!port){
-        return 
+        return
       }
       return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}${results.path}`
     }
@@ -2759,7 +2759,7 @@ export class Meta2d {
       return JSON.parse(data).token;
     }
   }
-  
+
   async doSqlCode(sql:Sql){
     const method = sql.method || 'get';
     let _sql = sql.sql;
@@ -2786,7 +2786,7 @@ export class Meta2d {
         this.socketCallback(JSON.stringify(arr), { type: 'sql', url: `/api/iot/data/sql/${method}`,method });
       }
     }
-  }  
+  }
 
   randomString(e: number) {
     e = e || 32;
@@ -3131,7 +3131,7 @@ export class Meta2d {
     }
     clearInterval(this.iotTimer);
     this.iotTimer = undefined;
-    
+
     // if(this.iotWebsocketClient){
     //   this.iotWebsocketClient.onclose = undefined;
     //   this.iotWebsocketClient.close();
