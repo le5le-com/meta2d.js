@@ -4286,8 +4286,10 @@ export class Meta2d {
       this.store.data.fits?.forEach((fit) => {
         let pens = [];
         fit.children.forEach((id) => {
-          this.store.pens[id].locked = LockState.None;
-          pens.push(this.store.pens[id]);
+          if(this.store.pens[id]){
+            this.store.pens[id].locked = LockState.None;
+            pens.push(this.store.pens[id]);
+          }
         });
         let r = wGap / 2;
         if (fit.left && fit.right) {
@@ -4379,8 +4381,10 @@ export class Meta2d {
       this.store.data.fits?.forEach((fit) => {
         let pens = [];
         fit.children.forEach((id) => {
-          this.store.pens[id].locked = LockState.None;
-          pens.push(this.store.pens[id]);
+          if(this.store.pens[id]){
+            this.store.pens[id].locked = LockState.None;
+            pens.push(this.store.pens[id]);
+          }
         });
         let r = hGap / 2;
         if (fit.top && fit.bottom) {
