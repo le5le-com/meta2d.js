@@ -542,7 +542,10 @@ export class Meta2d {
             }
           }
         })
-        const data = this.getEventData(e.list, pen);
+        let data = this.getEventData(e.list, pen);
+        if(Object.keys(data).length){
+          data = null;
+        }
         this.canvas.dialog.show(e.value as any, url, e.extend, data);
       }
     };
