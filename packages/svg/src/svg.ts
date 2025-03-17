@@ -7,6 +7,7 @@ const selfName = ':@';
 let allRect: Rect;
 let shapeScale: number; // 图形缩小比例
 let anchorsArr = [];
+const gradientMap = {};
 // globalThis.parseSvg = parseSvg; //  测试
 export function parseSvg(svg: string): Pen[] {
   const parser = new XMLParser({
@@ -58,6 +59,11 @@ export function parseSvg(svg: string): Pen[] {
     // for(let i in replaceMap) {// 替换children中的对应数据
     //   children.splice(Number(i),1,...replaceMap[i]);
     // }
+    //全局样式
+    const globalStyle = children.filter((item)=>item.defs);
+    globalStyle.forEach((item)=>{
+      setGradient(item.defs.filter((def) => def.linearGradient));
+    })
     const combinePens: Pen[] = transformCombines(selfProperty, children);
 
     pens.push(...combinePens);
@@ -181,6 +187,7 @@ function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
     } else if (child.defs) {
       setStyle(child.defs.filter((item) => item.style));
       setLinearGradient(child.defs.filter((item) => item.linearGradient));
+      setGradient(child.defs.filter((item) => item.linearGradient));
     } else if (child.style) {
       setStyle([{ style: child.style }]);
     } else if (childProperty) {
@@ -360,6 +367,11 @@ function transformPath(path: any, pen: any): any {
       pen.pivot.y = (match[2]-rect.y)/rect.height;
     }
   }
+  pen.points?.forEach((item)=>{
+    item.x = (item.x+ pen.x - allRect.x)/ allRect.width;
+    item.y = (item.y+ pen.y - allRect.y)/ allRect.height;
+  })
+
   rect.x += offsetX;
   rect.ex += offsetX;
   rect.y += offsetY;
@@ -469,9 +481,17 @@ function transformNormalShape(
   };
 
   let background;
+  let gradientColors;
+  let bkType;
+  let points;
   if (finalProperty.fill === 'none') {
   } else if (finalProperty.fill?.includes('url')) {
     const id: string = finalProperty.fill.replace('url(#', '').replace(')', '');
+    if(gradientMap[id]){
+      gradientColors = gradientMap[id].color;
+      // points = gradientMap[id].points;
+      bkType = 1;
+    }else{
     let gradientColor = linearGradient.find((item) => item.id === id);
     if (gradientColor && !gradientColor.color) {
       // 颜色不存在，则查找父级
@@ -480,6 +500,7 @@ function transformNormalShape(
       );
     }
     background = gradientColor?.color;
+  }
   } else {
     background = finalProperty.fill;
     // fill 属性不是 none ，是 undefined ，用默认黑色
@@ -522,6 +543,8 @@ function transformNormalShape(
     x,
     y,
     rotate,
+    gradientColors,
+    bkType,
     // TODO: background 可以为空
     background: background,
     color: finalProperty.stroke==='none' ? undefined : finalProperty.stroke,
@@ -767,6 +790,47 @@ function setLinearGradient(defs: any[]) {
       linearGradient.push(linearGradientItem);
     }
   });
+}
+
+function setGradient(defs: any[]){
+  defs.forEach((def) => {
+    let {id,x1,x2,y1,y2} = def[selfName];
+    // let deg = 0;
+    // if(Math.abs(Number(x1)-Number(x2))>Math.abs(Number(y1)-Number(y2))){
+    //   //水平
+    //   deg = 90;
+    //   if(Number(x1)>Number(x2)){
+    //     deg = 270;
+    //   }
+    // }else{  
+    //   //垂直
+    //   if(Number(y1)>Number(y2)){
+    //     deg = 180;
+    //   }
+    // }
+    let deg = calculateAngle(x1,y1,x2,y2)+90;
+    let color = def.linearGradient.map((item)=> item[selfName]['stop-color']+' '+ (parseFloat(item[selfName].offset||0)*100)+'%' ).join(',');
+    // let color = 
+    gradientMap[id] = {
+      color:`linear-gradient(${deg}deg,${color})`,
+      points:[{x:x1,y:y1},{x:x2,y:y2}]
+    }
+    //TODO svgpath 渐进区域问题
+  });
+}
+
+function calculateAngle(x1, y1, x2, y2) {
+  // 计算坐标差
+  const deltaX = x2 - x1;
+  const deltaY = y2 - y1;
+
+  // 使用 Math.atan2 计算角度，返回值为弧度
+  const angleInRadians = Math.atan2(deltaY, deltaX);
+
+  // 将弧度转换为度数
+  const angleInDegrees = angleInRadians * (180 / Math.PI);
+
+  return angleInDegrees;
 }
 
 function cssToJson(text: string) {
