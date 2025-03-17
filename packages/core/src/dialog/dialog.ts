@@ -98,7 +98,6 @@ export class Dialog {
             height:420px;
             padding: 16px 20px;
             border-radius: 9px;
-            background-color: #1e2430;
             z-index: 19999;
             overflow: auto;
         }`
