@@ -10,7 +10,7 @@ import {
   formatTime,
   setter,
 } from '@meta2d/core';
-import type { EChartOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 
 export enum ReplaceMode {
   Add,
@@ -49,7 +49,7 @@ let keyWords = [
 
 export interface ChartPen extends Pen {
   echarts: {
-    option: EChartOption; // echarts 参数
+    option: EChartsOption; // echarts 参数
     max: number; // 最大数据量
     replaceMode: ReplaceMode; // 替换模式
     theme: string; // 主题
@@ -139,8 +139,8 @@ export function echarts(pen: ChartPen): Path2D {
             echarts.registerMap(pen.echarts.geoName, data);
             pen.calculative.singleton.echartsReady = true;
             pen.calculative.singleton.echart.setOption(
-              updateOption(
-                pen.echarts.option,
+              updateOption(pen.echarts.option,
+
                 pen.calculative.canvas.store.data.scale
               ),
               true
@@ -467,7 +467,7 @@ function beforeValue(pen: ChartPen, value: any) {
           // 单饼
           y.forEach((yItem, index: number) => {
             const part = (
-              series[0].data as EChartOption.SeriesSunburst.DataObject[]
+              series[0].data as EChartsOption.SeriesSunburst.DataObject[]
             ).find((part) => part.name === yItem.name);
             part && (part.value = yItem.value);
           });
@@ -479,7 +479,7 @@ function beforeValue(pen: ChartPen, value: any) {
             }
             y[index].forEach((yItem, index: number) => {
               const part = (
-                serie.data as EChartOption.SeriesSunburst.DataObject[]
+                serie.data as EChartsOption.SeriesSunburst.DataObject[]
               ).find((part) => part.name === yItem.name);
               part && (part.value = yItem.value);
             });

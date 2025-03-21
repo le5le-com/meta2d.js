@@ -1321,7 +1321,6 @@ export function getFont({
   return `${fontStyle} ${textDecoration} ${fontWeight} ${fontSize}px/${lineHeight} ${fontFamily}`;
 }
 
-// TODO: 0.5 偏移量在 图片中可能存在问题
 export function ctxFlip(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
@@ -1329,11 +1328,11 @@ export function ctxFlip(
   // worldRect 可能为 undefined
   const { x, ex, y, ey } = pen.calculative.worldRect || {};
   if (pen.calculative.flipX) {
-    ctx.translate(x + ex + 0.5, 0.5);
+    ctx.translate(x + ex, 0);
     ctx.scale(-1, 1);
   }
   if (pen.calculative.flipY) {
-    ctx.translate(0.5, y + ey + 0.5);
+    ctx.translate(0, y + ey);
     ctx.scale(1, -1);
   }
 }
