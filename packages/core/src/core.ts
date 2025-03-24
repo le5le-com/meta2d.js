@@ -1054,9 +1054,9 @@ export class Meta2d {
       this.canvas.opening = true;
     }
     this.doInitJS();
-    this.doInitFn();
     this.initBindDatas();
     this.initBinds();
+    this.doInitFn();
     this.initMessageEvents();
     this.initGlobalTriggers();
     this.startAnimate();
