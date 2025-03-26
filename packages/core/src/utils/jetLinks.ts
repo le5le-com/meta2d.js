@@ -7,8 +7,12 @@ import { Event } from "../event";
 
 export function connectJetLinks(meta2d:Meta2d, net:Network){
   if (meta2d.jetLinksList.length) {
+    let url = net.url;
+    if(url.startsWith('/')){
+      url = (location.protocol === 'https:'?'wss://':'ws://')+ window.location.host + url;
+    }
     meta2d.jetLinksClient = new WebSocket(
-      `${net.url}/${
+      `${url}/${
         localStorage.getItem('X-Access-Token') ||
         getCookie('X-Access-Token') ||
         new URLSearchParams(location.search).get('X-Access-Token') ||
