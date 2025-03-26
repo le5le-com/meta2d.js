@@ -70,14 +70,15 @@ export function video(pen: Pen) {
       click(pen);
     }
     let media: HTMLMediaElement;
-    if (pen.video) {
-      media = document.createElement('video');
-      media.src = pen.video;
-    } else if (pen.audio) {
+    if (pen.audio) {
       media = document.createElement('audio');
       media.controls = (pen as any).controls;
       media.src = pen.audio;
+    } else {
+      media = document.createElement('video');
+      media.src = pen.video;
     }
+
     media.loop = pen.playLoop;
     media.ontimeupdate = () => {
       resizeProcessWidth(progress, media, pen.calculative.worldRect.width);

@@ -156,6 +156,7 @@ export interface Iot {
     key:string;
   }[];
   tree?:any;
+  token?:string;
 }
 
 export interface Sql {

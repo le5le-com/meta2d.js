@@ -1,4 +1,4 @@
-import { getRectOfPoints, Pen, Rect, s8 } from '@meta2d/core';
+import { deepClone, getRectOfPoints, Pen, Rect, s8 } from '@meta2d/core';
 import { getRect, parseSvgPath } from '@meta2d/core/src/diagrams/svg/parse';
 import { XMLParser } from 'fast-xml-parser/src/fxp';
 
@@ -7,6 +7,7 @@ const selfName = ':@';
 let allRect: Rect;
 let shapeScale: number; // 图形缩小比例
 let anchorsArr = [];
+const gradientMap = {};
 // globalThis.parseSvg = parseSvg; //  测试
 export function parseSvg(svg: string): Pen[] {
   const parser = new XMLParser({
@@ -22,6 +23,12 @@ export function parseSvg(svg: string): Pen[] {
   svgs.forEach((svg) => {
     const selfProperty = svg[selfName];
     allRect = transformContainerRect(selfProperty);
+    if(selfProperty.width&&selfProperty.width.includes('%')){
+      selfProperty.width = allRect.width*parseFloat(selfProperty.width)/100
+    }
+    if(selfProperty.height&&selfProperty.height.includes('%')){
+      selfProperty.height = allRect.height*parseFloat(selfProperty.height)/100
+    }
     const isWidthLitter = allRect.width < allRect.height; // 宽小于高
     // 长边等于 40
     if (!isWidthLitter) {
@@ -39,17 +46,24 @@ export function parseSvg(svg: string): Pen[] {
       shapeScale = selfProperty.height / allRect.height;
       !selfProperty.width && (selfProperty.width = shapeScale * allRect.width);
     }
-
+    if(isNaN(shapeScale)){
+      shapeScale = 1;
+    }
     const children: any[] = svg.svg;
     const replaceMap:any = {};// 暂时存储改动，避免对遍历产生影响
-    for(let i = 0; i < children.length; i++) {
-      if(children[i].g) {
-        replaceMap[i] = flatSvg(children[i]);
-      }
-    }
-    for(let i in replaceMap) {// 替换children中的对应数据
-      children.splice(Number(i),1,...replaceMap[i]);
-    }
+    // for(let i = 0; i < children.length; i++) {
+    //   if(children[i].g) {
+    //     replaceMap[i] = flatSvg(children[i]);
+    //   }
+    // }
+    // for(let i in replaceMap) {// 替换children中的对应数据
+    //   children.splice(Number(i),1,...replaceMap[i]);
+    // }
+    //全局样式
+    const globalStyle = children.filter((item)=>item.defs);
+    globalStyle.forEach((item)=>{
+      setGradient(item.defs.filter((def) => def.linearGradient));
+    })
     const combinePens: Pen[] = transformCombines(selfProperty, children);
 
     pens.push(...combinePens);
@@ -78,9 +92,12 @@ function setAnchor(pen: Pen) {
   pen.anchors = anchorsArr;
 }
 
-function transformCombines(selfProperty, children: any[]): Pen[] {
+function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
   const pens: Pen[] = [];
   const [width, height] = dealUnit(selfProperty);
+  if(selfProperty.visibility==='hidden'){
+    selfProperty.visible = false;
+  }
   const combinePen: Pen = {
     id: s8(),
     name: 'combine',
@@ -90,6 +107,7 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
     width,
     height,
     children: [],
+    visible:selfProperty.visible,
   };
   pens.push(combinePen);
   children.forEach((child) => {
@@ -121,9 +139,55 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
         },
         child.g
       );
+    }else if (child.svg) {
+      // 嵌套svg
+      let x=0,y=0,width=1,height=1;
+      if (selfProperty.transform) {
+        const xy =  getTranslateXY(selfProperty.transform);
+        if(xy){
+          x = xy.x/allRect.width;
+          y = xy.y/allRect.height;
+        }
+      }
+      const _ = child[selfName];
+      const viewbox_Rect = transformContainerRect(child[selfName]);
+      //svg所占宽高比
+      width = Number(_.width)/allRect.width;
+      height = Number(_.height)/allRect.height; 
+      let tem = deepClone(allRect);
+      //嵌套图元allRect以此为基准
+      allRect.width = viewbox_Rect.width;
+      allRect.height = viewbox_Rect.height;
+      pen = transformCombines(
+        {
+          x,
+          y,
+          width,
+          height,
+          locked: 10,
+        },
+        child.svg,
+        true
+      );
+      //恢复allRect
+      allRect = tem;
+    } else if (child.a) {
+      // // g 类型
+      pen = transformCombines(
+        {
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1,
+          locked: 10, 
+          ...childProperty,
+        },
+        child.a
+      );
     } else if (child.defs) {
       setStyle(child.defs.filter((item) => item.style));
       setLinearGradient(child.defs.filter((item) => item.linearGradient));
+      setGradient(child.defs.filter((item) => item.linearGradient));
     } else if (child.style) {
       setStyle([{ style: child.style }]);
     } else if (childProperty) {
@@ -266,12 +330,14 @@ function getTranslate(transform: string) {
   let offsetX = 0;
   let offsetY = 0;
   if (transform) {
+    if(transform.includes('translate')){
     let matchArr = transform
       .replace('translate(', '')
       .replace(')', '')
       .split(',');
     offsetX = parseFloat(matchArr[0]);
     offsetY = parseFloat(matchArr[1]);
+    }
   }
   return {
     offsetX,
@@ -285,7 +351,27 @@ function transformPath(path: any, pen: any): any {
   }
   let commands = parseSvgPath(d);
   let rect = getRect(commands);
-  let { offsetX, offsetY } = getTranslate(path.transform);
+  let offsetX = 0;
+  let offsetY = 0;
+  if(path.transform&&path.transform.includes('translate')){
+     let trans = getTranslate(path.transform);
+     offsetX = trans.offsetX;
+     offsetY = trans.offsetY;
+  }else if(path.transform&&path.transform.includes('rotate')){
+    const match =  path.transform.match( /(-?\d+)/g);
+    if(match?.length){
+      if(!pen.pivot){
+        pen.pivot ={}
+      }
+      pen.pivot.x = (match[1]-rect.x)/rect.width;
+      pen.pivot.y = (match[2]-rect.y)/rect.height;
+    }
+  }
+  pen.points?.forEach((item)=>{
+    item.x = (item.x+ pen.x - allRect.x)/ allRect.width;
+    item.y = (item.y+ pen.y - allRect.y)/ allRect.height;
+  })
+
   rect.x += offsetX;
   rect.ex += offsetX;
   rect.y += offsetY;
@@ -395,9 +481,17 @@ function transformNormalShape(
   };
 
   let background;
+  let gradientColors;
+  let bkType;
+  let points;
   if (finalProperty.fill === 'none') {
   } else if (finalProperty.fill?.includes('url')) {
     const id: string = finalProperty.fill.replace('url(#', '').replace(')', '');
+    if(gradientMap[id]){
+      gradientColors = gradientMap[id].color;
+      // points = gradientMap[id].points;
+      bkType = 1;
+    }else{
     let gradientColor = linearGradient.find((item) => item.id === id);
     if (gradientColor && !gradientColor.color) {
       // 颜色不存在，则查找父级
@@ -406,6 +500,7 @@ function transformNormalShape(
       );
     }
     background = gradientColor?.color;
+  }
   } else {
     background = finalProperty.fill;
     // fill 属性不是 none ，是 undefined ，用默认黑色
@@ -438,7 +533,9 @@ function transformNormalShape(
       }
     });
   }
-
+  if(isNaN(rotate)){
+    rotate = 0;
+  }
   return {
     id: s8(),
     locked: 10,
@@ -446,14 +543,16 @@ function transformNormalShape(
     x,
     y,
     rotate,
+    gradientColors,
+    bkType,
     // TODO: background 可以为空
     background: background,
-    color: finalProperty.stroke,
-    lineWidth: finalProperty['stroke-width']
+    color: finalProperty.stroke==='none' ? undefined : finalProperty.stroke,
+    lineWidth:finalProperty.stroke==='none'?0:( finalProperty['stroke-width']
       ? parseFloat(finalProperty['stroke-width']) * shapeScale
       : finalProperty.stroke
       ? 1
-      : 0,
+      : 0),
     lineCap: finalProperty.strokeLinecap,
     lineJoin: finalProperty.strokeLinejoin,
     lineDash: finalProperty.strokeDasharray, // TODO: 可能不是数组类型
@@ -468,6 +567,7 @@ function transformNormalShape(
     fontWeight: finalProperty['font-weight'],
     fontStyle: finalProperty['font-style'],
     matrix,
+    visible:!(finalProperty.visibility==='hidden')
   };
 }
 
@@ -597,9 +697,12 @@ function transformText(childProperty, textContent, pen: any) {
   // 文字
   const text = textContent[0]?.[contentProp];
   const width = measureText(text, pen);
-  const height = 0; // pen.fontSize / shapeScale;
+  const height =pen.fontSize|| 0; // pen.fontSize / shapeScale;
   //TODO 这里为什么需要减去height
   let { offsetX, offsetY } = getTranslate(childProperty.transform);
+  if(childProperty.fill&&childProperty.fill!=='none'){
+    pen.color = childProperty.fill;
+  }
   return {
     ...pen,
     name: 'text',
@@ -689,6 +792,47 @@ function setLinearGradient(defs: any[]) {
   });
 }
 
+function setGradient(defs: any[]){
+  defs.forEach((def) => {
+    let {id,x1,x2,y1,y2} = def[selfName];
+    // let deg = 0;
+    // if(Math.abs(Number(x1)-Number(x2))>Math.abs(Number(y1)-Number(y2))){
+    //   //水平
+    //   deg = 90;
+    //   if(Number(x1)>Number(x2)){
+    //     deg = 270;
+    //   }
+    // }else{  
+    //   //垂直
+    //   if(Number(y1)>Number(y2)){
+    //     deg = 180;
+    //   }
+    // }
+    let deg = calculateAngle(x1,y1,x2,y2)+90;
+    let color = def.linearGradient.map((item)=> item[selfName]['stop-color']+' '+ (parseFloat(item[selfName].offset||0)*100)+'%' ).join(',');
+    // let color = 
+    gradientMap[id] = {
+      color:`linear-gradient(${deg}deg,${color})`,
+      points:[{x:x1,y:y1},{x:x2,y:y2}]
+    }
+    //TODO svgpath 渐进区域问题
+  });
+}
+
+function calculateAngle(x1, y1, x2, y2) {
+  // 计算坐标差
+  const deltaX = x2 - x1;
+  const deltaY = y2 - y1;
+
+  // 使用 Math.atan2 计算角度，返回值为弧度
+  const angleInRadians = Math.atan2(deltaY, deltaX);
+
+  // 将弧度转换为度数
+  const angleInDegrees = angleInRadians * (180 / Math.PI);
+
+  return angleInDegrees;
+}
+
 function cssToJson(text: string) {
   const json = {};
   const styleArr = text.split('}');
@@ -730,4 +874,16 @@ function dealUnit(selfProperty: any): [number, number] {
   const width = parseFloat(selfProperty.width) || 0;
   const height = parseFloat(selfProperty.height) || 0;
   return [width, height];
+}
+
+
+function getTranslateXY(str){
+  const regex = /translate\((-?\d+),\s*(-?\d+)\)/;
+  const match = str.match(regex);
+
+  if (match) {
+    const x = parseInt(match[1], 10); // 提取 x 值
+    const y = parseInt(match[2], 10); // 提取 y 值
+    return {x,y};
+  }
 }

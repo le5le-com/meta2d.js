@@ -438,7 +438,7 @@ export class CanvasImage {
 
     ctx.save();
 
-    const finalRuleColor = ruleColor || options.ruleColor;
+    const finalRuleColor = ruleColor || options.ruleColor || "#ccc";
     ctx.strokeStyle = rgba(finalRuleColor, 0.7);
 
     const x = origin.x + data.x;

@@ -235,7 +235,38 @@ export class Meta2d {
   getOptions() {
     return this.store.options;
   }
-
+  /**
+   * @description
+   * @author Joseph Ho
+   * @date 21/02/2025
+   * @param {string} themeName 主题名
+   * @param {object} theme 主题变量字符串数组
+   * @returns {*}
+   * @memberof Meta2d
+   */
+  registerTheme(themeName: string, theme: object){
+    // 校验数据
+    if(!Array.isArray(theme)){
+      return;
+    }
+    // 写一个正则，中间必须有且仅有1个冒号，结尾不能有分号，符合"A:B"的形式，冒号两边必须非空，允许有空格
+    const regex = /^\s*\S+\s*:\s*\S+\s*$/;
+    const ret = theme.every(el=>regex.test(el));
+    if(!ret){
+      return;
+    }
+    const obj = {},newTheme = [];
+    for (let i = 0; i < theme.length; i++) {
+      const item = theme[i];
+      const kvs = item.split(":");
+      const kvs0 = kvs[0].trim();
+      const kvs1 = kvs[1].trim();
+      newTheme.push([kvs0,kvs1].join(":"));
+      obj[kvs0] = kvs1;
+    }
+    le5leTheme.addTheme(themeName,newTheme);
+    this.store.theme[themeName] = obj;
+  }
   setTheme(theme: string) {
     this.store.data.theme = theme;
     this.setBackgroundColor(this.store.theme[theme].background);
@@ -246,7 +277,7 @@ export class Meta2d {
       ruleColor: this.store.theme[theme].ruleColor,
       ruleOptions: this.store.theme[theme].ruleOptions,
     });
-    // 更新全局的主题css变量 
+    // 更新全局的主题css变量
     le5leTheme.updateCssRule(this.store.id, theme);
     this.canvas.initGlobalStyle();
 
@@ -511,11 +542,23 @@ export class Meta2d {
             }
           }
         })
-        const data = this.getEventData(e.list, pen);
+        let data = this.getEventData(e.list, pen);
+        if(Object.keys(data).length){
+          data = null;
+        }
         this.canvas.dialog.show(e.value as any, url, e.extend, data);
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
+      if(e.data?.length){
+        const value: any = this.getSendData(e.data);
+        if(pen.formId && pen.formData){
+          //表单数据
+          Object.assign(value,pen.formData);
+        }
+        this.sendDataToNetWork(value, pen, e);
+        return;
+      }
       if (e.list?.length) {
         // if (e.targetType === 'id') {
         if (e.network && e.network.protocol === 'ADIIOT') {
@@ -608,6 +651,38 @@ export class Meta2d {
     };
   }
 
+  getSendData(data:any[]){
+    const value: any = {};
+    data.forEach((item: any) => {
+      if(item.prop){
+        if(item.id&&item.id!=='固定值'){
+          const pen = this.findOne(item.id);
+          value[item.prop] = pen[item.key];
+        }else{
+          value[item.prop] = this.convertType(item.value,item.type);
+        }
+      }
+    });
+    return value;
+  }
+
+  convertType(value: string, type:string) {
+    if(typeof value === 'string'){
+      if(['switch','bool','boolean'].includes(type)){
+        if (value === 'false') {
+          return false;
+        } else if (value === 'true') {
+          return true;
+        }
+      }else if( ['integer','number','int','enum','double','float'].includes(type)){
+        if(!isNaN(Number(value))){
+          return Number(value);
+        }
+      }
+    }
+    return value;
+  }
+
   getEventData(list: any, pen: Pen) {
     const value: any = {};
     if (list?.length) {
@@ -671,6 +746,7 @@ export class Meta2d {
     const data = await getMeta2dData(this.store, id);
     if (data) {
       this.open(data);
+      this.lock(1);
       this.fitView(true, 10);
     }
   }
@@ -703,6 +779,10 @@ export class Meta2d {
     if (network.data) {
       Object.assign(network, network.data);
       delete network.data;
+    }
+    if(network.protocol === 'iot'){
+      this.iotMqttClient &&  this.iotMqttClient.publish(`le5le-iot/property/set/${this.store.data.iot?.token}`, JSON.stringify(value));
+      return;
     }
     if (!network.url) {
       return;
@@ -936,7 +1016,7 @@ export class Meta2d {
     this.clear(false, data?.template);
     this.canvas.autoPolylineFlag = true;
     if (data) {
-      // 根据图纸的主题设置主题 
+      // 根据图纸的主题设置主题
       if(data.theme){
         this.setTheme(data.theme);
       }
@@ -974,9 +1054,9 @@ export class Meta2d {
       this.canvas.opening = true;
     }
     this.doInitJS();
-    this.doInitFn();
     this.initBindDatas();
     this.initBinds();
+    this.doInitFn();
     this.initMessageEvents();
     this.initGlobalTriggers();
     this.startAnimate();
@@ -1215,7 +1295,7 @@ export class Meta2d {
             }
           }else if(realTime.bind.class === 'sql'){
             let bind = realTime.bind.id.split('#');
-            const sql = this.store.data.sqls.find((item) => item.bindId === bind[0]);  
+            const sql = this.store.data.sqls.find((item) => item.bindId === bind[0]);
             if(sql){
               if(!sql.keys){
                 sql.keys = [];
@@ -1229,6 +1309,28 @@ export class Meta2d {
           }
         }
       });
+      pen.events?.forEach((event)=>{
+        const actions = event.actions?.filter((item)=>item.action === EventAction.SendData);
+        actions?.forEach((action)=>{
+          action.data?.forEach((item)=>{
+            if(item.class === 'iot'){
+              let bind = item.prop.split('#');
+              let idx = devices.findIndex((item) => item.deviceId === bind[0]);
+              if(idx > -1){
+                if (!devices[idx].properties.includes(bind[1])) {
+                  devices[idx].properties.push(bind[1]);
+                }
+              }else{
+                devices.push({
+                  deviceId: bind[0],
+                  properties: [bind[1]],
+                  token: item.token
+                });
+              }
+            }
+          });
+        })
+      })
     });
     if(devices.length){
       if(!this.store.data.iot){
@@ -1855,6 +1957,44 @@ export class Meta2d {
     }
     this.inactive();
   }
+ 
+  clearCombine(pen?: Pen) {
+    if (!pen && this.store.active) {
+      pen = this.store.active[0];
+    }
+    if (!pen || !pen.children) {
+      return;
+    }
+    const children = getAllChildren(pen,this.store);
+    children.forEach((child) => {
+      child.parentId = undefined;
+      child.x = child.calculative.worldRect.x;
+      child.y = child.calculative.worldRect.y;
+      child.width = child.calculative.worldRect.width;
+      child.height = child.calculative.worldRect.height;
+      child.locked = LockState.None;
+      child.calculative.active = undefined;
+      child.calculative.hover = false;
+      if(child.showChild !== undefined){
+        this.setVisible(child, true);
+      }
+      child.children = undefined;
+    });
+    const combineArr = [];
+    children.forEach((child,index)=>{
+      if(child.name === 'combine'){
+        child.children = undefined;
+        combineArr.push(child);
+      }
+    });
+    this.delete(combineArr,true,false);
+    pen.children = undefined;
+    if (this.isCombine(pen)) {
+      this.delete([pen],true,false);
+    }
+    //未考虑历史记录
+    this.inactive();
+  }
 
   appendChild(pens: Pen[] = this.store.active) {
     if (!pens) {
@@ -2322,48 +2462,15 @@ export class Meta2d {
     const { networks } = this.store.data;
     const https = [];
     if (networks) {
-      let mqttIndex = 0;
+      let mqttIndex = 0, httpIndex = 0, websocketIndex = 0, sseIndex = 0;
       this.mqttClients = [];
-      let websocketIndex = 0;
-      let sseIndex = 0;
-      let sqlIndex = 0;
       this.websockets = [];
       this.eventSources = [];
       networks.forEach(async (net) => {
         // if (net.type === 'subscribe') {
         if (net.protocol === 'mqtt') {
           net.index = mqttIndex;
-          if (net.options.clientId && !net.options.customClientId) {
-            net.options.clientId = s8();
-          }
-          net.times = 0;
-          this.mqttClients[mqttIndex] = mqtt.connect(net.url, net.options);
-          this.mqttClients[mqttIndex].on(
-            'message',
-            (topic: string, message: Buffer) => {
-              this.socketCallback(message.toString(), {
-                topic,
-                type: 'mqtt',
-                url: net.url,
-              });
-            }
-          );
-          this.mqttClients[mqttIndex].on('error', (error) => {
-            this.store.emitter.emit('error', { type: 'mqtt', error });
-          });
-
-          this.mqttClients[mqttIndex].on('close', () => {
-            if (this.store.options.reconnetTimes) {
-              net.times++;
-              if (net.times >= this.store.options.reconnetTimes) {
-                net.times = 0;
-                this.mqttClients && this.mqttClients[net.index]?.end();
-              }
-            }
-          });
-          if (net.topics) {
-            this.mqttClients[mqttIndex].subscribe(net.topics.split(','));
-          }
+          this.connectNetMqtt(net);
           mqttIndex += 1;
         } else if (net.protocol === 'websocket') {
           net.index = websocketIndex;
@@ -2392,6 +2499,7 @@ export class Meta2d {
 
           websocketIndex += 1;
         } else if (net.protocol === 'http') {
+          net.index = httpIndex;
           https.push({
             url: net.url,
             interval: net.interval,
@@ -2399,6 +2507,7 @@ export class Meta2d {
             method: net.method,
             body: net.body,
           });
+          httpIndex += 1;
         }else if (net.protocol === 'ADIIOT') {
           connectJetLinks(this,net);
         }else if (net.protocol === 'SSE'){
@@ -2411,6 +2520,39 @@ export class Meta2d {
     this.onNetworkConnect(https);
     this.connectIot();
     this.connectSqls();
+  }
+
+  reconnectNetwork(index:number){
+    const net = this.store.data.networks[index];
+    if (net.protocol === 'mqtt') {
+      this.mqttClients && this.mqttClients[net.index]?.end();
+      this.connectNetMqtt(net);
+    } else if (net.protocol === 'websocket') {
+      if(this.websockets && this.websockets[net.index]){
+        this.websockets[net.index].onclose = undefined;
+        this.websockets[net.index].close();
+        this.websockets[net.index] = undefined;
+      }
+      this.connectNetWebSocket(net);
+    }else if(net.protocol === 'http'){
+      if(this.updateTimerList){
+        clearInterval(this.updateTimerList[net.index]);
+        this.updateTimerList[net.index] = undefined;
+      }
+      const http = deepClone(net);
+      if (!this.store.data.cancelFirstConnect) {
+        this.requestHttp(http);
+      }
+      this.updateTimerList[net.index] = setInterval(async () => {
+        this.requestHttp(http);
+      }, http.interval || 1000);
+    }else if(net.protocol === 'SSE'){
+      if(this.eventSources){
+        this.eventSources[net.index]?.close();
+        this.eventSources[net.index] = undefined;
+      }
+      this.connectSSE(net);
+    }
   }
 
   iotMqttClient:MqttClient;
@@ -2427,6 +2569,7 @@ export class Meta2d {
       return;
     }
     const token = await this.getIotToken(iot.devices,iot.protocol==='websocket'?1:undefined);
+    iot.token = token;
     //物联网设备
     // if(iot.protocol === 'mqtt'){
       // const url ='ws://192.168.110.148:8083/mqtt'; //`${location.protocol === 'https:'?'wss':'ws'}://${iot.host}:${location.protocol === 'https:'?'8084':'8083'}/mqtt`
@@ -2434,7 +2577,7 @@ export class Meta2d {
       this.iotMqttClient.on('message', (topic: string, message: Buffer) => {
         this.socketCallback(message.toString(), {
           topic:`le5le-iot/properties/${token}`,
-          type: 'iot', 
+          type: 'iot',
           url,
           method: 'mqtt'
         });
@@ -2453,7 +2596,7 @@ export class Meta2d {
     //     token
     //   );
     //   this.iotWebsocketClient.onmessage = (e) => {
-    //     this.socketCallback(e.data, { type: 'iot', method: 'websocket' });   
+    //     this.socketCallback(e.data, { type: 'iot', method: 'websocket' });
     //   };
     //   this.iotWebsocketClient.onerror = (error) => {
     //     this.store.emitter.emit('error', { type: 'websocket', error });
@@ -2461,7 +2604,7 @@ export class Meta2d {
     // }
   }
   //  type SqlType = 'list' | 'get' | 'exec' | 'add' | 'update' | 'delete';
-  
+
   connectSqls(){
     const { sqls } = this.store.data;
     if(sqls&&sqls.length){
@@ -2499,14 +2642,70 @@ export class Meta2d {
     });
   }
 
+  connectNetMqtt(net:Network){
+    if (net.options.clientId && !net.options.customClientId) {
+      net.options.clientId = s8();
+    }
+    let url = net.url;
+    if(url.indexOf('${') > -1){
+      let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          url = url.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
+    net.times = 0;
+    this.mqttClients[net.index] = mqtt.connect(url, net.options);
+    this.mqttClients[net.index].on(
+      'message',
+      (topic: string, message: Buffer) => {
+        this.socketCallback(message.toString(), {
+          topic,
+          type: 'mqtt',
+          url: net.url,
+        });
+      }
+    );
+    this.mqttClients[net.index].on('error', (error) => {
+      this.store.emitter.emit('error', { type: 'mqtt', error });
+    });
+
+    this.mqttClients[net.index].on('close', () => {
+      if (this.store.options.reconnetTimes) {
+        net.times++;
+        if (net.times >= this.store.options.reconnetTimes) {
+          net.times = 0;
+          this.mqttClients && this.mqttClients[net.index]?.end();
+        }
+      }
+    });
+    if (net.topics) {
+      this.mqttClients[net.index].subscribe(net.topics.split(','));
+    }
+  }
+
   connectNetWebSocket(net: Network) {
     if (this.websockets[net.index]) {
       this.websockets[net.index].onclose = undefined;
       this.websockets[net.index]?.close();
       this.websockets[net.index] = undefined;
     }
+    let url = net.url;
+    if(url.indexOf('${') > -1){
+      let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          url = url.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
     this.websockets[net.index] = new WebSocket(
-      net.url,
+      url,
       net.protocols || undefined
     );
     this.websockets[net.index].onmessage = (e) => {
@@ -2545,7 +2744,7 @@ export class Meta2d {
       let results = JSON.parse(data);
       let port = results.wssPort||results.wsPort;
       if(!port){
-        return 
+        return
       }
       return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}${results.path}`
     }
@@ -2564,7 +2763,7 @@ export class Meta2d {
       return JSON.parse(data).token;
     }
   }
-  
+
   async doSqlCode(sql:Sql){
     const method = sql.method || 'get';
     let _sql = sql.sql;
@@ -2591,7 +2790,7 @@ export class Meta2d {
         this.socketCallback(JSON.stringify(arr), { type: 'sql', url: `/api/iot/data/sql/${method}`,method });
       }
     }
-  }  
+  }
 
   randomString(e: number) {
     e = e || 32;
@@ -2796,7 +2995,7 @@ export class Meta2d {
   //获取动态参数
   getDynamicParam(key: string) {
     let params = queryURLParams();
-    let value = params[key] || localStorage[key] || getCookie(key) || '';
+    let value = params[key] || localStorage[key] || getCookie(key) || globalThis[key] || '';
     return value;
   }
 
@@ -2936,7 +3135,7 @@ export class Meta2d {
     }
     clearInterval(this.iotTimer);
     this.iotTimer = undefined;
-    
+
     // if(this.iotWebsocketClient){
     //   this.iotWebsocketClient.onclose = undefined;
     //   this.iotWebsocketClient.close();
@@ -4187,8 +4386,10 @@ export class Meta2d {
       this.store.data.fits?.forEach((fit) => {
         let pens = [];
         fit.children.forEach((id) => {
-          this.store.pens[id].locked = LockState.None;
-          pens.push(this.store.pens[id]);
+          if(this.store.pens[id]){
+            this.store.pens[id].locked = LockState.None;
+            pens.push(this.store.pens[id]);
+          }
         });
         let r = wGap / 2;
         if (fit.left && fit.right) {
@@ -4280,8 +4481,10 @@ export class Meta2d {
       this.store.data.fits?.forEach((fit) => {
         let pens = [];
         fit.children.forEach((id) => {
-          this.store.pens[id].locked = LockState.None;
-          pens.push(this.store.pens[id]);
+          if(this.store.pens[id]){
+            this.store.pens[id].locked = LockState.None;
+            pens.push(this.store.pens[id]);
+          }
         });
         let r = hGap / 2;
         if (fit.top && fit.bottom) {

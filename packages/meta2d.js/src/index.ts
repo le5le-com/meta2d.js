@@ -14,6 +14,7 @@ import {
 import { formPens } from '@meta2d/form-diagram';
 import { ftaPens, ftaPensbyCtx, ftaAnchors } from '@meta2d/fta-diagram';
 import { chartsPens } from '@meta2d/le5le-charts';
+export * from "@meta2d/core"
 
 globalThis.Meta2d = Meta2d;
 globalThis.registerCommonDiagram = function () {

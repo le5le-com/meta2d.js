@@ -92,9 +92,9 @@ export function getRect(path: SvgPath): Rect {
       }
     });
   });
-
-  --x;
-  --y;
+  //TODO ？
+  // --x;
+  // --y;
   return {
     x,
     y,

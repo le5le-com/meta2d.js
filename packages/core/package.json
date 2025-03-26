@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/core",
-  "version": "1.0.42",
+  "version": "1.0.74",
   "description": "@meta2d/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
   "main": "index.ts",
   "types": "index.d.ts",
@@ -25,7 +25,8 @@
   "homepage": "https://github.com/le5le-com/meta2d.js#readme",
   "devDependencies": {
     "@types/marked": "^4.0.3",
-    "@types/offscreencanvas": "latest"
+    "@types/offscreencanvas": "latest",
+    "@types/zrender": "^4.0.0"
   },
   "dependencies": {
     "mitt": "^2.1.0",
