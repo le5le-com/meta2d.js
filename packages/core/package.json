@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/core",
-  "version": "1.0.74",
+  "version": "1.0.76",
   "description": "@meta2d/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
   "main": "index.ts",
   "types": "index.d.ts",
