@@ -4001,9 +4001,7 @@ function dealWithVisio(command, pen, startX, startY) {
 }
 
 export function drawFilter(ctx,pen) {
-  const filter = pen.filter
-    console.log(filter)
-  ctx.filter = filter
+  ctx.filter = pen.filter
 }
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
