@@ -905,7 +905,7 @@ export function drawImage(
 ) {
   const { x, y, width, height } = getImagePosition(pen);
   const { worldIconRect, iconRotate, img } = pen.calculative;
-
+  ctx.filter = pen.filter
   if (iconRotate) {
     const { x: centerX, y: centerY } = worldIconRect.center;
     ctx.translate(centerX, centerY);
@@ -1367,6 +1367,9 @@ export function renderPen(
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
+
+  drawFilter(ctx,pen)
+
   const store = pen.calculative.canvas.store;
   const textFlip = pen.textFlip || store.options.textFlip;
   const textRotate = pen.textRotate || store.options.textRotate;
@@ -3476,7 +3479,7 @@ export function calcInView(pen: Pen, calcChild = false) {
     if((pen.canvasLayer === CanvasLayer.CanvasImageBottom||pen.canvasLayer===CanvasLayer.CanvasImage)&& pen.frames?.length){
       pen.calculative.inView = pen.frames.some(obj => obj.hasOwnProperty('visible'));
     }
-  } 
+  }
   if(pen.calculative.inView){
     const { x, y, width, height, rotate } = pen.calculative.worldRect;
     const penRect: Rect = {
@@ -3995,6 +3998,10 @@ function dealWithVisio(command, pen, startX, startY) {
       })
       return cloneCommand;
   }
+}
+
+export function drawFilter(ctx,pen) {
+  ctx.filter = pen.filter
 }
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {

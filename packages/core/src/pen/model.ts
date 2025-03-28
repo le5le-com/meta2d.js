@@ -195,6 +195,9 @@ export interface Pen extends Rect {
   shadowOffsetY?: number;
   textHasShadow?: boolean; // 文字是否需要阴影
 
+  // canvas 滤镜
+  filter?: string;
+
   text?: string;
   textWidth?: number;
   textHeight?: number;

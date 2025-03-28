@@ -7119,7 +7119,7 @@ export class Canvas {
                     id = _id;
                   }
                 }
-                
+
               });
               this.store.hover = this.store.pens[id];
               this.store.pens[id].calculative.hover = true;
@@ -8442,6 +8442,7 @@ export class Canvas {
     this.externalElements.style.zIndex = '5';
     this.magnifierCanvas.magnifier = false;
     this.externalElements.style.cursor = 'default';
+    this.magnifierCanvas.render();
     this.render();
   }
 
