@@ -118,7 +118,7 @@ export function getPoints(from: Point, to: Point, pen?: Pen) {
   }
 
   let step = 0.02;
-  if (from.lineLength) {
+  if (from.lineLength && !pen.parentId) {
     const r = getLineR(pen);
     step = r / from.lineLength;
   }
