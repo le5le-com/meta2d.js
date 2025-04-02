@@ -6713,8 +6713,14 @@ export class Canvas {
     const curPage = sessionStorage.getItem('page');
     const scale = this.store.data.scale;
     if(this.store.clipboard.mousePos&&(Math.abs(this.store.clipboard.mousePos.x-this.mousePos.x)>100*scale||Math.abs(this.store.clipboard.mousePos.y-this.mousePos.y)>100*scale)){
-      const offsetX = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.width/2;
-      const offsetY = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.height/2;
+      let _x = -this.store.clipboard.initRect.width/this.store.clipboard.scale/10/(scale);
+      let _y = -this.store.clipboard.initRect.height/this.store.clipboard.scale/10/(scale);
+      let offsetX = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.width/2+_x;
+      let offsetY = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.height/2+_y;
+      if(this.store.clipboard.pens.length>1){
+        offsetX = (scale-1)*this.store.clipboard.initRect.width/this.store.clipboard.scale/2;
+        offsetY = (scale-1)*this.store.clipboard.initRect.height/this.store.clipboard.scale/2;
+      }
       this.store.clipboard.pos = { x: this.mousePos.x-offsetX, y: this.mousePos.y-offsetY };
       this.store.clipboard.offset = 0;
     }else if (curPage !== clipboard.page) {
