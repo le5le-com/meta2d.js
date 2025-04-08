@@ -1367,6 +1367,8 @@ export class Canvas {
       !pen.parentId && this.randomCombineId(pen, pens);
     }
     if (Object.keys(this.randomIdObj).length !== 0) {
+      const keys = Object.keys(this.randomIdObj).join('|');
+      const regex = new RegExp(`(${keys})`, "g");
       for (const pen of pens) {
         if (pen.type) {
           pen.anchors[0].connectTo = this.randomIdObj[pen.anchors[0].connectTo];
@@ -1377,6 +1379,20 @@ export class Canvas {
             item.lineAnchor = this.randomIdObj[item.lineAnchor];
             item.lineId = this.randomIdObj[item.lineId];
           });
+        }
+
+        //动画、事件和状态
+        if(pen.animations?.length){
+          const str = JSON.stringify(pen.animations).replace(regex, match => this.randomIdObj[match]);
+          pen.animations = JSON.parse(str);
+        }
+        if(pen.triggers?.length){
+          const str = JSON.stringify(pen.triggers).replace(regex, match => this.randomIdObj[match]);
+          pen.triggers = JSON.parse(str);
+        }
+        if(pen.events?.length){
+          const str = JSON.stringify(pen.events).replace(regex, match => this.randomIdObj[match]);
+          pen.events = JSON.parse(str);
         }
       }
     }
@@ -1492,12 +1508,14 @@ export class Canvas {
         ];
       }
     } else {
-      if (pen.connectedLines && pen.connectedLines.length) {
+      if(pens.length>1){
+      // if (pen.connectedLines && pen.connectedLines.length) {
         beforeIds = [pen.id];
       }
     }
     randomId(pen);
-    if (beforeIds) {
+    if(pens.length>1){
+    // if (beforeIds) {
       if (beforeIds.length === 1) {
         this.randomIdObj[beforeIds[0]] = pen.id;
       } else {
