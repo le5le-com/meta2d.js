@@ -7981,7 +7981,40 @@ export class Canvas {
       height: pen.height / scale,
     };
   }
-
+  /**
+   * @description
+   * @author Joseph Ho
+   * @date 05/03/2025
+   * @param {Pen} pen
+   * @param {*} [origin=this.store.data.origin]
+   * @param {*} [scale=this.store.data.scale]
+   * @returns {*}  
+   * @memberof Canvas
+   */
+  reversePenRect(
+    pen: Pen,
+    origin = this.store.data.origin,
+    scale = this.store.data.scale
+  ){
+    if (!pen) {
+      return;
+    }
+    if (pen.parentId) {
+      // 子节点的 rect 只与父节点 rect 有关
+      return {
+        x: pen.x,
+        y: pen.y,
+        width: pen.width,
+        height: pen.height,
+      };
+    }
+    return {
+      x: pen.x * scale + origin.x,
+      y: pen.y * scale + origin.y,
+      width: pen.width * scale,
+      height: pen.height * scale,
+    };
+  }
   toPng(
     padding: Padding = 2,
     callback?: BlobCallback,

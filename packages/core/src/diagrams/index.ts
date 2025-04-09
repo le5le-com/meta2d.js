@@ -18,6 +18,7 @@ export * from './video';
 export * from './form';
 
 import { rectangle, square } from './rectangle';
+import { roundRectangle } from './roundRectangle';
 import { circle } from './circle';
 import { svgPath } from './svgPath';
 import { diamond } from './diamond';
@@ -38,10 +39,12 @@ import { gif } from './gif';
 import { mindNode, mindNodeAnchors } from './mindNode';
 import { mindLine, mindLineAnchors } from './mindLine';
 import { form } from './form';
+import { customer } from './customer';
 
 export function commonPens() {
   return {
     rectangle,
+    roundRectangle,
     square,
     circle,
     svgPath,
@@ -66,6 +69,7 @@ export function commonPens() {
     mindNode2:rectangle,
     form,
     combine:rectangle,
+    customer,
   };
 }
 

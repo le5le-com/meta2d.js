@@ -118,3 +118,25 @@ export function valueInArray(realValue: any, collection: unknown): boolean {
   }
   return false;
 }
+/**
+ * @description 四舍五入，精确的处理浮点数的小数位数
+ * @author Joseph Ho
+ * @date 24/07/2024
+ * @param {number} number 浮点数
+ * @param {number} precision 保留位数
+ * @returns {*}  {number}
+ */
+export function round(number: number, precision: number): number {
+  const func = Math.round;
+  precision = precision == null ? 0 : (precision >= 0 ? Math.min(precision, 292) : Math.max(precision, -292))
+  if (precision) {
+    // Shift with exponential notation to avoid floating-point issues.
+    // See [MDN](https://mdn.io/round#Examples) for more details.
+    let pair = `${number}e`.split('e')
+    const value = func(`${pair[0]}e${+pair[1] + precision}` as any)
+
+    pair = `${value}e`.split('e')
+    return +`${pair[0]}e${+pair[1] - precision}`
+  }
+  return func(number)
+}

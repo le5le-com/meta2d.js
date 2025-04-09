@@ -36,6 +36,9 @@ import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '../pen';
 import { pSBC, rgba } from '../utils';
 import { Canvas } from '../canvas';
+import { parse,rectangleRounded } from '../diagrams/svg/svg-path-round-corners/parse'
+import { serialize } from '../diagrams/svg/svg-path-round-corners/serialize'
+import { roundCorners } from '../diagrams/svg/svg-path-round-corners/index'
 
 /**
  * ancestor 是否是 pen 的祖先
@@ -1497,7 +1500,7 @@ export function renderPen(
     fill = !!back;
   }
   // }
-
+  
   setLineCap(ctx, pen);
   setLineJoin(ctx, pen);
 
@@ -1861,13 +1864,32 @@ export function ctxDrawPath(
       ctx.restore();
     }
     if (path instanceof Path2D) {
+      // 图元的滤镜效果
+      if (typeof ctx.filter == 'string') {
+        if(Number.isFinite(pen.blur)){
+          // 支持canvas滤镜
+          ctx.filter = 'blur(' + pen.blur + 'px)';
+        }
+      }
+      ctx.lineWidth = pen.calculative.lineWidth;
+      ctx.strokeStyle = pen.calculative.borderColor || pen.calculative.color;
       if (pen.type) {
         if (pen.close) {
           fill && ctx.fill(path);
         }
       } else {
+        if(pen.vpath){
+          // console.log('pkk111',path)
+          const p = new Path2D(pen.vpath);
+          fill && ctx.fill(p);
+          // fill && ctx.fill(path);
+        }else{
+          // console.log('pkk222',pen.name)
+          //svgPath
+          fill && ctx.fill(path);
+        }
         //svgPath
-        fill && ctx.fill(path);
+        // fill && ctx.fill(path);
       }
     } else {
       ctx.save();
@@ -1925,14 +1947,18 @@ export function ctxDrawPath(
 
     if (pen.calculative.lineWidth) {
       if (path instanceof Path2D) {
-        if (store.options.svgPathStroke || pen.name !== 'svgPath') {
+        if (store.options.svgPathStroke || (pen.name !== 'svgPath')) {
           if (path_from) {
             ctx.save();
             ctx.lineCap = pen.fromLineCap;
             ctx.stroke(path_from);
             ctx.restore();
           }
-          ctx.stroke(path);
+          if(!pen.vpath){
+            ctx.stroke(path);
+          }else{
+            ctx.stroke(new Path2D(pen.vpath));
+          }
           if (path_to) {
             ctx.save();
             ctx.lineCap = pen.toLineCap;
@@ -1992,6 +2018,52 @@ export function ctxDrawPath(
       ) {
         renderLineAnchors(ctx, pen);
       }
+    }
+    try {
+      if(path instanceof Path2D){
+        // 根据 最新的path 获取 svg 字符串
+        const svgString = (path as any).toSVGString();
+        pen.pathValue = svgString;
+        //  圆角矩形不是这样的圆角处理方式
+        if((pen.name !== 'roundRectangle'&& pen.name !== 'frame') && pen.pathValue){
+          // const regT = /(?<=\d)(?=[a-zA-Z])|(?<=[a-zA-Z])(?=\d)| /g;
+          // const paths = pen.pathValue.split(regT);
+          // console.log('pen222dd',pen.rounded);
+          if(pen.rounded){
+            pen.vpath = serialize(roundCorners(parse(pen.pathValue), pen.rounded));
+          }else{
+            pen.vpath = svgString;
+          }
+          // pen.vpath = roundPathCorners(paths, pen.borderRadius?pen.borderRadius:0, true);
+        }else{
+          if(pen.rounded && pen.rounded.length){
+            const {x,y,width,height} = pen.calculative.worldRect;
+            pen.vpath = rectangleRounded(x,y,width,height,...pen.rounded);
+          }else{
+            pen.vpath = svgString;
+          }
+        }
+        // if(pen.pathId){
+        //   store.data.paths[pen.pathId] = svgString;
+        // }
+        // // 获取 path 的 DOM Rect
+        // const box = (path as any).getBBox();
+        // if(!pen.BBox){
+        //   pen.BBox = {};
+        // }
+        // console.log('box',box)
+        // pen.BBox.x = box.x;
+        // pen.BBox.y = box.y;
+
+        // pen.BBox.width = box.width;
+        // pen.BBox.height = box.height;
+        // pen.BBox.left = box.left;
+        // pen.BBox.right = box.right;
+        // pen.BBox.top = box.top;
+        // pen.BBox.bottom = box.bottom;
+      }
+    } catch (error) {
+      console.error('path.toSVGString error', error);
     }
   }
 }
@@ -4025,6 +4097,8 @@ export function setChildValue(pen: Pen, data: IValue) {
         }
       }
       const child = pen.calculative.canvas.store.pens[childId];
+      // 如果子图元不选择继承父图元的属性，则不设置子图元的属性
+      if(child.notInherit) return;
       child && setChildValue(child, _data);
     });
   }

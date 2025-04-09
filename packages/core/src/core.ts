@@ -75,6 +75,7 @@ import { ViewMap } from './map';
 // TODO: 这种引入方式，引入 connect， webpack 5 报错
 import { MqttClient } from 'mqtt';
 import * as mqtt from 'mqtt/dist/mqtt.min.js';
+import './utils/path2D-inspection.min.js'
 
 import pkg from '../package.json';
 import { lockedError } from './utils/error';
@@ -1057,6 +1058,10 @@ export class Meta2d {
         });
       }
     }
+    // open图纸的时候，需要触发pen的onAdd钩子
+    for (const pen of data.pens) {
+      pen.onAdd?.(pen);
+    }
     this.canvas.autoPolylineFlag = false;
     this.store.emitter.emit('opened');
 
@@ -1894,7 +1899,7 @@ export class Meta2d {
     if (!pen && this.store.active) {
       pen = this.store.active[0];
     }
-    if (!pen || !pen.children) {
+    if (!pen || !pen.children || pen.name === 'customer') {
       return;
     }
 
@@ -2838,7 +2843,7 @@ export class Meta2d {
         let data = pen.onBeforeValue ? pen.onBeforeValue(pen, _d) : _d;
         this.canvas.updateValue(pen, data);
         // this.store.emitter.emit('valueUpdate', pen);
-        pen.onValue?.(pen);
+        pen.onValue?.(pen,_d);
         this.store.emitter.emit('valueUpdate', pen);
       }
     }
@@ -3271,7 +3276,7 @@ export class Meta2d {
 
       setChildValue(pen, afterData);
       this.canvas.updateValue(pen, afterData);
-      pen.onValue?.(pen);
+      pen.onValue?.(pen,afterData);
     });
 
     if (
@@ -4071,7 +4076,7 @@ export class Meta2d {
     }, 1000);
   }
 
-  downloadSvg() {
+  downloadSvg(onlyBolb?: boolean) {
     if (!(window as any).C2S) {
       console.error(
         '请先加载乐吾乐官网下的canvas2svg.js',
@@ -4185,7 +4190,9 @@ export class Meta2d {
     const urlObject = window.URL;
     const export_blob = new Blob([mySerializedSVG]);
     const url = urlObject.createObjectURL(export_blob);
-
+    if(onlyBolb){
+      return export_blob;
+    }
     const a = document.createElement('a');
     a.setAttribute('download', `${this.store.data.name || 'le5le.meta2d'}.svg`);
     a.setAttribute('href', url);

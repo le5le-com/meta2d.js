@@ -325,6 +325,7 @@ export interface Pen extends Rect {
 
   autoPolyline?: boolean;
   affectByTheme?: boolean; // 是否被主题影响，true,希望被主题改变样式，false，不希望被主题改变样式
+  notInherit?: boolean; // 子图元是否不继承父图元
 
   // flip?: Flip;
   flipX?: boolean;
@@ -613,7 +614,7 @@ export interface Pen extends Rect {
   prevFrame?: Pen;
 
   onAdd?: (pen: Pen) => void;
-  onValue?: (pen: Pen) => void;
+  onValue?: (pen: Pen, value?: any) => void;
   onBeforeValue?: (pen: Pen, value: ChartData) => any;
   onDestroy?: (pen: Pen) => void;
   onMove?: (pen: Pen) => void;
