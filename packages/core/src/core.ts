@@ -4407,7 +4407,7 @@ export class Meta2d {
             right = 0;
           }
           let ratio =
-            (this.canvas.width - left - right) / (rect.width - left - right);
+            (this.canvas.width - left - right) / (rect.width);
           pens.forEach((pen) => {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.width / this.canvas.width > 0.1) {
@@ -4429,6 +4429,14 @@ export class Meta2d {
             this.canvas.updatePenRect(pen, { worldRectIsReady: false });
             if (pen.externElement) {
               pen.onResize?.(pen);
+            }
+            if(pen.children.length){
+              const cPens = getAllChildren(pen,this.store);
+              cPens.forEach((cPen) => {
+                if (cPen.externElement) {
+                    cPen.onResize?.(cPen);
+                }
+              });
             }
           });
         } else if (fit.left) {
@@ -4503,7 +4511,7 @@ export class Meta2d {
           }
 
           let ratio =
-            (this.canvas.height - top - bottom) / (rect.height - top - bottom);
+            (this.canvas.height - top - bottom) / (rect.height);
           pens.forEach((pen) => {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.height / this.canvas.height > 0.1) {
@@ -4525,6 +4533,14 @@ export class Meta2d {
             this.canvas.updatePenRect(pen, { worldRectIsReady: false });
             if (pen.externElement) {
               pen.onResize?.(pen);
+            }
+            if(pen.children?.length){
+              const cPens = getAllChildren(pen,this.store);
+              cPens.forEach((cPen) => {
+                if (cPen.externElement) {
+                    cPen.onResize?.(cPen);
+                }
+              });
             }
           });
         } else if (fit.top) {
