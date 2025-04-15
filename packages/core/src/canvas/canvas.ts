@@ -1506,6 +1506,8 @@ export class Canvas {
           pen.anchors[0].id,
           pen.anchors[pen.anchors.length - 1].id,
         ];
+      }else{
+        beforeIds = [pen.id];
       }
     } else {
       if(pens.length>1){
