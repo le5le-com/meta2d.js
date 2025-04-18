@@ -100,6 +100,27 @@ arrows.triangleSolid = (
   ctx.restore();
 };
 
+arrows.reTriangleSolid = (
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  store: Meta2dStore,
+  point: Point
+) => {
+  ctx.save();
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const fromX = point.x - point.step/2;
+  ctx.moveTo(point.x, point.y - point.step/2);
+  ctx.lineTo(fromX, point.y);
+  ctx.lineTo(point.x, point.y + point.step/2);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.fill();
+  ctx.restore();
+};
+
 arrows.triangle = (
   ctx: CanvasRenderingContext2D,
   pen: Pen,
