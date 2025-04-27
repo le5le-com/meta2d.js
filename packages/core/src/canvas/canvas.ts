@@ -3787,6 +3787,7 @@ export class Canvas {
         } else if (!pen.height) {
           pen.width = this.width;
         }
+        this.updatePenRect(pen);
       }
       calcInView(pen);
     }
