@@ -298,7 +298,7 @@ export interface Pen extends Rect {
   trackTargets?: string[]; // 动画目标 pen id
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
-
+  lineAnimateElement?: string; // 动画元素
   lineAnimateType?: LineAnimateType;
   animateName?: string; // 当前执行的动画名称
   frames?: Pen[];

@@ -9,6 +9,9 @@ export const globalStore: {
   canvasDraws: {
     [key: string]: (ctx: CanvasRenderingContext2D, pen: Pen) => void;
   };
+  lineAnimateDraws: {
+    [key: string]: Path2D | CanvasRenderingContext2D | HTMLElement;
+  }
   anchors: { [key: string]: (pen: Pen) => void }; // TODO: 存储的是 副作用 函数，函数内修改 anchors
   htmlElements: { [key: string]: HTMLImageElement }; // 目前只存在图片资源，此处使用 HTMLImageElement
 } = {
@@ -35,4 +38,10 @@ export function registerAnchors(anchorsFns: {
   [key: string]: (pen: Pen) => void;
 }) {
   Object.assign(globalStore.anchors, anchorsFns);
+}
+
+export function registerLineAnimateDraws(lineAnimateDraws: {
+  [key: string]: Path2D | CanvasRenderingContext2D | HTMLElement;
+}) {
+  Object.assign(globalStore.lineAnimateDraws, lineAnimateDraws);
 }

@@ -46,6 +46,7 @@ import {
   register,
   registerAnchors,
   registerCanvasDraw,
+  registerLineAnimateDraws,
   Meta2dData,
   Meta2dStore,
   useStore,
@@ -1547,6 +1548,7 @@ export class Meta2d {
 
   registerAnchors = registerAnchors;
 
+  registerLineAnimateDraws = registerLineAnimateDraws
   // customeDock = (store, rect, pens, offset) => {xDock, yDock}
   // customDock return:
   // {

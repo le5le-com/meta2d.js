@@ -2130,6 +2130,10 @@ export function setCtxLineAnimate(
       const targetPen = pen.trackTargets;
       setTrackAnimateOnPen(pen,targetPen)
       break;
+    case LineAnimateType.Custom:
+      const animateEle = pen.lineAnimateElement
+      setElementAnimateOnPen(ctx,pen,animateEle)
+      break
     default:
       if (pen.animateReverse) {
         ctx.lineDashOffset = Number.EPSILON; //防止在执行动画时会绘制多余的远点
@@ -2156,37 +2160,65 @@ function setTrackAnimateOnPen(line:Pen, pens:string[]) {
     const targetPen = line.calculative.canvas.store.pens[target];
     const meta2d = line.calculative.canvas.parent
     if(!targetPen)return;
-    let path:SVGGeometryElement
-    let from:Point = null
-    line.calculative.worldAnchors.forEach(pt=>{
-      if (from) {
-        path = createSvgPath(path,from,from.next,pt.prev,pt)
-      }
-      from = pt;
-    })
-    if(line.close){
-      let pt = line.calculative.worldAnchors[0]
-      path = createSvgPath(path,from,from.next,pt.prev,pt)
-    }
+    const pos = calculateLineFrameStates(line);
 
-    let instance = 0
-    if(line.animateReverse){
-      instance = line.length - line.calculative.animatePos
-    }else {
-      instance = line.calculative.animatePos
-    }
-    const pos = getLinePointPosAndAngle(path,instance)
-    const data:any = {
-      x:(pos.x-origin.x)/scale,
-      y:(pos.y-origin.y)/ scale,
-      width: targetPen.width / scale,
-      height: targetPen.height / scale,
-      rotate:pos.rotate
-    }
-    meta2d.setValue({id:target,...data})
+    const width = targetPen.width;
+    const height = targetPen.height;
+
+    const worldX = pos.x - width / 2;
+    const worldY = pos.y - height / 2;
+
+    const viewX = (worldX - origin.x) / scale;
+    const viewY = (worldY - origin.y) / scale;
+    const viewWidth = width / scale;
+    const viewHeight = height / scale;
+
+    const data: any = {
+      x: viewX,
+      y: viewY,
+      width: viewWidth,
+      height: viewHeight,
+      rotate: pos.rotate,
+    };
+    meta2d.setValue({ id: target, ...data });
   })
 }
 
+function setElementAnimateOnPen(ctx:CanvasRenderingContext2D,line:Pen,element:string) {
+  const draw = globalStore.lineAnimateDraws[element]
+  if(!draw)return;
+  const pos = calculateLineFrameStates(line)
+  renderAnimateOnLine(ctx,line,pos,draw)
+  // render Canvas
+}
+
+function renderAnimateOnLine(ctx: CanvasRenderingContext2D, pen:Pen, pos:Point, draw:CanvasRenderingContext2D | HTMLElement | Path2D) {
+
+}
+
+function calculateLineFrameStates(line:Pen) {
+  let path:SVGGeometryElement
+  let from:Point = null
+  line.calculative.worldAnchors.forEach(pt=>{
+    if (from) {
+      path = createSvgPath(path,from,from.next,pt.prev,pt)
+    }
+    from = pt;
+  })
+  if(line.close){
+    let pt = line.calculative.worldAnchors[0]
+    path = createSvgPath(path,from,from.next,pt.prev,pt)
+  }
+
+  let instance = 0
+  if(line.animateReverse){
+    instance = line.length - line.calculative.animatePos
+  }else {
+    instance = line.calculative.animatePos
+  }
+  const pos = getLinePointPosAndAngle(path,instance)
+  return pos
+}
 /**
  * 全局 color
  */
