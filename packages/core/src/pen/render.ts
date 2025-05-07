@@ -4,7 +4,7 @@ import {
   IValue,
   LineAnimateType,
   LockState,
-  Pen,
+  Pen, TrackAnimate,
 } from './model';
 import { drawArrow, getLineRect, getSplitAnchor,getLinePointPosAndAngle,createSvgPath } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';

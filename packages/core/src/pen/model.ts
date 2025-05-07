@@ -111,7 +111,8 @@ export enum LineAnimateType {
   Dot, // 圆点
   Arrow, // 箭头,
   WaterDrop, // 水滴
-  Track
+  Track,
+  Custom // 自定义动画
 }
 
 export interface ColorStop {
