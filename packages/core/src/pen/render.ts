@@ -2127,8 +2127,8 @@ export function setCtxLineAnimate(
       ctx.lineWidth = 1;
       break;
     case LineAnimateType.Track:
-      const targetPen = pen.trackTargets;
-      setTrackAnimateOnPen(pen,targetPen)
+      const trackPenOption = pen.trackTargets;
+      setTrackAnimateOnPen(pen,trackPenOption)
       break;
     case LineAnimateType.Custom:
       const animateEle = pen.lineAnimateElement
@@ -2152,15 +2152,15 @@ export function setCtxLineAnimate(
   }
 }
 
-function setTrackAnimateOnPen(line:Pen, pens:string[]) {
-  if(!Array.isArray(pens))return;
+function setTrackAnimateOnPen(line:Pen, trackPenOption:TrackAnimate[]) {
+  if(!Array.isArray(trackPenOption))return;
   const origin = line.calculative.canvas.store.data.origin
   const scale = line.calculative.canvas.store.data.scale;
-  pens.forEach(target => {
-    const targetPen = line.calculative.canvas.store.pens[target];
+  trackPenOption.forEach(track => {
+    const targetPen = line.calculative.canvas.store.pens[track.id];
     const meta2d = line.calculative.canvas.parent
     if(!targetPen)return;
-    const pos = calculateLineFrameStates(line);
+    const pos = calculateLineFrameStates(line,track.offset?.instance);
 
     const width = targetPen.width;
     const height = targetPen.height;
@@ -2174,13 +2174,13 @@ function setTrackAnimateOnPen(line:Pen, pens:string[]) {
     const viewHeight = height / scale;
 
     const data: any = {
-      x: viewX,
-      y: viewY,
+      x: viewX + (track.offset?.x || 0),
+      y: viewY + (track.offset?.y || 0),
       width: viewWidth,
       height: viewHeight,
       rotate: pos.rotate,
     };
-    meta2d.setValue({ id: target, ...data });
+    meta2d.setValue({ id: targetPen.id, ...data });
   })
 }
 
@@ -2196,7 +2196,7 @@ function renderAnimateOnLine(ctx: CanvasRenderingContext2D, pen:Pen, pos:Point, 
 
 }
 
-function calculateLineFrameStates(line:Pen) {
+function calculateLineFrameStates(line:Pen,offsetInstance:number = 0) {
   let path:SVGGeometryElement
   let from:Point = null
   line.calculative.worldAnchors.forEach(pt=>{
@@ -2212,9 +2212,10 @@ function calculateLineFrameStates(line:Pen) {
 
   let instance = 0
   if(line.animateReverse){
-    instance = line.length - line.calculative.animatePos
+    // TODO 延迟有问题 出现卡顿瞬间移动
+    instance = line.length - line.calculative.animatePos - (offsetInstance * line.calculative.canvas.store.data.scale)
   }else {
-    instance = line.calculative.animatePos
+    instance = line.calculative.animatePos - offsetInstance * line.calculative.canvas.store.data.scale
   }
   const pos = getLinePointPosAndAngle(path,instance)
   return pos

@@ -93,6 +93,14 @@ export type IValue = Pen &
   Partial<ChartData> &
   Partial<Record<'tag' | 'newId', string>> & { [key: string]: any };
 
+export interface TrackAnimate {
+  id: string; // 目标 pen id
+  offset: {
+    x:number,
+    y:number,
+    instance:number
+  }; // 目标 pen 偏移量
+}
 // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
 // string 类型，只展示文字
 export type Dropdown = string | IValue;
@@ -295,7 +303,7 @@ export interface Pen extends Rect {
   animateColor?: string;
   animateLineDash?: number[];
   animateReverse?: boolean;
-  trackTargets?: string[]; // 动画目标 pen id
+  trackTargets?: TrackAnimate[]; // 动画目标 pen id
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
   lineAnimateElement?: string; // 动画元素
