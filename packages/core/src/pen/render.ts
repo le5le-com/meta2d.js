@@ -6,7 +6,7 @@ import {
   LockState,
   Pen,
 } from './model';
-import { drawArrow, getLineRect, getSplitAnchor } from '../diagrams';
+import { drawArrow, getLineRect, getSplitAnchor,getLinePointPosAndAngle,createSvgPath } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
   calcRotate,
