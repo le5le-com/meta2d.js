@@ -426,7 +426,7 @@ export function createSvgPath(path:SVGGeometryElement,from: Point, cp1: Point, c
   } else if (cp1) {
     d += `Q${cp1.x} ${cp1.y} ${to.x} ${to.y}`
   } else {
-    d += `L${to.x} ${to.y}`
+    d += `Q${cp2?.x || from.x} ${cp2?.y || from.y} ${to.x} ${to.y}`
   }
   path.setAttribute('d',d)
   return path
