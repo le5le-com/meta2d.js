@@ -2126,6 +2126,10 @@ export function setCtxLineAnimate(
       ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
+    case LineAnimateType.Track:
+      const targetPen = pen.trackTargets;
+      setTrackAnimateOnPen(pen,targetPen)
+      break;
     default:
       if (pen.animateReverse) {
         ctx.lineDashOffset = Number.EPSILON; //防止在执行动画时会绘制多余的远点
@@ -2142,6 +2146,45 @@ export function setCtxLineAnimate(
       }
       break;
   }
+}
+
+function setTrackAnimateOnPen(line:Pen, pens:string[]) {
+  if(!Array.isArray(pens))return;
+  const origin = line.calculative.canvas.store.data.origin
+  const scale = line.calculative.canvas.store.data.scale;
+  pens.forEach(target => {
+    const targetPen = line.calculative.canvas.store.pens[target];
+    const meta2d = line.calculative.canvas.parent
+    if(!targetPen)return;
+    let path:SVGGeometryElement
+    let from:Point = null
+    line.calculative.worldAnchors.forEach(pt=>{
+      if (from) {
+        path = createSvgPath(path,from,from.next,pt.prev,pt)
+      }
+      from = pt;
+    })
+    if(line.close){
+      let pt = line.calculative.worldAnchors[0]
+      path = createSvgPath(path,from,from.next,pt.prev,pt)
+    }
+
+    let instance = 0
+    if(line.animateReverse){
+      instance = line.length - line.calculative.animatePos
+    }else {
+      instance = line.calculative.animatePos
+    }
+    const pos = getLinePointPosAndAngle(path,instance)
+    const data:any = {
+      x:(pos.x-origin.x)/scale,
+      y:(pos.y-origin.y)/ scale,
+      width: targetPen.width / scale,
+      height: targetPen.height / scale,
+      rotate:pos.rotate
+    }
+    meta2d.setValue({id:target,...data})
+  })
 }
 
 /**

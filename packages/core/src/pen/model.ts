@@ -103,6 +103,7 @@ export enum LineAnimateType {
   Dot, // 圆点
   Arrow, // 箭头,
   WaterDrop, // 水滴
+  Track
 }
 
 export interface ColorStop {
@@ -294,6 +295,7 @@ export interface Pen extends Rect {
   animateColor?: string;
   animateLineDash?: number[];
   animateReverse?: boolean;
+  trackTargets?: string[]; // 动画目标 pen id
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
 
