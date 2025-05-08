@@ -6,7 +6,15 @@ import {
   LockState,
   Pen, TrackAnimate,
 } from './model';
-import { drawArrow, getLineRect, getSplitAnchor,getLinePointPosAndAngle,createSvgPath } from '../diagrams';
+import {
+  drawArrow,
+  getLineRect,
+  getSplitAnchor,
+  getLinePointPosAndAngle,
+  createSvgPath,
+  getLineLength,
+  createLineSvgPath
+} from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
   calcRotate,
@@ -2161,7 +2169,7 @@ function setTrackAnimateOnPen(line:Pen, trackPenOption:TrackAnimate[]) {
     const meta2d = line.calculative.canvas.parent
     if(!targetPen)return;
     const pos = calculateLineFrameStates(line,track.offset?.instance);
-
+    if(!pos)return;
     const width = targetPen.width;
     const height = targetPen.height;
 
@@ -2187,13 +2195,76 @@ function setTrackAnimateOnPen(line:Pen, trackPenOption:TrackAnimate[]) {
 function setElementAnimateOnPen(ctx:CanvasRenderingContext2D,line:Pen,element:string) {
   const draw = globalStore.lineAnimateDraws[element]
   if(!draw)return;
-  const pos = calculateLineFrameStates(line)
-  renderAnimateOnLine(ctx,line,pos,draw)
-  // render Canvas
+  renderElementOnLine(ctx,line,draw)
 }
 
-function renderAnimateOnLine(ctx: CanvasRenderingContext2D, pen:Pen, pos:Point, draw:CanvasRenderingContext2D | HTMLElement | Path2D) {
+function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:any) {
+  if(line.lineAnimateDash){
+    const scale = line.calculative.canvas.store.data.scale
+    const len = getLineLength(line) / scale
+    computeLineDashSegments(len,line.lineAnimateDash,line.lineAnimateDashOffset,line.lineAnimateElementCount).forEach((i,index)=>{
+      const pos = calculateLineFrameStates(line,i.start)
+      // if(i.start < 1)return
+      if(!pos)return
+      ctx.save()
+      draw(ctx,line,pos,index)
+      ctx.restore()
+    })
+  }
+}
+type DashSegment = {
+  start: number;
+  end: number;
+  isDash: boolean;
+};
 
+/**
+ * 模拟 canvas lineDash 计算
+ * @param lineLength 总长度
+ * @param dashArray [dashLength, gapLength, ...]
+ * @param offset 起点偏移，可为负数
+ */
+function computeLineDashSegments(lineLength: number, dashArray: number[], offset = 0, count: number, animateOffset = 0): DashSegment[] {
+  const result: DashSegment[] = [];
+  if (!dashArray || dashArray.length === 0) {
+    result.push({ start: 0, end: lineLength, isDash: true });
+    return result;
+  }
+
+  const patternLength = dashArray.reduce((sum, val) => sum + val, 0);
+  let pos = (-offset + animateOffset) % patternLength;
+  if (pos < 0) pos += patternLength;
+
+  let _count = 0;
+  let globalPos = 0;
+  if (!count) count = Infinity;
+
+  while (globalPos < lineLength && _count < count) {
+    for (let i = 0; i < dashArray.length; i++) {
+      const segLength = dashArray[i];
+      const isDash = i % 2 === 0;
+
+      let start = globalPos;
+      let end = globalPos + segLength - pos;
+
+      if (end > lineLength) end = lineLength;
+      if (isDash && end > start) {
+        // 这里平移到动画偏移后的环上
+        const shiftedStart = (start + animateOffset) % lineLength;
+        const shiftedEnd = (end + animateOffset) % lineLength;
+
+        result.push({ start: shiftedStart, end: shiftedEnd, isDash: true });
+        _count += 1;
+      }
+
+      globalPos = end;
+      pos = 0;
+
+      if (globalPos >= lineLength || _count >= count) break;
+    }
+  }
+
+  return result;
 }
 
 function calculateLineFrameStates(line:Pen,offsetInstance:number = 0) {

@@ -28,7 +28,7 @@ export function line(
       from = pt;
     });
     if (pen.close) {
-      if(pen.lineName === 'curve') {  
+      if(pen.lineName === 'curve') {
         draw(path, from, worldAnchors[0]);
       } else {
         path.closePath();
@@ -289,6 +289,21 @@ export function getLineLength(pen: Pen): number {
   return len;
 }
 
+export function createLineSvgPath(line:Pen) {
+  let path:SVGGeometryElement
+  let from:Point = null
+  line.calculative.worldAnchors.forEach(pt=>{
+    if (from) {
+      path = createSvgPath(path,from,from.next,pt.prev,pt)
+    }
+    from = pt;
+  })
+  if(line.close){
+    let pt = line.calculative.worldAnchors[0]
+    path = createSvgPath(path,from,from.next,pt.prev,pt)
+  }
+  return path
+}
 /**
  * 连线在 rect 内， 连线与 rect 相交
  */
@@ -433,6 +448,7 @@ export function createSvgPath(path:SVGGeometryElement,from: Point, cp1: Point, c
 }
 // 获取线段的某个点的导数和位置
 export function getLinePointPosAndAngle (path:SVGGeometryElement,distance: number){
+  if(distance<0 || distance>path.getTotalLength()) return null
   const delta = 0.01
   const point1 = path.getPointAtLength(distance)
 

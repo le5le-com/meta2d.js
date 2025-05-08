@@ -308,6 +308,9 @@ export interface Pen extends Rect {
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
   lineAnimateElement?: string; // 动画元素
+  lineAnimateDash?: number[]; // 动画元素间隔
+  lineAnimateDashOffset?: number; // 动画元素偏移量
+  lineAnimateElementCount?: number ; // 动画元素数量
   lineAnimateType?: LineAnimateType;
   animateName?: string; // 当前执行的动画名称
   frames?: Pen[];
@@ -441,6 +444,7 @@ export interface Pen extends Rect {
     globalAlpha?: number;
     lineDash?: number[];
     lineDashOffset?: number;
+    length?: number; // 线长度
     color?: string;
     background?: string;
     // anchorColor?: string;    // TODO: 锚点颜色动画，应该不需要
