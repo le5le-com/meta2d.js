@@ -40,6 +40,9 @@ export interface Meta2dData {
   ruleColor?: string;
   fromArrow?: string;
   toArrow?: string;
+  lineAnimateDraws?: {
+    [key: string]: string;
+  };
   lineWidth?: number;
   lineColor?: string; // 线条默认颜色
   color?: string; // 画笔默认 color 优先级高于 options.color
@@ -318,6 +321,7 @@ export const clearStore = (store: Meta2dStore, template?: string) => {
     center: { x: 0, y: 0 },
     paths: {},
     template: isSame ? template : null,
+    lineAnimateDraws: {}
   };
   store.sameTemplate = isSame;
   store.pens = {};

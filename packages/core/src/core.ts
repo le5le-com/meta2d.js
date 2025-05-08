@@ -1058,6 +1058,7 @@ export class Meta2d {
     this.initBindDatas();
     this.initBinds();
     this.doInitFn();
+    this.loadLineAnimateDraws();
     this.initMessageEvents();
     this.initGlobalTriggers();
     this.startAnimate();
@@ -1143,6 +1144,12 @@ export class Meta2d {
       }
     });
     this.render();
+  }
+
+  loadLineAnimateDraws(){
+    Object.entries(this.store.data.lineAnimateDraws).forEach(([key,drawFunc])=>{
+      globalStore.lineAnimateDraws[key] = eval(drawFunc);
+    })
   }
 
   statistics() {
@@ -1959,7 +1966,7 @@ export class Meta2d {
     }
     this.inactive();
   }
- 
+
   clearCombine(pen?: Pen) {
     if (!pen && this.store.active) {
       pen = this.store.active[0];
@@ -2177,6 +2184,10 @@ export class Meta2d {
       ...Object.keys(this.store.bind),
       ...Object.keys(this.store.bindDatas),
     ];
+
+    Object.entries(globalStore.lineAnimateDraws).forEach(([key, drawFunc]) => {
+      data.lineAnimateDraws[key] = drawFunc.toString();
+    })
     return data;
   }
 
