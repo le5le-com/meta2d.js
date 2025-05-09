@@ -4444,7 +4444,7 @@ export class Meta2d {
             if (pen.externElement) {
               pen.onResize?.(pen);
             }
-            if(pen.children.length){
+            if(pen.children?.length){
               const cPens = getAllChildren(pen,this.store);
               cPens.forEach((cPen) => {
                 if (cPen.externElement) {
