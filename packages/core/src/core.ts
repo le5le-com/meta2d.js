@@ -4421,7 +4421,7 @@ export class Meta2d {
             right = 0;
           }
           let ratio =
-            (this.canvas.width - left - right) / (rect.width);
+            (this.canvas.width - left - right) / (rect.width - left - right);
           pens.forEach((pen) => {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.width / this.canvas.width > 0.1) {
