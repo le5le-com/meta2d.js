@@ -4,9 +4,17 @@ import {
   IValue,
   LineAnimateType,
   LockState,
-  Pen,
+  Pen, TrackAnimate,
 } from './model';
-import { drawArrow, getLineRect, getSplitAnchor } from '../diagrams';
+import {
+  drawArrow,
+  getLineRect,
+  getSplitAnchor,
+  getLinePointPosAndAngle,
+  createSvgPath,
+  getLineLength,
+  createLineSvgPath
+} from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
   calcRotate,
@@ -2126,6 +2134,14 @@ export function setCtxLineAnimate(
       ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
+    case LineAnimateType.Track:
+      const trackPenOption = pen.trackTargets;
+      setTrackAnimateOnPen(pen,trackPenOption)
+      break;
+    case LineAnimateType.Custom:
+      const animateEle = pen.lineAnimateElement
+      setElementAnimateOnPen(ctx,pen,animateEle)
+      break
     default:
       if (pen.animateReverse) {
         ctx.lineDashOffset = Number.EPSILON; //防止在执行动画时会绘制多余的远点
@@ -2144,6 +2160,137 @@ export function setCtxLineAnimate(
   }
 }
 
+function setTrackAnimateOnPen(line:Pen, trackPenOption:TrackAnimate[]) {
+  if(!Array.isArray(trackPenOption))return;
+  const origin = line.calculative.canvas.store.data.origin
+  const scale = line.calculative.canvas.store.data.scale;
+  trackPenOption.forEach(track => {
+    const targetPen = line.calculative.canvas.store.pens[track.id];
+    const meta2d = line.calculative.canvas.parent
+    if(!targetPen)return;
+    const pos = calculateLineFrameStates(line,track.offset?.instance);
+    if(!pos)return;
+    const width = targetPen.width;
+    const height = targetPen.height;
+
+    const worldX = pos.x - width / 2;
+    const worldY = pos.y - height / 2;
+
+    const viewX = (worldX - origin.x) / scale;
+    const viewY = (worldY - origin.y) / scale;
+    const viewWidth = width / scale;
+    const viewHeight = height / scale;
+
+    const data: any = {
+      x: viewX + (track.offset?.x || 0),
+      y: viewY + (track.offset?.y || 0),
+      width: viewWidth,
+      height: viewHeight,
+      rotate: pos.rotate,
+    };
+    meta2d.setValue({ id: targetPen.id, ...data });
+  })
+}
+
+function setElementAnimateOnPen(ctx:CanvasRenderingContext2D,line:Pen,element:string) {
+  const draw = globalStore.lineAnimateDraws[element]
+  if(!draw)return;
+  renderElementOnLine(ctx,line,draw)
+}
+
+function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:any) {
+  if(line.lineAnimateDash){
+    const scale = line.calculative.canvas.store.data.scale
+    const len = getLineLength(line) / scale
+    computeLineDashSegments(len,line.lineAnimateDash,line.lineAnimateDashOffset,line.lineAnimateElementCount).forEach((i,index)=>{
+      const pos = calculateLineFrameStates(line,i.start)
+      // if(i.start < 1)return
+      if(!pos)return
+      ctx.save()
+      draw(ctx,line,pos,index)
+      ctx.restore()
+    })
+  }
+}
+type DashSegment = {
+  start: number;
+  end: number;
+  isDash: boolean;
+};
+
+/**
+ * 模拟 canvas lineDash 计算
+ * @param lineLength 总长度
+ * @param dashArray [dashLength, gapLength, ...]
+ * @param offset 起点偏移，可为负数
+ */
+function computeLineDashSegments(lineLength: number, dashArray: number[], offset = 0, count: number, animateOffset = 0): DashSegment[] {
+  const result: DashSegment[] = [];
+  if (!dashArray || dashArray.length === 0) {
+    result.push({ start: 0, end: lineLength, isDash: true });
+    return result;
+  }
+
+  const patternLength = dashArray.reduce((sum, val) => sum + val, 0);
+  let pos = (-offset + animateOffset) % patternLength;
+  if (pos < 0) pos += patternLength;
+
+  let _count = 0;
+  let globalPos = 0;
+  if (!count) count = Infinity;
+
+  while (globalPos < lineLength && _count < count) {
+    for (let i = 0; i < dashArray.length; i++) {
+      const segLength = dashArray[i];
+      const isDash = i % 2 === 0;
+
+      let start = globalPos;
+      let end = globalPos + segLength - pos;
+
+      if (end > lineLength) end = lineLength;
+      if (isDash && end > start) {
+        // 这里平移到动画偏移后的环上
+        const shiftedStart = (start + animateOffset) % lineLength;
+        const shiftedEnd = (end + animateOffset) % lineLength;
+
+        result.push({ start: shiftedStart, end: shiftedEnd, isDash: true });
+        _count += 1;
+      }
+
+      globalPos = end;
+      pos = 0;
+
+      if (globalPos >= lineLength || _count >= count) break;
+    }
+  }
+
+  return result;
+}
+
+function calculateLineFrameStates(line:Pen,offsetInstance:number = 0) {
+  let path:SVGGeometryElement
+  let from:Point = null
+  line.calculative.worldAnchors.forEach(pt=>{
+    if (from) {
+      path = createSvgPath(path,from,from.next,pt.prev,pt)
+    }
+    from = pt;
+  })
+  if(line.close){
+    let pt = line.calculative.worldAnchors[0]
+    path = createSvgPath(path,from,from.next,pt.prev,pt)
+  }
+
+  let instance = 0
+  if(line.animateReverse){
+    // TODO 延迟有问题 出现卡顿瞬间移动
+    instance = line.length - line.calculative.animatePos - (offsetInstance * line.calculative.canvas.store.data.scale)
+  }else {
+    instance = line.calculative.animatePos - offsetInstance * line.calculative.canvas.store.data.scale
+  }
+  const pos = getLinePointPosAndAngle(path,instance)
+  return pos
+}
 /**
  * 全局 color
  */
