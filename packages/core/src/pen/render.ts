@@ -2200,15 +2200,20 @@ function setElementAnimateOnPen(ctx:CanvasRenderingContext2D,line:Pen,element:st
 
 function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:any) {
   if(line.lineAnimateDash){
+    const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : line.lineAnimateDash.split(',').map(i=>Number(i))
     const scale = line.calculative.canvas.store.data.scale
     const len = getLineLength(line) / scale
-    computeLineDashSegments(len,line.lineAnimateDash,line.lineAnimateDashOffset,line.lineAnimateElementCount).forEach((i,index)=>{
+    computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount).forEach((i,index)=>{
       const pos = calculateLineFrameStates(line,i.start)
       // if(i.start < 1)return
       if(!pos)return
-      ctx.save()
-      draw(ctx,line,pos,index)
-      ctx.restore()
+      try {
+        ctx.save()
+        draw(ctx,line,pos,index)
+        ctx.restore()
+      }catch (e) {
+        console.warn(e)
+      }
     })
   }
 }
