@@ -1555,7 +1555,25 @@ export class Meta2d {
 
   registerAnchors = registerAnchors;
 
-  registerLineAnimateDraws = registerLineAnimateDraws
+  registerLineAnimateDraws = (name,drawFunc)=>{
+    drawFunc = typeof drawFunc === 'string'? drawFunc : drawFunc.toString();
+
+    this.store.data.lineAnimateDraws[name] = drawFunc;
+    // 同步到store
+    globalStore.lineAnimateDraws[name] = eval(drawFunc);
+  }
+  updateLineAnimateDraws(name,option){// option: {name:'xxx',code:'xxx'}
+    if(!option)return
+
+    delete this.store.data.lineAnimateDraws[name];
+    delete globalStore.lineAnimateDraws[name];
+
+    if(option === -1) { // -1 表示删除
+      return;
+    }
+    this.registerLineAnimateDraws(option.name || name,option.code);
+  }
+
   // customeDock = (store, rect, pens, offset) => {xDock, yDock}
   // customDock return:
   // {
