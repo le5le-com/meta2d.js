@@ -2656,7 +2656,7 @@ export class Meta2d {
   connectSSE(net:Network){
     this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
     this.eventSources[net.index].onmessage = (e) => {
-      this.socketCallback(e.data, { type: 'SSE', url: net.url });
+      this.socketCallback(e.data, { type: 'SSE', url: net.url, name:net.name });
     };
     this.eventSources[net.index].onerror = (error) => {
       this.store.emitter.emit('error', { type: 'SSE', error });
@@ -2697,6 +2697,7 @@ export class Meta2d {
           topic,
           type: 'mqtt',
           url: net.url,
+          name: net.name
         });
       }
     );
@@ -2740,7 +2741,7 @@ export class Meta2d {
       net.protocols || undefined
     );
     this.websockets[net.index].onmessage = (e) => {
-      this.socketCallback(e.data, { type: 'websocket', url: net.url });
+      this.socketCallback(e.data, { type: 'websocket', url: net.url, name:net.name });
     };
     this.websockets[net.index].onerror = (error) => {
       this.store.emitter.emit('error', { type: 'websocket', error });
@@ -3125,7 +3126,7 @@ export class Meta2d {
       });
       if (res.ok) {
         const data = await res.text();
-        this.socketCallback(data, { type: 'http', url: req.url });
+        this.socketCallback(data, { type: 'http', url: req.url, name: req.name });
       } else {
         _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
@@ -3178,7 +3179,7 @@ export class Meta2d {
 
   socketCallback(
     message: string,
-    context?: { type?: string; topic?: string; url?: string; method?: string }
+    context?: { type?: string; topic?: string; url?: string; method?: string, name?:string }
   ) {
     this.store.emitter.emit('socket', { message, context });
     let _message: any = message;
@@ -4438,7 +4439,7 @@ export class Meta2d {
             right = 0;
           }
           let ratio =
-            (this.canvas.width - left - right) / (rect.width);
+            (this.canvas.width - left - right) / (rect.width - left - right);
           pens.forEach((pen) => {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.width / this.canvas.width > 0.1) {
@@ -4461,7 +4462,7 @@ export class Meta2d {
             if (pen.externElement) {
               pen.onResize?.(pen);
             }
-            if(pen.children.length){
+            if(pen.children?.length){
               const cPens = getAllChildren(pen,this.store);
               cPens.forEach((cPen) => {
                 if (cPen.externElement) {

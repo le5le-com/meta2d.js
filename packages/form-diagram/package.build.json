@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/form-diagram",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "The form library based on le5le meta2d.",
   "main": "index.js",
   "types": "index.d.ts",
