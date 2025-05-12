@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "mitt": "^2.1.0",
-    "mqtt": "^4.2.6"
+    "mqtt": "^5.10.0"
   },
   "publishConfig": {
     "access": "public"
