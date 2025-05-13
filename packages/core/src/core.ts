@@ -2689,7 +2689,29 @@ export class Meta2d {
       }
     }
     net.times = 0;
-    this.mqttClients[net.index] = mqtt.connect(url, net.options);
+    let options = deepClone(net.options);
+    if(options?.username&&options.username.includes('${')){
+      let keys = options.username.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          options.username = options.username.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
+    if(options?.password&&options.password.includes('${')){
+      let keys = options.password.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          options.password = options.password.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
+    
+    this.mqttClients[net.index] = mqtt.connect(url, options);
     this.mqttClients[net.index].on(
       'message',
       (topic: string, message: Buffer) => {
@@ -2715,7 +2737,18 @@ export class Meta2d {
       }
     });
     if (net.topics) {
-      this.mqttClients[net.index].subscribe(net.topics.split(','));
+      let topics = net.topics;
+      if(topics.indexOf('${') > -1){
+        let keys = topics.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+        if (keys) {
+          keys.forEach((key) => {
+            topics = topics.replace(
+              `\${${key}}`,this.getDynamicParam(key)
+            );
+          });
+        }
+      }
+      this.mqttClients[net.index].subscribe(topics.split(','));
     }
   }
 
