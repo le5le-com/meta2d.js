@@ -3323,6 +3323,7 @@ function isLinear(value: unknown, key: string, pen: Pen): boolean {
 export function setLineAnimate(pen: Pen, now: number) {
   if (pen.calculative.start === 0) {
     pen.calculative.start = undefined;
+    pen.calculative.cycleStart = undefined;
     return 0;
   }
 
@@ -3333,15 +3334,32 @@ export function setLineAnimate(pen: Pen, now: number) {
   if (!pen.animateSpan) {
     pen.animateSpan = 1;
   }
+  const elapsed = (now - pen.calculative.cycleStart) / 1000; // 秒
 
-  pen.calculative.animatePos +=
-    pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+  if(pen.animateTimingFunction){
+    const scale = pen.calculative.canvas.store.data.scale;
+
+    const duration = pen.duration;
+    const t = Math.min(elapsed / duration, 1);
+
+    const progress = cubicBezierY(t,pen.animateTimingFunction[1],pen.animateTimingFunction[3])
+    // 更新动画位置
+    pen.calculative.animatePos = progress * pen.length;
+  }else{
+    pen.calculative.animatePos +=
+      pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+  }
+
+  if(!pen.calculative.cycleStart){
+    pen.calculative.cycleStart = now;
+  }
+
   if (!pen.calculative.start) {
     pen.calculative.start = Date.now();
     pen.calculative.animatePos =
       pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
     pen.calculative.cycleIndex = 1;
-  } else if (pen.calculative.animatePos > pen.length) {
+  } else if (pen.calculative.animatePos > pen.length || elapsed > pen.duration) {
     // 播放到尾了
     ++pen.calculative.cycleIndex;
 
@@ -3349,8 +3367,10 @@ export function setLineAnimate(pen: Pen, now: number) {
     if (pen.calculative.cycleIndex > pen.animateCycle) {
       pen.currentAnimation = undefined;
       pen.calculative.start = undefined;
+      pen.calculative.cycleStart = undefined;
       return 0;
     }
+    pen.calculative.cycleStart = undefined;
     pen.calculative.animatePos = pen.animateSpan;
   }
 

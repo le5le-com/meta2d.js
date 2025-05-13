@@ -118,3 +118,13 @@ export function valueInArray(realValue: any, collection: unknown): boolean {
   }
   return false;
 }
+
+// 三次贝塞尔曲线y轴分量
+export function cubicBezierY(t, p1y, p2y) {
+  const mt = 1 - t;
+  return (
+    3 * mt * mt * t * p1y +
+    3 * mt * t * t * p2y +
+    t * t * t
+  );
+}
