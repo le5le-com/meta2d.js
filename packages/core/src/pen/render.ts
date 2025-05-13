@@ -42,7 +42,7 @@ import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '../pen';
-import { pSBC, rgba } from '../utils';
+import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
 
 /**
