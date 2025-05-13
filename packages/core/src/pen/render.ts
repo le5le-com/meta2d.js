@@ -3337,12 +3337,16 @@ export function setLineAnimate(pen: Pen, now: number) {
   const elapsed = (now - pen.calculative.cycleStart) / 1000; // 秒
 
   if(pen.animateTimingFunction){
+
+    const timeParams = Array.isArray(pen.animateTimingFunction)?
+      pen.animateTimingFunction :
+      pen.animateTimingFunction.split(',');
     const scale = pen.calculative.canvas.store.data.scale;
 
     const duration = pen.duration;
     const t = Math.min(elapsed / duration, 1);
 
-    const progress = cubicBezierY(t,pen.animateTimingFunction[1],pen.animateTimingFunction[3])
+    const progress = cubicBezierY(t,timeParams[1],timeParams[3])
     // 更新动画位置
     pen.calculative.animatePos = progress * pen.length;
   }else{
