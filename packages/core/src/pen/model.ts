@@ -111,7 +111,6 @@ export enum LineAnimateType {
   Dot, // 圆点
   Arrow, // 箭头,
   WaterDrop, // 水滴
-  Track,
   Custom // 自定义动画
 }
 
@@ -309,7 +308,7 @@ export interface Pen extends Rect {
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
   lineAnimateElement?: string; // 动画元素
-  lineAnimateDash?: number[]; // 动画元素间隔
+  lineAnimateDash?: number[] | string; // 动画元素间隔
   lineAnimateDashOffset?: number; // 动画元素偏移量
   lineAnimateElementCount?: number ; // 动画元素数量
   lineAnimateType?: LineAnimateType;

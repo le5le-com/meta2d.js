@@ -2134,11 +2134,12 @@ export function setCtxLineAnimate(
       ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
-    case LineAnimateType.Track:
-      const trackPenOption = pen.trackTargets;
-      setTrackAnimateOnPen(pen,trackPenOption)
-      break;
     case LineAnimateType.Custom:
+      if(pen.trackTargets && pen.trackTargets.length){
+        const trackPenOption = pen.trackTargets;
+        setTrackAnimateOnPen(pen,trackPenOption)
+        break
+      }
       const animateEle = pen.lineAnimateElement
       setElementAnimateOnPen(ctx,pen,animateEle)
       break
