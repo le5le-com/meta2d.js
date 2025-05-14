@@ -3632,7 +3632,7 @@ export class Meta2d {
         break;
     }
 
-    this.doMessageEvent(eventName);
+    this.doMessageEvent(eventName,e);
   };
 
   private doEvent = (pen: Pen, eventName: EventName) => {
