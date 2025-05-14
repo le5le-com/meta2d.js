@@ -3336,7 +3336,7 @@ export function setLineAnimate(pen: Pen, now: number) {
   }
   const elapsed = (now - pen.calculative.cycleStart) / 1000; // 秒
 
-  if(pen.animateTimingFunction){
+  if(pen.animateTimingFunction && pen.duration){
 
     const timeParams = Array.isArray(pen.animateTimingFunction)?
       pen.animateTimingFunction :

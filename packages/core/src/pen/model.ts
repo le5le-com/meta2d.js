@@ -304,7 +304,7 @@ export interface Pen extends Rect {
   animateColor?: string;
   animateLineDash?: number[];
   animateReverse?: boolean;
-  animateTimingFunction?: string[]; // 三次贝塞尔时间函数两控制点的坐标参数: number[]
+  animateTimingFunction?: string[] | string; // 三次贝塞尔时间函数两控制点的坐标参数: number[]
   trackTargets?: TrackAnimate[]; // 动画目标 pen id
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
