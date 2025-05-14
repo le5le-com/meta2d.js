@@ -2862,7 +2862,7 @@ export class Canvas {
     const gridSize = this.store.data.gridSize || this.store.options.gridSize;
     const { origin, scale } = this.store.data;
     const autoAlignGrid =
-      this.store.options.autoAlignGrid && this.store.data.grid;
+      this.store.options.autoAlignGrid && (this.store.data.grid || this.store.options.grid);
       movedPens.forEach((pen) => {
       const i = this.movingPens.findIndex((item) => item.id === pen.id+movingSuffix);
       if(i<0){
