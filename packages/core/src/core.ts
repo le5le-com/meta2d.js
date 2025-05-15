@@ -3669,11 +3669,16 @@ export class Meta2d {
           this.doEvent(e, eventName);
         break;
       case 'change':
-        e.pen && updateFormData(e.pen)
-        this.store.data.locked &&
-          e &&
-          !e.disabled &&
-          this.doEvent(e, eventName);
+        e.pen && updateFormData(e.pen);
+        if(e.pen){
+          this.store.data.locked &&!e.pen.disabled &&
+            this.doEvent(e.pen, eventName);
+        }else{
+          this.store.data.locked &&
+            e &&
+            !e.disabled &&
+            this.doEvent(e, eventName);
+        }
         break;
     }
 
