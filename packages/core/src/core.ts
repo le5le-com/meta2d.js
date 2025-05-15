@@ -345,7 +345,16 @@ export class Meta2d {
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
       if (window && e.value && typeof e.value === 'string') {
-        window.open(e.value, e.params ?? '_blank');
+        let url = e.value;
+        if(url.includes('${')){
+          let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+          if (keys) {
+            keys?.forEach((key) => {
+              url = url.replace(`\${${key}}`, pen[key]);
+            });
+          }
+        }
+        window.open(url, e.params ?? '_blank');
         return;
       }
       console.warn('[meta2d] Link param is not a string');
