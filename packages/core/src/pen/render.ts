@@ -2205,9 +2205,11 @@ function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:any) 
     const scale = line.calculative.canvas.store.data.scale
     const len = getLineLength(line) / scale
     computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount).forEach((i,index)=>{
-      const pos = calculateLineFrameStates(line,i.start)
+      const pos:any = calculateLineFrameStates(line,i.start)
       // if(i.start < 1)return
       if(!pos)return
+      pos.index = i.start
+      pos.calculateLineFrameStates = calculateLineFrameStates
       try {
         ctx.save()
         draw(ctx,line,pos,index)
@@ -3342,7 +3344,6 @@ export function setLineAnimate(pen: Pen, now: number) {
     const timeParams = Array.isArray(pen.animateTimingFunction)?
       pen.animateTimingFunction :
       pen.animateTimingFunction.split(',');
-    const scale = pen.calculative.canvas.store.data.scale;
 
     const duration = pen.duration;
     const t = Math.min(elapsed / duration, 1);
