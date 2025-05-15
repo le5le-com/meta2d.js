@@ -355,14 +355,22 @@ export class Meta2d {
       const value = e.value;
       if (value && typeof value === 'object') {
         const pens = e.params ? this.find(e.params) : this.find(pen.id);
+        const _value:any = {};
+        for(let key in value){
+          if(value[key]?.id){
+            _value[key] = this.store.pens[value[key].id]?.[value[key].key];
+          }else{
+            _value[key] = value[key];
+          }
+        }
         pens.forEach((pen: Pen) => {
-          if (value.hasOwnProperty('visible')) {
-            if (pen.visible !== value.visible) {
-              this.setVisible(pen, value.visible);
+          if (_value.hasOwnProperty('visible')) {
+            if (pen.visible !== _value.visible) {
+              this.setVisible(pen, _value.visible);
             }
           }
           this.setValue(
-            { id: pen.id, ...value },
+            { id: pen.id, ..._value },
             { render: false, doEvent: false }
           );
         });
