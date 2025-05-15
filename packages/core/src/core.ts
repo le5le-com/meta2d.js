@@ -375,7 +375,7 @@ export class Meta2d {
               if (keys) {
                 keys.forEach((key) => {
                   __value = __value.replace(
-                    `\${${key}}`,this.getDynamicParam(key)
+                    `\${${key}}`,pen[key]||this.getDynamicParam(key)
                   );
                 });
               }
