@@ -2204,7 +2204,8 @@ function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:any) 
     const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : line.lineAnimateDash.split(',').map(i=>Number(i))
     const scale = line.calculative.canvas.store.data.scale
     const len = getLineLength(line) / scale
-    computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount).forEach((i,index)=>{
+    const elesPos = computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount)
+    elesPos.forEach((i,index)=>{
       const pos:any = calculateLineFrameStates(line,i.start)
       // if(i.start < 1)return
       if(!pos)return
@@ -3346,7 +3347,7 @@ export function setLineAnimate(pen: Pen, now: number) {
       pen.animateTimingFunction.split(',');
 
     const duration = pen.duration;
-    const t = Math.min(elapsed / duration, 1);
+    const t = elapsed / duration
 
     const progress = cubicBezierY(t,timeParams[1],timeParams[3])
     // 更新动画位置

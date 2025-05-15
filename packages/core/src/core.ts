@@ -1191,6 +1191,7 @@ export class Meta2d {
   }
 
   loadLineAnimateDraws(){
+    globalStore.lineAnimateDraws = {}
     Object.entries(this.store.data.lineAnimateDraws).forEach(([key,drawFunc])=>{
       globalStore.lineAnimateDraws[key] = eval(drawFunc);
     })
