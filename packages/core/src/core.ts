@@ -677,7 +677,20 @@ export class Meta2d {
           const pen = this.findOne(item.id);
           value[item.prop] = pen[item.key];
         }else{
-          value[item.prop] = this.convertType(item.value,item.type);
+          if(typeof item.value === 'string'&&item.value.includes('${')){
+            let _value = item.value
+            let keys = _value.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+            if (keys) {
+              keys.forEach((key) => {
+                _value = _value.replace(
+                  `\${${key}}`,this.getDynamicParam(key)
+                );
+              });
+            }
+            value[item.prop] = _value;
+          }else{
+            value[item.prop] = this.convertType(item.value,item.type);
+          }
         }
       }
     });
