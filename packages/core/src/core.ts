@@ -1752,6 +1752,7 @@ export class Meta2d {
       pen.currentAnimation = undefined;
       pen.calculative.pause = undefined;
       pen.calculative.start = undefined;
+      pen.calculative.cycleStart = undefined;
       pen.calculative.duration = undefined;
       pen.calculative.animatePos = 0;
       this.store.animates.delete(pen);
@@ -2710,7 +2711,7 @@ export class Meta2d {
         });
       }
     }
-    
+
     this.mqttClients[net.index] = mqtt.connect(url, options);
     this.mqttClients[net.index].on(
       'message',
