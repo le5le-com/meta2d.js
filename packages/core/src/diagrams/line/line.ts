@@ -448,7 +448,8 @@ export function createSvgPath(path:SVGGeometryElement,from: Point, cp1: Point, c
 }
 // 获取线段的某个点的导数和位置
 export function getLinePointPosAndAngle (path:SVGGeometryElement,distance: number){
-  if(distance<0 || distance>path.getTotalLength()) return null
+  const totalLength = path.getTotalLength()
+  if(distance<0 || distance>totalLength) return null
   const delta = 0.01
   const point1 = path.getPointAtLength(distance)
 
@@ -458,6 +459,7 @@ export function getLinePointPosAndAngle (path:SVGGeometryElement,distance: numbe
     x:point1.x,
     y:point1.y,
     rotate:determinant / Math.PI * 180,
+    progress: distance / totalLength
   }
 }
 
