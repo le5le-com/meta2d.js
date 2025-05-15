@@ -369,9 +369,23 @@ export class Meta2d {
           if(value[key]?.id){
             _value[key] = this.store.pens[value[key].id]?.[value[key].key];
           }else{
-            _value[key] = value[key];
+            if(typeof value[key] === 'string'&&value[key].includes('${')){
+              let __value = value[key]
+              let keys = __value.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+              if (keys) {
+                keys.forEach((key) => {
+                  __value = __value.replace(
+                    `\${${key}}`,this.getDynamicParam(key)
+                  );
+                });
+              }
+              _value[key] = __value;
+            } else {
+              _value[key] = value[key];
+            }
           }
         }
+
         pens.forEach((pen: Pen) => {
           if (_value.hasOwnProperty('visible')) {
             if (pen.visible !== _value.visible) {
