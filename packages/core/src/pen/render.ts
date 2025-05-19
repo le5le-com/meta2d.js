@@ -2216,6 +2216,7 @@ function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:any) 
         draw(ctx,line,pos,index)
         ctx.restore()
       }catch (e) {
+        ctx.restore()
         console.warn(e)
       }
     })
