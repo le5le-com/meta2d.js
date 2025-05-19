@@ -4224,6 +4224,12 @@ export class Canvas {
       });
     }
     !pen.rotate && (pen.rotate = 0);
+    pen.lineAnimateImages ??= []
+    if(pen.lineAnimateImages){
+      pen.lineAnimateImages.forEach((src)=>{
+        this.__loadImage(src)
+      })
+    }
     this.loadImage(pen);
     this.parent.penNetwork(pen);
   }
@@ -4592,6 +4598,33 @@ export class Canvas {
       }
       pen.calculative.strokeImage = pen.strokeImage;
     }
+  }
+
+  // 加载图片到全局缓存
+  __loadImage(src:string){
+    return new Promise(resolve=>{
+      if(!globalStore.htmlElements[src]){
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = src;
+        if (
+          this.store.options.cdn &&
+          !(
+            src.startsWith('http') ||
+            src.startsWith('//') ||
+            src.startsWith('data:image')
+          )
+        ) {
+          img.src = this.store.options.cdn + src;
+        }
+        img.onload = () => {
+          globalStore.htmlElements[src] = img;
+          resolve(img);
+        };
+      }else{
+        resolve(globalStore.htmlElements[src]);
+      }
+    })
   }
   private imageTimer: any;
   // 避免初始化图片加载重复调用 render，此处防抖
