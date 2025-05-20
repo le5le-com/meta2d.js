@@ -2520,7 +2520,7 @@ export function calcWorldAnchors(pen: Pen) {
     });
   }
 
-  if (pen.calculative.rotate) {
+  if (pen.calculative.rotate && pen.name !== 'line') {
     anchors.forEach((anchor) => {
       rotatePoint(
         anchor,
