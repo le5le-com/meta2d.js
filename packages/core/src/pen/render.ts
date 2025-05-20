@@ -2182,7 +2182,7 @@ export function setCtxLineAnimate(
   }
 }
 
-function setElementAnimateOnLine(ctx:CanvasRenderingContext2D,line:Pen,type:string,element:string | HTMLImageElement[]) {
+function setElementAnimateOnLine(ctx:CanvasRenderingContext2D,line:Pen,type:string,element:any) {
   let draw:Function = null
   switch (type){
     case 'image':
@@ -2204,13 +2204,13 @@ function setElementAnimateOnLine(ctx:CanvasRenderingContext2D,line:Pen,type:stri
   renderElementOnLine(ctx,line,draw)
 }
 
-function lineAnimateImageRender(imgs:HTMLImageElement[]) {
+function lineAnimateImageRender(imgs: HTMLImageElement[]) {
 
   return function(ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
     const scale = pen.calculative.canvas.store.data.scale;
     const width = (pen.lineAnimateElementWidth || 10);
     const height = (pen.lineAnimateElementHeight || 10);
-    const img = imgs[index % imgs.length];
+    const img:HTMLImageElement = imgs[index % imgs.length];
     if(!img)return;
 
     ctx.beginPath();
@@ -2243,8 +2243,8 @@ function lineAnimatePenRender(tracks:Pen[]) {
     const viewHeight = height / scale;
 
     const data: any = {
-      x: viewX + (targetPen.offset?.x || 0),
-      y: viewY + (targetPen.offset?.y || 0),
+      x: viewX,
+      y: viewY,
       width: viewWidth,
       height: viewHeight,
       rotate: state.rotate,
@@ -2253,7 +2253,7 @@ function lineAnimatePenRender(tracks:Pen[]) {
   }
 }
 
-function lineAnimateIconRender(icon:string) {
+function lineAnimateIconRender(icon:any) {
   return function(ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
     const scale = pen.calculative.canvas.store.data.scale;
     const width = (pen.lineAnimateElementWidth || 10);
@@ -2292,10 +2292,7 @@ function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:Funct
   const elesPos = computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount)
   elesPos.forEach((i,index)=>{
     const pos:any = calculateLineFrameStates(line,i.start)
-    // if(i.start < 1)return
     if(!pos)return
-    pos.index = i.start
-    pos.calculateLineFrameStates = calculateLineFrameStates
     try {
       ctx.save()
       draw(ctx,line,pos,index)
