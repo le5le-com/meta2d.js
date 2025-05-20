@@ -184,6 +184,9 @@ function value(pen: Pen) {
     return;
   }
   setElemPosition(pen, video);
+  if(!pen.calculative.media){
+    pen.calculative.media = video.querySelector('video')
+  }
   const currentSrc = pen.calculative.media.getAttribute('src');
   if (pen.video) {
     if (currentSrc !== pen.video) {
