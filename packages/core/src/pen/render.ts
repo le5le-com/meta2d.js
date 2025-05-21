@@ -4,7 +4,7 @@ import {
   IValue, lineAnimateTargetType,
   LineAnimateType,
   LockState,
-  Pen, TrackAnimate,
+  Pen,
 } from './model';
 import {
   drawArrow,
