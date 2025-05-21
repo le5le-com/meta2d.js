@@ -310,7 +310,7 @@ export interface Pen extends Rect {
 
   lineAnimateElement?: string; // 动画自定义元素
   lineAnimateIcon?: string; // 动画图标元素
-  lineAnimateImages:string[]; // 动画图片元素
+  lineAnimateImages?:string[]; // 动画图片元素
   lineAnimatePens?: string; // 动画目标 pen id
 
   lineAnimateDash?: number[] | string; // 动画元素间隔
