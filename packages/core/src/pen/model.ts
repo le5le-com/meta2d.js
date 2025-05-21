@@ -93,14 +93,6 @@ export type IValue = Pen &
   Partial<ChartData> &
   Partial<Record<'tag' | 'newId', string>> & { [key: string]: any };
 
-export interface TrackAnimate {
-  id: string; // 目标 pen id
-  offset: {
-    x:number,
-    y:number,
-    instance:number
-  }; // 目标 pen 偏移量
-}
 // obj 类型数组 text 字段显示文字，其它属性选中后合并到画笔上
 // string 类型，只展示文字
 export type Dropdown = string | IValue;
@@ -114,6 +106,12 @@ export enum LineAnimateType {
   Custom // 自定义动画
 }
 
+export enum lineAnimateTargetType {
+  Image, // 图片
+  Icon, // 图标
+  Pen, // 画笔
+  Element //自定义元素
+}
 export interface ColorStop {
   i: number; //取值0-1,色标位置
   color: string;
@@ -294,6 +292,9 @@ export interface Pen extends Rect {
 
   // 动画帧时长
   duration?: number;
+
+  curveAnimate?: boolean; // 是否开启曲线动画=>动画时间函数是否生效
+
   // 匀速渐变
   linear?: boolean;
   // 主要用于动画帧的缩放
@@ -304,14 +305,22 @@ export interface Pen extends Rect {
   animateLineDash?: number[];
   animateReverse?: boolean;
   animateTimingFunction?: string[] | string; // 三次贝塞尔时间函数两控制点的坐标参数: number[]
-  trackTargets?: TrackAnimate[]; // 动画目标 pen id
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
-  lineAnimateElement?: string; // 动画元素
+
+  lineAnimateElement?: string; // 动画自定义元素
+  lineAnimateIcon?: string; // 动画图标元素
+  lineAnimateImages:string[]; // 动画图片元素
+  lineAnimatePens?: string; // 动画目标 pen id
+
   lineAnimateDash?: number[] | string; // 动画元素间隔
   lineAnimateDashOffset?: number; // 动画元素偏移量
   lineAnimateElementCount?: number ; // 动画元素数量
   lineAnimateType?: LineAnimateType;
+  lineAnimateTargetType?: lineAnimateTargetType; // 动画目标元素类型
+  lineAnimateElementWidth?: number; // 动画元素宽度
+  lineAnimateElementHeight?: number; // 动画元素高度
+
   animateName?: string; // 当前执行的动画名称
   frames?: Pen[];
   // 提前预置的不同效果的动画组
