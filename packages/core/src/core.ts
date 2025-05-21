@@ -350,7 +350,7 @@ export class Meta2d {
           let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
             keys?.forEach((key) => {
-              url = url.replace(`\${${key}}`, pen[key]);
+              url = url.replace(`\${${key}}`, pen[key]||this.getDynamicParam(key));
             });
           }
         }
@@ -561,7 +561,7 @@ export class Meta2d {
           let keys = e.params.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
             keys?.forEach((key) => {
-              url = url.replace(`\${${key}}`, pen[key]);
+              url = url.replace(`\${${key}}`, pen[key]||this.getDynamicParam(key));
             });
           }
         }
