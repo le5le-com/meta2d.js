@@ -2583,6 +2583,7 @@ export class Meta2d {
             headers: net.headers || undefined,
             method: net.method,
             body: net.body,
+            enable: net.enable
           });
           httpIndex += 1;
         }else if (net.protocol === 'ADIIOT') {
@@ -2637,7 +2638,7 @@ export class Meta2d {
   iotWebsocketClient:WebSocket;
   async connectIot(){
     const { iot } = this.store.data;
-    if(!(iot&&iot?.devices?.length)){
+    if(!(iot&&iot?.devices?.length)||(iot&&iot.enable === false)){
       return;
     }
     const url =  globalThis.iotUrl || await this.getMqttUrl();
@@ -2680,26 +2681,44 @@ export class Meta2d {
     //   };
     // }
   }
+
+  closeIot(){
+    if(this.iotMqttClient){
+      const { iot } = this.store.data;
+      if(iot?.token){
+        this.unsubscribeIot(iot.token);
+      }
+      this.iotMqttClient.end();
+      this.iotMqttClient = undefined;
+    }
+    clearInterval(this.iotTimer);
+    this.iotTimer = undefined;
+  }
   //  type SqlType = 'list' | 'get' | 'exec' | 'add' | 'update' | 'delete';
 
   connectSqls(){
     const { sqls } = this.store.data;
     if(sqls&&sqls.length){
-      let sqlIndex = 0;
-      sqls.forEach( async(sql)=>{
-        await this.doSqlCode(sql);
-        if(sql.interval){
-            sql.index = sqlIndex;
-            this.sqlTimerList[sqlIndex] = setInterval(async () => {
+      // let sqlIndex = 0;
+      sqls.forEach( async(sql, index)=>{
+        if(sql.enable !== false){
+          await this.doSqlCode(sql);
+          if(sql.interval){
+            sql.index = index;
+            this.sqlTimerList[index] = setInterval(async () => {
               await this.doSqlCode(sql);
             }, sql.interval);
-            sqlIndex += 1;
+            // index += 1;
           }
-        })
+        }
+      })
     }
   }
 
   connectSSE(net:Network){
+    if(net.enable === false){
+      return;
+    }
     this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
     this.eventSources[net.index].onmessage = (e) => {
       this.socketCallback(e.data, { type: 'SSE', url: net.url, name:net.name });
@@ -2720,6 +2739,9 @@ export class Meta2d {
   }
 
   connectNetMqtt(net:Network){
+    if(net.enable === false){
+      return;
+    }
     if (net.options.clientId && !net.options.customClientId) {
       net.options.clientId = s8();
     }
@@ -2804,6 +2826,9 @@ export class Meta2d {
       this.websockets[net.index]?.close();
       this.websockets[net.index] = undefined;
     }
+    if(net.enable === false ){
+      return;
+    }
     let url = net.url;
     if(url.indexOf('${') > -1){
       let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
@@ -2873,6 +2898,17 @@ export class Meta2d {
       const data = await res.text();
       return JSON.parse(data).token;
     }
+  }
+
+  async unsubscribeIot(token:string){
+    const ret:any = await fetch(`/api/iot/unsubscribe/properties`,{
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body:JSON.stringify({token}),
+    });
+    return ret;
   }
 
   async doSqlCode(sql:Sql){
@@ -3122,7 +3158,9 @@ export class Meta2d {
     }
     if (!this.store.data.cancelFirstConnect) {
       https.forEach(async (_item) => {
-        this.requestHttp(_item);
+        if(_item.enable !== false){
+          this.requestHttp(_item);
+        }
       });
     }
     // if( enable ){
@@ -3142,7 +3180,7 @@ export class Meta2d {
 
     https.forEach((_item, index) => {
       _item.times = 0;
-      if(_item.interval !== 0){
+      if(_item.interval !== 0 && _item.enable !== false){
         this.updateTimerList[index] = setInterval(async () => {
           this.requestHttp(_item);
           if (this.store.options.reconnetTimes) {
@@ -3240,12 +3278,13 @@ export class Meta2d {
         clearInterval(_sqlTimer);
         _sqlTimer = undefined;
       });
-    if(this.iotMqttClient){
-      this.iotMqttClient.end();
-      this.iotMqttClient = undefined;
-    }
-    clearInterval(this.iotTimer);
-    this.iotTimer = undefined;
+    this.closeIot();
+    // if(this.iotMqttClient){
+    //   this.iotMqttClient.end();
+    //   this.iotMqttClient = undefined;
+    // }
+    // clearInterval(this.iotTimer);
+    // this.iotTimer = undefined;
 
     // if(this.iotWebsocketClient){
     //   this.iotWebsocketClient.onclose = undefined;

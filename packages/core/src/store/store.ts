@@ -143,6 +143,7 @@ export interface Network {
   devices?: any[]; //物联网设备,
   dbid?: string; //数据库id
   sql?: string; //sql语句
+  enable?: boolean; //是否启用
 }
 
 export interface Iot {
@@ -160,6 +161,7 @@ export interface Iot {
   }[];
   tree?:any;
   token?:string;
+  enable?:boolean;
 }
 
 export interface Sql {
@@ -174,6 +176,7 @@ export interface Sql {
   pageSize?: number;
   current?: number;
   keys?: string[]; // 子数据点key
+  enable?: boolean; 
 }
 
 export interface HttpOptions {
