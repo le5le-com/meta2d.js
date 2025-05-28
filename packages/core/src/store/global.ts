@@ -10,7 +10,7 @@ export const globalStore: {
     [key: string]: (ctx: CanvasRenderingContext2D, pen: Pen) => void;
   };
   lineAnimateDraws: {
-    [key: string]: (ctx:CanvasRenderingContext2D, pen: Pen, pos: any,index:number) => void
+    [key: string]: (ctx:CanvasRenderingContext2D, pen: Pen, state: any,index:number) => void
   }
   anchors: { [key: string]: (pen: Pen) => void }; // TODO: 存储的是 副作用 函数，函数内修改 anchors
   htmlElements: { [key: string]: HTMLImageElement }; // 目前只存在图片资源，此处使用 HTMLImageElement

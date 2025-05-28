@@ -1193,7 +1193,8 @@ export class Meta2d {
   loadLineAnimateDraws(){
     globalStore.lineAnimateDraws = {}
     Object.entries(this.store.data.lineAnimateDraws).forEach(([key,drawFunc])=>{
-      globalStore.lineAnimateDraws[key] = eval(drawFunc);
+      // @ts-ignore
+      globalStore.lineAnimateDraws[key] = new Function('ctx','pen','state','index',drawFunc);
     })
   }
 
@@ -1601,11 +1602,10 @@ export class Meta2d {
   registerAnchors = registerAnchors;
 
   registerLineAnimateDraws = (name,drawFunc)=>{
-    drawFunc = typeof drawFunc === 'string'? drawFunc : drawFunc.toString();
-
     this.store.data.lineAnimateDraws[name] = drawFunc;
     // 同步到store
-    globalStore.lineAnimateDraws[name] = eval(drawFunc);
+    // @ts-ignore
+    globalStore.lineAnimateDraws[name] = new Function('ctx','pen','state','index',drawFunc);
   }
   updateLineAnimateDraws(name,option){// option: {name:'xxx',code:'xxx'}
     if(!option)return
@@ -2248,10 +2248,6 @@ export class Meta2d {
       ...Object.keys(this.store.bind),
       ...Object.keys(this.store.bindDatas),
     ];
-
-    Object.entries(globalStore.lineAnimateDraws).forEach(([key, drawFunc]) => {
-      data.lineAnimateDraws[key] = drawFunc.toString();
-    })
     return data;
   }
 
