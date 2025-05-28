@@ -3177,17 +3177,23 @@ export class Meta2d {
     https.forEach((_item, index) => {
       _item.times = 0;
       if(_item.interval !== 0 && _item.enable !== false){
-        this.updateTimerList[index] = setInterval(async () => {
-          this.requestHttp(_item);
-          if (this.store.options.reconnetTimes) {
-            // _item.times++;
-            if (_item.times >= this.store.options.reconnetTimes) {
-              _item.times = 0;
-              clearInterval(this.updateTimerList[index]);
-              this.updateTimerList[index] = undefined;
+        if(_item.once){
+          setTimeout(async () => {
+            this.requestHttp(_item);
+          }, _item.interval || 1000);
+        }else{
+          this.updateTimerList[index] = setInterval(async () => {
+            this.requestHttp(_item);
+            if (this.store.options.reconnetTimes) {
+              // _item.times++;
+              if (_item.times >= this.store.options.reconnetTimes) {
+                _item.times = 0;
+                clearInterval(this.updateTimerList[index]);
+                this.updateTimerList[index] = undefined;
+              }
             }
-          }
-        }, _item.interval || 1000);
+          }, _item.interval || 1000);
+        }
       }
     });
   }

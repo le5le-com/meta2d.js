@@ -144,6 +144,7 @@ export interface Network {
   dbid?: string; //数据库id
   sql?: string; //sql语句
   enable?: boolean; //是否启用
+  once?: boolean; //是否只执行一次
 }
 
 export interface Iot {
