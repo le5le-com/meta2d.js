@@ -6771,6 +6771,11 @@ export class Canvas {
       let _y = -this.store.clipboard.initRect.height/this.store.clipboard.scale/10/(scale);
       let offsetX = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.width/2+_x;
       let offsetY = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.height/2+_y;
+      if(scale<this.store.clipboard.scale){
+        // 减小粘贴偏移量
+        offsetX = (scale-this.store.clipboard.scale)/((this.store.clipboard.scale-scale)*100)*this.store.clipboard.initRect.width/2+_x;
+        offsetY = (scale-this.store.clipboard.scale)/((this.store.clipboard.scale-scale)*100)*this.store.clipboard.initRect.height/2+_y;
+      }
       if(this.store.clipboard.pens.length>1){
         offsetX = (scale-1)*this.store.clipboard.initRect.width/this.store.clipboard.scale/2;
         offsetY = (scale-1)*this.store.clipboard.initRect.height/this.store.clipboard.scale/2;
