@@ -5271,11 +5271,11 @@ export class Canvas {
     }
     scalePoint(this.store.data.origin, s, center);
     this.store.data.pens.forEach((pen) => {
+      pen.onScale && pen.onScale(pen);
       if (pen.parentId) {
         return;
       }
       scalePen(pen, s, center);
-      pen.onScale && pen.onScale(pen);
       if (pen.isRuleLine) {
         // 扩大线的比例，若是放大，即不缩小，若是缩小，会放大
         const lineScale = 1 / s; //s > 1 ? 1 : 1 / s / s;
