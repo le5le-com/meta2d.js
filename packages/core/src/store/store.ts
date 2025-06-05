@@ -145,6 +145,8 @@ export interface Network {
   sql?: string; //sql语句
   enable?: boolean; //是否启用
   once?: boolean; //是否只执行一次
+  socketCbJs?: string; //socket回调js
+  socketFn?: Function;
 }
 
 export interface Iot {

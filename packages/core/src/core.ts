@@ -2579,7 +2579,8 @@ export class Meta2d {
             headers: net.headers || undefined,
             method: net.method,
             body: net.body,
-            enable: net.enable
+            enable: net.enable,
+            index: net.index
           });
           httpIndex += 1;
         }else if (net.protocol === 'ADIIOT') {
@@ -2717,7 +2718,7 @@ export class Meta2d {
     }
     this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
     this.eventSources[net.index].onmessage = (e) => {
-      this.socketCallback(e.data, { type: 'SSE', url: net.url, name:net.name });
+      this.socketCallback(e.data, { type: 'SSE', url: net.url, name:net.name, net });
     };
     this.eventSources[net.index].onerror = (error) => {
       this.store.emitter.emit('error', { type: 'SSE', error });
@@ -2783,7 +2784,8 @@ export class Meta2d {
           topic,
           type: 'mqtt',
           url: net.url,
-          name: net.name
+          name: net.name,
+          net
         });
       }
     );
@@ -2841,7 +2843,7 @@ export class Meta2d {
       net.protocols || undefined
     );
     this.websockets[net.index].onmessage = (e) => {
-      this.socketCallback(e.data, { type: 'websocket', url: net.url, name:net.name });
+      this.socketCallback(e.data, { type: 'websocket', url: net.url, name:net.name, net });
     };
     this.websockets[net.index].onerror = (error) => {
       this.store.emitter.emit('error', { type: 'websocket', error });
@@ -3245,7 +3247,8 @@ export class Meta2d {
       });
       if (res.ok) {
         const data = await res.text();
-        this.socketCallback(data, { type: 'http', url: req.url, name: req.name });
+        const net = this.store.data.networks.filter(item=>item.protocol==='http')[req.index];
+        this.socketCallback(data, { type: 'http', url: req.url, name: req.name, net});
       } else {
         _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
@@ -3299,10 +3302,38 @@ export class Meta2d {
 
   socketCallback(
     message: string,
-    context?: { type?: string; topic?: string; url?: string; method?: string, name?:string }
+    context?: { type?: string; topic?: string; url?: string; method?: string, name?:string, net?:Network }
   ) {
     this.store.emitter.emit('socket', { message, context });
     let _message: any = message;
+    if(context.net?.socketCbJs){
+      if(!context.net?.socketFn){
+        context.net.socketFn = new Function('e', 'context', context.net.socketCbJs) as (
+          e: string,
+          context?: {
+            meta2d?: Meta2d;
+            type?: string;
+            topic?: string;
+            url?: string;
+          }
+        ) => boolean;
+      }
+      if (context.net.socketFn) {
+        _message = context.net.socketFn(message,{
+          meta2d: this,
+          type: context.type,
+          topic: context.topic,
+          url: context.url,
+          method: context.method,
+        });
+        if (!_message) {
+          return;
+        }
+        if (_message&&_message !== true) {
+          message = _message;
+        }
+      }
+    }
     if (this.socketFn) {
       _message = this.socketFn(message, {
         meta2d: this,

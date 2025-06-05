@@ -20,7 +20,7 @@ export function deepClone<T>(o: T, keepCalc = false): T {
     const _o = {} as T;
     for (const key in o) {
       if (
-        ['canvas', 'lastFrame'].includes(key) ||
+        ['canvas', 'lastFrame', 'socketFn'].includes(key) ||
         o[key] instanceof HTMLImageElement ||
         o[key] instanceof HTMLMediaElement
       ) {
