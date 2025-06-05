@@ -141,7 +141,7 @@ export interface Network {
   times?: number; // 临时 重连次数
   index?: number; // 临时 索引
   devices?: any[]; //物联网设备,
-  dbid?: string; //数据库id
+  dbId?: string; //数据库id
   sql?: string; //sql语句
   enable?: boolean; //是否启用
   once?: boolean; //是否只执行一次
@@ -168,7 +168,7 @@ export interface Iot {
 export interface Sql {
   interval?: number;
   sql?:string;
-  dbid?: string;
+  dbId?: string;
   dbType?:string;
   name?:string;
   bindId?: string;

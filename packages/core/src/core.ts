@@ -2918,13 +2918,17 @@ export class Meta2d {
       headers:{
          Authorization: `Bearer ${getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
       },
-      body:JSON.stringify({ dbid:sql.dbid,sql:_sql,}),
+      body:JSON.stringify({ dbId:sql.dbId||(sql as any).dbid,sql:_sql,}),
     });
     if (res.ok) {
-      let data = await res.text();
+      let data:any = await res.text();
       if(data){
         const arr = [];
         data = JSON.parse(data);
+        if(data.error){
+          this.store.emitter.emit('error', { type: 'sql', error: data.error });
+          return;
+        }
         sql.keys?.forEach((key)=>{
           arr.push({id: sql.bindId+'#'+ key,value:getter(data,key.split('#').join('.'))});
         });
