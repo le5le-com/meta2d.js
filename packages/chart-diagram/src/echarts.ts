@@ -59,6 +59,8 @@ export interface ChartPen extends Pen {
     geoUrl?: string;
     diabled?: boolean; //通过脚本setOption后，禁止默认拿到echarts.option去设置图元
     replaceMerge?: string; // 替换合并
+    timeKeys?: string[]; // 时间键
+    dataMap?:any; // 数据映射，sql 查询结果的映射
   };
   calculative?: {
     partialOption?: any; // 部分更新的 option
@@ -345,6 +347,9 @@ function beforeValue(pen: ChartPen, value: any) {
     return value;
   }
   if (pen.realTimes && pen.realTimes.length) {
+    if(pen.echarts.dataMap&&value.data){
+      value =  formatData(pen, value);
+    }
     let keys = Object.keys(value);
     const { xAxis, yAxis } = pen.echarts.option;
     const { max, replaceMode, timeFormat } = pen.echarts;
@@ -545,6 +550,41 @@ function beforeValue(pen: ChartPen, value: any) {
   delete value.dataX;
   delete value.dataY;
   return Object.assign(value, { echarts });
+}
+
+/*
+  将sql 查询结果的数据格式化为 echarts 可用的格式
+ */
+function formatData(pen: any, value:any) {
+  if(!pen.echarts.dataMap||!value.data){
+    return value;
+  }
+  if(value.data){
+    let dataValue = {};
+    if(Array.isArray(value.data)){
+      //sql 列表
+      for (const key in pen.echarts.dataMap) {
+        if (pen.echarts.dataMap.hasOwnProperty(key)) { 
+          if(pen.echarts.timeKeys?.length&&pen.echarts.timeKeys.includes(pen.echarts.dataMap[key])){
+             dataValue[key] = value.data.map(item=>formatTime(pen.echarts.timeFormat,item[pen.echarts.dataMap[key]]));
+          }else{
+            dataValue[key] = value.data.map(item=>item[pen.echarts.dataMap[key]]);
+          }
+        }
+      }
+      
+    }else{
+      //sql 单条
+      for (const key in pen.echarts.dataMap) {
+        if (pen.echarts.dataMap.hasOwnProperty(key)) {
+          dataValue[key] = value.data[pen.echarts.dataMap[key]];
+        }
+      }
+    }
+    delete value.data;
+    Object.assign(value, dataValue);
+    return value;
+  }
 }
 
 function binds(pen: ChartPen, values: IValue[], formItem: FormItem): IValue {
