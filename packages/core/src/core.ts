@@ -4675,6 +4675,20 @@ export class Meta2d {
           pen.onResize?.(pen);
         }
       });
+
+      const videoPens = this.store.data.pens.filter(
+        (pen) => pen.name === 'video'
+      );
+      videoPens?.forEach((pen) => {
+        const worldRect = pen.calculative.worldRect;
+        if (worldRect.width / this.store.data.scale > rect.width * 0.8) {
+          //作为背景的video
+          pen.calculative.worldRect.x = worldRect.x - wGap / 2;
+          pen.calculative.worldRect.width = worldRect.width + wGap;
+          pen.calculative.worldRect.ex = worldRect.ex + wGap;
+          pen.onResize?.(pen);
+        }
+      });
     }
     //高度拉伸
     if (Math.abs(hGap) > 10) {
@@ -4774,6 +4788,19 @@ export class Meta2d {
           pen.onBeforeValue?.(pen, {
             operationalRect: pen.operationalRect,
           } as any);
+          pen.onResize?.(pen);
+        }
+      });
+      const videoPens = this.store.data.pens.filter(
+        (pen) => pen.name === 'video'
+      );
+      videoPens?.forEach((pen) => {
+        const worldRect = pen.calculative.worldRect;
+        if (worldRect.height / this.store.data.scale > rect.height * 0.8) {
+          //作为背景的video
+          pen.calculative.worldRect.y = worldRect.y - hGap / 2;
+          pen.calculative.worldRect.height = worldRect.height + hGap;
+          pen.calculative.worldRect.ey = worldRect.ey + hGap;
           pen.onResize?.(pen);
         }
       });
