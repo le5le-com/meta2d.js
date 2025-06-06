@@ -93,6 +93,7 @@ export function video(pen: Pen) {
     media.style.top = '0';
     media.style.width = '100%';
     media.style.height = '100%';
+    media.style.objectFit = (pen as any).objectFit || 'contain';
     player.appendChild(media);
     videos[pen.id] = player;
     pen.calculative.canvas.externalElements?.parentElement.appendChild(player);
