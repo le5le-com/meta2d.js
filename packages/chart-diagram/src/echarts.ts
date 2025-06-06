@@ -577,7 +577,11 @@ function formatData(pen: any, value:any) {
       //sql 单条
       for (const key in pen.echarts.dataMap) {
         if (pen.echarts.dataMap.hasOwnProperty(key)) {
-          dataValue[key] = value.data[pen.echarts.dataMap[key]];
+          if(pen.echarts.timeKeys?.length&&pen.echarts.timeKeys.includes(pen.echarts.dataMap[key])){
+            dataValue[key] = formatTime(pen.echarts.timeFormat,value.data[pen.echarts.dataMap[key]]);
+          }else{
+            dataValue[key] = value.data[pen.echarts.dataMap[key]];
+          }
         }
       }
     }
