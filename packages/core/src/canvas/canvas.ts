@@ -2687,6 +2687,9 @@ export class Canvas {
           if (this.store.hover.onShowInput) {
             this.store.hover.onShowInput(this.store.hover, e as any);
           } else {
+            if(this.store.hover.parentId){
+              this.active([this.store.hover])
+            }
             this.showInput(this.store.hover);
           }
         }

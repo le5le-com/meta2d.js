@@ -31,12 +31,12 @@ export function connectJetLinks(meta2d:Meta2d, net:Network){
       ) {
         const data = [];
         for (let key in mess.payload.properties) {
-          if (!key.startsWith('_')) {
+          // if (!key.startsWith('_')) {
             data.push({
               id: `${mess.payload.headers.productId}#${mess.payload.deviceId}#${key}`,
               value: mess.payload.properties[key],
             });
-          }
+          // }
         }
         meta2d.setDatas(data, { history: false });
       }else if(mess.topic.startsWith('/notifications')){
@@ -197,8 +197,7 @@ export async function playMp3(meta2d:any,alarmConfigId:string){
     method: 'GET'
   });
   if (res.ok) {
-    let data =  res.json();
-    console.log("alarm")
+    let data = await res.json();
     if(data.result.media){
       createAudio(meta2d,data.result.media,data.result.playTimes)
     }
