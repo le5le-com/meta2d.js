@@ -1,12 +1,20 @@
 import {
   CanvasLayer,
   ColorStop,
-  IValue,
+  IValue, lineAnimateTargetType,
   LineAnimateType,
   LockState,
   Pen,
 } from './model';
-import { drawArrow, getLineRect, getSplitAnchor } from '../diagrams';
+import {
+  drawArrow,
+  getLineRect,
+  getSplitAnchor,
+  getLinePointPosAndAngle,
+  createSvgPath,
+  getLineLength,
+  createLineSvgPath
+} from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
   calcRotate,
@@ -34,7 +42,7 @@ import { calcTextLines, calcTextDrawRect, calcTextRect } from './text';
 import { deepClone } from '../utils/clone';
 import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '../pen';
-import { pSBC, rgba } from '../utils';
+import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
 
 /**
@@ -905,7 +913,7 @@ export function drawImage(
 ) {
   const { x, y, width, height } = getImagePosition(pen);
   const { worldIconRect, iconRotate, img } = pen.calculative;
-
+  ctx.filter = pen.filter
   if (iconRotate) {
     const { x: centerX, y: centerY } = worldIconRect.center;
     ctx.translate(centerX, centerY);
@@ -1367,6 +1375,9 @@ export function renderPen(
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
+
+  drawFilter(ctx,pen)
+
   const store = pen.calculative.canvas.store;
   const textFlip = pen.textFlip || store.options.textFlip;
   const textRotate = pen.textRotate || store.options.textRotate;
@@ -2123,6 +2134,36 @@ export function setCtxLineAnimate(
       ctx.fillStyle = pen.animateColor || store.styles.animateColor;
       ctx.lineWidth = 1;
       break;
+    case LineAnimateType.Custom:
+      switch (pen.lineAnimateTargetType) {
+        case lineAnimateTargetType.Image:
+          pen.lineAnimateImages ??= []
+          if(pen.lineAnimateImages.length > 0){
+            const animateImgs:any = pen.lineAnimateImages.map((src,index) => {
+              const image = globalStore.htmlElements[src]
+              if (!image){
+                pen.calculative.canvas.__loadImage(src)
+              }else {
+                return image
+              }
+            })
+            setElementAnimateOnLine(ctx,pen,'image',animateImgs)
+          }
+          break
+        case lineAnimateTargetType.Icon:
+          const icon = pen.lineAnimateIcon
+          setElementAnimateOnLine(ctx,pen,'icon',icon)
+          break
+        case lineAnimateTargetType.Pen:
+          if(pen.lineAnimatePens){
+            setElementAnimateOnLine(ctx,pen,'pen',pen.lineAnimatePens)
+          }
+          break
+        case lineAnimateTargetType.Element:
+          const animateEle = pen.lineAnimateElement
+          setElementAnimateOnLine(ctx,pen,'element',animateEle)
+      }
+      break
     default:
       if (pen.animateReverse) {
         ctx.lineDashOffset = Number.EPSILON; //防止在执行动画时会绘制多余的远点
@@ -2141,6 +2182,206 @@ export function setCtxLineAnimate(
   }
 }
 
+function setElementAnimateOnLine(ctx:CanvasRenderingContext2D,line:Pen,type:string,element:any) {
+  let draw:Function = null
+  switch (type){
+    case 'image':
+      draw = lineAnimateImageRender(element)
+      break
+    case 'icon':
+      draw = lineAnimateIconRender(element)
+      break
+    case 'pen':
+      let targetPens = line.calculative.canvas.find(element);
+      line.lineAnimateElementCount = targetPens.length;
+      draw = lineAnimatePenRender(targetPens)
+      break
+    case 'element':
+      draw = globalStore.lineAnimateDraws[element]
+      if(!draw)return;
+      break
+  }
+  renderElementOnLine(ctx,line,draw)
+}
+
+function lineAnimateImageRender(imgs: HTMLImageElement[]) {
+
+  return function(ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
+    const scale = pen.calculative.canvas.store.data.scale;
+    const width = (pen.lineAnimateElementWidth || 10);
+    const height = (pen.lineAnimateElementHeight || 10);
+    const img:HTMLImageElement = imgs[index % imgs.length];
+    if(!img)return;
+
+    ctx.beginPath();
+    ctx.translate(state.x + (width / 2 * scale), state.y + (height / 2 * scale));  // 平移到中心点
+    ctx.rotate((state.rotate * Math.PI) / 180);
+    ctx.scale(scale, scale);
+    ctx.translate(-(width / 2* scale), -(height / 2 * scale));  // 平移回左上角
+    ctx.drawImage(img, 0, 0, width, height);
+}
+}
+function lineAnimatePenRender(tracks:Pen[]) {
+  return function (ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
+
+    const targetPen = tracks[index % tracks.length];
+    if(!targetPen)return;
+    const scale = pen.calculative.canvas.store.data.scale;
+    const origin = pen.calculative.canvas.store.data.origin
+
+    const meta2d = pen.calculative.canvas.parent
+
+    const width = targetPen.width;
+    const height = targetPen.height;
+
+    const worldX = state.x - width / 2;
+    const worldY = state.y - height / 2;
+
+    const viewX = (worldX - origin.x) / scale;
+    const viewY = (worldY - origin.y) / scale;
+    const viewWidth = width / scale;
+    const viewHeight = height / scale;
+
+    const data: any = {
+      x: viewX,
+      y: viewY,
+      width: viewWidth,
+      height: viewHeight,
+      rotate: state.rotate,
+    };
+    meta2d.setValue({ id: targetPen.id, ...data });
+  }
+}
+
+function lineAnimateIconRender(icon:any) {
+  return function(ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
+    const scale = pen.calculative.canvas.store.data.scale;
+    const width = (pen.lineAnimateElementWidth || 10);
+    const height = (pen.lineAnimateElementHeight || 10) ;
+
+    ctx.beginPath();
+    ctx.translate(state.x + (width / 2 * scale), state.y + (height / 2 * scale));  // 平移到中心点
+    ctx.rotate((state.rotate * Math.PI) / 180);
+    ctx.scale(scale, scale);
+    ctx.translate(-(width / 2* scale), -(height / 2 * scale));  // 平移回左上角
+
+    const fontWeight = pen.calculative.iconWeight;
+    let fontSize: number = undefined;
+    const fontFamily = pen.calculative.iconFamily;
+    fontSize =
+      (pen.calculative.iconSize || Math.max(pen.lineAnimateElementWidth || 0, pen.lineAnimateElementHeight || 0) || 10);
+    ctx.font = getFont({
+      fontSize,
+      fontWeight,
+      fontFamily,
+    });
+    ctx.fillStyle = pen.calculative.iconColor || getTextColor(pen, pen.calculative.canvas.parent.store);
+
+    if (pen.calculative.iconRotate) {
+      ctx.rotate((pen.calculative.iconRotate * Math.PI) / 180);
+    }
+    ctx.beginPath();
+    ctx.fillText(icon, 0, 0);
+  }
+}
+
+function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:Function) {
+  const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : (line.lineAnimateDash?.split(',').map(i=>Number(i)) || [10,20])
+  const scale = line.calculative.canvas.store.data.scale
+  const len = getLineLength(line) / scale
+  const elesPos = computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount)
+  elesPos.forEach((i,index)=>{
+    const pos:any = calculateLineFrameStates(line,i.start)
+    if(!pos)return
+    try {
+      ctx.save()
+      draw(ctx,line,pos,index)
+      ctx.restore()
+    }catch (e) {
+      ctx.restore()
+      console.warn(e)
+    }
+  })
+}
+type DashSegment = {
+  start: number;
+  end: number;
+  isDash: boolean;
+};
+
+/**
+ * 模拟 canvas lineDash 计算
+ * @param lineLength 总长度
+ * @param dashArray [dashLength, gapLength, ...]
+ * @param offset 起点偏移，可为负数
+ */
+function computeLineDashSegments(lineLength: number, dashArray: number[], offset = 0, count: number, animateOffset = 0): DashSegment[] {
+  const result: DashSegment[] = [];
+  if (!dashArray || dashArray.length === 0) {
+    result.push({ start: 0, end: lineLength, isDash: true });
+    return result;
+  }
+
+  const patternLength = dashArray.reduce((sum, val) => sum + val, 0);
+  let pos = (-offset + animateOffset) % patternLength;
+  if (pos < 0) pos += patternLength;
+
+  let _count = 0;
+  let globalPos = 0;
+  if (!count) count = Infinity;
+
+  while (globalPos < lineLength && _count < count) {
+    for (let i = 0; i < dashArray.length; i++) {
+      const segLength = dashArray[i];
+      const isDash = i % 2 === 0;
+
+      let start = globalPos;
+      let end = globalPos + segLength - pos;
+
+      if (end > lineLength) end = lineLength;
+      if (isDash && end > start) {
+        // 这里平移到动画偏移后的环上
+        const shiftedStart = (start + animateOffset) % lineLength;
+        const shiftedEnd = (end + animateOffset) % lineLength;
+
+        result.push({ start: shiftedStart, end: shiftedEnd, isDash: true });
+        _count += 1;
+      }
+
+      globalPos = end;
+      pos = 0;
+
+      if (globalPos >= lineLength || _count >= count) break;
+    }
+  }
+
+  return result;
+}
+
+function calculateLineFrameStates(line:Pen,offsetInstance:number = 0) {
+  let path:SVGGeometryElement
+  let from:Point = null
+  line.calculative.worldAnchors.forEach(pt=>{
+    if (from) {
+      path = createSvgPath(path,from,from.next,pt.prev,pt)
+    }
+    from = pt;
+  })
+  if(line.close){
+    let pt = line.calculative.worldAnchors[0]
+    path = createSvgPath(path,from,from.next,pt.prev,pt)
+  }
+
+  let instance = 0
+  if(line.animateReverse){
+    // TODO 延迟有问题 出现卡顿瞬间移动
+    instance = line.length - line.calculative.animatePos - (offsetInstance * line.calculative.canvas.store.data.scale)
+  }else {
+    instance = line.calculative.animatePos - offsetInstance * line.calculative.canvas.store.data.scale
+  }
+  const pos = getLinePointPosAndAngle(path,instance)
+  return pos
+}
 /**
  * 全局 color
  */
@@ -2360,7 +2601,7 @@ export function calcWorldAnchors(pen: Pen) {
     });
   }
 
-  if (pen.calculative.rotate) {
+  if (pen.calculative.rotate && pen.name !== 'line') {
     anchors.forEach((anchor) => {
       rotatePoint(
         anchor,
@@ -3168,6 +3409,7 @@ function isLinear(value: unknown, key: string, pen: Pen): boolean {
 export function setLineAnimate(pen: Pen, now: number) {
   if (pen.calculative.start === 0) {
     pen.calculative.start = undefined;
+    pen.calculative.cycleStart = undefined;
     return 0;
   }
 
@@ -3178,15 +3420,39 @@ export function setLineAnimate(pen: Pen, now: number) {
   if (!pen.animateSpan) {
     pen.animateSpan = 1;
   }
+  const elapsed = (now - pen.calculative.cycleStart) / 1000; // 秒
 
-  pen.calculative.animatePos +=
-    pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+  if(pen.curveAnimate){
+    let timeParams = []
+    if(!pen.animateTimingFunction){
+      timeParams = [0.25,0.25,0.75,0.75] // 默认为 linear
+    }else{
+      timeParams = Array.isArray(pen.animateTimingFunction)?
+        pen.animateTimingFunction :
+        pen.animateTimingFunction.split(',');
+    }
+
+    const duration = pen.duration || 5;
+    const t = elapsed / duration
+
+    const progress = cubicBezierY(t,timeParams[1],timeParams[3])
+    // 更新动画位置
+    pen.calculative.animatePos = progress * pen.length;
+  }else{
+    pen.calculative.animatePos +=
+      pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+  }
+
+  if(!pen.calculative.cycleStart){
+    pen.calculative.cycleStart = now;
+  }
+
   if (!pen.calculative.start) {
     pen.calculative.start = Date.now();
     pen.calculative.animatePos =
       pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
     pen.calculative.cycleIndex = 1;
-  } else if (pen.calculative.animatePos > pen.length) {
+  } else if (pen.calculative.animatePos > pen.length || (pen.curveAnimate && elapsed > pen.duration)) {
     // 播放到尾了
     ++pen.calculative.cycleIndex;
 
@@ -3194,8 +3460,10 @@ export function setLineAnimate(pen: Pen, now: number) {
     if (pen.calculative.cycleIndex > pen.animateCycle) {
       pen.currentAnimation = undefined;
       pen.calculative.start = undefined;
+      pen.calculative.cycleStart = undefined;
       return 0;
     }
+    pen.calculative.cycleStart = undefined;
     pen.calculative.animatePos = pen.animateSpan;
   }
 
@@ -3476,7 +3744,7 @@ export function calcInView(pen: Pen, calcChild = false) {
     if((pen.canvasLayer === CanvasLayer.CanvasImageBottom||pen.canvasLayer===CanvasLayer.CanvasImage)&& pen.frames?.length){
       pen.calculative.inView = pen.frames.some(obj => obj.hasOwnProperty('visible'));
     }
-  } 
+  }
   if(pen.calculative.inView){
     const { x, y, width, height, rotate } = pen.calculative.worldRect;
     const penRect: Rect = {
@@ -3995,6 +4263,10 @@ function dealWithVisio(command, pen, startX, startY) {
       })
       return cloneCommand;
   }
+}
+
+export function drawFilter(ctx,pen) {
+  ctx.filter = pen.filter
 }
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {

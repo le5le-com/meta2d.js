@@ -46,6 +46,7 @@ import {
   register,
   registerAnchors,
   registerCanvasDraw,
+  registerLineAnimateDraws,
   Meta2dData,
   Meta2dStore,
   useStore,
@@ -344,7 +345,16 @@ export class Meta2d {
   initEventFns() {
     this.events[EventAction.Link] = (pen: Pen, e: Event) => {
       if (window && e.value && typeof e.value === 'string') {
-        window.open(e.value, e.params ?? '_blank');
+        let url = e.value;
+        if(url.includes('${')){
+          let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+          if (keys) {
+            keys?.forEach((key) => {
+              url = url.replace(`\${${key}}`, pen[key]||this.getDynamicParam(key));
+            });
+          }
+        }
+        window.open(url, e.params ?? '_blank');
         return;
       }
       console.warn('[meta2d] Link param is not a string');
@@ -354,14 +364,36 @@ export class Meta2d {
       const value = e.value;
       if (value && typeof value === 'object') {
         const pens = e.params ? this.find(e.params) : this.find(pen.id);
+        const _value:any = {};
+        for(let key in value){
+          if(value[key]?.id){
+            _value[key] = this.store.pens[value[key].id]?.[value[key].key];
+          }else{
+            if(typeof value[key] === 'string'&&value[key].includes('${')){
+              let __value = value[key]
+              let keys = __value.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+              if (keys) {
+                keys.forEach((key) => {
+                  __value = __value.replace(
+                    `\${${key}}`,pen[key]||this.getDynamicParam(key)
+                  );
+                });
+              }
+              _value[key] = __value;
+            } else {
+              _value[key] = value[key];
+            }
+          }
+        }
+
         pens.forEach((pen: Pen) => {
-          if (value.hasOwnProperty('visible')) {
-            if (pen.visible !== value.visible) {
-              this.setVisible(pen, value.visible);
+          if (_value.hasOwnProperty('visible')) {
+            if (pen.visible !== _value.visible) {
+              this.setVisible(pen, _value.visible);
             }
           }
           this.setValue(
-            { id: pen.id, ...value },
+            { id: pen.id, ..._value },
             { render: false, doEvent: false }
           );
         });
@@ -529,7 +561,7 @@ export class Meta2d {
           let keys = e.params.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
             keys?.forEach((key) => {
-              url = url.replace(`\${${key}}`, pen[key]);
+              url = url.replace(`\${${key}}`, pen[key]||this.getDynamicParam(key));
             });
           }
         }
@@ -659,7 +691,20 @@ export class Meta2d {
           const pen = this.findOne(item.id);
           value[item.prop] = pen[item.key];
         }else{
-          value[item.prop] = this.convertType(item.value,item.type);
+          if(typeof item.value === 'string'&&item.value.includes('${')){
+            let _value = item.value
+            let keys = _value.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+            if (keys) {
+              keys.forEach((key) => {
+                _value = _value.replace(
+                  `\${${key}}`,this.getDynamicParam(key)
+                );
+              });
+            }
+            value[item.prop] = _value;
+          }else{
+            value[item.prop] = this.convertType(item.value,item.type);
+          }
         }
       }
     });
@@ -1057,6 +1102,7 @@ export class Meta2d {
     this.initBindDatas();
     this.initBinds();
     this.doInitFn();
+    this.loadLineAnimateDraws();
     this.initMessageEvents();
     this.initGlobalTriggers();
     this.startAnimate();
@@ -1142,6 +1188,14 @@ export class Meta2d {
       }
     });
     this.render();
+  }
+
+  loadLineAnimateDraws(){
+    globalStore.lineAnimateDraws = {}
+    Object.entries(this.store.data.lineAnimateDraws).forEach(([key,drawFunc])=>{
+      // @ts-ignore
+      globalStore.lineAnimateDraws[key] = new Function('ctx','pen','state','index',drawFunc);
+    })
   }
 
   statistics() {
@@ -1547,6 +1601,24 @@ export class Meta2d {
 
   registerAnchors = registerAnchors;
 
+  registerLineAnimateDraws = (name,drawFunc)=>{
+    this.store.data.lineAnimateDraws[name] = drawFunc;
+    // 同步到store
+    // @ts-ignore
+    globalStore.lineAnimateDraws[name] = new Function('ctx','pen','state','index',drawFunc);
+  }
+  updateLineAnimateDraws(name,option){// option: {name:'xxx',code:'xxx'}
+    if(!option)return
+
+    delete this.store.data.lineAnimateDraws[name];
+    delete globalStore.lineAnimateDraws[name];
+
+    if(option === -1) { // -1 表示删除
+      return;
+    }
+    this.registerLineAnimateDraws(option.name || name,option.code);
+  }
+
   // customeDock = (store, rect, pens, offset) => {xDock, yDock}
   // customDock return:
   // {
@@ -1725,6 +1797,7 @@ export class Meta2d {
       pen.currentAnimation = undefined;
       pen.calculative.pause = undefined;
       pen.calculative.start = undefined;
+      pen.calculative.cycleStart = undefined;
       pen.calculative.duration = undefined;
       pen.calculative.animatePos = 0;
       this.store.animates.delete(pen);
@@ -1957,7 +2030,7 @@ export class Meta2d {
     }
     this.inactive();
   }
- 
+
   clearCombine(pen?: Pen) {
     if (!pen && this.store.active) {
       pen = this.store.active[0];
@@ -2506,6 +2579,8 @@ export class Meta2d {
             headers: net.headers || undefined,
             method: net.method,
             body: net.body,
+            enable: net.enable,
+            index: net.index
           });
           httpIndex += 1;
         }else if (net.protocol === 'ADIIOT') {
@@ -2560,7 +2635,7 @@ export class Meta2d {
   iotWebsocketClient:WebSocket;
   async connectIot(){
     const { iot } = this.store.data;
-    if(!(iot&&iot?.devices?.length)){
+    if(!(iot&&iot?.devices?.length)||(iot&&iot.enable === false)){
       return;
     }
     const url =  globalThis.iotUrl || await this.getMqttUrl();
@@ -2603,29 +2678,47 @@ export class Meta2d {
     //   };
     // }
   }
+
+  closeIot(){
+    if(this.iotMqttClient){
+      const { iot } = this.store.data;
+      if(iot?.token){
+        this.unsubscribeIot(iot.token);
+      }
+      this.iotMqttClient.end();
+      this.iotMqttClient = undefined;
+    }
+    clearInterval(this.iotTimer);
+    this.iotTimer = undefined;
+  }
   //  type SqlType = 'list' | 'get' | 'exec' | 'add' | 'update' | 'delete';
 
   connectSqls(){
     const { sqls } = this.store.data;
     if(sqls&&sqls.length){
-      let sqlIndex = 0;
-      sqls.forEach( async(sql)=>{
-        await this.doSqlCode(sql);
-        if(sql.interval){
-            sql.index = sqlIndex;
-            this.sqlTimerList[sqlIndex] = setInterval(async () => {
+      // let sqlIndex = 0;
+      sqls.forEach( async(sql, index)=>{
+        if(sql.enable !== false){
+          await this.doSqlCode(sql);
+          if(sql.interval){
+            sql.index = index;
+            this.sqlTimerList[index] = setInterval(async () => {
               await this.doSqlCode(sql);
             }, sql.interval);
-            sqlIndex += 1;
+            // index += 1;
           }
-        })
+        }
+      })
     }
   }
 
   connectSSE(net:Network){
+    if(net.enable === false){
+      return;
+    }
     this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
     this.eventSources[net.index].onmessage = (e) => {
-      this.socketCallback(e.data, { type: 'SSE', url: net.url });
+      this.socketCallback(e.data, { type: 'SSE', url: net.url, name:net.name, net });
     };
     this.eventSources[net.index].onerror = (error) => {
       this.store.emitter.emit('error', { type: 'SSE', error });
@@ -2643,6 +2736,9 @@ export class Meta2d {
   }
 
   connectNetMqtt(net:Network){
+    if(net.enable === false){
+      return;
+    }
     if (net.options.clientId && !net.options.customClientId) {
       net.options.clientId = s8();
     }
@@ -2658,7 +2754,29 @@ export class Meta2d {
       }
     }
     net.times = 0;
-    this.mqttClients[net.index] = mqtt.connect(url, net.options);
+    let options = deepClone(net.options);
+    if(options?.username&&options.username.includes('${')){
+      let keys = options.username.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          options.username = options.username.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
+    if(options?.password&&options.password.includes('${')){
+      let keys = options.password.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys) {
+        keys.forEach((key) => {
+          options.password = options.password.replace(
+            `\${${key}}`,this.getDynamicParam(key)
+          );
+        });
+      }
+    }
+
+    this.mqttClients[net.index] = mqtt.connect(url, options);
     this.mqttClients[net.index].on(
       'message',
       (topic: string, message: Buffer) => {
@@ -2666,6 +2784,8 @@ export class Meta2d {
           topic,
           type: 'mqtt',
           url: net.url,
+          name: net.name,
+          net
         });
       }
     );
@@ -2683,7 +2803,18 @@ export class Meta2d {
       }
     });
     if (net.topics) {
-      this.mqttClients[net.index].subscribe(net.topics.split(','));
+      let topics = net.topics;
+      if(topics.indexOf('${') > -1){
+        let keys = topics.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+        if (keys) {
+          keys.forEach((key) => {
+            topics = topics.replace(
+              `\${${key}}`,this.getDynamicParam(key)
+            );
+          });
+        }
+      }
+      this.mqttClients[net.index].subscribe(topics.split(','));
     }
   }
 
@@ -2692,6 +2823,9 @@ export class Meta2d {
       this.websockets[net.index].onclose = undefined;
       this.websockets[net.index]?.close();
       this.websockets[net.index] = undefined;
+    }
+    if(net.enable === false ){
+      return;
     }
     let url = net.url;
     if(url.indexOf('${') > -1){
@@ -2709,7 +2843,7 @@ export class Meta2d {
       net.protocols || undefined
     );
     this.websockets[net.index].onmessage = (e) => {
-      this.socketCallback(e.data, { type: 'websocket', url: net.url });
+      this.socketCallback(e.data, { type: 'websocket', url: net.url, name:net.name, net });
     };
     this.websockets[net.index].onerror = (error) => {
       this.store.emitter.emit('error', { type: 'websocket', error });
@@ -2764,6 +2898,17 @@ export class Meta2d {
     }
   }
 
+  async unsubscribeIot(token:string){
+    const ret:any = await fetch(`/api/iot/unsubscribe/properties`,{
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body:JSON.stringify({token}),
+    });
+    return ret;
+  }
+
   async doSqlCode(sql:Sql){
     const method = sql.method || 'get';
     let _sql = sql.sql;
@@ -2775,13 +2920,17 @@ export class Meta2d {
       headers:{
          Authorization: `Bearer ${getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
       },
-      body:JSON.stringify({ dbid:sql.dbid,sql:_sql,}),
+      body:JSON.stringify({ dbId:sql.dbId||(sql as any).dbid,sql:_sql,}),
     });
     if (res.ok) {
-      let data = await res.text();
+      let data:any = await res.text();
       if(data){
         const arr = [];
         data = JSON.parse(data);
+        if(data.error){
+          this.store.emitter.emit('error', { type: 'sql', error: data.error });
+          return;
+        }
         sql.keys?.forEach((key)=>{
           arr.push({id: sql.bindId+'#'+ key,value:getter(data,key.split('#').join('.'))});
         });
@@ -3011,7 +3160,9 @@ export class Meta2d {
     }
     if (!this.store.data.cancelFirstConnect) {
       https.forEach(async (_item) => {
-        this.requestHttp(_item);
+        if(_item.enable !== false){
+          this.requestHttp(_item);
+        }
       });
     }
     // if( enable ){
@@ -3031,18 +3182,24 @@ export class Meta2d {
 
     https.forEach((_item, index) => {
       _item.times = 0;
-      if(_item.interval !== 0){
-        this.updateTimerList[index] = setInterval(async () => {
-          this.requestHttp(_item);
-          if (this.store.options.reconnetTimes) {
-            // _item.times++;
-            if (_item.times >= this.store.options.reconnetTimes) {
-              _item.times = 0;
-              clearInterval(this.updateTimerList[index]);
-              this.updateTimerList[index] = undefined;
+      if(_item.interval !== 0 && _item.enable !== false){
+        if(_item.once){
+          setTimeout(async () => {
+            this.requestHttp(_item);
+          }, _item.interval || 1000);
+        }else{
+          this.updateTimerList[index] = setInterval(async () => {
+            this.requestHttp(_item);
+            if (this.store.options.reconnetTimes) {
+              // _item.times++;
+              if (_item.times >= this.store.options.reconnetTimes) {
+                _item.times = 0;
+                clearInterval(this.updateTimerList[index]);
+                this.updateTimerList[index] = undefined;
+              }
             }
-          }
-        }, _item.interval || 1000);
+          }, _item.interval || 1000);
+        }
       }
     });
   }
@@ -3094,7 +3251,8 @@ export class Meta2d {
       });
       if (res.ok) {
         const data = await res.text();
-        this.socketCallback(data, { type: 'http', url: req.url });
+        const net = this.store.data.networks.filter(item=>item.protocol==='http')[req.index];
+        this.socketCallback(data, { type: 'http', url: req.url, name: req.name, net});
       } else {
         _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
@@ -3129,12 +3287,13 @@ export class Meta2d {
         clearInterval(_sqlTimer);
         _sqlTimer = undefined;
       });
-    if(this.iotMqttClient){
-      this.iotMqttClient.end();
-      this.iotMqttClient = undefined;
-    }
-    clearInterval(this.iotTimer);
-    this.iotTimer = undefined;
+    this.closeIot();
+    // if(this.iotMqttClient){
+    //   this.iotMqttClient.end();
+    //   this.iotMqttClient = undefined;
+    // }
+    // clearInterval(this.iotTimer);
+    // this.iotTimer = undefined;
 
     // if(this.iotWebsocketClient){
     //   this.iotWebsocketClient.onclose = undefined;
@@ -3147,10 +3306,38 @@ export class Meta2d {
 
   socketCallback(
     message: string,
-    context?: { type?: string; topic?: string; url?: string; method?: string }
+    context?: { type?: string; topic?: string; url?: string; method?: string, name?:string, net?:Network }
   ) {
     this.store.emitter.emit('socket', { message, context });
     let _message: any = message;
+    if(context.net?.socketCbJs){
+      if(!context.net?.socketFn){
+        context.net.socketFn = new Function('e', 'context', context.net.socketCbJs) as (
+          e: string,
+          context?: {
+            meta2d?: Meta2d;
+            type?: string;
+            topic?: string;
+            url?: string;
+          }
+        ) => boolean;
+      }
+      if (context.net.socketFn) {
+        _message = context.net.socketFn(message,{
+          meta2d: this,
+          type: context.type,
+          topic: context.topic,
+          url: context.url,
+          method: context.method,
+        });
+        if (!_message) {
+          return;
+        }
+        if (_message&&_message !== true) {
+          message = _message;
+        }
+      }
+    }
     if (this.socketFn) {
       _message = this.socketFn(message, {
         meta2d: this,
@@ -3559,15 +3746,20 @@ export class Meta2d {
           this.doEvent(e, eventName);
         break;
       case 'change':
-        e.pen && updateFormData(e.pen)
-        this.store.data.locked &&
-          e &&
-          !e.disabled &&
-          this.doEvent(e, eventName);
+        e.pen && updateFormData(e.pen);
+        if(e.pen){
+          this.store.data.locked &&!e.pen.disabled &&
+            this.doEvent(e.pen, eventName);
+        }else{
+          this.store.data.locked &&
+            e &&
+            !e.disabled &&
+            this.doEvent(e, eventName);
+        }
         break;
     }
 
-    this.doMessageEvent(eventName);
+    this.doMessageEvent(eventName,e);
   };
 
   private doEvent = (pen: Pen, eventName: EventName) => {
@@ -4430,6 +4622,14 @@ export class Meta2d {
             if (pen.externElement) {
               pen.onResize?.(pen);
             }
+            if(pen.children?.length){
+              const cPens = getAllChildren(pen,this.store);
+              cPens.forEach((cPen) => {
+                if (cPen.externElement) {
+                    cPen.onResize?.(cPen);
+                }
+              });
+            }
           });
         } else if (fit.left) {
           //左移
@@ -4475,6 +4675,20 @@ export class Meta2d {
           pen.onResize?.(pen);
         }
       });
+
+      const videoPens = this.store.data.pens.filter(
+        (pen) => pen.name === 'video'
+      );
+      videoPens?.forEach((pen) => {
+        const worldRect = pen.calculative.worldRect;
+        if (worldRect.width / this.store.data.scale > rect.width * 0.8) {
+          //作为背景的video
+          pen.calculative.worldRect.x = worldRect.x - wGap / 2;
+          pen.calculative.worldRect.width = worldRect.width + wGap;
+          pen.calculative.worldRect.ex = worldRect.ex + wGap;
+          pen.onResize?.(pen);
+        }
+      });
     }
     //高度拉伸
     if (Math.abs(hGap) > 10) {
@@ -4503,7 +4717,7 @@ export class Meta2d {
           }
 
           let ratio =
-            (this.canvas.height - top - bottom) / (rect.height - top - bottom);
+            (this.canvas.height - top - bottom) / (rect.height);
           pens.forEach((pen) => {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.height / this.canvas.height > 0.1) {
@@ -4525,6 +4739,14 @@ export class Meta2d {
             this.canvas.updatePenRect(pen, { worldRectIsReady: false });
             if (pen.externElement) {
               pen.onResize?.(pen);
+            }
+            if(pen.children?.length){
+              const cPens = getAllChildren(pen,this.store);
+              cPens.forEach((cPen) => {
+                if (cPen.externElement) {
+                    cPen.onResize?.(cPen);
+                }
+              });
             }
           });
         } else if (fit.top) {
@@ -4566,6 +4788,19 @@ export class Meta2d {
           pen.onBeforeValue?.(pen, {
             operationalRect: pen.operationalRect,
           } as any);
+          pen.onResize?.(pen);
+        }
+      });
+      const videoPens = this.store.data.pens.filter(
+        (pen) => pen.name === 'video'
+      );
+      videoPens?.forEach((pen) => {
+        const worldRect = pen.calculative.worldRect;
+        if (worldRect.height / this.store.data.scale > rect.height * 0.8) {
+          //作为背景的video
+          pen.calculative.worldRect.y = worldRect.y - hGap / 2;
+          pen.calculative.worldRect.height = worldRect.height + hGap;
+          pen.calculative.worldRect.ey = worldRect.ey + hGap;
           pen.onResize?.(pen);
         }
       });

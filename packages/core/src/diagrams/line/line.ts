@@ -28,7 +28,7 @@ export function line(
       from = pt;
     });
     if (pen.close) {
-      if(pen.lineName === 'curve') {  
+      if(pen.lineName === 'curve') {
         draw(path, from, worldAnchors[0]);
       } else {
         path.closePath();
@@ -118,7 +118,7 @@ export function getPoints(from: Point, to: Point, pen?: Pen) {
   }
 
   let step = 0.02;
-  if (from.lineLength) {
+  if (from.lineLength && !pen.parentId) {
     const r = getLineR(pen);
     step = r / from.lineLength;
   }
@@ -289,6 +289,21 @@ export function getLineLength(pen: Pen): number {
   return len;
 }
 
+export function createLineSvgPath(line:Pen) {
+  let path:SVGGeometryElement
+  let from:Point = null
+  line.calculative.worldAnchors.forEach(pt=>{
+    if (from) {
+      path = createSvgPath(path,from,from.next,pt.prev,pt)
+    }
+    from = pt;
+  })
+  if(line.close){
+    let pt = line.calculative.worldAnchors[0]
+    path = createSvgPath(path,from,from.next,pt.prev,pt)
+  }
+  return path
+}
 /**
  * 连线在 rect 内， 连线与 rect 相交
  */
@@ -411,3 +426,41 @@ export function isBezierIntersectRectangle(from: Point, to: Point, rect: Rect) {
 
   return false;
 }
+
+export function createSvgPath(path:SVGGeometryElement,from: Point, cp1: Point, cp2?: Point, to?: Point,) {
+  let d = ''
+  if(!path){
+    d += `M${from.x} ${from.y} `
+    path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d',d)
+  }
+  d = path.getAttribute('d') || ''
+
+  if (cp1 && cp2) {
+    d += `C${cp1.x} ${cp1.y} ${cp2.x} ${cp2.y} ${to.x} ${to.y}`
+  } else if (cp1) {
+    d += `Q${cp1.x} ${cp1.y} ${to.x} ${to.y}`
+  } else {
+    d += `Q${cp2?.x || from.x} ${cp2?.y || from.y} ${to.x} ${to.y}`
+  }
+  path.setAttribute('d',d)
+  return path
+}
+// 获取线段的某个点的导数和位置
+export function getLinePointPosAndAngle (path:SVGGeometryElement,distance: number){
+  const totalLength = path.getTotalLength()
+  if(distance<0 || distance>totalLength) return null
+  const delta = 0.01
+  const point1 = path.getPointAtLength(distance)
+
+  const point2 = path.getPointAtLength(distance - delta)
+  const determinant = Math.atan2(point1.y - point2.y, point1.x - point2.x)
+  return {
+    x:point1.x,
+    y:point1.y,
+    rotate:determinant / Math.PI * 180,
+    progress: distance / totalLength
+  }
+}
+
+

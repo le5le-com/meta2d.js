@@ -40,6 +40,9 @@ export interface Meta2dData {
   ruleColor?: string;
   fromArrow?: string;
   toArrow?: string;
+  lineAnimateDraws?: {
+    [key: string]: string;
+  };
   lineWidth?: number;
   lineColor?: string; // 线条默认颜色
   color?: string; // 画笔默认 color 优先级高于 options.color
@@ -138,8 +141,12 @@ export interface Network {
   times?: number; // 临时 重连次数
   index?: number; // 临时 索引
   devices?: any[]; //物联网设备,
-  dbid?: string; //数据库id
+  dbId?: string; //数据库id
   sql?: string; //sql语句
+  enable?: boolean; //是否启用
+  once?: boolean; //是否只执行一次
+  socketCbJs?: string; //socket回调js
+  socketFn?: Function;
 }
 
 export interface Iot {
@@ -157,12 +164,13 @@ export interface Iot {
   }[];
   tree?:any;
   token?:string;
+  enable?:boolean;
 }
 
 export interface Sql {
   interval?: number;
   sql?:string;
-  dbid?: string;
+  dbId?: string;
   dbType?:string;
   name?:string;
   bindId?: string;
@@ -171,6 +179,7 @@ export interface Sql {
   pageSize?: number;
   current?: number;
   keys?: string[]; // 子数据点key
+  enable?: boolean; 
 }
 
 export interface HttpOptions {
@@ -318,6 +327,7 @@ export const clearStore = (store: Meta2dStore, template?: string) => {
     center: { x: 0, y: 0 },
     paths: {},
     template: isSame ? template : null,
+    lineAnimateDraws: {}
   };
   store.sameTemplate = isSame;
   store.pens = {};

@@ -103,8 +103,15 @@ export enum LineAnimateType {
   Dot, // 圆点
   Arrow, // 箭头,
   WaterDrop, // 水滴
+  Custom // 自定义动画
 }
 
+export enum lineAnimateTargetType {
+  Image, // 图片
+  Icon, // 图标
+  Pen, // 画笔
+  Element //自定义元素
+}
 export interface ColorStop {
   i: number; //取值0-1,色标位置
   color: string;
@@ -195,6 +202,9 @@ export interface Pen extends Rect {
   shadowOffsetY?: number;
   textHasShadow?: boolean; // 文字是否需要阴影
 
+  // canvas 滤镜
+  filter?: string;
+
   text?: string;
   textWidth?: number;
   textHeight?: number;
@@ -282,6 +292,9 @@ export interface Pen extends Rect {
 
   // 动画帧时长
   duration?: number;
+
+  curveAnimate?: boolean; // 是否开启曲线动画=>动画时间函数是否生效
+
   // 匀速渐变
   linear?: boolean;
   // 主要用于动画帧的缩放
@@ -291,10 +304,23 @@ export interface Pen extends Rect {
   animateColor?: string;
   animateLineDash?: number[];
   animateReverse?: boolean;
+  animateTimingFunction?: string[] | string; // 三次贝塞尔时间函数两控制点的坐标参数: number[]
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
 
+  lineAnimateElement?: string; // 动画自定义元素
+  lineAnimateIcon?: string; // 动画图标元素
+  lineAnimateImages?:string[]; // 动画图片元素
+  lineAnimatePens?: string; // 动画目标 pen id
+
+  lineAnimateDash?: number[] | string; // 动画元素间隔
+  lineAnimateDashOffset?: number; // 动画元素偏移量
+  lineAnimateElementCount?: number ; // 动画元素数量
   lineAnimateType?: LineAnimateType;
+  lineAnimateTargetType?: lineAnimateTargetType; // 动画目标元素类型
+  lineAnimateElementWidth?: number; // 动画元素宽度
+  lineAnimateElementHeight?: number; // 动画元素高度
+
   animateName?: string; // 当前执行的动画名称
   frames?: Pen[];
   // 提前预置的不同效果的动画组
@@ -427,6 +453,7 @@ export interface Pen extends Rect {
     globalAlpha?: number;
     lineDash?: number[];
     lineDashOffset?: number;
+    length?: number; // 线长度
     color?: string;
     background?: string;
     // anchorColor?: string;    // TODO: 锚点颜色动画，应该不需要
@@ -550,6 +577,8 @@ export interface Pen extends Rect {
     animatePos?: number;
     // 已经循环次数
     cycleIndex?: number;
+    // 一个循环动画的开始时间
+    cycleStart?: number;
     // 是否暂停动画
     pause?: number;
 

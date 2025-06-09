@@ -17,6 +17,17 @@ export function formPens() {
   };
 }
 
+export function formVPens() {
+  return {
+    // radio,
+    switch: le5leSwitch,
+    slider,
+    // checkbox,
+    // table:table2,
+    // table2:table2,
+  };
+}
+
 export function formPath2DPens() {
   return {
     time,

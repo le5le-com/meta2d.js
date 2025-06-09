@@ -198,7 +198,7 @@ function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
       } else if (child.rect) {
         // rect 类型
         pen = transformRect(childProperty, pen);
-        const rectangle: Pen = pen;
+        const rectangle: any = pen;
         //获取圆上右下左坐标
         let circleAnchors = [
           {
@@ -231,7 +231,7 @@ function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
       } else if (child.circle) {
         // circle 类型
         pen = transformCircle(childProperty, pen);
-        const circle: Pen = pen;
+        const circle: any = pen;
         //获取圆上右下左坐标
         let circleAnchors = [
           {
@@ -267,7 +267,7 @@ function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
       } else if (child.line) {
         // line 类型
         pen = transformLine(childProperty, pen);
-        const line: Pen = pen;
+        const line: any = pen;
         line.anchors.forEach((item) => {
           const x = line.x + item.x * line.width;
           const y = line.y + item.y * line.height;
@@ -285,7 +285,7 @@ function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
       } else if (child.polyline) {
         // polyline 类型
         pen = transformPolyline(childProperty, pen);
-        const polyline: Pen = pen;
+        const polyline: any = pen;
         polyline.anchors.forEach((item) => {
           const x = polyline.x + item.x * polyline.width;
           const y = polyline.y + item.y * polyline.height;

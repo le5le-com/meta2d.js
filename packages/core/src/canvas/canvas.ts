@@ -1367,6 +1367,8 @@ export class Canvas {
       !pen.parentId && this.randomCombineId(pen, pens);
     }
     if (Object.keys(this.randomIdObj).length !== 0) {
+      const keys = Object.keys(this.randomIdObj).join('|');
+      const regex = new RegExp(`(${keys})`, "g");
       for (const pen of pens) {
         if (pen.type) {
           pen.anchors[0].connectTo = this.randomIdObj[pen.anchors[0].connectTo];
@@ -1377,6 +1379,20 @@ export class Canvas {
             item.lineAnchor = this.randomIdObj[item.lineAnchor];
             item.lineId = this.randomIdObj[item.lineId];
           });
+        }
+
+        //动画、事件和状态
+        if(pen.animations?.length){
+          const str = JSON.stringify(pen.animations).replace(regex, match => this.randomIdObj[match]);
+          pen.animations = JSON.parse(str);
+        }
+        if(pen.triggers?.length){
+          const str = JSON.stringify(pen.triggers).replace(regex, match => this.randomIdObj[match]);
+          pen.triggers = JSON.parse(str);
+        }
+        if(pen.events?.length){
+          const str = JSON.stringify(pen.events).replace(regex, match => this.randomIdObj[match]);
+          pen.events = JSON.parse(str);
         }
       }
     }
@@ -1490,14 +1506,18 @@ export class Canvas {
           pen.anchors[0].id,
           pen.anchors[pen.anchors.length - 1].id,
         ];
+      }else{
+        beforeIds = [pen.id];
       }
     } else {
-      if (pen.connectedLines && pen.connectedLines.length) {
+      if(pens.length>1){
+      // if (pen.connectedLines && pen.connectedLines.length) {
         beforeIds = [pen.id];
       }
     }
     randomId(pen);
-    if (beforeIds) {
+    if(pens.length>1){
+    // if (beforeIds) {
       if (beforeIds.length === 1) {
         this.randomIdObj[beforeIds[0]] = pen.id;
       } else {
@@ -2842,7 +2862,7 @@ export class Canvas {
     const gridSize = this.store.data.gridSize || this.store.options.gridSize;
     const { origin, scale } = this.store.data;
     const autoAlignGrid =
-      this.store.options.autoAlignGrid && this.store.data.grid;
+      this.store.options.autoAlignGrid && (this.store.data.grid || this.store.options.grid);
       movedPens.forEach((pen) => {
       const i = this.movingPens.findIndex((item) => item.id === pen.id+movingSuffix);
       if(i<0){
@@ -3767,6 +3787,7 @@ export class Canvas {
         } else if (!pen.height) {
           pen.width = this.width;
         }
+        this.updatePenRect(pen);
       }
       calcInView(pen);
     }
@@ -4203,6 +4224,12 @@ export class Canvas {
       });
     }
     !pen.rotate && (pen.rotate = 0);
+    pen.lineAnimateImages ??= []
+    if(pen.lineAnimateImages){
+      pen.lineAnimateImages.forEach((src)=>{
+        this.__loadImage(src)
+      })
+    }
     this.loadImage(pen);
     this.parent.penNetwork(pen);
   }
@@ -4571,6 +4598,33 @@ export class Canvas {
       }
       pen.calculative.strokeImage = pen.strokeImage;
     }
+  }
+
+  // 加载图片到全局缓存
+  __loadImage(src:string){
+    return new Promise(resolve=>{
+      if(!globalStore.htmlElements[src]){
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = src;
+        if (
+          this.store.options.cdn &&
+          !(
+            src.startsWith('http') ||
+            src.startsWith('//') ||
+            src.startsWith('data:image')
+          )
+        ) {
+          img.src = this.store.options.cdn + src;
+        }
+        img.onload = () => {
+          globalStore.htmlElements[src] = img;
+          resolve(img);
+        };
+      }else{
+        resolve(globalStore.htmlElements[src]);
+      }
+    })
   }
   private imageTimer: any;
   // 避免初始化图片加载重复调用 render，此处防抖
@@ -5217,11 +5271,11 @@ export class Canvas {
     }
     scalePoint(this.store.data.origin, s, center);
     this.store.data.pens.forEach((pen) => {
+      pen.onScale && pen.onScale(pen);
       if (pen.parentId) {
         return;
       }
       scalePen(pen, s, center);
-      pen.onScale && pen.onScale(pen);
       if (pen.isRuleLine) {
         // 扩大线的比例，若是放大，即不缩小，若是缩小，会放大
         const lineScale = 1 / s; //s > 1 ? 1 : 1 / s / s;
@@ -6713,8 +6767,19 @@ export class Canvas {
     const curPage = sessionStorage.getItem('page');
     const scale = this.store.data.scale;
     if(this.store.clipboard.mousePos&&(Math.abs(this.store.clipboard.mousePos.x-this.mousePos.x)>100*scale||Math.abs(this.store.clipboard.mousePos.y-this.mousePos.y)>100*scale)){
-      const offsetX = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.width/2;
-      const offsetY = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.height/2;
+      let _x = -this.store.clipboard.initRect.width/this.store.clipboard.scale/10/(scale);
+      let _y = -this.store.clipboard.initRect.height/this.store.clipboard.scale/10/(scale);
+      let offsetX = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.width/2+_x;
+      let offsetY = (scale-this.store.clipboard.scale)*this.store.clipboard.initRect.height/2+_y;
+      if(scale<this.store.clipboard.scale){
+        // 减小粘贴偏移量
+        offsetX = (scale-this.store.clipboard.scale)/((this.store.clipboard.scale-scale)*100)*this.store.clipboard.initRect.width/2+_x;
+        offsetY = (scale-this.store.clipboard.scale)/((this.store.clipboard.scale-scale)*100)*this.store.clipboard.initRect.height/2+_y;
+      }
+      if(this.store.clipboard.pens.length>1){
+        offsetX = (scale-1)*this.store.clipboard.initRect.width/this.store.clipboard.scale/2;
+        offsetY = (scale-1)*this.store.clipboard.initRect.height/this.store.clipboard.scale/2;
+      }
       this.store.clipboard.pos = { x: this.mousePos.x-offsetX, y: this.mousePos.y-offsetY };
       this.store.clipboard.offset = 0;
     }else if (curPage !== clipboard.page) {
@@ -7119,7 +7184,7 @@ export class Canvas {
                     id = _id;
                   }
                 }
-                
+
               });
               this.store.hover = this.store.pens[id];
               this.store.pens[id].calculative.hover = true;
@@ -7846,7 +7911,7 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
-        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate'].includes(k)){
+        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate', 'visible'].includes(k)){
           willRenderImage = true;
         }
       } else {
@@ -8442,6 +8507,7 @@ export class Canvas {
     this.externalElements.style.zIndex = '5';
     this.magnifierCanvas.magnifier = false;
     this.externalElements.style.cursor = 'default';
+    this.magnifierCanvas.render();
     this.render();
   }
 
