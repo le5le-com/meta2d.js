@@ -3085,6 +3085,8 @@ export class Meta2d {
         this.dataMock();
         this.render();
       }, this.store.data.networkInterval || 1000);
+    }else{
+      this.stopDataMock();
     }
   }
 
