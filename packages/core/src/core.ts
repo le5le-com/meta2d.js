@@ -3072,6 +3072,34 @@ export class Meta2d {
     }
   }
 
+  networkMock() {
+    if (this.store.data.networks && this.store.data.networks.length) {
+      let arr = [];
+      this.store.data.networks.forEach((net) => {
+        if(net.enable === false){
+          net.children?.forEach((child) => {
+            let _child = deepClone(child);
+            _child.enableMock = true;
+            let value = this.mockValue(_child);
+            if (value !== undefined) {
+              arr.push({
+                id: child.id,
+                value,
+              });
+            }
+          });
+        }
+      });
+      if (arr.length) {
+        this.setDatas(arr, {
+          render: true,
+          doEvent: true,
+          history: false,
+        });
+      }
+    }
+  }
+
   startDataMock() {
     let enable = this.store.data.enableMock;
     if (enable) {
@@ -3082,7 +3110,8 @@ export class Meta2d {
         this.store.data.pens.forEach((pen) => {
           this.penMock(pen);
         });
-        this.dataMock();
+        // this.dataMock();
+        this.networkMock();
         this.render();
       }, this.store.data.networkInterval || 1000);
     }else{

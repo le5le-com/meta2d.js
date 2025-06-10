@@ -147,6 +147,7 @@ export interface Network {
   once?: boolean; //是否只执行一次
   socketCbJs?: string; //socket回调js
   socketFn?: Function;
+  children?: any[]; //点位数组
 }
 
 export interface Iot {
