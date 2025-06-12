@@ -2573,7 +2573,16 @@ export class Meta2d {
           websocketIndex += 1;
         } else if (net.protocol === 'http') {
           net.index = httpIndex;
-          https.push(deepClone(net));
+          https.push({
+            url: net.url,
+            interval: net.interval,
+            headers: net.headers || undefined,
+            method: net.method,
+            body: net.body,
+            enable: net.enable,
+            index: net.index,
+            once: net.once,
+          });
           httpIndex += 1;
         }else if (net.protocol === 'ADIIOT') {
           connectJetLinks(this,net);
