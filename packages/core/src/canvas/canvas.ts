@@ -8179,7 +8179,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.data.background || this.store.styles.background;
+    const background = this.store.options.downloadBgTransparent?undefined:(this.store.data.background || this.store.styles.background);
       // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
@@ -8329,7 +8329,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.data.background || this.store.styles.background;
+    const background = this.store.options.downloadBgTransparent? undefined : (this.store.data.background || this.store.styles.background);
     // this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色

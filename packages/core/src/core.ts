@@ -4446,7 +4446,7 @@ export class Meta2d {
     const ctx = new (window as any).C2S(rect.width + 20, rect.height + 20);
     ctx.textBaseline = 'middle';
     ctx.strokeStyle = this.store.styles.color // getGlobalColor(this.store);
-    const background = this.store.data.background || this.store.styles.background;
+    const background = this.store.options.downloadBgTransparent? undefined : (this.store.data.background || this.store.styles.background);
     // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
@@ -4523,11 +4523,11 @@ export class Meta2d {
         {{bkRect}}`
       );
     }
-    if (this.store.data.background) {
+    if (background) {
       mySerializedSVG = mySerializedSVG.replace('{{bk}}', '');
       mySerializedSVG = mySerializedSVG.replace(
         '{{bkRect}}',
-        `<rect x="0" y="0" width="100%" height="100%" fill="${this.store.data.background}"></rect>`
+        `<rect x="0" y="0" width="100%" height="100%" fill="${background}"></rect>`
       );
     } else {
       mySerializedSVG = mySerializedSVG.replace('{{bk}}', '');
