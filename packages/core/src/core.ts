@@ -4413,7 +4413,7 @@ export class Meta2d {
     }, 1000);
   }
 
-  downloadSvg() {
+  downloadSvg(defs?:string[]) {
     if (!(window as any).C2S) {
       console.error(
         '请先加载乐吾乐官网下的canvas2svg.js',
@@ -4511,6 +4511,18 @@ export class Meta2d {
     }
 
     let mySerializedSVG = ctx.getSerializedSvg();
+    if(defs?.length){
+      mySerializedSVG = mySerializedSVG.replace(
+        '<defs/>',
+        `<defs>
+          <style type="text/css">
+            ${defs.join('\n')}
+          </style>
+          {{bk}}
+        </defs>
+        {{bkRect}}`
+      );
+    }
     if (this.store.data.background) {
       mySerializedSVG = mySerializedSVG.replace('{{bk}}', '');
       mySerializedSVG = mySerializedSVG.replace(
