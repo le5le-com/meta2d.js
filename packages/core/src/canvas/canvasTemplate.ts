@@ -18,7 +18,7 @@ export class CanvasTemplate {
   bgOffscreen = createOffscreen();
   patchFlags: boolean;
   bgPatchFlags: boolean;
-  fit: boolean; //是否自适应布局 
+  fit: boolean; //是否自适应布局
   constructor(public parentElement: HTMLElement, public store: Meta2dStore) {
     parentElement.appendChild(this.canvas);
     this.canvas.style.backgroundRepeat = 'no-repeat';
@@ -108,7 +108,7 @@ export class CanvasTemplate {
       const x = this.store.data.x || this.store.options.x || 0;
       const y = this.store.data.y || this.store.options.y || 0;
       const background =  this.store.data.background || this.store.styles.background;
-        // this.store.data.background || this.store.options.background;
+      // this.store.data.background || this.store.options.background;
       if (background) {
         ctx.save();
         ctx.fillStyle = background;
@@ -156,7 +156,7 @@ export class CanvasTemplate {
           continue;
         }
         if (
-          // pen.template 
+          // pen.template
           pen.canvasLayer===CanvasLayer.CanvasTemplate
           && pen.calculative.inView) {
           if (pen.name === 'combine' && !pen.draw){
@@ -217,11 +217,11 @@ export class CanvasTemplate {
     const height = (data.height || options.height) * scale;
     const startX = (data.x || options.x || 0) + origin.x;
     const startY = (data.y || options.y || 0) + origin.y;
-    if (gridRotate) {
-      ctx.translate(width / 2, height / 2);
-      ctx.rotate((gridRotate * Math.PI) / 180);
-      ctx.translate(-width / 2, -height / 2);
-    }
+    // if (width && height && gridRotate) {
+    //   ctx.translate(width / 2, height / 2);
+    //   ctx.rotate((gridRotate * Math.PI) / 180);
+    //   ctx.translate(-width / 2, -height / 2);
+    // }
     ctx.lineWidth = 1;
     ctx.strokeStyle = gridColor || options.gridColor;
     ctx.beginPath();
@@ -238,27 +238,202 @@ export class CanvasTemplate {
       const newY = startY - Math.ceil(n) * size;
       const endX = cW + newX + offset;
       const endY = cH + newY + offset;
-      for (let i = newX; i <= endX; i += size) {
-        ctx.moveTo(i, newY);
-        ctx.lineTo(i, cH + newY + offset);
-      }
-      for (let i = newY; i <= endY; i += size) {
-        ctx.moveTo(newX, i);
-        ctx.lineTo(cW + newX + offset, i);
+      if (gridRotate) {
+        // 菱形效果
+        // drawParallelLines(ctx, cW, cH, size, gridRotate);
+        // drawParallelLines(ctx, cW, cH, size, -gridRotate);
+
+        // 计算两组斜线的方向向量
+        const radian1 = (gridRotate * Math.PI) / 180;
+        const radian2 = radian1 + Math.PI / 2;
+
+        // 计算法向量用于间距控制
+        const normal1 = { x: Math.sin(radian1), y: -Math.cos(radian1) };
+        const normal2 = { x: Math.sin(radian2), y: -Math.cos(radian2) };
+        drawPreciseLines(ctx, cW, cH, size, normal1, radian1);
+        drawPreciseLines(ctx, cW, cH, size, normal2, radian2);
+      } else {
+        for (let i = newX; i <= endX; i += size) {
+          ctx.moveTo(i, newY);
+          ctx.lineTo(i, cH + newY + offset);
+        }
+        for (let i = newY; i <= endY; i += size) {
+          ctx.moveTo(newX, i);
+          ctx.lineTo(cW + newX + offset, i);
+        }
       }
     } else {
-      const endX = width + startX;
-      const endY = height + startY;
-      for (let i = startX; i <= endX; i += size) {
-        ctx.moveTo(i, startY);
-        ctx.lineTo(i, height + startY);
-      }
-      for (let i = startY; i <= endY; i += size) {
-        ctx.moveTo(startX, i);
-        ctx.lineTo(width + startX, i);
+      if(gridRotate){
+        const radian1 = gridRotate * Math.PI / 180;
+        const radian2 = radian1 + Math.PI / 2; // 垂直角度
+        
+        // 第一组斜线的法向量（用于间距控制）
+        const normal1 = { 
+            x: Math.sin(radian1), 
+            y: -Math.cos(radian1) 
+        };
+        
+        // 第二组斜线的法向量
+        const normal2 = { 
+            x: Math.sin(radian2), 
+            y: -Math.cos(radian2) 
+        };
+        // 绘制第一组斜线
+        drawPreciseLinesInRect(ctx, startX, startY, width, height, size, normal1, radian1);
+        // 绘制第二组垂直斜线
+        drawPreciseLinesInRect(ctx, startX, startY, width, height, size, normal2, radian1);
+      }else{
+        const endX = width + startX;
+        const endY = height + startY;
+        for (let i = startX; i <= endX; i += size) {
+          ctx.moveTo(i, startY);
+          ctx.lineTo(i, height + startY);
+        }
+        for (let i = startY; i <= endY; i += size) {
+          ctx.moveTo(startX, i);
+          ctx.lineTo(width + startX, i);
+        }
       }
     }
     ctx.stroke();
     ctx.restore();
   }
+}
+
+function drawParallelLines(ctx, width, height, spacing, angle) {
+  const radian = (angle * Math.PI) / 180;
+  const cos = Math.cos(radian);
+  const sin = Math.sin(radian);
+
+  const lineCount =
+    Math.ceil(
+      Math.max(width, height) /
+        (spacing * Math.min(Math.abs(cos), Math.abs(sin)))
+    ) * 2;
+
+  ctx.beginPath();
+  for (let i = -lineCount; i < lineCount; i++) {
+    const x = i * spacing;
+    if (sin > 0) {
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + (height / sin) * cos, height);
+    } else {
+      ctx.moveTo(x, height);
+      ctx.lineTo(x - (height / sin) * cos, 0);
+    }
+  }
+  ctx.stroke();
+}
+
+function drawPreciseLines(ctx, width, height, spacing, normal, angle) {
+  // 计算边界点
+  const corners = [
+    { x: 0, y: 0 },
+    { x: width, y: 0 },
+    { x: width, y: height },
+    { x: 0, y: height },
+  ];
+
+  // 计算投影范围
+  let minProjection = Infinity;
+  let maxProjection = -Infinity;
+
+  corners.forEach((corner) => {
+    const proj = corner.x * normal.x + corner.y * normal.y;
+    minProjection = Math.min(minProjection, proj);
+    maxProjection = Math.max(maxProjection, proj);
+  });
+
+  // 计算线条数量
+  const lineCount = Math.ceil((maxProjection - minProjection) / spacing);
+
+  ctx.beginPath();
+  for (let i = 0; i <= lineCount; i++) {
+    const d = minProjection + i * spacing;
+
+    // 计算与边界的交点
+    let points = [];
+    for (let j = 0; j < corners.length; j++) {
+      const p1 = corners[j];
+      const p2 = corners[(j + 1) % corners.length];
+
+      const denom = normal.x * (p2.y - p1.y) - normal.y * (p2.x - p1.x);
+      if (Math.abs(denom) > 1e-6) {
+        const t =
+          (d - p1.x * normal.x - p1.y * normal.y) /
+          (normal.x * (p2.x - p1.x) + normal.y * (p2.y - p1.y));
+        if (t >= 0 && t <= 1) {
+          const x = p1.x + t * (p2.x - p1.x);
+          const y = p1.y + t * (p2.y - p1.y);
+          points.push({ x, y });
+        }
+      }
+    }
+
+    // 绘制线条（确保有2个交点）
+    if (points.length >= 2) {
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.lineTo(points[1].x, points[1].y);
+    }
+  }
+  ctx.stroke();
+}
+
+function drawPreciseLinesInRect(ctx, x, y, width, height, spacing, normal, angle) {
+    const corners = [
+        { x, y }, // 左上
+        { x: x + width, y }, // 右上
+        { x: x + width, y: y + height }, // 右下
+        { x, y: y + height } // 左下
+    ];
+    
+    // 1. 计算法向量在四个角上的投影范围
+    let min = Infinity, max = -Infinity;
+    corners.forEach(p => {
+        const proj = p.x * normal.x + p.y * normal.y;
+        min = Math.min(min, proj);
+        max = Math.max(max, proj);
+    });
+    
+    // 2. 计算需要绘制的线条数量和起始位置
+    const totalLength = max - min;
+    const lineCount = Math.ceil(totalLength / spacing);
+    const startOffset = min;
+    
+    // 3. 绘制每条斜线
+    ctx.beginPath();
+    for (let i = 0; i <= lineCount; i++) {
+        const d = startOffset + i * spacing;
+        
+        // 计算与矩形边的交点
+        const points = [];
+        for (let j = 0; j < corners.length; j++) {
+            const p1 = corners[j];
+            const p2 = corners[(j + 1) % 4];
+            
+            // 线段与斜线的交点计算
+            const edgeVecX = p2.x - p1.x;
+            const edgeVecY = p2.y - p1.y;
+            
+            const denominator = normal.x * edgeVecY - normal.y * edgeVecX;
+            if (Math.abs(denominator) > 1e-6) {
+                const t = (d - p1.x * normal.x - p1.y * normal.y) / 
+                         (normal.x * edgeVecX + normal.y * edgeVecY);
+                
+                if (t >= 0 && t <= 1) {
+                    points.push({
+                        x: p1.x + t * edgeVecX,
+                        y: p1.y + t * edgeVecY
+                    });
+                }
+            }
+        }
+        
+        // 连接交点（确保有2个交点）
+        if (points.length >= 2) {
+            ctx.moveTo(points[0].x, points[0].y);
+            ctx.lineTo(points[1].x, points[1].y);
+        }
+    }
+    ctx.stroke();
 }
