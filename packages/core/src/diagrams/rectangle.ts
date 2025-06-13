@@ -2,6 +2,12 @@ import { Pen } from '../pen';
 
 export function rectangle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;
+  if(pen.name === 'combine' && !pen.draw){
+    if (path instanceof Path2D) {
+      return path;
+    }
+    return;
+  }
   if(!pen.setTheme){
     pen.setTheme = setTheme;
   }

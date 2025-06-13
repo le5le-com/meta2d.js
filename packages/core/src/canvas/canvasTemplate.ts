@@ -159,9 +159,9 @@ export class CanvasTemplate {
           // pen.template 
           pen.canvasLayer===CanvasLayer.CanvasTemplate
           && pen.calculative.inView) {
-          if (pen.name === 'combine' && !pen.draw){
-            continue;
-          }
+          // if (pen.name === 'combine' && !pen.draw){
+          //   continue;
+          // }
           //非图片
           renderPen(ctx, pen);
           //图片

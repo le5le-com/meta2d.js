@@ -4505,9 +4505,9 @@ export class Meta2d {
       if (pen.visible == false || !isShowChild(pen, this.store)) {
         continue;
       }
-      if (pen.name === 'combine' && !pen.draw) {
-        continue;
-      }
+      // if (pen.name === 'combine' && !pen.draw) {
+      //   continue;
+      // }
       renderPenRaw(ctx, pen, rect, true);
     }
 
