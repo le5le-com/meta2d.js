@@ -160,7 +160,7 @@ export function echarts(pen: ChartPen): Path2D {
     if (pen.calculative.singleton.echartsReady) {
       // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
-        pen.calculative.singleton.echart.setOption(
+        pen.calculative.singleton.echart?.setOption(
           updateOption(
             pen.echarts.option,
             pen.calculative.canvas.store.data.scale
