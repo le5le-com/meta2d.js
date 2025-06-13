@@ -60,6 +60,7 @@ import {
   setElemPosition,
   getAllFollowers,
   calcChildrenInitRect,
+  needImgCanvasPatchFlagsProps,
 } from '../pen';
 import {
   calcRotate,
@@ -4831,9 +4832,9 @@ export class Canvas {
       if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
         continue;
       }
-      if (pen.name === 'combine' && !pen.draw){
-        continue;
-      }
+      // if (pen.name === 'combine' && !pen.draw){
+      //   continue;
+      // }
       if (pen.calculative.inView) {
         if (
           pen.canvasLayer === CanvasLayer.CanvasMain &&
@@ -4869,9 +4870,9 @@ export class Canvas {
 
   private renderPenContainChild = (ctx: CanvasRenderingContext2D, pen: Pen) => {
     if(pen.calculative.inView){
-      if (!(pen.name === 'combine' && !pen.draw)){
+      // if (!(pen.name === 'combine' && !pen.draw)){
         renderPen(ctx, pen); // 可见才绘制，组合为状态只显示其中一个
-      }
+      // }
     }
     pen.children?.forEach((id) => {
       const child = this.store.pens[id];
@@ -7914,7 +7915,7 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
-        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate', 'visible'].includes(k)){
+        if(pen.image && pen.name !== 'gif' && needImgCanvasPatchFlagsProps.includes(k)){
           willRenderImage = true;
         }
       } else {
@@ -8264,9 +8265,9 @@ export class Canvas {
       if (!isShowChild(pen, this.store) || pen.visible == false) {
         continue;
       }
-      if (pen.name === 'combine' && !pen.draw){
-        continue;
-      }
+      // if (pen.name === 'combine' && !pen.draw){
+      //   continue;
+      // }
       // TODO: hover 待考虑，若出现再补上
       const { active } = pen.calculative;
       pen.calculative.active = false;
@@ -8352,9 +8353,9 @@ export class Canvas {
         if (!isShowChild(pen, this.store) || pen.visible == false) {
           continue;
         }
-        if (pen.name === 'combine' && !pen.draw){
-          continue;
-        }
+        // if (pen.name === 'combine' && !pen.draw){
+        //   continue;
+        // }
         const { active } = pen.calculative;
         pen.calculative.active = false;
         if (pen.calculative.img) {
