@@ -4,6 +4,7 @@ import {
   IValue, lineAnimateTargetType,
   LineAnimateType,
   LockState,
+  needImgCanvasPatchFlagsProps,
   Pen,
 } from './model';
 import {
@@ -4281,6 +4282,11 @@ export function setChildValue(pen: Pen, data: IValue) {
       } else {
         pen.calculative[k] = data[k];
       }
+    }
+    if(pen.image && pen.name !== 'gif' && needImgCanvasPatchFlagsProps.includes(k)){
+      pen.calculative.canvas.store.patchFlagsTop = true
+      pen.calculative.canvas.store.patchFlagsBackground = true;
+      pen.calculative.imageDrawed = false;
     }
   }
   if (

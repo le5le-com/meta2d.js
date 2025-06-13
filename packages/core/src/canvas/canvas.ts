@@ -60,6 +60,7 @@ import {
   setElemPosition,
   getAllFollowers,
   calcChildrenInitRect,
+  needImgCanvasPatchFlagsProps,
 } from '../pen';
 import {
   calcRotate,
@@ -7914,7 +7915,7 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
-        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate', 'visible'].includes(k)){
+        if(pen.image && pen.name !== 'gif' && needImgCanvasPatchFlagsProps.includes(k)){
           willRenderImage = true;
         }
       } else {
