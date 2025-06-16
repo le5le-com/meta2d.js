@@ -60,7 +60,9 @@ export function video(pen: Pen) {
     }
     pen.calculative.singleton.muted = muted;
     player.onmouseenter = (e)=>{
-      muted.style.display = 'block';
+      if(!(pen as any).hideMuted){
+        muted.style.display = 'block';
+      }
     }
     player.onmouseleave = (e)=>{
       muted.style.display = 'none';
