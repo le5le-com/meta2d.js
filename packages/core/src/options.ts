@@ -118,7 +118,8 @@ export interface Options {
     url?: string,
     headers?: any,
     method?: string,
-  }
+  },
+  downloadBgTransparent?: boolean, //生成svg/png时背景是否透明
 }
 
 export const defaultOptions: Options = {
