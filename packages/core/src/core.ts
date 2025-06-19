@@ -2914,7 +2914,16 @@ export class Meta2d {
     const method = sql.method || 'get';
     let _sql = sql.sql;
     if(method === 'list'){
-      _sql+= ` LIMIT ${sql.pageSize||20}`+(sql.current>1?(' OFFSET '+(sql.current-1)*sql.pageSize):'');
+      // _sql+= ` LIMIT ${sql.pageSize||20}`+(sql.current>1?(' OFFSET '+(sql.current-1)*sql.pageSize):'');
+      if(sql.dbType==="oracle"){
+        if(!_sql.includes('OFFSET')){
+          _sql+= ` OFFSET ${(sql.current||1-1)*(sql.pageSize||20)} ROWS FETCH NEXT ${sql.pageSize||20} ROWS ONLY`
+        }
+      }else{
+        if(!_sql.includes('LIMIT')){
+          _sql+= ` LIMIT ${sql.pageSize||20}`+(sql.current>1?(' OFFSET '+(sql.current-1)*(sql.pageSize||20)):'');
+        }
+      }
     }
     const res: Response = await fetch( `/api/iot/data/sql/${method}`, {
       method: 'POST',
