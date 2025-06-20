@@ -996,6 +996,25 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     textBackground,
     textType,
   } = pen.calculative;
+  if (
+    pen.input &&
+    !pen.text &&
+    !(pen.calculative.canvas.inputDiv.dataset.penId === pen.id)
+  ) {
+    ctx.save();
+    ctx.font = getFont({
+      fontStyle,
+      fontWeight,
+      fontFamily: fontFamily,
+      fontSize,
+      lineHeight,
+    });
+    ctx.fillStyle = pen.placeholderColor || '#c0c0c0';
+    const rect = pen.calculative.worldTextRect;
+    ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
+    ctx.restore();
+  }
+
   if (text == undefined || hiddenText) {
     return;
   }

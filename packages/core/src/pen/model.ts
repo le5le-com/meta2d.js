@@ -206,7 +206,8 @@ export interface Pen extends Rect {
 
   // canvas 滤镜
   filter?: string;
-
+  placeholder?: string;  //占位符
+  placeholderColor?: string; 
   text?: string;
   textWidth?: number;
   textHeight?: number;
