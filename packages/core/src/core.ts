@@ -273,19 +273,21 @@ export class Meta2d {
     this.setBackgroundColor(this.store.theme[theme].background);
     this.canvas.parentElement.style.background =
       this.store.theme[theme].parentBackground;
-    this.store.data.color = this.store.theme[theme].color;
     this.setOptions({
       ruleColor: this.store.theme[theme].ruleColor,
       ruleOptions: this.store.theme[theme].ruleOptions,
     });
     // 更新全局的主题css变量
-    le5leTheme.updateCssRule(this.store.id, theme);
-    this.canvas.initGlobalStyle();
+    if(!(this.store.options.themeOnlyCanvas || this.store.data.themeOnlyCanvas)){
+      this.store.data.color = this.store.theme[theme].color;
+      le5leTheme.updateCssRule(this.store.id, theme);
+      this.canvas.initGlobalStyle();
 
-    for (let i = 0; i < this.store.data.pens.length; i++) {
-      const pen = this.store.data.pens[i];
-      // 调用pen的主题设置函数,如果单个pen有主题的自定义设置的话
-      pen.setTheme && pen.setTheme(pen,this.store.styles)
+      for (let i = 0; i < this.store.data.pens.length; i++) {
+        const pen = this.store.data.pens[i];
+        // 调用pen的主题设置函数,如果单个pen有主题的自定义设置的话
+        pen.setTheme && pen.setTheme(pen,this.store.styles)
+      }
     }
     this.render();
   }

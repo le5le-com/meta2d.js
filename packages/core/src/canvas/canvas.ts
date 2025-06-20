@@ -4745,6 +4745,9 @@ export class Canvas {
   }
 
   initGlobalStyle(){
+    if(this.store.options.themeOnlyCanvas || this.store.data.themeOnlyCanvas){
+      return;
+    }
     const options={};
     const data = {};
     const theme = {};
