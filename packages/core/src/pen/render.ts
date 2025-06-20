@@ -1290,6 +1290,9 @@ export function drawDropdown(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
 ){
+  if(!pen.input){
+    return;
+  }
   const scale = pen.calculative.canvas.store.data.scale;
   const inputPenId = pen.calculative.canvas.inputDiv.dataset.penId;
   const { x, y, width, height } = pen.calculative.worldRect;
