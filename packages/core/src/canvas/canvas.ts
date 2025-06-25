@@ -1800,10 +1800,12 @@ export class Canvas {
         active: true,
         worldAnchors: [pt],
         lineWidth: lineWidth * scale,
+        ...options.linePresetStyle
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
       lineWidth,
+      ...options.linePresetStyle
     };
   }
 

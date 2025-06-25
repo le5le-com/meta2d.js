@@ -121,6 +121,7 @@ export interface Options {
   },
   downloadBgTransparent?: boolean, //生成svg/png时背景是否透明
   themeOnlyCanvas?: boolean //主题切换仅仅对画布有效，不更新图元样式
+  linePresetStyle?:Pen;
 }
 
 export const defaultOptions: Options = {
