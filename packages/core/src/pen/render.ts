@@ -255,7 +255,9 @@ function getTextRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 function getTextGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
+  calcCenter(pen.calculative.textDrawRect);
+  const { x, y, ex, width, height, center } = pen.calculative.textDrawRect;
   let points = [
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
