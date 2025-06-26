@@ -1551,7 +1551,7 @@ export class Canvas {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;
       }
-      if(abs) {
+      if(abs && !pen.parentId) {
         pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
         pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
         pen.width = pen.width * this.store.data.scale;
