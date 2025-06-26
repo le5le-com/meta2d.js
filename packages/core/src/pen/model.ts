@@ -770,6 +770,7 @@ export const formatAttrs: Set<string> = new Set([
   'globalAlpha',
   'anchorColor',
   'anchorRadius',
+  'shadow',
   'shadowColor',
   'shadowBlur',
   'shadowOffsetX',
@@ -808,8 +809,19 @@ export const formatAttrs: Set<string> = new Set([
   'animateLineWidth',
   'gradientSmooth',
   'lineSmooth',
-  'animations'
+  'animations',
+  'toArrow',
+  'fromArrow',
+  'lineName',
+  'textType',
+  'textGradientColors',
 ]);
+
+export const defaultFormat = {
+  'textType':0,
+  'bkType':0,
+  'strokeType':0,
+}
 
 /**
  * 清空 pen 的 生命周期

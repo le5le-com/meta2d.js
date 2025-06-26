@@ -36,6 +36,7 @@ import {
   calcWorldAnchors,
   getGlobalColor,
   isDomShapes,
+  defaultFormat,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -5171,7 +5172,7 @@ export class Meta2d {
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
       this.setValue(
-        { id: pen.id, ...attrs },
+        { id: pen.id, ...defaultFormat,...attrs },
         { render: false, doEvent: false }
       );
     }
@@ -5199,7 +5200,7 @@ export class Meta2d {
     for (let i = 0; i < pens.length - 1; i++) {
       const pen = pens[i];
       this.setValue(
-        { id: pen.id, ...attrs },
+        { id: pen.id, ...defaultFormat,...attrs },
         { render: false, doEvent: false }
       );
     }
@@ -5245,7 +5246,7 @@ export class Meta2d {
     for (let i = 0; i < pens.length; i++) {
       const pen = pens[i];
       this.setValue(
-        { id: pen.id, ...attrs },
+        { id: pen.id, ...defaultFormat,...attrs },
         { render: false, doEvent: false }
       );
     }
