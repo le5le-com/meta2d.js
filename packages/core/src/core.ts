@@ -2122,26 +2122,31 @@ export class Meta2d {
     calcRightBottom(rect);
     calcCenter(rect);
     child.calculative.worldRect = rect;
-    if (rectInRect(rect, parent.calculative.worldRect, true)) {
+    if (parent.container && rectInRect(rect, parent.calculative.worldRect, true)) {//取所有图元的范围
       const childRect = calcRelativeRect(rect, parent.calculative.worldRect);
       Object.assign(child, childRect);
     } else {
-      let x = Math.min(rect.x, parent.calculative.worldRect.x);
-      let y = Math.min(rect.y, parent.calculative.worldRect.y);
-      let ex = Math.max(rect.ex, parent.calculative.worldRect.ex);
-      let ey = Math.max(rect.ey, parent.calculative.worldRect.ey);
-      parent.calculative.worldRect = {
-        x: x,
-        y: y,
-        width: ex - x,
-        height: ey - y,
-        ex,
-        ey,
-      };
+      if(parent.container) {//容器模式取操作过程中最大范围
+        let x = Math.min(rect.x, parent.calculative.worldRect.x);
+        let y = Math.min(rect.y, parent.calculative.worldRect.y);
+        let ex = Math.max(rect.ex, parent.calculative.worldRect.ex);
+        let ey = Math.max(rect.ey, parent.calculative.worldRect.ey);
+        parent.calculative.worldRect = {
+          x: x,
+          y: y,
+          width: ex - x,
+          height: ey - y,
+          ex,
+          ey,
+        };
+        calcCenter(parent.calculative.worldRect);
+      } else {//取所有图元的范围
+        const pens = parent.children.map((cid) => this.store.pens[cid]);
+        parent.calculative.worldRect = getRect(pens);
+      }
       if (!parent.parentId) {
         Object.assign(parent, parent.calculative.worldRect);
       }
-      calcCenter(parent.calculative.worldRect);
       parent.children.forEach((cid) => {
         const cPen = this.store.pens[cid];
         const childRect = calcRelativeRect(
