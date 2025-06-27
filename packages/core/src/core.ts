@@ -838,7 +838,7 @@ export class Meta2d {
     }
     if (network.protocol === 'http') {
       if (typeof network.headers === 'object') {
-        for (let i in network.headers) {
+        /*for (let i in network.headers) {
           if (typeof network.headers[i] === 'string') {
             let keys = network.headers[i].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys) {
@@ -848,7 +848,18 @@ export class Meta2d {
               );
             }
           }
+        }*/
+        let headersStr = JSON.stringify(network.headers);
+        let keys = headersStr.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+        if (keys?.length) {
+         for(let i=0; i<keys.length; i++){
+            headersStr = headersStr.replace(
+              `\${${keys[i]}}`,
+              this.getDynamicParam(keys[i])
+            );
+          }
         }
+        network.headers = JSON.parse(headersStr);
       }
       let params = undefined;
       let url = network.url;
@@ -3313,7 +3324,7 @@ export class Meta2d {
           }
       }
       if (typeof req.headers === 'object') {
-        for (let i in req.headers) {
+        /*for (let i in req.headers) {
           if (typeof req.headers[i] === 'string') {
             let keys = req.headers[i].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys) {
@@ -3323,10 +3334,21 @@ export class Meta2d {
               );
             }
           }
+        }*/
+        let headersStr = JSON.stringify(req.headers);
+        let keys = headersStr.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+        if (keys?.length) {
+         for(let i=0; i<keys.length; i++){
+            headersStr = headersStr.replace(
+              `\${${keys[i]}}`,
+              this.getDynamicParam(keys[i])
+            );
+          }
         }
+        req.headers = JSON.parse(headersStr);
       }
       if (typeof req.body === 'object') {
-        for (let i in req.body) {
+        /*for (let i in req.body) {
           if (typeof req.body[i] === 'string') {
             let keys = req.body[i].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
             if (keys) {
@@ -3336,7 +3358,18 @@ export class Meta2d {
               );
             }
           }
+        }*/
+        let bodyStr = JSON.stringify(req.body);
+        let keys = bodyStr.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+        if (keys?.length) {
+         for(let i=0; i<keys.length; i++){
+            bodyStr = bodyStr.replace(
+              `\${${keys[i]}}`,
+              this.getDynamicParam(keys[i])
+            );
+          }
         }
+        req.body = JSON.parse(bodyStr);
       }
       // 默认每一秒请求一次
       const res: Response = await fetch(req.url, {
