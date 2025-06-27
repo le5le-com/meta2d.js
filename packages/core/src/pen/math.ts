@@ -251,3 +251,32 @@ export function isEqual(source: number, target: number): boolean {
   // @ts-ignore
   return source.toFixed(12) == target;
 }
+
+// 获取偏移量比较大的图元（认为是脏数据）
+export function findOutliersByZScore(pens: Pen[], threshold = 4) {
+  let points = pens.map((item) => item.calculative.worldRect);
+  // 计算x和y的平均值和标准差
+  const xValues = points.map((p) => p.x);
+  const yValues = points.map((p) => p.y);
+
+  const meanX = xValues.reduce((a, b) => a + b, 0) / xValues.length;
+  const meanY = yValues.reduce((a, b) => a + b, 0) / yValues.length;
+
+  const stdX = Math.sqrt(
+    xValues.map((x) => Math.pow(x - meanX, 2)).reduce((a, b) => a + b, 0) /
+      xValues.length
+  );
+  const stdY = Math.sqrt(
+    yValues.map((y) => Math.pow(y - meanY, 2)).reduce((a, b) => a + b, 0) /
+      yValues.length
+  );
+
+  // 计算每个点的综合z-score
+  return pens.filter((pen) => {
+    let point = pen.calculative.worldRect;
+    const zX = (point.x - meanX) / stdX;
+    const zY = (point.y - meanY) / stdY;
+    const combinedZ = Math.sqrt(zX * zX + zY * zY);
+    return combinedZ > threshold;
+  });
+}

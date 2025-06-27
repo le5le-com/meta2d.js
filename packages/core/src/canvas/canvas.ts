@@ -1551,7 +1551,7 @@ export class Canvas {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;
       }
-      if(abs) {
+      if(abs && !pen.parentId) {
         pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
         pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
         pen.width = pen.width * this.store.data.scale;
@@ -1800,10 +1800,12 @@ export class Canvas {
         active: true,
         worldAnchors: [pt],
         lineWidth: lineWidth * scale,
+        ...options.linePresetStyle
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
       lineWidth,
+      ...options.linePresetStyle
     };
   }
 
@@ -4745,6 +4747,9 @@ export class Canvas {
   }
 
   initGlobalStyle(){
+    if(this.store.options.themeOnlyCanvas || this.store.data.themeOnlyCanvas){
+      return;
+    }
     const options={};
     const data = {};
     const theme = {};

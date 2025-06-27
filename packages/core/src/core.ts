@@ -36,6 +36,8 @@ import {
   calcWorldAnchors,
   getGlobalColor,
   isDomShapes,
+  defaultFormat,
+  findOutliersByZScore,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -273,19 +275,21 @@ export class Meta2d {
     this.setBackgroundColor(this.store.theme[theme].background);
     this.canvas.parentElement.style.background =
       this.store.theme[theme].parentBackground;
-    this.store.data.color = this.store.theme[theme].color;
     this.setOptions({
       ruleColor: this.store.theme[theme].ruleColor,
       ruleOptions: this.store.theme[theme].ruleOptions,
     });
     // 更新全局的主题css变量
-    le5leTheme.updateCssRule(this.store.id, theme);
-    this.canvas.initGlobalStyle();
+    if(!(this.store.options.themeOnlyCanvas || this.store.data.themeOnlyCanvas)){
+      this.store.data.color = this.store.theme[theme].color;
+      le5leTheme.updateCssRule(this.store.id, theme);
+      this.canvas.initGlobalStyle();
 
-    for (let i = 0; i < this.store.data.pens.length; i++) {
-      const pen = this.store.data.pens[i];
-      // 调用pen的主题设置函数,如果单个pen有主题的自定义设置的话
-      pen.setTheme && pen.setTheme(pen,this.store.styles)
+      for (let i = 0; i < this.store.data.pens.length; i++) {
+        const pen = this.store.data.pens[i];
+        // 调用pen的主题设置函数,如果单个pen有主题的自定义设置的话
+        pen.setTheme && pen.setTheme(pen,this.store.styles)
+      }
     }
     this.render();
   }
@@ -1132,6 +1136,56 @@ export class Meta2d {
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
       this.canvas.scroll.init();
     }
+  }
+
+  dirtyData(active?:boolean){
+    //获取画布脏数据
+    const pens = this.store.data.pens;
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    const dirtyPens = [];
+    for (let i = pens.length - 1; i >= 0; i--) {
+      let pen = pens[i];
+      if(pen.parentId){
+        const parent = this.store.pens[pen.parentId];
+        if(pen.x>10 || pen.y>10 || pen.width>10 || pen.height>10){
+          // 子图元坐标值很大
+          dirtyPens.push(pen);
+        }else if(!parent.children||!parent.children.includes(pen.id)){
+          //已经解组但子图元还有父图元id
+          dirtyPens.push(pen);
+        }
+      }
+
+      if (width && height ) {
+        //大屏区域外
+        let rect = this.getPenRect(pen);
+        if(rect.x<-10 || rect.y<-10 || rect.x+rect.width>width || rect.y+rect.height>height){
+          dirtyPens.push(pen);
+        }
+      }
+
+      //无效连线 单个锚点连线
+    }
+    if(!width||!height){
+      //2d 偏移量很大
+      let outpens = findOutliersByZScore(pens);
+      outpens.forEach((item)=>{
+        let repeat = dirtyPens.filter((_item)=>_item.id===item.id);
+        if(!repeat.length){
+          dirtyPens.push(item);
+        }
+      })
+    }
+    if(active){
+      this.active(dirtyPens);
+    }
+    return dirtyPens;
+  }
+
+  clearDirtyData(){
+    let dirtyPens = this.dirtyData();
+    this.delete(dirtyPens,true);
   }
 
   cacheData(id: string) {
@@ -5174,7 +5228,7 @@ export class Meta2d {
     for (let i = 1; i < pens.length; i++) {
       const pen = pens[i];
       this.setValue(
-        { id: pen.id, ...attrs },
+        { id: pen.id, ...defaultFormat,...attrs },
         { render: false, doEvent: false }
       );
     }
@@ -5202,7 +5256,7 @@ export class Meta2d {
     for (let i = 0; i < pens.length - 1; i++) {
       const pen = pens[i];
       this.setValue(
-        { id: pen.id, ...attrs },
+        { id: pen.id, ...defaultFormat,...attrs },
         { render: false, doEvent: false }
       );
     }
@@ -5248,7 +5302,7 @@ export class Meta2d {
     for (let i = 0; i < pens.length; i++) {
       const pen = pens[i];
       this.setValue(
-        { id: pen.id, ...attrs },
+        { id: pen.id, ...defaultFormat,...attrs },
         { render: false, doEvent: false }
       );
     }

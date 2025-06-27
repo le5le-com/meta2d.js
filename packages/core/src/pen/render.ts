@@ -255,7 +255,9 @@ function getTextRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 function getTextGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
+  calcCenter(pen.calculative.textDrawRect);
+  const { x, y, ex, width, height, center } = pen.calculative.textDrawRect;
   let points = [
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
@@ -996,6 +998,25 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     textBackground,
     textType,
   } = pen.calculative;
+  if (
+    pen.input &&
+    !pen.text &&
+    !(pen.calculative.canvas.inputDiv.dataset.penId === pen.id)
+  ) {
+    ctx.save();
+    ctx.font = getFont({
+      fontStyle,
+      fontWeight,
+      fontFamily: fontFamily,
+      fontSize,
+      lineHeight,
+    });
+    ctx.fillStyle = pen.placeholderColor || '#c0c0c0';
+    const rect = pen.calculative.worldTextRect;
+    ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
+    ctx.restore();
+  }
+
   if (text == undefined || hiddenText) {
     return;
   }
@@ -1290,6 +1311,9 @@ export function drawDropdown(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
 ){
+  if(!pen.input){
+    return;
+  }
   const scale = pen.calculative.canvas.store.data.scale;
   const inputPenId = pen.calculative.canvas.inputDiv.dataset.penId;
   const { x, y, width, height } = pen.calculative.worldRect;
