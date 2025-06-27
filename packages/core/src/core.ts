@@ -37,6 +37,7 @@ import {
   getGlobalColor,
   isDomShapes,
   defaultFormat,
+  findOutliersByZScore,
 } from './pen';
 import { Point, rotatePoint } from './point';
 import {
@@ -1135,6 +1136,56 @@ export class Meta2d {
     if (this.canvas.scroll && this.canvas.scroll.isShow) {
       this.canvas.scroll.init();
     }
+  }
+
+  dirtyData(active?:boolean){
+    //获取画布脏数据
+    const pens = this.store.data.pens;
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    const dirtyPens = [];
+    for (let i = pens.length - 1; i >= 0; i--) {
+      let pen = pens[i];
+      if(pen.parentId){
+        const parent = this.store.pens[pen.parentId];
+        if(pen.x>10 || pen.y>10 || pen.width>10 || pen.height>10){
+          // 子图元坐标值很大
+          dirtyPens.push(pen);
+        }else if(!parent.children||!parent.children.includes(pen.id)){
+          //已经解组但子图元还有父图元id
+          dirtyPens.push(pen);
+        }
+      }
+
+      if (width && height ) {
+        //大屏区域外
+        let rect = this.getPenRect(pen);
+        if(rect.x<-10 || rect.y<-10 || rect.x+rect.width>width || rect.y+rect.height>height){
+          dirtyPens.push(pen);
+        }
+      }
+
+      //无效连线 单个锚点连线
+    }
+    if(!width||!height){
+      //2d 偏移量很大
+      let outpens = findOutliersByZScore(pens);
+      outpens.forEach((item)=>{
+        let repeat = dirtyPens.filter((_item)=>_item.id===item.id);
+        if(!repeat.length){
+          dirtyPens.push(item);
+        }
+      })
+    }
+    if(active){
+      this.active(dirtyPens);
+    }
+    return dirtyPens;
+  }
+
+  clearDirtyData(){
+    let dirtyPens = this.dirtyData();
+    this.delete(dirtyPens,true);
   }
 
   cacheData(id: string) {
