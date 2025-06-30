@@ -964,6 +964,9 @@ export function drawImage(
       let _width = img.naturalWidth;
       let _height = img.naturalHeight;
       offsety = (height/width*_width-_height)/2;
+      if(height - 2*offsety < 0){
+        offsety = (height -  _height/_width*width)/2
+      }
       _y = y + offsety;
     }
     ctx.drawImage(img, x, _y, width, height-2*offsety);
