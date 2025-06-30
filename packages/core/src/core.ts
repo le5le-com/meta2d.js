@@ -870,7 +870,7 @@ export class Meta2d {
             .map((key) => key + '=' + value[key])
             .join('&');
       }
-      if (network.method === 'POST') {
+      // if (network.method === 'POST') {
         if (url.indexOf('${') > -1) {
           let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
@@ -882,7 +882,7 @@ export class Meta2d {
             });
           }
         }
-      }
+      // }
       const res: Response = await fetch(url + (params ? params : ''), {
         headers: network.headers || {},
         method: network.method,
