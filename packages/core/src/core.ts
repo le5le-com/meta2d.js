@@ -1177,6 +1177,11 @@ export class Meta2d {
       }
 
       //无效连线 单个锚点连线
+      if(pen.name==='line'){
+        if(pen.anchors.length < 2){
+          dirtyPens.push(pen);
+        }
+      }
     }
     if(!width||!height){
       //2d 偏移量很大
