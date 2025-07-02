@@ -6027,6 +6027,8 @@ export class Meta2d {
         pens.splice(index, 1);
       }
     }
+    this.initTemplateCanvas([pen]);
+    this.initImageCanvas([pen]);
   }
 
   changePenId(oldId: string, newId: string): void {
