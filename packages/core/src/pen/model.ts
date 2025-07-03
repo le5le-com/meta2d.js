@@ -79,6 +79,8 @@ export const needPatchFlagsPenRectProps = [
 
 export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
 
+export const needImgCanvasPatchFlagsProps =  ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate', 'visible'];
+
 export interface ConnectLine {
   lineId: string;
   lineAnchor: string;
@@ -204,7 +206,8 @@ export interface Pen extends Rect {
 
   // canvas 滤镜
   filter?: string;
-
+  placeholder?: string;  //占位符
+  placeholderColor?: string; 
   text?: string;
   textWidth?: number;
   textHeight?: number;
@@ -767,6 +770,7 @@ export const formatAttrs: Set<string> = new Set([
   'globalAlpha',
   'anchorColor',
   'anchorRadius',
+  'shadow',
   'shadowColor',
   'shadowBlur',
   'shadowOffsetX',
@@ -805,8 +809,19 @@ export const formatAttrs: Set<string> = new Set([
   'animateLineWidth',
   'gradientSmooth',
   'lineSmooth',
-  'animations'
+  'animations',
+  'toArrow',
+  'fromArrow',
+  'lineName',
+  'textType',
+  'textGradientColors',
 ]);
+
+export const defaultFormat = {
+  'textType':0,
+  'bkType':0,
+  'strokeType':0,
+}
 
 /**
  * 清空 pen 的 生命周期

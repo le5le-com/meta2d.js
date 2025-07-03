@@ -73,6 +73,7 @@ export interface Meta2dData {
   cancelFirstConnect?: boolean; //http定时轮询首次是否请求
   component?: boolean;
   theme?: string; //主题
+  themeOnlyCanvas?: boolean;
   smoothNum?:number;//平滑量 值越大，平滑效果越好
   triggers?:Trigger[]; //全局状态
   dataPoints?: string[]; //数据点
@@ -141,9 +142,13 @@ export interface Network {
   times?: number; // 临时 重连次数
   index?: number; // 临时 索引
   devices?: any[]; //物联网设备,
-  dbid?: string; //数据库id
+  dbId?: string; //数据库id
   sql?: string; //sql语句
   enable?: boolean; //是否启用
+  once?: boolean; //是否只执行一次
+  socketCbJs?: string; //socket回调js
+  socketFn?: Function;
+  children?: any[]; //点位数组
 }
 
 export interface Iot {
@@ -167,7 +172,7 @@ export interface Iot {
 export interface Sql {
   interval?: number;
   sql?:string;
-  dbid?: string;
+  dbId?: string;
   dbType?:string;
   name?:string;
   bindId?: string;

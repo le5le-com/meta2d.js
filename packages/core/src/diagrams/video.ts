@@ -60,7 +60,9 @@ export function video(pen: Pen) {
     }
     pen.calculative.singleton.muted = muted;
     player.onmouseenter = (e)=>{
-      muted.style.display = 'block';
+      if(!(pen as any).hideMuted){
+        muted.style.display = 'block';
+      }
     }
     player.onmouseleave = (e)=>{
       muted.style.display = 'none';
@@ -93,6 +95,7 @@ export function video(pen: Pen) {
     media.style.top = '0';
     media.style.width = '100%';
     media.style.height = '100%';
+    media.style.objectFit = (pen as any).objectFit || 'contain';
     player.appendChild(media);
     videos[pen.id] = player;
     pen.calculative.canvas.externalElements?.parentElement.appendChild(player);

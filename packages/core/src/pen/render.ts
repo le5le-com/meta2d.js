@@ -4,6 +4,7 @@ import {
   IValue, lineAnimateTargetType,
   LineAnimateType,
   LockState,
+  needImgCanvasPatchFlagsProps,
   Pen,
 } from './model';
 import {
@@ -254,7 +255,9 @@ function getTextRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 function getTextGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const { x, y, ex, width, height, center } = pen.calculative.worldRect;
+  !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
+  calcCenter(pen.calculative.textDrawRect);
+  const { x, y, ex, width, height, center } = pen.calculative.textDrawRect;
   let points = [
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
@@ -961,6 +964,9 @@ export function drawImage(
       let _width = img.naturalWidth;
       let _height = img.naturalHeight;
       offsety = (height/width*_width-_height)/2;
+      if(height - 2*offsety < 0){
+        offsety = (height -  _height/_width*width)/2
+      }
       _y = y + offsety;
     }
     ctx.drawImage(img, x, _y, width, height-2*offsety);
@@ -995,6 +1001,25 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     textBackground,
     textType,
   } = pen.calculative;
+  if (
+    pen.input &&
+    !pen.text &&
+    !(pen.calculative.canvas.inputDiv.dataset.penId === pen.id)
+  ) {
+    ctx.save();
+    ctx.font = getFont({
+      fontStyle,
+      fontWeight,
+      fontFamily: fontFamily,
+      fontSize,
+      lineHeight,
+    });
+    ctx.fillStyle = pen.placeholderColor || '#c0c0c0';
+    const rect = pen.calculative.worldTextRect;
+    ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
+    ctx.restore();
+  }
+
   if (text == undefined || hiddenText) {
     return;
   }
@@ -1289,6 +1314,9 @@ export function drawDropdown(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   pen: Pen
 ){
+  if(!pen.input){
+    return;
+  }
   const scale = pen.calculative.canvas.store.data.scale;
   const inputPenId = pen.calculative.canvas.inputDiv.dataset.penId;
   const { x, y, width, height } = pen.calculative.worldRect;
@@ -4281,6 +4309,11 @@ export function setChildValue(pen: Pen, data: IValue) {
       } else {
         pen.calculative[k] = data[k];
       }
+    }
+    if(pen.image && pen.name !== 'gif' && needImgCanvasPatchFlagsProps.includes(k)){
+      pen.calculative.canvas.store.patchFlagsTop = true
+      pen.calculative.canvas.store.patchFlagsBackground = true;
+      pen.calculative.imageDrawed = false;
     }
   }
   if (

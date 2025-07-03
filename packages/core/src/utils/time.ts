@@ -1,6 +1,9 @@
-export function formatTime(format?: string) {
+export function formatTime(format?: string, utcDate?:string) {
   const weeks = ['天', '一', '二', '三', '四', '五', '六'];
-  const now = new Date();
+  let now = new Date();
+  if(utcDate){
+    now = new Date(utcDate);
+  }
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
   const day = now.getDate();

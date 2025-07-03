@@ -60,6 +60,7 @@ import {
   setElemPosition,
   getAllFollowers,
   calcChildrenInitRect,
+  needImgCanvasPatchFlagsProps,
 } from '../pen';
 import {
   calcRotate,
@@ -1550,7 +1551,7 @@ export class Canvas {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;
       }
-      if(abs) {
+      if(abs && !pen.parentId) {
         pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
         pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
         pen.width = pen.width * this.store.data.scale;
@@ -1799,10 +1800,12 @@ export class Canvas {
         active: true,
         worldAnchors: [pt],
         lineWidth: lineWidth * scale,
+        ...options.linePresetStyle
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
       lineWidth,
+      ...options.linePresetStyle
     };
   }
 
@@ -2687,6 +2690,9 @@ export class Canvas {
           if (this.store.hover.onShowInput) {
             this.store.hover.onShowInput(this.store.hover, e as any);
           } else {
+            if(this.store.hover.parentId){
+              this.active([this.store.hover])
+            }
             this.showInput(this.store.hover);
           }
         }
@@ -4741,6 +4747,9 @@ export class Canvas {
   }
 
   initGlobalStyle(){
+    if(this.store.options.themeOnlyCanvas || this.store.data.themeOnlyCanvas){
+      return;
+    }
     const options={};
     const data = {};
     const theme = {};
@@ -4828,9 +4837,9 @@ export class Canvas {
       if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
         continue;
       }
-      if (pen.name === 'combine' && !pen.draw){
-        continue;
-      }
+      // if (pen.name === 'combine' && !pen.draw){
+      //   continue;
+      // }
       if (pen.calculative.inView) {
         if (
           pen.canvasLayer === CanvasLayer.CanvasMain &&
@@ -4866,9 +4875,9 @@ export class Canvas {
 
   private renderPenContainChild = (ctx: CanvasRenderingContext2D, pen: Pen) => {
     if(pen.calculative.inView){
-      if (!(pen.name === 'combine' && !pen.draw)){
+      // if (!(pen.name === 'combine' && !pen.draw)){
         renderPen(ctx, pen); // 可见才绘制，组合为状态只显示其中一个
-      }
+      // }
     }
     pen.children?.forEach((id) => {
       const child = this.store.pens[id];
@@ -5271,11 +5280,11 @@ export class Canvas {
     }
     scalePoint(this.store.data.origin, s, center);
     this.store.data.pens.forEach((pen) => {
+      pen.onScale && pen.onScale(pen);
       if (pen.parentId) {
         return;
       }
       scalePen(pen, s, center);
-      pen.onScale && pen.onScale(pen);
       if (pen.isRuleLine) {
         // 扩大线的比例，若是放大，即不缩小，若是缩小，会放大
         const lineScale = 1 / s; //s > 1 ? 1 : 1 / s / s;
@@ -7911,7 +7920,7 @@ export class Canvas {
         if (needCalcIconRectProps.includes(k)) {
           willCalcIconRect = true;
         }
-        if(pen.image && pen.name !== 'gif' && ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate', 'visible'].includes(k)){
+        if(pen.image && pen.name !== 'gif' && needImgCanvasPatchFlagsProps.includes(k)){
           willRenderImage = true;
         }
       } else {
@@ -8176,7 +8185,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.data.background || this.store.styles.background;
+    const background = this.store.options.downloadBgTransparent?undefined:(this.store.data.background || this.store.styles.background);
       // this.store.data.background || this.store.options.background;
     if (background && isV) {
       // 绘制背景颜色
@@ -8261,9 +8270,9 @@ export class Canvas {
       if (!isShowChild(pen, this.store) || pen.visible == false) {
         continue;
       }
-      if (pen.name === 'combine' && !pen.draw){
-        continue;
-      }
+      // if (pen.name === 'combine' && !pen.draw){
+      //   continue;
+      // }
       // TODO: hover 待考虑，若出现再补上
       const { active } = pen.calculative;
       pen.calculative.active = false;
@@ -8326,7 +8335,7 @@ export class Canvas {
     ctx.textBaseline = 'middle'; // 默认垂直居中
     ctx.scale(scale, scale);
 
-    const background = this.store.data.background || this.store.styles.background;
+    const background = this.store.options.downloadBgTransparent? undefined : (this.store.data.background || this.store.styles.background);
     // this.store.data.background || this.store.options.background;
     if (background) {
       // 绘制背景颜色
@@ -8349,9 +8358,9 @@ export class Canvas {
         if (!isShowChild(pen, this.store) || pen.visible == false) {
           continue;
         }
-        if (pen.name === 'combine' && !pen.draw){
-          continue;
-        }
+        // if (pen.name === 'combine' && !pen.draw){
+        //   continue;
+        // }
         const { active } = pen.calculative;
         pen.calculative.active = false;
         if (pen.calculative.img) {
