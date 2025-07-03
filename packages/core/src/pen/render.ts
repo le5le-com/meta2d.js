@@ -3944,7 +3944,7 @@ function dealWithDXF(command,pen,startX,startY) {
       return {
         c:'_fillStyle',
         v:{
-          value:pen.color || command.v.value
+          value: command.v.value || pen.color
         }
       };
     default:
