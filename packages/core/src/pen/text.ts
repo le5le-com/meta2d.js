@@ -273,7 +273,7 @@ export function calcTextAdaptionWidth(
   let maxWidth = 0;
   pen.calculative.textLineWidths = [];
   pen.calculative.textLines.forEach((text: string) => {
-    const width = ctx.measureText(text).width;
+    const width = ctx.measureText(text).width + text.length * pen.calculative.letterSpacing;
     pen.calculative.textLineWidths.push(width);
     maxWidth < width && (maxWidth = width);
   });

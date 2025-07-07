@@ -62,6 +62,7 @@ export const needCalcTextRectProps = [
   'whiteSpace',
   'ellipsis',
   'keepDecimal',
+  'letterSpacing'
 ];
 
 export const needSetPenProps = ['x', 'y', 'width', 'height', 'flipX', 'flipY'];
@@ -214,7 +215,7 @@ export interface Pen extends Rect {
   textLeft?: number;
   textTop?: number;
   textColor?: string;
-  hoverTextColor?: string;
+    hoverTextColor?: string;
   activeTextColor?: string;
   fontFamily?: string;
   fontSize?: number;
@@ -226,6 +227,7 @@ export interface Pen extends Rect {
   textBackground?: string;
   whiteSpace?: WhiteSpace;
   ellipsis?: boolean;
+  letterSpacing?: number;
 
   image?: string;
   icon?: string;
@@ -509,6 +511,7 @@ export interface Pen extends Rect {
     lineHeight?: number;
     fontStyle?: string;
     fontWeight?: string;
+    letterSpacing?: number;
     textBackground?: string;
     iconSize?: number;
     icon?: string;

@@ -1081,8 +1081,13 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     } else if (textAlign === 'right') {
       x = width - textLineWidth;
     }
+    // 字间距
+    if(pen.letterSpacing){
+      fillTextWithSpacing(ctx,text,drawRectX + x, drawRectY + (i + y) * oneRowHeight,pen.calculative.letterSpacing);
+    }else{
+      ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
+    }
     // 下划线
-    ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
     const { textDecorationColor, textDecorationDash, textDecoration } = pen;
     if (textDecoration) {
       drawUnderLine(
@@ -1111,6 +1116,20 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   });
   ctx.restore();
 }
+
+function fillTextWithSpacing(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, spacing=0){
+  if(spacing === 0){
+      ctx.fillText(text,x,y);
+      return;
+  }
+
+  let totalWidth = 0;
+  for(let i=0; i<text.length; i++){
+    ctx.fillText(text[i],x+totalWidth,y);
+    totalWidth += ctx.measureText(text[i]).width + spacing;
+  }
+}
+
 function drawUnderLine(
   ctx: CanvasRenderingContext2D,
   location: any,
