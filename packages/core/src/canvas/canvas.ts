@@ -4659,6 +4659,7 @@ export class Canvas {
     const scale = this.store.data.scale;
     pen.calculative.lineWidth = pen.lineWidth * scale;
     pen.calculative.fontSize = pen.fontSize * scale;
+    pen.calculative.letterSpacing = (pen.letterSpacing || 0) * scale;
     if (pen.fontSize < 1 && pen.fontSize > 0) {
       pen.calculative.fontSize =
         pen.fontSize * pen.calculative.worldRect.height;
@@ -4849,7 +4850,7 @@ export class Canvas {
         ) {
           ctx.save();
           ctxFlip(ctx, pen);
-          if (pen.calculative.rotate) {
+          if (pen.rotateByRoot || pen.calculative.rotate) {
             ctxRotate(ctx, pen);
           }
           setGlobalAlpha(ctx, pen);
@@ -6423,7 +6424,10 @@ export class Canvas {
    * @param angle 本次的旋转值，加到 pen.calculative.rotate 上
    */
   rotatePen(pen: Pen, angle: number, rect: Rect) {
-    if (pen.type) {
+    if(pen.rotateByRoot){
+      return;
+    }
+    if (pen.name === 'line') {
       pen.calculative.worldAnchors.forEach((anchor) => {
         rotatePoint(anchor, angle, rect.center);
       });
@@ -7402,7 +7406,10 @@ export class Canvas {
       }
       style += `height:${height}px;`;
     }
-
+    if(pen.letterSpacing){
+      style += `letter-spacing:${pen.calculative.letterSpacing}px;`
+    }
+    
     let _textWidth = null;
     if (pen.textWidth) {
       _textWidth =

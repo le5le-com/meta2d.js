@@ -1081,8 +1081,13 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     } else if (textAlign === 'right') {
       x = width - textLineWidth;
     }
+    // 字间距
+    if(pen.letterSpacing){
+      fillTextWithSpacing(ctx,text,drawRectX + x, drawRectY + (i + y) * oneRowHeight,pen.calculative.letterSpacing);
+    }else{
+      ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
+    }
     // 下划线
-    ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
     const { textDecorationColor, textDecorationDash, textDecoration } = pen;
     if (textDecoration) {
       drawUnderLine(
@@ -1111,6 +1116,20 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   });
   ctx.restore();
 }
+
+function fillTextWithSpacing(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, spacing=0){
+  if(spacing === 0){
+      ctx.fillText(text,x,y);
+      return;
+  }
+
+  let totalWidth = 0;
+  for(let i=0; i<text.length; i++){
+    ctx.fillText(text[i],x+totalWidth,y);
+    totalWidth += ctx.measureText(text[i]).width + spacing;
+  }
+}
+
 function drawUnderLine(
   ctx: CanvasRenderingContext2D,
   location: any,
@@ -1378,21 +1397,43 @@ export function ctxRotate(
   pen: Pen,
   noFlip: boolean = false
 ) {
-  const { x, y } =
-    pen.calculative.worldRect.pivot || pen.calculative.worldRect.center;
-  ctx.translate(x, y);
-  let rotate = (pen.calculative.rotate * Math.PI) / 180;
-  // 目前只有水平和垂直翻转，都需要 * -1
-  if (!noFlip) {
-    if (pen.calculative.flipX) {
-      rotate *= -1;
+  if (pen.parentId && pen.rotateByRoot) {
+    let rootParent = getParent(pen, true);
+    if (rootParent) {
+      const { x, y } =
+        rootParent.calculative.worldRect.pivot ||
+        rootParent.calculative.worldRect.center;
+      ctx.translate(x, y);
+      let rotate = (rootParent.calculative.rotate * Math.PI) / 180;
+      // 目前只有水平和垂直翻转，都需要 * -1
+      if (!noFlip) {
+        if (rootParent.calculative.flipX) {
+          rotate *= -1;
+        }
+        if (rootParent.calculative.flipY) {
+          rotate *= -1;
+        }
+      }
+      ctx.rotate(rotate);
+      ctx.translate(-x, -y);
     }
-    if (pen.calculative.flipY) {
-      rotate *= -1;
+  } else {
+    const { x, y } =
+      pen.calculative.worldRect.pivot || pen.calculative.worldRect.center;
+    ctx.translate(x, y);
+    let rotate = (pen.calculative.rotate * Math.PI) / 180;
+    // 目前只有水平和垂直翻转，都需要 * -1
+    if (!noFlip) {
+      if (pen.calculative.flipX) {
+        rotate *= -1;
+      }
+      if (pen.calculative.flipY) {
+        rotate *= -1;
+      }
     }
+    ctx.rotate(rotate);
+    ctx.translate(-x, -y);
   }
-  ctx.rotate(rotate);
-  ctx.translate(-x, -y);
 }
 
 export function renderPen(
@@ -1414,7 +1455,7 @@ export function renderPen(
   }
   ctxFlip(ctx, pen);
 
-  if (pen.calculative.rotate && pen.name !== 'line') {
+  if (pen.rotateByRoot ||( pen.calculative.rotate && pen.name !== 'line')) {
     ctxRotate(ctx, pen);
   }
   if (pen.calculative.lineWidth > 1 || download) {
@@ -1581,7 +1622,7 @@ export function renderPen(
     ctxFlip(ctx, pen);
   }
   if (!textFlip && textRotate) {
-    if (pen.calculative.rotate && pen.name !== 'line') {
+    if (pen.rotateByRoot || (pen.calculative.rotate && pen.name !== 'line')) {
       ctxRotate(ctx, pen, true);
     }
   }
@@ -1676,7 +1717,7 @@ export function renderPenRaw(
     ctx.scale(1, -1);
   }
 
-  if (pen.calculative.rotate && pen.name !== 'line') {
+  if (pen.rotateByRoot || (pen.calculative.rotate && pen.name !== 'line')) {
     ctxRotate(ctx, pen);
   }
   if (pen.calculative.lineWidth > 1 || download) {
@@ -1808,7 +1849,7 @@ export function renderPenRaw(
     }
   }
   if (!textFlip && textRotate) {
-    if (pen.calculative.rotate && pen.name !== 'line') {
+    if (pen.rotateByRoot || (pen.calculative.rotate && pen.name !== 'line')) {
       ctxRotate(ctx, pen, true);
     }
   }
@@ -3633,7 +3674,10 @@ export function getPensDisableRotate(pens: Pen[]): boolean {
 }
 
 export function rotatePen(pen: Pen, angle: number, rect: Rect) {
-  if (pen.type) {
+  if(pen.rotateByRoot){
+    return;
+  }
+  if (pen.name === 'line') {
     pen.calculative.worldAnchors.forEach((anchor) => {
       rotatePoint(anchor, angle, rect.center);
     });
@@ -3972,7 +4016,7 @@ function dealWithDXF(command,pen,startX,startY) {
       return {
         c:'_fillStyle',
         v:{
-          value:pen.color || command.v.value
+          value: command.v.value || pen.color
         }
       };
     default:

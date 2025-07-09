@@ -120,7 +120,7 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
   }
   text = text.toString();
   const keepDecimal = pen.calculative.keepDecimal;
-  if (keepDecimal != undefined) {
+  if (keepDecimal != undefined && text != null && text !== "" && text.trim() !== "") {
     const textNum = Number(text);
     if (!isNaN(textNum)) {
       text = textNum.toFixed(keepDecimal)
@@ -273,7 +273,7 @@ export function calcTextAdaptionWidth(
   let maxWidth = 0;
   pen.calculative.textLineWidths = [];
   pen.calculative.textLines.forEach((text: string) => {
-    const width = ctx.measureText(text).width;
+    const width = ctx.measureText(text).width + text.length * pen.calculative.letterSpacing;
     pen.calculative.textLineWidths.push(width);
     maxWidth < width && (maxWidth = width);
   });

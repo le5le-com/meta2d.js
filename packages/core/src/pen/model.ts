@@ -62,6 +62,7 @@ export const needCalcTextRectProps = [
   'whiteSpace',
   'ellipsis',
   'keepDecimal',
+  'letterSpacing'
 ];
 
 export const needSetPenProps = ['x', 'y', 'width', 'height', 'flipX', 'flipY'];
@@ -214,7 +215,7 @@ export interface Pen extends Rect {
   textLeft?: number;
   textTop?: number;
   textColor?: string;
-  hoverTextColor?: string;
+    hoverTextColor?: string;
   activeTextColor?: string;
   fontFamily?: string;
   fontSize?: number;
@@ -226,6 +227,7 @@ export interface Pen extends Rect {
   textBackground?: string;
   whiteSpace?: WhiteSpace;
   ellipsis?: boolean;
+  letterSpacing?: number;
 
   image?: string;
   icon?: string;
@@ -386,6 +388,7 @@ export interface Pen extends Rect {
   imageRadius?: number; //图片圆角
   textFlip?: boolean; //文字是否镜像
   textRotate?: boolean; //文字是否旋转
+  rotateByRoot?: number;
   // calculative 对象中的值是为了动画存在，表明了渐变过程中，画布上绘制的当前值
   textAutoAdjust?: boolean; //text图元宽高根据文本自动调整
   dbInput?: boolean; //锁定状态下，双击能否输入
@@ -509,6 +512,7 @@ export interface Pen extends Rect {
     lineHeight?: number;
     fontStyle?: string;
     fontWeight?: string;
+    letterSpacing?: number;
     textBackground?: string;
     iconSize?: number;
     icon?: string;
