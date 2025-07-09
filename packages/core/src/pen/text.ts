@@ -120,7 +120,7 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
   }
   text = text.toString();
   const keepDecimal = pen.calculative.keepDecimal;
-  if (keepDecimal != undefined) {
+  if (keepDecimal != undefined && text != null && text !== "" && text.trim() !== "") {
     const textNum = Number(text);
     if (!isNaN(textNum)) {
       text = textNum.toFixed(keepDecimal)
