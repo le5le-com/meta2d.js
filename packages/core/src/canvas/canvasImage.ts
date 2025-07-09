@@ -231,7 +231,7 @@ export class CanvasImage {
         pen.calculative.imageDrawed = true;
         ctx.save();
         ctxFlip(ctx, pen);
-        if (pen.calculative.rotate) {
+        if (pen.rotateByRoot || pen.calculative.rotate) {
           ctxRotate(ctx, pen);
         }
 
@@ -261,7 +261,7 @@ export class CanvasImage {
         pen.calculative.imageDrawed = true;
         ctx.save();
         ctxFlip(ctx, pen);
-        if (pen.calculative.rotate) {
+        if (pen.rotateByRoot || pen.calculative.rotate) {
           ctxRotate(ctx, pen);
         }
 
@@ -285,7 +285,7 @@ export class CanvasImage {
           pen.calculative.imageDrawed = true;
           ctx.save();
           ctxFlip(ctx, pen);
-          if (pen.calculative.rotate) {
+          if (pen.rotateByRoot || pen.calculative.rotate) {
             ctxRotate(ctx, pen);
           }
 

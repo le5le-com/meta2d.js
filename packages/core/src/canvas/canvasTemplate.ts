@@ -168,7 +168,7 @@ export class CanvasTemplate {
           if (pen.image && pen.name !== 'gif' && pen.calculative.img) {
             ctx.save();
             ctxFlip(ctx, pen);
-            if (pen.calculative.rotate) {
+            if (pen.rotateByRoot || pen.calculative.rotate) {
               ctxRotate(ctx, pen);
             }
 

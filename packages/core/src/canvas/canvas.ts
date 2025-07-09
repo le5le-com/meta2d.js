@@ -4850,7 +4850,7 @@ export class Canvas {
         ) {
           ctx.save();
           ctxFlip(ctx, pen);
-          if (pen.calculative.rotate) {
+          if (pen.rotateByRoot || pen.calculative.rotate) {
             ctxRotate(ctx, pen);
           }
           setGlobalAlpha(ctx, pen);
@@ -6424,7 +6424,10 @@ export class Canvas {
    * @param angle 本次的旋转值，加到 pen.calculative.rotate 上
    */
   rotatePen(pen: Pen, angle: number, rect: Rect) {
-    if (pen.type) {
+    if(pen.rotateByRoot){
+      return;
+    }
+    if (pen.name === 'line') {
       pen.calculative.worldAnchors.forEach((anchor) => {
         rotatePoint(anchor, angle, rect.center);
       });
