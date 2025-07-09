@@ -795,8 +795,15 @@ export class Meta2d {
     const data = await getMeta2dData(this.store, id);
     if (data) {
       this.open(data);
+      this.canvas.opening =false;
       this.lock(1);
-      this.fitView(true, 10);
+      const width = this.store.data.width || this.store.options.width;
+      const height = this.store.data.height || this.store.options.height;
+      if (width && height ){
+        this.fitSizeView(true,0);
+      }else{
+        this.fitView(true, 10);
+      }
     }
   }
 
