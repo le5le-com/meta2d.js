@@ -4729,22 +4729,24 @@ export class Canvas {
       });
     }
     pen.type && this.initLineRect(pen);
-    if (pen.calculative.gradientTimer) {
-      clearTimeout(pen.calculative.gradientTimer);
+    if(pen.gradientColors||pen.lineGradientColors){
+      if (pen.calculative.gradientTimer) {
+        clearTimeout(pen.calculative.gradientTimer);
+      }
+      pen.calculative.gradientTimer = setTimeout(() => {
+        if (pen.calculative.lineGradient) {
+          pen.calculative.lineGradient = null;
+        }
+        if (pen.calculative.gradient) {
+          pen.calculative.gradient = null;
+        }
+        if (pen.calculative.radialGradient) {
+          pen.calculative.radialGradient = null;
+        }
+        this.patchFlags = true;
+        pen.calculative.gradientTimer = undefined;
+      }, 50);
     }
-    pen.calculative.gradientTimer = setTimeout(() => {
-      if (pen.calculative.lineGradient) {
-        pen.calculative.lineGradient = null;
-      }
-      if (pen.calculative.gradient) {
-        pen.calculative.gradient = null;
-      }
-      if (pen.calculative.radialGradient) {
-        pen.calculative.radialGradient = null;
-      }
-      this.patchFlags = true;
-      pen.calculative.gradientTimer = undefined;
-    }, 50);
   }
 
   initGlobalStyle(){
