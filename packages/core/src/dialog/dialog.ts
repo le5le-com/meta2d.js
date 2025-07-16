@@ -202,7 +202,7 @@ export class Dialog {
       this.dialog.style.top = rect.y?(rect.y + 'px'):(rect.height? `calc( 50% - ${rect.height/2}px )` : '15vh');
       this.dialog.style.left = rect.x? (rect.x + 'px'): `calc( 50% - ${rect.width? rect.width/2+'px': '40%'} )`;
     }
-    if(isIframe&&data){
+    if(isIframe && data && isSameOrigin(url)){
       let timeout = 0;
       const interval = setInterval(() => {
         if((this.iframe.contentWindow as any).meta2d){
@@ -263,5 +263,21 @@ export class Dialog {
     this.box.onclick = undefined;
     this.close.onclick = undefined;
     this.dialogMeta2d?.destroy(true);
+  } 
+}
+
+function isSameOrigin(url) {
+  if (url.startsWith('/')) {
+    return true;
+  }
+  try {
+    const _url = new URL(url);
+    return (
+      location.protocol === _url.protocol &&
+      location.hostname === _url.hostname &&
+      location.port === _url.port
+    );
+  } catch (e) {
+    return false;
   }
 }
