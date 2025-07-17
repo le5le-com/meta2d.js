@@ -14,6 +14,7 @@ export class Dialog {
   meta2dDiv: HTMLElement;
   dialogMeta2d: Meta2d;
   store: Meta2dStore;
+  data:any;
   constructor(public parentElement: HTMLElement, store: Meta2dStore) {
     this.store = store;
     this.box = document.createElement('div');
@@ -167,6 +168,7 @@ export class Dialog {
     if(!url){
       return;
     }
+    this.data = data;
     const isIframe = this.isUrl(url);
     let urlChange = false;
     if(isIframe){
@@ -225,19 +227,11 @@ export class Dialog {
     //   },300);
     // }
     this.iframe.onload = () => {
-      setTimeout(()=>{
-        this.iframe.contentWindow.postMessage(
-          JSON.stringify({
-            name:'dialog',
-            data
-          }),
-        '*');
-      },500);
       if(!this.dialogMeta2d||isIframe){
         this.box.style.display = 'block';
       }
     }
-    if(!urlChange&&!this.dialogMeta2d||isIframe){
+    if(!urlChange&&(!this.dialogMeta2d||isIframe)){
      this.box.style.display = 'block';
     }
     if(!isIframe){

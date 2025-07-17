@@ -565,6 +565,14 @@ export class Canvas {
 
     let data = JSON.parse(e.data);
     if (typeof data === 'object') {
+      if(data.name === 'onload'){
+        this.dialog.iframe.contentWindow.postMessage(
+          JSON.stringify({
+            name:'dialog',
+            data:this.dialog.data
+          }),
+        '*');
+      }
       this.parent.doMessageEvent(data.name, JSON.stringify(data.data));
     }else{
       this.parent.doMessageEvent(data);
