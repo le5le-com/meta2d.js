@@ -14,6 +14,7 @@ export class Dialog {
   meta2dDiv: HTMLElement;
   dialogMeta2d: Meta2d;
   store: Meta2dStore;
+  data:any;
   constructor(public parentElement: HTMLElement, store: Meta2dStore) {
     this.store = store;
     this.box = document.createElement('div');
@@ -167,7 +168,9 @@ export class Dialog {
     if(!url){
       return;
     }
+    this.data = data;
     const isIframe = this.isUrl(url);
+    let urlChange = false;
     if(isIframe){
       this.meta2dDiv.style.display = 'none';
       this.iframe.style.display = 'block';
@@ -178,6 +181,7 @@ export class Dialog {
     if(isIframe && url !== this.url){
       this.iframe.setAttribute('src', url);
       this.url = url;
+      urlChange = true;
     }
     title && (this.title.innerText = title);
     if(!title){
@@ -202,27 +206,32 @@ export class Dialog {
       this.dialog.style.top = rect.y?(rect.y + 'px'):(rect.height? `calc( 50% - ${rect.height/2}px )` : '15vh');
       this.dialog.style.left = rect.x? (rect.x + 'px'): `calc( 50% - ${rect.width? rect.width/2+'px': '40%'} )`;
     }
-    if(isIframe&&data){
-      let timeout = 0;
-      const interval = setInterval(() => {
-        if((this.iframe.contentWindow as any).meta2d){
-          clearInterval(interval);
-          setTimeout(()=>{
-          this.iframe.contentWindow.postMessage(
-            JSON.stringify({
-              name:'dialog',
-              data
-            }),
-          '*');
-          },100);
-        }
-        timeout++;
-        if(timeout > 50){
-          clearInterval(interval);
-        }
-      },300);
+    // if(isIframe && data && isSameOrigin(url)){
+    //   let timeout = 0;
+    //   const interval = setInterval(() => {
+    //     if((this.iframe.contentWindow as any).meta2d){
+    //       clearInterval(interval);
+    //       setTimeout(()=>{
+    //       this.iframe.contentWindow.postMessage(
+    //         JSON.stringify({
+    //           name:'dialog',
+    //           data
+    //         }),
+    //       '*');
+    //       },100);
+    //     }
+    //     timeout++;
+    //     if(timeout > 50){
+    //       clearInterval(interval);
+    //     }
+    //   },300);
+    // }
+    this.iframe.onload = () => {
+      if(!this.dialogMeta2d||isIframe){
+        this.box.style.display = 'block';
+      }
     }
-    if(!this.dialogMeta2d||isIframe){
+    if(!urlChange&&(!this.dialogMeta2d||isIframe)){
      this.box.style.display = 'block';
     }
     if(!isIframe){
@@ -263,5 +272,21 @@ export class Dialog {
     this.box.onclick = undefined;
     this.close.onclick = undefined;
     this.dialogMeta2d?.destroy(true);
+  } 
+}
+
+function isSameOrigin(url) {
+  if (url.startsWith('/')) {
+    return true;
+  }
+  try {
+    const _url = new URL(url);
+    return (
+      location.protocol === _url.protocol &&
+      location.hostname === _url.hostname &&
+      location.port === _url.port
+    );
+  } catch (e) {
+    return false;
   }
 }
