@@ -191,7 +191,7 @@ export class Dialog {
     }else{
       this.dialog.style.padding = '16px 20px';
       this.title.style.display = 'block';
-      this.body.style.height = 'calc(100% - 26px)';
+      this.body.style.height = 'calc(100% - 30px)';
       this.close.style.top = '2px';
       this.close.style.right = '2px';
       this.body.style.background = '#1e2430';
