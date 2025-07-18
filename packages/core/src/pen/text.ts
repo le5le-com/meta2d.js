@@ -307,7 +307,7 @@ export function calcTextAutoWidth(pen: Pen) {
         fontSize,
         lineHeight,
       });
-      currentWidth = ctx.measureText(arr[i]).width; //* scale;
+      currentWidth = ctx.measureText(arr[i]).width + arr[i].length * pen.calculative.letterSpacing; //* scale;
     } else {
       // 近似计算
       const chinese = arr[i].match(/[^\x00-\xff]/g) || '';
@@ -316,7 +316,7 @@ export function calcTextAutoWidth(pen: Pen) {
       const spaceWidth = spaces.length * fontSize * 0.3; // 空格占用的宽度
       const otherWidth =
         (arr[i].length - chinese.length - spaces.length) * fontSize * 0.6; // 其他字符占用的宽度
-      currentWidth = chineseWidth + spaceWidth + otherWidth;
+      currentWidth = chineseWidth + spaceWidth + otherWidth + arr[i].length * pen.calculative.letterSpacing;
     }
     if (currentWidth > textWidth) {
       textWidth = currentWidth; //* scale;
