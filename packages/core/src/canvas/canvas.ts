@@ -3087,12 +3087,13 @@ export class Canvas {
       pen.calculative.hover = false;
       setChildrenActive(pen, false);
     });
-    !drawing && this.store.emitter.emit('inactive', this.store.active);
+    const activePens = [...this.store.active];
     this.store.active = [];
     this.activeRect = undefined;
     this.sizeCPs = undefined;
     this.store.activeAnchor = undefined;
     this.patchFlags = true;
+    !drawing && this.store.emitter.emit('inactive', activePens);
   }
 
   active(pens: Pen[], emit = true) {
