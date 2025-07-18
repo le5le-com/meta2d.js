@@ -4765,16 +4765,17 @@ export class Canvas {
     const data = {};
     const theme = {};
     themeKeys.forEach(key => {
-      if (this.store.options[key] !== undefined) {
+      // 过滤调 null undefined ''
+      if (this.store.options[key] != null && this.store.options[key] !== '') {
         options[key] = this.store.options[key];
       }
-      if (this.store.data[key] !== undefined) {
+      if (this.store.data[key] != null && this.store.data[key] !== '') {
         data[key] = this.store.data[key];
       }
       if(this.store.data.theme){
         const value = this.store.theme[this.store.data.theme]?.[key];
 
-        if(value!==undefined){
+        if(value != null && value !== ''){
           theme[key] = value;
         }
       }
