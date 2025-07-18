@@ -3096,7 +3096,7 @@ export class Canvas {
   }
 
   active(pens: Pen[], emit = true) {
-    if (this.store.active) {
+    if (this.store.active && this.store.active.length) {
       emit && this.store.emitter.emit('inactive', this.store.active);
       for (const pen of this.store.active) {
         pen.calculative.active = undefined;
