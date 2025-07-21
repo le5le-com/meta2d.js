@@ -197,13 +197,16 @@ function generateAroundDiv(pen: Pen) {
   if (!div) {
     return;
   }
+  const isLinux =navigator.userAgent.indexOf('Linux') > -1; //Kylin OS会闪屏
   const top = document.createElement('div');
   top.style.position = 'absolute';
   top.style.left = pen.operationalRect.x * 100 + '%';
   top.style.top = '0px';
   top.style.width = pen.operationalRect.width * 100 + '%';
   top.style.height = pen.operationalRect.y * 100 + '%';
-  top.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux){
+    top.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  }
   top.style.backgroundColor = pen.blurBackground;
   div.appendChild(top);
 
@@ -214,7 +217,9 @@ function generateAroundDiv(pen: Pen) {
   right.style.width =
     (1 - pen.operationalRect.x - pen.operationalRect.width) * 100 + '%';
   right.style.height = '100%';
-  right.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux){
+    right.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  }
   right.style.backgroundColor = pen.blurBackground;
   div.appendChild(right);
 
@@ -225,7 +230,9 @@ function generateAroundDiv(pen: Pen) {
   bottom.style.width = pen.operationalRect.width * 100 + '%';
   bottom.style.height =
     (1 - pen.operationalRect.y - pen.operationalRect.height) * 100 + '%';
-  bottom.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux){
+    bottom.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  }
   bottom.style.backgroundColor = pen.blurBackground;
   div.appendChild(bottom);
 
@@ -235,7 +242,9 @@ function generateAroundDiv(pen: Pen) {
   left.style.top = '0px';
   left.style.width = pen.operationalRect.x * 100 + '%';
   left.style.height = '100%';
-  left.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux){
+    left.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  }
   left.style.backgroundColor = pen.blurBackground;
   div.appendChild(left);
 
