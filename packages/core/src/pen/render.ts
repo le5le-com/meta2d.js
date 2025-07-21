@@ -46,6 +46,9 @@ import { Gradient, isEqual, PenType } from '../pen';
 import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
 
+const LINE = "line";
+const REPEAT = "repeat"
+
 /**
  * ancestor 是否是 pen 的祖先
  * @param pen 当前画笔
@@ -847,6 +850,14 @@ function getImagePosition(pen: Pen) {
     imgNaturalWidth,
     imgNaturalHeight,
   } = pen.calculative;
+  if(!rect) {
+    return {
+      x:0,
+      y:0,
+      width: imgNaturalWidth,
+      height: imgNaturalHeight,
+    }
+  };
   let { x, y, width: w, height: h } = rect;
   if (iconWidth) {
     w = iconWidth;
@@ -1001,6 +1012,9 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     textBackground,
     textType,
   } = pen.calculative;
+  if (!text || hiddenText || pen.hiddenText) {
+    return;
+  }
   if (
     pen.input &&
     !pen.text &&
@@ -1020,9 +1034,6 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 
-  if (text == undefined || hiddenText) {
-    return;
-  }
   const store = canvas.store;
   ctx.save();
   if (!textHasShadow) {
@@ -1073,7 +1084,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   const y = 0.55;
   const textAlign = pen.textAlign || store.options.textAlign;
   const oneRowHeight = fontSize * lineHeight;
-  pen.calculative.textLines.forEach((text, i) => {
+  pen.calculative.textLines && pen.calculative.textLines.forEach((text, i) => {
     const textLineWidth = pen.calculative.textLineWidths[i];
     let x = 0;
     if (textAlign === 'center') {
@@ -1455,7 +1466,7 @@ export function renderPen(
   }
   ctxFlip(ctx, pen);
 
-  if (pen.rotateByRoot ||( pen.calculative.rotate && pen.name !== 'line')) {
+  if (pen.rotateByRoot || (pen.calculative.rotate && pen.name !== LINE)) {
     ctxRotate(ctx, pen);
   }
   if (pen.calculative.lineWidth > 1 || download) {
@@ -1510,14 +1521,14 @@ export function renderPen(
   // else {
   const strokeImg = pen.calculative.strokeImg;
   if (pen.calculative.strokeImage && strokeImg) {
-    ctx.strokeStyle = _stroke || ctx.createPattern(strokeImg, 'repeat');
+    ctx.strokeStyle = _stroke || ctx.createPattern(strokeImg, REPEAT);
     // fill = true;
   } else {
     let stroke: string | CanvasGradient | CanvasPattern;
     // TODO: 线只有线性渐变
     if (pen.calculative.strokeType) {
       if (pen.calculative.lineGradientColors) {
-        if (pen.name === 'line') {
+        if (pen.name === LINE) {
           lineGradientFlag = true;
         } else {
           if (pen.calculative.lineGradient) {
@@ -1539,7 +1550,7 @@ export function renderPen(
   //if (setBack) {
   const backgroundImg = pen.calculative.backgroundImg;
   if (pen.calculative.backgroundImage && backgroundImg) {
-    ctx.fillStyle = fill || ctx.createPattern(backgroundImg, 'repeat');
+    ctx.fillStyle = fill || ctx.createPattern(backgroundImg, REPEAT);
     fill = true;
   } else {
     let back: string | CanvasGradient | CanvasPattern;
@@ -1627,8 +1638,10 @@ export function renderPen(
     }
   }
 
-  drawText(ctx, pen);
-  if (pen.type === PenType.Line && pen.fillTexts) {
+  if(pen.calculative.text){
+    drawText(ctx, pen);
+  }
+  if (pen.type === PenType.Line && pen.fillTexts?.length > 0) {
     for (const text of pen.fillTexts) {
       drawFillText(ctx, pen, text);
     }
@@ -1737,7 +1750,7 @@ export function renderPenRaw(
       if (pen.calculative.strokeImg) {
         ctx.strokeStyle = ctx.createPattern(
           pen.calculative.strokeImg,
-          'repeat'
+          REPEAT
         );
         fill = true;
       }
@@ -1759,7 +1772,7 @@ export function renderPenRaw(
       if (pen.calculative.backgroundImg) {
         ctx.fillStyle = ctx.createPattern(
           pen.calculative.backgroundImg,
-          'repeat'
+          REPEAT
         );
         fill = true;
       }
@@ -1853,10 +1866,11 @@ export function renderPenRaw(
       ctxRotate(ctx, pen, true);
     }
   }
+  if(pen.calculative.text){
+    drawText(ctx, pen);
+  }
 
-  drawText(ctx, pen);
-
-  if (pen.type === PenType.Line && pen.fillTexts) {
+  if (pen.type === PenType.Line && pen.fillTexts?.length > 0) {
     for (const text of pen.fillTexts) {
       drawFillText(ctx, pen, text);
     }
@@ -2660,14 +2674,23 @@ export function calcWorldAnchors(pen: Pen) {
     !pen.calculative.canvas.parent.isCombine(pen)
   ) {
     const { x, y, width, height } = pen.calculative.worldRect;
-    anchors = store.options.defaultAnchors.map((anchor, index) => {
-      return {
+    for (let index = 0; index < store.options.defaultAnchors.length; index++) {
+      const anchor = store.options.defaultAnchors[index];
+      anchors.push({
         id: `${index}`,
         penId: pen.id,
         x: x + width * anchor.x,
         y: y + height * anchor.y,
-      };
-    });
+      })
+    }
+    // anchors = store.options.defaultAnchors.map((anchor, index) => {
+    //   return {
+    //     id: `${index}`,
+    //     penId: pen.id,
+    //     x: x + width * anchor.x,
+    //     y: y + height * anchor.y,
+    //   };
+    // });
   }
 
   if (pen.calculative.rotate && pen.name !== 'line') {
@@ -2746,14 +2769,18 @@ export function calcWorldPointOfPen(pen: Pen, pt: Point) {
 }
 
 export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
+  if(!pen.image && !pen.icon){
+    return;
+  }
   const { paddingTop, paddingBottom, paddingLeft, paddingRight } =
     pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;
   let width = pen.calculative.worldRect.width - paddingLeft - paddingRight;
   let height = pen.calculative.worldRect.height - paddingTop - paddingBottom;
-  let iconLeft = pen.calculative.iconLeft;
-  let iconTop = pen.calculative.iconTop;
+  let iconLeft = pen.calculative.iconLeft||0;
+  let iconTop = pen.calculative.iconTop||0;
+ 
   if (iconLeft && Math.abs(iconLeft) < 1) {
     iconLeft = pen.calculative.worldRect.width * iconLeft;
   }
@@ -3743,7 +3770,7 @@ function initLineRect(pen: Pen) {
   calcCenter(rect);
   pen.calculative.worldRect = rect;
   calcPadding(pen, rect);
-  calcTextRect(pen);
+  pen.calculative.text && calcTextRect(pen);
   if (pen.calculative.worldAnchors) {
     pen.anchors = pen.calculative.worldAnchors.map((pt) => {
       return calcRelativePoint(pt, pen.calculative.worldRect);
@@ -4354,7 +4381,7 @@ export function setChildValue(pen: Pen, data: IValue) {
       pen[k] = data[k];
       if (['fontSize', 'lineWidth'].includes(k)) {
         pen.calculative[k] = data[k] * pen.calculative.canvas.store.data.scale;
-        calcTextRect(pen);
+        pen.calculative.text && calcTextRect(pen);
       } else {
         pen.calculative[k] = data[k];
       }

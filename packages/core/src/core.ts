@@ -88,7 +88,7 @@ import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
 import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
 import { le5leTheme } from './theme'
-
+const echartReg = /^echarts/;
 export class Meta2d {
   store: Meta2dStore;
   canvas: Canvas;
@@ -804,6 +804,7 @@ export class Meta2d {
       }else{
         this.fitView(true, 10);
       }
+      document.title = data.name + "-" + window.name;
     }
   }
 
@@ -1487,10 +1488,11 @@ export class Meta2d {
     const initJs = this.store.data.initJs;
     if (initJs && initJs.trim()) {
       try {
-        const fn = new Function('context', initJs) as (context?: {
+        let fn = new Function('context', initJs) as (context?: {
           meta2d: Meta2d;
         }) => void;
         fn({ meta2d: this });
+        fn = null;
       } catch (e) {
         console.warn('initJs error', e);
       }
@@ -1883,10 +1885,12 @@ export class Meta2d {
       this.store.animateMap.delete(pen);
     });
     this.initImageCanvas(pens);
-    setTimeout(() => {
-      this.canvas?.calcActiveRect();
-      this.render();
-    }, 20);
+    if(this.store.data.locked === LockState.None){
+      setTimeout(() => {
+        this.canvas?.calcActiveRect();
+        this.render();
+      }, 20);
+    }
   }
 
   startVideo(idOrTagOrPens?: string | Pen[]): void {
@@ -2858,7 +2862,19 @@ export class Meta2d {
         });
       }
     }
-
+    // 稳定连接配置
+    if(!options.hasOwnProperty("keepalive")){
+      Object.assign(options,{keepallive: 30});
+    }
+    if(!options.hasOwnProperty("clean")){
+      Object.assign(options,{clean: false});
+    }
+    if(!options.hasOwnProperty("reconnectPeriod")){
+      Object.assign(options,{reconnectPeriod: 0});
+    }
+    if(!options.hasOwnProperty("connectTimeout")){
+      Object.assign(options,{connectTimeout: 10 * 1000});
+    }
     this.mqttClients[net.index] = mqtt.connect(url, options);
     this.mqttClients[net.index].on(
       'message',
@@ -2875,7 +2891,7 @@ export class Meta2d {
     this.mqttClients[net.index].on('error', (error) => {
       this.store.emitter.emit('error', { type: 'mqtt', error });
     });
-
+    let reconnectDelay = 1000;
     this.mqttClients[net.index].on('close', () => {
       if (this.store.options.reconnetTimes) {
         net.times++;
@@ -2883,22 +2899,40 @@ export class Meta2d {
           net.times = 0;
           this.mqttClients && this.mqttClients[net.index]?.end();
         }
+        setTimeout(()=>{
+          if (net.times < this.store.options.reconnetTimes) {
+            this.mqttClients[net.index].reconnect(options as any);
+            reconnectDelay = Math.min(reconnectDelay * 2, 10 * 1000);
+          }
+        },reconnectDelay)
       }
     });
-    if (net.topics) {
-      let topics = net.topics;
-      if(topics.indexOf('${') > -1){
-        let keys = topics.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
-        if (keys) {
-          keys.forEach((key) => {
-            topics = topics.replace(
-              `\${${key}}`,this.getDynamicParam(key)
-            );
+    this.mqttClients[net.index].on('connect', (connack) => {
+      reconnectDelay = 1000;
+      
+      if (!connack.sessionPresent) {
+        // 创建了新会话或没有找到旧会话，需要重新订阅主题
+        if (net.topics) {
+          let topics = net.topics;
+          if(topics.indexOf('${') > -1){
+            let keys = topics.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+            if (keys) {
+              keys.forEach((key) => {
+                topics = topics.replace(
+                  `\${${key}}`,this.getDynamicParam(key)
+                );
+              });
+            }
+          }
+          // QoS=1 是 MQTT 中最常用的级别，它能在保证大部分消息可靠传递
+          this.mqttClients[net.index].subscribe(topics.split(','),{ qos: 1 },(err)=>{
+            if(err) console.error("订阅失败：",err);
           });
         }
+      } else {
+        //已恢复之前的会话，可以接收离线消息，不需要重新订阅，之前的订阅已恢复
       }
-      this.mqttClients[net.index].subscribe(topics.split(','));
-    }
+    })
   }
 
   connectNetWebSocket(net: Network) {
@@ -3708,6 +3742,10 @@ export class Meta2d {
       initPens = deepClone(pens);
     }
     pens.forEach((pen) => {
+      if(pen.name === 'echarts' && !pen.onBeforeValue){
+        const hasEchartsStartKey = Object.keys(data).some(key=>echartReg.test(key));
+        if(hasEchartsStartKey) return;
+      }
       const afterData: IValue = pen.onBeforeValue
         ? pen.onBeforeValue(pen, data as ChartData)
         : data;

@@ -139,6 +139,7 @@ import { lockedError } from '../utils/error';
 import { Meta2d } from '../core';
 import { Dialog } from '../dialog';
 import { setter } from '../utils/object';
+import { isNumber } from '../utils/tool';
 import { Title } from '../title';
 import { CanvasTemplate } from './canvasTemplate';
 import { getLinePoints } from '../diagrams/line';
@@ -206,6 +207,7 @@ export class Canvas {
   touchStart = 0;
   touchStartTimer: any;
   timer: any;
+  scaleFlag: boolean = false;
 
   private lastAnimateRender = 0;
   animateRendering = false;
@@ -4292,7 +4294,7 @@ export class Canvas {
     calcCenter(rect);
     pen.calculative.worldRect = rect;
     calcPadding(pen, rect);
-    calcTextRect(pen);
+    pen.calculative.text && calcTextRect(pen);
     calcInView(pen);
     pen.calculative &&
     (pen.calculative.gradientAnimatePath = undefined);
@@ -4665,6 +4667,9 @@ export class Canvas {
   }
 
   setCalculativeByScale(pen: Pen) {
+    if(!this.scaleFlag){
+      return;
+    }
     const scale = this.store.data.scale;
     pen.calculative.lineWidth = pen.lineWidth * scale;
     pen.calculative.fontSize = pen.fontSize * scale;
@@ -4673,32 +4678,51 @@ export class Canvas {
       pen.calculative.fontSize =
         pen.fontSize * pen.calculative.worldRect.height;
     }
-    pen.calculative.iconSize = pen.iconSize * scale;
-    pen.calculative.iconWidth = pen.iconWidth * scale;
-    pen.calculative.iconHeight = pen.iconHeight * scale;
-    pen.calculative.iconLeft =
-      pen.iconLeft < 1 && pen.iconLeft > -1
-        ? pen.iconLeft
-        : pen.iconLeft * scale;
-    pen.calculative.iconTop =
-      pen.iconTop < 1 && pen.iconTop > -1 ? pen.iconTop : pen.iconTop * scale;
-    pen.calculative.textWidth =
-      pen.textWidth < 1 && pen.textWidth > -1
-        ? pen.textWidth
-        : pen.textWidth * scale;
-    pen.calculative.textHeight =
-      pen.textHeight < 1 && pen.textHeight > -1
-        ? pen.textHeight
-        : pen.textHeight * scale;
-    pen.calculative.textLeft =
-      pen.textLeft < 1 && pen.textLeft > -1
-        ? pen.textLeft * pen.calculative.worldRect.width
-        : pen.textLeft * scale;
-    pen.calculative.textTop =
-      pen.textTop < 1 && pen.textTop > -1 ? pen.textTop * pen.calculative.worldRect.height : pen.textTop * scale;
-
-    if (pen.type === PenType.Line && pen.borderWidth) {
-      pen.calculative.borderWidth = pen.borderWidth * scale;
+    if(isNumber(pen.iconSize)){
+      pen.calculative.iconSize = pen.iconSize * scale;
+    }
+    if(isNumber(pen.iconWidth)){
+      pen.calculative.iconWidth = pen.iconWidth * scale;
+    }
+    if(isNumber(pen.iconHeight)){
+      pen.calculative.iconHeight = pen.iconHeight * scale;
+    }
+    if(isNumber(pen.iconLeft)){
+      pen.calculative.iconLeft =
+        pen.iconLeft < 1 && pen.iconLeft > -1
+          ? pen.iconLeft
+          : pen.iconLeft * scale;
+    }
+    if(isNumber(pen.iconTop)){
+      pen.calculative.iconTop =
+         pen.iconTop < 1 && pen.iconTop > -1 ? pen.iconTop : pen.iconTop * scale;
+    }
+    if(isNumber(pen.textWidth)){
+      pen.calculative.textWidth =
+        pen.textWidth < 1 && pen.textWidth > -1
+          ? pen.textWidth
+          : pen.textWidth * scale;
+    }
+    if(isNumber(pen.textHeight)){
+      pen.calculative.textHeight =
+        pen.textHeight < 1 && pen.textHeight > -1
+          ? pen.textHeight
+          : pen.textHeight * scale;
+    }
+    if(isNumber(pen.textLeft)){
+      pen.calculative.textLeft =
+        pen.textLeft < 1 && pen.textLeft > -1
+          ? pen.textLeft * pen.calculative.worldRect.width
+          : pen.textLeft * scale;
+    }
+    if(isNumber(pen.textTop)){
+      pen.calculative.textTop =
+         pen.textTop < 1 && pen.textTop > -1 ? pen.textTop * pen.calculative.worldRect.height : pen.textTop * scale;
+    }
+    if(isNumber(pen.borderWidth)){
+      if (pen.type === PenType.Line && pen.borderWidth) {
+        pen.calculative.borderWidth = pen.borderWidth * scale;
+      }
     }
   }
 
@@ -4724,7 +4748,7 @@ export class Canvas {
     }
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
-    calcTextRect(pen);
+    pen.calculative.text && calcTextRect(pen);
     calcInView(pen);
     globalStore.path2dDraws[pen.name] &&
       this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
@@ -5277,9 +5301,11 @@ export class Canvas {
    * @param center 中心点，引用类型，存在副作用，会更改原值
    */
   scale(scale: number, center = { x: 0, y: 0 }) {
+    this.scaleFlag = true;
     const minScale = this.store.data.minScale || this.store.options.minScale;
     const maxScale = this.store.data.maxScale || this.store.options.maxScale;
     if (!(scale >= minScale && scale <= maxScale)) {
+      this.scaleFlag = false;
       return;
     }
 
@@ -5325,6 +5351,7 @@ export class Canvas {
         map.setView();
       }
       this.render();
+      this.scaleFlag = false;
       this.store.emitter.emit('scale', this.store.data.scale);
     // });
   }
@@ -7527,7 +7554,7 @@ export class Canvas {
         if (pen.text && pen.textAutoAdjust && !pen.parentId) {
           calcTextAutoWidth(pen);
         }
-        calcTextRect(pen);
+        pen.calculative.text && calcTextRect(pen);
         this.patchFlags = true;
         this.pushHistory({
           type: EditType.Update,
@@ -7536,8 +7563,8 @@ export class Canvas {
         });
         this.store.emitter.emit('change', pen);
         this.store.emitter.emit('valueUpdate', pen);
-      } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines.length == 0) {
-        calcTextRect(pen);
+      } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines && pen.calculative.textLines.length == 0) {
+        pen.calculative.text && calcTextRect(pen);
       }
       this.initTemplateCanvas([pen]);
     }
@@ -7977,7 +8004,7 @@ export class Canvas {
     } else if (willPatchFlagsPenRect) {
       this.updatePenRect(pen);
     } else {
-      willCalcTextRect && calcTextRect(pen);
+      !pen.hiddenText && willCalcTextRect && pen.calculative.text && calcTextRect(pen);
       willCalcIconRect && calcIconRect(this.store.pens, pen);
       if (willUpdatePath) {
         globalStore.path2dDraws[pen.name] &&

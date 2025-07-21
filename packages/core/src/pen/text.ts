@@ -11,7 +11,9 @@ export function calcTextRect(pen: Pen) {
     paddingRight,
     worldRect,
     canvas,
+    text
   } = pen.calculative;
+  if(!text) return;
   let { textLeft, textTop, textWidth, textHeight } = pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;
@@ -78,13 +80,19 @@ export function calcTextRect(pen: Pen) {
 
 export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
   // By default, the text is center aligned.
-  const lineHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
-  const h = pen.calculative.textLines.length * lineHeight;
+  const calc = pen.calculative;
+  if(!calc.text) return;
+  const { worldTextRect:rect,textLines,fontSize,lineHeight,canvas } = calc;
+
+  const lineHeightValue = fontSize * lineHeight;
+  const h = textLines.length * lineHeightValue;
+
   const textWidth = calcTextAdaptionWidth(ctx, pen); // 多行文本最大宽度
-  const rect = pen.calculative.worldTextRect;
+
   let x = rect.x + (rect.width - textWidth) / 2;
   let y = rect.y + (rect.height - h) / 2;
-  const options = pen.calculative.canvas.store.options;
+
+  const { options } = canvas.store;
   const textAlign = pen.textAlign || options.textAlign;
   switch (textAlign) {
     case 'left':
@@ -114,28 +122,36 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
 }
 
 export function calcTextLines(pen: Pen, text = pen.calculative.text) {
-  if (text == undefined) {
-    pen.calculative.textLines = [];
+  const calc = pen.calculative;
+  if (!text) {
+    calc.textLines = undefined;
     return;
   }
-  text = text.toString();
-  const keepDecimal = pen.calculative.keepDecimal;
-  if (keepDecimal != undefined && text != null && text !== "" && text.trim() !== "") {
-    const textNum = Number(text);
+  let textStr = typeof text === 'string'?text:text.toString();
+  const { whiteSpace,ellipsis } = pen;
+
+  if((whiteSpace === 'pre-line' || whiteSpace === 'break-all') && !textStr.includes('\n')){
+    calc.textLines = [textStr];
+    return;
+  }
+
+  const {keepDecimal} = calc;
+  if (keepDecimal != undefined && textStr.trim() !== "") {
+    const textNum = Number(textStr);
     if (!isNaN(textNum)) {
-      text = textNum.toFixed(keepDecimal)
+      textStr = textNum.toFixed(keepDecimal)
     }
   }
   let lines: string[] = [];
-  const oneRowHeight = pen.calculative.fontSize * pen.calculative.lineHeight;
-  const textHeight = pen.calculative.worldTextRect.height;
+  const oneRowHeight = calc.fontSize * calc.lineHeight;
+  const textHeight = calc.worldTextRect.height;
   const calcRows = Math.floor(textHeight / oneRowHeight);
   // 最小值为 1
   const maxRows = calcRows > 1 ? calcRows : 1;
-  switch (pen.whiteSpace) {
+  switch (whiteSpace) {
     case 'nowrap':
-      if (pen.ellipsis !== false) {
-        const allLines = wrapLines(text.split(''), pen);
+      if (ellipsis !== false) {
+        const allLines = wrapLines([...textStr], pen);
         if (allLines[0]) {
           lines.push(allLines[0]);
           if (allLines.length > 1) {
@@ -144,29 +160,29 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
           }
         }
       } else {
-        lines.push(text);
+        lines.push(textStr);
       }
       break;
     case 'pre-line':
-      lines = text.split(/[\n]/g);
-      if (pen.ellipsis !== false && lines.length > maxRows) {
+      lines = textStr.split(/[\n]/g);
+      if (ellipsis !== false && lines.length > maxRows) {
         lines = lines.slice(0, maxRows);
         setEllipsisOnLastLine(lines);
       }
       break;
     case 'break-all':
     default:
-      const paragraphs = text.split(/[\n]/g);
+      const paragraphs = textStr.split(/[\n]/g);
       let currentRow = 0;
       outer: for (const paragraph of paragraphs) {
         const words =
-          pen.whiteSpace === 'break-all'
+          whiteSpace === 'break-all'
             ? paragraph.split('')
             : getWords(paragraph);
         let items = wrapLines(words, pen);
         // 空行换行的情况
         if (items.length === 0) items = [''];
-        if (pen.ellipsis != false) {
+        if (ellipsis != false) {
           for (const l of items) {
             currentRow++;
             if (currentRow > maxRows) {
@@ -194,7 +210,7 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
   }
   */
 
-  pen.calculative.textLines = lines;
+  calc.textLines = lines;
 
   return lines;
 }
@@ -272,7 +288,7 @@ export function calcTextAdaptionWidth(
 ): number {
   let maxWidth = 0;
   pen.calculative.textLineWidths = [];
-  pen.calculative.textLines.forEach((text: string) => {
+  pen.calculative.textLines && pen.calculative.textLines.forEach((text: string) => {
     const width = ctx.measureText(text).width + text.length * pen.calculative.letterSpacing;
     pen.calculative.textLineWidths.push(width);
     maxWidth < width && (maxWidth = width);

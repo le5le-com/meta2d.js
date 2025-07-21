@@ -11,7 +11,7 @@ export function formatTime(format?: string, utcDate?:string) {
   const hours = now.getHours();
   const minutes = now.getMinutes();
   const seconds = now.getSeconds();
-  const fn = new Function(
+  let fn = new Function(
     'year',
     'month',
     'day',
@@ -24,5 +24,6 @@ export function formatTime(format?: string, utcDate?:string) {
       : 'return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} 星期${week}`'
   );
   const time = fn(year, month, day, weeks[week], hours, minutes, seconds);
+  fn = null;
   return time;
 }

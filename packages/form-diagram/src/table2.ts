@@ -387,11 +387,13 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         cellStyle.forEach((item: any, idx: number) => {
           if(item.wheres){
             let success = item.wheres.every((where: any) => {
-              const fn = new Function(
+              let fn = new Function(
                 'attr',
                 `return attr ${where.comparison} ${where.value}`
               );
-              return fn(cell);
+              const result = fn(cell);
+              fn = null;
+              return result;
             });
             if(success){
               successIdx = idx;
@@ -406,11 +408,13 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         ) {
           isSuccess = false;
           isSuccess = (cellStyle as any).wheres.every(function (where: any) {
-            const fn = new Function(
+            let fn = new Function(
               'attr',
               `return attr ${where.comparison} ${where.value}`
             );
-            return fn(cell);
+            const result = fn(cell);
+            fn = null;
+            return result;
           });
         }
       }

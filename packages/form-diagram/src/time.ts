@@ -34,7 +34,7 @@ function formatTime(pen: any) {
   const hours = (now.getHours() + '').padStart(2, pad);
   const minutes = (now.getMinutes() + '').padStart(2, pad);
   const seconds = (now.getSeconds() + '').padStart(2, pad);
-  const fn = new Function(
+  let fn = new Function(
     'year',
     'month',
     'day',
@@ -47,6 +47,7 @@ function formatTime(pen: any) {
       : 'return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} 星期${week}`'
   );
   const time = fn(year, month, day, weeks[week], hours, minutes, seconds);
+  fn = null;
   return time;
 }
 
