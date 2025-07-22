@@ -207,7 +207,7 @@ export class Canvas {
   touchStart = 0;
   touchStartTimer: any;
   timer: any;
-  scaleFlag: boolean = false;
+  scaleFlag: boolean = true; //默认为true
 
   private lastAnimateRender = 0;
   animateRendering = false;
