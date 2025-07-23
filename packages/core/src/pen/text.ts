@@ -130,10 +130,11 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
   let textStr = typeof text === 'string'?text:text.toString();
   const { whiteSpace,ellipsis } = pen;
 
-  if((whiteSpace === 'pre-line' || whiteSpace === 'break-all') && !textStr.includes('\n')){
-    calc.textLines = [textStr];
-    return;
-  }
+  // 这里本来想过滤text或者rectangle图元，但是tablePlus图元会调用calcTextLines，导致拿不到返回值，所以先注释
+  // if((whiteSpace === 'pre-line' || whiteSpace === 'break-all') && !textStr.includes('\n')){
+  //   calc.textLines = [textStr];
+  //   return;
+  // }
 
   const {keepDecimal} = calc;
   if (keepDecimal != undefined && textStr.trim() !== "") {

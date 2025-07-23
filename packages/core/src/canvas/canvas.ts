@@ -207,7 +207,6 @@ export class Canvas {
   touchStart = 0;
   touchStartTimer: any;
   timer: any;
-  scaleFlag: boolean = true; //默认为true
 
   private lastAnimateRender = 0;
   animateRendering = false;
@@ -4667,9 +4666,6 @@ export class Canvas {
   }
 
   setCalculativeByScale(pen: Pen) {
-    if(!this.scaleFlag){
-      return;
-    }
     const scale = this.store.data.scale;
     pen.calculative.lineWidth = pen.lineWidth * scale;
     pen.calculative.fontSize = pen.fontSize * scale;
@@ -5301,11 +5297,9 @@ export class Canvas {
    * @param center 中心点，引用类型，存在副作用，会更改原值
    */
   scale(scale: number, center = { x: 0, y: 0 }) {
-    this.scaleFlag = true;
     const minScale = this.store.data.minScale || this.store.options.minScale;
     const maxScale = this.store.data.maxScale || this.store.options.maxScale;
     if (!(scale >= minScale && scale <= maxScale)) {
-      this.scaleFlag = false;
       return;
     }
 
@@ -5351,7 +5345,6 @@ export class Canvas {
         map.setView();
       }
       this.render();
-      this.scaleFlag = false;
       this.store.emitter.emit('scale', this.store.data.scale);
     // });
   }
