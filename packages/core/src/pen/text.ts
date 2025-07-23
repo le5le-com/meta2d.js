@@ -13,7 +13,7 @@ export function calcTextRect(pen: Pen) {
     canvas,
     text
   } = pen.calculative;
-  if(!text) return;
+  // if(!text) return;
   let { textLeft, textTop, textWidth, textHeight } = pen.calculative;
   let x = paddingLeft;
   let y = paddingTop;

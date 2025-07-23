@@ -4293,7 +4293,7 @@ export class Canvas {
     calcCenter(rect);
     pen.calculative.worldRect = rect;
     calcPadding(pen, rect);
-    pen.calculative.text && calcTextRect(pen);
+    calcTextRect(pen);
     calcInView(pen);
     pen.calculative &&
     (pen.calculative.gradientAnimatePath = undefined);
@@ -4744,7 +4744,7 @@ export class Canvas {
     }
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
-    pen.calculative.text && calcTextRect(pen);
+    calcTextRect(pen);
     calcInView(pen);
     globalStore.path2dDraws[pen.name] &&
       this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
@@ -7547,7 +7547,7 @@ export class Canvas {
         if (pen.text && pen.textAutoAdjust && !pen.parentId) {
           calcTextAutoWidth(pen);
         }
-        pen.calculative.text && calcTextRect(pen);
+        calcTextRect(pen);
         this.patchFlags = true;
         this.pushHistory({
           type: EditType.Update,
@@ -7557,7 +7557,7 @@ export class Canvas {
         this.store.emitter.emit('change', pen);
         this.store.emitter.emit('valueUpdate', pen);
       } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines && pen.calculative.textLines.length == 0) {
-        pen.calculative.text && calcTextRect(pen);
+        calcTextRect(pen);
       }
       this.initTemplateCanvas([pen]);
     }
@@ -7997,7 +7997,7 @@ export class Canvas {
     } else if (willPatchFlagsPenRect) {
       this.updatePenRect(pen);
     } else {
-      !pen.hiddenText && willCalcTextRect && pen.calculative.text && calcTextRect(pen);
+      !pen.hiddenText && willCalcTextRect && calcTextRect(pen);
       willCalcIconRect && calcIconRect(this.store.pens, pen);
       if (willUpdatePath) {
         globalStore.path2dDraws[pen.name] &&
