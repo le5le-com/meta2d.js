@@ -115,6 +115,7 @@ export class Meta2d {
       topic?: string;
       url?: string;
       method?: string;
+      net?: any;
     }
   ) => boolean | string;
   events: Record<number, (pen: Pen, e: Event, params?: any) => void> = {};
@@ -3431,7 +3432,7 @@ export class Meta2d {
       if (res.ok) {
         const data = await res.text();
         const net = this.store.data.networks.filter(item=>item.protocol==='http')[req.index];
-        this.socketCallback(data, { type: 'http', url: req.url, name: req.name, net});
+        this.socketCallback(data, { type: 'http', method: req.method, url: req.url, name: req.name, net});
       } else {
         _req.times++;
         this.store.emitter.emit('error', { type: 'http', error: res });
@@ -3524,6 +3525,7 @@ export class Meta2d {
         topic: context.topic,
         url: context.url,
         method: context.method,
+        net: context.net
       });
       if (!_message) {
         return;
