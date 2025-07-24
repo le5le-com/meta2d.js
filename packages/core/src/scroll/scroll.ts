@@ -16,6 +16,8 @@ export class Scroll {
   lastScrollY: number;
   rect: Rect;
   isShow: boolean;
+  isV: any; //大屏页面
+  padding: number;
   pageMode: boolean; //页面模式
   constructor(public parent: Canvas) {
     this.h = document.createElement('div');
@@ -69,6 +71,19 @@ export class Scroll {
     this.isShow = true;
     this.resize();
     this.initPos();
+    this.getV();
+  }
+
+  getV() {
+    const w = this.parent.store.data.width || this.parent.store.options.width;
+    const h = this.parent.store.data.height || this.parent.store.options.height;
+    if (w && h) {
+      const scale = this.parent.store.data.scale;
+      this.isV = {
+        w: w * scale,
+        h: h * scale,
+      };
+    }
   }
 
   private onMouseDownH = (e: MouseEvent) => {
@@ -105,9 +120,14 @@ export class Scroll {
       }
       this.scrollY = this.lastScrollY + y;
       this.v.style.top = `${this.scrollY}px`;
-      this.parent.store.data.y =
-        this.y -
-        (y * this.rect.height) / this.parent.parentElement.clientHeight;
+      if (this.isV) {
+        this.parent.store.data.y =
+          this.y - (y * this.isV.h) / this.parent.parentElement.clientHeight;
+      } else {
+        this.parent.store.data.y =
+          this.y -
+          (y * this.rect.height) / this.parent.parentElement.clientHeight;
+      }
     }
 
     if (this.isDownH || this.isDownV) {
@@ -126,7 +146,9 @@ export class Scroll {
 
     this.isDownH = undefined;
     this.isDownV = undefined;
-
+    if (this.isV) {
+      return;
+    }
     if (this.scrollX < 20) {
       this.scrollX = 20;
       this.h.style.left = `${this.scrollX}px`;
@@ -153,6 +175,45 @@ export class Scroll {
   };
 
   canMouseMove(y: number) {
+    if (this.isV) {
+      let origin = this.parent.store.data.origin;
+      if (
+        y < 0 &&
+        (Math.abs(origin.y + this.parent.store.data.y - this.padding) < 1 ||
+          origin.y + this.parent.store.data.y - this.padding > 0)
+      ) {
+        this.scrollY = 0;
+        this.v.style.top = '0px';
+        return true;
+      }
+      if (
+        y > 0 &&
+        (Math.abs(
+          origin.y +
+            this.isV.h -
+            this.parent.height +
+            this.parent.store.data.y -
+            this.padding
+        ) < 1 ||
+          origin.y +
+            this.isV.h -
+            this.parent.height +
+            this.parent.store.data.y -
+            this.padding <=
+            0)
+      ) {
+        //重置
+        this.parent.store.data.y =
+          -(origin.y + this.isV.h - this.parent.height + this.padding) - 1;
+        this.parent.onMovePens();
+        this.parent.canvasTemplate.init();
+        this.parent.canvasImage.init();
+        this.parent.canvasImageBottom.init();
+        this.parent.render();
+        return true;
+      }
+      return false;
+    }
     const rect = this.parent.parent.getRect();
     if (y < 0 && rect.y + this.parent.store.data.y >= 0) {
       return true;
@@ -163,12 +224,24 @@ export class Scroll {
     return false;
   }
 
-  changeMode() {
+  changeMode(padding?: number) {
     this.pageMode = true;
     this.h.style.display = `none`;
     const rect = this.parent.parent.getRect();
     if (rect.height < this.parent.height) {
       this.v.style.display = `none`;
+    }
+    if (this.isV) {
+      let h = rect.height;
+      this.padding = padding || 0;
+      this.getV();
+      h = this.isV.h;
+      this.v.style.top = '0px';
+      this.v.style.height =
+        (this.parent.parentElement.clientHeight / (h + this.padding || 0)) *
+          this.parent.parentElement.clientHeight +
+        'px';
+      this.scrollY = 0;
     }
   }
 
@@ -180,7 +253,7 @@ export class Scroll {
   }
 
   resize() {
-    this.rect = getRect(this.parent.store.data.pens);
+    this.rect = this.parent.parent.getRect()// getRect(this.parent.store.data.pens);
     if (this.rect.width < 1400) {
       this.rect.width = 1400;
     }
@@ -260,8 +333,12 @@ export class Scroll {
 
     this.scrollY += y;
     this.v.style.top = `${this.scrollY}px`;
-    this.parent.store.data.y -=
-      (y * this.rect.height) / this.parent.parentElement.clientHeight;
+    if (this.isV) {
+      this.parent.store.data.y -=   (y * this.isV.h) / this.parent.parentElement.clientHeight;;
+    } else {
+      this.parent.store.data.y -=
+        (y * this.rect.height) / this.parent.parentElement.clientHeight;
+    }
 
     this.parent.onMovePens();
     this.parent.canvasTemplate.init();

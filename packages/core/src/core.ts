@@ -5143,13 +5143,23 @@ export class Meta2d {
     const { offsetWidth: width, offsetHeight: height } = canvas;
     this.resize(width, height);
     const padding = formatPadding(viewPadding);
-    const rect = this.getRect();
+    let rect = null;
+    const w = this.store.data.width || this.store.options.width;
+    const h = this.store.data.height || this.store.options.height;
+    if (w && h) {
+      rect = {
+        width: w * this.store.data.scale,
+        height: h * this.store.data.scale,
+      };
+    } else {
+      rect = this.getRect();
+    }
     const ratio = (width - padding[1] - padding[3]) / rect.width;
     this.scale(ratio * this.store.data.scale);
 
     this.topView(padding[0]);
     if (pageMode) {
-      this.canvas.scroll.changeMode();
+      this.canvas.scroll.changeMode(padding[0]);
     }
   }
 
@@ -5174,7 +5184,19 @@ export class Meta2d {
     if (!this.hasView()) return;
     const rect = this.getRect();
     const viewCenter = this.getViewCenter();
-    const pensRect: Rect = this.getPenRect(rect);
+    const w = this.store.data.width || this.store.options.width;
+    const h = this.store.data.height || this.store.options.height;
+    let pensRect: any = null;
+    if (w && h) {
+      pensRect = {
+        x: 0,
+        y: 0,
+        width: w,
+        height: h,
+      };
+    } else {
+      pensRect = this.getPenRect(rect);
+    }
     calcCenter(pensRect);
     const { center } = pensRect;
     const { scale, origin, x: dataX, y: dataY } = this.store.data;
