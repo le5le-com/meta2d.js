@@ -207,7 +207,6 @@ export class Canvas {
   touchStart = 0;
   touchStartTimer: any;
   timer: any;
-  scaleFlag: boolean = true; //默认为true
 
   private lastAnimateRender = 0;
   animateRendering = false;
@@ -4294,7 +4293,7 @@ export class Canvas {
     calcCenter(rect);
     pen.calculative.worldRect = rect;
     calcPadding(pen, rect);
-    pen.calculative.text && calcTextRect(pen);
+    calcTextRect(pen);
     calcInView(pen);
     pen.calculative &&
     (pen.calculative.gradientAnimatePath = undefined);
@@ -4667,9 +4666,6 @@ export class Canvas {
   }
 
   setCalculativeByScale(pen: Pen) {
-    if(!this.scaleFlag){
-      return;
-    }
     const scale = this.store.data.scale;
     pen.calculative.lineWidth = pen.lineWidth * scale;
     pen.calculative.fontSize = pen.fontSize * scale;
@@ -4748,7 +4744,7 @@ export class Canvas {
     }
     calcWorldAnchors(pen);
     calcIconRect(this.store.pens, pen);
-    pen.calculative.text && calcTextRect(pen);
+    calcTextRect(pen);
     calcInView(pen);
     globalStore.path2dDraws[pen.name] &&
       this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
@@ -5301,11 +5297,9 @@ export class Canvas {
    * @param center 中心点，引用类型，存在副作用，会更改原值
    */
   scale(scale: number, center = { x: 0, y: 0 }) {
-    this.scaleFlag = true;
     const minScale = this.store.data.minScale || this.store.options.minScale;
     const maxScale = this.store.data.maxScale || this.store.options.maxScale;
     if (!(scale >= minScale && scale <= maxScale)) {
-      this.scaleFlag = false;
       return;
     }
 
@@ -5351,7 +5345,6 @@ export class Canvas {
         map.setView();
       }
       this.render();
-      this.scaleFlag = false;
       this.store.emitter.emit('scale', this.store.data.scale);
     // });
   }
@@ -7554,7 +7547,7 @@ export class Canvas {
         if (pen.text && pen.textAutoAdjust && !pen.parentId) {
           calcTextAutoWidth(pen);
         }
-        pen.calculative.text && calcTextRect(pen);
+        calcTextRect(pen);
         this.patchFlags = true;
         this.pushHistory({
           type: EditType.Update,
@@ -7564,7 +7557,7 @@ export class Canvas {
         this.store.emitter.emit('change', pen);
         this.store.emitter.emit('valueUpdate', pen);
       } else if(pen.text === this.inputDiv.dataset.value && pen.calculative.textLines && pen.calculative.textLines.length == 0) {
-        pen.calculative.text && calcTextRect(pen);
+        calcTextRect(pen);
       }
       this.initTemplateCanvas([pen]);
     }
@@ -8004,7 +7997,7 @@ export class Canvas {
     } else if (willPatchFlagsPenRect) {
       this.updatePenRect(pen);
     } else {
-      !pen.hiddenText && willCalcTextRect && pen.calculative.text && calcTextRect(pen);
+      !pen.hiddenText && willCalcTextRect && calcTextRect(pen);
       willCalcIconRect && calcIconRect(this.store.pens, pen);
       if (willUpdatePath) {
         globalStore.path2dDraws[pen.name] &&

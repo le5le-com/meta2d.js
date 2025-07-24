@@ -3770,7 +3770,7 @@ function initLineRect(pen: Pen) {
   calcCenter(rect);
   pen.calculative.worldRect = rect;
   calcPadding(pen, rect);
-  pen.calculative.text && calcTextRect(pen);
+  calcTextRect(pen);
   if (pen.calculative.worldAnchors) {
     pen.anchors = pen.calculative.worldAnchors.map((pt) => {
       return calcRelativePoint(pt, pen.calculative.worldRect);
@@ -4381,7 +4381,7 @@ export function setChildValue(pen: Pen, data: IValue) {
       pen[k] = data[k];
       if (['fontSize', 'lineWidth'].includes(k)) {
         pen.calculative[k] = data[k] * pen.calculative.canvas.store.data.scale;
-        pen.calculative.text && calcTextRect(pen);
+        calcTextRect(pen);
       } else {
         pen.calculative[k] = data[k];
       }
