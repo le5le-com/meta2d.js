@@ -694,7 +694,7 @@ export class Meta2d {
       if(item.prop){
         if(item.id&&item.id!=='固定值'){
           const pen = this.findOne(item.id);
-          value[item.prop] = pen[item.key];
+          value[item.prop] = getter(pen,item.key);// pen[item.key];
         }else{
           if(typeof item.value === 'string'&&item.value.includes('${')){
             let _value = item.value
