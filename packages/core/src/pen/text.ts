@@ -127,7 +127,7 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
     calc.textLines = undefined;
     return;
   }
-  let textStr = typeof text === 'string'?text:text.toString();
+  let textStr = typeof text === 'string'?text:(text as any).toString();
   const { whiteSpace,ellipsis } = pen;
 
   // 这里本来想过滤text或者rectangle图元，但是tablePlus图元会调用calcTextLines，导致拿不到返回值，所以先注释
