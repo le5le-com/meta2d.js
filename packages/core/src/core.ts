@@ -83,7 +83,7 @@ import pkg from '../package.json';
 import { lockedError } from './utils/error';
 import { Scroll } from './scroll';
 import { getter } from './utils/object';
-import { getCookie, getMeta2dData, getToken, queryURLParams } from './utils/url';
+import { d, getCookie, getMeta2dData, getToken, queryURLParams } from './utils/url';
 import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
 import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
@@ -3302,8 +3302,15 @@ export class Meta2d {
 
   //获取动态参数
   getDynamicParam(key: string) {
+    let lsValue = localStorage.getItem(key);
+    if(globalThis.le5leTokenD){
+      let tokenkeys = [globalThis.le5leSSOTokenName ?? 'ssotoken',globalThis.le5leTokenName ?? 'token'];
+      if(tokenkeys.includes(key)){
+        lsValue = d(lsValue)
+      } 
+    }
     let params = queryURLParams();
-    let value = params[key] || localStorage[key] || getCookie(key) || globalThis[key] || '';
+    let value = params[key] || lsValue || getCookie(key) || globalThis[key] || '';
     return value;
   }
 
