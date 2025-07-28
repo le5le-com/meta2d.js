@@ -2868,9 +2868,9 @@ export class Meta2d {
       Object.assign(options,{keepallive: 30});
     }
     //  clean为false 时，clientId 是必填项 
-    if(options.clientId && !options.hasOwnProperty("clean")){
-      Object.assign(options,{clean: false});
-    }
+    // if(options.clientId && !options.hasOwnProperty("clean")){
+    //   Object.assign(options,{clean: false});
+    // }
     if(!options.hasOwnProperty("reconnectPeriod")){
       Object.assign(options,{reconnectPeriod: 0});
     }
