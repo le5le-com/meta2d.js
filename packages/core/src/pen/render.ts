@@ -2780,7 +2780,7 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
   let height = pen.calculative.worldRect.height - paddingTop - paddingBottom;
   let iconLeft = pen.calculative.iconLeft||0;
   let iconTop = pen.calculative.iconTop||0;
- 
+
   if (iconLeft && Math.abs(iconLeft) < 1) {
     iconLeft = pen.calculative.worldRect.width * iconLeft;
   }
@@ -4048,7 +4048,7 @@ function dealWithDXF(command,pen,startX,startY) {
       return {
         c:'_fillStyle',
         v:{
-          value: command.v.value || pen.color
+          value: pen.color || command.v.value
         }
       };
     default:
