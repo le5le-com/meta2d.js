@@ -484,7 +484,7 @@ function transformNormalShape(
   let gradientColors;
   let bkType;
   let points;
-  if (finalProperty.fill === 'none') {
+  if (finalProperty.fill&&finalProperty.fill.trim() === 'none') {
   } else if (finalProperty.fill?.includes('url')) {
     const id: string = finalProperty.fill.replace('url(#', '').replace(')', '');
     if(gradientMap[id]){
@@ -750,7 +750,7 @@ function styleToJson(style?: string) {
   const json = {};
   styleArr.forEach((item) => {
     const [key, value] = item.split(':');
-    key && (json[key] = value);
+    key && (json[key.trim()] = value);
   });
   return json;
 }
