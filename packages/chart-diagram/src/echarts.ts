@@ -268,6 +268,7 @@ function scale(pen: ChartPen) {
     if(pen.echarts.option?.dataZoom){
       //用户调整dataZoom后
       const options =pen.calculative.singleton.echart.getOption();
+      if(options?.dataZoom){
       const dataZoom = options.dataZoom;
       pen.echarts.option.dataZoom?.forEach((item,index)=>{
         if(dataZoom[index]){
@@ -275,6 +276,7 @@ function scale(pen: ChartPen) {
           item.end = dataZoom[index].end;
         }
       })
+    }
     }
     pen.calculative.singleton.echart.setOption(
       updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
