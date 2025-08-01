@@ -1639,9 +1639,7 @@ export function renderPen(
     }
   }
 
-  if(pen.calculative.text){
-    drawText(ctx, pen);
-  }
+  drawText(ctx, pen);
   if (pen.type === PenType.Line && pen.fillTexts?.length > 0) {
     for (const text of pen.fillTexts) {
       drawFillText(ctx, pen, text);
@@ -1867,9 +1865,7 @@ export function renderPenRaw(
       ctxRotate(ctx, pen, true);
     }
   }
-  if(pen.calculative.text){
-    drawText(ctx, pen);
-  }
+  drawText(ctx, pen);
 
   if (pen.type === PenType.Line && pen.fillTexts?.length > 0) {
     for (const text of pen.fillTexts) {
