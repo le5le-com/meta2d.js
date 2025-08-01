@@ -45,6 +45,7 @@ import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '../pen';
 import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
+import { isEmptyText } from '../utils/tool';
 
 const LINE = "line";
 const REPEAT = "repeat"
@@ -1012,7 +1013,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     textBackground,
     textType,
   } = pen.calculative;
-  if (!text || hiddenText || pen.hiddenText) {
+  if (isEmptyText(text) || hiddenText || pen.hiddenText) {
     return;
   }
   if (

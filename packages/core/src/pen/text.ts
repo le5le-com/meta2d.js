@@ -2,6 +2,7 @@ import { Pen } from '.';
 import { Canvas } from '../canvas';
 import { calcRightBottom, Rect } from '../rect';
 import { getFont } from './render';
+import { isEmptyText } from '../utils/tool';
 
 export function calcTextRect(pen: Pen) {
   const {
@@ -123,7 +124,7 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
 
 export function calcTextLines(pen: Pen, text = pen.calculative.text) {
   const calc = pen.calculative;
-  if (!text) {
+  if (isEmptyText(text)) {
     calc.textLines = undefined;
     return;
   }
