@@ -132,7 +132,7 @@ function beforeValue(pen: Pen, value: any) {
     for (let i = 1; i < 5; i++) {
       pen.calculative.singleton.div.children[i].style[
         'backdrop-filter'
-      ] = `blur(${value.blur || 2}px)`;
+      ] = `blur(${value.blur}px)`;
     }
   }
   if (value.blurBackground !== undefined) {
@@ -204,8 +204,8 @@ function generateAroundDiv(pen: Pen) {
   top.style.top = '0px';
   top.style.width = pen.operationalRect.width * 100 + '%';
   top.style.height = pen.operationalRect.y * 100 + '%';
-  if(!isLinux){
-    top.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux && pen.blur){
+    top.style['backdrop-filter'] = `blur(${pen.blur}px)`;
   }
   top.style.backgroundColor = pen.blurBackground;
   div.appendChild(top);
@@ -217,8 +217,8 @@ function generateAroundDiv(pen: Pen) {
   right.style.width =
     (1 - pen.operationalRect.x - pen.operationalRect.width) * 100 + '%';
   right.style.height = '100%';
-  if(!isLinux){
-    right.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux && pen.blur){
+    right.style['backdrop-filter'] = `blur(${pen.blur}px)`;
   }
   right.style.backgroundColor = pen.blurBackground;
   div.appendChild(right);
@@ -230,8 +230,8 @@ function generateAroundDiv(pen: Pen) {
   bottom.style.width = pen.operationalRect.width * 100 + '%';
   bottom.style.height =
     (1 - pen.operationalRect.y - pen.operationalRect.height) * 100 + '%';
-  if(!isLinux){
-    bottom.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux && pen.blur){
+    bottom.style['backdrop-filter'] = `blur(${pen.blur}px)`;
   }
   bottom.style.backgroundColor = pen.blurBackground;
   div.appendChild(bottom);
@@ -242,8 +242,8 @@ function generateAroundDiv(pen: Pen) {
   left.style.top = '0px';
   left.style.width = pen.operationalRect.x * 100 + '%';
   left.style.height = '100%';
-  if(!isLinux){
-    left.style['backdrop-filter'] = `blur(${pen.blur || 2}px)`;
+  if(!isLinux && pen.blur){
+    left.style['backdrop-filter'] = `blur(${pen.blur}px)`;
   }
   left.style.backgroundColor = pen.blurBackground;
   div.appendChild(left);
