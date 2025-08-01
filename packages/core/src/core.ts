@@ -1465,14 +1465,19 @@ export class Meta2d {
         })
       })
     });
+
+    if(!this.store.data.iot){
+      this.store.data.iot = {};
+    }
     if(devices.length){
-      if(!this.store.data.iot){
-        this.store.data.iot = {};
-      }
       this.store.data.iot.devices = devices;
+    }else{
+      delete this.store.data.iot.devices
     }
     if(properties.length){
       this.store.data.iot.list = properties;
+    }else{
+      delete this.store.data.iot.list
     }
   }
 
@@ -2318,6 +2323,7 @@ export class Meta2d {
   }
 
   data(): Meta2dData {
+    this.initBinds();
     const data: Meta2dData = deepClone(this.store.data);
     const { pens, paths } = this.store.data;
     data.version = pkg.version;
