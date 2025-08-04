@@ -1013,9 +1013,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     textBackground,
     textType,
   } = pen.calculative;
-  if (isEmptyText(text) || hiddenText || pen.hiddenText) {
-    return;
-  }
+
   if (
     pen.input &&
     !pen.text &&
@@ -1034,7 +1032,10 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
     ctx.restore();
   }
-
+  
+  if (isEmptyText(text) || hiddenText || pen.hiddenText) {
+    return;
+  }
   const store = canvas.store;
   ctx.save();
   if (!textHasShadow) {
