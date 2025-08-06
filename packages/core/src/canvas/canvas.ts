@@ -6837,14 +6837,16 @@ export class Canvas {
       offset && (this.store.clipboard.offset = offset);
       pos && (this.store.clipboard.pos = pos);
     }
+    
+    const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
+    for (const pen of rootPens) {
+      this.pastePen(pen, undefined);
+    }
+
     if(!this.keyOptions?.F){
       this.store.clipboard.pens.forEach((pen: Pen) => {
         delete pen.copyIndex;
       });
-    }
-    const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
-    for (const pen of rootPens) {
-      this.pastePen(pen, undefined);
     }
     sessionStorage.setItem('page', clipboard.page);
     this.active(rootPens);
