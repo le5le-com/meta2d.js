@@ -4071,6 +4071,8 @@ function dealWithVisio(command, pen, startX, startY) {
 }
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
+     // 如果子图元存在不继承父图元的属性，则跳过该属性的设置
+    // if(pen.notInheritProps.includes(k)) continue;
     if (inheritanceProps.includes(k)) {
       if (k == 'fontSize' && data[k] < 0) {
         data[k] = 0;
@@ -4097,8 +4099,6 @@ export function setChildValue(pen: Pen, data: IValue) {
         }
       }
       const child = pen.calculative.canvas.store.pens[childId];
-      // 如果子图元不选择继承父图元的属性，则不设置子图元的属性
-      if(child.notInherit) return;
       child && setChildValue(child, _data);
     });
   }

@@ -325,7 +325,7 @@ export interface Pen extends Rect {
 
   autoPolyline?: boolean;
   affectByTheme?: boolean; // 是否被主题影响，true,希望被主题改变样式，false，不希望被主题改变样式
-  notInherit?: boolean; // 子图元是否不继承父图元
+  notInheritProps?: string[]; // 子图元的哪些属性不继承父图元
 
   // flip?: Flip;
   flipX?: boolean;
