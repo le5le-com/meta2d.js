@@ -2878,7 +2878,7 @@ export class Meta2d {
     //   Object.assign(options,{clean: false});
     // }
     if(!options.hasOwnProperty("reconnectPeriod")){
-      Object.assign(options,{reconnectPeriod: 0});
+      Object.assign(options,{reconnectPeriod: 5000});
     }
     if(!options.hasOwnProperty("connectTimeout")){
       Object.assign(options,{connectTimeout: 10 * 1000});
@@ -2899,24 +2899,25 @@ export class Meta2d {
     this.mqttClients[net.index].on('error', (error) => {
       this.store.emitter.emit('error', { type: 'mqtt', error });
     });
-    let reconnectDelay = 1000;
-    this.mqttClients[net.index].on('close', () => {
-      if (this.store.options.reconnetTimes) {
-        net.times++;
-        if (net.times >= this.store.options.reconnetTimes) {
-          net.times = 0;
-          this.mqttClients && this.mqttClients[net.index]?.end();
-        }
-        setTimeout(()=>{
-          if (net.times < this.store.options.reconnetTimes) {
-            this.mqttClients[net.index].reconnect(options as any);
-            reconnectDelay = Math.min(reconnectDelay * 2, 10 * 1000);
-          }
-        },reconnectDelay)
-      }
-    });
+    //mqtt 默认重连配置 reconnectPeriod
+    // let reconnectDelay = 1000;
+    // this.mqttClients[net.index].on('close', () => {
+    //   if (this.store.options.reconnetTimes) {
+    //     net.times++;
+    //     if (net.times >= this.store.options.reconnetTimes) {
+    //       net.times = 0;
+    //       this.mqttClients && this.mqttClients[net.index]?.end();
+    //     }
+    //     setTimeout(()=>{
+    //       if (net.times < this.store.options.reconnetTimes) {
+    //         this.mqttClients[net.index].reconnect(options as any);
+    //         reconnectDelay = Math.min(reconnectDelay * 2, 10 * 1000);
+    //       }
+    //     },reconnectDelay)
+    //   }
+    // });
     this.mqttClients[net.index].on('connect', (connack) => {
-      reconnectDelay = 1000;
+      // reconnectDelay = 1000;
       
       if (!connack.sessionPresent) {
         // 创建了新会话或没有找到旧会话，需要重新订阅主题
