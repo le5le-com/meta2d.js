@@ -1967,8 +1967,10 @@ export function ctxDrawPath(
       ctx.restore();
     }
 
-    const progress = pen.calculative.progress;
-    if (progress != null) {
+    const progress =
+      (pen.calculative.progress - (pen.calculative.min || 0)) /
+      ((pen.calculative.max || 1) - (pen.calculative.min || 0));
+    if (progress != null && !isNaN(progress)) {
       // 从左往右 x, y, x + width * progress, y
       // 从右往左 ex, y, x + width * (1-progress), y
       // 从下往上 x, y, x, y + height * progress
