@@ -2996,7 +2996,7 @@ export class Meta2d {
     const res: Response = await fetch('/api/iot/app/mqtt', {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${getToken()}`,
+        Authorization: getToken(),
       },
     });
     if (res.ok) {
@@ -3014,7 +3014,7 @@ export class Meta2d {
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${getToken()}`,
+        Authorization: getToken(),
       },
       body:JSON.stringify({devices: devices,type}),
     });
@@ -3028,7 +3028,7 @@ export class Meta2d {
     const ret:any = await fetch(`/api/iot/unsubscribe/properties`,{
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${getToken()}`,
+        Authorization: getToken(),
       },
       body:JSON.stringify({token}),
     });
@@ -3053,7 +3053,7 @@ export class Meta2d {
     const res: Response = await fetch( `/api/iot/data/sql/${method}`, {
       method: 'POST',
       headers:{
-         Authorization: `Bearer ${getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
+         Authorization: getToken(),
       },
       body:JSON.stringify({ dbId:sql.dbId||(sql as any).dbid,sql:_sql,}),
     });
