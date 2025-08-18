@@ -39,7 +39,7 @@ import { gif } from './gif';
 import { mindNode, mindNodeAnchors } from './mindNode';
 import { mindLine, mindLineAnchors } from './mindLine';
 import { form } from './form';
-import { customer } from './customer';
+import { element } from './element';
 
 export function commonPens() {
   return {
@@ -69,7 +69,7 @@ export function commonPens() {
     mindNode2:rectangle,
     form,
     combine:rectangle,
-    customer,
+    element,
   };
 }
 

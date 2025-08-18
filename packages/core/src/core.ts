@@ -1899,7 +1899,7 @@ export class Meta2d {
     if (!pen && this.store.active) {
       pen = this.store.active[0];
     }
-    if (!pen || !pen.children || pen.name === 'customer') {
+    if (!pen || !pen.children || pen.name === 'element') {
       return;
     }
 

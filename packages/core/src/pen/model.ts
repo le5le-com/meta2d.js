@@ -104,7 +104,16 @@ export enum LineAnimateType {
   Arrow, // 箭头,
   WaterDrop, // 水滴
 }
-
+export interface BBox {
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+  bottom: number;
+  right: number;
+  x: number;
+  y: number;
+}
 export interface ColorStop {
   i: number; //取值0-1,色标位置
   color: string;
@@ -146,6 +155,13 @@ export interface Pen extends Rect {
   hoverBackground?: string;
   activeColor?: string;
   activeBackground?: string;
+  blendMode?: string; // 混合模式
+  effects?: any[]; // 效果
+  strokes?: any[]; // 描边
+  fills?: any[]; // 填充
+  BBox?: BBox;
+  pathValue: string;
+  vpath: string;
   mouseDownValid?: boolean; // 是否鼠标按下是否有样式效果
   mouseDownColor?: string;
   mouseDownBackground?: string;

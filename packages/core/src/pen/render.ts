@@ -1505,7 +1505,10 @@ export function renderPen(
   setLineJoin(ctx, pen);
 
   setGlobalAlpha(ctx, pen);
-
+  // 设置每个pen的混合模式
+  if(pen.blendMode){
+    ctx.globalCompositeOperation = pen.blendMode as any;
+  }
   if (pen.calculative.lineDash) {
     ctx.setLineDash(
       pen.calculative.lineDash.map(
@@ -1878,6 +1881,14 @@ export function ctxDrawPath(
           fill && ctx.fill(path);
         }
       } else {
+        // 模糊
+        if (typeof ctx.filter == 'string') {
+          const index = pen.effects?.findIndex((item) => item.type === "LAYER_BLUR");
+          if(index > -1){
+            // 支持canvas滤镜
+            ctx.filter = 'blur(' + pen.effects[index].radius + 'px)';
+          }
+        }
         if(pen.vpath){
           // console.log('pkk111',path)
           const p = new Path2D(pen.vpath);
