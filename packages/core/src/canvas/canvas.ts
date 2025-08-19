@@ -4107,6 +4107,10 @@ export class Canvas {
     if (!pen.id) {
       pen.id = s8();
     }
+    // 图元的层级索引赋初值
+    if(!pen.hasOwnProperty('index')){
+      pen.index = -1;
+    }
     if (
       Math.abs(this.store.lastScale - this.store.data.scale) < 0.0001 &&
       this.store.sameTemplate &&
@@ -4118,6 +4122,11 @@ export class Canvas {
       this.store.data.pens.push(pen);
       this.updatePenRect(pen);
       return;
+    }
+    // 图元编辑器会用到，图元的index层级，取决于图元在pens的顺序，因为核心库是根据顺序绘制图元的，
+    // 所有在pens的位置越靠后，层级越高，视觉就是越往上层
+    if(!pen.parentId){
+      pen.index = this.store.data.pens.length;
     }
     if(pen.copyIndex){
       this.store.data.pens.splice(pen.copyIndex + 1, 0, pen);

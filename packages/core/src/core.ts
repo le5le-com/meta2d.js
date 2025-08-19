@@ -5423,7 +5423,129 @@ export class Meta2d {
         setElemPosition(pen, pen.calculative.singleton.div);
     }
   }
+    /**
+   * @description 同一层画布层，置底，即放到数组最前，最后绘制即在底部
+   * @author Joseph Ho
+   * @date 26/11/2024
+   * @param {Pen[]} pen
+   * @memberof Meta2d
+   */
+  toTopIndex(pen: Pen[]) {
+    const peerIds = this.store.data.pens.filter(el=>el.leader === pen[0].leader).map(el=>el.id);
+    const _index = peerIds.findIndex((p) => p === pen[0].id);
+    if(_index < peerIds.length - 1){
+      const _index2 = peerIds.length - 1;
+      const index2Id = peerIds[_index2];
+      this.swapIndex(pen[0].id, index2Id,'up');
+    }
+  }
+  /**
+   * @description 同一画布层，置底，即放到数组最前，最后绘制即在底部
+   * @author Joseph Ho
+   * @date 26/11/2024
+   * @param {Pen[]} pen
+   * @memberof Meta2d
+   */
+  toBottomIndex(pen: Pen[]) {
+    const peerIds = this.store.data.pens.filter(el=>el.leader === pen[0].leader).map(el=>el.id);
+    const _index = peerIds.findIndex((p) => p === pen[0].id);
+    if(_index > 0){
+      const _index2 = 0;
+      const index2Id = peerIds[_index2];
+      this.swapIndex(pen[0].id, index2Id,'down');
+    }
+  }
+  /**
+   * @description 同一层画布层，上移一层
+   * @author Joseph Ho
+   * @date 26/11/2024
+   * @param {Pen[]} pen
+   * @memberof Meta2d
+   */
+  upIndex(pen: Pen[]) {
+    const peerIds = this.store.data.pens.filter(el=>el.leader === pen[0].leader).map(el=>el.id);
+    const _index1 = peerIds.findIndex((p) => p === pen[0].id);
+    if(_index1 < peerIds.length - 1){
+      const _index2 = _index1 + 1;
+      const index2Id = peerIds[_index2];
+      this.swapIndex(pen[0].id, index2Id,'up');
+    }
+  }
+  /**
+   * @description 同一个画布层，下移一层
+   * @author Joseph Ho
+   * @date 26/11/2024
+   * @param {Pen[]} pen
+   * @memberof Meta2d
+   */
+  downIndex(pen: Pen[]) {
+    const peerIds = this.store.data.pens.filter(el=>el.leader === pen[0].leader).map(el=>el.id);
+    const _index1 = peerIds.findIndex((p) => p === pen[0].id);
+    if(_index1 > 0){
+      const _index2 = _index1 - 1;
+      const index2Id = peerIds[_index2];
+      this.swapIndex(pen[0].id, index2Id,'down');
+    }
+  }
+  /**
+   * @description swap two pens的index
+   * @author Joseph Ho
+   * @date 26/11/2024
+   * @param {string} id1
+   * @param {string} id2
+   * @memberof Meta2d
+   */
+  swapIndex(id1: string, id2: string,direction:string) {
+    // console.log('swapIndex id1 id2',id1,id2);
+    let index1 = this.store.data.pens.findIndex((p) => p.id === id1);
+    let index2 = this.store.data.pens.findIndex((p) => p.id === id2);
+    // swap two pens
+    if(direction === 'down'){
+      let temp = this.store.data.pens[index1];
+      let temp2 = this.store.data.pens[index2];
+      // let tempIndex = temp.index;
+      // temp.index = temp2.index;
+      // temp2.index = tempIndex;
+      // 删除index1的pen
+      this.store.data.pens.splice(index1, 1);
+      // 删除index2的pen，并插入index1的pen
+      this.store.data.pens.splice(index2, 1, temp);
+      // 在index1的位置插入index2的pen
+      this.store.data.pens.splice(index1, 0, temp2);
 
+      // index1 = this.store.data.pens.findIndex((p) => p.id === id1);
+      // index2 = this.store.data.pens.findIndex((p) => p.id === id2);
+      // let tempIndex = this.store.data.pens[index1].index;
+      // this.store.data.pens[index1].index = this.store.data.pens[index2].index;
+      // this.store.data.pens[index2].index = tempIndex;
+    }else if(direction === 'up'){
+      let temp = this.store.data.pens[index1];
+      let temp2 = this.store.data.pens[index2];
+      // let tempIndex = temp.index;
+      // temp.index = temp2.index;
+      // temp2.index = tempIndex;
+      // 删除index1的pen
+      this.store.data.pens.splice(index1, 1);
+      // 删除index2的pen，并插入index1的pen
+      this.store.data.pens.splice(index2, 0, temp);
+      // 在index1的位置插入index2的pen
+
+      // index1 = this.store.data.pens.findIndex((p) => p.id === id1);
+      // index2 = this.store.data.pens.findIndex((p) => p.id === id2);
+      // let tempIndex = this.store.data.pens[index1].index;
+      // this.store.data.pens[index1].index = this.store.data.pens[index2].index;
+      // this.store.data.pens[index2].index = tempIndex;
+    }
+    this.updateAllIndex();
+    this.render();
+    this.store.emitter.emit('swapIndex');
+  }
+  updateAllIndex(){
+    for (let i = 0; i < this.store.data.pens.length; i++) {
+      const pen = this.store.data.pens[i];
+      pen.index = i;
+    }
+  }
   /**
    * 该画笔上移，即把该画笔在数组中的位置向后移动一个
    * @param pens 画笔

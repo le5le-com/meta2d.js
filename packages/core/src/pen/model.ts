@@ -288,6 +288,7 @@ export interface Pen extends Rect {
   autoTo?: boolean;
 
   connectedLines?: ConnectLine[];
+  index: number; // 图元的层级
 
   // Cycle count. Infinite if == 0.
   animateCycle?: number;
