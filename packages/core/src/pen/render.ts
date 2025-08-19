@@ -2035,8 +2035,9 @@ export function ctxDrawPath(
         // 根据 最新的path 获取 svg 字符串
         const svgString = (path as any).toSVGString();
         pen.pathValue = svgString;
+
         //  圆角矩形不是这样的圆角处理方式
-        if((pen.name !== 'roundRectangle'&& pen.name !== 'frame') && pen.pathValue){
+        if((pen.name !== 'roundRectangle') && pen.pathValue){
           // const regT = /(?<=\d)(?=[a-zA-Z])|(?<=[a-zA-Z])(?=\d)| /g;
           // const paths = pen.pathValue.split(regT);
           // console.log('pen222dd',pen.rounded);
@@ -2048,30 +2049,43 @@ export function ctxDrawPath(
           // pen.vpath = roundPathCorners(paths, pen.borderRadius?pen.borderRadius:0, true);
         }else{
           if(pen.rounded && pen.rounded.length){
-            const {x,y,width,height} = pen.calculative.worldRect;
-            pen.vpath = rectangleRounded(x,y,width,height,...pen.rounded);
+            pen.vpath = rectangleRounded(pen.x,pen.y,pen.width,pen.height,...pen.rounded);
           }else{
             pen.vpath = svgString;
           }
         }
-        // if(pen.pathId){
-        //   store.data.paths[pen.pathId] = svgString;
-        // }
-        // // 获取 path 的 DOM Rect
-        // const box = (path as any).getBBox();
-        // if(!pen.BBox){
-        //   pen.BBox = {};
-        // }
+        // console.log('vpath',pen.name,pen.rounded,pen.vpath);
+        if(pen.pathId){
+          store.data.paths[pen.pathId] = svgString;
+        }
+        // 获取 path 的 DOM Rect
+        const box = (path as any).getBBox();
+        if(!pen.BBox){
+          pen.BBox = {};
+        }
         // console.log('box',box)
         // pen.BBox.x = box.x;
         // pen.BBox.y = box.y;
-
-        // pen.BBox.width = box.width;
-        // pen.BBox.height = box.height;
-        // pen.BBox.left = box.left;
-        // pen.BBox.right = box.right;
-        // pen.BBox.top = box.top;
-        // pen.BBox.bottom = box.bottom;
+        pen.BBox.width = box.width;
+        pen.BBox.height = box.height;
+        pen.BBox.left = box.left;
+        pen.BBox.right = box.right;
+        pen.BBox.top = box.top;
+        pen.BBox.bottom = box.bottom;
+        //由于更新了vpath，所以需要重新根据vpath绘制
+        // if(pen.vpath){
+        //   const p = new Path2D(pen.vpath);
+        //   fill && ctx.fill(p);
+        //   // fill && ctx.fill(path);
+        // }else{
+        //   // console.log('pkk222',pen.name)
+        //   //svgPath
+        //   fill && ctx.fill(path);
+        // }
+        // if(pen.strokes && pen.strokes.length > 0){
+        //   // 这里必须stroke一下，上面是fill的绘制动作
+        //   ctx.stroke(path);
+        // }
       }
     } catch (error) {
       console.error('path.toSVGString error', error);

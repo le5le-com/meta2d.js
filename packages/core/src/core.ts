@@ -3182,7 +3182,16 @@ export class Meta2d {
       });
     }
   }
-
+  /**
+   * @description  重绘Path2d图元
+   * @author Joseph Ho
+   * @date 23/08/2023
+   * @param {Pen} pen
+   * @memberof Meta2d
+   */
+  updatePath2D(pen: Pen){
+    globalStore.path2dDraws[pen.name] && this.store.path2dMap.set(pen, globalStore.path2dDraws[pen.name](pen));
+  }
   setValue(
     data: IValue,
     {
