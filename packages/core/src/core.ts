@@ -5829,6 +5829,105 @@ export class Meta2d {
     }
     return line;
   }
+      /**
+   * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件
+   * @param pens 画笔数组
+   * @param showChild 是否作为状态复用（参考 combine showChild）
+   * @param anchor 是否产生默认的锚点
+   * @returns 组合图形
+   */
+    toComp(
+      pens = this.store.data.pens,
+      rect: Rect,
+      showChild?: number,
+      anchor?: boolean
+    ): Pen[] {
+      // if (pens.length === 1) {
+      //   const pen: Pen = deepClone(pens[0]);
+      //   pen.type = PenType.Node;
+      //   pen.id = undefined;
+      //   return [pen];
+      // }
+  
+      const components = deepClone(pens, true);
+      // const rect = getRect(components);
+      let parent: Pen = {
+        id: s8(),
+        name: 'combine',
+        ...rect,
+        children: [],
+        showChild,
+      };
+  
+      if (anchor) {
+        parent.anchors = [
+          {
+            id: '0',
+            penId: parent.id,
+            x: 0.5,
+            y: 0,
+          },
+          {
+            id: '1',
+            penId: parent.id,
+            x: 1,
+            y: 0.5,
+          },
+          {
+            id: '2',
+            penId: parent.id,
+            x: 0.5,
+            y: 1,
+          },
+          {
+            id: '3',
+            penId: parent.id,
+            x: 0,
+            y: 0.5,
+          },
+        ];
+      }
+      //如果本身就是一个组合图元
+      const parents = components.filter((pen)=>!pen.parentId);
+      const p = components.find((pen) => {
+        return pen.width === rect.width && pen.height === rect.height;
+      });
+      const oneIsParent = p && showChild === undefined;
+      if(parents.length===1){
+        // parent =parents[0];
+        // 这里需要注释，解决一个图元 toComp失败的问题
+      }else if (oneIsParent) {
+        if (!p.children) {
+          p.children = [];
+        }
+        parent = p;
+      } else {
+        // 不影响画布数据，生成一个组合图形便于二次复用
+        // this.canvas.makePen(parent);
+      }
+      // console.log('toComp111111');
+      components.forEach((pen) => {
+        if (pen === parent || pen.parentId === parent.id) {
+          return;
+        }
+        if (pen.parentId) {
+          // 已经是其它节点的子节点，x,y,w,h 已经是百分比了
+          return;
+        }
+        parent.children.push(pen.id);
+        pen.parentId = parent.id;
+        // console.log('pen.calculative.worldRect',pen.calculative.worldRect,rect,pen.name);
+        const childRect = calcRelativeRect(pen.calculative.worldRect, rect);
+        // console.log('childRect',childRect);
+        Object.assign(pen, childRect);
+        pen.locked = pen.lockedOnCombine ?? LockState.DisableMove;
+        // pen.type = PenType.Node;
+      });
+  
+      return (oneIsParent||parents.length===1)
+        ? deepClone(components)
+        : deepClone([parent, ...components]);
+    }
   /**
    * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件
    * @param pens 画笔数组
