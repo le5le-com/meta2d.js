@@ -4047,7 +4047,16 @@ export class Meta2d {
   ) {
     return this.canvas.toPng(padding, callback, containBkImg, maxWidth);
   }
-
+  toPngWithOpt(
+    padding?: Padding,
+    callback?: BlobCallback,
+    containBkImg = false,
+    maxWidth?: number,
+    noTranslate?: boolean,
+    opt?:{width:number,height:number}
+  ) {
+    return this.canvas.toPngWithOpt(padding, callback, containBkImg, maxWidth,noTranslate,opt);
+  }
   activeToPng(padding?: Padding, maxWidth?: number) {
     return this.canvas.activeToPng(padding, maxWidth);
   }

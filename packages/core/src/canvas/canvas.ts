@@ -8084,6 +8084,190 @@ export class Canvas {
       height: pen.height * scale,
     };
   }
+  toPngWithOpt(
+    padding: Padding = 2,
+    callback?: BlobCallback,
+    containBkImg = false,
+    maxWidth?: number,
+    noTranslate?: boolean,
+    opt?:{width:number,height:number}
+  ) {
+    const rect = getRect(this.store.data.pens);
+    const _scale = this.store.data.scale;
+    if (!isFinite(rect.width)) {
+      throw new Error('can not to png, because width is not finite');
+    }
+    const oldRect = deepClone(rect);
+    const storeData = this.store.data;
+    // TODO: 目前背景颜色优先级更高
+    const isDrawBkImg =
+      containBkImg && !storeData.background && this.store.bkImg;
+    // 主体在背景的右侧，下侧
+    let isRight = false,
+      isBottom = false;
+    if (isDrawBkImg) {
+      rect.x += storeData.x;
+      rect.y += storeData.y;
+      calcRightBottom(rect);
+      if (rectInRect(rect, this.canvasRect, true)) {
+        // 全部在区域内，那么 rect 就是 canvasRect
+        Object.assign(rect, this.canvasRect);
+      } else {
+        // 合并区域
+        const mergeArea = getRectOfPoints([
+          ...rectToPoints(rect),
+          ...rectToPoints(this.canvasRect),
+        ]);
+        Object.assign(rect, mergeArea);
+      }
+      isRight = rect.x === 0;
+      isBottom = rect.y === 0;
+    }
+    const width = opt.width ||this.store.data.width || this.store.options.width;
+    const height = opt.height ||this.store.data.height || this.store.options.height;
+    //大屏
+    let isV = false;
+    if (width && height && !this.store.data.component) {
+      isV = true;
+    }
+    if (isV) {
+      rect.x = this.store.data.origin.x;
+      rect.y = this.store.data.origin.y;
+      rect.width = width * this.store.data.scale;
+      rect.height = height * this.store.data.scale;
+    }
+    const vRect = deepClone(rect);
+
+    // 有背景图，也添加 padding
+    const p = formatPadding(padding);
+    rect.x -= p[3] * _scale;
+    rect.y -= p[0] * _scale;
+    rect.width += (p[3] + p[1]) * _scale;
+    rect.height += (p[0] + p[2]) * _scale;
+    // 扩大图
+    // const scale =
+    //   rect.width > rect.height ? longSide / rect.width : longSide / rect.height;
+    const scale = (maxWidth || 1920) / rect.width;
+    rect.width *= scale;
+    rect.height *= scale;
+
+    calcRightBottom(rect);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(rect.width);
+    canvas.height = Math.ceil(rect.height);
+    if (
+      canvas.width > 32767 ||
+      canvas.height > 32767 ||
+      (!navigator.userAgent.includes('Firefox') &&
+        canvas.height * canvas.width > 268435456) ||
+      (navigator.userAgent.includes('Firefox') &&
+        canvas.height * canvas.width > 472907776)
+    ) {
+      throw new Error(
+        'can not to png, because the size exceeds the browser limit'
+      );
+    }
+    const ctx = canvas.getContext('2d');
+
+    // if (window.devicePixelRatio > 1) {
+    //   canvas.width *= window.devicePixelRatio;
+    //   canvas.height *= window.devicePixelRatio;
+    //   canvas.style.width = `${canvas.width / window.devicePixelRatio}`;
+    //   canvas.style.height = `${canvas.height / window.devicePixelRatio}`;
+
+    //   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // }
+
+    ctx.textBaseline = 'middle'; // 默认垂直居中
+    ctx.scale(scale, scale);
+
+    const background =
+      this.store.data.background || this.store.options.background;
+    if (background) {
+      // 绘制背景颜色
+      ctx.save();
+      ctx.fillStyle = background;
+      if (isV) {
+        ctx.fillRect(
+          0,
+          0,
+          vRect.width + (p[1] + p[3]) * _scale,
+          vRect.height + (p[0] + p[2]) * _scale
+        );
+      } else {
+        ctx.fillRect(
+          0,
+          0,
+          oldRect.width + (p[3] + p[1]) * _scale,
+          oldRect.height + (p[0] + p[2]) * _scale
+        );
+      }
+      ctx.restore();
+    }
+
+    if (isDrawBkImg) {
+      if (isV) {
+        ctx.drawImage(
+          this.store.bkImg,
+          p[3] * _scale || 0,
+          p[0] * _scale || 0,
+          vRect.width,
+          vRect.height
+        );
+      } else {
+        const x = rect.x < 0 ? -rect.x : 0;
+        const y = rect.y < 0 ? -rect.y : 0;
+        ctx.drawImage(
+          this.store.bkImg,
+          x,
+          y,
+          this.canvasRect.width,
+          this.canvasRect.height
+        );
+      }
+    }
+    if (!noTranslate) {
+      if (!isDrawBkImg) {
+        ctx.translate(-rect.x, -rect.y);
+      } else {
+        // 平移画布，画笔的 worldRect 不变化
+        if (isV) {
+          ctx.translate(
+            -oldRect.x + p[3] * _scale || 0,
+            -oldRect.y + p[0] * _scale || 0
+          );
+        } else {
+          ctx.translate(
+            (isRight ? storeData.x : -oldRect.x) + p[3] * _scale || 0,
+            (isBottom ? storeData.y : -oldRect.y) + p[0] * _scale || 0
+          );
+        }
+      }
+    }else{
+      ctx.translate(-rect.x, -rect.y);
+    }
+ 
+    for (const pen of this.store.data.pens) {
+      // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
+      if (!isShowChild(pen, this.store) || pen.visible == false) {
+        continue;
+      }
+      // TODO: hover 待考虑，若出现再补上
+      const { active } = pen.calculative;
+      pen.calculative.active = false;
+      if (pen.calculative.img) {
+        renderPenRaw(ctx, pen);
+      } else {
+        renderPen(ctx, pen, true);
+      }
+      pen.calculative.active = active;
+    }
+    if (callback) {
+      canvas.toBlob(callback);
+      return;
+    }
+    return canvas.toDataURL();
+  }
   toPng(
     padding: Padding = 2,
     callback?: BlobCallback,
