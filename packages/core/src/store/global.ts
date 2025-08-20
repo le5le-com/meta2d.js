@@ -18,7 +18,7 @@ export const globalStore: {
   anchors: {},
   htmlElements: {},
 };
-
+window.globalStore = globalStore;
 export function register(path2dFns: {
   [key: string]: (pen: Pen, ctx?: CanvasRenderingContext2D) => Path2D;
 }) {
