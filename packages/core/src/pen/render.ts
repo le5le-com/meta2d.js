@@ -2048,8 +2048,21 @@ export function ctxDrawPath(
           }
           // pen.vpath = roundPathCorners(paths, pen.borderRadius?pen.borderRadius:0, true);
         }else{
-          if(pen.rounded && pen.rounded.length){
-            pen.vpath = rectangleRounded(pen.x,pen.y,pen.width,pen.height,...pen.rounded);
+          if(pen.rounded && pen.rounded.length > 0){
+            if(pen.parentId){
+              const parent = store.data.pens.find(el=>el.id === pen.parentId)
+              if(parent){
+                const width = pen.width * parent.width;
+                const height = pen.height * parent.height;
+                const x = pen.x * parent.width+parent.x;
+                const y = pen.y * parent.height +parent.y;
+                pen.vpath = rectangleRounded(x,y,width,height,...pen.rounded);
+              }else{
+                pen.vpath = rectangleRounded(pen.x,pen.y,pen.width,pen.height,...pen.rounded);
+              }
+            }else{
+              pen.vpath = rectangleRounded(pen.x,pen.y,pen.width,pen.height,...pen.rounded);
+            }
           }else{
             pen.vpath = svgString;
           }
