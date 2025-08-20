@@ -4097,7 +4097,7 @@ function dealWithVisio(command, pen, startX, startY) {
 export function setChildValue(pen: Pen, data: IValue) {
   for (const k in data) {
      // 如果子图元存在不继承父图元的属性，则跳过该属性的设置
-    // if(pen.notInheritProps.includes(k)) continue;
+    if(Array.isArray(pen.notInheritProps) && pen.notInheritProps.includes(k)) continue;
     if (inheritanceProps.includes(k)) {
       if (k == 'fontSize' && data[k] < 0) {
         data[k] = 0;
