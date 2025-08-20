@@ -81,6 +81,7 @@ export interface Meta2dData {
   disableTranslate?: boolean; //禁止平移
   disableScale?: boolean; //禁止缩放
   asyncTranslate?: boolean; //异步平移
+  globalAnchors?: Point[]; // 全局锚点
 }
 
 export interface Fit {
@@ -218,6 +219,7 @@ export interface Meta2dStore {
   hoverAnchor?: Point;
   pointAt?: Point;
   pointAtIndex?: number;
+  pointAtCanvas?: Point;
   animates: Set<Pen>;
   options: Options;
   theme: Theme;

@@ -1821,7 +1821,11 @@ export class Canvas {
       this.setAnchor(this.store.pointAt);
       return;
     }
-
+      // set anchor of canvas
+    if( this.hotkeyType === HotkeyType.AddCanvasAnchor) {
+      this.setCanvasAnchor(this.store.pointAtCanvas);
+      return
+    }
     //shift 快捷添加锚点并连线
     if (!this.store.options.autoAnchor && !this.drawingLine) {
       if (e.shiftKey && e.ctrlKey && e.altKey) {
@@ -2410,7 +2414,7 @@ export class Canvas {
       this.getHover(e);
     }
     globalThis.debug && console.timeEnd('hover');
-    if (this.hotkeyType === HotkeyType.AddAnchor) {
+    if (this.hotkeyType === HotkeyType.AddAnchor || this.hotkeyType === HotkeyType.AddCanvasAnchor) {
       this.patchFlags = true;
     }
     this.render(false);
@@ -3239,8 +3243,25 @@ export class Canvas {
     this.title.hide();
     this.store.pointAt = undefined;
     this.store.pointAtIndex = undefined;
+    this.store.pointAtCanvas = undefined;
     const activeLine =
       this.store.active.length === 1 && this.store.active[0].type;
+    // 计算鼠标位置是否在画布之内 
+    if(this.hotkeyType === HotkeyType.AddCanvasAnchor){
+      const {width,height,scale,origin} = this.store.data;
+      const {x,y} = origin;
+      let isIn = false;
+      if(pt.x >= x && pt.x <= (x+width*scale)  && pt.y >= y && pt.y <= (y+height*scale) ){
+        isIn = true;
+      }else{
+        isIn = false;
+      }
+      if(isIn){
+        this.store.pointAtCanvas = pt;
+      }else{
+        this.store.pointAtCanvas = undefined;
+      }
+    }
     if (
       !this.drawingLineName &&
       this.hotkeyType !== HotkeyType.AddAnchor &&
@@ -4890,7 +4911,33 @@ export class Canvas {
     const ctx = this.offscreen.getContext('2d');
     ctx.save();
     ctx.translate(0.5, 0.5);
-
+    // 渲染添加过程中移动的锚点
+    if(this.hotkeyType === HotkeyType.AddCanvasAnchor && this.store.pointAtCanvas){
+      let size = 3;
+      const {x,y} = this.store.pointAtCanvas;
+      ctx.save();
+      ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#cccccc';
+      ctx.arc(x, y, size + 1.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    // 渲染最终添加的画布锚点
+    if(this.store.data.globalAnchors?.length > 0){
+      const ans = this.store.data.globalAnchors;
+      for (let i = 0; i < ans.length; i++) {
+        const an = ans[i];
+        let size = 3;
+        ctx.save();
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#cccccc';
+        ctx.arc(an.x, an.y, size, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
     if (
       !this.store.options.disableAnchor &&
       this.store.hover &&
@@ -5965,7 +6012,20 @@ export class Canvas {
       });
     }
   }
-
+    async setCanvasAnchor(e: { x: number; y: number }) {
+    if(!this.store.data.globalAnchors){
+      this.store.data.globalAnchors = [];
+    }
+    this.store.data.globalAnchors.push({
+      id: s8(),
+      x: e.x,
+      y: e.y,
+    })
+    this.store.pointAtCanvas = undefined;
+    this.externalElements.style.cursor = 'default';
+    this.hotkeyType = HotkeyType.None;
+    this.render();
+  }
   /**
    * 连线允许移动，若与其它图形有连接，但其它图形不在此次移动中，会断开连接
    * @param line 连线
@@ -8329,7 +8389,25 @@ export class Canvas {
     }
     this.patchFlags = true;
   }
-
+   toggleGlobalAnchorMode() {
+    if (!this.hotkeyType) {
+      if (this.store.options.disableAnchor || this.store.hover?.disableAnchor) {
+        return;
+      }
+      this.hotkeyType = HotkeyType.AddCanvasAnchor;
+      if (this.store.hover) {
+        this.externalElements.style.cursor = 'pointer';
+      }
+    } else if (this.hotkeyType === HotkeyType.AddCanvasAnchor) {
+      this.hotkeyType = HotkeyType.None;
+      if (this.store.hoverAnchor) {
+        this.externalElements.style.cursor = 'vertical-text';
+      } else if (this.store.hover) {
+        this.externalElements.style.cursor = 'move';
+      }
+    }
+    this.patchFlags = true;
+  }
   addAnchorHand() {
     if (
       this.store.activeAnchor &&

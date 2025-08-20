@@ -121,12 +121,31 @@ function updatePen(pen: Pen, value?: any) {
   const kvs = Object.keys(value);
   const keys = pen.properties.extend.map(el => el.attr);
   const throughFlag = kvs.some(el => keys.includes(el));
-  console.log(throughFlag,'throughFlag')
+  // console.log(kvs,'keys')
   // 走绑定透传控制这套逻辑
   if (throughFlag) {
     const targetAttr = kvs.filter(el=>el !== 'id')[0];
-    const val = value[targetAttr]
-    console.log(val)
+    let val = value[targetAttr]
+    // console.log(val,'val')
+    const targetKey = kvs.filter(el=>el !== 'id')[0];
+    // console.log(value[targetKey],'value[targetKey]')
+    const pIndex = pen.properties.extend.findIndex(el=>el.attr === targetKey);
+    if(pIndex > -1){
+      const parentKey = `properties.extend.${pIndex}.value`
+      // 根据值类型，对设置的值做处理
+      switch (pen.properties.extend[pIndex].valueType) {
+        case "animation":
+          val = parseInt(val);
+          break;
+        
+        default:
+          break;
+      }
+      meta2d.setValue({
+        id: pen.id,
+        [parentKey]: val
+      }, { render: false, doEvent: false });
+    }
     for (let i = 0; i < pen.children.length; i++) {
       const cId = pen.children[i];
       const child = meta2d.find(cId);
@@ -135,12 +154,12 @@ function updatePen(pen: Pen, value?: any) {
       for (let j = 0; j < child[0].propBindings.length; j++) {
         const pb = child[0].propBindings[j];
         const exs = pen.properties.extend.find(el => el.attr === pb.src);
-        console.log('exs', exs,pb);
+        // console.log('exs', exs,pb);
         // console.log('...................................',pen.targetAttr)
         // 如果不是当前修改的属性，则跳过设置
         if (targetAttr !== pb.src) continue;
         if (exs) {
-          console.log('hello',exs)
+          // console.log('hello',exs)
           const obj = { id: child[0].id };
           // const val = value[]
           // 除开内置属性的其他属性，更新流程都走properties.extend
@@ -157,7 +176,8 @@ function updatePen(pen: Pen, value?: any) {
               Object.assign(obj, { [TEXT]: val });
             }
           } else {
-            if (exs.valueType === 'animate') {
+            if (exs.valueType === 'animation') {
+              // console.log(exs.value,'animation')
               switch (exs.value) {
                 case 0:
                   // stop animation
@@ -180,7 +200,7 @@ function updatePen(pen: Pen, value?: any) {
               Object.assign(obj, { [pb.target]: val });
             }
           }
-          console.log('obj', obj);
+          // console.log('obj', obj);
           meta2d.setValue(obj, { render: false, doEvent: false });
         }
       }

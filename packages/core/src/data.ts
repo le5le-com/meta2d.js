@@ -16,6 +16,7 @@ export enum HotkeyType {
   Select, // TODO: 未实现
   Resize,
   AddAnchor,
+  AddCanvasAnchor,
 }
 
 export enum MouseRight {
