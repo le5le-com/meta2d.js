@@ -873,11 +873,21 @@ export class Meta2d {
       let params = undefined;
       let url = network.url;
       if (network.method === 'GET') {
-        params =
-          '?' +
-          Object.keys(value)
-            .map((key) => key + '=' + value[key])
-            .join('&');
+        if(Object.keys(value).length !== 0){
+          if(url.includes('?')){
+             params =
+            '&' +
+            Object.keys(value)
+              .map((key) => key + '=' + value[key])
+              .join('&');
+          }else{
+            params =
+              '?' +
+              Object.keys(value)
+                .map((key) => key + '=' + value[key])
+                .join('&');
+          }
+        }
       }
       // if (network.method === 'POST') {
         if (url.indexOf('${') > -1) {
