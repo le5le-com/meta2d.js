@@ -291,11 +291,31 @@ export function calcTextAdaptionWidth(
   let maxWidth = 0;
   pen.calculative.textLineWidths = [];
   pen.calculative.textLines && pen.calculative.textLines.forEach((text: string) => {
-    const width = ctx.measureText(text).width + text.length * pen.calculative.letterSpacing;
+    let width;
+    if(pen.calculative.textType){
+      // 文字渐变 measureText 计算有误
+      width = getFontWith(text,pen) + text.length * pen.calculative.letterSpacing;
+    }else{
+      width = ctx.measureText(text).width + text.length * pen.calculative.letterSpacing;
+    }
     pen.calculative.textLineWidths.push(width);
     maxWidth < width && (maxWidth = width);
   });
   return maxWidth;
+}
+
+function getFontWith(text, pen: Pen) {
+  const fontSize = pen.calculative.fontSize;
+  const chinese = text.match(/[^\x00-\xff]/g) || '';
+  const chineseWidth = chinese.length * fontSize; // 中文占用的宽度
+  const spaces = text.match(/\s/g) || '';
+  const spaceWidth =
+    spaces.length * fontSize * ((pen as any).CSmultiple || 0.5); // 空格占用的宽度 CSmultiple表示中文字符:空格字符像素倍数
+  const otherWidth =
+    (text.length - chinese.length - spaces.length) *
+    fontSize *
+    ((pen as any).CEmultiple || 0.54); // 其他字符占用的宽度 CEmultiple 表示中文字符:英文字符像素倍数。
+  return chineseWidth + spaceWidth + otherWidth;
 }
 /**
  * 副作用函数，会修改传入的参数
