@@ -55,8 +55,10 @@ export function getToken() {
   switch (globalThis.le5leTokenType) {
     case TokenType.LocalStorage: //1
       token = localStorage.getItem(key);
+      break;
     case TokenType.Cookie: //2
       token =  getCookie(key);
+      break;
     default:
       token = isLe5le ? getCookie(key) : localStorage.getItem(key);
   }
