@@ -203,11 +203,19 @@ function initRect(pen: formPen) {
   pen.initScale = pen.calculative.canvas.store.data.scale;
   pen.tableWidth = width;
   pen.tableHeight = finalHight || height;
+
+  let h = finalHight || height;
+  let w = width;
+  let _h = h;
+  if(pen.parentId){
+    width = w/pen.calculative.canvas.parent.store.pens[pen.parentId].calculative.worldRect.width;
+    _h = h/pen.calculative.canvas.parent.store.pens[pen.parentId].calculative.worldRect.height;
+  }
   //   if (!pen.width) {
   pen.calculative.width = width;
-  pen.calculative.height = finalHight || height;
+  pen.calculative.height = _h;
   pen.calculative.width = width;
-  pen.calculative.height = finalHight || height;
+  pen.calculative.height = _h;
  
   if (!pen.height) {
     pen.height = pen.calculative.height;
@@ -229,12 +237,12 @@ function initRect(pen: formPen) {
   pen.calculative.worldRect = {
     x,
     y,
-    height: pen.calculative.height,
-    width: pen.calculative.width,
-    center: {
-      x: pen.x + pen.calculative.width / 2,
-      y: pen.y + pen.calculative.height / 2,
-    },
+    height:h,
+    width: w,
+    // center: {
+    //   x: pen.x + pen.calculative.width / 2,
+    //   y: pen.y + pen.calculative.height / 2,
+    // },
   };
   pen.width = pen.calculative.width;
   pen.height = pen.calculative.height;
