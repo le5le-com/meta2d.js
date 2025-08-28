@@ -588,7 +588,7 @@ export class Meta2d {
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
       if(e.data?.length){
-        const value: any = this.getSendData(e.data);
+        const value: any = this.getSendData(e.data, pen);
         if(pen.formId && pen.formData){
           //表单数据
           Object.assign(value,pen.formData);
@@ -688,7 +688,7 @@ export class Meta2d {
     };
   }
 
-  getSendData(data:any[]){
+  getSendData(data:any[], cpen?: Pen){
     const value: any = {};
     data.forEach((item: any) => {
       if(item.prop){
@@ -702,7 +702,7 @@ export class Meta2d {
             if (keys) {
               keys.forEach((key) => {
                 _value = _value.replace(
-                  `\${${key}}`,this.getDynamicParam(key)
+                  `\${${key}}`,getter(cpen,key) || this.getDynamicParam(key)
                 );
               });
             }
@@ -873,11 +873,21 @@ export class Meta2d {
       let params = undefined;
       let url = network.url;
       if (network.method === 'GET') {
-        params =
-          '?' +
-          Object.keys(value)
-            .map((key) => key + '=' + value[key])
-            .join('&');
+        if(Object.keys(value).length !== 0){
+          if(url.includes('?')){
+             params =
+            '&' +
+            Object.keys(value)
+              .map((key) => key + '=' + value[key])
+              .join('&');
+          }else{
+            params =
+              '?' +
+              Object.keys(value)
+                .map((key) => key + '=' + value[key])
+                .join('&');
+          }
+        }
       }
       // if (network.method === 'POST') {
         if (url.indexOf('${') > -1) {
@@ -1465,14 +1475,19 @@ export class Meta2d {
         })
       })
     });
+
+    if(!this.store.data.iot){
+      this.store.data.iot = {};
+    }
     if(devices.length){
-      if(!this.store.data.iot){
-        this.store.data.iot = {};
-      }
       this.store.data.iot.devices = devices;
+    }else{
+      delete this.store.data.iot.devices
     }
     if(properties.length){
       this.store.data.iot.list = properties;
+    }else{
+      delete this.store.data.iot.list
     }
   }
 
@@ -2318,6 +2333,7 @@ export class Meta2d {
   }
 
   data(): Meta2dData {
+    this.initBinds();
     const data: Meta2dData = deepClone(this.store.data);
     const { pens, paths } = this.store.data;
     data.version = pkg.version;
@@ -2872,7 +2888,7 @@ export class Meta2d {
     //   Object.assign(options,{clean: false});
     // }
     if(!options.hasOwnProperty("reconnectPeriod")){
-      Object.assign(options,{reconnectPeriod: 0});
+      Object.assign(options,{reconnectPeriod: 5000});
     }
     if(!options.hasOwnProperty("connectTimeout")){
       Object.assign(options,{connectTimeout: 10 * 1000});
@@ -2893,24 +2909,25 @@ export class Meta2d {
     this.mqttClients[net.index].on('error', (error) => {
       this.store.emitter.emit('error', { type: 'mqtt', error });
     });
-    let reconnectDelay = 1000;
-    this.mqttClients[net.index].on('close', () => {
-      if (this.store.options.reconnetTimes) {
-        net.times++;
-        if (net.times >= this.store.options.reconnetTimes) {
-          net.times = 0;
-          this.mqttClients && this.mqttClients[net.index]?.end();
-        }
-        setTimeout(()=>{
-          if (net.times < this.store.options.reconnetTimes) {
-            this.mqttClients[net.index].reconnect(options as any);
-            reconnectDelay = Math.min(reconnectDelay * 2, 10 * 1000);
-          }
-        },reconnectDelay)
-      }
-    });
+    //mqtt 默认重连配置 reconnectPeriod
+    // let reconnectDelay = 1000;
+    // this.mqttClients[net.index].on('close', () => {
+    //   if (this.store.options.reconnetTimes) {
+    //     net.times++;
+    //     if (net.times >= this.store.options.reconnetTimes) {
+    //       net.times = 0;
+    //       this.mqttClients && this.mqttClients[net.index]?.end();
+    //     }
+    //     setTimeout(()=>{
+    //       if (net.times < this.store.options.reconnetTimes) {
+    //         this.mqttClients[net.index].reconnect(options as any);
+    //         reconnectDelay = Math.min(reconnectDelay * 2, 10 * 1000);
+    //       }
+    //     },reconnectDelay)
+    //   }
+    // });
     this.mqttClients[net.index].on('connect', (connack) => {
-      reconnectDelay = 1000;
+      // reconnectDelay = 1000;
       
       if (!connack.sessionPresent) {
         // 创建了新会话或没有找到旧会话，需要重新订阅主题
@@ -2989,7 +3006,7 @@ export class Meta2d {
     const res: Response = await fetch('/api/iot/app/mqtt', {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${getToken()}`,
+        Authorization: getToken(),
       },
     });
     if (res.ok) {
@@ -3007,7 +3024,7 @@ export class Meta2d {
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${getToken()}`,
+        Authorization: getToken(),
       },
       body:JSON.stringify({devices: devices,type}),
     });
@@ -3021,7 +3038,7 @@ export class Meta2d {
     const ret:any = await fetch(`/api/iot/unsubscribe/properties`,{
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${getToken()}`,
+        Authorization: getToken(),
       },
       body:JSON.stringify({token}),
     });
@@ -3046,7 +3063,7 @@ export class Meta2d {
     const res: Response = await fetch( `/api/iot/data/sql/${method}`, {
       method: 'POST',
       headers:{
-         Authorization: `Bearer ${getCookie('token') || localStorage.getItem('token')|| new URLSearchParams(location.search).get('token') || ''}`,
+         Authorization: getToken(),
       },
       body:JSON.stringify({ dbId:sql.dbId||(sql as any).dbid,sql:_sql,}),
     });

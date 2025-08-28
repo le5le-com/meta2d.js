@@ -347,6 +347,8 @@ export interface Pen extends Rect {
   video?: string;
   audio?: string;
 
+  max?: number; // progress最大值 
+  min?: number; // progress最小值
   progress?: number;
   progressColor?: string;
   verticalProgress?: boolean;
@@ -435,6 +437,8 @@ export interface Pen extends Rect {
     height?: number;
     borderRadius?: number;
 
+    max?: number;
+    min?: number;
     progress?: number;
     progressColor?: string;
     progressGradientColors?: string;

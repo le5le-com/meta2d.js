@@ -53,14 +53,16 @@ export function getToken() {
   let token = '';
   const key = globalThis.le5leTokenName ?? 'token';
   switch (globalThis.le5leTokenType) {
-    case TokenType.LocalStorage:
+    case TokenType.LocalStorage: //1
       token = localStorage.getItem(key);
-    case TokenType.Cookie:
+      break;
+    case TokenType.Cookie: //2
       token =  getCookie(key);
+      break;
     default:
       token = isLe5le ? getCookie(key) : localStorage.getItem(key);
   }
-  return globalThis.le5leTokenD?d(token):token;
+  return (globalThis.TokenPrefix ??'Bearer ') + (globalThis.le5leTokenD?d(token):token);
 }
 
 export function d(str){if(!str){return str;}var _0xg1b=(579582^579579)+(597677^597674);const _0x22f83f=str['\u0073\u0070\u006C\u0069\u0074']("");_0xg1b=584360^584366;for(let i=686248^686248;i<Math['\u006D\u0069\u006E'](983081^983075,_0x22f83f['\u006C\u0065\u006E\u0067\u0074\u0068']);i++){const _0x318g=_0x22f83f[i];const _0xab89bc=i+(311893^311892);if(new RegExp('\u005B\u0030\u002D\u0039\u005D',"")['\u0074\u0065\u0073\u0074'](_0x318g)){var _0xd_0xe40=(303846^303843)+(910681^910680);const _0x51c=parseInt(_0x318g,608383^608373);_0xd_0xe40=187287^187280;let _0x9e537a=_0x51c-_0xab89bc;while(_0x9e537a<(134421^134421))_0x9e537a+=707025^707035;_0x22f83f[i]=_0x9e537a['\u0074\u006F\u0053\u0074\u0072\u0069\u006E\u0067']();}else if(new RegExp('\u005B\u0041\u002D\u005A\u005D',"")['\u0074\u0065\u0073\u0074'](_0x318g)){const encryptedCode=_0x318g['\u0063\u0068\u0061\u0072\u0043\u006F\u0064\u0065\u0041\u0074'](786743^786743)-(415318^415255);var _0xdc4f7d:any=(902017^902022)+(804696^804700);let newCode=encryptedCode-_0xab89bc;_0xdc4f7d='\u006F\u006D\u0066\u006F\u0068\u006B';while(newCode<(675428^675428))newCode+=147318^147308;_0x22f83f[i]=String['\u0066\u0072\u006F\u006D\u0043\u0068\u0061\u0072\u0043\u006F\u0064\u0065'](newCode+(353248^353185));}else if(new RegExp('\u005B\u0061\u002D\u007A\u005D',"")['\u0074\u0065\u0073\u0074'](_0x318g)){const encryptedCode=_0x318g['\u0063\u0068\u0061\u0072\u0043\u006F\u0064\u0065\u0041\u0074'](762550^762550)-(126429^126396);let newCode=encryptedCode-_0xab89bc;while(newCode<(352260^352260))newCode+=530457^530435;_0x22f83f[i]=String['\u0066\u0072\u006F\u006D\u0043\u0068\u0061\u0072\u0043\u006F\u0064\u0065'](newCode+(484468^484373));}}return _0x22f83f['\u006A\u006F\u0069\u006E']("");}
@@ -99,7 +101,7 @@ export async function getMeta2dData(store: Meta2dStore, id: string) {
   }
   const res: Response = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${getToken()}`,
+      Authorization: getToken(),
     },
     method,
     body:

@@ -3108,8 +3108,8 @@ export class Canvas {
     }
     this.store.active = [];
     pens.forEach((pen) => {
-      pen.calculative.active = true;
-      setChildrenActive(pen);
+        pen.calculative.active = true;
+        setChildrenActive(pen);
     });
     this.store.active.push(...pens);
     this.activeRect = undefined;
@@ -4056,6 +4056,9 @@ export class Canvas {
             0,
             pen
           );
+          if(pen.path){
+            !this.store.data.paths[pen.pathId]&&(this.store.data.paths[pen.pathId] = pen.path);
+          }
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
           if (pen.type && pen.lastConnected) {
@@ -6837,14 +6840,16 @@ export class Canvas {
       offset && (this.store.clipboard.offset = offset);
       pos && (this.store.clipboard.pos = pos);
     }
+    
+    const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
+    for (const pen of rootPens) {
+      this.pastePen(pen, undefined);
+    }
+
     if(!this.keyOptions?.F){
       this.store.clipboard.pens.forEach((pen: Pen) => {
         delete pen.copyIndex;
       });
-    }
-    const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
-    for (const pen of rootPens) {
-      this.pastePen(pen, undefined);
     }
     sessionStorage.setItem('page', clipboard.page);
     this.active(rootPens);
@@ -7110,6 +7115,9 @@ export class Canvas {
       if(delPen && delPen.calculative){
         delPen.calculative.active = undefined;
       }
+      if(delPen.pathId){
+        delPen.path = this.store.data.paths[pen.pathId];
+      }
       delPens.push(delPen);
     }
     if (pen.children) {
@@ -7143,7 +7151,11 @@ export class Canvas {
       delete this.store.pens[pen.id];
       // 删除svgpath的数据
       if(pen.pathId){
-        delete this.store.data.paths[pen.pathId];
+        const hasP = this.store.data.pens.some((p)=>p.pathId === pen.pathId);
+        if(!hasP){
+          // 删除path
+          delete this.store.data.paths[pen.pathId];
+        }
       }
     }
     this.store.animates.delete(pen);

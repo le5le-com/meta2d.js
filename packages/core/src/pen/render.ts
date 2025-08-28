@@ -45,6 +45,7 @@ import { renderFromArrow, renderToArrow } from './arrow';
 import { Gradient, isEqual, PenType } from '../pen';
 import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
+import { isEmptyText } from '../utils/tool';
 
 const LINE = "line";
 const REPEAT = "repeat"
@@ -854,8 +855,8 @@ function getImagePosition(pen: Pen) {
     return {
       x:0,
       y:0,
-      width: imgNaturalWidth,
-      height: imgNaturalHeight,
+      width: imgNaturalWidth || pen.calculative.img.naturalWidth,
+      height: imgNaturalHeight || pen.calculative.img.naturalHeight,
     }
   };
   let { x, y, width: w, height: h } = rect;
@@ -1012,9 +1013,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     textBackground,
     textType,
   } = pen.calculative;
-  if (!text || hiddenText || pen.hiddenText) {
-    return;
-  }
+
   if (
     pen.input &&
     !pen.text &&
@@ -1033,7 +1032,10 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
     ctx.restore();
   }
-
+  
+  if (isEmptyText(text) || hiddenText || pen.hiddenText) {
+    return;
+  }
   const store = canvas.store;
   ctx.save();
   if (!textHasShadow) {
@@ -1638,9 +1640,7 @@ export function renderPen(
     }
   }
 
-  if(pen.calculative.text){
-    drawText(ctx, pen);
-  }
+  drawText(ctx, pen);
   if (pen.type === PenType.Line && pen.fillTexts?.length > 0) {
     for (const text of pen.fillTexts) {
       drawFillText(ctx, pen, text);
@@ -1866,9 +1866,7 @@ export function renderPenRaw(
       ctxRotate(ctx, pen, true);
     }
   }
-  if(pen.calculative.text){
-    drawText(ctx, pen);
-  }
+  drawText(ctx, pen);
 
   if (pen.type === PenType.Line && pen.fillTexts?.length > 0) {
     for (const text of pen.fillTexts) {
@@ -1969,8 +1967,10 @@ export function ctxDrawPath(
       ctx.restore();
     }
 
-    const progress = pen.calculative.progress;
-    if (progress != null) {
+    const progress =
+      (pen.calculative.progress - (pen.calculative.min || 0)) /
+      ((pen.calculative.max || 1) - (pen.calculative.min || 0));
+    if (progress != null && !isNaN(progress)) {
       // 从左往右 x, y, x + width * progress, y
       // 从右往左 ex, y, x + width * (1-progress), y
       // 从下往上 x, y, x, y + height * progress
@@ -2769,7 +2769,7 @@ export function calcWorldPointOfPen(pen: Pen, pt: Point) {
 }
 
 export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
-  if(!pen.image && !pen.icon){
+  if(!pen.image && !pen.icon && !pen.thumbImg){
     return;
   }
   const { paddingTop, paddingBottom, paddingLeft, paddingRight } =
@@ -2780,7 +2780,7 @@ export function calcIconRect(pens: { [key: string]: Pen }, pen: Pen) {
   let height = pen.calculative.worldRect.height - paddingTop - paddingBottom;
   let iconLeft = pen.calculative.iconLeft||0;
   let iconTop = pen.calculative.iconTop||0;
- 
+
   if (iconLeft && Math.abs(iconLeft) < 1) {
     iconLeft = pen.calculative.worldRect.width * iconLeft;
   }
@@ -4048,7 +4048,7 @@ function dealWithDXF(command,pen,startX,startY) {
       return {
         c:'_fillStyle',
         v:{
-          value: command.v.value || pen.color
+          value: pen.color || command.v.value
         }
       };
     default:

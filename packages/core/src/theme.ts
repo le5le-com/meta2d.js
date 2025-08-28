@@ -248,7 +248,7 @@ export const le5leTheme = {
   getThemeObj(theme="dark"){
     // 将theme的list转换为对象
     const dot = ":";
-    const obj = this[theme].reduce((acc, curr) => {
+    const obj = this[theme]?.reduce((acc, curr) => {
       const [key, value] = curr.split(dot);
       acc[key] = value;
       return acc;
