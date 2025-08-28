@@ -588,7 +588,7 @@ export class Meta2d {
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
       if(e.data?.length){
-        const value: any = this.getSendData(e.data);
+        const value: any = this.getSendData(e.data, pen);
         if(pen.formId && pen.formData){
           //表单数据
           Object.assign(value,pen.formData);
@@ -688,7 +688,7 @@ export class Meta2d {
     };
   }
 
-  getSendData(data:any[]){
+  getSendData(data:any[], cpen?: Pen){
     const value: any = {};
     data.forEach((item: any) => {
       if(item.prop){
@@ -702,7 +702,7 @@ export class Meta2d {
             if (keys) {
               keys.forEach((key) => {
                 _value = _value.replace(
-                  `\${${key}}`,this.getDynamicParam(key)
+                  `\${${key}}`,getter(cpen,key) || this.getDynamicParam(key)
                 );
               });
             }

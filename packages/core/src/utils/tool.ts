@@ -22,7 +22,7 @@ export function isEmptyText(text) {
     }
     
     // 检查是否为非0的假值（如NaN、false等）
-    if (!text && text !== 0 && text !== '0') {
+    if (!text && text !== 0 && text !== '0' && text !== false) {
         return true;
     }
     
