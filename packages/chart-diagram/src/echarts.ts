@@ -61,6 +61,7 @@ export interface ChartPen extends Pen {
     replaceMerge?: string; // 替换合并
     timeKeys?: string[]; // 时间键
     dataMap?:any; // 数据映射，sql 查询结果的映射
+    autoGetTime: boolean; // 趋势图是否自动获取时间
   };
   calculative?: {
     partialOption?: any; // 部分更新的 option
@@ -354,7 +355,7 @@ function beforeValue(pen: ChartPen, value: any) {
     }
     let keys = Object.keys(value);
     const { xAxis, yAxis } = pen.echarts.option;
-    const { max, replaceMode, timeFormat } = pen.echarts;
+    const { max, replaceMode, timeFormat, autoGetTime = true } = pen.echarts;
     let dataDotArr = []; //记录只更新一个点的数据
     let chartFlag = false;
     for (let key in value) {
@@ -368,7 +369,7 @@ function beforeValue(pen: ChartPen, value: any) {
             beforeV.splice(0, beforeV.length - max);
           }
           value[key] = beforeV;
-          if(!keys.includes('echarts.option.xAxis.data')){
+          if(autoGetTime && !keys.includes('echarts.option.xAxis.data')){
             //x轴时间  避免影响x轴历史趋势
             let _key = 'echarts.option.xAxis.data';
             if (Array.isArray(xAxis) && xAxis.length) {
