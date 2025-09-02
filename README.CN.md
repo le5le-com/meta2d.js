@@ -100,7 +100,7 @@ Meta2d.js 是一个实时数据响应和交互的 2d 引擎，可用于 Web 组�
 
 # 开发文档
 
-https://doc.le5le.com/document/119359590
+https://doc.le5le.com/document/136
 
 # 开始上手
 
