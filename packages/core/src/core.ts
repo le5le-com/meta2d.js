@@ -4755,7 +4755,7 @@ export class Meta2d {
    * 放大到屏幕尺寸，并居中
    * @param fit true，填满但完整展示；false，填满，但长边可能截取（即显示不完整）
    */
-  fitView(fit: boolean = true, viewPadding: Padding = 10) {
+  fitView(fit: boolean = true, viewPadding: Padding = 10, fill: boolean = true) {
     // 默认垂直填充，两边留白
     if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
@@ -4786,7 +4786,7 @@ export class Meta2d {
 
     // 5. 居中
     this.centerView();
-    if (this.store.data.fits?.length) {
+    if (fill && this.store.data.fits?.length) {
       this.fillView();
     }
   }
@@ -5086,7 +5086,7 @@ export class Meta2d {
     this.centerView();
   }
 
-  fitSizeView(fit: boolean | string = true, viewPadding: Padding = 10) {
+  fitSizeView(fit: boolean | string = true, viewPadding: Padding = 10, fill: boolean = true) {
     // 默认垂直填充，两边留白
     // if (!this.hasView()) return;
     // 1. 重置画布尺寸为容器尺寸
@@ -5126,7 +5126,7 @@ export class Meta2d {
 
     // 5. 居中
     this.centerSizeView();
-    if (this.store.data.fits?.length) {
+    if (fill && this.store.data.fits?.length) {
       this.fillView();
     }
   }
