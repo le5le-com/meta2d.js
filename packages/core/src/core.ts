@@ -4826,8 +4826,17 @@ export class Meta2d {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.width / this.canvas.width > 0.1) {
                 pen.imageRatio = false;
+                pen.ratio = false;
               }
             }
+            if (pen.name === 'tablePlus') {
+              pen.colWidth = (pen.colWidth ?? 150) * ratio;
+              pen.styles.forEach((style) => {
+                if (style.width) {
+                  style.width = style.width * ratio;
+                }
+              });
+            }         
             pen.calculative.worldRect.x =
               rect.x -
               wGap / 2 +
@@ -4944,6 +4953,7 @@ export class Meta2d {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.height / this.canvas.height > 0.1) {
                 pen.imageRatio = false;
+                pen.ratio = false;
               }
             }
             pen.calculative.worldRect.y =
