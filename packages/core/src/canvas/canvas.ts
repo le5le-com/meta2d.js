@@ -7329,6 +7329,10 @@ export class Canvas {
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.dropdown.style.width = this.inputParent.style.width;
       this.dropdown.style.fontSize = (pen.fontSize || 12) + 'px';
+      const inputRect = this.inputDiv.getBoundingClientRect();
+      let maxH = window.innerHeight - inputRect.top - inputRect.height;
+      maxH = maxH > 200 ? 200 : maxH;
+      this.dropdown.style.maxHeight = maxH + 'px';
       this.setDropdownList();
       this.externalElements.style.zIndex = '9999';
     } else {
