@@ -3370,7 +3370,9 @@ export class Canvas {
           getParent(this.store.lastHover, true) || this.store.lastHover,
           false
         );
-        this.store.emitter.emit('leave', this.store.lastHover);
+        if(this.store.pens[this.store.lastHover.id]){
+          this.store.emitter.emit('leave', this.store.lastHover);
+        }
         this.tooltip.hide();
       }
       if (this.store.hover) {
