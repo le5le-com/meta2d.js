@@ -3274,6 +3274,8 @@ export class Canvas {
     }
   };
 
+  lastHoverType = HoverType.None;
+
   private getHover = (pt: Point) => {
     if (this.dragRect) {
       return;
@@ -3383,6 +3385,16 @@ export class Canvas {
       }
       this.store.lastHover = this.store.hover;
     }
+    if (
+      [HoverType.LineAnchor, HoverType.NodeAnchor].includes(hoverType) &&
+      ![HoverType.LineAnchor, HoverType.NodeAnchor].includes(this.lastHoverType)
+    ) {
+      this.store.emitter.emit("enterAnchor", {
+        pen: this.store.hover,
+        anchor: this.store.hoverAnchor,
+      });
+    }
+    this.lastHoverType = hoverType;
 
     this.store.hover?.onMouseMove?.(this.store.hover, this.mousePos);
   };
