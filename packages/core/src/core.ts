@@ -2722,9 +2722,11 @@ export class Meta2d {
       if (!this.store.data.cancelFirstConnect) {
         this.requestHttp(http);
       }
-      this.updateTimerList[net.index] = setInterval(async () => {
-        this.requestHttp(http);
-      }, http.interval || 1000);
+      if(net.interval !== 0){
+        this.updateTimerList[net.index] = setInterval(async () => {
+          this.requestHttp(http);
+        }, http.interval || 1000);
+      }
     }else if(net.protocol === 'SSE'){
       if(this.eventSources){
         this.eventSources[net.index]?.close();
