@@ -3274,6 +3274,8 @@ export class Canvas {
     }
   };
 
+  lastHoverType = HoverType.None;
+
   private getHover = (pt: Point) => {
     if (this.dragRect) {
       return;
@@ -3370,7 +3372,9 @@ export class Canvas {
           getParent(this.store.lastHover, true) || this.store.lastHover,
           false
         );
-        this.store.emitter.emit('leave', this.store.lastHover);
+        if(this.store.pens[this.store.lastHover.id]){
+          this.store.emitter.emit('leave', this.store.lastHover);
+        }
         this.tooltip.hide();
       }
       if (this.store.hover) {
@@ -3381,6 +3385,16 @@ export class Canvas {
       }
       this.store.lastHover = this.store.hover;
     }
+    if (
+      [HoverType.LineAnchor, HoverType.NodeAnchor].includes(hoverType) &&
+      ![HoverType.LineAnchor, HoverType.NodeAnchor].includes(this.lastHoverType)
+    ) {
+      this.store.emitter.emit("enterAnchor", {
+        pen: this.store.hover,
+        anchor: this.store.hoverAnchor,
+      });
+    }
+    this.lastHoverType = hoverType;
 
     this.store.hover?.onMouseMove?.(this.store.hover, this.mousePos);
   };
@@ -4848,6 +4862,7 @@ export class Canvas {
     globalThis.debugRender && console.timeEnd('renderPens');
     this.renderBorder();
     this.renderHoverPoint();
+    this.renderPensAnchors();
     offscreenCtx.restore();
     if(this.magnifierCanvas.magnifier) {
       this.magnifierCanvas.render();
@@ -4870,7 +4885,9 @@ export class Canvas {
         continue;
       }
       // if (pen.template) {
-      if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
+      if (pen.canvasLayer === CanvasLayer.CanvasTemplate 
+        || pen.canvasLayer === CanvasLayer.CanvasImageBottom
+        || pen.canvasLayer === CanvasLayer.CanvasImage) {
         continue;
       }
       // if (pen.name === 'combine' && !pen.draw){
@@ -5191,6 +5208,115 @@ export class Canvas {
     }
     ctx.restore();
   };
+
+ renderPensAnchors = () => {
+    // 总是显示锚点 不受locked影响
+    for (const pen of this.store.data.pens) {
+      if (!isFinite(pen.x)) {
+        continue;
+      }
+      if (pen.anchorVisible === true) {
+        this.renderAnchors(pen);
+      }
+    }
+  };
+
+  renderAnchors = (pen: Pen) => {
+    const ctx = this.offscreen.getContext("2d");
+    ctx.save();
+    ctx.translate(0.5, 0.5);
+    ctx.strokeStyle = pen.anchorColor || this.store.styles.anchorColor;
+    ctx.fillStyle = pen.anchorBackground || this.store.options.anchorBackground;
+    pen.calculative.worldAnchors.forEach((anchor) => {
+      if (anchor.hidden || anchor.locked > LockState.DisableEdit) {
+        return;
+      }
+      if (anchor === this.store.hoverAnchor) {
+        ctx.save();
+        const hoverAnchorColor =
+          pen.hoverAnchorColor || this.store.options.hoverAnchorColor;
+        ctx.strokeStyle = hoverAnchorColor;
+        ctx.fillStyle = hoverAnchorColor;
+      }
+      ctx.beginPath();
+      let size =
+        anchor.radius || pen.anchorRadius || this.store.options.anchorRadius;
+      if (pen.type && !anchor.radius && !pen.anchorRadius) {
+        size = 3;
+        if (pen.calculative.lineWidth > 3) {
+          size = pen.calculative.lineWidth;
+        }
+      }
+      if (anchor.type === PointType.Line) {
+        //旋转的情况
+        let _rotate = this.store.pens[anchor.penId].rotate || 0;
+        if (this.store.pens[anchor.penId].calculative.flipX) {
+          _rotate *= -1;
+        }
+        if (this.store.pens[anchor.penId].calculative.flipY) {
+          _rotate *= -1;
+        }
+        let rotate = anchor.rotate + _rotate;
+        if (this.store.pens[anchor.penId].calculative.flipX) {
+          rotate *= -1;
+        }
+        if (this.store.pens[anchor.penId].calculative.flipY) {
+          rotate *= -1;
+        }
+        ctx.save();
+        ctx.translate(anchor.x, anchor.y);
+        ctx.rotate((rotate * Math.PI) / 180);
+        ctx.translate(-anchor.x, -anchor.y);
+        ctx.rect(
+          anchor.x - (anchor.length * this.store.data.scale) / 2,
+          anchor.y - size,
+          anchor.length * this.store.data.scale,
+          size * 2
+        );
+        ctx.restore();
+      } else {
+        ctx.arc(anchor.x, anchor.y, size, 0, Math.PI * 2);
+      }
+      if (pen.type && this.store.hoverAnchor === anchor) {
+        ctx.save();
+        ctx.strokeStyle = pen.activeColor || this.store.styles.activeColor;
+        ctx.fillStyle = ctx.strokeStyle;
+      } else if (anchor.color || anchor.background) {
+        ctx.save();
+        ctx.strokeStyle = anchor.color;
+        ctx.fillStyle = anchor.background;
+      }
+      ctx.fill();
+      ctx.stroke();
+      if (anchor === this.store.hoverAnchor) {
+        ctx.restore();
+      }
+
+      if (pen.type && this.store.hoverAnchor === anchor) {
+        ctx.restore();
+      } else if (anchor.color || anchor.background) {
+        ctx.restore();
+      }
+      //根父节点
+      if (!pen.parentId && pen.children && pen.children.length > 0) {
+        if (anchor === this.store.hoverAnchor) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.lineWidth = 3;
+          const hoverAnchorColor =
+            pen.hoverAnchorColor || this.store.options.hoverAnchorColor;
+          if ((globalThis as any).pSBC) {
+            ctx.strokeStyle = (globalThis as any).pSBC(0.5, hoverAnchorColor);
+          }
+          ctx.arc(anchor.x, anchor.y, size + 1.5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    });
+    ctx.restore();
+  };
+
 
   transTimeout: any;
   translate(x: number = 0, y: number = 0) {
@@ -7329,6 +7455,10 @@ export class Canvas {
       this.dropdown.style.color = pen.dropdownColor || '#bdc7db';
       this.dropdown.style.width = this.inputParent.style.width;
       this.dropdown.style.fontSize = (pen.fontSize || 12) + 'px';
+      const inputRect = this.inputDiv.getBoundingClientRect();
+      let maxH = window.innerHeight - inputRect.top - inputRect.height;
+      maxH = maxH > 200 ? 200 : maxH;
+      this.dropdown.style.maxHeight = maxH + 'px';
       this.setDropdownList();
       this.externalElements.style.zIndex = '9999';
     } else {
