@@ -201,10 +201,12 @@ export class Dialog {
       this.body.style.background = '#1e2430';
     }
     if(rect) {
-      this.dialog.style.width = rect.width?(rect.width + 'px'): '80%'
-      this.dialog.style.height = rect.height?(rect.height + 'px'): '420px';
-      this.dialog.style.top = rect.y?(rect.y + 'px'):(rect.height? `calc( 50% - ${rect.height/2}px )` : '15vh');
-      this.dialog.style.left = rect.x? (rect.x + 'px'): `calc( 50% - ${rect.width? rect.width/2+'px': '40%'} )`;
+      const { x, y, width, height } = this.detailRect(rect);
+      this.dialog.style.width = width;
+      this.dialog.style.height = height;
+      this.dialog.style.top = y;
+      this.dialog.style.left = x;
+      this.dialog.style.translate = `${x === '50%' ? '-50%' : 0} ${y === '50%' ? '-50%' : 0}`;
     }
     // if(isIframe && data && isSameOrigin(url)){
     //   let timeout = 0;
@@ -254,7 +256,28 @@ export class Dialog {
       }
     }
   }
-
+  detailRect(rect?:any):{x:string,y:string,width:string,height:string}{
+    const keys = ['x','y','width','height']
+    if(rect) {
+      for(let key of keys) {
+        let value = rect[key];
+        if(value) {
+          if(Number(value)) {
+            rect[key] = value + 'px';
+          } else if(!value.match(/\d+(px|vh|vw|%)$/)){
+            value = parseFloat(value);
+            rect[key] = isNaN(value)? undefined: value + 'px';
+          }
+        }
+      }
+    }
+    return {
+      x: rect.x || '50%',
+      y: rect.y || '50%',
+      width: rect.width || '80%',
+      height:rect.height || '420px'
+    }
+  }
   hide() {
     this.box.style.display = 'none';
   }
