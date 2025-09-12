@@ -3863,11 +3863,27 @@ export function calcInView(pen: Pen, calcChild = false) {
       pen.calculative.inView = false;
     }
   }
+  if(store.data.locked && pen.calculative.inView && store.data.roles?.length){
+    pen.calculative.inView = hasPermission(pen,store.data.roles);
+  }
   // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
   // 更改 view 后，修改 dom 节点的显示隐藏
   // pen.onMove?.(pen);
   pen.calculative.singleton?.div &&
     setElemPosition(pen, pen.calculative.singleton.div);
+}
+
+//基于角色判断权限 是否显示
+function hasPermission(pen: Pen, roles: string[]) {
+  if (!pen.roles?.length) {
+    if (pen.parentId) {
+      return hasPermission(getParent(pen, false), roles);
+    } else {
+      return true;
+    }
+  } else {
+    return roles?.some((role) => pen.roles.includes(role));
+  }
 }
 
 /**

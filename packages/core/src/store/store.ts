@@ -85,6 +85,7 @@ export interface Meta2dData {
   disableTranslate?: boolean; //禁止平移
   disableScale?: boolean; //禁止缩放
   asyncTranslate?: boolean; //异步平移
+  roles?: string[]; //角色
 }
 
 export interface Fit {

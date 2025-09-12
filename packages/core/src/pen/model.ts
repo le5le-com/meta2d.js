@@ -431,6 +431,9 @@ export interface Pen extends Rect {
   formType?:string; //表单类型 reset or submit
   className?:string;//dom样式
   styles?:any;
+
+  //业务
+  roles?: string[];
   calculative?: {
     x?: number;
     y?: number;
