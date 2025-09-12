@@ -270,6 +270,7 @@ export interface Pen extends Rect {
   followers?: string[];
 
   anchors?: Point[];
+  anchorVisible?: boolean;
   anchorRadius?: number;
   anchorBackground?: string;
 
