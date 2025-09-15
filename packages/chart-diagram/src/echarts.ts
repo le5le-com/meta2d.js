@@ -45,6 +45,7 @@ let keyWords = [
   'symbolOffset',
   'shadowOffsetY',
   'shadowOffsetX',
+  'itemGap'
 ];
 
 export interface ChartPen extends Pen {
