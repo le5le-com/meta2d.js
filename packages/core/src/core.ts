@@ -679,10 +679,18 @@ export class Meta2d {
       );
       return;
     };
-    this.events[EventAction.Message] = (pen: Pen, e: Event) => {
+    this.events[EventAction.Message] = (pen: Pen, e: Event, params?: any) => {
+      let theme = e.params;
+      let content = e.value
+      if(!content && params && params.type === 'http'){
+        content = params.error.statusText;
+        if(!theme){
+          theme = 'error';
+        }
+      }
       this.message({
-        theme: e.params as any,
-        content: e.value as any,
+        theme,
+        content,
         ...e.extend,
       });
     };
@@ -928,6 +936,8 @@ export class Meta2d {
           e.fn?.(pen, data, { meta2d: this, e });
         }
         console.info('http消息发送成功');
+      }else {
+        this.store.emitter.emit('error', { type: 'http', error: res });
       }
     } else if (network.protocol === 'mqtt') {
       const clients = this.mqttClients?.filter(
