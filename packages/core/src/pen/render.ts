@@ -850,13 +850,14 @@ function getImagePosition(pen: Pen) {
     iconHeight,
     imgNaturalWidth,
     imgNaturalHeight,
+    worldRect
   } = pen.calculative;
   if(!rect) {
     return {
-      x:0,
-      y:0,
-      width: imgNaturalWidth || pen.calculative.img.naturalWidth,
-      height: imgNaturalHeight || pen.calculative.img.naturalHeight,
+      x: worldRect.x,
+      y: worldRect.y,
+      width: worldRect.width || imgNaturalWidth || pen.calculative.img.naturalWidth,
+      height: worldRect.width || imgNaturalHeight || pen.calculative.img.naturalHeight,
     }
   };
   let { x, y, width: w, height: h } = rect;
