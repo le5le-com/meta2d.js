@@ -9082,6 +9082,7 @@ export class Canvas {
     if (this.magnifierCanvas.magnifier) {
       this.externalElements.style.cursor = 'default';
     }
+    this.magnifierCanvas.render();
     this.render();
   }
 
