@@ -208,7 +208,7 @@ export interface Pen extends Rect {
   // canvas 滤镜
   filter?: string;
   placeholder?: string;  //占位符
-  placeholderColor?: string; 
+  placeholderColor?: string;
   text?: string;
   textWidth?: number;
   textHeight?: number;
@@ -322,7 +322,7 @@ export interface Pen extends Rect {
   lineAnimateDash?: number[] | string; // 动画元素间隔
   lineAnimateDashOffset?: number; // 动画元素偏移量
   lineAnimateElementCount?: number ; // 动画元素数量
-  lineAnimateType?: LineAnimateType;
+  lineAnimateType?: LineAnimateType | LineAnimateType[];
   lineAnimateTargetType?: lineAnimateTargetType; // 动画目标元素类型
   lineAnimateElementWidth?: number; // 动画元素宽度
   lineAnimateElementHeight?: number; // 动画元素高度
@@ -348,7 +348,7 @@ export interface Pen extends Rect {
   video?: string;
   audio?: string;
 
-  max?: number; // progress最大值 
+  max?: number; // progress最大值
   min?: number; // progress最小值
   progress?: number;
   progressColor?: string;

@@ -1033,7 +1033,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
     ctx.restore();
   }
-  
+
   if (isEmptyText(text) || hiddenText || pen.hiddenText) {
     return;
   }
@@ -2175,8 +2175,23 @@ export function setCtxLineAnimate(
   }
   pen.calculative.animateLineWidth &&
     (ctx.lineWidth = pen.calculative.animateLineWidth * store.data.scale);
+  if(Array.isArray(pen.lineAnimateType)){
+    pen.lineAnimateType.forEach(type =>{
+      renderLineAnimate(pen,store,type,ctx)
+    })
+  }else {
+    renderLineAnimate(pen,store,pen.lineAnimateType,ctx)
+  }
+}
+
+function renderLineAnimate(
+  pen: Pen,
+  store: Meta2dStore,
+  type: number,
+  ctx: CanvasRenderingContext2D
+){
   let len = 0;
-  switch (pen.lineAnimateType) {
+  switch (type) {
     case LineAnimateType.Beads:
       if (pen.animateReverse) {
         ctx.lineDashOffset = pen.calculative.animatePos;
