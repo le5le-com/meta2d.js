@@ -3065,7 +3065,7 @@ export class Meta2d {
       if(sql.pageSize !== -1){
         if(sql.dbType==="oracle"){
           if(!_sql.includes('OFFSET')){
-            _sql+= ` OFFSET ${(sql.current||1-1)*(sql.pageSize||20)} ROWS FETCH NEXT ${sql.pageSize||20} ROWS ONLY`
+            _sql+= ` OFFSET ${((sql.current||1)-1)*(sql.pageSize||20)} ROWS FETCH NEXT ${sql.pageSize||20} ROWS ONLY`
           }
         }else{
           if(!_sql.includes('LIMIT')){
