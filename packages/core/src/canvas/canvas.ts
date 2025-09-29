@@ -4885,9 +4885,7 @@ export class Canvas {
         continue;
       }
       // if (pen.template) {
-      if (pen.canvasLayer === CanvasLayer.CanvasTemplate 
-        || pen.canvasLayer === CanvasLayer.CanvasImageBottom
-        || pen.canvasLayer === CanvasLayer.CanvasImage) {
+      if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
         continue;
       }
       // if (pen.name === 'combine' && !pen.draw){
