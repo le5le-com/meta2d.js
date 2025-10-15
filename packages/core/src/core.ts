@@ -385,6 +385,16 @@ export class Meta2d {
                 });
               }
               _value[key] = __value;
+            } else if (
+              typeof value[key] === 'string' &&
+              ((value[key].startsWith('{') && value[key].endsWith('}')) ||
+                (value[key].startsWith('[') && value[key].endsWith(']')))
+            ) {
+              try{
+                _value[key] = JSON.parse(value[key]);
+              }catch(e){
+                _value[key] = value[key];
+              }
             } else {
               _value[key] = value[key];
             }
