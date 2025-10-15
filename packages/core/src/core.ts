@@ -4816,6 +4816,9 @@ export class Meta2d {
   }
 
   fillView() {
+    if(this.store.options.unFill){
+      return; //不自适应
+    }
     const rect = this.getRect();
     const wGap = this.canvas.width - rect.width;
     const hGap = this.canvas.height - rect.height;
