@@ -2385,22 +2385,190 @@ function lineAnimateIconRender(icon:any) {
 }
 
 function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:Function) {
-  const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : (line.lineAnimateDash?.split(',').map(i=>Number(i)) || [10,20])
   const scale = line.calculative.canvas.store.data.scale
   const len = getLineLength(line) / scale
-  const elesPos = computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount)
-  elesPos.forEach((i,index)=>{
-    const pos:any = calculateLineFrameStates(line,i.start)
-    if(!pos)return
-    try {
-      ctx.save()
-      draw(ctx,line,pos,index)
-      ctx.restore()
-    }catch (e) {
-      ctx.restore()
-      console.warn(e)
+
+  if (line.lineAnimateFlowMode) {
+    renderFlowElementsOnLine(ctx, line, draw, len, scale)
+  } else {
+    // 原有的间隔重复模式
+    const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : (line.lineAnimateDash?.split(',').map(i=>Number(i)) || [10,20])
+    const elesPos = computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount)
+    elesPos.forEach((i,index)=>{
+      const pos:any = calculateLineFrameStates(line,i.start)
+      if(!pos)return
+      try {
+        ctx.save()
+        draw(ctx,line,pos,index)
+        ctx.restore()
+      }catch (e) {
+        ctx.restore()
+        console.warn(e)
+      }
+    })
+  }
+}
+/**
+ * 水流模式：元素连续流动，循环往复
+ * @param ctx 绘制上下文
+ * @param line 线条画笔
+ * @param draw 绘制函数
+ * @param len 线条长度
+ * @param scale 缩放比例
+ */
+/**
+ * 水流模式：元素连续流动，循环往复
+ * @param ctx 绘制上下文
+ * @param line 线条画笔
+ * @param draw 绘制函数
+ * @param len 线条长度
+ * @param scale 缩放比例
+ */
+/**
+ * 水流模式：元素连续流动，循环往复
+ */
+/**
+ * 水流模式：元素连续流动，循环往复
+ */
+/**
+ * 水流模式：元素连续流动，循环往复
+ */
+function renderFlowElementsOnLine(
+  ctx: CanvasRenderingContext2D,
+  line: Pen,
+  draw: Function,
+  len: number,
+  scale: number
+) {
+  const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : (line.lineAnimateDash?.split(',').map(i=>Number(i)) || [10,20])
+
+  const spacing = (dash[0] || 30) * scale  // 缩放后的间距
+
+  const animatePos = line.calculative.animatePos  // 这是路径长度单位
+  const worldAnchors = line.calculative.worldAnchors
+
+  if (worldAnchors.length > 1) {
+    let from: Point
+    let lastLength = 0  // 累积的路径长度
+
+    for (let i = 0; i < worldAnchors.length; i++) {
+      let pt = worldAnchors[i]
+
+      if (from) {
+        // 计算线段的实际像素距离（世界坐标）
+        const segmentPixelLength = line.length
+
+        // 计算当前线段上第一个元素的偏移
+        let firstOffset = (animatePos - lastLength) % spacing
+
+        // 关键：从负一个间距开始，确保元素无缝进入
+        let offsetInSegment = firstOffset - spacing
+
+        let elementIndex = 0
+
+        // 扩展绘制范围，从负位置到线段末尾
+        while (offsetInSegment < segmentPixelLength) {
+          // 只绘制在线段范围内的元素（>=0）
+          if (offsetInSegment >= 0) {
+            // 计算元素在整条路径上的位置
+            const absolutePos = lastLength + offsetInSegment
+
+            const offsetInstance = (animatePos - absolutePos) / scale
+
+            try {
+              ctx.save()
+              const pos: any = calculateLineFrameStates(line, offsetInstance)
+              if (pos) {
+                draw(ctx, line, pos, elementIndex)
+              }
+              ctx.restore()
+            } catch (e) {
+              ctx.restore()
+              console.warn(e)
+            }
+          }
+
+          offsetInSegment += spacing
+          elementIndex++
+        }
+
+        // lastLength 累积的是像素距离
+        lastLength += segmentPixelLength
+      }
+      from = pt
     }
-  })
+
+    // 处理闭合路径
+    if (line.close) {
+      let pt = worldAnchors[0]
+      if (from) {
+        const segmentPixelLength = Math.sqrt(
+          (pt.x - from.x) ** 2 + (pt.y - from.y) ** 2
+        )
+
+        let firstOffset = (animatePos - lastLength) % spacing
+        let offsetInSegment = firstOffset - spacing
+        let elementIndex = 0
+
+        while (offsetInSegment < segmentPixelLength) {
+          if (offsetInSegment >= 0) {
+            const absolutePos = lastLength + offsetInSegment
+            const offsetInstance = (animatePos - absolutePos) / scale
+
+            try {
+              ctx.save()
+              const pos: any = calculateLineFrameStates(line, offsetInstance)
+              if (pos) {
+                draw(ctx, line, pos, elementIndex)
+              }
+              ctx.restore()
+            } catch (e) {
+              ctx.restore()
+              console.warn(e)
+            }
+          }
+
+          offsetInSegment += spacing
+          elementIndex++
+        }
+      }
+    }
+  }
+}
+/**
+ * 计算水流模式下元素的位置（循环流动）
+ * @param lineLength 线条总长度
+ * @param spacing 元素间距
+ * @param offset 累积的动画偏移量
+ * @param count 元素数量
+ * @returns 元素位置数组
+ */
+function computeFlowPositions(
+  lineLength: number,
+  spacing: number,
+  offset: number,
+  count: number
+): number[] {
+  const positions: number[] = []
+
+  // 从第一个元素开始计算，确保覆盖整条线
+  for (let i = 0; i < count; i++) {
+    // 每个元素的虚拟位置 = 当前偏移 - 索引 * 间距
+    // 减号是因为我们希望元素向前流动
+    const virtualPos = offset - i * spacing
+
+    // 映射到实际线条上的位置（取模实现循环）
+    let actualPos = virtualPos % lineLength
+
+    // 处理负数情况
+    if (actualPos < 0) {
+      actualPos += lineLength
+    }
+
+    positions.push(actualPos)
+  }
+
+  return positions
 }
 type DashSegment = {
   start: number;
@@ -4379,10 +4547,10 @@ function dealWithVisio(command, pen, startX, startY) {
         v: {
           x: xc,
           y: yc,
-          radius: R,
+          radius: Math.abs(R),
           startAngle: startAngle,
           endAngle: endAngle,
-          aclockwise: true,
+          aclockwise: R > 0,
         },
       };
     default:
