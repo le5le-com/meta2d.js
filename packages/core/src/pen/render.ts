@@ -2408,28 +2408,7 @@ function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:Funct
     })
   }
 }
-/**
- * 水流模式：元素连续流动，循环往复
- * @param ctx 绘制上下文
- * @param line 线条画笔
- * @param draw 绘制函数
- * @param len 线条长度
- * @param scale 缩放比例
- */
-/**
- * 水流模式：元素连续流动，循环往复
- * @param ctx 绘制上下文
- * @param line 线条画笔
- * @param draw 绘制函数
- * @param len 线条长度
- * @param scale 缩放比例
- */
-/**
- * 水流模式：元素连续流动，循环往复
- */
-/**
- * 水流模式：元素连续流动，循环往复
- */
+
 /**
  * 水流模式：元素连续流动，循环往复
  */
