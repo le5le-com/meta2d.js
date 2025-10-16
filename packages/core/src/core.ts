@@ -4876,6 +4876,8 @@ export class Meta2d {
             pen.calculative.x = pen.calculative.worldRect.x;
             pen.width = pen.calculative.worldRect.width;
             pen.x = pen.calculative.worldRect.x;
+            pen.textWidth *= ratio
+            pen.calculative.textWidth *= ratio;
             this.canvas.updatePenRect(pen, { worldRectIsReady: false });
             if (pen.externElement) {
               pen.onResize?.(pen);
