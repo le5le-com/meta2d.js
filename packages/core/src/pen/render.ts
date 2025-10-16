@@ -2388,8 +2388,8 @@ function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:Funct
   const scale = line.calculative.canvas.store.data.scale
   const len = getLineLength(line) / scale
 
-  if (line.lineAnimateFlowMode) {
-    renderFlowElementsOnLine(ctx, line, draw, len, scale)
+  if (line.lineAnimateLoopMode) {
+    renderLoopElementsOnLine(ctx, line, draw, len, scale)
   } else {
     // 原有的间隔重复模式
     const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : (line.lineAnimateDash?.split(',').map(i=>Number(i)) || [10,20])
@@ -2433,7 +2433,7 @@ function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:Funct
 /**
  * 水流模式：元素连续流动，循环往复
  */
-function renderFlowElementsOnLine(
+function renderLoopElementsOnLine(
   ctx: CanvasRenderingContext2D,
   line: Pen,
   draw: Function,
@@ -2534,41 +2534,6 @@ function renderFlowElementsOnLine(
       }
     }
   }
-}
-/**
- * 计算水流模式下元素的位置（循环流动）
- * @param lineLength 线条总长度
- * @param spacing 元素间距
- * @param offset 累积的动画偏移量
- * @param count 元素数量
- * @returns 元素位置数组
- */
-function computeFlowPositions(
-  lineLength: number,
-  spacing: number,
-  offset: number,
-  count: number
-): number[] {
-  const positions: number[] = []
-
-  // 从第一个元素开始计算，确保覆盖整条线
-  for (let i = 0; i < count; i++) {
-    // 每个元素的虚拟位置 = 当前偏移 - 索引 * 间距
-    // 减号是因为我们希望元素向前流动
-    const virtualPos = offset - i * spacing
-
-    // 映射到实际线条上的位置（取模实现循环）
-    let actualPos = virtualPos % lineLength
-
-    // 处理负数情况
-    if (actualPos < 0) {
-      actualPos += lineLength
-    }
-
-    positions.push(actualPos)
-  }
-
-  return positions
 }
 type DashSegment = {
   start: number;
