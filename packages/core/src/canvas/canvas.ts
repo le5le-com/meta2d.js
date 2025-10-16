@@ -7542,14 +7542,14 @@ export class Canvas {
       style += `margin-left:${
         scale > 1
           ? pen.textLeft * font_scale
-          : (pen.textLeft * font_scale) / scale
+          : (pen.textLeft * font_scale) // scale
       }px;`;
     }
     if (pen.textTop) {
       style += `margin-top:${
         scale > 1
           ? pen.textTop * font_scale
-          : (pen.textTop * font_scale) / scale
+          : (pen.textTop * font_scale) // scale
       }px;`;
     }
     if (pen.lineHeight) {
