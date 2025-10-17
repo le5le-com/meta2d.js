@@ -326,6 +326,7 @@ export interface Pen extends Rect {
   lineAnimateTargetType?: lineAnimateTargetType; // 动画目标元素类型
   lineAnimateElementWidth?: number; // 动画元素宽度
   lineAnimateElementHeight?: number; // 动画元素高度
+  lineAnimateLoopMode?: boolean; //是否开启循环模式
 
   animateName?: string; // 当前执行的动画名称
   frames?: Pen[];
