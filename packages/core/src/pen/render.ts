@@ -4457,8 +4457,8 @@ function dealWithVisio(command, pen, startX, startY) {
     case 'ArcTo':
       let endX2 = (command.v.X * 100 * width) / originWidth + x;
       let endY2 = (command.v.Y * 100 * height) / originHeight + y;
-      let h =
-        command.v.A * 100 * (width / height) * (originHeight / originWidth);
+      let h = command.v.A * 100 * pen.calculative.canvas.store.data.scale;
+
       // 计算弦的中点
       let xm = (startX + endX2) / 2;
       let ym = (startY + endY2) / 2;
@@ -4466,38 +4466,60 @@ function dealWithVisio(command, pen, startX, startY) {
       // 计算弦的长度
       let d = Math.sqrt((endX2 - startX) ** 2 + (endY2 - startY) ** 2);
 
-      // 计算圆弧的半径
-      let R = d ** 2 / (8 * h) + h / 2;
+      // 特殊情况：如果弧高为0或弦长为0，直接画直线
+      if (Math.abs(h) < 0.001 || d < 0.001) {
+        return {
+          c: 'lineTo',
+          v: { x: endX2, y: endY2 }
+        };
+      }
 
-      // 计算单位垂直向量
+      // 计算圆弧的半径
+      let R = (d * d) / (8 * Math.abs(h)) + Math.abs(h) / 2;
+
+      // 计算垂直于弦的单位向量（向左侧，逆时针旋转90度）
       let ux = -(endY2 - startY) / d;
       let uy = (endX2 - startX) / d;
 
-      // 计算两个可能的圆心
-      let xc1 = xm + ux * R;
-      let yc1 = ym + uy * R;
-      let xc2 = xm - ux * R;
-      let yc2 = ym - uy * R;
+      // 圆心到弦中点的距离
+      let centerDist = R - Math.abs(h);
 
-      // 选择一个圆心
-      let xc = xc1;
-      let yc = yc1;
+      // 根据A的符号选择圆心位置
+      // A>0: 弧向左侧凸起，圆心在右侧
+      // A<0: 弧向右侧凸起，圆心在左侧
+      let xc = xm - Math.sign(h) * ux * centerDist;
+      let yc = ym - Math.sign(h) * uy * centerDist;
 
-      // 计算起点和终点到圆心的角度
+      // 计算起点和终点相对于圆心的角度
       let startAngle = Math.atan2(startY - yc, startX - xc);
       let endAngle = Math.atan2(endY2 - yc, endX2 - xc);
+
+      // 确定绘制方向
+      // 计算角度差，归一化到[-π, π]
+      let angleDiff = endAngle - startAngle;
+      while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+      while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+      // A>0时，应该逆时针绘制较小的弧
+      // A<0时，应该顺时针绘制较小的弧
+      let anticlockwise = h > 0;
+
+      if ((anticlockwise && angleDiff > 0) || (!anticlockwise && angleDiff < 0)) {
+        [startAngle, endAngle] = [endAngle, startAngle];
+        anticlockwise = !anticlockwise;
+      }
+
       return {
         c: 'arc',
         v: {
           x: xc,
           y: yc,
-          radius: Math.abs(R),
+          radius: R,
           startAngle: startAngle,
           endAngle: endAngle,
-          aclockwise: R > 0,
+          anticlockwise: anticlockwise,
         },
-      };
-    default:
+      };    default:
       const cloneCommand = deepClone(command)
       Object.entries(cloneCommand.v).forEach(([k,v]:any)=>{
         // 表明此类型为
