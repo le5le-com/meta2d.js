@@ -7525,8 +7525,8 @@ export class Canvas {
     }
     if (pen.fontSize) {
       if (pen.fontSize * scale < 12) {
-        style += `font-size:${pen.fontSize}px;`;
-        style += `zoom:${(pen.fontSize / 12) * scale};`;
+        style += `font-size:${pen.calculative.fontSize}px;`;
+        // style += `zoom:${(pen.fontSize / 12) * scale};`;
       } else {
         style += `font-size:${pen.fontSize * scale}px;`;
       }
@@ -7541,8 +7541,8 @@ export class Canvas {
     if (pen.textLeft) {
       style += `margin-left:${
         scale > 1
-          ? pen.textLeft * font_scale
-          : (pen.textLeft * font_scale) // scale
+          ? pen.textLeft * scale
+          : (pen.textLeft * scale) // scale
       }px;`;
     }
     if (pen.textTop) {
@@ -7556,7 +7556,7 @@ export class Canvas {
       style += `line-height:${
         scale > 1
           ? pen.fontSize * pen.lineHeight * scale
-          : pen.fontSize * pen.lineHeight * font_scale
+          : pen.calculative.fontSize * pen.lineHeight
       }px;`;
     }
     if (pen.textHeight) {
@@ -7571,7 +7571,7 @@ export class Canvas {
         tem = 0;
       }
       let height =
-        pen.fontSize * scale < 12 ? tem * font_scale : tem * scale * font_scale;
+        pen.fontSize * scale < 12 ? tem * scale * font_scale : tem * scale * font_scale;
       if (height < pen.fontSize * pen.lineHeight * scale) {
         height = pen.fontSize * pen.lineHeight * scale;
         style += `top:-${height / 2}px;`;
@@ -7584,17 +7584,18 @@ export class Canvas {
     
     let _textWidth = null;
     if (pen.textWidth) {
-      _textWidth =
-        pen.textWidth < 1 && pen.textWidth > -1
-          ? pen.textWidth * pen.calculative.worldRect.width
-          : pen.textWidth;
+      // _textWidth =
+      //   pen.textWidth < 1 && pen.textWidth > -1
+      //     ? pen.textWidth * pen.calculative.worldRect.width
+      //     : pen.textWidth;
+      _textWidth = pen.calculative.textWidth;
       if (pen.whiteSpace !== 'pre-line') {
         if (_textWidth < pen.fontSize) {
           style += `width:${pen.fontSize * 1.2 * font_scale}px;`;
         } else {
           style += `width:${
             scale > 1
-              ? _textWidth * font_scale * scale
+              ? _textWidth * font_scale
               : _textWidth * font_scale
           }px;`;
         }
@@ -7606,7 +7607,7 @@ export class Canvas {
           tem = 0;
         }
         style += `width:${
-          pen.fontSize * scale < 12 ? tem * font_scale : tem * scale
+          pen.fontSize * scale < 12 ? tem * scale : tem * scale
         }px;`;
       }
       // if (pen.whiteSpace === 'pre-line') {
