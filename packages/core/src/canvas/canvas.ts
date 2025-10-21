@@ -177,6 +177,7 @@ export class Canvas {
   touchScaling?: boolean;
   touchMoving?: boolean;
   startTouches?: TouchList;
+  lastTouchY?: number; 
 
   lastOffsetX = 0;
   lastOffsetY = 0;
@@ -1578,6 +1579,7 @@ export class Canvas {
   }
 
   ontouchstart = (e: TouchEvent) => {
+    this.lastTouchY = e.touches[0].clientY
     if (this.store.data.locked === LockState.Disable) {
       return;
     }
@@ -1662,6 +1664,12 @@ export class Canvas {
     const x = event.touches[0].pageX - this.clientRect.x;
     const y = event.touches[0].pageY - this.clientRect.y;
     if (len === 1) {
+      if (this.store.options.scroll && this.scroll && !this.store.options.scrollButScale) {
+        let diff = this.lastTouchY - event.touches[0].clientY;
+        this.scroll.wheel(diff < 0);
+        this.lastTouchY = event.touches[0].clientY;
+        return;
+      }
       this.onMouseMove({
         x,
         y,
