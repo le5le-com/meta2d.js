@@ -4519,7 +4519,10 @@ function dealWithVisio(command, pen, startX, startY) {
           endAngle: endAngle,
           anticlockwise: anticlockwise,
         },
-      };    default:
+        startX: endX2,
+        startY: endY2,
+      };
+    default:
       const cloneCommand = deepClone(command)
       Object.entries(cloneCommand.v).forEach(([k,v]:any)=>{
         // 表明此类型为
