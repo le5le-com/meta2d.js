@@ -228,6 +228,9 @@ export class Canvas {
     metaKey?:boolean;
     F?:boolean;
   }
+
+  isMobile?: boolean = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   /**
    * @deprecated 改用 beforeAddPens
    */
@@ -304,6 +307,7 @@ export class Canvas {
     this.externalElements.style.background = 'transparent';
     this.externalElements.style.zIndex = '5';
     parentElement.style.position = 'relative';
+    parentElement.style['-webkit-tap-highlight-color'] = 'transparent'
     parentElement.appendChild(this.externalElements);
     this.createInput();
 
@@ -358,6 +362,9 @@ export class Canvas {
     this.externalElements.ontouchmove = this.ontouchmove;
     this.externalElements.ontouchend = this.ontouchend;
     this.externalElements.onmousedown = (e) => {
+      if(this.isMobile){
+        return;
+      }
       this.onMouseDown({
         x: e.offsetX,
         y: e.offsetY,
@@ -372,6 +379,9 @@ export class Canvas {
       });
     };
     this.externalElements.onmousemove = (e) => {
+      if(this.isMobile){
+        return;
+      }
       if (e.target !== this.externalElements) {
         return;
       }
@@ -389,6 +399,9 @@ export class Canvas {
       });
     };
     this.externalElements.onmouseup = (e) => {
+      if(this.isMobile){
+        return;
+      }
       this.onMouseUp({
         x: e.offsetX,
         y: e.offsetY,
