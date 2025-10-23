@@ -433,6 +433,8 @@ export interface Pen extends Rect {
   className?:string;//dom样式
   styles?:any;
 
+  hoverCursor?: string; //hover鼠标样式
+
   //业务
   roles?: string[];
   calculative?: {

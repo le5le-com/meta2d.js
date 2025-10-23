@@ -3510,7 +3510,7 @@ export class Canvas {
               this.externalElements.style.cursor = 'move';
             }
           } else {
-            this.externalElements.style.cursor = this.store.options.hoverCursor;
+            this.externalElements.style.cursor = pen.hoverCursor || this.store.options.hoverCursor;
           }
           if(pen.calculative.disabled){
             this.externalElements.style.cursor = 'not-allowed';
@@ -3559,7 +3559,7 @@ export class Canvas {
               this.externalElements.style.cursor = 'move';
             }
           } else {
-            this.externalElements.style.cursor = this.store.options.hoverCursor;
+            this.externalElements.style.cursor = pen.hoverCursor || this.store.options.hoverCursor;
           }
           if(pen.calculative.disabled){
             this.externalElements.style.cursor = 'not-allowed';
