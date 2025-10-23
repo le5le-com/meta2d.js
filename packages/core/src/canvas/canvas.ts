@@ -208,6 +208,7 @@ export class Canvas {
   touchStart = 0;
   touchStartTimer: any;
   timer: any;
+  lastTapTime: number = 0;
 
   private lastAnimateRender = 0;
   animateRendering = false;
@@ -438,7 +439,12 @@ export class Canvas {
       }
     };
 
-    this.externalElements.ondblclick = this.ondblclick;
+    this.externalElements.ondblclick = (e)=>{
+      if(this.isMobile){
+        return;
+      }
+      this.ondblclick(e)
+    };
     this.externalElements.tabIndex = 0;
     this.externalElements.onblur = () => {
       this.mouseDown = undefined;
@@ -1596,6 +1602,15 @@ export class Canvas {
     if (this.store.data.locked === LockState.Disable) {
       return;
     }
+    
+    const currentTime = new Date().getTime();
+    const tapTime = currentTime - this.lastTapTime;
+    if (tapTime < 300 && tapTime > 0) {
+      //双击
+      this.ondblclick(e as any);
+    }
+    this.lastTapTime = currentTime;
+
     if (this.touchStartTimer) {
       clearTimeout(this.touchStartTimer);
     }
@@ -1759,22 +1774,21 @@ export class Canvas {
 
     const x = event.changedTouches[0].pageX - this.clientRect.x;
     const y = event.changedTouches[0].pageY - this.clientRect.y;
-
-    this.onMouseUp({
-      x,
-      y,
-      clientX: event.changedTouches[0].clientX,
-      clientY: event.changedTouches[0].clientY,
-      pageX: event.changedTouches[0].pageX,
-      pageY: event.changedTouches[0].pageY,
-      ctrlKey: event.ctrlKey || event.metaKey,
-      shiftKey: event.shiftKey,
-      altKey: event.altKey,
-      buttons: 1,
-    });
-    setTimeout(() => {
+    setTimeout(() => { //ontouchstart防抖之后
+      this.onMouseUp({
+        x,
+        y,
+        clientX: event.changedTouches[0].clientX,
+        clientY: event.changedTouches[0].clientY,
+        pageX: event.changedTouches[0].pageX,
+        pageY: event.changedTouches[0].pageY,
+        ctrlKey: event.ctrlKey || event.metaKey,
+        shiftKey: event.shiftKey,
+        altKey: event.altKey,
+        buttons: 1,
+      });
       this.render();
-    }, 20);
+    }, 60);
   };
 
   onGesturestart = (e) => {
