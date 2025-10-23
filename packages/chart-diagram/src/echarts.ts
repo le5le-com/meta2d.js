@@ -58,6 +58,7 @@ export interface ChartPen extends Pen {
     geoName?: string;
     geoJson?: any;
     geoUrl?: string;
+    disabled?: boolean;
     diabled?: boolean; //通过脚本setOption后，禁止默认拿到echarts.option去设置图元
     replaceMerge?: string; // 替换合并
     timeKeys?: string[]; // 时间键
@@ -266,7 +267,7 @@ function scale(pen: ChartPen) {
   // let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
   // updateOption(option, ratio);
   if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) return;
-  if(!pen.echarts.diabled){
+  if(!(pen.echarts.diabled||pen.echarts.disabled)){
     if(pen.echarts.option?.dataZoom){
       //用户调整dataZoom后
       const options =pen.calculative.singleton.echart.getOption();
