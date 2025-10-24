@@ -3862,6 +3862,7 @@ export class Canvas {
   clearCanvas() {
     this.activeRect = undefined;
     this.sizeCPs = undefined;
+    this.__loadFailSet = new Set()
     this.canvas
       .getContext('2d')
       .clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -4668,8 +4669,10 @@ export class Canvas {
     }
   }
 
+  __loadFailSet = new Set()
   // 加载图片到全局缓存
   __loadImage(src: string, retryNum = 5) {
+    if(this.__loadFailSet.has(src))return
     return new Promise((resolve, reject) => {
       if (!globalStore.htmlElements[src]) {
         const img = new Image();
@@ -4701,6 +4704,7 @@ export class Canvas {
               this.__loadImage(src, retryNum - 1).then(resolve).catch(reject);
             }, 1000);
           } else {
+            this.__loadFailSet.add(src)
             reject(new Error(`Failed to load image: ${src}`));
           }
         };
