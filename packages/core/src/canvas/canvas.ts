@@ -177,7 +177,7 @@ export class Canvas {
   touchScaling?: boolean;
   touchMoving?: boolean;
   startTouches?: TouchList;
-  lastTouchY?: number; 
+  lastTouchY?: number;
 
   lastOffsetX = 0;
   lastOffsetY = 0;
@@ -1602,7 +1602,7 @@ export class Canvas {
     if (this.store.data.locked === LockState.Disable) {
       return;
     }
-    
+
     const currentTime = new Date().getTime();
     const tapTime = currentTime - this.lastTapTime;
     if (tapTime < 300 && tapTime > 0) {
@@ -4669,12 +4669,13 @@ export class Canvas {
   }
 
   // 加载图片到全局缓存
-  __loadImage(src:string){
-    return new Promise(resolve=>{
-      if(!globalStore.htmlElements[src]){
+  __loadImage(src: string, retryNum = 5) {
+    return new Promise((resolve, reject) => {
+      if (!globalStore.htmlElements[src]) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = src;
+
+        // 处理 CDN 路径
         if (
           this.store.options.cdn &&
           !(
@@ -4684,15 +4685,29 @@ export class Canvas {
           )
         ) {
           img.src = this.store.options.cdn + src;
+        } else {
+          img.src = src;
         }
+
         img.onload = () => {
           globalStore.htmlElements[src] = img;
           resolve(img);
         };
-      }else{
+
+        img.onerror = () => {
+          if (retryNum > 0) {
+            console.warn(`Image ${src} load failed, retrying... (${retryNum})`);
+            setTimeout(() => {
+              this.__loadImage(src, retryNum - 1).then(resolve).catch(reject);
+            }, 1000);
+          } else {
+            reject(new Error(`Failed to load image: ${src}`));
+          }
+        };
+      } else {
         resolve(globalStore.htmlElements[src]);
       }
-    })
+    });
   }
   private imageTimer: any;
   // 避免初始化图片加载重复调用 render，此处防抖
@@ -6999,7 +7014,7 @@ export class Canvas {
       offset && (this.store.clipboard.offset = offset);
       pos && (this.store.clipboard.pos = pos);
     }
-    
+
     const rootPens = this.store.clipboard.pens.filter((pen) => !pen.parentId);
     for (const pen of rootPens) {
       this.pastePen(pen, undefined);
@@ -7616,7 +7631,7 @@ export class Canvas {
     if(pen.letterSpacing){
       style += `letter-spacing:${pen.calculative.letterSpacing}px;`
     }
-    
+
     let _textWidth = null;
     if (pen.textWidth) {
       // _textWidth =
