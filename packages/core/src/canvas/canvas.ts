@@ -3862,7 +3862,7 @@ export class Canvas {
   clearCanvas() {
     this.activeRect = undefined;
     this.sizeCPs = undefined;
-    this.__loadFailSet = new Set()
+    this.__loadMap = new Map()
     this.canvas
       .getContext('2d')
       .clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -4669,11 +4669,11 @@ export class Canvas {
     }
   }
 
-  __loadFailSet = new Set()
+  __loadMap = new Map()
   // 加载图片到全局缓存
   __loadImage(src: string, retryNum = 5) {
-    if(this.__loadFailSet.has(src))return
-    return new Promise((resolve, reject) => {
+    if(this.__loadMap.has(src))return this.__loadMap.get(src); // promise
+    const promise = new Promise((resolve, reject) => {
       if (!globalStore.htmlElements[src]) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -4694,6 +4694,7 @@ export class Canvas {
 
         img.onload = () => {
           globalStore.htmlElements[src] = img;
+          this.__loadMap.delete(src); // 成功后清理
           resolve(img);
         };
 
@@ -4701,10 +4702,11 @@ export class Canvas {
           if (retryNum > 0) {
             console.warn(`Image ${src} load failed, retrying... (${retryNum})`);
             setTimeout(() => {
+              this.__loadMap.delete(src)
               this.__loadImage(src, retryNum - 1).then(resolve).catch(reject);
             }, 1000);
           } else {
-            this.__loadFailSet.add(src)
+            this.__loadMap.set(src,0)
             reject(new Error(`Failed to load image: ${src}`));
           }
         };
@@ -4712,6 +4714,9 @@ export class Canvas {
         resolve(globalStore.htmlElements[src]);
       }
     });
+    this.__loadMap.set(src, promise);
+
+    return promise
   }
   private imageTimer: any;
   // 避免初始化图片加载重复调用 render，此处防抖
