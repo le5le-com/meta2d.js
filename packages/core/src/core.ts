@@ -1,4 +1,4 @@
-import { commonAnchors, commonPens, cube, reset, updateFormData } from './diagrams';
+import { clearIframes, commonAnchors, commonPens, cube, updateIframes, reset, updateFormData } from './diagrams';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options, PenPlugin, PluginOptions } from './options';
@@ -1119,6 +1119,7 @@ export class Meta2d {
       if(data.theme){
         this.setTheme(data.theme);
       }
+      updateIframes(data.pens);
       this.setBackgroundImage(data.bkImage, data);
       Object.assign(this.store.data, data);
       this.store.data.pens = [];
@@ -6664,6 +6665,7 @@ export class Meta2d {
   setLifeCycleFunc = setLifeCycleFunc;
   destroy(onlyData?: boolean) {
     this.clear(false);
+    clearIframes();
     this.stopDataMock();
     this.closeSocket();
     this.closeNetwork();

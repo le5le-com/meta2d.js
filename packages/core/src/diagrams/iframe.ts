@@ -2,6 +2,36 @@ import { Pen, setElemPosition } from '../pen';
 import { Point } from '../point';
 import { deepClone, getRootDomain } from '../utils';
 
+const iframes:{
+   [key: string]: HTMLElement;
+} = {};
+
+export function clearIframes() {
+  for(const key in iframes){
+    iframes[key].remove();
+    iframes[key] = null;
+  }
+  iframes;
+}
+
+export function updateIframes(pens: Pen[]) {
+  for(const key in iframes){
+    if (!pens.some((pen) => pen.name == 'iframe' && pen.iframe == key)) {
+      iframes[key].remove();
+      iframes[key] = null;
+    }
+  }
+}
+
+function matchIframe(pen: Pen) {
+  const div = iframes[pen.iframe];
+  if (div) {
+    pen.calculative.singleton.div = div;
+    return true;
+  }
+  return false;
+}
+
 export function iframe(pen: Pen) {
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
@@ -19,6 +49,9 @@ export function iframe(pen: Pen) {
   const worldRect = pen.calculative.worldRect;
 
   if (!pen.calculative.singleton.div) {
+    if(matchIframe(pen)){
+      return
+    }
     const div = document.createElement('div');
     div.style.position = 'absolute';
     div.style.outline = 'none';
@@ -55,7 +88,8 @@ export function iframe(pen: Pen) {
 function destory(pen: Pen) {
   updatePointerEvents(pen);
   if (pen.calculative.singleton && pen.calculative.singleton.div) {
-    pen.calculative.singleton.div.remove();
+    // pen.calculative.singleton.div.remove();
+    iframes[pen.calculative.iframe] = pen.calculative.singleton.div;
     delete pen.calculative.singleton.div;
   }
 }
