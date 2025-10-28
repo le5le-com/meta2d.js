@@ -2304,21 +2304,21 @@ function setElementAnimateOnLine(ctx:CanvasRenderingContext2D,line:Pen,type:stri
 }
 
 function lineAnimateImageRender(imgs: HTMLImageElement[]) {
-
-  return function(ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
+  return function(ctx: CanvasRenderingContext2D, pen: Pen, state: any, index: number) {
     const scale = pen.calculative.canvas.store.data.scale;
     const width = (pen.lineAnimateElementWidth || 10);
     const height = (pen.lineAnimateElementHeight || 10);
-    const img:HTMLImageElement = imgs[index % imgs.length];
-    if(!img)return;
+    const img: HTMLImageElement = imgs[index % imgs.length];
+    if (!img) return;
 
-    ctx.beginPath();
-    ctx.translate(state.x + (width / 2 * scale), state.y + (height / 2 * scale));  // 平移到中心点
+    ctx.save();
+    ctx.translate(state.x, state.y);
     ctx.rotate((state.rotate * Math.PI) / 180);
     ctx.scale(scale, scale);
-    ctx.translate(-(width / 2* scale), -(height / 2 * scale));  // 平移回左上角
-    ctx.drawImage(img, 0, 0, width, height);
-}
+    ctx.drawImage(img, -width / 2, -height / 2, width, height);
+
+    ctx.restore();
+  }
 }
 function lineAnimatePenRender(tracks:Pen[]) {
   return function (ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
@@ -2355,14 +2355,11 @@ function lineAnimatePenRender(tracks:Pen[]) {
 function lineAnimateIconRender(icon:any) {
   return function(ctx:CanvasRenderingContext2D,pen:Pen,state:any,index:number) {
     const scale = pen.calculative.canvas.store.data.scale;
-    const width = (pen.lineAnimateElementWidth || 10);
-    const height = (pen.lineAnimateElementHeight || 10) ;
 
     ctx.beginPath();
-    ctx.translate(state.x + (width / 2 * scale), state.y + (height / 2 * scale));  // 平移到中心点
+    ctx.translate(state.x, state.y);
     ctx.rotate((state.rotate * Math.PI) / 180);
     ctx.scale(scale, scale);
-    ctx.translate(-(width / 2* scale), -(height / 2 * scale));  // 平移回左上角
 
     const fontWeight = pen.calculative.iconWeight;
     let fontSize: number = undefined;
