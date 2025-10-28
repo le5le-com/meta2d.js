@@ -164,7 +164,7 @@ export class Dialog {
     }
   }
 
-  async show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number},data?:any) {
+  async show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number, background?:string},data?:any) {
     if(!url){
       return;
     }
@@ -198,7 +198,7 @@ export class Dialog {
       this.body.style.height = 'calc(100% - 30px)';
       this.close.style.top = '2px';
       this.close.style.right = '2px';
-      this.body.style.background = '#1e2430';
+      this.dialog.style.background = rect.background || this.store.data.background || '#1e2430';
     }
     if(rect) {
       const { x, y, width, height } = this.detailRect(rect);
