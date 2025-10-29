@@ -164,15 +164,15 @@ function beforeValue(pen: Pen, value: any) {
   }
   if (value.blur !== undefined) {
     for (let i = 1; i < 5; i++) {
-      pen.calculative.singleton.div.children[i].style[
+      pen.calculative.singleton.div.children[i]&&(pen.calculative.singleton.div.children[i].style[
         'backdrop-filter'
-      ] = `blur(${value.blur}px)`;
+      ] = `blur(${value.blur}px)`);
     }
   }
   if (value.blurBackground !== undefined) {
     for (let i = 1; i < 5; i++) {
-      pen.calculative.singleton.div.children[i].style.backgroundColor =
-        value.blurBackground;
+      pen.calculative.singleton.div.children[i]&&(pen.calculative.singleton.div.children[i].style.backgroundColor =
+        value.blurBackground);
     }
   }
   return value;
