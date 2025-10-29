@@ -88,7 +88,10 @@ export function iframe(pen: Pen) {
 function destory(pen: Pen) {
   updatePointerEvents(pen);
   if (pen.calculative.singleton && pen.calculative.singleton.div) {
-    // pen.calculative.singleton.div.remove();
+    if(!pen.calculative.canvas.store.data.locked){
+      // 手动删除iframe
+      pen.calculative.singleton.div.remove();
+    }
     iframes[pen.calculative.iframe] = pen.calculative.singleton.div;
     delete pen.calculative.singleton.div;
   }
