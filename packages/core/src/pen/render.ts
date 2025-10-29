@@ -1070,7 +1070,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     lineHeight,
   });
 
-  !pen.calculative.textDrawRect && calcTextDrawRect(ctx, pen);
+  (!pen.calculative.textDrawRect || pen.calculative.fontsChecked) && calcTextDrawRect(ctx, pen);
   const {
     x: drawRectX,
     y: drawRectY,

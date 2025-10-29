@@ -87,7 +87,13 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   const lineHeightValue = fontSize * lineHeight;
   const h = textLines.length * lineHeightValue;
-
+  if (pen.calculative.fontsChecked !== false) {
+    if (!document.fonts.check(ctx.font)) {
+      pen.calculative.fontsChecked = true;
+    } else {
+      pen.calculative.fontsChecked = false;
+    }
+  }
   const textWidth = calcTextAdaptionWidth(ctx, pen); // 多行文本最大宽度
 
   let x = rect.x + (rect.width - textWidth) / 2;
@@ -296,7 +302,7 @@ export function calcTextAdaptionWidth(
       // 文字渐变 measureText 计算有误
       width = getFontWith(text,pen) + text.length * pen.calculative.letterSpacing;
     }else{
-      width = ctx.measureText(text).width + text.length * pen.calculative.letterSpacing;
+      width = ctx.measureText(text).width + text.length * pen.calculative.letterSpacing;  
     }
     pen.calculative.textLineWidths.push(width);
     maxWidth < width && (maxWidth = width);

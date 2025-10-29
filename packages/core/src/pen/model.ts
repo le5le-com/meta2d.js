@@ -535,6 +535,7 @@ export interface Pen extends Rect {
     iconColor?: string;
     iconFamily?: string;
     iconWeight?: string;
+    fontsChecked?: boolean; // 处理字体加载慢于文字宽度计算
 
     // 绝对值，计算后的结果
     paddingTop?: number;
