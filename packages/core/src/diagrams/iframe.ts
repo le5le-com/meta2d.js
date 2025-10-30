@@ -3,7 +3,7 @@ import { Point } from '../point';
 import { deepClone, getRootDomain } from '../utils';
 
 const iframes:{
-   [key: string]: HTMLElement;
+  [key: string]: HTMLElement;
 } = {};
 
 export function clearIframes() {
@@ -27,6 +27,7 @@ function matchIframe(pen: Pen) {
   const div = iframes[pen.iframe];
   if (div) {
     pen.calculative.singleton.div = div;
+    generateAroundDiv(pen);
     return true;
   }
   return false;
@@ -88,12 +89,14 @@ export function iframe(pen: Pen) {
 function destory(pen: Pen) {
   updatePointerEvents(pen);
   if (pen.calculative.singleton && pen.calculative.singleton.div) {
-    if(!pen.calculative.canvas.store.data.locked){
+    if (!pen.calculative.canvas.store.data.locked) {
       // 手动删除iframe
       pen.calculative.singleton.div.remove();
+      iframes[pen.calculative.iframe] = null;
+    }else{
+      iframes[pen.calculative.iframe] = pen.calculative.singleton.div;
+      delete pen.calculative.singleton.div;
     }
-    iframes[pen.calculative.iframe] = pen.calculative.singleton.div;
-    delete pen.calculative.singleton.div;
   }
 }
 
@@ -168,14 +171,14 @@ function beforeValue(pen: Pen, value: any) {
   if (value.blur !== undefined) {
     for (let i = 1; i < 5; i++) {
       pen.calculative.singleton.div.children[i]&&(pen.calculative.singleton.div.children[i].style[
-        'backdrop-filter'
-      ] = `blur(${value.blur}px)`);
+          'backdrop-filter'
+        ] = `blur(${value.blur}px)`);
     }
   }
   if (value.blurBackground !== undefined) {
     for (let i = 1; i < 5; i++) {
       pen.calculative.singleton.div.children[i]&&(pen.calculative.singleton.div.children[i].style.backgroundColor =
-        value.blurBackground);
+          value.blurBackground);
     }
   }
   return value;
@@ -226,6 +229,12 @@ function initOperationalRect(operationalRect) {
   }
 }
 
+function removeAllButFirst(parent) {
+  while (parent.childNodes.length > 1) {
+      parent.removeChild(parent.lastChild);
+  }
+}
+
 function generateAroundDiv(pen: Pen) {
   if (!initOperationalRect(pen.operationalRect)) {
     return;
@@ -234,7 +243,9 @@ function generateAroundDiv(pen: Pen) {
   if (!div) {
     return;
   }
-  const isLinux =navigator.userAgent.indexOf('Linux') > -1; //Kylin OS会闪屏
+
+  div.childNodes.length>1 && removeAllButFirst(div);
+  const isLinux = navigator.userAgent.indexOf('Linux') > -1; //Kylin OS会闪屏
   const top = document.createElement('div');
   top.style.position = 'absolute';
   top.style.left = pen.operationalRect.x * 100 + '%';
