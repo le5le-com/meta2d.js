@@ -823,7 +823,7 @@ export class Meta2d {
       }else{
         this.fitView(true, 10);
       }
-      document.title = data.name + "-" + window.name;
+      // document.title = data.name + "-" + window.name;
     }
   }
 
