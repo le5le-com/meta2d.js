@@ -7521,7 +7521,7 @@ export class Canvas {
     } else {
       // this.inputRight.style.display = 'none';
     }
-    this.inputDiv.contentEditable = 'true';
+    this.inputDiv.contentEditable = pen.readonly ? 'false' : 'true';
     this.inputDiv.focus();
     const range = window.getSelection(); //创建range
     range.selectAllChildren(this.inputDiv); //range 选择obj下所有子内容
