@@ -666,7 +666,7 @@ export interface Pen extends Rect {
   onBeforeValue?: (pen: Pen, value: ChartData) => any;
   onDestroy?: (pen: Pen) => void;
   onMove?: (pen: Pen) => void;
-  onResize?: (pen: Pen) => void;
+  onResize?: (pen: Pen, raw?: boolean) => void; // raw : 是否是原生resize触发的，scale也会触发resize事件
   onRotate?: (pen: Pen) => void;
   onScale?: (pen: Pen) => void;
   onClick?: (pen: Pen, e: Point) => void;
