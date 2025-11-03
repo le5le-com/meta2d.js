@@ -5744,7 +5744,7 @@ export class Canvas {
       calcRightBottom(pen.calculative.worldRect);
       calcCenter(pen.calculative.worldRect);
       this.updatePenRect(pen, { worldRectIsReady: true });
-      this.execPenResize(pen);
+      this.execPenResize(pen, true);
       this.updateLines(pen);
     });
     this.getSizeCPs();
@@ -8285,11 +8285,11 @@ export class Canvas {
   /**
    * 执行 pen ，以及 pen 的子孙节点的 onResize 生命周期函数
    */
-  private execPenResize(pen: Pen) {
-    pen.onResize?.(pen);
+  private execPenResize(pen: Pen,raw?: boolean) {
+    pen.onResize?.(pen, raw);
     pen.children?.forEach((chlidId) => {
       const child = this.store.pens[chlidId];
-      child && this.execPenResize(child);
+      child && this.execPenResize(child, raw);
     });
   }
 
@@ -8305,7 +8305,7 @@ export class Canvas {
       pen.height = rect.height * scale;
     }
     this.updatePenRect(pen);
-    this.execPenResize(pen);
+    this.execPenResize(pen, true);
 
     render && this.render();
   }
