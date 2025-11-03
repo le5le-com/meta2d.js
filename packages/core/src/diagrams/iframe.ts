@@ -8,7 +8,7 @@ const iframes:{
 
 export function clearIframes() {
   for(const key in iframes){
-    iframes[key].remove();
+    iframes[key]?.remove();
     iframes[key] = null;
   }
   iframes;
@@ -17,7 +17,7 @@ export function clearIframes() {
 export function updateIframes(pens: Pen[]) {
   for(const key in iframes){
     if (!pens.some((pen) => pen.name == 'iframe' && pen.iframe == key)) {
-      iframes[key].remove();
+      iframes[key]?.remove();
       iframes[key] = null;
     }
   }
