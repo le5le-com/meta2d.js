@@ -594,6 +594,9 @@ export class Canvas {
           }),
         '*');
       }
+      if(data.name === 'closeDialog'){
+        this.dialog.hide();
+      }
       this.parent.doMessageEvent(data.name, JSON.stringify(data.data));
     }else{
       this.parent.doMessageEvent(data);

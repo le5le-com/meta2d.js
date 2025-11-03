@@ -1,6 +1,19 @@
 import { Meta2d } from "../core";
 import { getMeta2dData } from "../utils";
 import { Meta2dStore } from '../store';
+
+interface DialogStyle{
+  x:number;
+  y:number;
+  width:number;
+  height:number;
+  background?:string;
+  maskBackground?:string;
+  hideClose?:boolean;
+  closeTop?:number;
+  closeRight?:number;
+}
+
 export class Dialog {
   box: HTMLElement;
   iframe: HTMLIFrameElement;
@@ -164,7 +177,7 @@ export class Dialog {
     }
   }
 
-  async show(title?: string, url?: string, rect?:{x:number,y:number,width:number,height:number, background?:string},data?:any) {
+  async show(title?: string, url?: string, rect?:DialogStyle,data?:any) {
     if(!url){
       return;
     }
@@ -189,17 +202,18 @@ export class Dialog {
       this.title.style.display = 'none';
       this.body.style.height = '100%';
       this.body.style.overflow= 'hidden';
-      this.close.style.top = '18px';
-      this.close.style.right = '20px';
+      this.close.style.top = (rect?.closeTop || 18)+'px';
+      this.close.style.right = (rect?.closeRight || 20)+'px';
       this.body.style.background = 'transparent'
     }else{
       this.dialog.style.padding = '16px 20px';
       this.title.style.display = 'block';
       this.body.style.height = 'calc(100% - 30px)';
-      this.close.style.top = '2px';
-      this.close.style.right = '2px';
-      this.dialog.style.background = rect.background || this.store.data.background || '#1e2430';
+      this.close.style.top = (rect?.closeTop || 2)+'px';
+      this.close.style.right = (rect?.closeRight || 2)+'px';
+      this.dialog.style.background = rect?.background || this.store.data.background || '#1e2430';
     }
+
     if(rect) {
       const { x, y, width, height } = this.detailRect(rect);
       this.dialog.style.width = width;
@@ -207,6 +221,8 @@ export class Dialog {
       this.dialog.style.top = y;
       this.dialog.style.left = x;
       this.dialog.style.translate = `${x === '50%' ? '-50%' : 0} ${y === '50%' ? '-50%' : 0}`;
+      this.box.style.background = rect.maskBackground || '#0000006f';
+      this.close.style.display = rect.hideClose? 'none':'block';
     }
     // if(isIframe && data && isSameOrigin(url)){
     //   let timeout = 0;
