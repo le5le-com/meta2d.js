@@ -1462,6 +1462,15 @@ export class Canvas {
           if(num % 2 === 0){
             lastH += pen.height + 10 * this.store.data.scale;
           }
+          delete (pen as any).dataset;
+        }
+        if((pen as any).temOffsetX){
+          pen.x += (pen as any).temOffsetX*this.store.data.scale;
+          delete (pen as any).temOffsetX;
+        }
+        if((pen as any).temOffsetY){
+          pen.y += (pen as any).temOffsetY*this.store.data.scale;
+          delete  (pen as any).temOffsetY;
         }
       }
     }
