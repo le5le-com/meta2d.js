@@ -1383,33 +1383,36 @@ export class Meta2d {
           // });
 
           //JetLinks
-          let productId = realTime.productId || pen.productId;
-          let deviceId = realTime.deviceId || pen.deviceId;
-          let propertyId = realTime.propertyId;
-          let flag = false;
-          if(productId&&productId.indexOf('${') > -1){
-            let keys = productId.match(/(?<=\$\{).*?(?=\})/g);
-            if(keys?.length){
-              productId = this.getDynamicParam(keys[0])||productId;
+          const Jet = this.store.data.networks?.some((item)=>item.protocol === 'ADIIOT');
+            let productId = realTime.productId || pen.productId;
+            let deviceId = realTime.deviceId || pen.deviceId;
+            let propertyId = realTime.propertyId;
+            let flag = false;
+          if(Jet){
+            if(productId && typeof productId === 'string' &&productId.indexOf('${') > -1){
+              let keys = productId.match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                productId = this.getDynamicParam(keys[0])||productId;
+              }
+              flag = true;
             }
-            flag = true;
-          }
-          if(deviceId&&deviceId.indexOf('${') > -1){
-            let keys = deviceId.match(/(?<=\$\{).*?(?=\})/g);
-            if(keys?.length){
-              deviceId = this.getDynamicParam(keys[0])||deviceId;
+            if(deviceId && typeof deviceId === 'string' && deviceId.indexOf('${') > -1){
+              let keys = deviceId.match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                deviceId = this.getDynamicParam(keys[0])||deviceId;
+              }
+              flag = true;
             }
-            flag = true;
-          }
-          if(propertyId&&propertyId.indexOf('${') > -1){
-            let keys = propertyId.match(/(?<=\$\{).*?(?=\})/g);
-            if(keys?.length){
-              propertyId = this.getDynamicParam(keys[0])||propertyId;
+            if(propertyId && typeof propertyId === 'string' &&propertyId.indexOf('${') > -1){
+              let keys = propertyId.match(/(?<=\$\{).*?(?=\})/g);
+              if(keys?.length){
+                propertyId = this.getDynamicParam(keys[0])||propertyId;
+              }
+              flag = true;
             }
-            flag = true;
-          }
-          if(flag){
-            realTime.bind&&(realTime.bind.id = productId+'#'+deviceId+'#'+propertyId);
+            if(flag){
+              realTime.bind&&(realTime.bind.id = productId+'#'+deviceId+'#'+propertyId);
+            }
           }
           if (!this.store.bind[realTime.bind.id]) {
             this.store.bind[realTime.bind.id] = [];
@@ -1418,22 +1421,23 @@ export class Meta2d {
             id: pen.id,
             key: realTime.key,
           });
-
-          if (productId && deviceId && propertyId) {
-            const index = this.jetLinksList.findIndex((item) =>
-              item.topic.startsWith(`/${productId}/${deviceId}`)
-            );
-            if (index > -1) {
-              const properties = this.jetLinksList[index].properties;
-              if (!properties.includes(realTime.propertyId)) {
-                this.jetLinksList[index].properties.push(realTime.propertyId);
+          if(Jet){
+            if (productId && deviceId && propertyId) {
+              const index = this.jetLinksList.findIndex((item) =>
+                item.topic.startsWith(`/${productId}/${deviceId}`)
+              );
+              if (index > -1) {
+                const properties = this.jetLinksList[index].properties;
+                if (!properties.includes(realTime.propertyId)) {
+                  this.jetLinksList[index].properties.push(realTime.propertyId);
+                }
+              } else {
+                this.jetLinksList.push({
+                  topic: `/${productId}/${deviceId}`,
+                  deviceId,
+                  properties: [realTime.propertyId],
+                });
               }
-            } else {
-              this.jetLinksList.push({
-                topic: `/${productId}/${deviceId}`,
-                deviceId,
-                properties: [realTime.propertyId],
-              });
             }
           }
           if(realTime.bind.class === 'iot'){
