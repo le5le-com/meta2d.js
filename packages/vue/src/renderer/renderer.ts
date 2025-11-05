@@ -1,43 +1,79 @@
-import { Meta2d, Pen} from "@meta2d/core"
-import {camelize, createRenderer, markRaw, toRaw} from 'vue'
-import {useMeta2d} from "./hooks/useMeta2d";
-import { getCurrentInstance } from 'vue'
+import {facePen, Meta2d, Pen, setLifeCycleFunc} from "@meta2d/core";
+import {camelize, createRenderer, markRaw, toRaw, inject} from 'vue';
+import {getEventName, isEvent, isOnceEvent} from "../utils";
 
+const rendererMeta2dMap = new WeakMap<any, Meta2d>();
 
-export const renderer = createRenderer<Pen, Pen>({
+export function createMeta2dRenderer(meta2d: Meta2d) {
+  const renderer = createRenderer<Pen, Pen>({
     createElement(tag, namespace?, isCustomizedBuiltIn?,props?) {
-        let element: Promise<Pen>
-        const instance = getCurrentInstance()
-        const meta2d = useMeta2d()
-        element = meta2d.meat2d.addPen({
-            name:tag,
-            ...toRaw(props)
-        })
-        return element as Pen
+      let element: Pen = null;
+      element = meta2d.addPenSync({
+        name:tag,
+      });
+      return element;
     },
-    patchProp(el:Pen, key, _prevValue, nextValue) {
-        const meta2d = useMeta2d();
-        (el as Promise<Pen>).then((pen)=>{
-            meta2d.meat2d.setValue({id:pen.id,[key]:nextValue})
-        })
+    patchProp(pen:Pen, key, _prevValue, nextValue) {
+      console.log(key, _prevValue, nextValue,'patchProp');
+      if(isEvent(key)){
+        if(isOnceEvent(key)){ // 是once修饰符 暂不处理
+          setLifeCycleFunc(pen,getEventName(key),nextValue);
+        }else {
+          setLifeCycleFunc(pen,getEventName(key),nextValue);
+        }
+        return;
+      }
+      meta2d.setValue({id:pen.id,[key]:nextValue});
     },
     insert(el, parent) {
     },
     remove(el) {
-
+      console.log(el,'remove');
+      const a =meta2d.deleteSync([el]);
+      console.log(a);
     },
-    createText(text) {
-      return {}
+    createText(node) {
+      return {
+        name:"text",
+        x:0,
+        y:0,
+        width:0,
+        height:0,
+        visible:false
+      };
     },
     createComment() {
-      return {}
+      return {
+        name:"text",
+        x:0,
+        y:0,
+        width:0,
+        height:0,
+        visible:false
+      };
     },
     setText() {},
     setElementText() {},
-    parentNode(node) {
-      return {}
+    parentNode(el) {
+      if(el?.parentId) {
+        return meta2d.findOne(el.parentId);
+      }else {
+        return {
+          name:"text",
+          x:0,
+          y:0,
+          width:0,
+          height:0,
+          visible:false
+        };
+      }
     },
-    nextSibling(node) {
-      return {}
+    nextSibling(pen) {
+      const children = meta2d.store.data.pens;
+      const index = children.indexOf(pen);
+      return index + 1 < children.length ? children[index + 1] : null
     },
-})
+  });
+  rendererMeta2dMap.set(renderer,meta2d );
+  return renderer;
+}

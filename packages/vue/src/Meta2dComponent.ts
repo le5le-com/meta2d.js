@@ -1,35 +1,45 @@
-import { defineComponent, h, markRaw, onMounted, onUnmounted, renderSlot, shallowRef } from 'vue'
+import { defineComponent, h, markRaw, onMounted, onUnmounted, renderSlot, shallowRef, provide } from 'vue';
 import {Meta2d, Pen} from "@meta2d/core";
 import {createApp} from "./renderer";
 import {useGetPropsByAttrs} from "./attr";
 import {useMeta2d} from "./renderer/hooks/useMeta2d";
+import {createMeta2dRenderer} from "./renderer/renderer";
 
 export const Meta2dComponent = defineComponent({
     setup(_props, { slots, expose, attrs }) {
-        const dom = shallowRef<HTMLElement>()
-        const meta2dInstance = shallowRef<Meta2d>()
-        const config = useGetPropsByAttrs(attrs)
-        function mount() {
-            const meta2d = useMeta2d(dom.value,config)
-            meta2dInstance.value = markRaw(meta2d.meat2d)
-            const app = createApp({
-                render: () => renderSlot(slots, 'default'),
-            })
-          //@ts-ignore
-            app.mount(dom.value)
-        }
+        const dom = shallowRef<HTMLElement>();
+        const meta2dInstance = shallowRef<Meta2d>();
+        const config = useGetPropsByAttrs(attrs);
+      function mount() {
 
-        function unMount() {
-            meta2dInstance.value!.destroy()
+        const meta2d = new Meta2d(dom.value, config);
+        meta2dInstance.value = markRaw(meta2d);
+
+        const renderer = createMeta2dRenderer(meta2d);
+
+        const app = renderer.createApp({
+          setup() {
+            return () => {
+              return slots.default?.() || [];
+            };
+          }
+        });
+        //@ts-ignore
+        app.mount(dom.value);
+      }
+
+
+      function unMount() {
+            meta2dInstance.value!.destroy();
         }
 
         onMounted(() => {
-            mount()
-        })
+            mount();
+        });
 
-        onUnmounted(unMount)
-        expose({ app: meta2dInstance })
+        onUnmounted(unMount);
+        expose({ app: meta2dInstance });
 
-        return () => h('div', { ref: dom })
+        return () => h('div', { ref: dom });
     },
-})
+});
