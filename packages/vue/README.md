@@ -1,4 +1,4 @@
-# meta2d-vue
+# @meta2d/vue
 Vue 声明式UI的方式使用meta2d，此库在开发中，暂不可用于生产环境
 
 # example
