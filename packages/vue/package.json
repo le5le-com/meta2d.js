@@ -1,0 +1,27 @@
+{
+  "name": "@meta2d/vue",
+  "version": "1.0.0",
+  "description": "meta2d vue component",
+  "main": "index.ts",
+  "types": "index.d.ts",
+  "type": "module",
+  "scripts": {
+    "copy": "shx cp package.build.json ../../dist/vue/package.json",
+    "build": "tsc && npm run copy"
+  },
+  "keywords": [],
+  "author": "",
+  "dependencies": {
+    "@meta2d/core": "workspace:*",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.34.6",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "typescript": "^5.7.3"
+  }
+}
