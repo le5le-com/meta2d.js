@@ -3914,6 +3914,29 @@ export class Canvas {
     return pen;
   }
 
+  addPenSync(pen: Pen, history?: boolean, emit?: boolean, abs?:boolean): Pen {
+
+    if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
+      return;
+    }
+    if(abs) {
+      pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+      pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+      pen.width = pen.width * this.store.data.scale;
+      pen.height = pen.height * this.store.data.scale;
+    }
+    this.makePen(pen);
+    this.active([pen]);
+    this.render();
+    emit && this.store.emitter.emit('add', [pen]);
+
+    if (history) {
+      this.pushHistory({ type: EditType.Add, pens: [pen] });
+    }
+
+    return pen;
+  }
+
   pushHistory(action: EditAction) {
     if (this.store.data.locked) {
       return;
@@ -7242,6 +7265,31 @@ export class Canvas {
       return;
     }
     if (this.beforeRemovePens && (await this.beforeRemovePens(pens)) != true) {
+      return;
+    }
+    if (!canDelLocked) {
+      pens = pens.filter((pen) => !pen.locked);
+    }
+    if (!pens || !pens.length) {
+      return;
+    }
+    const deletePens: Pen[] = [];
+    this._del(pens, deletePens, canDelLocked);
+    this.initImageCanvas(deletePens);
+    this.initTemplateCanvas(deletePens);
+    this.inactive();
+    this.clearHover();
+    this.render();
+    // TODO: 连线的删除 ，连接的 node 的 connectLines 会变化（删除 node ，line 的 anchors 类似），未记历史记录
+    if (history) {
+      if(deletePens.length === 0)return;
+      this.pushHistory({ type: EditType.Delete, pens: deletePens });
+    }
+    this.store.emitter.emit('delete', pens);
+  }
+
+  deleteSync(pens = this.store.active, canDelLocked = false, history = true) {
+    if (!pens || !pens.length) {
       return;
     }
     if (!canDelLocked) {

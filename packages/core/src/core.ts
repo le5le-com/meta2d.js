@@ -1014,7 +1014,9 @@ export class Meta2d {
   async addPen(pen: Pen, history?: boolean, emit = true, abs = false) {
     return await this.canvas.addPen(pen, history, emit, abs);
   }
-
+  addPenSync(pen: Pen, history?: boolean, emit = true, abs = false) {
+    return this.canvas.addPenSync(pen, history, emit, abs);
+  }
   async addPens(pens: Pen[], history?: boolean, abs = false) {
     return await this.canvas.addPens(pens, history, abs);
   }
@@ -2331,6 +2333,9 @@ export class Meta2d {
    */
   delete(pens?: Pen[], canDelLocked = false, history = true) {
     this.canvas.delete(pens, canDelLocked, history);
+  }
+  deleteSync(pens?: Pen[], canDelLocked = false, history = true) {
+    this.canvas.deleteSync(pens, canDelLocked, history);
   }
 
   scale(scale: number, center = { x: 0, y: 0 }) {
