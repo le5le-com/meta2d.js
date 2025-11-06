@@ -1,33 +1,34 @@
-import type { Directive } from 'vue'
+import type {Directive} from 'vue';
 import {Meta2d, Pen} from "@meta2d/core";
 
-export function patchVShow(meta2d,dir) {
-  dir.dir = createVshowDirective(meta2d)
-  dir.dir.name = 'show'
+export function patchVShow(meta2d, dir) {
+  dir.dir = createVshowDirective(meta2d);
+  dir.dir.name = 'show';
 }
- function createVshowDirective(meta2d:Meta2d):Directive {
-  const customVShow:Directive = {
-    mounted(el){
+
+function createVshowDirective(meta2d: Meta2d): Directive {
+  const customVShow: Directive = {
+    mounted(el) {
     },
-    beforeMount(el:Pen, { value }, vnode) {
-      setDisplay(meta2d, el, value)
+    beforeMount(el: Pen, {value}, vnode) {
+      setDisplay(meta2d, el, value);
     },
-    updated(el:Pen, { value }, vnode) {
-      setDisplay(meta2d, el, value)
+    updated(el: Pen, {value}, vnode) {
+      setDisplay(meta2d, el, value);
     },
-    beforeUpdate(el:Pen, { value, oldValue }, vnode) {
+    beforeUpdate(el: Pen, {value, oldValue}, vnode) {
       if (value !== oldValue) {
-        setDisplay(meta2d, el, value)
+        setDisplay(meta2d, el, value);
       }
     }
-  }
-  return customVShow
+  };
+  return customVShow;
 }
 
 
-function setDisplay(meta2d:Meta2d, el:Pen, value:boolean) {
+function setDisplay(meta2d: Meta2d, el: Pen, value: boolean) {
   meta2d.setValue({
-    id:el.id,
-    visible:value
-  })
+    id: el.id,
+    visible: value
+  });
 }
