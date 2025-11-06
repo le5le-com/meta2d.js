@@ -14,7 +14,6 @@ export function createMeta2dRenderer(meta2d: Meta2d) {
       return element;
     },
     patchProp(pen:Pen, key, _prevValue, nextValue) {
-      console.log(key, _prevValue, nextValue,'patchProp');
       if(isEvent(key)){
         if(isOnceEvent(key)){ // 是once修饰符 暂不处理
           setLifeCycleFunc(pen,getEventName(key),nextValue);
