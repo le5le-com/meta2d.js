@@ -19,10 +19,10 @@ export const Meta2dComponent = defineComponent({
   setup(_props, {slots, expose, attrs}) {
     const dom = shallowRef<HTMLElement>();
     const meta2dInstance = shallowRef<Meta2d>();
-    const config = useGetPropsByAttrs(attrs);
+    const {meta2dConf, eleConf} = useGetPropsByAttrs(attrs);
 
     function mount() {
-      const meta2d = new Meta2d(dom.value, config);
+      const meta2d = new Meta2d(dom.value, meta2dConf);
 
       meta2dInstance.value = markRaw(meta2d);
 
@@ -54,7 +54,7 @@ export const Meta2dComponent = defineComponent({
             };
             parentContext.subContext.push(currentContext);
 
-            if(config.inherit){
+            if(eleConf.inherit){
               if(vnode.props?.x != undefined) {
                 vnode.props.x = currentContext.x + Number(vnode.props.x);
                 currentContext.x = vnode.props.x;
