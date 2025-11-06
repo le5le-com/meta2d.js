@@ -10,8 +10,8 @@ import {
 } from 'vue';
 import {Meta2d} from "@meta2d/core";
 import {useGetPropsByAttrs} from "./attr";
-import {createMeta2dRenderer} from "./renderer/renderer";
-import {pathDirectives} from "./directives";
+import {createMeta2dContext, createMeta2dRenderer} from "./renderer/renderer";
+import {hackDirectives} from "./directives";
 
 export const Meta2dComponent = defineComponent({
 
@@ -22,18 +22,20 @@ export const Meta2dComponent = defineComponent({
 
     function mount() {
       const meta2d = new Meta2d(dom.value, config);
+
       meta2dInstance.value = markRaw(meta2d);
-      const renderer = createMeta2dRenderer(meta2d);
+
+      const context = createMeta2dContext(meta2d)
+      const renderer = createMeta2dRenderer(meta2d, context);
 
       const app = renderer.createApp({
         setup() {
           const instance = getCurrentInstance();
 
-          // 递归处理 vnode 及其子节点
           function processVNode(vnode: VNode): VNode {
-            // 处理当前节点的指令
+
             if (vnode.dirs && vnode.dirs.length > 0) {
-              pathDirectives(meta2d, vnode.dirs);
+              hackDirectives(meta2d, vnode.dirs);
             }
 
             const clonedNode:any = cloneVNode(vnode);

@@ -1,9 +1,8 @@
-import { DefineComponent } from 'vue'
+import {Pen} from "@meta2d/core";
 
-declare module 'vue' {
-    export interface GlobalComponents {
-        circle: DefineComponent<{ x: number; y: number; text: string }>
-        square: DefineComponent<{ x: number; y: number; text: string }>
-        Meta2dComponent: typeof import('../index')['Meta2dComponent']
-    }
+export interface Meta2dContext {
+  pen:Pen,
+  parent:Pen,
+  group:boolean,
+  prevContext: Meta2dContext
 }
