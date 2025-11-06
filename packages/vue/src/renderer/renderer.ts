@@ -28,9 +28,7 @@ export function createMeta2dRenderer(meta2d: Meta2d) {
     insert(el, parent) {
     },
     remove(el) {
-      console.log(el,'remove');
-      const a =meta2d.deleteSync([el]);
-      console.log(a);
+      meta2d.deleteSync([el]);
     },
     createText(node) {
       return {
@@ -57,16 +55,7 @@ export function createMeta2dRenderer(meta2d: Meta2d) {
     parentNode(el) {
       if(el?.parentId) {
         return meta2d.findOne(el.parentId);
-      }else {
-        return {
-          name:"text",
-          x:0,
-          y:0,
-          width:0,
-          height:0,
-          visible:false
-        };
-      }
+      }else return null
     },
     nextSibling(pen) {
       const children = meta2d.store.data.pens;
@@ -74,6 +63,6 @@ export function createMeta2dRenderer(meta2d: Meta2d) {
       return index + 1 < children.length ? children[index + 1] : null
     },
   });
-  rendererMeta2dMap.set(renderer,meta2d );
+  rendererMeta2dMap.set(renderer, meta2d);
   return renderer;
 }

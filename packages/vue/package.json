@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "",
-  "dependencies": {
+  "peerDependencies": {
     "@meta2d/core": "workspace:*",
     "vue": "^3.5.22"
   },
