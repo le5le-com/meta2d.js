@@ -26,7 +26,6 @@ export function patchVShow(meta2d,dir) {
 
 
 function setDisplay(meta2d:Meta2d, el:Pen, value:boolean) {
-  debugger
   meta2d.setValue({
     id:el.id,
     visible:value
