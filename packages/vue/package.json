@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/vue",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "meta2d vue component",
   "main": "index.ts",
   "types": "index.d.ts",
