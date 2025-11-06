@@ -1,7 +1,10 @@
 import {Meta2d, Pen, setLifeCycleFunc} from "@meta2d/core";
-import {createRenderer} from 'vue';
+import {createRenderer, nextTick} from 'vue';
 import {getEventName, isEvent, isOnceEvent} from "../utils";
 import {Meta2dContext} from "@meta2d/vue/src/types";
+
+
+let isDirty = false
 
 const rendererMeta2dMap = new WeakMap<Meta2d, any>();
 
@@ -31,8 +34,16 @@ export function createMeta2dRenderer(meta2d: Meta2d, context: Meta2dContext) {
         }
         return;
       }
-      meta2d.setValue({id:pen.id,[key]:nextValue});
-    },
+      meta2d.setValue({id:pen.id,[key]:nextValue},{render:false});
+
+      if (!isDirty) {
+        isDirty = true
+        nextTick(() => {
+          meta2d.render()
+          isDirty = false
+        })
+      }
+      },
 
     insert(el, parent) {
     },
