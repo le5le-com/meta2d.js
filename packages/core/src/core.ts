@@ -4843,12 +4843,12 @@ export class Meta2d {
           let left = fit.leftValue;
           let right = fit.rightValue;
           if (left) {
-            left = Math.abs(left) < 1 ? left * this.canvas.width : left;
+            left = Math.abs(left) < 1 ? left * rect.width : left;
           } else {
             left = 0;
           }
           if (right) {
-            right = Math.abs(right) < 1 ? right * this.canvas.width : right;
+            right = Math.abs(right) < 1 ? right * rect.width : right;
           } else {
             right = 0;
           }
@@ -4869,11 +4869,19 @@ export class Meta2d {
                 }
               });
             }
-            pen.calculative.worldRect.x =
-              rect.x -
-              wGap / 2 +
-              left +
-              (pen.calculative.worldRect.x - rect.x) * ratio; //(fit.leftValue || 0)+ (pen.calculative.worldRect.x + pen.calculative.worldRect.width/2)-( pen.calculative.worldRect.width*ratio)*(range/2- (fit.rightValue || 0))/(range- (fit.leftValue || 0)-(fit.rightValue || 0));
+            if (Math.abs(fit.leftValue) < 1) {
+              pen.calculative.worldRect.x =
+                rect.x -
+                wGap / 2 +
+                left +
+                (pen.calculative.worldRect.x - rect.x - left) * ratio;
+            } else {
+              pen.calculative.worldRect.x =
+                rect.x -
+                wGap / 2 +
+                left +
+                (pen.calculative.worldRect.x - rect.x) * ratio;
+            }
             pen.calculative.worldRect.width *= ratio;
             pen.calculative.worldRect.ex =
               pen.calculative.worldRect.x + pen.calculative.worldRect.width;

@@ -8879,41 +8879,45 @@ export class Canvas {
     if(rect.width > 0.5){
       rect.left = true;
       rect.right = true;
-      rect.leftValue = (rect.x-0)*scale*width;
-      rect.rightValue = (1 - (rect.x+rect.width))*scale*width;
+      rect.leftValue = rect.x;
+      rect.rightValue = 1 - (rect.x+rect.width);
     }else{
       if(rect.x < 0.5){
         rect.left = true;
-        rect.leftValue = (rect.x-0)*scale*width;
+        rect.leftValue = rect.x;
+        if(rect.x > 0.2 && (rect.x+rect.width) > 0.5){
+          rect.right = true;
+          rect.rightValue = 1 - (rect.x+rect.width);
+        }
       }else{
         rect.right = true;
-        rect.rightValue = (1 - (rect.x+rect.width))*scale*width;
+        rect.rightValue = 1 - (rect.x+rect.width);
       }
     }
-    if(rect.leftValue < 1){
+    if(rect.leftValue < 0.05){
       rect.leftValue = 0;
     }
-    if(rect.rightValue < 1){
+    if(rect.rightValue < 0.05){
       rect.rightValue = 0;
     }
     if(rect.height > 0.5){
       rect.top = true;
       rect.bottom = true;
-      rect.topValue = (rect.y-0)*scale*height;
-      rect.bottomValue = (1 - (rect.y+rect.height))*scale*height;
+      rect.topValue = rect.y;
+      rect.bottomValue = 1 - (rect.y+rect.height);
     }else{
       if(rect.y < 0.5){
         rect.top = true;
-        rect.topValue = (rect.y-0)*scale*height;
+        rect.topValue = rect.y;
       }else{
         rect.bottom = true;
-        rect.bottomValue = (1 - (rect.y+rect.height))*scale*height;
+        rect.bottomValue = 1 - (rect.y+rect.height);
       }
     }
-    if(rect.topValue < 1){
+    if(rect.topValue < 0.05){
       rect.topValue = 0;
     }
-    if(rect.bottomValue < 1){
+    if(rect.bottomValue < 0.05){
       rect.bottomValue = 0;
     }
 
@@ -9017,42 +9021,46 @@ export class Canvas {
       if(fit.width > 0.5){
         fit.left = true;
         fit.right = true;
-        fit.leftValue =  (fit.x-0)*scale*width;
-        fit.rightValue = ((1 - (fit.x+fit.width))*scale*width);
+        fit.leftValue =  fit.x;
+        fit.rightValue = 1 - (fit.x+fit.width);
       }else{
         if(fit.x < 0.5){
           fit.left = true;
-          fit.leftValue = (fit.x-0)*scale*width;
+          fit.leftValue = fit.x;
+          if(fit.x > 0.2 && (fit.x+fit.width) > 0.5){
+            fit.right = true;
+            fit.rightValue = 1 - (fit.x+fit.width);
+          }
         }else{
           fit.right = true;
-          fit.rightValue =  ((1 - (fit.x+fit.width))*scale*width);
+          fit.rightValue =  1 - (fit.x+fit.width);
         }
       }
-      if( Math.abs(fit.leftValue) < 1){
+      if( Math.abs(fit.leftValue) < 0.05){
         fit.leftValue = 0;
       }
-      if(Math.abs(fit.rightValue) < 1){
+      if(Math.abs(fit.rightValue) < 0.05){
         fit.rightValue = 0;
       }
       if(fit.height > 0.5){
         fit.top = true;
         fit.bottom = true;
-        fit.topValue =  (fit.y-0)*scale*height;
-        fit.bottomValue = (1 - (fit.y+fit.height))*scale*height;
+        fit.topValue =  fit.y;
+        fit.bottomValue = 1 - (fit.y+fit.height);
       }else{
         if(fit.y < 0.5){
           fit.top = true;
-          fit.topValue =  (fit.y-0)*scale*height;
+          fit.topValue =  fit.y-0;
         }else{
           fit.bottom = true;
-          fit.bottomValue = (1 - (fit.y+fit.height))*scale*height;
+          fit.bottomValue = 1 - (fit.y+fit.height);
         }
       }
 
-      if(Math.abs(fit.topValue) < 1){
+      if(Math.abs(fit.topValue) < 0.05){
         fit.topValue = 0;
       }
-      if(Math.abs(fit.bottomValue) < 1){
+      if(Math.abs(fit.bottomValue) < 0.05){
         fit.bottomValue = 0;
       }
       fit.children = pens.map(pen=>pen.id);
