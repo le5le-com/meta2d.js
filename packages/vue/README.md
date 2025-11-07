@@ -1,6 +1,18 @@
 # @meta2d/vue
-Vue 声明式UI的方式使用meta2d，暂不稳定，请谨慎使用
-# example
+
+![meta2d-vue](./docs/images/logo.png)
+Vue 声明式UI的方式使用meta2d
+
+## Features
+- [x] vue响应式更新
+- [x] vue事件触发
+- [x] vue指令
+- [ ] vue事件修饰符
+- [ ] vue数据双向绑定
+
+> [!NOTE]
+> 此库目前暂不稳定，在1.0发布之前可能会更改相关配置，且没有进行完整的测试，请自行承担风险，感谢支持
+
 ```vue
 <script setup>
 import {Meta2dComponent} from "@meta2d/vue"
