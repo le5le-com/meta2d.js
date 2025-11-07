@@ -1,43 +1,67 @@
 # @meta2d/vue
-Vue 声明式UI的方式使用meta2d，此库在开发中，暂不可用于生产环境
 
-# example
+<p align="center">
+  <img width="300px" src="./docs/images/logo.png">
+</p>
+
+Vue 声明式UI的方式使用meta2d
+
+## Features
+- [x] vue响应式更新
+- [x] vue事件触发
+- [x] vue指令
+- [ ] vue事件修饰符
+- [ ] vue数据双向绑定
+
+> [!NOTE]
+> 此库目前暂不稳定，在1.0发布之前可能会更改相关配置，且没有进行完整的测试，请自行承担风险，感谢支持
+
+## example
+
 ```vue
-<script setup lang="ts">
-  import {Meta2dComponent} from "@meta2d/vue"
-  import {onMounted, reactive} from "vue";
+<script setup>
+import {Meta2dComponent} from "@meta2d/vue"
+import {onMounted, reactive} from "vue";
 
-  const circleData = reactive({
-    background:"#1376e4"
-  })
+const circleData = reactive({
+  background:"#1376e4"
+})
 
-  onMounted(()=>{
+onMounted(()=>{
+  setTimeout(()=>{
+    circleData.background = '#00ff00'
     setTimeout(()=>{
-      circleData.background = '#00ff00'
-      setTimeout(()=>{
-        circleData.background = '#ff0000'
-      },4000)
+      circleData.background = '#ff0000'
     },4000)
-  })
+  },4000)
+})
 
+const data = reactive(new Array(10).fill(0).map(()=>({
+  visible:true
+})))
 </script>
 
 <template>
   <div class="main">
     <Meta2dComponent style="width: 100%;height: 100%">
       <template v-for="row in 20" :key="row">
-        <circle v-for="i in 10" :key="i"
-                :text="i"
-                :x="(row - 1) * 20 + 6"
-                :y="(i - 1) * 20 + 6"
-                :width="20"
-                :height="20"
-                :background="circleData.background"
-        >
-        </circle>
+        <template v-for="(i,index) in data" :key="index">
+          <circle
+              :text="index"
+              :x="(row - 1) * 20 + 100"
+              :y="(index - 1) * 20 + 100"
+              :width="20"
+              :height="20"
+              :background="circleData.background"
+              @click="()=>i.visible = !i.visible"
+              v-if="i.visible"
+          >
+          </circle>
+        </template>
       </template>
     </Meta2dComponent>
   </div>
 </template>
+
 ```
 ![example](./docs/images/meta2d-vue.gif)

@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/vue",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "meta2d vue component",
   "main": "index.ts",
   "types": "index.d.ts",
@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "",
-  "dependencies": {
+  "peerDependencies": {
     "@meta2d/core": "workspace:*",
     "vue": "^3.5.22"
   },
