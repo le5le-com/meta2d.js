@@ -127,7 +127,7 @@ export const Meta2dComponent = defineComponent({
     });
 
     onUnmounted(unMount);
-    expose({app: meta2dInstance});
+    expose({meta2d: meta2dInstance});
 
     return () => h('div', {ref: dom});
   },
