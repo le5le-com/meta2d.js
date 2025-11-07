@@ -1,7 +1,8 @@
 # @meta2d/vue
 
-![meta2d-vue](./docs/images/logo.png)
-Vue 声明式UI的方式使用meta2d
+<p align="center">
+  <img width="300px" src="./docs/images/logo.png">
+</p>Vue 声明式UI的方式使用meta2d
 
 ## Features
 - [x] vue响应式更新
