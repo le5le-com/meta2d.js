@@ -1,6 +1,9 @@
 # @meta2d/vue
 
-![meta2d-vue](./docs/images/logo.png)
+<p align="center">
+  <img width="300px" src="./docs/images/logo.png">
+</p>
+
 Vue 声明式UI的方式使用meta2d
 
 ## Features
@@ -12,6 +15,8 @@ Vue 声明式UI的方式使用meta2d
 
 > [!NOTE]
 > 此库目前暂不稳定，在1.0发布之前可能会更改相关配置，且没有进行完整的测试，请自行承担风险，感谢支持
+
+## example
 
 ```vue
 <script setup>
