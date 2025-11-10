@@ -214,3 +214,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
+      
+      - name: Publish vue
+        run: |
+          cd dist/vue
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
+        continue-on-error: true
