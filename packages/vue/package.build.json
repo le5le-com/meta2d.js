@@ -1,7 +1,7 @@
 {
   "name": "@meta2d/vue",
-  "version": "1.0.1",
-  "description": "The fta library based on le5le meta2d.",
+  "version": "0.0.1",
+  "description": "The vue library based on le5le meta2d.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
