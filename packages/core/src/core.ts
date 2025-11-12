@@ -747,6 +747,18 @@ export class Meta2d {
           return Number(value);
         }
       }
+    }else if(typeof value === 'object'){
+      let bodyStr = JSON.stringify(value);
+      let keys = bodyStr.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
+      if (keys?.length) {
+        for(let i=0; i<keys.length; i++){
+          bodyStr = bodyStr.replace(
+            `\${${keys[i]}}`,
+            this.getDynamicParam(keys[i])
+          );
+        }
+      }
+      return JSON.parse(bodyStr);
     }
     return value;
   }
