@@ -12,6 +12,11 @@ import {
 } from '@meta2d/core';
 import type { EChartsOption } from 'echarts';
 
+const eventNameMap = {
+  'enter':'mouseover',
+  'leave':'mouseout',
+}
+
 export enum ReplaceMode {
   Add,
   Replace,
@@ -187,8 +192,8 @@ export function initEvent(pen: Pen) {
   });
   pen.events?.forEach((event)=>{
     if (event.actions && event.actions.length) {
-      if(eventNames.includes(event.name)){
-        _chart.on(event.name, (params) => {
+      if(eventNames.includes(eventNameMap[event.name]||event.name)){
+        _chart.on(eventNameMap[event.name]||event.name, (params) => {
           let flag = false;
           if (event.conditions && event.conditions.length) {
             if (event.conditionType === 'and') {
