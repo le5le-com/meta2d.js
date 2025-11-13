@@ -3814,7 +3814,7 @@ export class Canvas {
   resize(w?: number, h?: number) {
     w = w || this.parentElement.clientWidth;
     h = h || this.parentElement.clientHeight;
-
+    console.log("resize",w,h,this.parentElement.clientWidth,this.parentElement.clientHeight);
     this.width = w;
     this.height = h;
 
@@ -3839,7 +3839,7 @@ export class Canvas {
 
     w = (w * this.store.dpiRatio) | 0;
     h = (h * this.store.dpiRatio) | 0;
-
+    console.log("dpiRatio",this.store.dpiRatio,w,h);
     this.canvas.width = w;
     this.canvas.height = h;
 
@@ -4949,6 +4949,7 @@ export class Canvas {
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
     offscreenCtx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
+      console.log("clearRect",this.offscreen.width,this.offscreen.height);
     offscreenCtx.save();
     offscreenCtx.translate(this.store.data.x, this.store.data.y);
     globalThis.debugRender && console.time('renderPens');
@@ -4963,6 +4964,7 @@ export class Canvas {
     }
     const ctx = this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    console.log("drawImage",this.offscreen.width,this.offscreen.height);
     ctx.drawImage(this.offscreen, 0, 0, this.width, this.height);
     this.canvasTemplate.render();
     this.canvasImageBottom.render();
