@@ -182,20 +182,7 @@ export class Dialog {
       return;
     }
     this.data = data;
-    const isIframe = this.isUrl(url);
-    let urlChange = false;
-    if(isIframe){
-      this.meta2dDiv.style.display = 'none';
-      this.iframe.style.display = 'block';
-    }else{
-      this.iframe.style.display = 'none';
-      this.meta2dDiv.style.display = 'block';
-    }
-    if(isIframe && url !== this.url){
-      this.iframe.setAttribute('src', url);
-      this.url = url;
-      urlChange = true;
-    }
+    
     title && (this.title.innerText = title);
     if(!title){
       this.dialog.style.padding = '0px';
@@ -224,6 +211,7 @@ export class Dialog {
       this.box.style.background = rect.maskBackground || '#0000006f';
       this.close.style.display = rect.hideClose? 'none':'block';
     }
+    console.log("dialog",this.dialog.clientHeight,this.dialog.clientWidth);
     // if(isIframe && data && isSameOrigin(url)){
     //   let timeout = 0;
     //   const interval = setInterval(() => {
@@ -244,6 +232,23 @@ export class Dialog {
     //     }
     //   },300);
     // }
+
+    const isIframe = this.isUrl(url);
+    let urlChange = false;
+    if(isIframe){
+      this.meta2dDiv.style.display = 'none';
+      this.iframe.style.display = 'block';
+    }else{
+      this.iframe.style.display = 'none';
+      this.meta2dDiv.style.display = 'block';
+    }
+    if(isIframe && url !== this.url){
+      console.log("iframe",this.iframe.clientHeight,this.iframe.clientWidth);
+      this.iframe.setAttribute('src', url);
+      this.url = url;
+      urlChange = true;
+    }
+
     this.iframe.onload = () => {
       if(!this.dialogMeta2d||isIframe){
         this.box.style.display = 'block';
