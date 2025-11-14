@@ -211,7 +211,6 @@ export class Dialog {
       this.dialog.style.translate = `${x === '50%' ? '-50%' : 0} ${y === '50%' ? '-50%' : 0}`;
       this.box.style.background = rect.maskBackground || '#0000006f';
     }
-    console.log("dialog",this.dialog.clientHeight,this.dialog.clientWidth);
     // if(isIframe && data && isSameOrigin(url)){
     //   let timeout = 0;
     //   const interval = setInterval(() => {
@@ -243,7 +242,6 @@ export class Dialog {
       this.meta2dDiv.style.display = 'block';
     }
     if(isIframe && url !== this.url){
-      console.log("iframe",this.iframe.clientHeight,this.iframe.clientWidth);
       this.iframe.setAttribute('src', url);
       this.url = url;
       urlChange = true;
