@@ -250,11 +250,13 @@ export class Dialog {
     this.iframe.onload = () => {
       if(!this.dialogMeta2d||isIframe){
         this.close.style.display = rect.hideClose? 'none':'block';
+        this.box.style.opacity = '1';
       }
     }
-    // if(!urlChange&&(!this.dialogMeta2d||isIframe)){
+    if(!urlChange&&(!this.dialogMeta2d||isIframe)){
     //  this.box.style.display = 'block';
-    // }
+      this.box.style.opacity = '1';
+    }
     if(!isIframe){
       this.meta2dDiv.style.display = 'block';
       if(!this.dialogMeta2d){
@@ -299,6 +301,7 @@ export class Dialog {
   }
   hide() {
     this.box.style.display = 'none';
+    this.box.style.opacity = '0';
   }
 
   isUrl(url: string) {
