@@ -321,10 +321,14 @@ export class Scroll {
     }
   }
 
-  wheel(up?: boolean) {
+  wheel(up?: any) {
     let y = 10;
-    if (up) {
-      y = -10;
+    if(typeof up === 'boolean'){
+      if (up) {
+        y = -10;
+      }
+    }else{
+      y = up;
     }
 
     if (this.pageMode && this.canMouseMove(y)) {

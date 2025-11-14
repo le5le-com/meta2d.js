@@ -1706,7 +1706,7 @@ export class Canvas {
     if (len === 1) {
       if (this.store.options.scroll && this.scroll && !this.store.options.scrollButScale) {
         let diff = this.lastTouchY - event.touches[0].clientY;
-        this.scroll.wheel(diff < 0);
+        this.scroll.wheel(diff);
         this.lastTouchY = event.touches[0].clientY;
         return;
       }
