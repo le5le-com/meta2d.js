@@ -142,6 +142,7 @@ export class Dialog {
             position: absolute;
             right:20px;
             top:2px;
+            display:none;
         }`
       );
       sheet.insertRule(
@@ -200,7 +201,7 @@ export class Dialog {
       this.close.style.right = (rect?.closeRight || 2)+'px';
       this.dialog.style.background = rect?.background || this.store.data.background || '#1e2430';
     }
-
+    this.box.style.display = 'block';
     if(rect) {
       const { x, y, width, height } = this.detailRect(rect);
       this.dialog.style.width = width;
@@ -209,7 +210,6 @@ export class Dialog {
       this.dialog.style.left = x;
       this.dialog.style.translate = `${x === '50%' ? '-50%' : 0} ${y === '50%' ? '-50%' : 0}`;
       this.box.style.background = rect.maskBackground || '#0000006f';
-      this.close.style.display = rect.hideClose? 'none':'block';
     }
     console.log("dialog",this.dialog.clientHeight,this.dialog.clientWidth);
     // if(isIframe && data && isSameOrigin(url)){
@@ -251,12 +251,12 @@ export class Dialog {
 
     this.iframe.onload = () => {
       if(!this.dialogMeta2d||isIframe){
-        this.box.style.display = 'block';
+        this.close.style.display = rect.hideClose? 'none':'block';
       }
     }
-    if(!urlChange&&(!this.dialogMeta2d||isIframe)){
-     this.box.style.display = 'block';
-    }
+    // if(!urlChange&&(!this.dialogMeta2d||isIframe)){
+    //  this.box.style.display = 'block';
+    // }
     if(!isIframe){
       this.meta2dDiv.style.display = 'block';
       if(!this.dialogMeta2d){
