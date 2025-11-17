@@ -9,18 +9,18 @@ import {Pen} from "../pen";
  */
 function rewritePenLifeCycle() {
   let funcMap = null;
-  let funcPenMap = new Map();
+  let funcPenMap = new WeakMap();
   return (pen: Pen, lifeCycle, func: Function, del= false )=>{
     if(funcPenMap.has(pen) && funcPenMap.get(pen)){
       funcMap = funcPenMap.get(pen);
     }else {
-      funcPenMap.set(pen,funcMap = new Map());
+      funcPenMap.set(pen,funcMap = new WeakMap());
     }
     if(typeof func !== "function")return ()=>{
       console.warn('[rewritePenLifeCycle] warn: not a function ');
     };
     let funcListSet = new Set();
-    let originFuncMap = new Map(); // 原始事件回调Map
+    let originFuncMap = new WeakMap(); // 原始事件回调Map
     if(funcMap.has(lifeCycle) && funcMap.get(lifeCycle)){
       funcListSet = funcMap.get(lifeCycle);
     }else {
