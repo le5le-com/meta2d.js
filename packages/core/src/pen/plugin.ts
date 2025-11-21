@@ -9,7 +9,7 @@ import {Pen} from "../pen";
  */
 function rewritePenLifeCycle() {
   let funcMap = null;
-  let funcPenMap = new Map();
+  let funcPenMap = new WeakMap();
   return (pen: Pen, lifeCycle, func: Function, del= false )=>{
     if(funcPenMap.has(pen) && funcPenMap.get(pen)){
       funcMap = funcPenMap.get(pen);
