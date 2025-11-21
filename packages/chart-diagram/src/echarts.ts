@@ -69,6 +69,7 @@ export interface ChartPen extends Pen {
     timeKeys?: string[]; // 时间键
     dataMap?:any; // 数据映射，sql 查询结果的映射
     autoGetTime: boolean; // 趋势图是否自动获取时间
+    initJs?: string; // 初始化js
   };
   calculative?: {
     partialOption?: any; // 部分更新的 option
@@ -168,13 +169,31 @@ export function echarts(pen: ChartPen): Path2D {
     if (pen.calculative.singleton.echartsReady) {
       // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
-        pen.calculative.singleton.echart?.setOption(
-          updateOption(
-            pen.echarts.option,
-            pen.calculative.canvas.store.data.scale
-          ),
-          true
-        );
+        if(pen.echarts.initJs){
+          let fn = new Function(
+            'myChart',
+            'context',
+            `return async function () { ${pen.echarts.initJs}}`
+          );
+          fn(pen.calculative.singleton.echart, {
+            meta2d: this,
+            pen: pen,
+          })().then((option) => {
+            if (option) {
+              pen.calculative.singleton.echart.setOption(option, true);
+              let _option = pen.calculative.singleton.echart.getOption();
+              pen.echarts.option = _option;
+            }
+          });
+        }else{
+          pen.calculative.singleton.echart?.setOption(
+            updateOption(
+              pen.echarts.option,
+              pen.calculative.canvas.store.data.scale
+            ),
+            true
+          );
+        }
         setTimeout(() => onRenderPenRaw(pen), 300);
       });
     }
@@ -272,7 +291,7 @@ function scale(pen: ChartPen) {
   // let ratio: number = pen.calculative.canvas.store.data.scale / pen.beforeScale;
   // updateOption(option, ratio);
   if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) return;
-  if(!(pen.echarts.diabled||pen.echarts.disabled)){
+  if(!(pen.echarts.diabled||pen.echarts.disabled)&&!pen.echarts.initJs){
     if(pen.echarts.option?.dataZoom){
       //用户调整dataZoom后
       const options =pen.calculative.singleton.echart.getOption();
