@@ -1,7 +1,7 @@
 {
   "name": "@meta2d/rule",
   "version": "0.0.1",
-  "description": "",
+  "description": "@meta2d rule engine",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
