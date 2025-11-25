@@ -1,4 +1,4 @@
-import { Config, Rule, RuleEngine } from '../types';
+import { Config, Rule, RuleEngine, RuleState } from '../types';
 import { createContext } from './context';
 import { BaseTraverser } from './traverse';
 import { Meta2d, Pen } from '@meta2d/core';
@@ -12,21 +12,36 @@ export function createEngine(
   const traverser = (config.traverser || BaseTraverser)(context)
   const rules = config.rules
 
-  const start = ()=>{
-    main: while (!traverser.done){
-      const node = traverser.next();
-      for (const rule of rules) {
-        if(rule.target(node)){  // 此处循环嵌套过多，考虑性能优化（map存储node和对应规则）
-          for (const ruleKey in rule) {
-            const exec = context.ruleMaps.get(ruleKey)
-            if(exec){
-              if(!execValidate(exec, context, node)){
-                break main
-              }
+  /**
+   * @description 单独检查一个节点是否符合要求
+   * */
+  const check = (node:Pen)=>{
+    for (const rule of rules) {
+      if(rule.target(node)){  // 此处循环嵌套过多，考虑性能优化（map存储node和对应规则）
+        for (const ruleKey in rule.rules) {
+          if(rule.rules[ruleKey] === RuleState.CLOSE){
+            continue
+          }
+          const exec = context.ruleMaps.get(ruleKey)
+          if(exec){
+            if(!execValidate(exec, context, node)){
+              return false
             }
           }
         }
       }
+    }
+    return true
+  }
+
+  /**
+   * @description 从traverser中遍历所有节点，检查是否符合要求
+   * */
+  const start = ()=>{
+    main: while (!traverser.done.value){
+      const node = traverser.point
+      const res = check(node)
+      traverser.point = traverser.next()
     }
   }
 
@@ -34,5 +49,6 @@ export function createEngine(
     start,
     traverser,
     context,
+    check
   }
 }

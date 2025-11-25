@@ -7,13 +7,14 @@ export function createContext(config:Config<Pen>, meta2d:Meta2d): Context<Pen>{
   const plugins = config.plugins
   const ruleMaps = new Map<string, Rule>();
 
-  plugins.forEach(plugin=>{
+  plugins?.forEach(plugin=>{
     if(!validatePlugin(plugin))return
     plugin.rules.forEach(rule=>{
       const ruleFullName = plugin.name + SEPARATOR + rule.name
       ruleMaps.set(ruleFullName, rule)
     })
   })
+
   const pens = meta2d.store.data.pens
   return {
     meta2d: meta2d,

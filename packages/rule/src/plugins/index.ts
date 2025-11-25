@@ -4,6 +4,7 @@ export const BasePlugin: Plugin = {
   name:"BasePlugin",
   rules:[
     {
+      name:"non-connect-from",
       meta:{
         docs:{
           description:"是否允许开始连接线",
@@ -15,9 +16,11 @@ export const BasePlugin: Plugin = {
           }
         }
       },
-      name:"non-connect-from",
-      validate:(context,pen)=>{
-        return true
+      validate:(context,node)=>{
+        return node.type === 1
+      },
+      fail:(context,node)=>{
+        console.log('fail', node.id);
       }
     }
   ],

@@ -7,16 +7,16 @@ export enum MessageType {
   error, // 错误
 }
 
-enum RuleState {
+export enum RuleState {
   OPEN,
   CLOSE
 }
 
 export type Config<Node> = {
   rules: RuleConfig<Node>[] // 规则列表
-  plugins: Plugin[], // 规则插件
-  traverser: Traverser<any, any>, // 遍历节点数的方法
-  stopByError: boolean
+  plugins?: Plugin[], // 规则插件
+  traverser?: Traverser<any, any>, // 遍历节点数的方法
+  stopByError?: boolean
 }
 
 export type RuleConfig<Node> = {
@@ -33,7 +33,8 @@ export type Rule<Node = Pen> = {
       errorMessage: string | ((context: unknown) => Message)
     },
   }
-  validate: (context: Context<Pen>,node:Node) => boolean
+  validate: (this:Rule, context: Context<Node>,node:Node) => boolean
+  fail?: (this:Rule, context: Context<Node>,node:Node) => void
 }
 
 export type PluginConfig<TRuleNames extends string = string> = {
@@ -64,12 +65,15 @@ export type Context<Node> = {
 
 export type Traverser<Context, Node> = (context:Context) => ({
   point: Node
-  next: (context?: Context) => Node | undefined
-  done: boolean
+  next: () => Node | undefined
+  done: {
+    value: boolean
+  }
 })
 
-export type RuleEngine = {
+export type RuleEngine<Node = Pen> = {
   start: any,
+  check: (node:Node) => boolean,
   traverser: any,
-  context: Context<Pen>,
+  context: Context<Node>,
 }
