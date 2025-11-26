@@ -16,6 +16,7 @@ export * from './line';
 export * from './iframe';
 export * from './video';
 export * from './form';
+export * from './sceneContainer';
 
 import { rectangle, square } from './rectangle';
 import { circle } from './circle';
@@ -38,6 +39,7 @@ import { gif } from './gif';
 import { mindNode, mindNodeAnchors } from './mindNode';
 import { mindLine, mindLineAnchors } from './mindLine';
 import { form } from './form';
+import { sceneContainer } from './sceneContainer';
 
 export function commonPens() {
   return {
@@ -66,6 +68,7 @@ export function commonPens() {
     mindNode2:rectangle,
     form,
     combine:rectangle,
+    sceneContainer
   };
 }
 

@@ -3464,7 +3464,9 @@ export class Canvas {
       ) {
         continue;
       }
-
+      if(this.store.data.locked && pen.name === 'sceneContainer'){
+        continue;
+      }
       const r = getLineR(pen);
       if (
         !pen.calculative.active &&
