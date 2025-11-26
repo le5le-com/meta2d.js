@@ -6938,10 +6938,19 @@ export class Canvas {
     this.store.clipboard = undefined;
     localStorage.removeItem(this.clipboardName);
     sessionStorage.setItem('page', page);
-
-    let copyPens: Pen[] = this.getAllByPens(
-      deepClone(pens || this.store.active, true)
-    );
+    let precCopyPens = deepClone(pens, true);
+    if(!precCopyPens){
+      precCopyPens = deepClone(this.store.active, true);
+      if(precCopyPens.length === 1&& precCopyPens[0].parentId){
+        //复制子图元
+        precCopyPens[0].parentId = undefined;
+        precCopyPens[0].x = precCopyPens[0].calculative.worldRect.x;
+        precCopyPens[0].y = precCopyPens[0].calculative.worldRect.y;
+        precCopyPens[0].width = precCopyPens[0].calculative.worldRect.width;
+        precCopyPens[0].height = precCopyPens[0].calculative.worldRect.height;
+      }
+    }
+    let copyPens: Pen[] = this.getAllByPens(precCopyPens);
     //根据pens顺序复制
     copyPens.forEach((activePen: any) => {
       activePen.copyIndex = this.store.data.pens.findIndex(
