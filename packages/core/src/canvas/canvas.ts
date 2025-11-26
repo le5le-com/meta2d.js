@@ -1589,6 +1589,13 @@ export class Canvas {
     }
     const list: Pen[] = [];
     for (const pen of pens) {
+      if (!pen.id) {
+        pen.id = s8();
+      }
+      !pen.calculative && (pen.calculative = { canvas: this });
+      this.store.pens[pen.id] = pen;
+    }
+    for (const pen of pens) {
       if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
         continue;
       }
