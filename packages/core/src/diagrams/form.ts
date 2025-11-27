@@ -8,13 +8,13 @@ export function form(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
-    pen.onMove = move;
-    pen.onRotate = move;
-    pen.onMouseEnter = mouseEnter;
+    // pen.onMove = move;
+    // pen.onRotate = move;
+    // pen.onMouseEnter = mouseEnter;
     pen.onMouseLeave = mouseLeave;
-    pen.onMouseMove = mouseMove;
+    // pen.onMouseMove = mouseMove;
     pen.onMouseUp = mouseUp;
-    pen.onInput = input;
+    // pen.onInput = input;
   }
   pen.formId = pen.id;
   let wr = pen.calculative.borderRadius || 0,
@@ -70,7 +70,15 @@ function input(pen: Pen, text: string) {
   // this.store.emitter.emit('valueUpdate', pen);
 }
 
-function destory(pen: Pen) {}
+function destory(pen: Pen) {
+  pen.followers.forEach((id: string) =>{
+    let fpen = pen.calculative.canvas.store.pens[id];
+    fpen.formKey = undefined;
+    fpen.formValue = undefined;
+    fpen.formType = undefined;
+    fpen.formId = undefined;
+  })
+}
 
 function move(pen: Pen) {}
 
@@ -115,6 +123,9 @@ function mouseLeave(pen: Pen) {
             );
             if (!isIn) {
               pen.followers.splice(idx, 1);
+              delete activePen.formKey;
+              delete activePen.formValue;
+              delete activePen.formType;
               delete activePen.formId;
             }
           }
@@ -128,8 +139,11 @@ function mouseUp(pen: Pen) {
   const activePens = pen.calculative.canvas.store.active;
   if (activePens && activePens.length) {
     activePens.forEach((activePen: Pen) => {
-      const movingPen =
+      let movingPen =
         pen.calculative.canvas.store.pens[activePen.id + movingSuffix];
+      if (!movingPen) {
+        movingPen = pen.calculative.canvas.store.pens[activePen.id];
+      }
       if (movingPen && movingPen.calculative) {
         let inRect = deepClone(pen.calculative.worldRect);
         inRect.x -= 1;
@@ -144,6 +158,7 @@ function mouseUp(pen: Pen) {
             pen.followers.push(activePen.id);
           }
           activePen.formId = pen.id;
+          predictFormValue(activePen);
         }
       }
     });
@@ -155,12 +170,12 @@ function mouseMove(pen: Pen, e: Point) {
 }
 
 //更新表单数据
-export function updateFormData(pen, key?:string){
-  if(pen.formId && pen.formKey && pen.formValue){
+export function updateFormData(pen, key?: string) {
+  if (pen.formId && pen.formKey && pen.formValue) {
     //表单图元更新值
     const leaderPen = pen.calculative.canvas.store.pens[pen.formId];
-    if(leaderPen){
-      if(!leaderPen.formData){
+    if (leaderPen) {
+      if (!leaderPen.formData) {
         leaderPen.formData = {};
       }
       leaderPen.formData[pen.formKey] = pen[pen.formValue];
@@ -169,25 +184,60 @@ export function updateFormData(pen, key?:string){
 }
 
 //提交表单
-export function submit(pen:Pen){
-}
+export function submit(pen: Pen) {}
 
 //重置表单
-export function reset(pen:Pen){
+export function reset(pen: Pen) {
   const formPen = pen.calculative.canvas.store.pens[pen.formId];
-  formPen.followers.forEach((id:string)=>{
+  // formPen.followers.forEach((id:string,index:number)=>{
+  for (let i = formPen.followers.length - 1; i >= 0; i--) {
+    let id = formPen.followers[i];
     const follower = pen.calculative.canvas.store.pens[id];
-    if(follower.formId && follower.formKey && formPen.formData[follower.formKey]){
+    if (
+      follower &&
+      follower.formId &&
+      follower.formKey &&
+      formPen.formData[follower.formKey]
+    ) {
       const value = follower[follower.formValue];
-      let data:any = '';
-      if(Array.isArray(value)){
+      let data: any = '';
+      if (Array.isArray(value)) {
         data = [];
       }
       // follower[follower.formValue] = data;
       // follower.calculative[follower.formValue] = data;
-      pen.calculative.canvas.parent.setValue({id:follower.id,[follower.formValue]:data},{render:false,doEvent:false,history:false});
+      pen.calculative.canvas.parent.setValue(
+        { id: follower.id, [follower.formValue]: data },
+        { render: false, doEvent: false, history: false }
+      );
     }
-  });
+    if (!follower) {
+      formPen.followers.splice(i, 1);
+    }
+  }
   formPen.formData = {};
   pen.calculative.canvas.parent.render();
+}
+
+const formValueMap = {
+  progress: 'progress',
+  cascadeFilterDom: 'checked',
+  treeFilterDom: 'checked',
+  dateRangePickerDom: 'pickerTimes',
+  datePickerDom: 'pickerTimes',
+  slider: 'value',
+  switch: 'checked',
+  inputDom: 'text',
+  checkbox: 'selectedKeys',
+  radio: 'selectKey',
+  rectangle: 'text',
+};
+
+function predictFormValue(pen: Pen) {
+  if (pen.name === 'rectangle') {
+    if (!pen.input && !pen.dropdownList) {
+      return;
+    }
+  }
+  pen.formValue = formValueMap[pen.name];
 }

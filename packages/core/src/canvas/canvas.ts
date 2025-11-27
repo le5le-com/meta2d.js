@@ -6956,6 +6956,9 @@ export class Canvas {
       activePen.copyIndex = this.store.data.pens.findIndex(
         (pen) => pen.id === activePen.id
       );
+      if(activePen.followers?.length){
+        activePen.followers = undefined;
+      }
       if(activePen.pathId){
         //复制svgpath
         activePen.path = this.store.data.paths[activePen.pathId];
