@@ -1377,7 +1377,7 @@ export class Canvas {
     if (obj[0] && obj[0].draggable !== false) {
       const pt = { x: event.offsetX, y: event.offsetY };
       this.calibrateMouse(pt);
-      this.dropPens(obj, pt);
+      await this.dropPens(obj, pt);
       this.addCaches = [];
       // 拖拽新增图元判断是否是在容器上
       this.getContainerHover(pt);
