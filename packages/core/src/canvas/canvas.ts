@@ -3279,7 +3279,7 @@ export class Canvas {
     if (this.dragRect) {
       return;
     }
-    this.store.hoverContainer = undefined;
+    // this.store.hoverContainer = undefined;
     const containerPens:Pen[] = this.store.data.pens.filter((pen)=>pen.container||this.store.options.containerShapes?.includes(pen.name));
     if(containerPens.length){
       for(let i=containerPens.length-1;i>=0;--i){
