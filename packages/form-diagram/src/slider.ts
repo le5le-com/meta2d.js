@@ -97,11 +97,11 @@ function initRect(pen: formPen) {
   const scaleX = pen.calculative.worldRect.width / pen.sliderWidth;
   const scaleY = pen.calculative.worldRect.height / pen.sliderHeight;
   const textScale = Math.min(scaleX, scaleY);
-  pen.fontSize = pen._fontSize * textScale;
-
-  const barWidth = pen.calculative.worldRect.width - pen._textWidth * textScale;
-  pen.textLeft = barWidth + 10 * textScale;
-  pen.calculative.textLeft = pen.textLeft;
+  // pen.fontSize = pen._fontSize * textScale;
+  const scale = pen.calculative.canvas.store.data.scale;
+  const barWidth = pen.calculative.worldRect.width - 3 * pen.calculative.fontSize;// pen._textWidth * textScale;
+  // pen.textLeft = barWidth + 10 * textScale;
+  // pen.calculative.textLeft = pen.textLeft;
 
   pen.calculative.barRect = {
     x: 0,
@@ -138,8 +138,16 @@ function mouseDown(pen: formPen, e: Point) {
   if (pos > pen.calculative.barRect.width) {
     return;
   }
-
-  let value = Math.round((pos / pen.calculative.barRect.width) * 100);
+  let value = 0;
+  let _value = (pos / pen.calculative.barRect.width) * 100;
+  if(_value < 1){
+    value= 0
+  }else if(_value > 99){
+    value = 100;
+  }else{
+    value = Math.round(_value);
+  }
+  // let value = Math.round((pos / pen.calculative.barRect.width) * 100);
   if (value < pen.min || value > pen.max) {
     return;
   }
