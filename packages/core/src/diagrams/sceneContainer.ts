@@ -2,7 +2,7 @@ import { Pen, setElemPosition } from '../pen';
 import { Point } from '../point';
 import { getMeta2dData, s8, debounce, deepClone } from '../utils';
 
-export function sceneContainer(pen: Pen) {
+export function sceneContainer(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if (!pen.onDestroy) {
     pen.onAdd = add;
     pen.onDestroy = destory;
@@ -11,6 +11,9 @@ export function sceneContainer(pen: Pen) {
     pen.onMouseDown = onMousedown;
     pen.onMouseUp = onMouseUp;
   }
+  const path = !ctx ? new Path2D() : ctx;
+
+  if (path instanceof Path2D) return path;
 }
 
 async function add(pen: any) {
