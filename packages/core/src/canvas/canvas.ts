@@ -1654,6 +1654,7 @@ export class Canvas {
       });
 
       if (e.touches.length === 2) {
+        this.mouseDown = undefined;
         this.initTouchDis = Math.hypot(
           e.touches[0].pageX - e.touches[1].pageX,
           e.touches[0].pageY - e.touches[1].pageY
@@ -1730,17 +1731,18 @@ export class Canvas {
         buttons: 1,
       });
     } else if (len === 2 && this.startTouches?.length === 2) {
+      this.mouseDown = undefined;
       if (!this.touchMoving && !this.touchScaling) {
         const x1 = this.startTouches[0].pageX - touches[0].pageX;
         const x2 = this.startTouches[1].pageX - touches[1].pageX;
         const y1 = this.startTouches[0].pageY - touches[0].pageY;
         const y2 = this.startTouches[1].pageY - touches[1].pageY;
         if (
-          ((x1 >= 0 && x2 < 0) || (x1 <= 0 && x2 > 0)) &&
-          ((y1 >= 0 && y2 < 0) || (y1 <= 0 && y2 > 0))
+          (((x1 >= 0 && x2 < 0) || (x1 <= 0 && x2 > 0)) &&
+          ((y1 >= 0 && y2 < 0) || (y1 <= 0 && y2 > 0)))||(x2==0&&y2==0)||(x1==0&&y1==0)
         ) {
           this.touchScaling = true;
-        } else {
+        } else if(y1*y2 > 0 && x1*x2 > 0){
           this.touchMoving = true;
         }
       }
