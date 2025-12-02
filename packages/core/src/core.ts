@@ -825,8 +825,8 @@ export class Meta2d {
     //图纸更新
     const data = await getMeta2dData(this.store, id);
     if (data) {
+      this.canvas.opening = true;
       this.open(data);
-      this.canvas.opening =false;
       this.lock(1);
       const width = this.store.data.width || this.store.options.width;
       const height = this.store.data.height || this.store.options.height;
@@ -835,6 +835,7 @@ export class Meta2d {
       }else{
         this.fitView(true, 10);
       }
+      this.render(true);
       // document.title = data.name + "-" + window.name;
     }
   }
