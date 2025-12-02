@@ -1814,7 +1814,7 @@ export class Meta2d {
   }
 
   startAnimate(idOrTagOrPens?: string | Pen[], params?: number | string): void {
-    this.stopAnimate(idOrTagOrPens);
+    // this.stopAnimate(idOrTagOrPens);
     let pens: Pen[];
     // 没有参数 则播放有自动播放属性的动画
     if (!idOrTagOrPens) {
@@ -1828,8 +1828,18 @@ export class Meta2d {
       });
     } else if (typeof idOrTagOrPens === 'string') {
       pens = this.find(idOrTagOrPens);
+      pens.forEach((pen)=>{
+        if(!pen.calculative.pause || pen.currentAnimation !== params){
+          this.stopAnimate([pen]);
+        }
+      })
     } else {
       pens = idOrTagOrPens;
+      pens.forEach((pen)=>{
+        if(!pen.calculative.pause || pen.currentAnimation !== params){
+          this.stopAnimate([pen]);
+        }
+      })
     }
     if (!pens.length) {
       return;
