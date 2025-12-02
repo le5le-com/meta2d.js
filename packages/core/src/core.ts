@@ -355,7 +355,7 @@ export class Meta2d {
           let keys = url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
             keys?.forEach((key) => {
-              url = url.replace(`\${${key}}`, pen[key]||this.getDynamicParam(key));
+              url = url.replace(`\${${key}}`, getter(pen,key)||this.getDynamicParam(key));
             });
           }
         }
@@ -380,7 +380,7 @@ export class Meta2d {
               if (keys) {
                 keys.forEach((key) => {
                   __value = __value.replace(
-                    `\${${key}}`,pen[key]||this.getDynamicParam(key)
+                    `\${${key}}`, getter(pen,key)||this.getDynamicParam(key)
                   );
                 });
               }
@@ -576,7 +576,7 @@ export class Meta2d {
           let keys = e.params.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
           if (keys) {
             keys?.forEach((key) => {
-              url = url.replace(`\${${key}}`, pen[key]||this.getDynamicParam(key));
+              url = url.replace(`\${${key}}`, getter(pen,key)||this.getDynamicParam(key));
             });
           }
         }
@@ -633,14 +633,14 @@ export class Meta2d {
           const _pen = e.params ? this.findOne(e.params) : pen;
           for (let key in value) {
             if (value[key] === undefined || value[key] === '') {
-              value[key] = _pen[key];
+              value[key] = getter(_pen,key);
             } else if (
               typeof value[key] === 'string' &&
               value[key]?.indexOf('${') > -1
             ) {
               let keys = value[key].match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
               if (keys?.length) {
-                value[key] = _pen[keys[0]] ?? this.getDynamicParam(keys[0]);
+                value[key] = getter(_pen,key[0]) ?? this.getDynamicParam(keys[0]);
               }
             }
           }
