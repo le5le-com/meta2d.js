@@ -664,7 +664,10 @@ export class Meta2d {
         return;
       }
       let params = queryURLParams(_pen.iframe.split('?')[1]);
-      const value: any = this.getEventData(e.list, _pen);
+      let value: any = this.getSendData(e.data, pen);
+      if(e.list){
+        value = this.getEventData(e.list, pen);
+      }
       (
         _pen.calculative.singleton.div.children[0] as HTMLIFrameElement
       ).contentWindow.postMessage(
@@ -682,7 +685,10 @@ export class Meta2d {
         console.warn('[meta2d] Emit value must be a string');
         return;
       }
-      const value: any = this.getEventData(e.list, pen);
+      let value: any = this.getSendData(e.data, pen);
+      if(e.list){
+        value = this.getEventData(e.list, pen);
+      }
       window.parent.postMessage(
         JSON.stringify({ name: e.value, data: value }),
         '*'
