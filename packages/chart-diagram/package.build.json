@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/chart-diagram",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "The charting library based on le5le meta2d and echarts/highcharts.",
   "main": "index.js",
   "types": "index.d.ts",

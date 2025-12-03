@@ -207,12 +207,13 @@ export function initEvent(pen: Pen) {
   const _chart = pen.calculative.singleton.echart;
   const eventNames = ['click', 'dblclick', 'mousedown', 'mousemove', 'mouseup', 'mouseover', 'mouseout', 'globalout', 'contextmenu'];
   eventNames.forEach((eventName) => {
-    _chart.off(eventName);
+    let name = eventNameMap[eventName]||eventName;
+    _chart.getZr().off(name);
   });
   pen.events?.forEach((event)=>{
     if (event.actions && event.actions.length) {
       if(eventNames.includes(eventNameMap[event.name]||event.name)){
-        _chart.on(eventNameMap[event.name]||event.name, (params) => {
+        _chart.getZr().on(eventNameMap[event.name]||event.name, (params) => {
           let flag = false;
           if (event.conditions && event.conditions.length) {
             if (event.conditionType === 'and') {
