@@ -141,6 +141,7 @@ export interface Pen extends Rect {
   // 优先级高于 title
   titleFnJs?: string;
   titleFn?: (pen: Pen) => string;
+  titleUnUpdate?: boolean; //点位刷新 title内容是否更新
 
   lineWidth?: number;
   borderWidth?: number;

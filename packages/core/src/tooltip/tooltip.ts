@@ -113,6 +113,10 @@ export class Tooltip {
     if (Tooltip.titleEmpty(pen)) {
       return;
     }
+    
+    if(pen.titleUnUpdate){
+      return;
+    }
 
     const oldRect = this.setText(pen);
     const newRect = this.box.getBoundingClientRect();
