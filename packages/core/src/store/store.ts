@@ -316,7 +316,8 @@ export const clearStore = (store: Meta2dStore, template?: string) => {
     for (const pen of store.data.pens) {
       // if (pen.template) {
       if (pen.canvasLayer === CanvasLayer.CanvasTemplate) {
-        store.templatePens[pen.id] = pen;
+        //TODO 不同图纸模板层切换
+        // store.templatePens[pen.id] = pen;
       }
     }
   }
