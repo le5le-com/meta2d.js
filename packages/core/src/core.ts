@@ -6730,6 +6730,7 @@ export class Meta2d {
       globalStore.canvasDraws = {};
       globalStore.anchors = {};
       globalStore.htmlElements = {};
+      globalStore.lineAnimateDraws = {}
     }
   }
 }
