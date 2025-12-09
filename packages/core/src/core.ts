@@ -714,7 +714,7 @@ export class Meta2d {
 
   getSendData(data:any[], cpen?: Pen){
     const value: any = {};
-    data.forEach((item: any) => {
+    data?.forEach((item: any) => {
       if(item.prop){
         if(item.id&&item.id!=='固定值'){
           const pen = this.findOne(item.id);
