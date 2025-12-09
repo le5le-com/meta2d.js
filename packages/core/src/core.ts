@@ -4842,7 +4842,7 @@ export class Meta2d {
     } else {
       ratio = w > h ? w : h;
     }
-    if (this.store.data.fits?.length) {
+    if (fill && this.store.data.fits?.length) {
       this.canvas.opening = true;
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
@@ -5205,7 +5205,7 @@ export class Meta2d {
         ratio = w > h ? w : h;
       }
     }
-    if (this.store.data.fits?.length) {
+    if (fill && this.store.data.fits?.length) {
       this.canvas.opening = true;
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
