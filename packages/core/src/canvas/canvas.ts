@@ -359,9 +359,15 @@ export class Canvas {
     this.externalElements.ondrop = this.ondrop;
     this.externalElements.oncontextmenu = (e) => e.preventDefault();
     this.store.options.interval = 50;
-    this.externalElements.ontouchstart = this.ontouchstart;
-    this.externalElements.ontouchmove = this.ontouchmove;
-    this.externalElements.ontouchend = this.ontouchend;
+    if(this.store.options.parentTouch){
+      this.parentElement.ontouchstart = this.ontouchstart;
+      this.parentElement.ontouchmove = this.ontouchmove;
+      this.parentElement.ontouchend = this.ontouchend;
+    }else{
+      this.externalElements.ontouchstart = this.ontouchstart;
+      this.externalElements.ontouchmove = this.ontouchmove;
+      this.externalElements.ontouchend = this.ontouchend;
+    }
     this.externalElements.onmousedown = (e) => {
       if(this.isMobile){
         return;
@@ -9250,9 +9256,15 @@ export class Canvas {
 
     this.externalElements.ondragover = (e) => e.preventDefault();
     this.externalElements.ondrop = undefined;
-    this.externalElements.ontouchstart = undefined;
-    this.externalElements.ontouchmove = undefined;
-    this.externalElements.ontouchend = undefined;
+    if(this.store.options.parentTouch){
+      this.parentElement.ontouchstart = undefined;
+      this.parentElement.ontouchmove = undefined;
+      this.parentElement.ontouchend = undefined;
+    }else{
+      this.externalElements.ontouchstart = undefined;
+      this.externalElements.ontouchmove = undefined;
+      this.externalElements.ontouchend = undefined;
+    }
     this.externalElements.onmousedown = undefined;
     this.externalElements.onmousemove = undefined;
     this.externalElements.onmouseup = undefined;
