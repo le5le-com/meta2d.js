@@ -7,7 +7,7 @@ on:
       
 permissions:
   id-token: write  # Required for OIDC
-  contents: write
+  contents: read
   
 jobs:
   build:
@@ -18,14 +18,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
-          always-auth: true
-          scope: '@meta2d'
 
       - uses: pnpm/action-setup@v4
         with:
           version: latest
+          run_install: true
 
       - name: Install dependencies
         run: |
@@ -33,7 +32,7 @@ jobs:
 
       - name: Build
         run: |
-          pnpm build
+          npm run build
 
       - name: Extract version from tag
         id: extract_version
@@ -52,27 +51,25 @@ jobs:
       - name: Publish core
         run: |
           cd dist/core
-          npm publish --provenance --access public --registry=https://registry.npmjs.org
-        env:
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish
+        continue-on-error: true   
 
       - name: Publish meta2d.js
         run: |
           cd dist/meta2d.js
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish activity
         run: |
           cd dist/activity-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish chart
         run: |
           cd dist/chart-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish class
@@ -84,59 +81,59 @@ jobs:
       - name: Publish flow
         run: |
           cd dist/flow-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish form
         run: |
           cd dist/form-diagram
-          npm publish --access public 
+          npm publish
         continue-on-error: true
 
       - name: Publish fta
         run: |
           cd dist/fta-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish le5le-charts
         run: |
           cd dist/le5le-charts
-          npm publish --access public 
+          npm publish
         continue-on-error: true
 
       - name: Publish sequence
         run: |
           cd dist/sequence-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish plugin-mind-collapse
         run: |
           cd dist/plugin-mind-collapse
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish plugin-mind-core
         run: |
           cd dist/plugin-mind-core
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish svg
         run: |
           cd dist/svg
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish utils
         run: |
           cd dist/utils
-          npm publish --access public
+          npm publish
         continue-on-error: true
       
       - name: Publish vue
         run: |
           cd dist/vue
-          npm publish --access public
+          npm publish
         continue-on-error: true
