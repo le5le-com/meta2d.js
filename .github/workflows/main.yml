@@ -52,23 +52,24 @@ jobs:
         run: |
           cd dist/core
           npm publish
+        continue-on-error: true   
 
       - name: Publish meta2d.js
         run: |
           cd dist/meta2d.js
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish activity
         run: |
           cd dist/activity-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish chart
         run: |
           cd dist/chart-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish class
@@ -80,59 +81,59 @@ jobs:
       - name: Publish flow
         run: |
           cd dist/flow-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish form
         run: |
           cd dist/form-diagram
-          npm publish --access public 
+          npm publish
         continue-on-error: true
 
       - name: Publish fta
         run: |
           cd dist/fta-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish le5le-charts
         run: |
           cd dist/le5le-charts
-          npm publish --access public 
+          npm publish
         continue-on-error: true
 
       - name: Publish sequence
         run: |
           cd dist/sequence-diagram
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish plugin-mind-collapse
         run: |
           cd dist/plugin-mind-collapse
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish plugin-mind-core
         run: |
           cd dist/plugin-mind-core
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish svg
         run: |
           cd dist/svg
-          npm publish --access public
+          npm publish
         continue-on-error: true
 
       - name: Publish utils
         run: |
           cd dist/utils
-          npm publish --access public
+          npm publish
         continue-on-error: true
       
       - name: Publish vue
         run: |
           cd dist/vue
-          npm publish --access public
+          npm publish
         continue-on-error: true
