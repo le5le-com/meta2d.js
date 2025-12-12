@@ -178,6 +178,9 @@ export class Canvas {
   touchMoving?: boolean;
   startTouches?: TouchList;
   lastTouchY?: number;
+  startDistance?: number;
+  startCenter?: Point;
+  currentCenter?: Point;
 
   lastOffsetX = 0;
   lastOffsetY = 0;
@@ -1632,7 +1635,9 @@ export class Canvas {
     const tapTime = currentTime - this.lastTapTime;
     if (tapTime < 300 && tapTime > 0) {
       //双击
-      this.ondblclick(e as any);
+      if (e.touches.length !== 2) {
+        this.ondblclick(e as any);
+      }
     }
     this.lastTapTime = currentTime;
 
@@ -1677,6 +1682,11 @@ export class Canvas {
             (e.touches[1].pageY - e.touches[0].pageY) / 2 -
             this.clientRect.y,
         };
+        this.startDistance = this.getDistance(e.touches[0], e.touches[1]);
+        this.startCenter = this.getCenter(e.touches[0], e.touches[1]);
+        this.currentCenter = { ...this.startCenter };
+        this.touchScaling = undefined;
+        this.touchMoving = undefined;
 
         return;
       } else if (e.touches.length === 3) {
@@ -1739,16 +1749,32 @@ export class Canvas {
     } else if (len === 2 && this.startTouches?.length === 2) {
       this.mouseDown = undefined;
       if (!this.touchMoving && !this.touchScaling) {
-        const x1 = this.startTouches[0].pageX - touches[0].pageX;
-        const x2 = this.startTouches[1].pageX - touches[1].pageX;
-        const y1 = this.startTouches[0].pageY - touches[0].pageY;
-        const y2 = this.startTouches[1].pageY - touches[1].pageY;
-        if (
-          (((x1 >= 0 && x2 < 0) || (x1 <= 0 && x2 > 0)) &&
-          ((y1 >= 0 && y2 < 0) || (y1 <= 0 && y2 > 0)))||(x2==0&&y2==0)||(x1==0&&y1==0)
-        ) {
+        // const x1 = this.startTouches[0].pageX - touches[0].pageX;
+        // const x2 = this.startTouches[1].pageX - touches[1].pageX;
+        // const y1 = this.startTouches[0].pageY - touches[0].pageY;
+        // const y2 = this.startTouches[1].pageY - touches[1].pageY;
+        // if (
+        //   (((x1 >= 0 && x2 < 0) || (x1 <= 0 && x2 > 0)) &&
+        //   ((y1 >= 0 && y2 < 0) || (y1 <= 0 && y2 > 0)))||(x2==0&&y2==0)||(x1==0&&y1==0)
+        // ) {
+        //   this.touchScaling = true;
+        // } else if(y1*y2 > 0 && x1*x2 > 0){
+        //   this.touchMoving = true;
+        // }
+        // 当前距离和中心点
+        const currentDistance = this.getDistance(touches[0], touches[1]);
+        const newCenter = this.getCenter(touches[0], touches[1]);
+        
+        // 计算变化
+        const distanceDiff = currentDistance - this.startDistance;
+        const centerDiffX = newCenter.x - this.currentCenter.x;
+        const centerDiffY = newCenter.y - this.currentCenter.y;
+        const centerMoveDistance = Math.sqrt(centerDiffX * centerDiffX + centerDiffY * centerDiffY);
+        const scaleRatio = Math.abs(distanceDiff) / this.startDistance;
+      
+        if (scaleRatio > centerMoveDistance / 100) {
           this.touchScaling = true;
-        } else if(y1*y2 > 0 && x1*x2 > 0){
+        } else if (centerMoveDistance > 5) {
           this.touchMoving = true;
         }
       }
@@ -1817,6 +1843,19 @@ export class Canvas {
       this.render();
     }, 60);
   };
+
+  getDistance(touch1, touch2) {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  getCenter(touch1, touch2) {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  }
 
   onGesturestart = (e) => {
     e.preventDefault();
