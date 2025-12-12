@@ -7,7 +7,7 @@ on:
       
 permissions:
   id-token: write  # Required for OIDC
-  contents: read
+  contents: write
   
 jobs:
   build:
@@ -20,7 +20,8 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
-          token: none
+          always-auth: true
+          scope: '@meta2d'
 
       - uses: pnpm/action-setup@v4
         with:
@@ -51,8 +52,10 @@ jobs:
       - name: Publish core
         run: |
           cd dist/core
-          npm publish --access public 
-        continue-on-error: true
+          npm publish --provenance --access public --registry=https://registry.npmjs.org
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish meta2d.js
         run: |
