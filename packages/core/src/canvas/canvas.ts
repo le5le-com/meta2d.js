@@ -7935,11 +7935,12 @@ export class Canvas {
         }
       }
     };
-    this.inputDiv.onblur = ()=>{
-      setTimeout(()=> {
-        this.hideInput()
-      },300)
-    }
+    // 下拉 点击滚动条
+    // this.inputDiv.onblur = ()=>{
+    //   setTimeout(()=> {
+    //     this.hideInput()
+    //   },300)
+    // }
     this.inputDiv.oninput = (e: any) => {
       const pen = this.store.pens[this.inputDiv.dataset.penId];
       if(pen && pen.inputType === 'number'){
