@@ -15,17 +15,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      - run: rm -rf .npmrc
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
-          always-auth: true
-          scope: '@meta2d'
 
       - uses: pnpm/action-setup@v4
         with:
           version: latest
+          run_install: true
 
       - name: Install dependencies
         run: |
@@ -52,10 +51,7 @@ jobs:
       - name: Publish core
         run: |
           cd dist/core
-          npm publish --provenance --access public --registry=https://registry.npmjs.org
-        env:
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish
 
       - name: Publish meta2d.js
         run: |
