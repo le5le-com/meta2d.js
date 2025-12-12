@@ -4,7 +4,11 @@ on:
   push:
     tags:
       - 'v*'
-
+      
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,7 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'  
+          registry-url: 'https://registry.npmjs.org'
+          token: none
 
       - uses: pnpm/action-setup@v4
         with:
@@ -43,182 +48,92 @@ jobs:
           cd dist/meta2d.js
           npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
 
-      # - name: Update activity version
-      #   run: |
-      #     cd dist/activity-diagram
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update chart version
-      #   run: |
-      #     cd dist/chart-diagram
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update class version
-      #   run: |
-      #     cd dist/class-diagram
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update flow version
-      #   run: |
-      #     cd dist/flow-diagram
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update form version
-      #   run: |
-      #     cd dist/form-diagram
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update fta version
-      #   run: |
-      #     cd dist/fta-diagram
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update le5le-charts version
-      #   run: |
-      #     cd dist/le5le-charts
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update sequence version
-      #   run: |
-      #     cd dist/sequence-diagram
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update plugin-mind-collapse version
-      #   run: |
-      #     cd dist/plugin-mind-collapse
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update plugin-mind-core version
-      #   run: |
-      #     cd dist/plugin-mind-core
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update svg version
-      #   run: |
-      #     cd dist/svg
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
-      # - name: Update utils version
-      #   run: |
-      #     cd dist/utils
-      #     npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
-
       - name: Publish core
         run: |
           cd dist/core
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
+          npm publish --access public 
         continue-on-error: true
 
       - name: Publish meta2d.js
         run: |
           cd dist/meta2d.js
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish activity
         run: |
           cd dist/activity-diagram
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish chart
         run: |
           cd dist/chart-diagram
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish class
         run: |
           cd dist/class-diagram
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish flow
         run: |
           cd dist/flow-diagram
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish form
         run: |
           cd dist/form-diagram
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
+          npm publish --access public 
         continue-on-error: true
 
       - name: Publish fta
         run: |
           cd dist/fta-diagram
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish le5le-charts
         run: |
           cd dist/le5le-charts
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
+          npm publish --access public 
         continue-on-error: true
 
       - name: Publish sequence
         run: |
           cd dist/sequence-diagram
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish plugin-mind-collapse
         run: |
           cd dist/plugin-mind-collapse
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish plugin-mind-core
         run: |
           cd dist/plugin-mind-core
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish svg
         run: |
           cd dist/svg
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
 
       - name: Publish utils
         run: |
           cd dist/utils
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
       
       - name: Publish vue
         run: |
           cd dist/vue
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
         continue-on-error: true
