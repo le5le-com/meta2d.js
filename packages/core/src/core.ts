@@ -5875,6 +5875,7 @@ export class Meta2d {
 
     for (const pen of this.store.data.pens) {
       calcInView(pen);
+      pen.onMove?.(pen);
     }
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
