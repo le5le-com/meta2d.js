@@ -497,7 +497,7 @@ export class Meta2d {
             context?: { meta2d: Meta2d; eventName: string }
           ) => void;
         } catch (err) {
-          console.error('[meta2d]: Error on make a function:', err);
+          console.error('[meta2d]: Error on make a function:', err ,'code:', e.value);
         }
       }
       e.fn?.(pen, params || e.params, { meta2d: this, eventName: e.name });
@@ -959,7 +959,7 @@ export class Meta2d {
                 context?: { meta2d: Meta2d; e: any }
               ) => void;
             } catch (err) {
-              console.error('[meta2d]: Error on make a function:', err);
+              console.error('[meta2d]: Error on make a function:', err ,'code:', e.callback);
             }
           }
           e.fn?.(pen, data, { meta2d: this, e });
@@ -4086,7 +4086,7 @@ export class Meta2d {
                   }
                 ) => boolean;
               } catch (err) {
-                console.error('Error: make function:', err);
+                console.error('Error: make function:', err,'code:', fnJs);
               }
               if (event.where.fn) {
                 can = event.where.fn(pen, { meta2d: this });
