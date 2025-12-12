@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - run: rm -rf .npmrc
+
       - uses: actions/setup-node@v4
         with:
           node-version: '24.x'
