@@ -21,6 +21,7 @@ jobs:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
           token: none
+          scope: '@meta2d'
 
       - uses: pnpm/action-setup@v4
         with:
