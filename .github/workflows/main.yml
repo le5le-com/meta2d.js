@@ -32,7 +32,7 @@ jobs:
 
       - name: Build
         run: |
-          pnpm build
+          npm run build
 
       - name: Extract version from tag
         id: extract_version
