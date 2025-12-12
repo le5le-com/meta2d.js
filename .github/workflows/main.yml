@@ -53,7 +53,9 @@ jobs:
         run: |
           cd dist/core
           npm publish --provenance --access public --registry=https://registry.npmjs.org
-      
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish meta2d.js
         run: |
