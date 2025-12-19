@@ -28,3 +28,30 @@ export async function throttle(fn: Function, delay: number, params?: any) {
   return await fn(params);
 }
 
+
+export class InstanceDebouncer {
+  static instances = new WeakMap();
+  
+  static debounce(instance, methodName, wait = 300) {
+    const key = Symbol(`${instance.constructor.name}.${methodName}`);
+    
+    if (!this.instances.has(instance)) {
+      this.instances.set(instance, {});
+    }
+    
+    const instanceData = this.instances.get(instance);
+    
+    return (...args) => {
+      if (instanceData[key]) {
+        clearTimeout(instanceData[key]);
+      }
+      
+      instanceData[key] = setTimeout(() => {
+        instance[methodName](...args);
+        delete instanceData[key];
+      }, wait);
+    };
+  }
+}
+
+

@@ -88,6 +88,7 @@ export interface Options {
   disableClipboard?: boolean; //是否禁止系统剪切板
   drawingLineLength?: number; //绘制过程中允许的最大长度，0表示不限
   disableTouchPadScale?: boolean; //是否禁止触控板缩放
+  parentTouch?: boolean; //移动端是否父级监听touch事件
   cdn?: string;
   x?: number;
   y?: number;
@@ -189,6 +190,7 @@ export const defaultOptions: Options = {
   disableClipboard: false,
   drawingLineLength: 0,
   disableTouchPadScale: false,
+  parentTouch: true,
   cdn: '',
   polylineSpace: 10,
   domShapes: [],

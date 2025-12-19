@@ -9,6 +9,7 @@ import {
   getter,
   formatTime,
   setter,
+  InstanceDebouncer,
 } from '@meta2d/core';
 import type { EChartsOption } from 'echarts';
 
@@ -74,6 +75,13 @@ export interface ChartPen extends Pen {
   calculative?: {
     partialOption?: any; // 部分更新的 option
   } & Pen['calculative'];
+
+  // 缩放 防抖
+  debounceTime?: number;
+  scaleFn?: any;
+  debounceScale?: any;
+  resizeFn?: any;
+  debounceResize?: any;
   // beforeScale: number;
 }
 
@@ -272,7 +280,19 @@ function move(pen: Pen) {
 }
 
 function resize(pen: ChartPen) {
-  move(pen);
+  if(pen.debounceTime){
+    if(!pen.resizeFn){
+      pen.resizeFn = resizeFn;
+      pen.debounceResize = InstanceDebouncer.debounce(pen, 'resizeFn', pen.debounceTime);
+    }
+    pen.debounceResize(pen);
+  }else{
+    resizeFn(pen);
+  }
+}
+
+function resizeFn(pen: ChartPen) {
+   move(pen);
   if (!pen.calculative.singleton?.echart) {
     return;
   }
@@ -280,6 +300,18 @@ function resize(pen: ChartPen) {
 }
 
 function scale(pen: ChartPen) {
+  if(pen.debounceTime){
+    if(!pen.scaleFn){
+      pen.scaleFn = scaleFn;
+      pen.debounceScale = InstanceDebouncer.debounce(pen, 'scaleFn', pen.debounceTime);
+    }
+    pen.debounceScale(pen);
+  }else{
+    scaleFn(pen);
+  }
+}
+
+function scaleFn(pen: ChartPen) {
   if (!pen.calculative.singleton.echart) {
     return;
   }

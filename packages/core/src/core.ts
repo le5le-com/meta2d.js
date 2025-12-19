@@ -497,7 +497,7 @@ export class Meta2d {
             context?: { meta2d: Meta2d; eventName: string }
           ) => void;
         } catch (err) {
-          console.error('[meta2d]: Error on make a function:', err);
+          console.error('[meta2d]: Error on make a function:', err ,'code:', e.value);
         }
       }
       e.fn?.(pen, params || e.params, { meta2d: this, eventName: e.name });
@@ -714,7 +714,7 @@ export class Meta2d {
 
   getSendData(data:any[], cpen?: Pen){
     const value: any = {};
-    data.forEach((item: any) => {
+    data?.forEach((item: any) => {
       if(item.prop){
         if(item.id&&item.id!=='固定值'){
           const pen = this.findOne(item.id);
@@ -959,7 +959,7 @@ export class Meta2d {
                 context?: { meta2d: Meta2d; e: any }
               ) => void;
             } catch (err) {
-              console.error('[meta2d]: Error on make a function:', err);
+              console.error('[meta2d]: Error on make a function:', err ,'code:', e.callback);
             }
           }
           e.fn?.(pen, data, { meta2d: this, e });
@@ -4086,7 +4086,7 @@ export class Meta2d {
                   }
                 ) => boolean;
               } catch (err) {
-                console.error('Error: make function:', err);
+                console.error('Error: make function:', err,'code:', fnJs);
               }
               if (event.where.fn) {
                 can = event.where.fn(pen, { meta2d: this });
@@ -4842,7 +4842,7 @@ export class Meta2d {
     } else {
       ratio = w > h ? w : h;
     }
-    if (this.store.data.fits?.length) {
+    if (fill && this.store.data.fits?.length) {
       this.canvas.opening = true;
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
@@ -5205,7 +5205,7 @@ export class Meta2d {
         ratio = w > h ? w : h;
       }
     }
-    if (this.store.data.fits?.length) {
+    if (fill && this.store.data.fits?.length) {
       this.canvas.opening = true;
     }
     // 该方法直接更改画布的 scale 属性，所以比率应该乘以当前 scale
@@ -5875,6 +5875,7 @@ export class Meta2d {
 
     for (const pen of this.store.data.pens) {
       calcInView(pen);
+      pen.onMove?.(pen);
     }
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
@@ -6730,6 +6731,7 @@ export class Meta2d {
       globalStore.canvasDraws = {};
       globalStore.anchors = {};
       globalStore.htmlElements = {};
+      globalStore.lineAnimateDraws = {}
     }
   }
 }
