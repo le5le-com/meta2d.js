@@ -10,6 +10,7 @@ export function perspectiveTransform(
   center: Point,
   angleX: number,
   angleY: number,
+  angleZ: number,
   dist: number
 ) {
 
@@ -19,9 +20,10 @@ export function perspectiveTransform(
 
     const radX = (angleX * Math.PI) / 180;
     const radY = (angleY * Math.PI) / 180;
+    const radZ = (angleZ * Math.PI) / 180;
     let vec = new Vector3D(x, y, 0)
 
-    vec = vec.rotateX(radX).rotateY(radY)
+    vec = vec.rotateX(radX).rotateY(radY).rotateZ(radZ)
 
     const scale = dist / (dist + vec.z);
     const projectedX = vec.x * scale;
