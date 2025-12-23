@@ -28,6 +28,16 @@ export function perspectiveTransform(
     const scale = dist / (dist + vec.z);
     const projectedX = vec.x * scale;
     const projectedY = vec.y * scale;
+    const near = dist * 0.1; // 或一个固定值
+
+    const depth = dist + vec.z;
+    if (depth < near) {
+      return {
+        ...point,
+        visible: false,
+        scale: 0
+      };
+    }
 
     return {
       ...point,
