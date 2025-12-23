@@ -208,7 +208,7 @@ export class Dialog {
       this.dialog.style.height = height;
       this.dialog.style.top = y;
       this.dialog.style.left = x;
-      this.dialog.style.translate = `${x === '50%' ? '-50%' : 0} ${y === '50%' ? '-50%' : 0}`;
+      this.dialog.style.transform = `translate(${x === '50%' ? '-50%' : 0}, ${y === '50%' ? '-50%' : 0})`;
       this.box.style.background = rect.maskBackground || '#0000006f';
     }
     // if(isIframe && data && isSameOrigin(url)){
