@@ -1404,6 +1404,11 @@ export class Canvas {
 
   async dropPens(pens: Pen[], e: Point) {
     this.randomIdObj = {};
+    if(this.parent.store.options.textPresetStyle){
+      if(pens.length === 1 && !(pens[0] as any).temPreset && pens[0].name === 'text'){
+        Object.assign(pens[0], this.parent.store.options.textPresetStyle);
+      }
+    }
     for (const pen of pens) {
       // 只修改 树根处的 祖先节点, randomCombineId 会递归更改子节点
       !pen.parentId && this.randomCombineId(pen, pens);
