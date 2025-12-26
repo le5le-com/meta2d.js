@@ -1,0 +1,13 @@
+{
+  "name": "@meta2d/transform",
+  "version": "0.0.1",
+  "description": "图元变换库，实现视角动态2d变伪3d的效果",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

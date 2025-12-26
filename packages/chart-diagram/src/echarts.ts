@@ -920,7 +920,7 @@ function dotNotationToObject(dotNotationObj,pen) {
           current = current[arrayIndex];
         } else {
           if (!current[key]) {
-            if (key === 'series') {
+            if (['series', 'yAxis', 'xAxis'].includes(key) && !isNaN(parseInt(keys[index + 1]))) {
               current[key] = [];
             } else {
               current[key] = {};
