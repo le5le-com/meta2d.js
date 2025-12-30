@@ -857,7 +857,7 @@ function getImagePosition(pen: Pen) {
       x: worldRect.x,
       y: worldRect.y,
       width: worldRect.width || imgNaturalWidth || pen.calculative.img.naturalWidth,
-      height: worldRect.width || imgNaturalHeight || pen.calculative.img.naturalHeight,
+      height: worldRect.height || imgNaturalHeight || pen.calculative.img.naturalHeight,
     }
   };
   let { x, y, width: w, height: h } = rect;
