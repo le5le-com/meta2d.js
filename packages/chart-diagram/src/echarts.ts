@@ -431,18 +431,20 @@ function beforeValue(pen: ChartPen, value: any) {
           if(autoGetTime && !keys.includes('echarts.option.xAxis.data')){
             //x轴时间  避免影响x轴历史趋势
             let _key = 'echarts.option.xAxis.data';
-            if (Array.isArray(xAxis) && xAxis.length) {
-              _key = 'echarts.option.xAxis.0.data';
+            if(!value[_key]){ //多轴 时间一致
+              if (Array.isArray(xAxis) && xAxis.length) {
+                _key = 'echarts.option.xAxis.0.data';
+              }
+              let _value = getter(pen, _key);
+              let _time = formatTime(
+                timeFormat || '`${hours}:${minutes}:${seconds}`'
+              );
+              _value.push(_time);
+              if (max) {
+                _value.splice(0, _value.length - max);
+              }
+              value[_key] = _value;
             }
-            let _value = getter(pen, _key);
-            let _time = formatTime(
-              timeFormat || '`${hours}:${minutes}:${seconds}`'
-            );
-            _value.push(_time);
-            if (max) {
-              _value.splice(0, _value.length - max);
-            }
-            value[_key] = _value;
           }
         }
         if (key.includes('.data.')) {
