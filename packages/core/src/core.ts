@@ -1344,7 +1344,7 @@ export class Meta2d {
         pen.name.endsWith('Dom') ||
         isDomShapes.includes(pen.name) ||
         this.store.options.domShapes.includes(pen.name) ||
-        pen.externElement
+        pen.externElement || pen.isDom
     ).length;
     const aningNum = this.store.animates.size;
     let dataPointsNum = 0;

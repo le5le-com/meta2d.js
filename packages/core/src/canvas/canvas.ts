@@ -6027,7 +6027,7 @@ export class Canvas {
         pen.name.endsWith('Dom') ||
         isDomShapes.includes(pen.name) ||
         this.store.options.domShapes.includes(pen.name) ||
-        pen.image
+        pen.image || pen.isDom
       ) {
         // 修改名称会执行 onDestroy ，清空它
         value.name = 'rectangle';

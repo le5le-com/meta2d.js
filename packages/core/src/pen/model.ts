@@ -434,6 +434,7 @@ export interface Pen extends Rect {
   formType?:string; //表单类型 reset or submit
   className?:string;//dom样式
   styles?:any;
+  isDom?:boolean; //是否是dom元素
 
   hoverCursor?: string; //hover鼠标样式
 
