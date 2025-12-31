@@ -125,6 +125,7 @@ export interface Options {
   linePresetStyle?:Pen;
   textPresetStyle?:Pen;
   unFill?: boolean;
+  roles?: string[];
 }
 
 export const defaultOptions: Options = {

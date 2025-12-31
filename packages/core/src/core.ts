@@ -225,6 +225,12 @@ export class Meta2d {
       }
     }
     this.store.options = Object.assign(this.store.options, opts);
+    
+    if(opts.roles && this.store.data.pens?.length){
+      for (const pen of this.store.data.pens) {
+        calcInView(pen);
+      }
+    }
     if (this.canvas && opts.scroll !== undefined) {
       if (opts.scroll) {
         !this.canvas.scroll && (this.canvas.scroll = new Scroll(this.canvas));

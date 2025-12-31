@@ -3989,8 +3989,8 @@ export function calcInView(pen: Pen, calcChild = false) {
       pen.calculative.inView = false;
     }
   }
-  if(store.data.locked && pen.calculative.inView && store.data.roles?.length){
-    pen.calculative.inView = hasPermission(pen,store.data.roles);
+  if(store.data.locked){
+    pen.calculative.inView = hasPermission(pen, store.options.roles);
   }
   // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
   // 更改 view 后，修改 dom 节点的显示隐藏
@@ -4008,6 +4008,9 @@ function hasPermission(pen: Pen, roles: string[]) {
       return true;
     }
   } else {
+    if(!roles?.length){
+      return false;
+    }
     return roles?.some((role) => pen.roles.includes(role));
   }
 }
