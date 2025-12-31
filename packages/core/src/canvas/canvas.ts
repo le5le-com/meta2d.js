@@ -8040,6 +8040,12 @@ export class Canvas {
       e.stopPropagation();
     };
     this.inputDiv.onkeydown = (e: KeyboardEvent) => {
+      if(e.key === 'Enter'){
+        const pen = this.store.pens[this.inputDiv.dataset.penId];
+        if(pen.input && pen.whiteSpace === 'nowrap'){
+          this.hideInput();
+        }
+      }
       e.stopPropagation();
     };
     this.inputDiv.onmousedown = this.stopPropagation;
