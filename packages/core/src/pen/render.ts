@@ -3989,7 +3989,7 @@ export function calcInView(pen: Pen, calcChild = false) {
       pen.calculative.inView = false;
     }
   }
-  if(store.data.locked){
+  if(store.data.locked && pen.calculative.inView){
     pen.calculative.inView = hasPermission(pen, store.options.roles);
   }
   // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
@@ -4005,7 +4005,7 @@ function hasPermission(pen: Pen, roles: string[]) {
     if (pen.parentId) {
       return hasPermission(getParent(pen, false), roles);
     } else {
-      return true;
+      return pen.calculative.inView;
     }
   } else {
     if(!roles?.length){
