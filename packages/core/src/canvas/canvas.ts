@@ -1769,14 +1769,14 @@ export class Canvas {
         // 当前距离和中心点
         const currentDistance = this.getDistance(touches[0], touches[1]);
         const newCenter = this.getCenter(touches[0], touches[1]);
-        
+
         // 计算变化
         const distanceDiff = currentDistance - this.startDistance;
         const centerDiffX = newCenter.x - this.currentCenter.x;
         const centerDiffY = newCenter.y - this.currentCenter.y;
         const centerMoveDistance = Math.sqrt(centerDiffX * centerDiffX + centerDiffY * centerDiffY);
         const scaleRatio = Math.abs(distanceDiff) / this.startDistance;
-      
+
         if (scaleRatio > centerMoveDistance / 100) {
           this.touchScaling = true;
         } else if (centerMoveDistance > 5) {

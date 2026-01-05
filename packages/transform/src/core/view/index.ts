@@ -1,5 +1,5 @@
-import {Point} from "./types";
-import {Vector3D} from "./math";
+import {Point} from "../../types";
+import {Vector3D} from "../math";
 
 /**
  * @description 透视变换
