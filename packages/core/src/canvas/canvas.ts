@@ -1915,7 +1915,7 @@ export class Canvas {
         active: true,
         worldAnchors: [pt],
         ...options.linePresetStyle,
-        lineWidth: options.linePresetStyle.lineWidth ? options.linePresetStyle.lineWidth*scale : lineWidth * scale
+        lineWidth: (options.linePresetStyle && options.linePresetStyle.lineWidth ) ? options.linePresetStyle?.lineWidth*scale : lineWidth * scale
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
