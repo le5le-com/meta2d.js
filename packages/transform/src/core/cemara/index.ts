@@ -1,4 +1,4 @@
-import { Point } from "../types";
+import { Point } from "../../types";
 import { Vector3D } from "../math";
 
 /**
