@@ -1017,7 +1017,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
 
   if (
     pen.input &&
-    !pen.text &&
+    isEmptyText(pen.text) &&
     !(pen.calculative.canvas.inputDiv.dataset.penId === pen.id) &&
     !pen.onShowInput
   ) {
