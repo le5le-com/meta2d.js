@@ -4515,6 +4515,23 @@ export class Canvas {
         }
       }
     }
+    if (
+      this.drawingLine.lineName === 'polyline' &&
+      !to.connectTo &&
+      this.drawingLine.calculative.worldAnchors.length > 2
+    ) {
+      //拐出一点
+      let toLast =
+        this.drawingLine.calculative.worldAnchors[
+          this.drawingLine.calculative.worldAnchors.length - 2
+        ];
+      if (
+        Math.abs(toLast.x - to.x) / this.store.data.scale < 5 &&
+        Math.abs(toLast.y - to.y) / this.store.data.scale < 5
+      ) {
+        this.drawingLine.calculative.worldAnchors.pop();
+      }
+    }
     const rect = getLineRect(this.drawingLine);
     Object.assign(this.drawingLine, rect);
     this.drawingLine.calculative.worldRect = rect;
