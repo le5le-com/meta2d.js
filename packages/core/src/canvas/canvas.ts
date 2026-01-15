@@ -4991,7 +4991,13 @@ export class Canvas {
       }
     });
     this.store.styles = {};
-    const themeObj = le5leTheme.getThemeObj(this.store.data.theme);
+    let defaultTheme = '';
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (!width && !height) {
+      defaultTheme = 'default' // 认为2d 默认没有主题
+    }
+    const themeObj = le5leTheme.getThemeObj(this.store.data.theme || defaultTheme);
     Object.assign(this.store.styles, options, data, theme,themeObj);
   }
 
