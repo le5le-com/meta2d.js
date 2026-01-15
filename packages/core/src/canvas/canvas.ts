@@ -107,6 +107,7 @@ import {
   Padding,
   rgba,
   s8,
+  toNumber,
 } from '../utils';
 import {
   inheritanceProps,
@@ -8012,7 +8013,7 @@ export class Canvas {
       const pen = this.store.pens[this.inputDiv.dataset.penId];
       if(pen && pen.inputType === 'number'){
         const value = e.target.innerText;
-        const numericValue = value.replace(/[^0-9]/g, ''); // 移除非数字字符
+        const numericValue = toNumber(value); // 移除非数字字符
         // 如果输入的值不是纯数字，则替换为纯数字
         if (value !== numericValue) {
             e.preventDefault();

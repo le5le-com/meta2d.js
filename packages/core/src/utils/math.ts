@@ -128,3 +128,23 @@ export function cubicBezierY(t, p1y, p2y) {
     t * t * t
   );
 }
+
+export function toNumber(text) {
+  const matches = text.match(/^-?\d*\.?\d*/);
+  text = matches ? matches[0] : '';
+  
+  if (text.includes('-') && text.indexOf('-') !== 0) {
+    text = text.replace(/-/g, '');
+    if (text) {
+      text = '-' + text;
+    }
+  }
+  
+  const decimalCount = (text.match(/\./g) || []).length;
+  if (decimalCount > 1) {
+    const parts = text.split('.');
+    text = parts[0] + '.' + parts.slice(1).join('');
+  }
+
+  return text;
+}
