@@ -80,7 +80,7 @@ export function video(pen: Pen) {
       media = document.createElement('video');
       media.src = pen.video;
       media.crossOrigin = pen.crossOrigin || 'anonymous';
-      pen.calculative.img = media as HTMLVideoElement;
+      (pen.calculative as any).img= media as HTMLVideoElement;
     }
 
     media.loop = pen.playLoop;
