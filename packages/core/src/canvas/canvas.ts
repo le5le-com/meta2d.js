@@ -4948,7 +4948,7 @@ export class Canvas {
       });
     }
     pen.type && this.initLineRect(pen);
-    if(pen.gradientColors||pen.lineGradientColors){
+    if((pen.bkType && pen.gradientColors) || (pen.strokeType && pen.lineGradientColors)){
       if (pen.calculative.gradientTimer) {
         clearTimeout(pen.calculative.gradientTimer);
       }
