@@ -107,6 +107,7 @@ import {
   Padding,
   rgba,
   s8,
+  toNumber,
 } from '../utils';
 import {
   inheritanceProps,
@@ -1769,14 +1770,14 @@ export class Canvas {
         // 当前距离和中心点
         const currentDistance = this.getDistance(touches[0], touches[1]);
         const newCenter = this.getCenter(touches[0], touches[1]);
-        
+
         // 计算变化
         const distanceDiff = currentDistance - this.startDistance;
         const centerDiffX = newCenter.x - this.currentCenter.x;
         const centerDiffY = newCenter.y - this.currentCenter.y;
         const centerMoveDistance = Math.sqrt(centerDiffX * centerDiffX + centerDiffY * centerDiffY);
         const scaleRatio = Math.abs(distanceDiff) / this.startDistance;
-      
+
         if (scaleRatio > centerMoveDistance / 100) {
           this.touchScaling = true;
         } else if (centerMoveDistance > 5) {
@@ -1915,7 +1916,7 @@ export class Canvas {
         active: true,
         worldAnchors: [pt],
         ...options.linePresetStyle,
-        lineWidth: options.linePresetStyle.lineWidth ? options.linePresetStyle.lineWidth*scale : lineWidth * scale
+        lineWidth: (options.linePresetStyle && options.linePresetStyle.lineWidth ) ? options.linePresetStyle?.lineWidth*scale : lineWidth * scale
       },
       fromArrow: data.fromArrow || options.fromArrow,
       toArrow: data.toArrow || options.toArrow,
@@ -4515,6 +4516,23 @@ export class Canvas {
         }
       }
     }
+    if (
+      this.drawingLine.lineName === 'polyline' &&
+      !to.connectTo &&
+      this.drawingLine.calculative.worldAnchors.length > 2
+    ) {
+      //拐出一点
+      let toLast =
+        this.drawingLine.calculative.worldAnchors[
+          this.drawingLine.calculative.worldAnchors.length - 2
+        ];
+      if (
+        Math.abs(toLast.x - to.x) / this.store.data.scale < 5 &&
+        Math.abs(toLast.y - to.y) / this.store.data.scale < 5
+      ) {
+        this.drawingLine.calculative.worldAnchors.pop();
+      }
+    }
     const rect = getLineRect(this.drawingLine);
     Object.assign(this.drawingLine, rect);
     this.drawingLine.calculative.worldRect = rect;
@@ -4930,7 +4948,7 @@ export class Canvas {
       });
     }
     pen.type && this.initLineRect(pen);
-    if(pen.gradientColors||pen.lineGradientColors){
+    if((pen.bkType && pen.gradientColors) || (pen.strokeType && pen.lineGradientColors)){
       if (pen.calculative.gradientTimer) {
         clearTimeout(pen.calculative.gradientTimer);
       }
@@ -4974,7 +4992,13 @@ export class Canvas {
       }
     });
     this.store.styles = {};
-    const themeObj = le5leTheme.getThemeObj(this.store.data.theme);
+    let defaultTheme = '';
+    const width = this.store.data.width || this.store.options.width;
+    const height = this.store.data.height || this.store.options.height;
+    if (!width && !height) {
+      defaultTheme = 'default' // 认为2d 默认没有主题
+    }
+    const themeObj = le5leTheme.getThemeObj(this.store.data.theme || defaultTheme);
     Object.assign(this.store.styles, options, data, theme,themeObj);
   }
 
@@ -6027,7 +6051,7 @@ export class Canvas {
         pen.name.endsWith('Dom') ||
         isDomShapes.includes(pen.name) ||
         this.store.options.domShapes.includes(pen.name) ||
-        pen.image
+        pen.image || pen.isDom
       ) {
         // 修改名称会执行 onDestroy ，清空它
         value.name = 'rectangle';
@@ -7989,7 +8013,7 @@ export class Canvas {
       const pen = this.store.pens[this.inputDiv.dataset.penId];
       if(pen && pen.inputType === 'number'){
         const value = e.target.innerText;
-        const numericValue = value.replace(/[^0-9]/g, ''); // 移除非数字字符
+        const numericValue = toNumber(value); // 移除非数字字符
         // 如果输入的值不是纯数字，则替换为纯数字
         if (value !== numericValue) {
             e.preventDefault();

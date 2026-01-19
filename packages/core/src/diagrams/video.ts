@@ -79,6 +79,8 @@ export function video(pen: Pen) {
     } else {
       media = document.createElement('video');
       media.src = pen.video;
+      media.crossOrigin = pen.crossOrigin || 'anonymous';
+      (pen.calculative as any).img= media as HTMLVideoElement;
     }
 
     media.loop = pen.playLoop;

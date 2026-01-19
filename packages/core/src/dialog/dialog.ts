@@ -302,6 +302,8 @@ export class Dialog {
   hide() {
     this.box.style.display = 'none';
     this.box.style.opacity = '0';
+    this.iframe.setAttribute('src', 'about:blank');
+    this.url = 'about:blank';
   }
 
   isUrl(url: string) {

@@ -225,6 +225,12 @@ export class Meta2d {
       }
     }
     this.store.options = Object.assign(this.store.options, opts);
+    
+    if(opts.roles && this.store.data.pens?.length){
+      for (const pen of this.store.data.pens) {
+        calcInView(pen);
+      }
+    }
     if (this.canvas && opts.scroll !== undefined) {
       if (opts.scroll) {
         !this.canvas.scroll && (this.canvas.scroll = new Scroll(this.canvas));
@@ -1393,7 +1399,7 @@ export class Meta2d {
         pen.name.endsWith('Dom') ||
         isDomShapes.includes(pen.name) ||
         this.store.options.domShapes.includes(pen.name) ||
-        pen.externElement
+        pen.externElement || pen.isDom
     ).length;
     const aningNum = this.store.animates.size;
     let dataPointsNum = 0;
