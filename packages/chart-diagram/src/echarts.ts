@@ -417,6 +417,47 @@ function beforeValue(pen: ChartPen, value: any) {
     const { max, replaceMode, timeFormat, autoGetTime = true } = pen.echarts;
     let dataDotArr = []; //记录只更新一个点的数据
     let chartFlag = false;
+
+    // le5le iot 聚合
+    let realTimes = pen.realTimes.filter(
+      (item) => item.bind && item.bind.class === 'iot' && item.bind.compute_name
+    );
+    if (realTimes.length) {
+      let realTime = realTimes.find((item) => keys.includes(item.key));
+
+      if (realTime) {
+        let _value = {};
+        let times = [];
+        for (let key in value) {
+          if (key.includes('echarts.option.series')) {
+            _value[key] = Object.fromEntries(value[key]); //数组转对象
+            times.push(...Object.keys(_value[key]));
+          }
+        }
+        times = [...new Set(times)].sort((a, b) => a - b);
+
+        for (let key in value) {
+          if (key.includes('echarts.option.series')) {
+            _value[key] = times.map((time) => {
+              return _value[key][time];
+            });
+          }
+        }
+        if ((times[0] + '').length === 19) {
+          times = times.map((time) => time / 1000000);
+        }
+        times = times.map((time) => {
+          return formatTime(
+            timeFormat ||
+              '`${year}:${month}:${day} ${hours}:${minutes}:${seconds}`',
+            time
+          );
+        });
+        _value['echarts.option.xAxis.data'] = times;
+        return _value;
+      }
+    }
+
     for (let key in value) {
       if (key.includes('echarts.option')) {
         chartFlag = true;

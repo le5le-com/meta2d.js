@@ -168,6 +168,10 @@ export interface Iot {
   tree?:any;
   token?:string;
   enable?:boolean;
+  room?:string;
+  computes?:any[];
+  interval?:any; 
+  times?:number;
 }
 
 export interface Sql {

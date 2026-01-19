@@ -876,7 +876,62 @@ export class Meta2d {
       delete network.data;
     }
     if(network.protocol === 'iot'){
-      this.iotMqttClient &&  this.iotMqttClient.publish(`le5le-iot/property/set/${this.store.data.iot?.token}`, JSON.stringify(value));
+      if (this.store.data.iot.room) {
+        let payload = {
+          token: this.store.data.iot.token,
+          data: value,
+        };
+        if (value.name) {
+          const keys = Object.keys(value).filter(
+            (key) => value[key] === 'aggregate'
+          );
+          if (keys.length) {
+            const _value = deepClone(value);
+            keys.forEach((key) => {
+              delete _value[key];
+            });
+            delete _value.name;
+            if (_value.start && typeof _value.start === 'string') {
+              _value.start = Math.floor(
+                new Date(_value.start).getTime() / 1000
+              );
+            }
+            if (_value.end && typeof _value.end === 'string') {
+              _value.end = Math.floor(new Date(_value.end).getTime() / 1000);
+            }
+            let payload = [];
+            keys.forEach((key) => {
+              let arr = key.split('#');
+              payload.push({
+                token: this.store.data.iot.token,
+                deviceId: arr[0],
+                key: arr[1],
+                name: arr[1] + '_' + value.name,
+                ..._value,
+              });
+            });
+
+            this.iotMqttClient &&
+              this.iotMqttClient.publish(
+                `le5le-iot/${this.store.data.iot.room}/property/aggregate`,
+                JSON.stringify(payload)
+              );
+            return;
+          }
+        }
+
+        this.iotMqttClient &&
+          this.iotMqttClient.publish(
+            `le5le-iot/${this.store.data.iot.room}/properties/set`,
+            JSON.stringify(payload)
+          );
+      } else {
+        this.iotMqttClient &&
+          this.iotMqttClient.publish(
+            `le5le-iot/property/set/${this.store.data.iot?.token}`,
+            JSON.stringify(value)
+          );
+      }
       return;
     }
     if (!network.url) {
@@ -1392,6 +1447,7 @@ export class Meta2d {
     this.store.bind = {};
     const devices = [];
     const properties = [];
+    const computes = [];
     this.store.data.pens.forEach((pen) => {
       pen.realTimes?.forEach((realTime) => {
         if (realTime.bind && realTime.bind.id) {
@@ -1462,25 +1518,44 @@ export class Meta2d {
             }
           }
           if(realTime.bind.class === 'iot'){
-            let bind = realTime.bind.id.split('#');
-            let idx = devices.findIndex((item) => item.deviceId === bind[0]);
-            if(idx > -1){
-              if (!devices[idx].properties.includes(bind[1])) {
-                devices[idx].properties.push(bind[1]);
+            if(realTime.bind.compute_name){
+              let c_idx = computes.findIndex((item) => item.id === realTime.bind.id);
+              if(c_idx === -1){
+                computes.push(deepClone(realTime.bind));
+              }
+              let idx = devices.findIndex((item) => item.deviceId === realTime.bind.deviceId);
+              if(idx > -1){
+                if (!devices[idx].properties.includes(realTime.bind.key)) {
+                  devices[idx].properties.push(realTime.bind.key);
+                }
+              }else{
+                devices.push({
+                  deviceId: realTime.bind.deviceId,
+                  properties: [realTime.bind.key],
+                  token: realTime.bind.token
+                });
               }
             }else{
-              devices.push({
-                deviceId: bind[0],
-                properties: [bind[1]],
-                token: realTime.bind.token
-              });
-            }
-            let index = properties.findIndex((item) => item.key === realTime.bind.id);
-            if (index === -1) {
-              properties.push({
-                key: realTime.bind.id,
-                label: realTime.bind.label,
-              });
+              let bind = realTime.bind.id.split('#');
+              let idx = devices.findIndex((item) => item.deviceId === bind[0]);
+              if(idx > -1){
+                if (!devices[idx].properties.includes(bind[1])) {
+                  devices[idx].properties.push(bind[1]);
+                }
+              }else{
+                devices.push({
+                  deviceId: bind[0],
+                  properties: [bind[1]],
+                  token: realTime.bind.token
+                });
+              }
+              let index = properties.findIndex((item) => item.key === realTime.bind.id);
+              if (index === -1) {
+                properties.push({
+                  key: realTime.bind.id,
+                  label: realTime.bind.label,
+                });
+              }
             }
           }else if(realTime.bind.class === 'sql'){
             let bind = realTime.bind.id.split('#');
@@ -1534,6 +1609,9 @@ export class Meta2d {
       this.store.data.iot.list = properties;
     }else{
       delete this.store.data.iot.list
+    }
+    if(computes.length){
+      this.store.data.iot.computes = computes;
     }
   }
 
@@ -2797,23 +2875,40 @@ export class Meta2d {
 
   iotMqttClient:MqttClient;
   iotTimer: any;
-  iotWebsocketClient:WebSocket;
+
   async connectIot(){
     const { iot } = this.store.data;
     if(!(iot&&iot?.devices?.length)||(iot&&iot.enable === false)){
       return;
     }
-    const url =  globalThis.iotUrl || await this.getMqttUrl();
+    let { url, password, username } = await this.getMqttUrl();
+    if(!url){
+      url = globalThis.iotUrl;
+    }
     if(!url){
       console.warn('iot Request address error')
       return;
     }
-    const token = await this.getIotToken(iot.devices,iot.protocol==='websocket'?1:undefined);
+    const {token, room, data} = await this.getIotToken(iot.devices,iot.protocol==='websocket'?1:undefined,iot.room);
+    if(data){
+      // 初始数据
+      this.socketCallback( JSON.stringify(data), {
+        type: 'iot',
+        url,
+        method: 'mqtt'
+      });
+    }
+    if(room){
+      iot.room = room;
+    }
     iot.token = token;
     //物联网设备
-    // if(iot.protocol === 'mqtt'){
-      // const url ='ws://192.168.110.148:8083/mqtt'; //`${location.protocol === 'https:'?'wss':'ws'}://${iot.host}:${location.protocol === 'https:'?'8084':'8083'}/mqtt`
-      this.iotMqttClient = mqtt.connect(url);
+    const options = {
+      username,
+      password,
+      clientId: 'client-'+Math.random().toString(16).slice(2,8),
+    }
+      this.iotMqttClient = mqtt.connect(url,options);
       this.iotMqttClient.on('message', (topic: string, message: Buffer) => {
         this.socketCallback(message.toString(), {
           topic:`le5le-iot/properties/${token}`,
@@ -2825,30 +2920,86 @@ export class Meta2d {
       this.iotMqttClient.on('error', (error) => {
         this.store.emitter.emit('error', { type: 'mqtt', error });
       });
-      this.iotMqttClient.subscribe(`le5le-iot/properties/${token}`);
+      if(iot.room){
+        this.iotMqttClient.subscribe(`le5le-iot/${iot.room}/properties/get`);
+      }else{
+        this.iotMqttClient.subscribe(`le5le-iot/properties/${token}`);
+      }
       this.iotTimer = setInterval(()=>{
-        this.iotMqttClient && this.iotMqttClient.publish(`le5le-iot/subscribe/ping`, token);
+        if(iot.room){
+          this.iotMqttClient && this.iotMqttClient.publish(`le5le-iot/subscribe/ping`, iot.room);
+        }else{
+          this.iotMqttClient && this.iotMqttClient.publish(`le5le-iot/subscribe/ping`, token);
+        }
       },300000);
-    // }else if(iot.protocol === 'websocket'){
-    //   const url = 'ws://192.168.110.6/api/ws/iot/properties'// `${location.protocol === 'https:'?'wss':'ws'}://${location.host}/api/ws/iot/properties`
-    //   this.iotWebsocketClient = new WebSocket(
-    //     url,
-    //     token
-    //   );
-    //   this.iotWebsocketClient.onmessage = (e) => {
-    //     this.socketCallback(e.data, { type: 'iot', method: 'websocket' });
-    //   };
-    //   this.iotWebsocketClient.onerror = (error) => {
-    //     this.store.emitter.emit('error', { type: 'websocket', error });
-    //   };
-    // }
+      if(this.store.data.iot.computes?.length){
+        let flag = false;
+        this.store.data.iot.computes.forEach((item)=>{
+          if(item.times>0){
+            flag = true;
+          }
+        });
+        this.iotAggregatePublish(this.store.data.iot.computes);
+        iot.times = 0;
+        if(flag){
+          iot.interval = setInterval(()=>{
+            iot.times += 1;
+            let arr = this.store.data.iot.computes.filter((item)=>item.times && iot.times%item.times===0);
+            if(arr.length){
+              this.iotAggregatePublish(arr);
+            }
+          },1000);
+        }
+      }
+  }
+
+  iotAggregateBuild(item:any){
+    let data = {
+      token: this.store.data.iot.token,
+      deviceId:item.deviceId,
+      key:item.key,
+      name: item.key+'_'+item.compute_name//item.id
+    };
+    ['aggregate','start','end','groupBy','limit','recent'].forEach((key)=>{
+      if(item[key]){
+        if(item[key].indexOf('${') > -1){
+            let keys = item[key].match(/(?<=\$\{).*?(?=\})/g);
+            data[key] = this.getDynamicParam(keys[0])
+        }else{
+          if(key ==='start' || key ==='end'){
+            if(typeof item[key] === 'string'){
+              data[key] = Math.floor(new Date(item[key]).getTime() / 1000);
+            }else{
+              data[key] = item[key]
+            }
+          }else{
+            data[key] = item[key];
+          }
+        }
+      }
+    });
+    return data;
+  }
+
+  iotAggregatePublish(item:any){
+    if(this.iotMqttClient){
+      let data = item.map((_item)=>{
+        return this.iotAggregateBuild(_item);
+      })
+
+      this.iotMqttClient.publish(`le5le-iot/${this.store.data.iot.room}/property/aggregate`, JSON.stringify(data));
+    }
   }
 
   closeIot(){
     if(this.iotMqttClient){
       const { iot } = this.store.data;
+      if(iot.interval){
+        clearInterval(iot.interval);
+        iot.interval = undefined;
+      }
       if(iot?.token){
-        this.unsubscribeIot(iot.token);
+        this.unsubscribeIot(iot.token, iot.room);
       }
       this.iotMqttClient.end();
       this.iotMqttClient = undefined;
@@ -3077,31 +3228,34 @@ export class Meta2d {
       if(!port){
         return
       }
-      return `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}${results.path}`
+      return{
+        username: results.username,
+        password: results.password,
+        url: `${location.protocol === 'https:'?'wss':'ws'}://${results.host}:${location.protocol === 'https:'?results.wssPort:results.wsPort}${results.path}`
+      }
     }
   }
 
-  async getIotToken(devices:any, type:number){
+  async getIotToken(devices:any, type:number, room?:string){
     const res: Response = await fetch('/api/iot/subscribe/properties', {
       method: 'POST',
       headers: {
         Authorization: getToken(),
       },
-      body:JSON.stringify({devices: devices,type}),
+      body:JSON.stringify({devices: devices,type,room}),
     });
     if (res.ok) {
-      const data = await res.text();
-      return JSON.parse(data).token;
+      return await res.json()
     }
   }
 
-  async unsubscribeIot(token:string){
+  async unsubscribeIot(token:string, room?:string){
     const ret:any = await fetch(`/api/iot/unsubscribe/properties`,{
       method: 'POST',
       headers: {
         Authorization: getToken(),
       },
-      body:JSON.stringify({token}),
+      body:JSON.stringify({token, room}),
     });
     return ret;
   }
@@ -3556,18 +3710,6 @@ export class Meta2d {
         _sqlTimer = undefined;
       });
     this.closeIot();
-    // if(this.iotMqttClient){
-    //   this.iotMqttClient.end();
-    //   this.iotMqttClient = undefined;
-    // }
-    // clearInterval(this.iotTimer);
-    // this.iotTimer = undefined;
-
-    // if(this.iotWebsocketClient){
-    //   this.iotWebsocketClient.onclose = undefined;
-    //   this.iotWebsocketClient.close();
-    //   this.iotWebsocketClient = undefined;
-    // }
     closeJetLinks(this);
     this.closeSSE();
   }

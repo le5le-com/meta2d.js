@@ -147,6 +147,9 @@ export interface Bind {
   label?: string;
   class?: string;
   token?: string;
+  compute_name?: string;
+  deviceId?: string;
+  key?: string;
 }
 
 export interface RealTime {
