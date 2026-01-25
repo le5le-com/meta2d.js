@@ -225,7 +225,7 @@ export class Meta2d {
       }
     }
     this.store.options = Object.assign(this.store.options, opts);
-    
+
     if(opts.roles && this.store.data.pens?.length){
       for (const pen of this.store.data.pens) {
         calcInView(pen);
@@ -6025,6 +6025,7 @@ export class Meta2d {
       calcInView(pen);
       pen.onMove?.(pen);
     }
+    this.canvas.canvasTemplate.init();
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
     this.render();
