@@ -461,6 +461,9 @@ function beforeValue(pen: ChartPen, value: any) {
     for (let key in value) {
       if (key.includes('echarts.option')) {
         chartFlag = true;
+        if(key.includes('series.links.')){ // 桑基图
+          chartFlag = false;
+        }
         let beforeV = getter(pen, key);
         if (Array.isArray(beforeV) && replaceMode === ReplaceMode.Add) {
           //追加
@@ -669,7 +672,7 @@ function formatData(pen: any, value:any) {
     if(Array.isArray(value.data)){
       //sql 列表
       for (const key in pen.echarts.dataMap) {
-        if (pen.echarts.dataMap.hasOwnProperty(key)) { 
+        if (pen.echarts.dataMap.hasOwnProperty(key)) {
           if(pen.echarts.timeKeys?.length&&pen.echarts.timeKeys.includes(pen.echarts.dataMap[key])){
              dataValue[key] = value.data.map(item=>formatTime(pen.echarts.timeFormat,item[pen.echarts.dataMap[key]]));
           }else{
@@ -677,7 +680,7 @@ function formatData(pen: any, value:any) {
           }
         }
       }
-      
+
     }else{
       //sql 单条
       for (const key in pen.echarts.dataMap) {
