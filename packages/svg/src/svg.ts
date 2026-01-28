@@ -77,7 +77,7 @@ function flatSvg(children) {
     if(childKeys.length == 2 && childKeys[0] == 'id' && childKeys[1] == 'data-name') {
       return flatSvg(children.g[0]);
     }
-  } 
+  }
   return children.g;
 }
 function setAnchor(pen: Pen) {
@@ -153,7 +153,7 @@ function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
       const viewbox_Rect = transformContainerRect(child[selfName]);
       //svg所占宽高比
       width = Number(_.width)/allRect.width;
-      height = Number(_.height)/allRect.height; 
+      height = Number(_.height)/allRect.height;
       let tem = deepClone(allRect);
       //嵌套图元allRect以此为基准
       allRect.width = viewbox_Rect.width;
@@ -179,7 +179,7 @@ function transformCombines(selfProperty, children: any[],svg?:boolean): Pen[] {
           y: 0,
           width: 1,
           height: 1,
-          locked: 10, 
+          locked: 10,
           ...childProperty,
         },
         child.a
@@ -529,7 +529,11 @@ function transformNormalShape(
       } else if (type === 'matrix') {
         // 矩阵变换
         // TODO: 是否有 , 分隔的？如果有 ，getTranslate 的代码是否重复了？直接挂到这个里面？
-        matrix = value.split(' ').map((item) => parseFloat(item));
+        if(value.includes(',')){
+          matrix = value.split(',').map((item) => parseFloat(item));
+        }else{
+          matrix = value.split(' ').map((item) => parseFloat(item));
+        }
       }
     });
   }
@@ -802,7 +806,7 @@ function setGradient(defs: any[]){
     //   if(Number(x1)>Number(x2)){
     //     deg = 270;
     //   }
-    // }else{  
+    // }else{
     //   //垂直
     //   if(Number(y1)>Number(y2)){
     //     deg = 180;
@@ -810,7 +814,7 @@ function setGradient(defs: any[]){
     // }
     let deg = calculateAngle(x1,y1,x2,y2)+90;
     let color = def.linearGradient.map((item)=> item[selfName]['stop-color']+' '+ (parseFloat(item[selfName].offset||0)*100)+'%' ).join(',');
-    // let color = 
+    // let color =
     gradientMap[id] = {
       color:`linear-gradient(${deg}deg,${color})`,
       points:[{x:x1,y:y1},{x:x2,y:y2}]
