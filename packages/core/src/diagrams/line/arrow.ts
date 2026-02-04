@@ -95,14 +95,17 @@ export function drawArrow(
       if(pen.animateReverse){
         pos = 1-pos;
       }
+      let step = 1 / (worldAnchors[0].lineLength / d);
+      let lastPos = pos * step;
+      let i;
       worldAnchors.forEach((pt: Point) => {
         let to = pt;
         if (from) {
-          let step = 1 / (from.lineLength / d);
-          pos = pos % step;
+          step = 1 / (from.lineLength / d);
+          // pos = pos % step;
           if (from.next) {
             if (to.prev) {
-              for (let i = pos; i < 1; i += step) {
+              for ( i = lastPos; i < 1; i += step) {
                 let point = getBezierPoint(i, from, from.next, to.prev, to);
                 let pointNext = getBezierPoint(
                   i + 0.001,
@@ -128,7 +131,7 @@ export function drawArrow(
                 }
               }
             } else {
-              for (let i = pos; i < 1; i += step) {
+              for (i = lastPos; i < 1; i += step) {
                 let point = getQuadraticPoint(i, from, from.next, to);
                 let pointNext = getQuadraticPoint(
                   i + 0.001,
@@ -155,7 +158,7 @@ export function drawArrow(
             }
           } else {
             if (to.prev) {
-              for (let i = pos; i < 1; i += step) {
+              for (i = lastPos; i < 1; i += step) {
                 let point = getQuadraticPoint(i, from, to.prev, to);
                 let pointNext = getQuadraticPoint(
                   i + 0.001,
@@ -181,7 +184,7 @@ export function drawArrow(
               }
             } else {
               let angle = getAngle(from, to);
-              for (let i = pos; i < 1; i += step) {
+              for (i = lastPos; i < 1; i += step) {
                 let point = {
                   x: from.x + (to.x - from.x) * i,
                   y: from.y + (to.y - from.y) * i,
@@ -205,6 +208,11 @@ export function drawArrow(
           }
         }
         from = pt;
+        if(!i){
+          i = lastPos;
+        }else {
+          lastPos = i-1
+        }
       });
     }
   }
