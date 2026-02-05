@@ -54,6 +54,8 @@ let keyWords = [
   'itemGap'
 ];
 
+const funKeyWords = ['formatter', 'color'];
+
 export interface ChartPen extends Pen {
   echarts: {
     option: EChartsOption; // echarts 参数
@@ -918,6 +920,7 @@ function updateOption(_option, ratio) {
     }
   }
   deepSetValue(option, keyWords, ratio);
+  deepNewFunction(option, funKeyWords);
   return option;
 }
 
@@ -979,4 +982,41 @@ function dotNotationToObject(dotNotationObj,pen) {
   });
 
   return result;
+}
+
+function isFunctionString(str) {
+  const trimmed = str.trim();
+
+  // function 函数正则
+  const functionRegex = /^\s*function(\s+\w+)?\s*\([^)]*\)\s*\{[\s\S]*\}\s*$/;
+
+  // 箭头函数正则
+  const arrowRegex = /^\s*(\([^)]*\)|\w+)\s*=>\s*(\{[\s\S]*\}|[^{}]+)\s*$/;
+
+  return functionRegex.test(trimmed) || arrowRegex.test(trimmed);
+}
+
+function deepNewFunction<T>(o: any, keyWords: string[]) {
+  if (Array.isArray(o)) {
+    const arr = [] as T & any[];
+    o.forEach((item) => {
+      arr.push(deepNewFunction(item, keyWords));
+    });
+    return arr;
+  } else if (typeof o === 'object') {
+    if (o === null) {
+      return null;
+    }
+    for (const key in o) {
+      if (keyWords.includes(key)) {
+        if (isFunctionString(o[key])) {
+          o[key] = eval('(' + o[key] + ')');
+        }
+      } else {
+        o[key] = deepNewFunction(o[key], keyWords);
+      }
+    }
+    return o;
+  }
+  return o;
 }
