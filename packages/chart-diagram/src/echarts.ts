@@ -985,6 +985,7 @@ function dotNotationToObject(dotNotationObj,pen) {
 }
 
 function isFunctionString(str) {
+  if(typeof str !== 'string') return false;
   const trimmed = str.trim();
 
   // function 函数正则
