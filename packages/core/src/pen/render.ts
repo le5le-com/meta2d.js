@@ -2947,6 +2947,9 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
   if (pen.calculative.initRect) {
     scaleRect(pen.calculative.initRect, scale, center, pen.pivot);
   }
+  if (pen.calculative.prevFrameRect){
+    scaleRect(pen.calculative.prevFrameRect, scale, center, pen.pivot);
+  }
   scaleChildrenInitRect(pen, scale, center);
   if (pen.calculative.x) {
     scalePoint(pen.calculative as any as Point, scale, center);
@@ -3332,6 +3335,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
     pen.calculative.x = pen.calculative.worldRect.x;
     pen.calculative.y = pen.calculative.worldRect.y;
     pen.calculative.initRect = deepClone(pen.calculative.worldRect);
+    pen.calculative.prevFrameRect = deepClone(pen.calculative.worldRect);
     if (pen.parentId) {
       pen.calculative.initRelativeRect = {
         x: pen.x,
@@ -3368,6 +3372,11 @@ export function setNodeAnimate(pen: Pen, now: number) {
     for (const frame of pen.frames) {
       d += frame.duration;
       if (pos > d) {
+        if(!pen.frames[frameIndex].switch) {
+          pen.calculative.prevFrameRect = deepClone(pen.calculative.worldRect);
+          //上一个动画帧结束
+          pen.frames[frameIndex].switch = true;
+        }
         ++frameIndex;
       } else {
         break;
@@ -3391,6 +3400,13 @@ export function setNodeAnimate(pen: Pen, now: number) {
     // 新循环播放
     let cycleChanged = false;
     if (cycleIndex > pen.calculative.cycleIndex) {
+      pen.frames.forEach((f) => {
+        f.switch = false
+      })
+      //每次循环结束保持最初状态
+      pen.calculative.worldRect = deepClone(pen.calculative.initRect);
+      pen.calculative.prevFrameRect = deepClone(pen.calculative.initRect);
+
       pen.calculative.cycleIndex = cycleIndex;
       pen.calculative.frameStart = pen.calculative.start + pen.calculative.duration * (cycleIndex - 1);
       cycleChanged = true;
@@ -3463,7 +3479,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
     if (k === 'duration') {
       continue;
     } else if (k === 'scale') {
-      pen.calculative.worldRect = deepClone(pen.calculative.initRect);
+      pen.calculative.worldRect = deepClone(pen.calculative.prevFrameRect);
       scaleRect(
         pen.calculative.worldRect,
         pen.prevFrame.scale,
