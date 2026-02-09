@@ -1034,14 +1034,14 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     const textLineWidth = ctx.measureText(pen.placeholder || '请输入').width;
     const rect = pen.calculative.worldTextRect;
     let x = 0;
-    let y = 0;
+    let y = (rect.height - pen.calculative.fontSize) / 2;
     if (pen.textAlign === 'center') {
       x = (rect.width - textLineWidth) / 2;
     } else if (pen.textAlign === 'right') {
       x = rect.width - textLineWidth;
     }
-    if (pen.textBaseline === 'middle') {
-      y = (rect.height - pen.calculative.fontSize) / 2;
+    if (pen.textBaseline === 'top') {
+      y = 0;
     } else if (pen.textBaseline === 'bottom') {
       y = rect.height - pen.calculative.fontSize;
     }
