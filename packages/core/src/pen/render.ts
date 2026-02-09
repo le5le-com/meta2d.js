@@ -1029,9 +1029,23 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
       fontSize,
       lineHeight,
     });
+    ctx.textBaseline = 'top';
     ctx.fillStyle = pen.placeholderColor || '#c0c0c0';
+    const textLineWidth = ctx.measureText(pen.placeholder || '请输入').width;
     const rect = pen.calculative.worldTextRect;
-    ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
+    let x = 0;
+    let y = 0;
+    if (pen.textAlign === 'center') {
+      x = (rect.width - textLineWidth) / 2;
+    } else if (pen.textAlign === 'right') {
+      x = rect.width - textLineWidth;
+    }
+    if (pen.textBaseline === 'middle') {
+      y = (rect.height - pen.calculative.fontSize) / 2;
+    } else if (pen.textBaseline === 'bottom') {
+      y = rect.height - pen.calculative.fontSize;
+    }
+    ctx.fillText(pen.placeholder || '请输入', rect.x + x, rect.y + y);
     ctx.restore();
   }
 
