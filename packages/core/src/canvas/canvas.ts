@@ -5023,6 +5023,10 @@ export class Canvas {
     }
 
     if (now - this.lastRender < this.store.options.interval) {
+      if(this.store.options.interval > this.store.options.minFPSNumber && this.store.options.autoFPS){
+        this.store.options.interval --
+        this.store.options.animateInterval = this.store.options.interval
+      }
       if (this.renderTimer) {
         cancelAnimationFrame(this.renderTimer);
       }

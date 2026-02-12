@@ -62,7 +62,7 @@ export interface Options {
   ruleOptions?:{
     height?:number;
     background?:string; //背景颜色
-    underline?:boolean; 
+    underline?:boolean;
     textColor?:string; //文字颜色
     textLeft?:number;
     textTop?:number;
@@ -73,6 +73,8 @@ export interface Options {
   toArrow?: string;
   autoPolyline?: boolean;
   interval?: number;
+  minFPSNumber?: number;
+  autoFPS?: boolean;
   animateInterval?: number;
   dragAllIn?: boolean;
   scroll?: boolean;
@@ -157,6 +159,8 @@ export const defaultOptions: Options = {
   ruleColor: '#888888',
   drawingLineName: 'curve',
   interval: 30,
+  minFPSNumber: 10,
+  autoFPS: true,
   animateInterval: 30,
   autoPolyline: true,
   autoAnchor: true,
