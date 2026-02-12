@@ -3458,10 +3458,29 @@ export function setNodeAnimate(pen: Pen, now: number) {
     }
   }
 
-  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
-  process  > 0 && setNodeAnimateProcess(pen, process);
-  return true;
-}
+  const frame = pen.frames[pen.calculative.frameIndex]
+  let process = 0
+  if(frame.curveAnimate){
+    const elapsed = ((now - pen.calculative.frameStart) /  pen.calculative.frameDuration) % 1;
+
+    let timeParams = []
+    if(!frame.animateTimingFunction){
+      timeParams = [0.25,0.25,0.75,0.75] // 默认为 linear
+    }else{
+      timeParams = Array.isArray(frame.animateTimingFunction)?
+        frame.animateTimingFunction :
+        frame.animateTimingFunction.split(',');
+    }
+
+    const t = elapsed
+
+    process = cubicBezierY(t,timeParams[1],timeParams[3])
+  }else {
+    process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
+  }
+    process  > 0 && setNodeAnimateProcess(pen, process);
+    return true;
+  }
 
 // 把前一个动画帧初始化为播放前状态
 export function initPrevFrame(pen: Pen) {
