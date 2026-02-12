@@ -5022,21 +5022,30 @@ export class Canvas {
       return;
     }
 
-    if (now - this.lastRender < this.store.options.interval) {
-      if(this.store.options.interval > this.store.options.minFPSNumber && this.store.options.autoFPS){
-        this.store.options.interval --
-        this.store.options.animateInterval = this.store.options.interval
-      }
+    const frameCost = now - this.lastRender;
+
+    if (this.store.options.autoFPS) {
+      const minInterval = this.store.options.minFPSNumber;
+
+      let idealInterval = Math.max(minInterval, Math.round(frameCost));
+
+      const lerpFactor = 0.2;
+      this.store.options.interval = Math.round(
+        this.store.options.interval +
+        (idealInterval - this.store.options.interval) * lerpFactor
+      );
+
+      this.store.options.animateInterval = this.store.options.interval;
+    }
+
+    if (frameCost < this.store.options.interval) {
       if (this.renderTimer) {
         cancelAnimationFrame(this.renderTimer);
       }
       this.renderTimer = requestAnimationFrame(this.render);
-
       return;
-    }else if(now - this.lastRender - this.store.options.interval > 10 && this.store.options.autoFPS){
-      this.store.options.interval ++
-      this.store.options.animateInterval = this.store.options.interval
     }
+
     this.renderTimer = undefined;
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
