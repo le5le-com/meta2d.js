@@ -1093,7 +1093,11 @@ export class Canvas {
       case 'z':
       case 'Z':
         if (e.ctrlKey || e.metaKey) {
-          this.undo();
+          if (e.shiftKey) {
+            this.redo();
+          }else{
+            this.undo();
+          }
         } else if (e.shiftKey) {
           this.redo();
         }
