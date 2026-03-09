@@ -5007,7 +5007,17 @@ export class Meta2d {
     if(this.store.options.unFill){
       return; //不自适应
     }
-    const rect = this.getRect();
+    let rect: Rect = {
+      x: this.store.data.origin.x,
+      y: this.store.data.origin.y,
+      width: this.store.data.width * this.store.data.scale,
+      height: this.store.data.height * this.store.data.scale,
+    };
+
+    if (isNaN(rect.width) || isNaN(rect.height)) {
+      rect = this.getRect();
+    }
+    // const rect = this.getRect();
     const wGap = this.canvas.width - rect.width;
     const hGap = this.canvas.height - rect.height;
     //宽度拉伸

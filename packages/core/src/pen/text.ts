@@ -83,7 +83,11 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
   // By default, the text is center aligned.
   const calc = pen.calculative;
   if(isEmptyText(calc.text)) return;
+  if (!calc.textLines) {
+    calcTextLines(pen);
+  }
   const { worldTextRect:rect,textLines,fontSize,lineHeight,canvas } = calc;
+  if (!textLines) return;
 
   const lineHeightValue = fontSize * lineHeight;
   const h = textLines.length * lineHeightValue;

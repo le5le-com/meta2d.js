@@ -462,6 +462,8 @@ export interface Pen extends Rect {
 
     // 执行动画前的初始位置
     initRect?: Rect;
+    // 上一帧结束位置
+    prevFrameRect?: Rect;
     // 执行动画前的初始相对位置
     initRelativeRect?: Rect;
     // 执行动画前存储子图元的显示隐藏情况

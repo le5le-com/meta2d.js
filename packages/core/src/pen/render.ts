@@ -1029,9 +1029,23 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
       fontSize,
       lineHeight,
     });
+    ctx.textBaseline = 'top';
     ctx.fillStyle = pen.placeholderColor || '#c0c0c0';
+    const textLineWidth = ctx.measureText(pen.placeholder || '请输入').width;
     const rect = pen.calculative.worldTextRect;
-    ctx.fillText(pen.placeholder || '请输入', rect.x, rect.y + rect.height / 2);
+    let x = 0;
+    let y = (rect.height - pen.calculative.fontSize) / 2;
+    if (pen.textAlign === 'center') {
+      x = (rect.width - textLineWidth) / 2;
+    } else if (pen.textAlign === 'right') {
+      x = rect.width - textLineWidth;
+    }
+    if (pen.textBaseline === 'top') {
+      y = 0;
+    } else if (pen.textBaseline === 'bottom') {
+      y = rect.height - pen.calculative.fontSize;
+    }
+    ctx.fillText(pen.placeholder || '请输入', rect.x + x, rect.y + y);
     ctx.restore();
   }
 
@@ -2947,6 +2961,9 @@ export function scalePen(pen: Pen, scale: number, center: Point) {
   if (pen.calculative.initRect) {
     scaleRect(pen.calculative.initRect, scale, center, pen.pivot);
   }
+  if (pen.calculative.prevFrameRect){
+    scaleRect(pen.calculative.prevFrameRect, scale, center, pen.pivot);
+  }
   scaleChildrenInitRect(pen, scale, center);
   if (pen.calculative.x) {
     scalePoint(pen.calculative as any as Point, scale, center);
@@ -3332,6 +3349,7 @@ export function setNodeAnimate(pen: Pen, now: number) {
     pen.calculative.x = pen.calculative.worldRect.x;
     pen.calculative.y = pen.calculative.worldRect.y;
     pen.calculative.initRect = deepClone(pen.calculative.worldRect);
+    pen.calculative.prevFrameRect = deepClone(pen.calculative.worldRect);
     if (pen.parentId) {
       pen.calculative.initRelativeRect = {
         x: pen.x,
@@ -3368,6 +3386,11 @@ export function setNodeAnimate(pen: Pen, now: number) {
     for (const frame of pen.frames) {
       d += frame.duration;
       if (pos > d) {
+        if(!pen.frames[frameIndex].switch) {
+          pen.calculative.prevFrameRect = deepClone(pen.calculative.worldRect);
+          //上一个动画帧结束
+          pen.frames[frameIndex].switch = true;
+        }
         ++frameIndex;
       } else {
         break;
@@ -3391,6 +3414,13 @@ export function setNodeAnimate(pen: Pen, now: number) {
     // 新循环播放
     let cycleChanged = false;
     if (cycleIndex > pen.calculative.cycleIndex) {
+      pen.frames.forEach((f) => {
+        f.switch = false
+      })
+      //每次循环结束保持最初状态
+      pen.calculative.worldRect = deepClone(pen.calculative.initRect);
+      pen.calculative.prevFrameRect = deepClone(pen.calculative.initRect);
+
       pen.calculative.cycleIndex = cycleIndex;
       pen.calculative.frameStart = pen.calculative.start + pen.calculative.duration * (cycleIndex - 1);
       cycleChanged = true;
@@ -3428,10 +3458,29 @@ export function setNodeAnimate(pen: Pen, now: number) {
     }
   }
 
-  const process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
-  process  > 0 && setNodeAnimateProcess(pen, process);
-  return true;
-}
+  const frame = pen.frames[pen.calculative.frameIndex]
+  let process = 0
+  if(frame.curveAnimate){
+    const elapsed = ((now - pen.calculative.frameStart) /  pen.calculative.frameDuration) % 1;
+
+    let timeParams = []
+    if(!frame.animateTimingFunction){
+      timeParams = [0.25,0.25,0.75,0.75] // 默认为 linear
+    }else{
+      timeParams = Array.isArray(frame.animateTimingFunction)?
+        frame.animateTimingFunction :
+        frame.animateTimingFunction.split(',');
+    }
+
+    const t = elapsed
+
+    process = cubicBezierY(t,timeParams[1],timeParams[3])
+  }else {
+    process = ((now - pen.calculative.frameStart) / pen.calculative.frameDuration) % 1;
+  }
+    process  > 0 && setNodeAnimateProcess(pen, process);
+    return true;
+  }
 
 // 把前一个动画帧初始化为播放前状态
 export function initPrevFrame(pen: Pen) {
@@ -3463,7 +3512,7 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
     if (k === 'duration') {
       continue;
     } else if (k === 'scale') {
-      pen.calculative.worldRect = deepClone(pen.calculative.initRect);
+      pen.calculative.worldRect = deepClone(pen.calculative.prevFrameRect);
       scaleRect(
         pen.calculative.worldRect,
         pen.prevFrame.scale,

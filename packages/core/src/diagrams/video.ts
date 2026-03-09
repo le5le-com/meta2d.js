@@ -56,7 +56,9 @@ export function video(pen: Pen) {
       }
     }
     if(!pen.calculative.singleton){
-      pen.calculative.singleton = {};
+      pen.calculative.singleton = {
+        div: player,
+      };
     }
     pen.calculative.singleton.muted = muted;
     player.onmouseenter = (e)=>{

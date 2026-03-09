@@ -1093,7 +1093,11 @@ export class Canvas {
       case 'z':
       case 'Z':
         if (e.ctrlKey || e.metaKey) {
-          this.undo();
+          if (e.shiftKey) {
+            this.redo();
+          }else{
+            this.undo();
+          }
         } else if (e.shiftKey) {
           this.redo();
         }
@@ -5023,13 +5027,21 @@ export class Canvas {
     }
 
     if (now - this.lastRender < this.store.options.interval) {
+      if(this.store.options.interval > this.store.options.minFPSNumber && this.store.options.autoFPS){
+        this.store.options.interval --
+        this.store.options.animateInterval = this.store.options.interval
+      }
       if (this.renderTimer) {
         cancelAnimationFrame(this.renderTimer);
       }
       this.renderTimer = requestAnimationFrame(this.render);
 
       return;
+    }else if(now - this.lastRender - this.store.options.interval > 10 && this.store.options.autoFPS && document.visibilityState === 'visible'){
+      this.store.options.interval ++
+      this.store.options.animateInterval = this.store.options.interval
     }
+
     this.renderTimer = undefined;
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
@@ -8164,6 +8176,7 @@ export class Canvas {
     li.onmousedown = this.stopPropagation;
     li.dataset.i = index + '';
     li.onclick = this.selectDropdown;
+    li.ontouchstart = this.selectDropdown;
     const pen = this.store.pens[this.inputDiv.dataset.penId];
     li.onmouseenter = () => {
       li.style.background = pen.dropdownHoverBackground||this.store.styles["activeBg"] || '#eee';
@@ -8176,7 +8189,8 @@ export class Canvas {
     this.dropdown.appendChild(li);
   }
 
-  private selectDropdown = (e: MouseEvent) => {
+  private selectDropdown = (e: MouseEvent | TouchEvent) => {
+    e.stopPropagation();
     const li = e.target as HTMLElement;
     const pen = this.store.pens[this.inputDiv.dataset.penId];
     if (!li || !pen || !pen.dropdownList) {
