@@ -5279,6 +5279,48 @@ export class Meta2d {
     this.render(true);
   }
 
+  scaleView() {
+    const viewRadio = window.innerWidth / window.innerHeight;
+    const rect = this.getRect();
+    const radio = rect.width / rect.height;
+    if (Math.abs(viewRadio - radio) < 0.001) {
+      return;
+    }
+    let translate: string;
+    if (viewRadio > radio) {
+      translate = `scale(${viewRadio / radio},1)`;
+    } else {
+      translate = `scale(1,${radio / viewRadio})`;
+    }
+    this.canvas.parentElement.style.transform = translate;
+  }
+
+  setFits() {
+    if (!this.store.data.fits) {
+      const children = this.store.data.pens
+        .filter((pen) => !pen.parentId)
+        .map((pen) => pen.id);
+      this.store.data.fits = [
+        {
+          bottom: true,
+          bottomValue: 0,
+          left: true,
+          leftValue: 0,
+          right: true,
+          rightValue: 0,
+          top: true,
+          topValue: 0,
+          x: 0,
+          y: 0,
+          height: 1,
+          width: 1,
+          children,
+        },
+      ];
+    }
+  }
+
+
   trimPens() {
     //去除空连线
     let pens = this.store.data.pens.filter(
