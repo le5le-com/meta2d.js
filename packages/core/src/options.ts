@@ -128,6 +128,7 @@ export interface Options {
   textPresetStyle?:Pen;
   unFill?: boolean;
   roles?: string[];
+  crossOrigin?: string;
 }
 
 export const defaultOptions: Options = {

@@ -22,7 +22,7 @@ export function gif(pen: Pen): Path2D {
   const id = meta2dId+'-'+ pen.id;
   if (!gifsList[id]) {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = pen.crossOrigin || pen.calculative.canvas.parent.store.options.crossOrigin || 'anonymous';
     img.src = pen.image;
     if (
       pen.calculative.canvas.parent.store.options.cdn &&

@@ -1121,7 +1121,7 @@ export class Meta2d {
         ) {
           img.src = that.store.options.cdn + url;
         }
-        img.crossOrigin = 'anonymous';
+        img.crossOrigin = that.store.options.crossOrigin || 'anonymous';
         img.onload = () => {
           resolve(img);
         };

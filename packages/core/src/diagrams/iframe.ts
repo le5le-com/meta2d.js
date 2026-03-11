@@ -327,7 +327,7 @@ function renderPenRaw(pen: Pen) {
       img.crossOrigin =
         pen.crossOrigin === 'undefined'
           ? undefined
-          : pen.crossOrigin || 'anonymous';
+          : pen.crossOrigin || pen.calculative.canvas.store.options.crossOrigin || 'anonymous';
       if (
         pen.calculative.canvas.store.options.cdn &&
         !(
@@ -385,7 +385,7 @@ async function handleSaveImg(pen: Pen) {
     img.crossOrigin =
       pen.crossOrigin === 'undefined'
         ? undefined
-        : pen.crossOrigin || 'anonymous';
+        : pen.crossOrigin || pen.calculative.canvas.store.options.crossOrigin || 'anonymous';
     img.src = canvas.toDataURL('image/png', 0.1);
     if (img.src.length > 10) {
       pen.calculative.img = img;

@@ -1345,7 +1345,7 @@ export class Canvas {
       img.onerror = (e) => {
         reject(e);
       };
-      img.crossOrigin = 'anonymous';
+      img.crossOrigin = this.store.options.crossOrigin || 'anonymous';
       img.src = url;
     });
   }
@@ -4638,7 +4638,7 @@ export class Canvas {
 
       // set that as your image source
       img.src = image64;
-
+      img.crossOrigin = pen.crossOrigin || this.store.options.crossOrigin || 'anonymous';
       // do your canvas work
       img.onload = () => {
         pen.calculative.img = img;
@@ -4683,7 +4683,7 @@ export class Canvas {
             img.crossOrigin =
               pen.crossOrigin === 'undefined'
                 ? undefined
-                : pen.crossOrigin || 'anonymous';
+                : pen.crossOrigin || this.store.options.crossOrigin || 'anonymous';
             img.src = pen.image;
             if (
               this.store.options.cdn &&
@@ -4723,7 +4723,7 @@ export class Canvas {
           pen.calculative.backgroundImg = img;
         } else {
           const img = new Image();
-          img.crossOrigin = 'anonymous';
+          img.crossOrigin = pen.crossOrigin || this.store.options.crossOrigin || 'anonymous';
           img.src = pen.backgroundImage;
           if (
             this.store.options.cdn &&
@@ -4757,7 +4757,7 @@ export class Canvas {
           pen.calculative.strokeImg = img;
         } else {
           const img = new Image();
-          img.crossOrigin = 'anonymous';
+          img.crossOrigin = pen.crossOrigin || this.store.options.crossOrigin || 'anonymous';
           img.src = pen.strokeImage;
           if (
             this.store.options.cdn &&
@@ -4794,7 +4794,7 @@ export class Canvas {
     const promise = new Promise((resolve, reject) => {
       if (!globalStore.htmlElements[src]) {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        img.crossOrigin = this.store.options.crossOrigin || 'anonymous';
 
         // 处理 CDN 路径
         if (
