@@ -32,7 +32,7 @@ export class Title {
       document.head.appendChild(style);
       sheet = style.sheet;
       sheet.insertRule(
-        '.meta2d-title{position:absolute;padding:0;z-index:10;left: -9999px;top: -9999px;background:#fff;color:#000; cursor: crosshair;border: 1px solid black;}'
+        '.meta2d-title{position:absolute;padding:0;z-index:10;left: -9999px;top: -9999px;background:#fff;color:#000; cursor: crosshair;border: 1px solid black;max-width:300px;overflow-wrap: break-word;}'
       );
     }
   }
@@ -82,8 +82,22 @@ export class Title {
    * @param newRect 新
    */
   private changePositionByAnchor(anchor: Point) {
-    this.box.style.left = anchor.x + 10 + 'px';
-    this.box.style.top = anchor.y + 10 + 'px';
+    let pW = this.parentElement.clientWidth;
+    let pH = this.parentElement.clientHeight;
+    if(anchor.x + 20 + 300 > pW){
+      this.box.style.right = (pW - anchor.x) + 'px';
+      this.box.style.left = 'auto';
+    }else{
+      this.box.style.left = anchor.x + 10 + 'px';
+      this.box.style.right = 'auto';
+    }
+    if(anchor.y + 10 + 100 > pH){
+      this.box.style.bottom = (pH - anchor.y) + 'px';
+      this.box.style.top = 'auto';
+    }else{
+      this.box.style.top = anchor.y + 10 + 'px';
+      this.box.style.bottom = 'auto';
+    }
   }
 
   private static titleEmpty(anchor: Point) {
