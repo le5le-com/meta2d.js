@@ -71,6 +71,17 @@ export interface Options {
   drawingLineName?: string;
   fromArrow?: string;
   toArrow?: string;
+  dirMarkers?: boolean;
+  dirMarkerInterval?: number;
+  dirMarkerColor?: string;
+  drawDirMarkers?: (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    angleRad: number,
+    color: string,
+    pen: Pen
+  ) => void;
   autoPolyline?: boolean;
   interval?: number;
   minFPSNumber?: number;
@@ -200,6 +211,7 @@ export const defaultOptions: Options = {
   parentTouch: true,
   cdn: '',
   polylineSpace: 10,
+  dirMarkers: true,
   domShapes: [],
   containerShapes:['tablePlus'],
   textFlip: true,

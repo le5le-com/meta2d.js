@@ -14,7 +14,8 @@ import {
   getLinePointPosAndAngle,
   createSvgPath,
   getLineLength,
-  createLineSvgPath
+  createLineSvgPath,
+  renderLineDirectionMarkers,
 } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
 import {
@@ -2092,6 +2093,7 @@ export function ctxDrawPath(
 
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
+      renderLineDirectionMarkers(ctx, pen, store);
 
       if (
         pen.calculative.active &&
@@ -2161,6 +2163,7 @@ export function ctxDrawLinePath(
 
       pen.fromArrow && renderFromArrow(ctx, pen, store);
       pen.toArrow && renderToArrow(ctx, pen, store);
+      renderLineDirectionMarkers(ctx, pen, store);
       //TODO 锚点处渐进色的过渡
       if (
         pen.calculative.active &&

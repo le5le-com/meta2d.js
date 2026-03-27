@@ -285,6 +285,10 @@ export interface Pen extends Rect {
   fromArrowColor?: string;
   toArrowColor?: string;
 
+  dirMarkers?: boolean;
+  dirMarkerInterval?: number;
+  dirMarkerColor?: string;
+
   autoFrom?: boolean;
   autoTo?: boolean;
 

@@ -97,8 +97,12 @@ export function getLinePoints(pen: Pen) {
   const pts: Point[] = [];
   let from: Point; // 上一个点
   pen.calculative.worldAnchors.forEach((pt: Point) => {
-    pts.push(pt);
-    from && pts.push(...getPoints(from, pt, pen));
+    if (!from) {
+      pts.push(pt);
+    } else {
+      pts.push(...getPoints(from, pt, pen));
+      pts.push(pt);
+    }
     from = pt;
   });
   if (pen.close && pen.calculative.worldAnchors.length > 1) {
