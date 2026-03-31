@@ -27,7 +27,7 @@
     "copyfiles": "latest",
     "path": "latest",
     "ts-loader": "latest",
-    "typescript": "latest",
+    "typescript": "^5.6.3",
     "webpack": "latest",
     "webpack-cli": "latest"
   },
