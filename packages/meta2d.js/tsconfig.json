@@ -1,7 +1,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "baseUrl": "./",
     "sourceMap": true,
     "moduleResolution": "node",
