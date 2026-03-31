@@ -1,12 +1,13 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "outDir": "./dist",
-    "rootDir": ".",
     "sourceMap": true,
     "declaration": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "target": "esnext",
     "allowJs": true,
     "lib": [
@@ -15,11 +16,12 @@
       "dom",
       "es2021.string"
     ],
+    "downlevelIteration": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports":true,
     "types": ["node","offscreencanvas"],
     "paths": {
-      "@meta2d/*": ["./packages/*"]
+      "@meta2d/*": ["packages/*"],
     }
   },
   "include": ["packages/**/*"],
