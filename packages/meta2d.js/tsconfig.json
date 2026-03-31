@@ -1,13 +1,15 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
     "sourceMap": true,
     "moduleResolution": "node",
     "module": "esnext",
     "target": "esnext",
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports":true
+    "allowSyntheticDefaultImports":true,
+      "paths": {
+      "@meta2d/*": ["./packages/*"],
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
