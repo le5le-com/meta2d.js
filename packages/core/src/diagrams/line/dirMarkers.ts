@@ -45,8 +45,6 @@ export function drawDefaultLineDirectionChevron(
   ctx.translate(x, y);
   ctx.rotate(angleRad);
   strokeChevronV(ctx, armLength, halfSpread);
-  ctx.translate(-armLength * 1.2, 0);
-  strokeChevronV(ctx, armLength, halfSpread);
   ctx.restore();
 }
 
@@ -132,7 +130,7 @@ export function renderLineDirectionMarkers(
   const interval =
     (pen.dirMarkerInterval ??
       store.options.dirMarkerInterval ??
-      100) * scale;
+      40) * scale;
   const color =
     pen.dirMarkerColor ??
     store.options.dirMarkerColor ??
@@ -146,23 +144,17 @@ export function renderLineDirectionMarkers(
     totalLen += Math.sqrt(dx * dx + dy * dy);
     segs.push(totalLen);
   }
-  if (totalLen < 2) {
+  if (totalLen <= 1e-6) {
     ctx.restore();
     return;
   }
 
-  const margin = 6 * scale;
-
-  const inner = totalLen - 2 * margin;
-  const ds: number[] = [];
-  if (inner < interval * 0.25) {
-    if (totalLen > 2 * margin) {
-      ds.push(totalLen / 2);
-    }
-  } else {
-    for (let d = margin + interval / 2; d < totalLen - margin; d += interval) {
-      ds.push(d);
-    }
+  let ds: number[] = [];
+  for (let d = interval / 2; d < totalLen; d += interval) {
+    ds.push(d);
+  }
+  if (ds.length === 0 || ds.length === 1) {
+    ds = [totalLen / 2];
   }
 
   if (drawer) {
