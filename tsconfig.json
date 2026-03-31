@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
-    "rootDir": "./packages",
+    "rootDir": "./",
     "baseUrl": ".",
     "outDir": "./dist",
     "sourceMap": true,
