@@ -1,8 +1,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "outDir": "./dist",
     "sourceMap": true,
     "declaration": true,
@@ -21,7 +19,7 @@
     "allowSyntheticDefaultImports":true,
     "types": ["node","offscreencanvas"],
     "paths": {
-      "@meta2d/*": ["packages/*"],
+      "@meta2d/*": ["./packages/*"]
     }
   },
   "include": ["packages/**/*"],
