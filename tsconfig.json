@@ -2,10 +2,11 @@
   "compileOnSave": false,
   "compilerOptions": {
     "outDir": "./dist",
+    "rootDir": ".",
     "sourceMap": true,
     "declaration": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "esnext",
     "allowJs": true,
     "lib": [
@@ -14,7 +15,6 @@
       "dom",
       "es2021.string"
     ],
-    "downlevelIteration": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports":true,
     "types": ["node","offscreencanvas"],
