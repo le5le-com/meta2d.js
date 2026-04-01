@@ -2307,6 +2307,17 @@ export class Canvas {
       if (this.mouseRight === MouseRight.Down) {
         this.mouseRight = MouseRight.Translate;
       }
+      const activePen = this.store.active[0];
+      if (
+        activePen &&
+        this.store.data.locked &&
+        (activePen.locked === undefined ||
+          activePen.locked < LockState.DisableMove)
+      ) {
+        // 图元鼠标按下后移动交互
+        activePen?.onMouseMove?.(activePen, this.mousePos);
+        return;
+      }
       // Translate
       if (
         this.store.data.locked === LockState.DisableEdit ||

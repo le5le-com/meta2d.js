@@ -10,6 +10,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
     pen.onMouseDown = mouseDown;
     pen.onValue = onValue;
     pen.onBeforeValue = beforeValue;
+    pen.onMouseUp = mouseUp;
     pen.setTheme = setTheme;
   }
 
@@ -37,7 +38,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
   ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, pen.x, pen.y, r);
+  ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.fill();
 
@@ -53,7 +54,7 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
   ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, pen.x, pen.y, r);
+  ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.fill();
 
@@ -62,7 +63,8 @@ export function slider(ctx: CanvasRenderingContext2D, pen: formPen) {
   ctx.strokeStyle = activeColor;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  x = pen.calculative.worldRect.x + pen.calculative.ballRect.x;
+  const scale = pen.calculative.canvas.store.data.scale;
+  x = pen.calculative.worldRect.x + pen.calculative.ballRect.x+20*scale;
   y =
     pen.calculative.worldRect.y +
     pen.calculative.ballRect.y +
@@ -104,9 +106,9 @@ function initRect(pen: formPen) {
   // pen.calculative.textLeft = pen.textLeft;
 
   pen.calculative.barRect = {
-    x: 0,
+    x: 0 + 20*scale,
     y: (pen.calculative.worldRect.height - pen.barHeight * scaleY) / 2,
-    width: barWidth,
+    width: barWidth - 20*scale,
     height: pen.barHeight * scaleY,
   };
   calcRightBottom(pen.calculative.barRect);
@@ -134,25 +136,26 @@ function mouseDown(pen: formPen, e: Point) {
   if(pen.disabled){
     return;
   }
+  let value = 0;
   const pos = e.x - pen.calculative.worldRect.x;
   if (pos > pen.calculative.barRect.width) {
-    return;
-  }
-  let value = 0;
-  let _value = (pos / pen.calculative.barRect.width) * 100;
-  if(_value < 1){
-    value= 0
-  }else if(_value > 99){
     value = 100;
   }else{
-    value = Math.round(_value);
-  }
-  // let value = Math.round((pos / pen.calculative.barRect.width) * 100);
-  if (value < pen.min || value > pen.max) {
-    return;
-  }
-  if (value < 0 || value > 100) {
-    return;
+    let _value = (pos / pen.calculative.barRect.width) * 100;
+    if(_value < 1){
+      value= 0
+    }else if(_value > 99){
+      value = 100;
+    }else{
+      value = Math.round(_value);
+    }
+    // let value = Math.round((pos / pen.calculative.barRect.width) * 100);
+    if (value < pen.min || value > pen.max) {
+      return;
+    }
+    if (value < 0 || value > 100) {
+      return;
+    }
   }
   pen.value = value;
   calcBallRect(pen);
@@ -206,4 +209,8 @@ function setTheme(pen:any,styles:any){
   pen.calculative.btnBackground = styles["sliderBtnBg"];
   pen.activeColor = styles["tabActiveBg"];
   pen.calculative.activeColor = styles["tabActiveBg"];
+}
+
+function mouseUp(pen, e){
+  pen.calculative.canvas.store.emitter.emit('change', pen);
 }
