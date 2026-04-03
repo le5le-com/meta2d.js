@@ -60,7 +60,6 @@ export function iframe(pen: Pen) {
     div.style.top = '-9999px';
     div.style.width = worldRect.width + 'px';
     div.style.height = worldRect.height + 'px';
-    document.body.appendChild(div);
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
     setElemPosition(pen, div);
     pen.calculative.singleton.div = div;
