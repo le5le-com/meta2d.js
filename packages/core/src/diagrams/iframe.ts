@@ -71,6 +71,7 @@ export function iframe(pen: Pen) {
     iframe.frameBorder = '0';
     iframe.style.border = 'none';
     iframe.src = pen.iframe;
+    iframe.allowFullscreen = true;
     pen.calculative.iframe = pen.iframe;
     div.appendChild(iframe);
     generateAroundDiv(pen);
