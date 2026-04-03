@@ -211,7 +211,7 @@ export const defaultOptions: Options = {
   parentTouch: true,
   cdn: '',
   polylineSpace: 10,
-  dirMarkers: true,
+  dirMarkers: false,
   domShapes: [],
   containerShapes:['tablePlus'],
   textFlip: true,
