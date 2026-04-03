@@ -137,7 +137,8 @@ function mouseDown(pen: formPen, e: Point) {
     return;
   }
   let value = 0;
-  const pos = e.x - pen.calculative.worldRect.x;
+  const scale = pen.calculative.canvas.store.data.scale;
+  const pos = e.x - pen.calculative.worldRect.x - 20*scale;
   if (pos > pen.calculative.barRect.width) {
     value = 100;
   }else{
