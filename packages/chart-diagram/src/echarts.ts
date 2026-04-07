@@ -216,10 +216,10 @@ export function echarts(pen: ChartPen): Path2D {
 export function initEvent(pen: Pen) {
   const _chart = pen.calculative.singleton.echart;
   const eventNames = ['click', 'dblclick', 'mousedown', 'mousemove', 'mouseup', 'mouseover', 'mouseout', 'globalout', 'contextmenu'];
-  eventNames.forEach((eventName) => {
-    let name = eventNameMap[eventName]||eventName;
-    _chart.getZr().off(name);
-  });
+  // eventNames.forEach((eventName) => {
+  //   let name = eventNameMap[eventName]||eventName;
+  //   _chart.getZr().off(name);
+  // });
   pen.events?.forEach((event)=>{
     if (event.actions && event.actions.length) {
       if(eventNames.includes(eventNameMap[event.name]||event.name)){
