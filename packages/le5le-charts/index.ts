@@ -4,3 +4,4 @@ export * from './src/pieChart';
 export * from './src/histogram';
 export * from './src/gauge';
 export * from './src/register';
+export * from './src/heatmap';
