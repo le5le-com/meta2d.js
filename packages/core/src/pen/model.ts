@@ -288,6 +288,7 @@ export interface Pen extends Rect {
   dirMarkers?: boolean;
   dirMarkerInterval?: number;
   dirMarkerColor?: string;
+  dirMarkerLineWidth?: number;
 
   autoFrom?: boolean;
   autoTo?: boolean;
@@ -837,6 +838,7 @@ export const formatAttrs: Set<string> = new Set([
   'animations',
   'toArrow',
   'fromArrow',
+  'dirMarkerLineWidth',
   'lineName',
   'textType',
   'textGradientColors',

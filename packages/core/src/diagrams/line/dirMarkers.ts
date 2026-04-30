@@ -92,9 +92,7 @@ export function renderLineDirectionMarkers(
   }
 
   const show =
-    pen.dirMarkers !== undefined
-      ? pen.dirMarkers
-      : store.options.dirMarkers;
+    pen.dirMarkers !== pen.dirMarkers || store.options.dirMarkers;
   if (!show) {
     return;
   }
@@ -135,6 +133,11 @@ export function renderLineDirectionMarkers(
     pen.dirMarkerColor ??
     store.options.dirMarkerColor ??
     '#ffffff';
+  const lineW = pen.calculative.lineWidth || 2;
+  const strokeW =
+    (pen.dirMarkerLineWidth ?? store.options.dirMarkerLineWidth) != null
+      ? (pen.dirMarkerLineWidth ?? store.options.dirMarkerLineWidth) * scale
+      : Math.min(lineW * 0.38, Math.max(0.75, lineW * 0.14));
 
   const segs: number[] = [0]; // 各个点到起点的累计距离，方便后续根据方向标记的距离计算位置
   let totalLen = 0;
@@ -158,13 +161,15 @@ export function renderLineDirectionMarkers(
   }
 
   if (drawer) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeW;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
     for (const d of ds) {
       const { x, y, ang } = pointAndAngleOnPolyline(pts, segs, d);
       drawer(ctx, x, y, ang, color, pen);
     }
   } else {
-    const lineW = pen.calculative.lineWidth || 2;
-    const strokeW = Math.min(lineW * 0.38, Math.max(0.75, lineW * 0.14));
     const innerW = Math.max(0, lineW - strokeW);
     const halfSpread = innerW * 0.38;
     const armLength = lineW * 0.52;

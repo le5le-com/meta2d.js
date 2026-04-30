@@ -74,6 +74,7 @@ export interface Options {
   dirMarkers?: boolean;
   dirMarkerInterval?: number;
   dirMarkerColor?: string;
+  dirMarkerLineWidth?: number;
   drawDirMarkers?: (
     ctx: CanvasRenderingContext2D,
     x: number,
