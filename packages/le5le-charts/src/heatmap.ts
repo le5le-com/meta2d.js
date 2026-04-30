@@ -26,7 +26,7 @@ export function heatmap(ctx: CanvasRenderingContext2D, pen: leChartPen) {
   }
 }
 
-export function beforeValue(pen: leChartPen, value: any) {
+function beforeValue(pen: leChartPen, value: any) {
   if (value.data || value.min || value.max || value.chartsColor) {
     pen.calculative.update = true;
   }
@@ -84,7 +84,7 @@ function padData(data: any, r: number, c: number) {
   const newRows = r + 2 * padSize;
   const newCols = c + 2 * padSize;
   const padded = Array(newRows)
-    .fill()
+    .fill(null)
     .map(() => Array(newCols).fill(0));
   for (let i = 0; i < r; i++) {
     for (let j = 0; j < c; j++) {

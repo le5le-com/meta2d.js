@@ -87,4 +87,7 @@ export interface leChartPen extends Pen {
   xAxisData?: string[];
   replaceMode?: ReplaceMode;
   clockInterval?: NodeJS.Timer;
+  calculative?: {
+    update?: boolean;
+  } & Pen['calculative'];
 }
