@@ -91,8 +91,7 @@ export function renderLineDirectionMarkers(
     return;
   }
 
-  const show =
-    pen.dirMarkers !== pen.dirMarkers || store.options.dirMarkers;
+  const show = pen.dirMarkers || store.options.dirMarkers;
   if (!show) {
     return;
   }
