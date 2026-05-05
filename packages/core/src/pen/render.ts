@@ -308,48 +308,150 @@ function getGradientR(angle: number, width: number, height: number) {
 }
 
 function formatGradient(color: string) {
-  if (typeof color == 'string' && color.startsWith('linear-gradient')) {
-    let arr = color.slice(16, -2).split('deg,');
-    if (arr.length > 1) {
-      let _arr = arr[1].split('%,');
-      const colors = [];
-      _arr.forEach((stap) => {
-        if (/rgba?/.test(stap)) {
-          let _arr = stap.split(') ');
-          colors.push({
-            color: rgbaToHex(_arr[0] + ')'),
-            i: parseFloat(_arr[1]) / 100,
-          });
-        } else {
-          let _arr = stap.split(' ');
-          if (_arr.length > 2) {
-            colors.push({
-              color: _arr[1],
-              i: parseFloat(_arr[2]) / 100,
-            });
-          } else {
-            colors.push({
-              color: _arr[0],
-              i: parseFloat(_arr[1]) / 100,
-            });
-          }
-        }
-      });
-      return {
-        angle: parseFloat(arr[0]),
-        colors,
-      };
-    } else {
-      return {
-        angle: parseFloat(arr[0]),
-        colors: [],
-      };
-    }
-  } else {
+  if (typeof color !== 'string' || !color.startsWith('linear-gradient')) {
     return {
       angle: 0,
       colors: [],
     };
+  }
+
+  const start = color.indexOf('(');
+  const end = color.lastIndexOf(')');
+  if (start === -1 || end === -1 || end <= start) {
+    return { angle: 0, colors: [] };
+  }
+  const inner = color.slice(start + 1, end).trim();
+  const parts = splitByCommaRespectingParens(inner);
+  if (parts.length === 0) {
+    return { angle: 0, colors: [] };
+  }
+
+  let angle = 0;
+  let colorStartIndex = 0;
+
+  const firstPart = parts[0].trim();
+  if (firstPart.endsWith('deg')) {
+    angle = parseFloat(firstPart);
+    colorStartIndex = 1;
+  } else if (firstPart.startsWith('to ')) {
+    angle = directionToAngle(firstPart);
+    colorStartIndex = 1;
+  }
+
+  const rawStops: { color: string; offset?: number }[] = [];
+  for (let i = colorStartIndex; i < parts.length; i++) {
+    const stop = parseColorStop(parts[i].trim());
+    if (stop) {
+      rawStops.push(stop);
+    }
+  }
+
+  if (rawStops.length === 0) {
+    return { angle, colors: [] };
+  }
+
+  fillMissingOffsets(rawStops);
+
+  const colors = rawStops.map((stop) => ({
+    color: stop.color,
+    i: stop.offset! / 100,
+  }));
+
+  return { angle, colors };
+}
+
+function splitByCommaRespectingParens(str: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let depth = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === '(') {
+      depth++;
+      current += char;
+    } else if (char === ')') {
+      depth--;
+      current += char;
+    } else if (char === ',' && depth === 0) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  if (current.trim()) {
+    parts.push(current);
+  }
+  return parts;
+}
+
+function parseColorStop(str: string): { color: string; offset?: number } | null {
+  if (!str) return null;
+
+  const percentMatch = str.match(/^(.+?)\s+(\d+(?:\.\d+)?%)\s*$/);
+  if (percentMatch) {
+    return {
+      color: normalizeColor(percentMatch[1].trim()),
+      offset: parseFloat(percentMatch[2]),
+    };
+  }
+
+  return { color: normalizeColor(str) };
+}
+
+function normalizeColor(color: string): string {
+  if (/^rgba?\s*\(/.test(color)) {
+    return rgbaToHex(color);
+  }
+  return color;
+}
+
+function directionToAngle(dir: string): number {
+  const map: Record<string, number> = {
+    'to top': 90,
+    'to right': 180,
+    'to bottom': 270,
+    'to left': 0,
+    'to top right': 135,
+    'to right top': 135,
+    'to bottom right': 225,
+    'to right bottom': 225,
+    'to bottom left': 315,
+    'to left bottom': 315,
+    'to top left': 45,
+    'to left top': 45,
+  };
+  return map[dir] ?? 0;
+}
+
+function fillMissingOffsets(stops: { color: string; offset?: number }[]) {
+  if (stops.length === 0) return;
+
+  if (stops[0].offset == null) {
+    stops[0].offset = 0;
+  }
+  if (stops[stops.length - 1].offset == null) {
+    stops[stops.length - 1].offset = 100;
+  }
+
+  let i = 0;
+  while (i < stops.length) {
+    if (stops[i].offset == null) {
+      let prevIndex = i - 1;
+      let nextIndex = i + 1;
+      while (nextIndex < stops.length && stops[nextIndex].offset == null) {
+        nextIndex++;
+      }
+      const prevOffset = stops[prevIndex].offset!;
+      const nextOffset = stops[nextIndex].offset!;
+      const gap = nextIndex - prevIndex;
+      for (let j = 1; j < gap; j++) {
+        stops[prevIndex + j].offset = prevOffset + (nextOffset - prevOffset) * (j / gap);
+      }
+      i = nextIndex;
+    } else {
+      i++;
+    }
   }
 }
 
@@ -1573,6 +1675,13 @@ export function renderPen(
     fill = true;
   } else {
     let back: string | CanvasGradient | CanvasPattern;
+    const backgroundStr = pen.calculative.background || '';
+
+    if(backgroundStr.startsWith('linear-gradient')){
+      //让background为linear开头的兼容到gradientColors
+      pen.calculative.gradientColors = backgroundStr;
+      pen.calculative.bkType = Gradient.Linear;
+    }
     if (pen.calculative.bkType === Gradient.Linear) {
       if (pen.calculative.gradientColors) {
         // if (!pen.type) {
