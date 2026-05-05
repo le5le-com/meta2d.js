@@ -17,6 +17,7 @@ export * from './iframe';
 export * from './video';
 export * from './form';
 export * from './sceneContainer';
+export * from './htmlDom';
 
 import { rectangle, square } from './rectangle';
 import { circle } from './circle';
@@ -40,12 +41,14 @@ import { mindNode, mindNodeAnchors } from './mindNode';
 import { mindLine, mindLineAnchors } from './mindLine';
 import { form } from './form';
 import { sceneContainer } from './sceneContainer';
+import {htmlDom} from "./htmlDom";
 
 export function commonPens() {
   return {
     rectangle,
     square,
     circle,
+    htmlDom,
     svgPath,
     diamond,
     triangle,
