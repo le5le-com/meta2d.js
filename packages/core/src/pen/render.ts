@@ -1677,7 +1677,7 @@ export function renderPen(
     let back: string | CanvasGradient | CanvasPattern;
     const backgroundStr = pen.calculative.background || '';
 
-    if(backgroundStr.startsWith('linear-gradient')){
+    if(typeof backgroundStr === 'string' && backgroundStr.startsWith('linear-gradient')){
       //让background为linear开头的兼容到gradientColors
       pen.calculative.gradientColors = backgroundStr;
       pen.calculative.bkType = Gradient.Linear;
