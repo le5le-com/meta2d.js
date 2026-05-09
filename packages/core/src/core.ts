@@ -6272,9 +6272,15 @@ export class Meta2d {
       }
       this.setValue(
         { id: pen.id, canvasLayer: layer },
-        { render: false, doEvent: false, history: false }
+        { render: false, doEvent: false, history: false },
       );
-    } else if (pen.externElement || pen.name === 'gif') {
+    } else if (
+      pen.name.endsWith('Dom') ||
+      isDomShapes.includes(pen.name) ||
+      this.store.options.domShapes.includes(pen.name) ||
+      pen.externElement ||
+      pen.name === 'gif'
+    ) {
       let zIndex = 0;
       // let zIndex = pen.calculative.zIndex === undefined ? 5 : pen.calculative.zIndex + 1;
       if (type === 'top') {
@@ -6292,7 +6298,7 @@ export class Meta2d {
       }
       this.setValue(
         { id: pen.id, zIndex },
-        { render: false, doEvent: false, history: false }
+        { render: false, doEvent: false, history: false },
       );
       pen.calculative.singleton?.div &&
         setElemPosition(pen, pen.calculative.singleton.div);
