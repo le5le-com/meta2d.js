@@ -837,6 +837,8 @@ export class Meta2d {
     //图纸更新
     const data = await getMeta2dData(this.store, id);
     if (data) {
+      data.locked = 1;
+      data.fits?.length && (globalThis.meta2dData = JSON.stringify(data));
       this.canvas.opening = true;
       this.open(data);
       this.lock(1);
