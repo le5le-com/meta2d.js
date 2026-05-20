@@ -149,6 +149,8 @@ export interface Network {
   socketCbJs?: string; //socket回调js
   socketFn?: Function;
   children?: any[]; //点位数组
+  preJs?: string; //前置处理
+  preFn?: Function;
 }
 
 export interface Iot {
@@ -169,7 +171,7 @@ export interface Iot {
   enable?:boolean;
   room?:string;
   computes?:any[];
-  interval?:any; 
+  interval?:any;
   times?:number;
 }
 
@@ -185,7 +187,7 @@ export interface Sql {
   pageSize?: number;
   current?: number;
   keys?: string[]; // 子数据点key
-  enable?: boolean; 
+  enable?: boolean;
 }
 
 export interface HttpOptions {

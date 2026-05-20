@@ -3036,9 +3036,20 @@ export class Meta2d {
     }
   }
 
-  connectSSE(net:Network){
+  async connectSSE(net:Network){
     if(net.enable === false){
       return;
+    }
+    if (net.preJs) {
+      if (!net.preFn) {
+        const AsyncFunction = Object.getPrototypeOf(
+          async function () {},
+        ).constructor;
+        net.preFn = new AsyncFunction('network', net.preJs);
+      }
+      if(net.preFn){
+        net = await net.preFn(net);
+      }
     }
     this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
     this.eventSources[net.index].onmessage = (e) => {
@@ -3059,9 +3070,20 @@ export class Meta2d {
     });
   }
 
-  connectNetMqtt(net:Network){
+  async connectNetMqtt(net:Network){
     if(net.enable === false){
       return;
+    }
+    if (net.preJs) {
+      if (!net.preFn) {
+        const AsyncFunction = Object.getPrototypeOf(
+          async function () {},
+        ).constructor;
+        net.preFn = new AsyncFunction('network', net.preJs);
+      }
+      if(net.preFn){
+        net = await net.preFn(net);
+      }
     }
     if (net.options.clientId && !net.options.customClientId) {
       net.options.clientId = s8();
@@ -3174,7 +3196,7 @@ export class Meta2d {
     })
   }
 
-  connectNetWebSocket(net: Network) {
+  async connectNetWebSocket(net: Network) {
     if (this.websockets[net.index]) {
       this.websockets[net.index].onclose = undefined;
       this.websockets[net.index]?.close();
@@ -3182,6 +3204,17 @@ export class Meta2d {
     }
     if(net.enable === false ){
       return;
+    }
+    if (net.preJs) {
+      if (!net.preFn) {
+        const AsyncFunction = Object.getPrototypeOf(
+          async function () {},
+        ).constructor;
+        net.preFn = new AsyncFunction('network', net.preJs);
+      }
+      if(net.preFn){
+        net = await net.preFn(net);
+      }
     }
     let url = net.url;
     if(url.indexOf('${') > -1){
@@ -3614,6 +3647,20 @@ export class Meta2d {
 
   async requestHttp(_req: Network) {
     let req = deepClone(_req);
+    const net: Network = this.store.data.networks.filter(
+      (item) => item.protocol === 'http',
+    )[req.index];
+    if (net.preJs) {
+      if (!net.preFn) {
+        const AsyncFunction = Object.getPrototypeOf(
+          async function () {},
+        ).constructor;
+        net.preFn = new AsyncFunction('network', net.preJs);
+      }
+      if(net.preFn){
+        req = await net.preFn(req);
+      }
+    }
     if (req.url) {
       if(req.url.indexOf('${') > -1){
         let keys = req.url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
@@ -3681,7 +3728,6 @@ export class Meta2d {
       });
       if (res.ok) {
         const data = await res.text();
-        const net = this.store.data.networks.filter(item=>item.protocol==='http')[req.index];
         this.socketCallback(data, { type: 'http', method: req.method, url: req.url, name: req.name, net});
       } else {
         _req.times++;
