@@ -4,11 +4,11 @@ on:
   push:
     tags:
       - 'v*'
-      
+
 permissions:
   id-token: write  # Required for OIDC
   contents: read
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pnpm i
+          pnpm i --ignore-scripts
 
       - name: Build
         run: |
@@ -52,7 +52,7 @@ jobs:
         run: |
           cd dist/core
           npm publish
-        continue-on-error: true   
+        continue-on-error: true
 
       - name: Publish meta2d.js
         run: |
@@ -131,7 +131,7 @@ jobs:
           cd dist/utils
           npm publish
         continue-on-error: true
-      
+
       - name: Publish vue
         run: |
           cd dist/vue
