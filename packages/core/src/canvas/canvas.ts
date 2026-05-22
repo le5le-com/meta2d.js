@@ -5037,20 +5037,22 @@ export class Canvas {
       return;
     }
 
-    if (now - this.lastRender < this.store.options.interval) {
-      if(this.store.options.interval > this.store.options.minFPSNumber && this.store.options.autoFPS){
-        this.store.options.interval --
+    if(patchFlags != null){
+      if (now - this.lastRender < this.store.options.interval) {
+        if(this.store.options.interval > this.store.options.minFPSNumber && this.store.options.autoFPS){
+          this.store.options.interval --
+          this.store.options.animateInterval = this.store.options.interval
+        }
+        if (this.renderTimer) {
+          cancelAnimationFrame(this.renderTimer);
+        }
+        this.renderTimer = requestAnimationFrame(this.render);
+
+        return;
+      }else if(now - this.lastRender - this.store.options.interval > 10 && this.store.options.autoFPS && document.visibilityState === 'visible'){
+        this.store.options.interval ++
         this.store.options.animateInterval = this.store.options.interval
       }
-      if (this.renderTimer) {
-        cancelAnimationFrame(this.renderTimer);
-      }
-      this.renderTimer = requestAnimationFrame(this.render);
-
-      return;
-    }else if(now - this.lastRender - this.store.options.interval > 10 && this.store.options.autoFPS && document.visibilityState === 'visible'){
-      this.store.options.interval ++
-      this.store.options.animateInterval = this.store.options.interval
     }
 
     this.renderTimer = undefined;
