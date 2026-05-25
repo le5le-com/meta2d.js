@@ -3547,6 +3547,9 @@ export class Meta2d {
   }
 
   penNetwork(pen: Pen) {
+    if (!pen.apiUrl) {
+      return;
+    }
     const penNetwork: Network = {
       url: pen.apiUrl,
       method: pen.apiMethod,
@@ -3647,10 +3650,10 @@ export class Meta2d {
 
   async requestHttp(_req: Network) {
     let req = deepClone(_req);
-    const net: Network = this.store.data.networks.filter(
+    const net: Network = this.store.data.networks?.filter(
       (item) => item.protocol === 'http',
     )[req.index];
-    if (net.preJs) {
+    if (net?.preJs) {
       if (!net.preFn) {
         const AsyncFunction = Object.getPrototypeOf(
           async function () {},
