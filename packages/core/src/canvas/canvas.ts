@@ -117,6 +117,7 @@ import {
   HoverType,
   MouseRight,
   rotatedCursors,
+  Direction,
 } from '../data';
 import { createOffscreen } from './offscreen';
 import {
@@ -146,6 +147,7 @@ import { CanvasTemplate } from './canvasTemplate';
 import { getLinePoints } from '../diagrams/line';
 import { Popconfirm } from '../popconfirm';
 import { le5leTheme, themeKeys } from '../theme';
+import { getFont } from '../pen/render';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -5429,7 +5431,10 @@ export class Canvas {
     ctx.translate(0.5, 0.5);
     ctx.strokeStyle = pen.anchorColor || this.store.styles.anchorColor;
     ctx.fillStyle = pen.anchorBackground || this.store.options.anchorBackground;
-    pen.calculative.worldAnchors.forEach((anchor) => {
+    const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } =
+      pen.calculative;
+    const scale = this.store.data.scale;
+    pen.calculative.worldAnchors.forEach((anchor, index) => {
       if (anchor.hidden || anchor.locked > LockState.DisableEdit) {
         return;
       }
@@ -5473,7 +5478,7 @@ export class Canvas {
           anchor.x - (anchor.length * this.store.data.scale) / 2,
           anchor.y - size,
           anchor.length * this.store.data.scale,
-          size * 2
+          size * 2,
         );
         ctx.restore();
       } else {
@@ -5497,6 +5502,64 @@ export class Canvas {
       if (pen.type && this.store.hoverAnchor === anchor) {
         ctx.restore();
       } else if (anchor.color || anchor.background) {
+        ctx.restore();
+      }
+
+      if (anchor.label) {
+        ctx.save();
+        ctx.font = getFont({
+          fontStyle,
+          fontWeight,
+          fontFamily,
+          fontSize,
+          lineHeight,
+        });
+        const rX = pen.anchors[index].x;
+        const rY = pen.anchors[index].y;
+        let xGap = 0;
+        let yGap = 0;
+        if (anchor.labelDirection !== undefined) {
+          if (anchor.labelDirection === Direction.Left) {
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            xGap = -(anchor.labelGap || 10) * scale;
+          } else if (anchor.labelDirection === Direction.Right) {
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            xGap = (anchor.labelGap || 10) * scale;
+          } else if (anchor.labelDirection === Direction.Up) {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            yGap = -(anchor.labelGap || 5) * scale;
+          } else if (anchor.labelDirection === Direction.Bottom) {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            yGap = (anchor.labelGap || 5) * scale;
+          }
+        } else {
+          if (rX < 0.1) {
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            xGap = (anchor.labelGap || 10) * scale;
+          } else if (rX > 0.9) {
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            xGap = -(anchor.labelGap || 10) * scale;
+          } else {
+            ctx.textAlign = 'center';
+            if (rY < 0.1) {
+              ctx.textBaseline = 'top';
+              yGap = (anchor.labelGap || 5) * scale;
+            } else if (rY > 0.9) {
+              ctx.textBaseline = 'bottom';
+              yGap = -(anchor.labelGap || 5) * scale;
+            } else {
+              ctx.textBaseline = 'middle';
+            }
+          }
+        }
+        ctx.fillStyle = getTextColor(pen, this.store);
+        ctx.fillText(anchor.label, anchor.x + xGap, anchor.y + yGap);
         ctx.restore();
       }
       //根父节点

@@ -56,6 +56,9 @@ export interface Point {
   type?: PointType;
   length?: number;
   distance?: number;
+  label?: string; //锚点标签
+  labelGap?: number; //锚点标签偏移量
+  labelDirection?: Direction; //锚点标签方向
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
