@@ -1968,6 +1968,9 @@ export class Meta2d {
         }
         if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
+          if (!animate.animateCycle) {
+            animate.animateCycle = 0;
+          }
           animate.animateName = animate.name;
           delete animate.name;
           animate.currentAnimation = index;
