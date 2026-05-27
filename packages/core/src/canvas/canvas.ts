@@ -8059,7 +8059,9 @@ export class Canvas {
         '.meta2d-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
       );
       sheet.insertRule('.meta2d-input ul li:hover{background: #eeeeee;}');
-      sheet.insertRule(`.input-div::-webkit-scrollbar {display:none}`);
+      if (CSS.supports?.('selector(.input-div::-webkit-scrollbar)')) {
+        sheet.insertRule(`.input-div::-webkit-scrollbar {display:none}`);
+      }
       sheet.insertRule(`.input-div{scrollbar-width: none;}`);
       sheet.insertRule(
         '.meta2d-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'
