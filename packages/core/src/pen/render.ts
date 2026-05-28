@@ -2235,33 +2235,29 @@ export function ctxDrawLinePath(
         setCtxLineAnimate(ctx, pen, store);
         ctx.beginPath();
         if (path instanceof Path2D) {
-          if (pen.lineName === 'polyline' || pen.lineName === 'line') {
-            if (
-              pen.lineAnimateType === LineAnimateType.Arrow ||
-              pen.lineAnimateType === LineAnimateType.WaterDrop
-            ) {
-              //箭头动画
-              const _path = drawArrow(pen);
-              ctx.stroke(_path);
-              ctx.fill(_path);
-            } else {
-              if (
-                pen.calculative.gradientSmooth ||
-                pen.calculative.lineSmooth
-              ) {
-                if (!pen.calculative.gradientAnimatePath) {
-                  pen.calculative.gradientAnimatePath =
-                    getGradientAnimatePath(pen);
-                }
-                if (pen.calculative.gradientAnimatePath instanceof Path2D) {
-                  ctx.stroke(pen.calculative.gradientAnimatePath);
-                }
-              } else {
-                ctx.stroke(path);
-              }
-            }
+          if (
+            pen.lineAnimateType === LineAnimateType.Arrow ||
+            pen.lineAnimateType === LineAnimateType.WaterDrop
+          ) {
+            //箭头动画
+            const _path = drawArrow(pen);
+            ctx.stroke(_path);
+            ctx.fill(_path);
           } else {
-            ctx.stroke(path);
+            if (
+              pen.calculative.gradientSmooth ||
+              pen.calculative.lineSmooth
+            ) {
+              if (!pen.calculative.gradientAnimatePath) {
+                pen.calculative.gradientAnimatePath =
+                  getGradientAnimatePath(pen);
+              }
+              if (pen.calculative.gradientAnimatePath instanceof Path2D) {
+                ctx.stroke(pen.calculative.gradientAnimatePath);
+              }
+            } else {
+              ctx.stroke(path);
+            }
           }
         } else {
           path(pen, ctx);
