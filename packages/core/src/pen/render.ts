@@ -47,6 +47,7 @@ import { Gradient, isEqual, PenType } from '../pen';
 import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
 import { isEmptyText } from '../utils/tool';
+import {TRANSPARENT_COLOR} from "@meta2d/core";
 
 const LINE = "line";
 const REPEAT = "repeat"
@@ -2290,7 +2291,9 @@ export function setCtxLineAnimate(
   pen: Pen,
   store: Meta2dStore
 ) {
-  ctx.strokeStyle = pen.animateColor || store.styles.animateColor;
+  ctx.strokeStyle = pen.lineAnimateType === LineAnimateType.Custom ?
+    pen.animateColor || TRANSPARENT_COLOR
+    : (pen.animateColor || store.styles.animateColor);
   if (pen.animateShadow) {
     ctx.shadowBlur = pen.animateShadowBlur || pen.animateLineWidth || 6;
     ctx.shadowColor =
@@ -2471,7 +2474,7 @@ function lineAnimatePenRender(tracks:Pen[]) {
       height: viewHeight,
       rotate: state.rotate,
     };
-    meta2d.setValue({ id: targetPen.id, ...data });
+    meta2d.setValue({ id: targetPen.id, ...data }, { render: false, doEvent: false, history: false });
   }
 }
 

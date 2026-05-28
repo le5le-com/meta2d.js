@@ -8,6 +8,8 @@ export enum KeydownType {
   Canvas,
 }
 
+export const TRANSPARENT_COLOR = '#FFFFFF00'
+
 export interface Options {
   color?: string;
   activeColor?: string;
