@@ -87,6 +87,62 @@ export interface ChartPen extends Pen {
   // beforeScale: number;
 }
 
+function safeSetOption(
+  pen: ChartPen,
+  option: any,
+  opts?: boolean | Record<string, any>
+): boolean {
+  const chart = pen.calculative?.singleton?.echart;
+  if (!chart) {
+    return false;
+  }
+  if (option == null) {
+    console.warn('[meta2d:echarts] Skip setOption because option is empty.', pen);
+    return false;
+  }
+  try {
+    chart.setOption(option, opts as any);
+    return true;
+  } catch (error) {
+    console.error('[meta2d:echarts] setOption failed.', {
+      penId: pen.id,
+      option,
+      opts,
+      error,
+    });
+    return false;
+  }
+}
+
+function safeResize(pen: ChartPen): boolean {
+  const chart = pen.calculative?.singleton?.echart;
+  const div = pen.calculative?.singleton?.div as HTMLDivElement;
+  if (!chart || !div || !div.isConnected) {
+    return false;
+  }
+  const { width, height } = pen.calculative?.worldRect || {};
+  if (!(width > 0) || !(height > 0)) {
+    console.warn('[meta2d:echarts] Skip resize because container size is invalid.', {
+      penId: pen.id,
+      width,
+      height,
+    });
+    return false;
+  }
+  try {
+    chart.resize();
+    return true;
+  } catch (error) {
+    console.error('[meta2d:echarts] resize failed.', {
+      penId: pen.id,
+      width,
+      height,
+      error,
+    });
+    return false;
+  }
+}
+
 export function echarts(pen: ChartPen): Path2D {
   let echarts = globalThis.echarts;
   if (!pen.echarts || !echarts) {
@@ -159,14 +215,15 @@ export function echarts(pen: ChartPen): Path2D {
             }
             echarts.registerMap(pen.echarts.geoName, data);
             pen.calculative.singleton.echartsReady = true;
-            pen.calculative.singleton.echart.setOption(
+            safeSetOption(
+              pen,
               updateOption(pen.echarts.option,
 
                 pen.calculative.canvas.store.data.scale
               ),
               true
             );
-            pen.calculative.singleton.echart.resize();
+            safeResize(pen);
             setTimeout(() => {
               onRenderPenRaw(pen);
             }, 300);
@@ -190,13 +247,16 @@ export function echarts(pen: ChartPen): Path2D {
             pen: pen,
           })().then((option) => {
             if (option) {
-              pen.calculative.singleton.echart.setOption(option, true);
-              let _option = pen.calculative.singleton.echart.getOption();
-              pen.echarts.option = _option;
+              const applied = safeSetOption(pen, option, true);
+              if (applied) {
+                let _option = pen.calculative.singleton.echart.getOption();
+                pen.echarts.option = _option;
+              }
             }
           });
         }else{
-          pen.calculative.singleton.echart?.setOption(
+          safeSetOption(
+            pen,
             updateOption(
               pen.echarts.option,
               pen.calculative.canvas.store.data.scale
@@ -298,7 +358,7 @@ function resizeFn(pen: ChartPen) {
   if (!pen.calculative.singleton?.echart) {
     return;
   }
-  pen.calculative.singleton.echart.resize();
+  safeResize(pen);
 }
 
 function scale(pen: ChartPen) {
@@ -340,13 +400,14 @@ function scaleFn(pen: ChartPen) {
       })
     }
     }
-    pen.calculative.singleton.echart.setOption(
+    safeSetOption(
+      pen,
       updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
       true
     );
   }
   // pen.beforeScale = pen.calculative.canvas.store.data.scale;
-  pen.calculative.singleton.echart.resize();
+  safeResize(pen);
 }
 
 function value(pen: ChartPen) {
@@ -360,14 +421,15 @@ function value(pen: ChartPen) {
       const option = pen.calculative.partialOption.echarts.option;
       let isReplaceMerge = Array.isArray(pen.echarts?.replaceMerge)?pen.echarts?.replaceMerge.some((key)=>option[key]):false;
       if (isReplaceMerge) {
-        pen.calculative.singleton.echart.setOption(deepClone(option), {
+        safeSetOption(pen, deepClone(option), {
           replaceMerge: pen.echarts.replaceMerge,
         });
       } else {
-        pen.calculative.singleton.echart.setOption(deepClone(option));
+        safeSetOption(pen, deepClone(option));
       }
     } else {
-      pen.calculative.singleton.echart.setOption(
+      safeSetOption(
+        pen,
         updateOption(
           pen.echarts.option,
           pen.calculative.canvas.store.data.scale
@@ -884,9 +946,17 @@ export function setEchartsOption(
 
 function onRenderPenRaw(pen: Pen) {
   const img = new Image();
-  img.src = pen.calculative.singleton?.echart?.getDataURL({
-    pixelRatio: 2,
-  });
+  try {
+    img.src = pen.calculative.singleton?.echart?.getDataURL({
+      pixelRatio: 2,
+    });
+  } catch (error) {
+    console.error('[meta2d:echarts] getDataURL failed.', {
+      penId: pen.id,
+      error,
+    });
+    return;
+  }
   pen.calculative.img = img;
 }
 
