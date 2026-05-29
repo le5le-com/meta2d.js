@@ -47,7 +47,7 @@ import { Gradient, isEqual, PenType } from '../pen';
 import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
 import { isEmptyText } from '../utils/tool';
-import {TRANSPARENT_COLOR} from "@meta2d/core";
+import { TRANSPARENT_COLOR } from "../options";
 
 const LINE = "line";
 const REPEAT = "repeat"
