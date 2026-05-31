@@ -148,6 +148,7 @@ import { getLinePoints } from '../diagrams/line';
 import { Popconfirm } from '../popconfirm';
 import { le5leTheme, themeKeys } from '../theme';
 import { getFont } from '../pen/render';
+import { getEasingFunction } from '../utils/easing';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -219,6 +220,21 @@ export class Canvas {
   private lastAnimateRender = 0;
   animateRendering = false;
   renderTimer: number;
+
+  private viewAnimation?: {
+    startTime: number;
+    duration: number;
+    fromX: number;
+    fromY: number;
+    fromScale: number;
+    toX: number;
+    toY: number;
+    toScale: number;
+    easing: (t: number) => number;
+    center: Point;
+    pen?: Pen;
+  };
+  private viewAnimationTimer?: number;
 
   initPens?: Pen[];
 
@@ -616,6 +632,7 @@ export class Canvas {
   }
 
   onwheel = (e: WheelEvent) => {
+    this.viewAnimation = undefined;
     //输入模式不允许滚动
     if (this.inputDiv.contentEditable === 'true') {
       return;
@@ -1638,6 +1655,7 @@ export class Canvas {
   }
 
   ontouchstart = (e: TouchEvent) => {
+    this.viewAnimation = undefined;
     this.lastTouchY = e.touches[0].clientY
     if (this.store.data.locked === LockState.Disable) {
       return;
@@ -1943,6 +1961,7 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    this.viewAnimation = undefined;
     if (e.buttons === 2 && !this.drawingLine) {
       this.mouseRight = MouseRight.Down;
     }
@@ -5742,6 +5761,223 @@ export class Canvas {
       this.store.emitter.emit('scale', this.store.data.scale);
     // });
   }
+
+  animateView(options: {
+    x?: number;
+    y?: number;
+    scale?: number;
+    pen?: Pen;
+    duration?: number;
+    easing?: string;
+    center?: Point;
+  }) {
+    if (this.viewAnimationTimer) {
+      cancelAnimationFrame(this.viewAnimationTimer);
+      this.viewAnimationTimer = undefined;
+    }
+    this.viewAnimation = undefined;
+    const duration = options.duration ?? 300;
+    const easingName = options.easing ?? 'easeOutCubic';
+    const center = options.center
+      ? { ...options.center }
+      : {
+          x: this.width / 2,
+          y: this.height / 2,
+        };
+
+    let toX = options.x !== undefined ? options.x : this.store.data.x;
+    let toY = options.y !== undefined ? options.y : this.store.data.y;
+    let toScale =
+      options.scale !== undefined ? options.scale : this.store.data.scale;
+
+    const minScale =
+      this.store.data.minScale || this.store.options.minScale;
+    const maxScale =
+      this.store.data.maxScale || this.store.options.maxScale;
+    if (toScale < minScale) toScale = minScale;
+    if (toScale > maxScale) toScale = maxScale;
+
+    if (options.pen) {
+      const viewCenter = {
+        x: this.width / 2,
+        y: this.height / 2,
+      };
+      toX =
+        viewCenter.x -
+        options.pen.calculative.worldRect.x -
+        options.pen.calculative.worldRect.width / 2;
+      toY =
+        viewCenter.y -
+        options.pen.calculative.worldRect.y -
+        options.pen.calculative.worldRect.height / 2;
+    }
+
+    if (
+      !options.pen &&
+      Math.abs(toX - this.store.data.x) < 0.5 &&
+      Math.abs(toY - this.store.data.y) < 0.5 &&
+      Math.abs(toScale - this.store.data.scale) < 0.001
+    ) {
+      return;
+    }
+
+    this.calibrateMouse(center);
+
+    this.viewAnimation = {
+      startTime: performance.now(),
+      duration,
+      fromX: this.store.data.x,
+      fromY: this.store.data.y,
+      fromScale: this.store.data.scale,
+      toX,
+      toY,
+      toScale,
+      easing: getEasingFunction(easingName),
+      center,
+      pen: options.pen,
+    };
+
+    this.animateViewFrame();
+  }
+
+  private animateViewFrame = () => {
+    if (!this.viewAnimation) {
+      return;
+    }
+
+    const now = performance.now();
+    const {
+      startTime,
+      duration,
+      fromX,
+      fromY,
+      fromScale,
+      toX,
+      toY,
+      toScale,
+      easing,
+      center,
+      pen,
+    } = this.viewAnimation;
+
+    let progress = Math.min(1, (now - startTime) / duration);
+    progress = easing(progress);
+
+    const prevScale = this.store.data.scale;
+    const currentScale = fromScale + (toScale - fromScale) * progress;
+
+    const s = currentScale / prevScale;
+    if (s !== 1) {
+      this.store.data.scale = currentScale;
+      this.store.data.center = center;
+      scalePoint(this.store.data.origin, s, center);
+
+      this.store.data.pens.forEach((p) => {
+        p.onScale && p.onScale(p);
+        if (p.parentId) {
+          return;
+        }
+        scalePen(p, s, center);
+        if (p.isRuleLine) {
+          const lineScale = 1 / s;
+          const lineCenter = p.calculative.worldRect.center;
+          if (!p.width) {
+            scalePen(p, lineScale, lineCenter);
+          } else if (!p.height) {
+            scalePen(p, lineScale, lineCenter);
+          }
+        }
+        this.updatePenRect(p, { worldRectIsReady: true });
+        this.execPenResize(p);
+      });
+      this.calcActiveRect();
+    }
+
+    // Calculate current x, y
+    let currentX: number;
+    let currentY: number;
+    if (pen) {
+      // 参考 gotoView 的计算方式，基于当前 worldRect 实时计算
+      const viewCenter = {
+        x: this.width / 2,
+        y: this.height / 2,
+      };
+      currentX =
+        viewCenter.x -
+        pen.calculative.worldRect.x -
+        pen.calculative.worldRect.width / 2;
+      currentY =
+        viewCenter.y -
+        pen.calculative.worldRect.y -
+        pen.calculative.worldRect.height / 2;
+    } else {
+      currentX = fromX + (toX - fromX) * progress;
+      currentY = fromY + (toY - fromY) * progress;
+    }
+
+    const prevX = this.store.data.x;
+    const prevY = this.store.data.y;
+    this.store.data.x = currentX;
+    this.store.data.y = currentY;
+
+    if (this.scroll && this.scroll.isShow) {
+      this.scroll.translate(currentX - prevX, currentY - prevY);
+    }
+
+    this.onMovePens();
+    this.canvasTemplate.init();
+    this.canvasImage.init();
+    this.canvasImageBottom.init();
+    this.render();
+
+    if (progress < 1) {
+      this.viewAnimationTimer = requestAnimationFrame(this.animateViewFrame);
+    } else {
+      // Ensure final values are exact
+      if (!pen) {
+        this.store.data.x = toX;
+        this.store.data.y = toY;
+      }
+      if (Math.abs(this.store.data.scale - toScale) > 0.001) {
+        const finalS = toScale / this.store.data.scale;
+        this.store.data.scale = toScale;
+        this.store.data.center = center;
+        scalePoint(this.store.data.origin, finalS, center);
+        this.store.data.pens.forEach((p) => {
+          p.onScale && p.onScale(p);
+          if (p.parentId) {
+            return;
+          }
+          scalePen(p, finalS, center);
+          if (p.isRuleLine) {
+            const lineScale = 1 / finalS;
+            const lineCenter = p.calculative.worldRect.center;
+            if (!p.width) {
+              scalePen(p, lineScale, lineCenter);
+            } else if (!p.height) {
+              scalePen(p, lineScale, lineCenter);
+            }
+          }
+          this.updatePenRect(p, { worldRectIsReady: true });
+          this.execPenResize(p);
+        });
+        this.calcActiveRect();
+        this.onMovePens();
+        this.canvasTemplate.init();
+        this.canvasImage.init();
+        this.canvasImageBottom.init();
+        this.render();
+      }
+
+      this.viewAnimation = undefined;
+      this.viewAnimationTimer = undefined;
+      this.store.emitter.emit('scale', this.store.data.scale);
+      this.store.emitter.emit('translate', {
+        x: this.store.data.x,
+        y: this.store.data.y,
+      });
+    }
+  };
 
   templateScale(scale: number, center = { x: 0, y: 0 }) {
     const { minScale, maxScale } = this.store.options;

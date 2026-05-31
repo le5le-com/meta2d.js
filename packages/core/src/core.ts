@@ -6135,6 +6135,18 @@ export class Meta2d {
     this.render();
   }
 
+  animateView(options: {
+    x?: number;
+    y?: number;
+    scale?: number;
+    pen?: Pen;
+    duration?: number;
+    easing?: string;
+    center?: Point;
+  }) {
+    this.canvas.animateView(options);
+  }
+
   showMap() {
     if (!this.map) {
       this.map = new ViewMap(this.canvas);
