@@ -5527,11 +5527,11 @@ export class Canvas {
       if (anchor.label) {
         ctx.save();
         ctx.font = getFont({
-          fontStyle,
-          fontWeight,
-          fontFamily,
-          fontSize,
-          lineHeight,
+          fontStyle: anchor.labelStyle?.fontStyle || fontStyle,
+          fontWeight: anchor.labelStyle?.fontWeight || fontWeight,
+          fontFamily: anchor.labelStyle?.fontFamily || fontFamily,
+          lineHeight: anchor.labelStyle?.lineHeight || lineHeight,
+          fontSize:  anchor.labelStyle?.fontSize* scale || fontSize,
         });
         const rX = pen.anchors[index].x;
         const rY = pen.anchors[index].y;
@@ -5577,7 +5577,7 @@ export class Canvas {
             }
           }
         }
-        ctx.fillStyle = getTextColor(pen, this.store);
+        ctx.fillStyle = anchor.labelStyle?.textColor || getTextColor(pen, this.store);
         ctx.fillText(anchor.label, anchor.x + xGap, anchor.y + yGap);
         ctx.restore();
       }

@@ -59,6 +59,13 @@ export interface Point {
   label?: string; //锚点标签
   labelGap?: number; //锚点标签偏移量
   labelDirection?: Direction; //锚点标签方向
+  labelStyle?: {
+    textColor?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    fontStyle?: string;
+    fontWeight?: string;
+  };
 }
 
 export function rotatePoint(pt: Point, angle: number, center: Point) {
@@ -207,7 +214,7 @@ export function samePoint(pt1: Point, pt2: Point): boolean {
 export function getDistance(form: Point, to: Point, store: Meta2dStore) {
   let dis =
     Math.sqrt(
-      (form.x - to.x) * (form.x - to.x) + (form.y - to.y) * (form.y - to.y)
+      (form.x - to.x) * (form.x - to.x) + (form.y - to.y) * (form.y - to.y),
     ) / store.data.scale;
 
   if (to.rotate === 0) {
