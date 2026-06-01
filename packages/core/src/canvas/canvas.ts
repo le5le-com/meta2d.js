@@ -5902,14 +5902,17 @@ export class Canvas {
         x: this.width / 2,
         y: this.height / 2,
       };
-      currentX =
+      const targetX =
         viewCenter.x -
         pen.calculative.worldRect.x -
         pen.calculative.worldRect.width / 2;
-      currentY =
+      const targetY =
         viewCenter.y -
         pen.calculative.worldRect.y -
         pen.calculative.worldRect.height / 2;
+
+      currentX = fromX + (targetX - fromX) * progress;
+      currentY = fromY + (targetY - fromY) * progress;
     } else {
       currentX = fromX + (toX - fromX) * progress;
       currentY = fromY + (toY - fromY) * progress;
