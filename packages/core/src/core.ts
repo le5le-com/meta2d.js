@@ -1096,8 +1096,11 @@ export class Meta2d {
   async addPen(pen: Pen, history?: boolean, emit = true, abs = false) {
     return await this.canvas.addPen(pen, history, emit, abs);
   }
-  addPenSync(pen: Pen, history?: boolean, emit = true, abs = false) {
+  addPenSync(pen: Pen, history?: boolean, emit = true, abs = true) {
     return this.canvas.addPenSync(pen, history, emit, abs);
+  }
+  addPensSync(pens: Pen[], history?: boolean, abs = true) {
+    return this.canvas.addPensSync(pens, history, abs);
   }
   async addPens(pens: Pen[], history?: boolean, abs = false) {
     return await this.canvas.addPens(pens, history, abs);

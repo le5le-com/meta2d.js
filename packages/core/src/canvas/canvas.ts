@@ -1653,7 +1653,35 @@ export class Canvas {
     }
     return list;
   }
-
+  addPensSync(pens: Pen[], history?: boolean, abs?:boolean){
+    const list: Pen[] = [];
+    // for (const pen of pens) {
+    //   if (!pen.id) {
+    //     pen.id = s8();
+    //   }
+    //   !pen.calculative && (pen.calculative = { canvas: this });
+    //   this.store.pens[pen.id] = pen;
+    // }
+    for (const pen of pens) {
+      if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
+        continue;
+      }
+      if(abs && !pen.parentId) {
+        pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+        pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+        pen.width = pen.width * this.store.data.scale;
+        pen.height = pen.height * this.store.data.scale;
+      }
+      this.makePen(pen);
+      list.push(pen);
+    }
+    this.render();
+    this.store.emitter.emit('add', list);
+    if (history) {
+      this.pushHistory({ type: EditType.Add, pens: deepClone(list, true) });
+    }
+    return list;
+  }
   ontouchstart = (e: TouchEvent) => {
     this.viewAnimation = undefined;
     this.lastTouchY = e.touches[0].clientY
