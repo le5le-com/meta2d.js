@@ -306,7 +306,7 @@ export class Canvas {
     public parentElement: HTMLElement,
     public store: Meta2dStore
   ) {
-    this.canvasTemplate = new CanvasTemplate(parentElement, store);
+    this.canvasTemplate = new CanvasTemplate(parentElement, store, this);
     this.canvasTemplate.canvas.style.zIndex = '1';
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
     this.canvasImageBottom.canvas.style.zIndex = '2';
@@ -5083,6 +5083,10 @@ export class Canvas {
       now = performance.now();
     }
     if (!this.patchFlags) {
+      if(this.store.options.gridAlwaysRender && this.store.options.grid){
+        this.canvasTemplate.bgPatchFlags = true
+        this.canvasTemplate.render()
+      }
       return;
     }
 

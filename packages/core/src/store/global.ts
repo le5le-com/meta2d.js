@@ -1,5 +1,17 @@
 import pkg from '../../package.json';
 import { Pen } from '../pen';
+import {Point} from "@meta2d/core";
+
+export interface GridDrawerContext {
+  store: any;
+  canvas: HTMLCanvasElement;
+}
+
+export type GridDrawer = (
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  context: GridDrawerContext,
+  mousePos: Point
+) => boolean | undefined;
 
 export const globalStore: {
   version: string;
@@ -14,6 +26,7 @@ export const globalStore: {
   }
   anchors: { [key: string]: (pen: Pen) => void }; // TODO: 存储的是 副作用 函数，函数内修改 anchors
   htmlElements: { [key: string]: HTMLImageElement }; // 目前只存在图片资源，此处使用 HTMLImageElement
+  gridDrawers: { [key: string]: GridDrawer };
 } = {
   version: pkg.version,
   path2dDraws: {},
@@ -21,6 +34,7 @@ export const globalStore: {
   anchors: {},
   lineAnimateDraws:{},
   htmlElements: {},
+  gridDrawers: {},
 };
 
 export function register(path2dFns: {
@@ -45,4 +59,12 @@ export function registerLineAnimateDraws(lineAnimateDraws: {
   [key: string]: (ctx:CanvasRenderingContext2D, line:Pen, pos:any, index:number)=>void
 }) {
   Object.assign(globalStore.lineAnimateDraws, lineAnimateDraws);
+}
+
+export function registerGridDrawer(name: string, drawer: GridDrawer) {
+  globalStore.gridDrawers[name] = drawer;
+}
+
+export function unregisterGridDrawer(name: string) {
+  delete globalStore.gridDrawers[name];
 }

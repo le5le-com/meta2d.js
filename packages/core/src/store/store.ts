@@ -36,6 +36,8 @@ export interface Meta2dData {
   gridColor?: string;
   gridSize?: number;
   gridRotate?: number;
+  gridType?: string;
+  gridScope?: 'full' | 'inner' | 'outer';
   rule?: boolean;
   ruleColor?: string;
   fromArrow?: string;
