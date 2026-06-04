@@ -1,6 +1,6 @@
 import pkg from '../../package.json';
 import { Pen } from '../pen';
-import {Point} from "@meta2d/core";
+import {Point} from "../point";
 
 export interface GridDrawerContext {
   store: any;

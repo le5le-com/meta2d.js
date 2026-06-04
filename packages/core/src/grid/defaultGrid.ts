@@ -1,5 +1,5 @@
 import { GridDrawerContext } from '../store';
-import {Point} from "@meta2d/core";
+import {Point} from "../point";
 
 export function defaultGridDrawer(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
