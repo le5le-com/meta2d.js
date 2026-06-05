@@ -226,14 +226,75 @@ export class CanvasTemplate {
       // grid false 时不绘制, undefined 时看 options.grid
       return;
     }
+
+    const { gridRotate, gridColor, gridSize, scale, origin, gridScope } = data;
+    let size = (gridSize || options.gridSize) * scale;
+    size = size < 0 ? 0 : size;
+
+    const width = (data.width || options.width) * scale;
+    const height = (data.height || options.height) * scale;
+    const startX = (data.x || options.x || 0) + origin.x;
+    const startY = (data.y || options.y || 0) + origin.y;
+
+    const ratio = this.store.dpiRatio;
+    const cW = this.canvas.width / ratio;
+    const cH = this.canvas.height / ratio;
+
+    const scope = gridScope || options.gridScope;
+    const hasRect = width && height;
+
+    ctx.save();
+
+    let area: { x: number; y: number; width: number; height: number };
+    if (scope === 'full') {
+      area = { x: 0, y: 0, width: cW, height: cH };
+    } else if (scope === 'inner') {
+      if (hasRect) {
+        area = { x: startX, y: startY, width, height };
+        ctx.beginPath();
+        ctx.rect(startX, startY, width, height);
+        ctx.clip();
+      } else {
+        area = { x: 0, y: 0, width: cW, height: cH };
+      }
+    } else if (scope === 'outer') {
+      area = { x: 0, y: 0, width: cW, height: cH };
+      if (hasRect) {
+        ctx.beginPath();
+        ctx.rect(0, 0, cW, cH);
+        ctx.rect(startX, startY, width, height);
+        ctx.clip('evenodd');
+      }
+    } else {
+      // 默认同 inner
+      if (hasRect) {
+        area = { x: startX, y: startY, width, height };
+        ctx.beginPath();
+        ctx.rect(startX, startY, width, height);
+        ctx.clip();
+      } else {
+        area = { x: 0, y: 0, width: cW, height: cH };
+      }
+    }
+
     const context: GridDrawerContext = {
       store: this.store,
       canvas: this.canvas,
+      area,
+      align: { x: startX, y: startY },
+      size,
+      color: gridColor || options.gridColor,
+      rotate: gridRotate,
+      scale,
+      mousePos,
     };
+
     const gridType = data.gridType || options.gridType || 'default';
     const drawer = globalStore.gridDrawers[gridType] || globalStore.gridDrawers['default'];
     if (drawer) {
-      this.parentCanvas.store.options.gridAlwaysRender = drawer(ctx, context, mousePos)
+      this.parentCanvas.store.options.gridAlwaysRender = drawer(ctx, context, mousePos);
     }
+
+    ctx.restore();
   }
 }

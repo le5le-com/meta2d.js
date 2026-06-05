@@ -5,6 +5,15 @@ import {Point} from "../point";
 export interface GridDrawerContext {
   store: any;
   canvas: HTMLCanvasElement;
+  /** 实际要绘制的矩形区域（已考虑 scope 和 clip） */
+  area: { x: number; y: number; width: number; height: number };
+  /** 网格对齐原点 */
+  align: { x: number; y: number };
+  size: number;
+  color: string;
+  rotate?: number;
+  scale: number;
+  mousePos?: Point;
 }
 
 export type GridDrawer = (
