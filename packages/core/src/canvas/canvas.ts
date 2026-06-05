@@ -5083,7 +5083,7 @@ export class Canvas {
       now = performance.now();
     }
     if (!this.patchFlags) {
-      if(this.store.options.gridAlwaysRender && this.store.options.grid){
+      if(this.store.options.gridAlwaysRender && (this.store.options.grid || this.store.data.grid)){
         this.canvasTemplate.bgPatchFlags = true
         this.canvasTemplate.render()
       }
