@@ -8113,12 +8113,10 @@ export class Canvas {
     if (pen.fontWeight) {
       style += `font-weight: ${pen.fontWeight};`;
     }
+    let ml = 0;
     if (pen.textLeft) {
-      style += `margin-left:${
-        scale > 1
-          ? pen.textLeft * scale
-          : (pen.textLeft * scale) // scale
-      }px;`;
+      ml = scale > 1 ? pen.textLeft * scale : (pen.textLeft * scale);
+      style += `margin-left:${ml}px;`;
     }
     if (pen.textTop) {
       style += `margin-top:${
@@ -8182,7 +8180,7 @@ export class Canvas {
           tem = 0;
         }
         style += `width:${
-          pen.fontSize * scale < 12 ? tem * scale : tem * scale
+          pen.fontSize * scale < 12 ? tem * scale - ml : tem * scale - ml
         }px;`;
       }
       // if (pen.whiteSpace === 'pre-line') {
@@ -8212,9 +8210,9 @@ export class Canvas {
             scale /
             (pen.lineHeight * pen.fontSize)
         );
-      if (textWidth > contentWidth) {
-        style += 'justify-content: start;';
-      }
+      // if (textWidth > contentWidth) {
+      //   style += 'justify-content: start;';
+      // }
     }
     sheet.deleteRule(0);
     sheet.deleteRule(0);
