@@ -306,7 +306,7 @@ export class Canvas {
     public parentElement: HTMLElement,
     public store: Meta2dStore
   ) {
-    this.canvasTemplate = new CanvasTemplate(parentElement, store);
+    this.canvasTemplate = new CanvasTemplate(parentElement, store, this);
     this.canvasTemplate.canvas.style.zIndex = '1';
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
     this.canvasImageBottom.canvas.style.zIndex = '2';
@@ -1653,7 +1653,35 @@ export class Canvas {
     }
     return list;
   }
-
+  addPensSync(pens: Pen[], history?: boolean, abs?:boolean){
+    const list: Pen[] = [];
+    // for (const pen of pens) {
+    //   if (!pen.id) {
+    //     pen.id = s8();
+    //   }
+    //   !pen.calculative && (pen.calculative = { canvas: this });
+    //   this.store.pens[pen.id] = pen;
+    // }
+    for (const pen of pens) {
+      if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
+        continue;
+      }
+      if(abs && !pen.parentId) {
+        pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+        pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+        pen.width = pen.width * this.store.data.scale;
+        pen.height = pen.height * this.store.data.scale;
+      }
+      this.makePen(pen);
+      list.push(pen);
+    }
+    this.render();
+    this.store.emitter.emit('add', list);
+    if (history) {
+      this.pushHistory({ type: EditType.Add, pens: deepClone(list, true) });
+    }
+    return list;
+  }
   ontouchstart = (e: TouchEvent) => {
     this.viewAnimation = undefined;
     this.lastTouchY = e.touches[0].clientY
@@ -5055,6 +5083,10 @@ export class Canvas {
       now = performance.now();
     }
     if (!this.patchFlags) {
+      if(this.store.options.gridAlwaysRender && this.store.options.grid){
+        this.canvasTemplate.bgPatchFlags = true
+        this.canvasTemplate.render()
+      }
       return;
     }
 
@@ -5902,14 +5934,17 @@ export class Canvas {
         x: this.width / 2,
         y: this.height / 2,
       };
-      currentX =
+      const targetX =
         viewCenter.x -
         pen.calculative.worldRect.x -
         pen.calculative.worldRect.width / 2;
-      currentY =
+      const targetY =
         viewCenter.y -
         pen.calculative.worldRect.y -
         pen.calculative.worldRect.height / 2;
+
+      currentX = fromX + (targetX - fromX) * progress;
+      currentY = fromY + (targetY - fromY) * progress;
     } else {
       currentX = fromX + (toX - fromX) * progress;
       currentY = fromY + (toY - fromY) * progress;

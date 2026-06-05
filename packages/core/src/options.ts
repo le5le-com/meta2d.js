@@ -59,6 +59,9 @@ export interface Options {
   grid?: boolean;
   gridColor?: string;
   gridSize?: number;
+  gridType?: string;
+  gridScope?: 'full' | 'inner' | 'outer';
+  gridAlwaysRender?: boolean; // 是否同步渲染grid
   rule?: boolean;
   ruleColor?: string;
   ruleOptions?:{

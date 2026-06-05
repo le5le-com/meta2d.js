@@ -49,6 +49,8 @@ import {
   registerAnchors,
   registerCanvasDraw,
   registerLineAnimateDraws,
+  registerGridDrawer,
+  unregisterGridDrawer,
   Meta2dData,
   Meta2dStore,
   useStore,
@@ -315,6 +317,8 @@ export class Meta2d {
       grid,
       gridColor,
       gridSize,
+      gridType,
+      gridScope,
       fromArrow,
       toArrow,
       rule,
@@ -328,6 +332,8 @@ export class Meta2d {
       grid,
       gridColor,
       gridSize,
+      gridType,
+      gridScope,
     });
     this.store.data = Object.assign(this.store.data, {
       textColor,
@@ -1102,8 +1108,11 @@ export class Meta2d {
   async addPen(pen: Pen, history?: boolean, emit = true, abs = false) {
     return await this.canvas.addPen(pen, history, emit, abs);
   }
-  addPenSync(pen: Pen, history?: boolean, emit = true, abs = false) {
+  addPenSync(pen: Pen, history?: boolean, emit = true, abs = true) {
     return this.canvas.addPenSync(pen, history, emit, abs);
+  }
+  addPensSync(pens: Pen[], history?: boolean, abs = true) {
+    return this.canvas.addPensSync(pens, history, abs);
   }
   async addPens(pens: Pen[], history?: boolean, abs = false) {
     return await this.canvas.addPens(pens, history, abs);
@@ -1175,16 +1184,22 @@ export class Meta2d {
     gridColor = this.store.data.gridColor,
     gridSize = this.store.data.gridSize,
     gridRotate = this.store.data.gridRotate,
+    gridType = this.store.data.gridType,
+    gridScope = this.store.data.gridScope,
   }: {
     grid?: boolean;
     gridColor?: string;
     gridSize?: number;
     gridRotate?: number;
+    gridType?: string;
+    gridScope?: 'full' | 'inner' | 'outer';
   } = {}) {
     this.store.data.grid = grid;
     this.store.data.gridColor = gridColor;
     this.store.data.gridSize = gridSize < 0 ? 0 : gridSize;
     this.store.data.gridRotate = gridRotate;
+    this.store.data.gridType = gridType;
+    this.store.data.gridScope = gridScope;
     // this.store.patchFlagsBackground = true;
     this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
   }
@@ -1835,6 +1850,10 @@ export class Meta2d {
   registerCanvasDraw = registerCanvasDraw;
 
   registerAnchors = registerAnchors;
+
+  registerGridDrawer = registerGridDrawer;
+
+  unregisterGridDrawer = unregisterGridDrawer;
 
   registerLineAnimateDraws = (name,drawFunc)=>{
     this.store.data.lineAnimateDraws[name] = drawFunc;
