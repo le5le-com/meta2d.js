@@ -121,6 +121,12 @@ export class Meta2d {
   events: Record<number, (pen: Pen, e: Event, params?: any) => void> = {};
   map: ViewMap;
   mapTimer: any;
+  /**
+   * fillView 首次填充前各 fit 顶层图元的原始几何快照（设计坐标系，与 scale/origin 无关）。
+   * 用于保证多次调用 fillView 的幂等性：每次填充前先还原到原始几何，再执行拉伸，
+   * 避免在已拉伸的结果上重复拉伸导致超出屏幕。open 新图纸时置空。
+   */
+  fillViewSnapshot: Map<string, any> | null = null;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
@@ -1197,6 +1203,8 @@ export class Meta2d {
 
   open(data?: Meta2dData, render: boolean = true) {
     this.clear(false, data?.template);
+    // 打开新图纸，原始几何快照失效，下次 fillView 时重新采集
+    this.fillViewSnapshot = null;
     this.canvas.autoPolylineFlag = true;
     if (data) {
       // 根据图纸的主题设置主题
@@ -5070,6 +5078,76 @@ export class Meta2d {
       rect = this.getRect();
     }
     // const rect = this.getRect();
+
+    // 幂等处理：首次填充前记录各 fit 顶层图元的原始几何（设计坐标系，除以 scale、
+    // 相对 origin，从而与当前缩放/平移无关）；后续每次填充前先还原到原始几何，
+    // 避免在上一次已拉伸的基础上再次拉伸，导致多次适应屏幕时内容超出屏幕。
+    const { origin: _origin, scale: _scale } = this.store.data;
+    if (!this.fillViewSnapshot) {
+      this.fillViewSnapshot = new Map();
+      this.store.data.fits?.forEach((fit) => {
+        fit.children.forEach((id) => {
+          const pen: any = this.store.pens[id];
+          if (!pen) {
+            return;
+          }
+          const wr = pen.calculative.worldRect;
+          this.fillViewSnapshot.set(id, {
+            x: (wr.x - _origin.x) / _scale,
+            y: (wr.y - _origin.y) / _scale,
+            width: wr.width / _scale,
+            height: wr.height / _scale,
+            textWidth: pen.textWidth != null ? pen.textWidth / _scale : undefined,
+            colWidth: pen.colWidth,
+            styleWidths: pen.styles?.map((style: any) => style.width),
+            imageRatio: pen.imageRatio,
+            ratio: pen.ratio,
+          });
+        });
+      });
+    } else {
+      this.fillViewSnapshot.forEach((snap, id) => {
+        const pen: any = this.store.pens[id];
+        if (!pen) {
+          return;
+        }
+        pen.x = _origin.x + snap.x * _scale;
+        pen.y = _origin.y + snap.y * _scale;
+        pen.width = snap.width * _scale;
+        pen.height = snap.height * _scale;
+        if (snap.textWidth !== undefined) {
+          pen.textWidth = snap.textWidth * _scale;
+        }
+        if (snap.colWidth !== undefined) {
+          pen.colWidth = snap.colWidth;
+        }
+        if (snap.styleWidths) {
+          pen.styles?.forEach((style: any, i: number) => {
+            if (snap.styleWidths[i] !== undefined) {
+              style.width = snap.styleWidths[i];
+            }
+          });
+        }
+        if (snap.imageRatio !== undefined) {
+          pen.imageRatio = snap.imageRatio;
+        }
+        if (snap.ratio !== undefined) {
+          pen.ratio = snap.ratio;
+        }
+        this.canvas.updatePenRect(pen, { worldRectIsReady: false });
+        if (pen.externElement) {
+          pen.onResize?.(pen);
+        }
+        if (pen.children?.length) {
+          getAllChildren(pen, this.store).forEach((cPen) => {
+            if (cPen.externElement) {
+              cPen.onResize?.(cPen);
+            }
+          });
+        }
+      });
+    }
+
     const wGap = this.canvas.width - rect.width;
     const hGap = this.canvas.height - rect.height;
     //宽度拉伸
