@@ -9,21 +9,6 @@ export function dotGridDrawer(
   const baseColor = color;
   ctx.fillStyle = baseColor;
 
-  if (mousePos) {
-    const effectRadius = 150 * store.data.scale;
-    const gradient = ctx.createRadialGradient(
-      mousePos.x,
-      mousePos.y,
-      0,
-      mousePos.x,
-      mousePos.y,
-      effectRadius
-    );
-    gradient.addColorStop(0, '#ffffff');
-    gradient.addColorStop(1, baseColor);
-    ctx.fillStyle = gradient;
-  }
-
   const radius = Math.max(0.5, 1.5 * store.data.scale);
 
   const m = align.x / size;
