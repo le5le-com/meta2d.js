@@ -2592,10 +2592,15 @@ export class Meta2d {
       this.store.data.websocket = websocket;
     }
     if (this.store.data.websocket) {
-      this.websocket = new WebSocket(
-        this.store.data.websocket,
-        this.store.data.websocketProtocols || undefined
-      );
+      try {
+        this.websocket = new WebSocket(
+          this.store.data.websocket,
+          this.store.data.websocketProtocols || undefined
+        );
+      } catch (error) {
+        this.store.emitter.emit('error', { type: 'websocket', error });
+        return;
+      }
       this.websocket.onmessage = (e) => {
         this.socketCallback(e.data, {
           type: 'websocket',
@@ -2877,7 +2882,10 @@ export class Meta2d {
   }
 
   reconnectNetwork(index:number){
-    const net = this.store.data.networks[index];
+    const net = this.store.data.networks?.[index];
+    if (!net) {
+      return;
+    }
     if (net.protocol === 'mqtt') {
       this.mqttClients && this.mqttClients[net.index]?.end();
       this.connectNetMqtt(net);
