@@ -65,6 +65,7 @@ export interface Point {
     fontFamily?: string;
     fontStyle?: string;
     fontWeight?: string;
+    lineHeight?: number;
   };
 }
 
