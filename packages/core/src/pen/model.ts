@@ -237,7 +237,10 @@ export interface Pen extends Rect {
   iconHeight?: number;
   iconTop?: number;
   iconLeft?: number;
+  iconType?: Gradient;
   iconColor?: string;
+  iconGradientColors?: string;
+  iconGradientRadius?: number;
   iconFamily?: string;
   iconWeight?: string;
   iconSize?: number;
@@ -542,7 +545,10 @@ export interface Pen extends Rect {
     iconHeight?: number;
     iconTop?: number;
     iconLeft?: number;
+    iconType?: Gradient;
     iconColor?: string;
+    iconGradientColors?: string;
+    iconGradientRadius?: number;
     iconFamily?: string;
     iconWeight?: string;
     fontsChecked?: boolean; // 处理字体加载慢于文字宽度计算

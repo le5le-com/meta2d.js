@@ -276,6 +276,53 @@ function getTextGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   return getLinearGradient(ctx, points, colors, r);
 }
 
+function getIconGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { worldIconRect, iconGradientColors } = pen.calculative;
+  if (!iconGradientColors || !worldIconRect) {
+    return;
+  }
+  const { x, y, ex, width, height, center } = worldIconRect;
+  let points = [
+    { x: ex, y: y + height / 2 },
+    { x: x, y: y + height / 2 },
+  ];
+  const { angle, colors } = formatGradient(iconGradientColors);
+  let r = getGradientR(angle, width, height);
+  points.forEach((point) => {
+    rotatePoint(point, angle, center);
+  });
+  return getLinearGradient(ctx, points, colors, r);
+}
+
+function getIconRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+  const { worldIconRect, iconGradientColors, iconGradientRadius } =
+    pen.calculative;
+  if (!iconGradientColors || !worldIconRect) {
+    return;
+  }
+  const { width, height, center } = worldIconRect;
+  const { x: centerX, y: centerY } = center;
+  let r = width;
+  if (r < height) {
+    r = height;
+  }
+  r *= 0.5;
+  const { colors } = formatGradient(iconGradientColors);
+  const grd = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    r * (iconGradientRadius || 0),
+    centerX,
+    centerY,
+    r
+  );
+  colors.forEach((stop) => {
+    grd.addColorStop(stop.i, stop.color);
+  });
+
+  return grd;
+}
+
 function getGradientR(angle: number, width: number, height: number) {
   const dividAngle = (Math.atan(height / width) / Math.PI) * 180;
   let calculateAngle = (angle - 90) % 360;
@@ -1449,7 +1496,15 @@ export function drawIcon(
     fontWeight,
     fontFamily,
   });
-  ctx.fillStyle = pen.calculative.iconColor || getTextColor(pen, store);
+
+  let iconGradient = undefined;
+  if (pen.calculative.iconType === Gradient.Linear) {
+    iconGradient = getIconGradient(ctx, pen);
+  } else if (pen.calculative.iconType === Gradient.Radial) {
+    iconGradient = getIconRadialGradient(ctx, pen);
+  }
+  ctx.fillStyle =
+    iconGradient || pen.calculative.iconColor || getTextColor(pen, store);
 
   if (pen.calculative.iconRotate) {
     ctx.translate(iconRect.center.x, iconRect.center.y);
