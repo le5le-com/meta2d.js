@@ -9,16 +9,15 @@ const iframes:{
 export function clearIframes() {
   for(const key in iframes){
     iframes[key]?.remove();
-    iframes[key] = null;
+    delete iframes[key];
   }
-  iframes;
 }
 
 export function updateIframes(pens: Pen[]) {
   for(const key in iframes){
     if (!pens.some((pen) => pen.name == 'iframe' && pen.iframe == key)) {
       iframes[key]?.remove();
-      iframes[key] = null;
+      delete iframes[key];
     }
   }
 }
@@ -74,9 +73,6 @@ export function iframe(pen: Pen) {
     pen.calculative.iframe = pen.iframe;
     div.appendChild(iframe);
     generateAroundDiv(pen);
-    iframe.onload = () => {
-      iframe.setAttribute('document.domain', '');
-    };
   }
 
   if (pen.calculative.patchFlags) {
