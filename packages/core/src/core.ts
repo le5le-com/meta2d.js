@@ -5286,15 +5286,17 @@ export class Meta2d {
           pen.calculative.worldRect.x = worldRect.x - wGap / 2;
           pen.calculative.worldRect.width = worldRect.width + wGap;
           pen.calculative.worldRect.ex = worldRect.ex + wGap;
-          pen.operationalRect.x =
-            (pen.operationalRect.x * bfW) / pen.calculative.worldRect.width;
-          pen.operationalRect.width =
-            (pen.calculative.worldRect.width -
-              (1 - pen.operationalRect.width) * bfW) /
-            pen.calculative.worldRect.width;
-          pen.onBeforeValue?.(pen, {
-            operationalRect: pen.operationalRect,
-          } as any);
+          if(pen.operationalRect){
+              pen.operationalRect.x =
+              (pen.operationalRect.x * bfW) / pen.calculative.worldRect.width;
+            pen.operationalRect.width =
+              (pen.calculative.worldRect.width -
+                (1 - pen.operationalRect.width) * bfW) /
+              pen.calculative.worldRect.width;
+            pen.onBeforeValue?.(pen, {
+              operationalRect: pen.operationalRect,
+            } as any);
+          }
           pen.onResize?.(pen);
         }
       });
@@ -5403,15 +5405,17 @@ export class Meta2d {
           pen.calculative.worldRect.y = worldRect.y - hGap / 2;
           pen.calculative.worldRect.height = worldRect.height + hGap;
           pen.calculative.worldRect.ey = worldRect.ey + hGap;
-          pen.operationalRect.y =
-            (pen.operationalRect.y * bfH) / pen.calculative.worldRect.width;
-          pen.operationalRect.height =
-            (pen.calculative.worldRect.height -
-              (1 - pen.operationalRect.height) * bfH) /
-            pen.calculative.worldRect.height;
-          pen.onBeforeValue?.(pen, {
-            operationalRect: pen.operationalRect,
-          } as any);
+          if(pen.operationalRect){
+            pen.operationalRect.y =
+              (pen.operationalRect.y * bfH) / pen.calculative.worldRect.width;
+            pen.operationalRect.height =
+              (pen.calculative.worldRect.height -
+                (1 - pen.operationalRect.height) * bfH) /
+              pen.calculative.worldRect.height;
+            pen.onBeforeValue?.(pen, {
+              operationalRect: pen.operationalRect,
+            } as any);
+          }
           pen.onResize?.(pen);
         }
       });
