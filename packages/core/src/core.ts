@@ -7112,6 +7112,7 @@ export class Meta2d {
       globalStore.anchors = {};
       globalStore.htmlElements = {};
       globalStore.lineAnimateDraws = {}
+      globalStore.gridDrawers = {}
     }
   }
 }

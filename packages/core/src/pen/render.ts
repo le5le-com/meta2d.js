@@ -1423,7 +1423,7 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
 }
 
 export function drawIcon(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D,
   pen: Pen
 ) {
   const store = pen.calculative.canvas.store;

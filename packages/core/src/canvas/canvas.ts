@@ -4189,6 +4189,14 @@ export class Canvas {
           );
           if (i > -1) {
             pen.onDestroy?.(this.store.pens[pen.id]);
+            const parent = pen.parentId
+              ? this.store.pens[pen.parentId]
+              : undefined;
+            if (parent?.children) {
+              parent.children = parent.children.filter(
+                (item) => item !== pen.id,
+              );
+            }
             this.store.data.pens.splice(i, 1);
             this.store.pens[pen.id] = undefined;
             if (!pen.calculative) {
@@ -4272,6 +4280,13 @@ export class Canvas {
           }
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
+          if (pen.parentId) {
+            !this.store.pens[pen.parentId].children &&
+              (this.store.pens[pen.parentId].children = []);
+            if (!this.store.pens[pen.parentId].children.includes(pen.id)) {
+              this.store.pens[pen.parentId].children.push(pen.id);
+            }
+          }
           if (pen.type && pen.lastConnected) {
             for (let key in pen.lastConnected) {
               this.store.pens[key]&&(this.store.pens[key].connectedLines = pen.lastConnected[key]);
