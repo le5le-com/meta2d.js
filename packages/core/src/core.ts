@@ -3886,8 +3886,9 @@ export class Meta2d {
       this.setDatas(data);
     } else {
       data.forEach((_data: IValue) => {
-        this.setValue(_data);
+        this.setValue(_data, { render: false });
       });
+      this.render();
     }
   }
 
