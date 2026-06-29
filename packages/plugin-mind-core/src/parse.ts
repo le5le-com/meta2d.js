@@ -49,6 +49,10 @@ export function Scope(
 ) {
   let res: any = createDom('div');
   let namespace = config.key;
+  const scriptOptions =
+    config?.options ||
+    config?.meta2d?.store?.options ||
+    (globalThis as any).meta2d?.store?.options;
   window[env] ? '' : (window[env] = {});
   window[env][namespace] ? '' : (window[env][namespace] = {});
   let symbols = Object.getOwnPropertySymbols(window);
@@ -178,7 +182,7 @@ export function Scope(
   window[env][namespace].__depMap = varObj;
   varObj.forEach((i: any) => {
     // 支持简单的表达式
-    let res = scopedEval(window[env][namespace], i.name);
+    let res = scopedEval(window[env][namespace], i.name, scriptOptions);
     // 将生成的结果保存在数据中
     i.res = res;
     // 进行运算后的值替换

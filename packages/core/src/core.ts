@@ -65,6 +65,8 @@ import {
   s8,
   valueInArray,
   valueInRange,
+  makeSafeFn,
+  makeSafeAsyncFn,
 } from './utils';
 import {
   calcCenter,
@@ -509,7 +511,13 @@ export class Meta2d {
             throw new Error('[meta2d] Function value must be string');
           }
           const fnJs = e.value;
-          e.fn = new Function('pen', 'params', 'context', fnJs) as (
+          e.fn = makeSafeFn(
+            this.store.options,
+            'pen',
+            'params',
+            'context',
+            fnJs
+          ) as (
             pen: Pen,
             params: any,
             context?: { meta2d: Meta2d; eventName: string }
@@ -1028,7 +1036,13 @@ export class Meta2d {
                 throw new Error('[meta2d] Function callback must be string');
               }
               const fnJs = e.callback;
-              e.fn = new Function('pen', 'data', 'context', fnJs) as (
+              e.fn = makeSafeFn(
+                this.store.options,
+                'pen',
+                'data',
+                'context',
+                fnJs
+              ) as (
                 pen: Pen,
                 data: string,
                 context?: { meta2d: Meta2d; e: any }
@@ -1411,7 +1425,7 @@ export class Meta2d {
     globalStore.lineAnimateDraws = {}
     Object.entries(this.store.data.lineAnimateDraws).forEach(([key,drawFunc])=>{
       // @ts-ignore
-      globalStore.lineAnimateDraws[key] = new Function('ctx','pen','state','index',drawFunc);
+      globalStore.lineAnimateDraws[key] = makeSafeFn(this.store.options,'ctx','pen','state','index',drawFunc);
     })
   }
 
@@ -1659,7 +1673,7 @@ export class Meta2d {
     const initJs = this.store.data.initJs;
     if (initJs && initJs.trim()) {
       try {
-        let fn = new Function('context', initJs) as (context?: {
+        let fn = makeSafeFn(this.store.options, 'context', initJs) as (context?: {
           meta2d: Meta2d;
         }) => void;
         fn({ meta2d: this });
@@ -1859,7 +1873,7 @@ export class Meta2d {
     this.store.data.lineAnimateDraws[name] = drawFunc;
     // 同步到store
     // @ts-ignore
-    globalStore.lineAnimateDraws[name] = new Function('ctx','pen','state','index',drawFunc);
+    globalStore.lineAnimateDraws[name] = makeSafeFn(this.store.options,'ctx','pen','state','index',drawFunc);
   }
   updateLineAnimateDraws(name,option){// option: {name:'xxx',code:'xxx'}
     if(!option)return
@@ -2562,7 +2576,7 @@ export class Meta2d {
       ) => boolean;
       const socketCbJs = this.store.data.socketCbJs;
       if (socketCbJs) {
-        socketFn = new Function('e', 'context', socketCbJs) as (
+        socketFn = makeSafeFn(this.store.options, 'e', 'context', socketCbJs) as (
           e: string,
           context?: {
             meta2d?: Meta2d;
@@ -3080,13 +3094,13 @@ export class Meta2d {
     }
     if (net.preJs) {
       if (!net.preFn) {
-        const AsyncFunction = Object.getPrototypeOf(
-          async function () {},
-        ).constructor;
-        net.preFn = new AsyncFunction('network', net.preJs);
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
       }
       if(net.preFn){
-        net = await net.preFn(net);
+        const preNet = await net.preFn(net);
+        if (preNet) {
+          net = preNet;
+        }
       }
     }
     this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
@@ -3114,13 +3128,13 @@ export class Meta2d {
     }
     if (net.preJs) {
       if (!net.preFn) {
-        const AsyncFunction = Object.getPrototypeOf(
-          async function () {},
-        ).constructor;
-        net.preFn = new AsyncFunction('network', net.preJs);
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
       }
       if(net.preFn){
-        net = await net.preFn(net);
+        const preNet = await net.preFn(net);
+        if (preNet) {
+          net = preNet;
+        }
       }
     }
     if (net.options.clientId && !net.options.customClientId) {
@@ -3245,13 +3259,13 @@ export class Meta2d {
     }
     if (net.preJs) {
       if (!net.preFn) {
-        const AsyncFunction = Object.getPrototypeOf(
-          async function () {},
-        ).constructor;
-        net.preFn = new AsyncFunction('network', net.preJs);
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
       }
       if(net.preFn){
-        net = await net.preFn(net);
+        const preNet = await net.preFn(net);
+        if (preNet) {
+          net = preNet;
+        }
       }
     }
     let url = net.url;
@@ -3693,13 +3707,13 @@ export class Meta2d {
     )[req.index];
     if (net?.preJs) {
       if (!net.preFn) {
-        const AsyncFunction = Object.getPrototypeOf(
-          async function () {},
-        ).constructor;
-        net.preFn = new AsyncFunction('network', net.preJs);
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
       }
       if(net.preFn){
-        req = await net.preFn(req);
+        const preReq = await net.preFn(req);
+        if (preReq) {
+          req = preReq;
+        }
       }
     }
     if (req.url) {
@@ -3817,7 +3831,7 @@ export class Meta2d {
     let _message: any = message;
     if(context.net?.socketCbJs){
       if(!context.net?.socketFn){
-        context.net.socketFn = new Function('e', 'context', context.net.socketCbJs) as (
+        context.net.socketFn = makeSafeFn(this.store.options, 'e', 'context', context.net.socketCbJs) as (
           e: string,
           context?: {
             meta2d?: Meta2d;
@@ -4317,7 +4331,7 @@ export class Meta2d {
               can = fn(pen, { meta2d: this });
             } else if (fnJs) {
               try {
-                event.where.fn = new Function('pen', 'context', fnJs) as (
+                event.where.fn = makeSafeFn(this.store.options, 'pen', 'context', fnJs) as (
                   pen: Pen,
                   context?: {
                     meta2d: Meta2d;
@@ -4662,7 +4676,7 @@ export class Meta2d {
         can = fn(data, { meta2d: this });
       } else if (fnJs) {
         try {
-          condition.fn = new Function('data', 'context', fnJs) as (
+          condition.fn = makeSafeFn(this.store.options, 'data', 'context', fnJs) as (
             data: any,
             context?: {
               meta2d: Meta2d;
@@ -4728,7 +4742,7 @@ export class Meta2d {
         can = fn(pen, { meta2d: this });
       } else if (fnJs) {
         try {
-          condition.fn = new Function('pen', 'context', fnJs) as (
+          condition.fn = makeSafeFn(this.store.options, 'pen', 'context', fnJs) as (
             pen: Pen,
             context?: {
               meta2d: Meta2d;

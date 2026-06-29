@@ -146,6 +146,7 @@ export interface Options {
   unFill?: boolean;
   roles?: string[];
   crossOrigin?: string;
+  allowScript?: boolean; //是否允许脚本执行
 }
 
 export const defaultOptions: Options = {

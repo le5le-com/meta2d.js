@@ -10,7 +10,10 @@ import {
   formatTime,
   setter,
   InstanceDebouncer,
+  makeSafeFn,
+  makeSafeFunctionString,
 } from '@meta2d/core';
+import type { Options } from '@meta2d/core';
 import type { EChartsOption } from 'echarts';
 
 const eventNameMap = {
@@ -217,9 +220,10 @@ export function echarts(pen: ChartPen): Path2D {
             pen.calculative.singleton.echartsReady = true;
             safeSetOption(
               pen,
-              updateOption(pen.echarts.option,
-
-                pen.calculative.canvas.store.data.scale
+              updateOption(
+                pen.echarts.option,
+                pen.calculative.canvas.store.data.scale,
+                pen.calculative.canvas.store.options
               ),
               true
             );
@@ -237,15 +241,17 @@ export function echarts(pen: ChartPen): Path2D {
       // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
         if(pen.echarts.initJs){
-          let fn = new Function(
+          let fn = makeSafeFn(
+            pen.calculative.canvas.store.options,
             'myChart',
             'context',
             `return async function () { ${pen.echarts.initJs}}`
           );
-          fn(pen.calculative.singleton.echart, {
+          const initFn = fn(pen.calculative.singleton.echart, {
             meta2d: this,
             pen: pen,
-          })().then((option) => {
+          });
+          initFn?.().then((option) => {
             if (option) {
               const applied = safeSetOption(pen, option, true);
               if (applied) {
@@ -259,7 +265,8 @@ export function echarts(pen: ChartPen): Path2D {
             pen,
             updateOption(
               pen.echarts.option,
-              pen.calculative.canvas.store.data.scale
+              pen.calculative.canvas.store.data.scale,
+              pen.calculative.canvas.store.options
             ),
             true
           );
@@ -402,7 +409,11 @@ function scaleFn(pen: ChartPen) {
     }
     safeSetOption(
       pen,
-      updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
+      updateOption(
+        pen.echarts.option,
+        pen.calculative.canvas.store.data.scale,
+        pen.calculative.canvas.store.options
+      ),
       true
     );
   }
@@ -432,7 +443,8 @@ function value(pen: ChartPen) {
         pen,
         updateOption(
           pen.echarts.option,
-          pen.calculative.canvas.store.data.scale
+          pen.calculative.canvas.store.data.scale,
+          pen.calculative.canvas.store.options
         ),
         true
       );
@@ -514,7 +526,8 @@ function beforeValue(pen: ChartPen, value: any) {
           return formatTime(
             timeFormat ||
               '`${year}:${month}:${day} ${hours}:${minutes}:${seconds}`',
-            time
+            time,
+            pen.calculative?.canvas?.store?.options
           );
         });
         _value['echarts.option.xAxis.data'] = times;
@@ -545,7 +558,9 @@ function beforeValue(pen: ChartPen, value: any) {
               }
               let _value = getter(pen, _key);
               let _time = formatTime(
-                timeFormat || '`${hours}:${minutes}:${seconds}`'
+                timeFormat || '`${hours}:${minutes}:${seconds}`',
+                undefined,
+                pen.calculative?.canvas?.store?.options
               );
               _value.push(_time);
               if (max) {
@@ -738,7 +753,7 @@ function formatData(pen: any, value:any) {
       for (const key in pen.echarts.dataMap) {
         if (pen.echarts.dataMap.hasOwnProperty(key)) {
           if(pen.echarts.timeKeys?.length&&pen.echarts.timeKeys.includes(pen.echarts.dataMap[key])){
-             dataValue[key] = value.data.map(item=>formatTime(pen.echarts.timeFormat,item[pen.echarts.dataMap[key]]));
+             dataValue[key] = value.data.map(item=>formatTime(pen.echarts.timeFormat,item[pen.echarts.dataMap[key]], pen.calculative?.canvas?.store?.options));
           }else{
             dataValue[key] = value.data.map(item=>item[pen.echarts.dataMap[key]]);
           }
@@ -750,7 +765,7 @@ function formatData(pen: any, value:any) {
       for (const key in pen.echarts.dataMap) {
         if (pen.echarts.dataMap.hasOwnProperty(key)) {
           if(pen.echarts.timeKeys?.length&&pen.echarts.timeKeys.includes(pen.echarts.dataMap[key])){
-            dataValue[key] = formatTime(pen.echarts.timeFormat,value.data[pen.echarts.dataMap[key]]);
+            dataValue[key] = formatTime(pen.echarts.timeFormat,value.data[pen.echarts.dataMap[key]], pen.calculative?.canvas?.store?.options);
           }else{
             dataValue[key] = value.data[pen.echarts.dataMap[key]];
           }
@@ -960,7 +975,7 @@ function onRenderPenRaw(pen: Pen) {
   pen.calculative.img = img;
 }
 
-function updateOption(_option, ratio) {
+function updateOption(_option, ratio, options?: Pick<Options, 'allowScript'>) {
   const option = deepClone(_option);
   // if (option.grid) {
   //   let props = ['top', 'bottom', 'left', 'right'];
@@ -990,7 +1005,7 @@ function updateOption(_option, ratio) {
     }
   }
   deepSetValue(option, keyWords, ratio);
-  deepNewFunction(option, funKeyWords);
+  deepNewFunction(option, funKeyWords, options);
   return option;
 }
 
@@ -1067,11 +1082,11 @@ function isFunctionString(str) {
   return functionRegex.test(trimmed) || arrowRegex.test(trimmed);
 }
 
-function deepNewFunction<T>(o: any, keyWords: string[]) {
+function deepNewFunction<T>(o: any, keyWords: string[], options?: Pick<Options, 'allowScript'>) {
   if (Array.isArray(o)) {
     const arr = [] as T & any[];
     o.forEach((item) => {
-      arr.push(deepNewFunction(item, keyWords));
+      arr.push(deepNewFunction(item, keyWords, options));
     });
     return arr;
   } else if (typeof o === 'object') {
@@ -1081,10 +1096,10 @@ function deepNewFunction<T>(o: any, keyWords: string[]) {
     for (const key in o) {
       if (keyWords.includes(key)) {
         if (isFunctionString(o[key])) {
-          o[key] = eval('(' + o[key] + ')');
+          o[key] = makeSafeFunctionString(options, o[key]);
         }
       } else {
-        o[key] = deepNewFunction(o[key], keyWords);
+        o[key] = deepNewFunction(o[key], keyWords, options);
       }
     }
     return o;

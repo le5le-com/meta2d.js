@@ -1,7 +1,7 @@
 import { formPen, cellData, Pos, ReplaceMode } from './common';
 import { Point } from '@meta2d/core/src/point';
 import { Rect } from '@meta2d/core/src/rect';
-import { calcRightBottom, calcTextLines, deepClone } from '@meta2d/core';
+import { calcRightBottom, calcTextLines, deepClone, makeSafeFn } from '@meta2d/core';
 
 export function table2(ctx: CanvasRenderingContext2D, pen: formPen) {
   if (!pen.onAdd) {
@@ -395,7 +395,8 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         cellStyle.forEach((item: any, idx: number) => {
           if(item.wheres){
             let success = item.wheres.every((where: any) => {
-              let fn = new Function(
+              let fn = makeSafeFn(
+                pen.calculative?.canvas?.store?.options,
                 'attr',
                 `return attr ${where.comparison} ${where.value}`
               );
@@ -416,7 +417,8 @@ function drawCell(ctx: CanvasRenderingContext2D, pen: formPen) {
         ) {
           isSuccess = false;
           isSuccess = (cellStyle as any).wheres.every(function (where: any) {
-            let fn = new Function(
+            let fn = makeSafeFn(
+              pen.calculative?.canvas?.store?.options,
               'attr',
               `return attr ${where.comparison} ${where.value}`
             );

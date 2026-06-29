@@ -1,4 +1,7 @@
-export function formatTime(format?: string, utcDate?:string) {
+import { makeSafeFn } from './safe';
+import type { Options } from '../options';
+
+export function formatTime(format?: string, utcDate?:string, options?: Pick<Options, 'allowScript'>) {
   const weeks = ['天', '一', '二', '三', '四', '五', '六'];
   let now = new Date();
   if(utcDate){
@@ -11,7 +14,11 @@ export function formatTime(format?: string, utcDate?:string) {
   const hours = now.getHours();
   const minutes = now.getMinutes();
   const seconds = now.getSeconds();
-  let fn = new Function(
+  if (!format) {
+    return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} 星期${weeks[week]}`;
+  }
+  let fn = makeSafeFn(
+    options,
     'year',
     'month',
     'day',
@@ -19,9 +26,7 @@ export function formatTime(format?: string, utcDate?:string) {
     'hours',
     'minutes',
     'seconds',
-    format
-      ? `return ${format}`
-      : 'return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} 星期${week}`'
+    `return ${format}`
   );
   const time = fn(year, month, day, weeks[week], hours, minutes, seconds);
   fn = null;

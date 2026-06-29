@@ -1,4 +1,5 @@
-import {Pen} from "@meta2d/core";
+import {Pen, makeSafeFn} from "@meta2d/core";
+import type { Options } from '@meta2d/core';
 
 export function createDom(tag: string, config: {
   style?: object
@@ -116,12 +117,12 @@ export function removeDuplicates(list: any[]) {
 }
 
 //沙盒
-export function scopedEval(scope: object, expr: string) {
+export function scopedEval(scope: object, expr: string, options?: Pick<Options, 'allowScript'>) {
   const scopeKeys = Object.keys(scope);
   const scopeValues = Object.values(scope);
 
   // 函数的参数名称与作用域的键相匹配，函数体是表达式
-   let func = new Function(...scopeKeys/*这是变量名列表*/, `return ${expr};`);
+   let func = makeSafeFn(options, ...scopeKeys/*这是变量名列表*/, `return ${expr};`);
 
   // 将作用域的值作为参数传递
   try {
