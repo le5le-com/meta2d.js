@@ -5127,26 +5127,36 @@ export class Meta2d {
     const { origin: _origin, scale: _scale } = this.store.data;
     if (!this.fillViewSnapshot) {
       this.fillViewSnapshot = new Map();
+      const setFillViewSnapshot = (pen: any) => {
+        const wr = pen.calculative.worldRect;
+        this.fillViewSnapshot.set(pen.id, {
+          x: (wr.x - _origin.x) / _scale,
+          y: (wr.y - _origin.y) / _scale,
+          width: wr.width / _scale,
+          height: wr.height / _scale,
+          textWidth: pen.textWidth != null ? pen.textWidth / _scale : undefined,
+          colWidth: pen.colWidth,
+          styleWidths: pen.styles?.map((style: any) => style.width),
+          imageRatio: pen.imageRatio,
+          ratio: pen.ratio,
+          operationalRect:
+            pen.name === 'iframe' && pen.operationalRect
+              ? deepClone(pen.operationalRect)
+              : undefined,
+        });
+      };
       this.store.data.fits?.forEach((fit) => {
         fit.children.forEach((id) => {
           const pen: any = this.store.pens[id];
           if (!pen) {
             return;
           }
-          const wr = pen.calculative.worldRect;
-          this.fillViewSnapshot.set(id, {
-            x: (wr.x - _origin.x) / _scale,
-            y: (wr.y - _origin.y) / _scale,
-            width: wr.width / _scale,
-            height: wr.height / _scale,
-            textWidth: pen.textWidth != null ? pen.textWidth / _scale : undefined,
-            colWidth: pen.colWidth,
-            styleWidths: pen.styles?.map((style: any) => style.width),
-            imageRatio: pen.imageRatio,
-            ratio: pen.ratio,
-          });
+          setFillViewSnapshot(pen);
         });
       });
+      this.store.data.pens
+        .filter((pen) => pen.name === 'iframe')
+        .forEach(setFillViewSnapshot);
     } else {
       this.fillViewSnapshot.forEach((snap, id) => {
         const pen: any = this.store.pens[id];
@@ -5175,6 +5185,12 @@ export class Meta2d {
         }
         if (snap.ratio !== undefined) {
           pen.ratio = snap.ratio;
+        }
+        if (pen.name === 'iframe' && snap.operationalRect) {
+          pen.operationalRect = deepClone(snap.operationalRect);
+          pen.onBeforeValue?.(pen, {
+            operationalRect: pen.operationalRect,
+          } as any);
         }
         this.canvas.updatePenRect(pen, { worldRectIsReady: false });
         if (pen.externElement) {
@@ -5296,7 +5312,7 @@ export class Meta2d {
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.width / this.store.data.scale > rect.width * 0.8) {
+        if (worldRect.width / this.canvas.width > 0.8) {
           let bfW = worldRect.width;
           pen.calculative.worldRect.x = worldRect.x - wGap / 2;
           pen.calculative.worldRect.width = worldRect.width + wGap;
@@ -5321,7 +5337,7 @@ export class Meta2d {
       );
       videoPens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.width / this.store.data.scale > rect.width * 0.8) {
+        if (worldRect.width / this.canvas.width > 0.8) {
           //作为背景的video
           pen.calculative.worldRect.x = worldRect.x - wGap / 2;
           pen.calculative.worldRect.width = worldRect.width + wGap;
@@ -5415,7 +5431,7 @@ export class Meta2d {
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.height / this.store.data.scale > rect.height * 0.8) {
+        if (worldRect.height / this.canvas.height > 0.8) {
           let bfH = worldRect.height;
           pen.calculative.worldRect.y = worldRect.y - hGap / 2;
           pen.calculative.worldRect.height = worldRect.height + hGap;
@@ -5439,7 +5455,7 @@ export class Meta2d {
       );
       videoPens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.height / this.store.data.scale > rect.height * 0.8) {
+        if (worldRect.height / this.canvas.height > 0.8) {
           //作为背景的video
           pen.calculative.worldRect.y = worldRect.y - hGap / 2;
           pen.calculative.worldRect.height = worldRect.height + hGap;
