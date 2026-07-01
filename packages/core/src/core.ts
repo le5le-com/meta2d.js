@@ -49,6 +49,8 @@ import {
   registerAnchors,
   registerCanvasDraw,
   registerLineAnimateDraws,
+  registerGridDrawer,
+  unregisterGridDrawer,
   Meta2dData,
   Meta2dStore,
   useStore,
@@ -63,6 +65,8 @@ import {
   s8,
   valueInArray,
   valueInRange,
+  makeSafeFn,
+  makeSafeAsyncFn,
 } from './utils';
 import {
   calcCenter,
@@ -121,6 +125,12 @@ export class Meta2d {
   events: Record<number, (pen: Pen, e: Event, params?: any) => void> = {};
   map: ViewMap;
   mapTimer: any;
+  /**
+   * fillView 首次填充前各 fit 顶层图元的原始几何快照（设计坐标系，与 scale/origin 无关）。
+   * 用于保证多次调用 fillView 的幂等性：每次填充前先还原到原始几何，再执行拉伸，
+   * 避免在已拉伸的结果上重复拉伸导致超出屏幕。open 新图纸时置空。
+   */
+  fillViewSnapshot: Map<string, any> | null = null;
   constructor(parent: string | HTMLElement, opts: Options = {}) {
     this.store = useStore(s8());
     this.setOptions(opts);
@@ -309,6 +319,8 @@ export class Meta2d {
       grid,
       gridColor,
       gridSize,
+      gridType,
+      gridScope,
       fromArrow,
       toArrow,
       rule,
@@ -322,6 +334,8 @@ export class Meta2d {
       grid,
       gridColor,
       gridSize,
+      gridType,
+      gridScope,
     });
     this.store.data = Object.assign(this.store.data, {
       textColor,
@@ -497,7 +511,13 @@ export class Meta2d {
             throw new Error('[meta2d] Function value must be string');
           }
           const fnJs = e.value;
-          e.fn = new Function('pen', 'params', 'context', fnJs) as (
+          e.fn = makeSafeFn(
+            this.store.options,
+            'pen',
+            'params',
+            'context',
+            fnJs
+          ) as (
             pen: Pen,
             params: any,
             context?: { meta2d: Meta2d; eventName: string }
@@ -837,6 +857,8 @@ export class Meta2d {
     //图纸更新
     const data = await getMeta2dData(this.store, id);
     if (data) {
+      data.locked = 1;
+      data.fits?.length && (globalThis.meta2dData = JSON.stringify(data));
       this.canvas.opening = true;
       this.open(data);
       this.lock(1);
@@ -1014,7 +1036,13 @@ export class Meta2d {
                 throw new Error('[meta2d] Function callback must be string');
               }
               const fnJs = e.callback;
-              e.fn = new Function('pen', 'data', 'context', fnJs) as (
+              e.fn = makeSafeFn(
+                this.store.options,
+                'pen',
+                'data',
+                'context',
+                fnJs
+              ) as (
                 pen: Pen,
                 data: string,
                 context?: { meta2d: Meta2d; e: any }
@@ -1094,8 +1122,11 @@ export class Meta2d {
   async addPen(pen: Pen, history?: boolean, emit = true, abs = false) {
     return await this.canvas.addPen(pen, history, emit, abs);
   }
-  addPenSync(pen: Pen, history?: boolean, emit = true, abs = false) {
+  addPenSync(pen: Pen, history?: boolean, emit = true, abs = true) {
     return this.canvas.addPenSync(pen, history, emit, abs);
+  }
+  addPensSync(pens: Pen[], history?: boolean, abs = true) {
+    return this.canvas.addPensSync(pens, history, abs);
   }
   async addPens(pens: Pen[], history?: boolean, abs = false) {
     return await this.canvas.addPens(pens, history, abs);
@@ -1167,16 +1198,22 @@ export class Meta2d {
     gridColor = this.store.data.gridColor,
     gridSize = this.store.data.gridSize,
     gridRotate = this.store.data.gridRotate,
+    gridType = this.store.data.gridType,
+    gridScope = this.store.data.gridScope,
   }: {
     grid?: boolean;
     gridColor?: string;
     gridSize?: number;
     gridRotate?: number;
+    gridType?: string;
+    gridScope?: 'full' | 'inner' | 'outer';
   } = {}) {
     this.store.data.grid = grid;
     this.store.data.gridColor = gridColor;
     this.store.data.gridSize = gridSize < 0 ? 0 : gridSize;
     this.store.data.gridRotate = gridRotate;
+    this.store.data.gridType = gridType;
+    this.store.data.gridScope = gridScope;
     // this.store.patchFlagsBackground = true;
     this.canvas && (this.canvas.canvasTemplate.bgPatchFlags = true);
   }
@@ -1195,6 +1232,8 @@ export class Meta2d {
 
   open(data?: Meta2dData, render: boolean = true) {
     this.clear(false, data?.template);
+    // 打开新图纸，原始几何快照失效，下次 fillView 时重新采集
+    this.fillViewSnapshot = null;
     this.canvas.autoPolylineFlag = true;
     if (data) {
       // 根据图纸的主题设置主题
@@ -1386,7 +1425,7 @@ export class Meta2d {
     globalStore.lineAnimateDraws = {}
     Object.entries(this.store.data.lineAnimateDraws).forEach(([key,drawFunc])=>{
       // @ts-ignore
-      globalStore.lineAnimateDraws[key] = new Function('ctx','pen','state','index',drawFunc);
+      globalStore.lineAnimateDraws[key] = makeSafeFn(this.store.options,'ctx','pen','state','index',drawFunc);
     })
   }
 
@@ -1634,7 +1673,7 @@ export class Meta2d {
     const initJs = this.store.data.initJs;
     if (initJs && initJs.trim()) {
       try {
-        let fn = new Function('context', initJs) as (context?: {
+        let fn = makeSafeFn(this.store.options, 'context', initJs) as (context?: {
           meta2d: Meta2d;
         }) => void;
         fn({ meta2d: this });
@@ -1826,11 +1865,15 @@ export class Meta2d {
 
   registerAnchors = registerAnchors;
 
+  registerGridDrawer = registerGridDrawer;
+
+  unregisterGridDrawer = unregisterGridDrawer;
+
   registerLineAnimateDraws = (name,drawFunc)=>{
     this.store.data.lineAnimateDraws[name] = drawFunc;
     // 同步到store
     // @ts-ignore
-    globalStore.lineAnimateDraws[name] = new Function('ctx','pen','state','index',drawFunc);
+    globalStore.lineAnimateDraws[name] = makeSafeFn(this.store.options,'ctx','pen','state','index',drawFunc);
   }
   updateLineAnimateDraws(name,option){// option: {name:'xxx',code:'xxx'}
     if(!option)return
@@ -1966,6 +2009,9 @@ export class Meta2d {
         }
         if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
+          if (!animate.animateCycle) {
+            animate.animateCycle = 0;
+          }
           animate.animateName = animate.name;
           delete animate.name;
           animate.currentAnimation = index;
@@ -2530,7 +2576,7 @@ export class Meta2d {
       ) => boolean;
       const socketCbJs = this.store.data.socketCbJs;
       if (socketCbJs) {
-        socketFn = new Function('e', 'context', socketCbJs) as (
+        socketFn = makeSafeFn(this.store.options, 'e', 'context', socketCbJs) as (
           e: string,
           context?: {
             meta2d?: Meta2d;
@@ -2560,10 +2606,15 @@ export class Meta2d {
       this.store.data.websocket = websocket;
     }
     if (this.store.data.websocket) {
-      this.websocket = new WebSocket(
-        this.store.data.websocket,
-        this.store.data.websocketProtocols || undefined
-      );
+      try {
+        this.websocket = new WebSocket(
+          this.store.data.websocket,
+          this.store.data.websocketProtocols || undefined
+        );
+      } catch (error) {
+        this.store.emitter.emit('error', { type: 'websocket', error });
+        return;
+      }
       this.websocket.onmessage = (e) => {
         this.socketCallback(e.data, {
           type: 'websocket',
@@ -2845,7 +2896,10 @@ export class Meta2d {
   }
 
   reconnectNetwork(index:number){
-    const net = this.store.data.networks[index];
+    const net = this.store.data.networks?.[index];
+    if (!net) {
+      return;
+    }
     if (net.protocol === 'mqtt') {
       this.mqttClients && this.mqttClients[net.index]?.end();
       this.connectNetMqtt(net);
@@ -3034,9 +3088,20 @@ export class Meta2d {
     }
   }
 
-  connectSSE(net:Network){
+  async connectSSE(net:Network){
     if(net.enable === false){
       return;
+    }
+    if (net.preJs) {
+      if (!net.preFn) {
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
+      }
+      if(net.preFn){
+        const preNet = await net.preFn(net);
+        if (preNet) {
+          net = preNet;
+        }
+      }
     }
     this.eventSources[net.index] = new EventSource(net.url,{withCredentials:net.withCredentials});
     this.eventSources[net.index].onmessage = (e) => {
@@ -3057,9 +3122,20 @@ export class Meta2d {
     });
   }
 
-  connectNetMqtt(net:Network){
+  async connectNetMqtt(net:Network){
     if(net.enable === false){
       return;
+    }
+    if (net.preJs) {
+      if (!net.preFn) {
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
+      }
+      if(net.preFn){
+        const preNet = await net.preFn(net);
+        if (preNet) {
+          net = preNet;
+        }
+      }
     }
     if (net.options.clientId && !net.options.customClientId) {
       net.options.clientId = s8();
@@ -3172,7 +3248,7 @@ export class Meta2d {
     })
   }
 
-  connectNetWebSocket(net: Network) {
+  async connectNetWebSocket(net: Network) {
     if (this.websockets[net.index]) {
       this.websockets[net.index].onclose = undefined;
       this.websockets[net.index]?.close();
@@ -3180,6 +3256,17 @@ export class Meta2d {
     }
     if(net.enable === false ){
       return;
+    }
+    if (net.preJs) {
+      if (!net.preFn) {
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
+      }
+      if(net.preFn){
+        const preNet = await net.preFn(net);
+        if (preNet) {
+          net = preNet;
+        }
+      }
     }
     let url = net.url;
     if(url.indexOf('${') > -1){
@@ -3512,6 +3599,9 @@ export class Meta2d {
   }
 
   penNetwork(pen: Pen) {
+    if (!pen.apiUrl) {
+      return;
+    }
     const penNetwork: Network = {
       url: pen.apiUrl,
       method: pen.apiMethod,
@@ -3612,6 +3702,20 @@ export class Meta2d {
 
   async requestHttp(_req: Network) {
     let req = deepClone(_req);
+    const net: Network = this.store.data.networks?.filter(
+      (item) => item.protocol === 'http',
+    )[req.index];
+    if (net?.preJs) {
+      if (!net.preFn) {
+        net.preFn = makeSafeAsyncFn(this.store.options, 'network', net.preJs);
+      }
+      if(net.preFn){
+        const preReq = await net.preFn(req);
+        if (preReq) {
+          req = preReq;
+        }
+      }
+    }
     if (req.url) {
       if(req.url.indexOf('${') > -1){
         let keys = req.url.match(/\$\{([^}]+)\}/g)?.map(m => m.slice(2, -1));
@@ -3679,7 +3783,6 @@ export class Meta2d {
       });
       if (res.ok) {
         const data = await res.text();
-        const net = this.store.data.networks.filter(item=>item.protocol==='http')[req.index];
         this.socketCallback(data, { type: 'http', method: req.method, url: req.url, name: req.name, net});
       } else {
         _req.times++;
@@ -3728,7 +3831,7 @@ export class Meta2d {
     let _message: any = message;
     if(context.net?.socketCbJs){
       if(!context.net?.socketFn){
-        context.net.socketFn = new Function('e', 'context', context.net.socketCbJs) as (
+        context.net.socketFn = makeSafeFn(this.store.options, 'e', 'context', context.net.socketCbJs) as (
           e: string,
           context?: {
             meta2d?: Meta2d;
@@ -3797,8 +3900,9 @@ export class Meta2d {
       this.setDatas(data);
     } else {
       data.forEach((_data: IValue) => {
-        this.setValue(_data);
+        this.setValue(_data, { render: false });
       });
+      this.render();
     }
   }
 
@@ -4227,7 +4331,7 @@ export class Meta2d {
               can = fn(pen, { meta2d: this });
             } else if (fnJs) {
               try {
-                event.where.fn = new Function('pen', 'context', fnJs) as (
+                event.where.fn = makeSafeFn(this.store.options, 'pen', 'context', fnJs) as (
                   pen: Pen,
                   context?: {
                     meta2d: Meta2d;
@@ -4310,11 +4414,9 @@ export class Meta2d {
           }
           event.actions.forEach((action) => {
             if (action.timeout) {
-              let timer = setTimeout(() => {
+              setTimeout(() => {
                 if (this.events[action.action]) {
                   this.events[action.action](pen, action);
-                  clearTimeout(timer);
-                  timer = null;
                 }
               }, action.timeout);
             } else {
@@ -4359,11 +4461,9 @@ export class Meta2d {
           if (indexArr.includes(index)) {
             trigger.actions?.forEach((event) => {
               if (event.timeout) {
-                let timer = setTimeout(() => {
+                setTimeout(() => {
                   if (this.events[event.action]) {
                     this.events[event.action](pen, event);
-                    clearTimeout(timer);
-                    timer = null;
                   }
                 }, event.timeout);
               } else {
@@ -4408,11 +4508,9 @@ export class Meta2d {
         if (indexArr.includes(index)) {
           trigger.actions?.forEach((event) => {
             if (event.timeout) {
-              let timer = setTimeout(() => {
+              setTimeout(() => {
                 if (this.events[event.action]) {
                   this.events[event.action](pen, event);
-                  clearTimeout(timer);
-                  timer = null;
                 }
               }, event.timeout);
             } else {
@@ -4445,11 +4543,9 @@ export class Meta2d {
               if (flag) {
                 state.actions?.forEach((event) => {
                   if (event.timeout) {
-                    let timer = setTimeout(() => {
+                    setTimeout(() => {
                       if (this.events[event.action]) {
                         this.events[event.action](pen, event);
-                        clearTimeout(timer);
-                        timer = null;
                       }
                     }, event.timeout);
                   } else {
@@ -4487,7 +4583,13 @@ export class Meta2d {
         }
         if (flag) {
           item.event.actions.forEach((action) => {
-            this.events[action.action](item.pen, action, data);
+            if(action.timeout){
+              setTimeout(() => {
+                this.events[action.action](item.pen, action, data);
+              }, action.timeout);
+            }else{
+              this.events[action.action](item.pen, action, data);
+            }
           });
         }
       });
@@ -4574,7 +4676,7 @@ export class Meta2d {
         can = fn(data, { meta2d: this });
       } else if (fnJs) {
         try {
-          condition.fn = new Function('data', 'context', fnJs) as (
+          condition.fn = makeSafeFn(this.store.options, 'data', 'context', fnJs) as (
             data: any,
             context?: {
               meta2d: Meta2d;
@@ -4640,7 +4742,7 @@ export class Meta2d {
         can = fn(pen, { meta2d: this });
       } else if (fnJs) {
         try {
-          condition.fn = new Function('pen', 'context', fnJs) as (
+          condition.fn = makeSafeFn(this.store.options, 'pen', 'context', fnJs) as (
             pen: Pen,
             context?: {
               meta2d: Meta2d;
@@ -5018,6 +5120,92 @@ export class Meta2d {
       rect = this.getRect();
     }
     // const rect = this.getRect();
+
+    // 幂等处理：首次填充前记录各 fit 顶层图元的原始几何（设计坐标系，除以 scale、
+    // 相对 origin，从而与当前缩放/平移无关）；后续每次填充前先还原到原始几何，
+    // 避免在上一次已拉伸的基础上再次拉伸，导致多次适应屏幕时内容超出屏幕。
+    const { origin: _origin, scale: _scale } = this.store.data;
+    if (!this.fillViewSnapshot) {
+      this.fillViewSnapshot = new Map();
+      const setFillViewSnapshot = (pen: any) => {
+        const wr = pen.calculative.worldRect;
+        this.fillViewSnapshot.set(pen.id, {
+          x: (wr.x - _origin.x) / _scale,
+          y: (wr.y - _origin.y) / _scale,
+          width: wr.width / _scale,
+          height: wr.height / _scale,
+          textWidth: pen.textWidth != null ? pen.textWidth / _scale : undefined,
+          colWidth: pen.colWidth,
+          styleWidths: pen.styles?.map((style: any) => style.width),
+          imageRatio: pen.imageRatio,
+          ratio: pen.ratio,
+          operationalRect:
+            pen.name === 'iframe' && pen.operationalRect
+              ? deepClone(pen.operationalRect)
+              : undefined,
+        });
+      };
+      this.store.data.fits?.forEach((fit) => {
+        fit.children.forEach((id) => {
+          const pen: any = this.store.pens[id];
+          if (!pen) {
+            return;
+          }
+          setFillViewSnapshot(pen);
+        });
+      });
+      this.store.data.pens
+        .filter((pen) => pen.name === 'iframe')
+        .forEach(setFillViewSnapshot);
+    } else {
+      this.fillViewSnapshot.forEach((snap, id) => {
+        const pen: any = this.store.pens[id];
+        if (!pen) {
+          return;
+        }
+        pen.x = _origin.x + snap.x * _scale;
+        pen.y = _origin.y + snap.y * _scale;
+        pen.width = snap.width * _scale;
+        pen.height = snap.height * _scale;
+        if (snap.textWidth !== undefined) {
+          pen.textWidth = snap.textWidth * _scale;
+        }
+        if (snap.colWidth !== undefined) {
+          pen.colWidth = snap.colWidth;
+        }
+        if (snap.styleWidths) {
+          pen.styles?.forEach((style: any, i: number) => {
+            if (snap.styleWidths[i] !== undefined) {
+              style.width = snap.styleWidths[i];
+            }
+          });
+        }
+        if (snap.imageRatio !== undefined) {
+          pen.imageRatio = snap.imageRatio;
+        }
+        if (snap.ratio !== undefined) {
+          pen.ratio = snap.ratio;
+        }
+        if (pen.name === 'iframe' && snap.operationalRect) {
+          pen.operationalRect = deepClone(snap.operationalRect);
+          pen.onBeforeValue?.(pen, {
+            operationalRect: pen.operationalRect,
+          } as any);
+        }
+        this.canvas.updatePenRect(pen, { worldRectIsReady: false });
+        if (pen.externElement) {
+          pen.onResize?.(pen);
+        }
+        if (pen.children?.length) {
+          getAllChildren(pen, this.store).forEach((cPen) => {
+            if (cPen.externElement) {
+              cPen.onResize?.(cPen);
+            }
+          });
+        }
+      });
+    }
+
     const wGap = this.canvas.width - rect.width;
     const hGap = this.canvas.height - rect.height;
     //宽度拉伸
@@ -5124,20 +5312,22 @@ export class Meta2d {
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.width / this.store.data.scale > rect.width * 0.8) {
+        if (worldRect.width / this.canvas.width > 0.8) {
           let bfW = worldRect.width;
           pen.calculative.worldRect.x = worldRect.x - wGap / 2;
           pen.calculative.worldRect.width = worldRect.width + wGap;
           pen.calculative.worldRect.ex = worldRect.ex + wGap;
-          pen.operationalRect.x =
-            (pen.operationalRect.x * bfW) / pen.calculative.worldRect.width;
-          pen.operationalRect.width =
-            (pen.calculative.worldRect.width -
-              (1 - pen.operationalRect.width) * bfW) /
-            pen.calculative.worldRect.width;
-          pen.onBeforeValue?.(pen, {
-            operationalRect: pen.operationalRect,
-          } as any);
+          if(pen.operationalRect){
+              pen.operationalRect.x =
+              (pen.operationalRect.x * bfW) / pen.calculative.worldRect.width;
+            pen.operationalRect.width =
+              (pen.calculative.worldRect.width -
+                (1 - pen.operationalRect.width) * bfW) /
+              pen.calculative.worldRect.width;
+            pen.onBeforeValue?.(pen, {
+              operationalRect: pen.operationalRect,
+            } as any);
+          }
           pen.onResize?.(pen);
         }
       });
@@ -5147,7 +5337,7 @@ export class Meta2d {
       );
       videoPens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.width / this.store.data.scale > rect.width * 0.8) {
+        if (worldRect.width / this.canvas.width > 0.8) {
           //作为背景的video
           pen.calculative.worldRect.x = worldRect.x - wGap / 2;
           pen.calculative.worldRect.width = worldRect.width + wGap;
@@ -5241,20 +5431,22 @@ export class Meta2d {
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.height / this.store.data.scale > rect.height * 0.8) {
+        if (worldRect.height / this.canvas.height > 0.8) {
           let bfH = worldRect.height;
           pen.calculative.worldRect.y = worldRect.y - hGap / 2;
           pen.calculative.worldRect.height = worldRect.height + hGap;
           pen.calculative.worldRect.ey = worldRect.ey + hGap;
-          pen.operationalRect.y =
-            (pen.operationalRect.y * bfH) / pen.calculative.worldRect.width;
-          pen.operationalRect.height =
-            (pen.calculative.worldRect.height -
-              (1 - pen.operationalRect.height) * bfH) /
-            pen.calculative.worldRect.height;
-          pen.onBeforeValue?.(pen, {
-            operationalRect: pen.operationalRect,
-          } as any);
+          if(pen.operationalRect){
+            pen.operationalRect.y =
+              (pen.operationalRect.y * bfH) / pen.calculative.worldRect.width;
+            pen.operationalRect.height =
+              (pen.calculative.worldRect.height -
+                (1 - pen.operationalRect.height) * bfH) /
+              pen.calculative.worldRect.height;
+            pen.onBeforeValue?.(pen, {
+              operationalRect: pen.operationalRect,
+            } as any);
+          }
           pen.onResize?.(pen);
         }
       });
@@ -5263,7 +5455,7 @@ export class Meta2d {
       );
       videoPens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.height / this.store.data.scale > rect.height * 0.8) {
+        if (worldRect.height / this.canvas.height > 0.8) {
           //作为背景的video
           pen.calculative.worldRect.y = worldRect.y - hGap / 2;
           pen.calculative.worldRect.height = worldRect.height + hGap;
@@ -6081,6 +6273,18 @@ export class Meta2d {
     this.canvas.canvasImage.init();
     this.canvas.canvasImageBottom.init();
     this.render();
+  }
+
+  animateView(options: {
+    x?: number;
+    y?: number;
+    scale?: number;
+    pen?: Pen;
+    duration?: number;
+    easing?: string;
+    center?: Point;
+  }) {
+    this.canvas.animateView(options);
   }
 
   showMap() {
@@ -6939,6 +7143,7 @@ export class Meta2d {
       globalStore.anchors = {};
       globalStore.htmlElements = {};
       globalStore.lineAnimateDraws = {}
+      globalStore.gridDrawers = {}
     }
   }
 }

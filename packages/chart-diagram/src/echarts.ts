@@ -10,7 +10,10 @@ import {
   formatTime,
   setter,
   InstanceDebouncer,
+  makeSafeFn,
+  makeSafeFunctionString,
 } from '@meta2d/core';
+import type { Options } from '@meta2d/core';
 import type { EChartsOption } from 'echarts';
 
 const eventNameMap = {
@@ -87,6 +90,62 @@ export interface ChartPen extends Pen {
   // beforeScale: number;
 }
 
+function safeSetOption(
+  pen: ChartPen,
+  option: any,
+  opts?: boolean | Record<string, any>
+): boolean {
+  const chart = pen.calculative?.singleton?.echart;
+  if (!chart) {
+    return false;
+  }
+  if (option == null) {
+    console.warn('[meta2d:echarts] Skip setOption because option is empty.', pen);
+    return false;
+  }
+  try {
+    chart.setOption(option, opts as any);
+    return true;
+  } catch (error) {
+    console.error('[meta2d:echarts] setOption failed.', {
+      penId: pen.id,
+      option,
+      opts,
+      error,
+    });
+    return false;
+  }
+}
+
+function safeResize(pen: ChartPen): boolean {
+  const chart = pen.calculative?.singleton?.echart;
+  const div = pen.calculative?.singleton?.div as HTMLDivElement;
+  if (!chart || !div || !div.isConnected) {
+    return false;
+  }
+  const { width, height } = pen.calculative?.worldRect || {};
+  if (!(width > 0) || !(height > 0)) {
+    console.warn('[meta2d:echarts] Skip resize because container size is invalid.', {
+      penId: pen.id,
+      width,
+      height,
+    });
+    return false;
+  }
+  try {
+    chart.resize();
+    return true;
+  } catch (error) {
+    console.error('[meta2d:echarts] resize failed.', {
+      penId: pen.id,
+      width,
+      height,
+      error,
+    });
+    return false;
+  }
+}
+
 export function echarts(pen: ChartPen): Path2D {
   let echarts = globalThis.echarts;
   if (!pen.echarts || !echarts) {
@@ -159,14 +218,16 @@ export function echarts(pen: ChartPen): Path2D {
             }
             echarts.registerMap(pen.echarts.geoName, data);
             pen.calculative.singleton.echartsReady = true;
-            pen.calculative.singleton.echart.setOption(
-              updateOption(pen.echarts.option,
-
-                pen.calculative.canvas.store.data.scale
+            safeSetOption(
+              pen,
+              updateOption(
+                pen.echarts.option,
+                pen.calculative.canvas.store.data.scale,
+                pen.calculative.canvas.store.options
               ),
               true
             );
-            pen.calculative.singleton.echart.resize();
+            safeResize(pen);
             setTimeout(() => {
               onRenderPenRaw(pen);
             }, 300);
@@ -180,26 +241,32 @@ export function echarts(pen: ChartPen): Path2D {
       // 初始化时，等待父div先渲染完成，避免初始图表控件太大。
       setTimeout(() => {
         if(pen.echarts.initJs){
-          let fn = new Function(
+          let fn = makeSafeFn(
+            pen.calculative.canvas.store.options,
             'myChart',
             'context',
             `return async function () { ${pen.echarts.initJs}}`
           );
-          fn(pen.calculative.singleton.echart, {
+          const initFn = fn(pen.calculative.singleton.echart, {
             meta2d: this,
             pen: pen,
-          })().then((option) => {
+          });
+          initFn?.().then((option) => {
             if (option) {
-              pen.calculative.singleton.echart.setOption(option, true);
-              let _option = pen.calculative.singleton.echart.getOption();
-              pen.echarts.option = _option;
+              const applied = safeSetOption(pen, option, true);
+              if (applied) {
+                let _option = pen.calculative.singleton.echart.getOption();
+                pen.echarts.option = _option;
+              }
             }
           });
         }else{
-          pen.calculative.singleton.echart?.setOption(
+          safeSetOption(
+            pen,
             updateOption(
               pen.echarts.option,
-              pen.calculative.canvas.store.data.scale
+              pen.calculative.canvas.store.data.scale,
+              pen.calculative.canvas.store.options
             ),
             true
           );
@@ -298,7 +365,7 @@ function resizeFn(pen: ChartPen) {
   if (!pen.calculative.singleton?.echart) {
     return;
   }
-  pen.calculative.singleton.echart.resize();
+  safeResize(pen);
 }
 
 function scale(pen: ChartPen) {
@@ -340,13 +407,18 @@ function scaleFn(pen: ChartPen) {
       })
     }
     }
-    pen.calculative.singleton.echart.setOption(
-      updateOption(pen.echarts.option, pen.calculative.canvas.store.data.scale),
+    safeSetOption(
+      pen,
+      updateOption(
+        pen.echarts.option,
+        pen.calculative.canvas.store.data.scale,
+        pen.calculative.canvas.store.options
+      ),
       true
     );
   }
   // pen.beforeScale = pen.calculative.canvas.store.data.scale;
-  pen.calculative.singleton.echart.resize();
+  safeResize(pen);
 }
 
 function value(pen: ChartPen) {
@@ -360,17 +432,19 @@ function value(pen: ChartPen) {
       const option = pen.calculative.partialOption.echarts.option;
       let isReplaceMerge = Array.isArray(pen.echarts?.replaceMerge)?pen.echarts?.replaceMerge.some((key)=>option[key]):false;
       if (isReplaceMerge) {
-        pen.calculative.singleton.echart.setOption(deepClone(option), {
+        safeSetOption(pen, deepClone(option), {
           replaceMerge: pen.echarts.replaceMerge,
         });
       } else {
-        pen.calculative.singleton.echart.setOption(deepClone(option));
+        safeSetOption(pen, deepClone(option));
       }
     } else {
-      pen.calculative.singleton.echart.setOption(
+      safeSetOption(
+        pen,
         updateOption(
           pen.echarts.option,
-          pen.calculative.canvas.store.data.scale
+          pen.calculative.canvas.store.data.scale,
+          pen.calculative.canvas.store.options
         ),
         true
       );
@@ -452,7 +526,8 @@ function beforeValue(pen: ChartPen, value: any) {
           return formatTime(
             timeFormat ||
               '`${year}:${month}:${day} ${hours}:${minutes}:${seconds}`',
-            time
+            time,
+            pen.calculative?.canvas?.store?.options
           );
         });
         _value['echarts.option.xAxis.data'] = times;
@@ -483,7 +558,9 @@ function beforeValue(pen: ChartPen, value: any) {
               }
               let _value = getter(pen, _key);
               let _time = formatTime(
-                timeFormat || '`${hours}:${minutes}:${seconds}`'
+                timeFormat || '`${hours}:${minutes}:${seconds}`',
+                undefined,
+                pen.calculative?.canvas?.store?.options
               );
               _value.push(_time);
               if (max) {
@@ -676,7 +753,7 @@ function formatData(pen: any, value:any) {
       for (const key in pen.echarts.dataMap) {
         if (pen.echarts.dataMap.hasOwnProperty(key)) {
           if(pen.echarts.timeKeys?.length&&pen.echarts.timeKeys.includes(pen.echarts.dataMap[key])){
-             dataValue[key] = value.data.map(item=>formatTime(pen.echarts.timeFormat,item[pen.echarts.dataMap[key]]));
+             dataValue[key] = value.data.map(item=>formatTime(pen.echarts.timeFormat,item[pen.echarts.dataMap[key]], pen.calculative?.canvas?.store?.options));
           }else{
             dataValue[key] = value.data.map(item=>item[pen.echarts.dataMap[key]]);
           }
@@ -688,7 +765,7 @@ function formatData(pen: any, value:any) {
       for (const key in pen.echarts.dataMap) {
         if (pen.echarts.dataMap.hasOwnProperty(key)) {
           if(pen.echarts.timeKeys?.length&&pen.echarts.timeKeys.includes(pen.echarts.dataMap[key])){
-            dataValue[key] = formatTime(pen.echarts.timeFormat,value.data[pen.echarts.dataMap[key]]);
+            dataValue[key] = formatTime(pen.echarts.timeFormat,value.data[pen.echarts.dataMap[key]], pen.calculative?.canvas?.store?.options);
           }else{
             dataValue[key] = value.data[pen.echarts.dataMap[key]];
           }
@@ -884,13 +961,21 @@ export function setEchartsOption(
 
 function onRenderPenRaw(pen: Pen) {
   const img = new Image();
-  img.src = pen.calculative.singleton?.echart?.getDataURL({
-    pixelRatio: 2,
-  });
+  try {
+    img.src = pen.calculative.singleton?.echart?.getDataURL({
+      pixelRatio: 2,
+    });
+  } catch (error) {
+    console.error('[meta2d:echarts] getDataURL failed.', {
+      penId: pen.id,
+      error,
+    });
+    return;
+  }
   pen.calculative.img = img;
 }
 
-function updateOption(_option, ratio) {
+function updateOption(_option, ratio, options?: Pick<Options, 'allowScript'>) {
   const option = deepClone(_option);
   // if (option.grid) {
   //   let props = ['top', 'bottom', 'left', 'right'];
@@ -920,7 +1005,7 @@ function updateOption(_option, ratio) {
     }
   }
   deepSetValue(option, keyWords, ratio);
-  deepNewFunction(option, funKeyWords);
+  deepNewFunction(option, funKeyWords, options);
   return option;
 }
 
@@ -997,11 +1082,11 @@ function isFunctionString(str) {
   return functionRegex.test(trimmed) || arrowRegex.test(trimmed);
 }
 
-function deepNewFunction<T>(o: any, keyWords: string[]) {
+function deepNewFunction<T>(o: any, keyWords: string[], options?: Pick<Options, 'allowScript'>) {
   if (Array.isArray(o)) {
     const arr = [] as T & any[];
     o.forEach((item) => {
-      arr.push(deepNewFunction(item, keyWords));
+      arr.push(deepNewFunction(item, keyWords, options));
     });
     return arr;
   } else if (typeof o === 'object') {
@@ -1011,10 +1096,10 @@ function deepNewFunction<T>(o: any, keyWords: string[]) {
     for (const key in o) {
       if (keyWords.includes(key)) {
         if (isFunctionString(o[key])) {
-          o[key] = eval('(' + o[key] + ')');
+          o[key] = makeSafeFunctionString(options, o[key]);
         }
       } else {
-        o[key] = deepNewFunction(o[key], keyWords);
+        o[key] = deepNewFunction(o[key], keyWords, options);
       }
     }
     return o;

@@ -8,6 +8,8 @@ export enum KeydownType {
   Canvas,
 }
 
+export const TRANSPARENT_COLOR = '#FFFFFF00'
+
 export interface Options {
   color?: string;
   activeColor?: string;
@@ -57,6 +59,9 @@ export interface Options {
   grid?: boolean;
   gridColor?: string;
   gridSize?: number;
+  gridType?: string;
+  gridScope?: 'full' | 'inner' | 'outer';
+  gridAlwaysRender?: boolean; // 是否同步渲染grid
   rule?: boolean;
   ruleColor?: string;
   ruleOptions?:{
@@ -141,6 +146,7 @@ export interface Options {
   unFill?: boolean;
   roles?: string[];
   crossOrigin?: string;
+  allowScript?: boolean; //是否允许脚本执行
 }
 
 export const defaultOptions: Options = {

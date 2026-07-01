@@ -117,6 +117,7 @@ import {
   HoverType,
   MouseRight,
   rotatedCursors,
+  Direction,
 } from '../data';
 import { createOffscreen } from './offscreen';
 import {
@@ -146,6 +147,8 @@ import { CanvasTemplate } from './canvasTemplate';
 import { getLinePoints } from '../diagrams/line';
 import { Popconfirm } from '../popconfirm';
 import { le5leTheme, themeKeys } from '../theme';
+import { getFont } from '../pen/render';
+import { getEasingFunction } from '../utils/easing';
 
 export const movingSuffix = '-moving' as const;
 export class Canvas {
@@ -218,6 +221,21 @@ export class Canvas {
   animateRendering = false;
   renderTimer: number;
 
+  private viewAnimation?: {
+    startTime: number;
+    duration: number;
+    fromX: number;
+    fromY: number;
+    fromScale: number;
+    toX: number;
+    toY: number;
+    toScale: number;
+    easing: (t: number) => number;
+    center: Point;
+    pen?: Pen;
+  };
+  private viewAnimationTimer?: number;
+
   initPens?: Pen[];
 
   pointSize = 8 as const;
@@ -288,7 +306,7 @@ export class Canvas {
     public parentElement: HTMLElement,
     public store: Meta2dStore
   ) {
-    this.canvasTemplate = new CanvasTemplate(parentElement, store);
+    this.canvasTemplate = new CanvasTemplate(parentElement, store, this);
     this.canvasTemplate.canvas.style.zIndex = '1';
     this.canvasImageBottom = new CanvasImage(parentElement, store, true);
     this.canvasImageBottom.canvas.style.zIndex = '2';
@@ -614,6 +632,7 @@ export class Canvas {
   }
 
   onwheel = (e: WheelEvent) => {
+    this.viewAnimation = undefined;
     //输入模式不允许滚动
     if (this.inputDiv.contentEditable === 'true') {
       return;
@@ -732,6 +751,28 @@ export class Canvas {
     this.scale(this.store.data.scale + scaleOff, { x, y });
     this.externalElements.focus(); // 聚焦
   };
+
+  touchToWheelEvent(event: TouchEvent, deltaY: number): WheelEvent {
+    const touch = event.changedTouches[0] || event.touches[0];
+    return {
+      deltaX: 0,
+      deltaY,
+      deltaZ: 0,
+      deltaMode: 0,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      pageX: touch.pageX,
+      pageY: touch.pageY,
+      ctrlKey: event.ctrlKey,
+      shiftKey: event.shiftKey,
+      altKey: event.altKey,
+      metaKey: event.metaKey,
+      wheelDelta: -deltaY,
+      wheelDeltaY: -deltaY,
+      preventDefault: () => event.preventDefault(),
+      stopPropagation: () => event.stopPropagation(),
+    } as unknown as WheelEvent;
+  }
 
   onkeydown = (e: KeyboardEvent) => {
     if (
@@ -1634,8 +1675,37 @@ export class Canvas {
     }
     return list;
   }
-
+  addPensSync(pens: Pen[], history?: boolean, abs?:boolean){
+    const list: Pen[] = [];
+    // for (const pen of pens) {
+    //   if (!pen.id) {
+    //     pen.id = s8();
+    //   }
+    //   !pen.calculative && (pen.calculative = { canvas: this });
+    //   this.store.pens[pen.id] = pen;
+    // }
+    for (const pen of pens) {
+      if (this.beforeAddPen && this.beforeAddPen(pen) != true) {
+        continue;
+      }
+      if(abs && !pen.parentId) {
+        pen.x = pen.x * this.store.data.scale + this.store.data.origin.x;
+        pen.y = pen.y * this.store.data.scale + this.store.data.origin.y;
+        pen.width = pen.width * this.store.data.scale;
+        pen.height = pen.height * this.store.data.scale;
+      }
+      this.makePen(pen);
+      list.push(pen);
+    }
+    this.render();
+    this.store.emitter.emit('add', list);
+    if (history) {
+      this.pushHistory({ type: EditType.Add, pens: deepClone(list, true) });
+    }
+    return list;
+  }
   ontouchstart = (e: TouchEvent) => {
+    this.viewAnimation = undefined;
     this.lastTouchY = e.touches[0].clientY
     if (this.store.data.locked === LockState.Disable) {
       return;
@@ -1738,8 +1808,21 @@ export class Canvas {
     const x = event.touches[0].pageX - this.clientRect.x;
     const y = event.touches[0].pageY - this.clientRect.y;
     if (len === 1) {
+      const diff = this.lastTouchY - event.touches[0].clientY;
+      if (diff) {
+        const pos: Point = { x, y };
+        this.calibrateMouse(pos);
+        this.getHover(pos);
+        if (this.store.hover?.onWheel) {
+          this.onwheel(this.touchToWheelEvent(event, diff));
+          this.lastTouchY = event.touches[0].clientY;
+          return;
+        }
+      }
       if (this.store.options.scroll && this.scroll && !this.store.options.scrollButScale) {
-        let diff = this.lastTouchY - event.touches[0].clientY;
+        if (!diff) {
+          return;
+        }
         this.scroll.wheel(diff);
         this.lastTouchY = event.touches[0].clientY;
         return;
@@ -1941,6 +2024,7 @@ export class Canvas {
     shiftKey?: boolean;
     altKey?: boolean;
   }) => {
+    this.viewAnimation = undefined;
     if (e.buttons === 2 && !this.drawingLine) {
       this.mouseRight = MouseRight.Down;
     }
@@ -3535,6 +3619,8 @@ export class Canvas {
       if(this.store.data.locked && pen.name === 'sceneContainer'){
         continue;
       }
+      const pointerEventsNone =
+        this.store.data.locked && pen.ignoreEvent === true;
       const r = getLineR(pen);
       if (
         !pen.calculative.active &&
@@ -3565,7 +3651,11 @@ export class Canvas {
       //   }
       // }
       // 锚点
-      if (!this.store.data.locked && this.hotkeyType !== HotkeyType.Resize) {
+      if (
+        !pointerEventsNone &&
+        !this.store.data.locked &&
+        this.hotkeyType !== HotkeyType.Resize
+      ) {
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
@@ -3581,6 +3671,9 @@ export class Canvas {
       }
       // 图形
       if (pen.type) {
+        if (pointerEventsNone) {
+          continue;
+        }
         if (pen.isRuleLine) {
           let ruleH = this.store.options.ruleOptions?.height || 20;
           if (
@@ -3622,6 +3715,10 @@ export class Canvas {
           if (hoverType) {
             break;
           }
+        }
+
+        if (pointerEventsNone) {
+          continue;
         }
 
         let isIn = false;
@@ -3713,6 +3810,7 @@ export class Canvas {
       if (
         pen.visible == false ||
         pen.locked === LockState.Disable ||
+        (this.store.data.locked && pen.ignoreEvent === true) ||
         pen === this.store.active[0]
       ) {
         continue;
@@ -4140,6 +4238,14 @@ export class Canvas {
           );
           if (i > -1) {
             pen.onDestroy?.(this.store.pens[pen.id]);
+            const parent = pen.parentId
+              ? this.store.pens[pen.parentId]
+              : undefined;
+            if (parent?.children) {
+              parent.children = parent.children.filter(
+                (item) => item !== pen.id,
+              );
+            }
             this.store.data.pens.splice(i, 1);
             this.store.pens[pen.id] = undefined;
             if (!pen.calculative) {
@@ -4223,6 +4329,13 @@ export class Canvas {
           }
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
+          if (pen.parentId) {
+            !this.store.pens[pen.parentId].children &&
+              (this.store.pens[pen.parentId].children = []);
+            if (!this.store.pens[pen.parentId].children.includes(pen.id)) {
+              this.store.pens[pen.parentId].children.push(pen.id);
+            }
+          }
           if (pen.type && pen.lastConnected) {
             for (let key in pen.lastConnected) {
               this.store.pens[key]&&(this.store.pens[key].connectedLines = pen.lastConnected[key]);
@@ -5034,23 +5147,29 @@ export class Canvas {
       now = performance.now();
     }
     if (!this.patchFlags) {
+      if(this.store.options.gridAlwaysRender && (this.store.options.grid || this.store.data.grid)){
+        this.canvasTemplate.bgPatchFlags = true
+        this.canvasTemplate.render()
+      }
       return;
     }
 
-    if (now - this.lastRender < this.store.options.interval) {
-      if(this.store.options.interval > this.store.options.minFPSNumber && this.store.options.autoFPS){
-        this.store.options.interval --
+    if(patchFlags != null){
+      if (now - this.lastRender < this.store.options.interval) {
+        if(this.store.options.interval > this.store.options.minFPSNumber && this.store.options.autoFPS){
+          this.store.options.interval --
+          this.store.options.animateInterval = this.store.options.interval
+        }
+        if (this.renderTimer) {
+          cancelAnimationFrame(this.renderTimer);
+        }
+        this.renderTimer = requestAnimationFrame(this.render);
+
+        return;
+      }else if(now - this.lastRender - this.store.options.interval > 10 && this.store.options.autoFPS && document.visibilityState === 'visible'){
+        this.store.options.interval ++
         this.store.options.animateInterval = this.store.options.interval
       }
-      if (this.renderTimer) {
-        cancelAnimationFrame(this.renderTimer);
-      }
-      this.renderTimer = requestAnimationFrame(this.render);
-
-      return;
-    }else if(now - this.lastRender - this.store.options.interval > 10 && this.store.options.autoFPS && document.visibilityState === 'visible'){
-      this.store.options.interval ++
-      this.store.options.animateInterval = this.store.options.interval
     }
 
     this.renderTimer = undefined;
@@ -5427,7 +5546,10 @@ export class Canvas {
     ctx.translate(0.5, 0.5);
     ctx.strokeStyle = pen.anchorColor || this.store.styles.anchorColor;
     ctx.fillStyle = pen.anchorBackground || this.store.options.anchorBackground;
-    pen.calculative.worldAnchors.forEach((anchor) => {
+    const { fontStyle, fontWeight, fontSize, fontFamily, lineHeight } =
+      pen.calculative;
+    const scale = this.store.data.scale;
+    pen.calculative.worldAnchors.forEach((anchor, index) => {
       if (anchor.hidden || anchor.locked > LockState.DisableEdit) {
         return;
       }
@@ -5471,7 +5593,7 @@ export class Canvas {
           anchor.x - (anchor.length * this.store.data.scale) / 2,
           anchor.y - size,
           anchor.length * this.store.data.scale,
-          size * 2
+          size * 2,
         );
         ctx.restore();
       } else {
@@ -5495,6 +5617,64 @@ export class Canvas {
       if (pen.type && this.store.hoverAnchor === anchor) {
         ctx.restore();
       } else if (anchor.color || anchor.background) {
+        ctx.restore();
+      }
+
+      if (anchor.label) {
+        ctx.save();
+        ctx.font = getFont({
+          fontStyle: anchor.labelStyle?.fontStyle || fontStyle,
+          fontWeight: anchor.labelStyle?.fontWeight || fontWeight,
+          fontFamily: anchor.labelStyle?.fontFamily || fontFamily,
+          lineHeight: anchor.labelStyle?.lineHeight || lineHeight,
+          fontSize:  anchor.labelStyle?.fontSize* scale || fontSize,
+        });
+        const rX = pen.anchors[index].x;
+        const rY = pen.anchors[index].y;
+        let xGap = 0;
+        let yGap = 0;
+        if (anchor.labelDirection !== undefined) {
+          if (anchor.labelDirection === Direction.Left) {
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            xGap = -(anchor.labelGap || 10) * scale;
+          } else if (anchor.labelDirection === Direction.Right) {
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            xGap = (anchor.labelGap || 10) * scale;
+          } else if (anchor.labelDirection === Direction.Up) {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            yGap = -(anchor.labelGap || 5) * scale;
+          } else if (anchor.labelDirection === Direction.Bottom) {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            yGap = (anchor.labelGap || 5) * scale;
+          }
+        } else {
+          if (rX < 0.1) {
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            xGap = (anchor.labelGap || 10) * scale;
+          } else if (rX > 0.9) {
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            xGap = -(anchor.labelGap || 10) * scale;
+          } else {
+            ctx.textAlign = 'center';
+            if (rY < 0.1) {
+              ctx.textBaseline = 'top';
+              yGap = (anchor.labelGap || 5) * scale;
+            } else if (rY > 0.9) {
+              ctx.textBaseline = 'bottom';
+              yGap = -(anchor.labelGap || 5) * scale;
+            } else {
+              ctx.textBaseline = 'middle';
+            }
+          }
+        }
+        ctx.fillStyle = anchor.labelStyle?.textColor || getTextColor(pen, this.store);
+        ctx.fillText(anchor.label, anchor.x + xGap, anchor.y + yGap);
         ctx.restore();
       }
       //根父节点
@@ -5677,6 +5857,226 @@ export class Canvas {
       this.store.emitter.emit('scale', this.store.data.scale);
     // });
   }
+
+  animateView(options: {
+    x?: number;
+    y?: number;
+    scale?: number;
+    pen?: Pen;
+    duration?: number;
+    easing?: string;
+    center?: Point;
+  }) {
+    if (this.viewAnimationTimer) {
+      cancelAnimationFrame(this.viewAnimationTimer);
+      this.viewAnimationTimer = undefined;
+    }
+    this.viewAnimation = undefined;
+    const duration = options.duration ?? 300;
+    const easingName = options.easing ?? 'easeOutCubic';
+    const center = options.center
+      ? { ...options.center }
+      : {
+          x: this.width / 2,
+          y: this.height / 2,
+        };
+
+    let toX = options.x !== undefined ? options.x : this.store.data.x;
+    let toY = options.y !== undefined ? options.y : this.store.data.y;
+    let toScale =
+      options.scale !== undefined ? options.scale : this.store.data.scale;
+
+    const minScale =
+      this.store.data.minScale || this.store.options.minScale;
+    const maxScale =
+      this.store.data.maxScale || this.store.options.maxScale;
+    if (toScale < minScale) toScale = minScale;
+    if (toScale > maxScale) toScale = maxScale;
+
+    if (options.pen) {
+      const viewCenter = {
+        x: this.width / 2,
+        y: this.height / 2,
+      };
+      toX =
+        viewCenter.x -
+        options.pen.calculative.worldRect.x -
+        options.pen.calculative.worldRect.width / 2;
+      toY =
+        viewCenter.y -
+        options.pen.calculative.worldRect.y -
+        options.pen.calculative.worldRect.height / 2;
+    }
+
+    if (
+      !options.pen &&
+      Math.abs(toX - this.store.data.x) < 0.5 &&
+      Math.abs(toY - this.store.data.y) < 0.5 &&
+      Math.abs(toScale - this.store.data.scale) < 0.001
+    ) {
+      return;
+    }
+
+    this.calibrateMouse(center);
+
+    this.viewAnimation = {
+      startTime: performance.now(),
+      duration,
+      fromX: this.store.data.x,
+      fromY: this.store.data.y,
+      fromScale: this.store.data.scale,
+      toX,
+      toY,
+      toScale,
+      easing: getEasingFunction(easingName),
+      center,
+      pen: options.pen,
+    };
+
+    this.animateViewFrame();
+  }
+
+  private animateViewFrame = () => {
+    if (!this.viewAnimation) {
+      return;
+    }
+
+    const now = performance.now();
+    const {
+      startTime,
+      duration,
+      fromX,
+      fromY,
+      fromScale,
+      toX,
+      toY,
+      toScale,
+      easing,
+      center,
+      pen,
+    } = this.viewAnimation;
+
+    let progress = Math.min(1, (now - startTime) / duration);
+    progress = easing(progress);
+
+    const prevScale = this.store.data.scale;
+    const currentScale = fromScale + (toScale - fromScale) * progress;
+
+    const s = currentScale / prevScale;
+    if (s !== 1) {
+      this.store.data.scale = currentScale;
+      this.store.data.center = center;
+      scalePoint(this.store.data.origin, s, center);
+
+      this.store.data.pens.forEach((p) => {
+        p.onScale && p.onScale(p);
+        if (p.parentId) {
+          return;
+        }
+        scalePen(p, s, center);
+        if (p.isRuleLine) {
+          const lineScale = 1 / s;
+          const lineCenter = p.calculative.worldRect.center;
+          if (!p.width) {
+            scalePen(p, lineScale, lineCenter);
+          } else if (!p.height) {
+            scalePen(p, lineScale, lineCenter);
+          }
+        }
+        this.updatePenRect(p, { worldRectIsReady: true });
+        this.execPenResize(p);
+      });
+      this.calcActiveRect();
+    }
+
+    // Calculate current x, y
+    let currentX: number;
+    let currentY: number;
+    if (pen) {
+      // 参考 gotoView 的计算方式，基于当前 worldRect 实时计算
+      const viewCenter = {
+        x: this.width / 2,
+        y: this.height / 2,
+      };
+      const targetX =
+        viewCenter.x -
+        pen.calculative.worldRect.x -
+        pen.calculative.worldRect.width / 2;
+      const targetY =
+        viewCenter.y -
+        pen.calculative.worldRect.y -
+        pen.calculative.worldRect.height / 2;
+
+      currentX = fromX + (targetX - fromX) * progress;
+      currentY = fromY + (targetY - fromY) * progress;
+    } else {
+      currentX = fromX + (toX - fromX) * progress;
+      currentY = fromY + (toY - fromY) * progress;
+    }
+
+    const prevX = this.store.data.x;
+    const prevY = this.store.data.y;
+    this.store.data.x = currentX;
+    this.store.data.y = currentY;
+
+    if (this.scroll && this.scroll.isShow) {
+      this.scroll.translate(currentX - prevX, currentY - prevY);
+    }
+
+    this.onMovePens();
+    this.canvasTemplate.init();
+    this.canvasImage.init();
+    this.canvasImageBottom.init();
+    this.render();
+
+    if (progress < 1) {
+      this.viewAnimationTimer = requestAnimationFrame(this.animateViewFrame);
+    } else {
+      // Ensure final values are exact
+      if (!pen) {
+        this.store.data.x = toX;
+        this.store.data.y = toY;
+      }
+      if (Math.abs(this.store.data.scale - toScale) > 0.001) {
+        const finalS = toScale / this.store.data.scale;
+        this.store.data.scale = toScale;
+        this.store.data.center = center;
+        scalePoint(this.store.data.origin, finalS, center);
+        this.store.data.pens.forEach((p) => {
+          p.onScale && p.onScale(p);
+          if (p.parentId) {
+            return;
+          }
+          scalePen(p, finalS, center);
+          if (p.isRuleLine) {
+            const lineScale = 1 / finalS;
+            const lineCenter = p.calculative.worldRect.center;
+            if (!p.width) {
+              scalePen(p, lineScale, lineCenter);
+            } else if (!p.height) {
+              scalePen(p, lineScale, lineCenter);
+            }
+          }
+          this.updatePenRect(p, { worldRectIsReady: true });
+          this.execPenResize(p);
+        });
+        this.calcActiveRect();
+        this.onMovePens();
+        this.canvasTemplate.init();
+        this.canvasImage.init();
+        this.canvasImageBottom.init();
+        this.render();
+      }
+
+      this.viewAnimation = undefined;
+      this.viewAnimationTimer = undefined;
+      this.store.emitter.emit('scale', this.store.data.scale);
+      this.store.emitter.emit('translate', {
+        x: this.store.data.x,
+        y: this.store.data.y,
+      });
+    }
+  };
 
   templateScale(scale: number, center = { x: 0, y: 0 }) {
     const { minScale, maxScale } = this.store.options;
@@ -7777,12 +8177,10 @@ export class Canvas {
     if (pen.fontWeight) {
       style += `font-weight: ${pen.fontWeight};`;
     }
+    let ml = 0;
     if (pen.textLeft) {
-      style += `margin-left:${
-        scale > 1
-          ? pen.textLeft * scale
-          : (pen.textLeft * scale) // scale
-      }px;`;
+      ml = scale > 1 ? pen.textLeft * scale : (pen.textLeft * scale);
+      style += `margin-left:${ml}px;`;
     }
     if (pen.textTop) {
       style += `margin-top:${
@@ -7846,7 +8244,7 @@ export class Canvas {
           tem = 0;
         }
         style += `width:${
-          pen.fontSize * scale < 12 ? tem * scale : tem * scale
+          pen.fontSize * scale < 12 ? tem * scale - ml : tem * scale - ml
         }px;`;
       }
       // if (pen.whiteSpace === 'pre-line') {
@@ -7876,9 +8274,9 @@ export class Canvas {
             scale /
             (pen.lineHeight * pen.fontSize)
         );
-      if (textWidth > contentWidth) {
-        style += 'justify-content: start;';
-      }
+      // if (textWidth > contentWidth) {
+      //   style += 'justify-content: start;';
+      // }
     }
     sheet.deleteRule(0);
     sheet.deleteRule(0);
@@ -7994,7 +8392,9 @@ export class Canvas {
         '.meta2d-input ul li{padding: 5px 12px;line-height: 22px;white-space: nowrap;cursor: pointer;}'
       );
       sheet.insertRule('.meta2d-input ul li:hover{background: #eeeeee;}');
-      sheet.insertRule(`.input-div::-webkit-scrollbar {display:none}`);
+      if (CSS.supports?.('selector(.input-div::-webkit-scrollbar)')) {
+        sheet.insertRule(`.input-div::-webkit-scrollbar {display:none}`);
+      }
       sheet.insertRule(`.input-div{scrollbar-width: none;}`);
       sheet.insertRule(
         '.meta2d-input .input-div{resize:none;border:none;outline:none;background:transparent;flex-grow:1;height:100%;width: 100%;left:0;top:0;display:flex;text-align: center;justify-content: center;flex-direction: column;}'

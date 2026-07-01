@@ -3,6 +3,7 @@ import { Point } from '../point';
 import { Meta2dStore } from '../store';
 import type { marked as Marked } from 'marked';
 import { getParent } from '../pen';
+import { makeSafeFn } from '../utils';
 
 export class Tooltip {
   box: HTMLElement;
@@ -72,7 +73,7 @@ export class Tooltip {
   private static getTitle(pen: Pen) {
     if (pen.titleFnJs && !pen.titleFn) {
       try {
-        pen.titleFn = new Function('pen', pen.titleFnJs) as (
+        pen.titleFn = makeSafeFn(pen.calculative?.canvas?.store?.options, 'pen', pen.titleFnJs) as (
           pen: Pen
         ) => string;
       } catch (error) {

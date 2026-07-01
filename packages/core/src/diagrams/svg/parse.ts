@@ -257,6 +257,117 @@ function calcWorldPoints(command: SvgCommand, previous: SvgCommand) {
   command.worldPoints = worldPoints;
 }
 
+function getArcWorldPoints(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  rx: number,
+  ry: number,
+  phi: number,
+  fa: number,
+  fs: number
+): number[] {
+  const cosP = Math.cos(phi);
+  const sinP = Math.sin(phi);
+
+  const dx = (x1 - x2) / 2;
+  const dy = (y1 - y2) / 2;
+  const x1p = cosP * dx + sinP * dy;
+  const y1p = -sinP * dx + cosP * dy;
+
+  let rxSq = rx * rx;
+  let rySq = ry * ry;
+  const x1pSq = x1p * x1p;
+  const y1pSq = y1p * y1p;
+  const lambda = x1pSq / rxSq + y1pSq / rySq;
+  if (lambda > 1) {
+    const s = Math.sqrt(lambda);
+    rx *= s;
+    ry *= s;
+    rxSq = rx * rx;
+    rySq = ry * ry;
+  }
+
+  const sq = Math.sqrt(
+    Math.max(0, (rxSq * rySq - rxSq * y1pSq - rySq * x1pSq) / (rxSq * y1pSq + rySq * x1pSq))
+  );
+  const sc = fa === fs ? -sq : sq;
+  const cxp = (sc * rx * y1p) / ry;
+  const cyp = (-sc * ry * x1p) / rx;
+
+  const cx = cosP * cxp - sinP * cyp + (x1 + x2) / 2;
+  const cy = sinP * cxp + cosP * cyp + (y1 + y2) / 2;
+
+  let t1 = Math.atan2(y1p - cyp, x1p - cxp);
+  let t2 = Math.atan2(-y1p - cyp, -x1p - cxp);
+  let dt = t2 - t1;
+  if (fs === 0 && dt > 0) {
+    dt -= 2 * Math.PI;
+  } else if (fs === 1 && dt < 0) {
+    dt += 2 * Math.PI;
+  }
+
+  const points: number[] = [x1, y1, x2, y2];
+
+  function addPointIfOnArc(t: number) {
+    const tEnd = t1 + dt;
+    let nt = t;
+    const period = 2 * Math.PI;
+
+    // Normalize nt to primary period near t1
+    const k = Math.floor((t1 - nt) / period);
+    nt += k * period;
+
+    const eps = 1e-10;
+    let onArc: boolean;
+    if (dt > 0) {
+      onArc =
+        (nt >= t1 - eps && nt <= tEnd + eps) ||
+        (nt + period >= t1 - eps && nt + period <= tEnd + eps);
+      if (nt + period >= t1 - eps && nt + period <= tEnd + eps) {
+        nt += period;
+      }
+    } else {
+      onArc =
+        (nt <= t1 + eps && nt >= tEnd - eps) ||
+        (nt - period <= t1 + eps && nt - period >= tEnd - eps);
+      if (nt - period <= t1 + eps && nt - period >= tEnd - eps) {
+        nt -= period;
+      }
+    }
+
+    if (onArc) {
+      const cosT = Math.cos(nt);
+      const sinT = Math.sin(nt);
+      points.push(cx + rx * cosT * cosP - ry * sinT * sinP);
+      points.push(cy + rx * cosT * sinP + ry * sinT * cosP);
+    }
+  }
+
+  // x-extremes: tan(t) = -ry * sin(phi) / (rx * cos(phi))
+  if (Math.abs(cosP) > 1e-10) {
+    const t = Math.atan((-ry * sinP) / (rx * cosP));
+    addPointIfOnArc(t);
+    addPointIfOnArc(t + Math.PI);
+  } else {
+    addPointIfOnArc(0);
+    addPointIfOnArc(Math.PI);
+  }
+
+  // y-extremes: tan(t) = ry * cos(phi) / (rx * sin(phi))
+  if (Math.abs(sinP) > 1e-10) {
+    const t = Math.atan((ry * cosP) / (rx * sinP));
+    addPointIfOnArc(t);
+    addPointIfOnArc(t + Math.PI);
+  } else {
+    addPointIfOnArc(Math.PI / 2);
+    addPointIfOnArc((3 * Math.PI) / 2);
+  }
+
+  return points;
+}
+
 function calcWorldPositions(path: SvgPath) {
   let previous: SvgCommand;
   let x = 0;
@@ -294,11 +405,30 @@ function calcWorldPositions(path: SvgPath) {
         ];
         break;
       case 'A':
-        item.worldPoints = [
+        item.worldPoints = getArcWorldPoints(
           previous.worldPoints[previous.worldPoints.length - 2],
-          item.values[0] +
-            previous.worldPoints[previous.worldPoints.length - 1],
-        ];
+          previous.worldPoints[previous.worldPoints.length - 1],
+          item.values[5],
+          item.values[6],
+          item.values[0],
+          item.values[1],
+          (item.values[2] * Math.PI) / 180,
+          item.values[3],
+          item.values[4]
+        );
+        break;
+      case 'a':
+        item.worldPoints = getArcWorldPoints(
+          previous.worldPoints[previous.worldPoints.length - 2],
+          previous.worldPoints[previous.worldPoints.length - 1],
+          previous.worldPoints[previous.worldPoints.length - 2] + item.values[5],
+          previous.worldPoints[previous.worldPoints.length - 1] + item.values[6],
+          item.values[0],
+          item.values[1],
+          (item.values[2] * Math.PI) / 180,
+          item.values[3],
+          item.values[4]
+        );
         break;
       default:
         calcWorldPoints(item, previous);
