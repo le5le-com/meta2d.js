@@ -18,6 +18,14 @@ export * from './video';
 export * from './form';
 export * from './sceneContainer';
 export * from './htmlDom';
+export * from './sector';
+export * from './chord';
+export * from './polygon';
+export * from './octagon';
+export * from './trapezoid';
+export * from './crosse';
+export * from './rightTriangle';
+export * from './parallelogram';
 
 import { rectangle, square } from './rectangle';
 import { circle } from './circle';
@@ -41,7 +49,15 @@ import { mindNode, mindNodeAnchors } from './mindNode';
 import { mindLine, mindLineAnchors } from './mindLine';
 import { form } from './form';
 import { sceneContainer } from './sceneContainer';
-import {htmlDom} from "./htmlDom";
+import { htmlDom } from './htmlDom';
+import { sector } from './sector';
+import { chord } from './chord';
+import { polygon } from './polygon';
+import { octagon } from './octagon';
+import { trapezoid, trapezoidAnchors } from './trapezoid';
+import { crosse } from './crosse';
+import { rightTriangle, rightTriangleAnchors } from './rightTriangle';
+import { parallelogram, parallelogramAnchors } from './parallelogram';
 
 export function commonPens() {
   return {
@@ -68,10 +84,18 @@ export function commonPens() {
     gif,
     mindNode,
     mindLine,
-    mindNode2:rectangle,
+    mindNode2: rectangle,
     form,
-    combine:rectangle,
-    sceneContainer
+    combine: rectangle,
+    sceneContainer,
+    sector,
+    chord,
+    polygon,
+    octagon,
+    trapezoid,
+    crosse,
+    rightTriangle,
+    parallelogram,
   };
 }
 
@@ -82,5 +106,8 @@ export function commonAnchors() {
     pentagram: pentagramAnchors,
     mindNode: mindNodeAnchors,
     mindLine: mindLineAnchors,
+    rightTriangle: rightTriangleAnchors,
+    trapezoid: trapezoidAnchors,
+    parallelogram: parallelogramAnchors,
   };
 }
