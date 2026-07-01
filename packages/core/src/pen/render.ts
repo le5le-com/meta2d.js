@@ -1185,7 +1185,8 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     const textLineWidth = ctx.measureText(pen.placeholder || '请输入').width;
     const rect = pen.calculative.worldTextRect;
     let x = 0;
-    let y = (rect.height - pen.calculative.fontSize) / 2;
+    const oneRowHeight = fontSize * lineHeight;
+    let y = (rect.height - oneRowHeight) / 2;
     if (pen.textAlign === 'center') {
       x = (rect.width - textLineWidth) / 2;
     } else if (pen.textAlign === 'right') {
@@ -1194,9 +1195,13 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     if (pen.textBaseline === 'top') {
       y = 0;
     } else if (pen.textBaseline === 'bottom') {
-      y = rect.height - pen.calculative.fontSize;
+      y = rect.height - oneRowHeight;
     }
-    ctx.fillText(pen.placeholder || '请输入', rect.x + x, rect.y + y);
+    ctx.fillText(
+      pen.placeholder || '请输入',
+      rect.x + x,
+      rect.y + y + getTextBaselineOffset(ctx, pen.placeholder || '请输入', oneRowHeight)
+    );
     ctx.restore();
   }
 
@@ -1250,7 +1255,6 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 
-  const y = 0.55;
   const textAlign = pen.textAlign || store.options.textAlign;
   const oneRowHeight = fontSize * lineHeight;
   pen.calculative.textLines && pen.calculative.textLines.forEach((text, i) => {
@@ -1261,11 +1265,15 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     } else if (textAlign === 'right') {
       x = width - textLineWidth;
     }
+    const y =
+      drawRectY +
+      i * oneRowHeight +
+      getTextBaselineOffset(ctx, text, oneRowHeight);
     // 字间距
     if(pen.letterSpacing){
-      fillTextWithSpacing(ctx,text,drawRectX + x, drawRectY + (i + y) * oneRowHeight,pen.calculative.letterSpacing);
+      fillTextWithSpacing(ctx,text,drawRectX + x, y,pen.calculative.letterSpacing);
     }else{
-      ctx.fillText(text, drawRectX + x, drawRectY + (i + y) * oneRowHeight);
+      ctx.fillText(text, drawRectX + x, y);
     }
     // 下划线
     const { textDecorationColor, textDecorationDash, textDecoration } = pen;
@@ -1274,7 +1282,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
         ctx,
         {
           x: drawRectX + x,
-          y: drawRectY + (i + y) * oneRowHeight,
+          y,
           width: textLineWidth,
         },
         { textDecorationColor, textDecorationDash, fontSize }
@@ -1287,7 +1295,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
         ctx,
         {
           x: drawRectX + x,
-          y: drawRectY + (i + y) * oneRowHeight,
+          y,
           width: textLineWidth,
         },
         { textStrickoutColor, textStrickoutDash, fontSize }
@@ -1295,6 +1303,24 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     }
   });
   ctx.restore();
+}
+
+// 文字基线偏移量
+function getTextBaselineOffset(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  lineHeight: number
+) {
+  const metrics = ctx.measureText(text);
+  const { actualBoundingBoxAscent, actualBoundingBoxDescent } = metrics;
+  if (actualBoundingBoxAscent || actualBoundingBoxDescent) {
+    return (
+      lineHeight / 2 +
+      (actualBoundingBoxAscent - actualBoundingBoxDescent) / 2
+    );
+  }
+
+  return lineHeight * 0.55;
 }
 
 function fillTextWithSpacing(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, spacing=0){
