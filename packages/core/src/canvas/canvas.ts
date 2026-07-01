@@ -3584,6 +3584,8 @@ export class Canvas {
       if(this.store.data.locked && pen.name === 'sceneContainer'){
         continue;
       }
+      const pointerEventsNone =
+        this.store.data.locked && pen.ignoreEvent === true;
       const r = getLineR(pen);
       if (
         !pen.calculative.active &&
@@ -3614,7 +3616,11 @@ export class Canvas {
       //   }
       // }
       // 锚点
-      if (!this.store.data.locked && this.hotkeyType !== HotkeyType.Resize) {
+      if (
+        !pointerEventsNone &&
+        !this.store.data.locked &&
+        this.hotkeyType !== HotkeyType.Resize
+      ) {
         if (pen.calculative.worldAnchors) {
           for (const anchor of pen.calculative.worldAnchors) {
             hoverType = this.inAnchor(pt, pen, anchor);
@@ -3630,6 +3636,9 @@ export class Canvas {
       }
       // 图形
       if (pen.type) {
+        if (pointerEventsNone) {
+          continue;
+        }
         if (pen.isRuleLine) {
           let ruleH = this.store.options.ruleOptions?.height || 20;
           if (
@@ -3671,6 +3680,10 @@ export class Canvas {
           if (hoverType) {
             break;
           }
+        }
+
+        if (pointerEventsNone) {
+          continue;
         }
 
         let isIn = false;
@@ -3762,6 +3775,7 @@ export class Canvas {
       if (
         pen.visible == false ||
         pen.locked === LockState.Disable ||
+        (this.store.data.locked && pen.ignoreEvent === true) ||
         pen === this.store.active[0]
       ) {
         continue;
