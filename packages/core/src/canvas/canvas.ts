@@ -752,6 +752,28 @@ export class Canvas {
     this.externalElements.focus(); // 聚焦
   };
 
+  touchToWheelEvent(event: TouchEvent, deltaY: number): WheelEvent {
+    const touch = event.changedTouches[0] || event.touches[0];
+    return {
+      deltaX: 0,
+      deltaY,
+      deltaZ: 0,
+      deltaMode: 0,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      pageX: touch.pageX,
+      pageY: touch.pageY,
+      ctrlKey: event.ctrlKey,
+      shiftKey: event.shiftKey,
+      altKey: event.altKey,
+      metaKey: event.metaKey,
+      wheelDelta: -deltaY,
+      wheelDeltaY: -deltaY,
+      preventDefault: () => event.preventDefault(),
+      stopPropagation: () => event.stopPropagation(),
+    } as unknown as WheelEvent;
+  }
+
   onkeydown = (e: KeyboardEvent) => {
     if (
       this.store.data.locked >= LockState.DisableEdit &&
@@ -1786,8 +1808,21 @@ export class Canvas {
     const x = event.touches[0].pageX - this.clientRect.x;
     const y = event.touches[0].pageY - this.clientRect.y;
     if (len === 1) {
+      const diff = this.lastTouchY - event.touches[0].clientY;
+      if (diff) {
+        const pos: Point = { x, y };
+        this.calibrateMouse(pos);
+        this.getHover(pos);
+        if (this.store.hover?.onWheel) {
+          this.onwheel(this.touchToWheelEvent(event, diff));
+          this.lastTouchY = event.touches[0].clientY;
+          return;
+        }
+      }
       if (this.store.options.scroll && this.scroll && !this.store.options.scrollButScale) {
-        let diff = this.lastTouchY - event.touches[0].clientY;
+        if (!diff) {
+          return;
+        }
         this.scroll.wheel(diff);
         this.lastTouchY = event.touches[0].clientY;
         return;
