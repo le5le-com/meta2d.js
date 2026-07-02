@@ -574,7 +574,7 @@ export class Meta2d {
             value: value[key],
           };
           if (!obj.value) {
-            let oneForm = _pen.form.find(
+            let oneForm = _pen.form?.find(
               (_item) =>
                 (_item.dataIds as BindId) &&
                 (_item.dataIds as BindId).dataId === obj.dataId
