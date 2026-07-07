@@ -9101,6 +9101,7 @@ export class Canvas {
       // if (pen.name === 'combine' && !pen.draw){
       //   continue;
       // }
+      pen.onRenderPenRaw?.(pen)
       // TODO: hover 待考虑，若出现再补上
       const { active } = pen.calculative;
       pen.calculative.active = false;
