@@ -5119,6 +5119,10 @@ export class Meta2d {
     if (isNaN(rect.width) || isNaN(rect.height)) {
       rect = this.getRect();
     }
+    const fitChildIds = new Set<string>();
+    this.store.data.fits?.forEach((fit) => {
+      fit.children?.forEach((id) => fitChildIds.add(id));
+    });
     // const rect = this.getRect();
     const scaleTablePlusWidth = (
       pen: any,
@@ -5353,7 +5357,7 @@ export class Meta2d {
         }
       });
       const iframePens = this.store.data.pens.filter(
-        (pen) => pen.name === 'iframe'
+        (pen) => pen.name === 'iframe' && !fitChildIds.has(pen.id)
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
@@ -5472,7 +5476,7 @@ export class Meta2d {
         }
       });
       const iframePens = this.store.data.pens.filter(
-        (pen) => pen.name === 'iframe'
+        (pen) => pen.name === 'iframe' && !fitChildIds.has(pen.id)
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
