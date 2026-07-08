@@ -5120,6 +5120,37 @@ export class Meta2d {
       rect = this.getRect();
     }
     // const rect = this.getRect();
+    const scaleTablePlusWidth = (
+      pen: any,
+      ratio: number,
+      scaledIds?: Set<string>
+    ) => {
+      if (!pen || pen.name !== 'tablePlus') {
+        return;
+      }
+      if (scaledIds?.has(pen.id)) {
+        return;
+      }
+      scaledIds?.add(pen.id);
+      pen.colWidth = (pen.colWidth ?? 150) * ratio;
+      pen.styles?.forEach((style: any) => {
+        if (style.width) {
+          style.width *= ratio;
+        }
+      });
+    };
+    const scaleChildTablePlusWidth = (
+      pen: any,
+      ratio: number,
+      scaledIds: Set<string>
+    ) => {
+      scaleTablePlusWidth(pen, ratio, scaledIds);
+      if (pen.children?.length) {
+        getAllChildren(pen, this.store).forEach((cPen) => {
+          scaleTablePlusWidth(cPen, ratio, scaledIds);
+        });
+      }
+    };
 
     // 幂等处理：首次填充前记录各 fit 顶层图元的原始几何（设计坐标系，除以 scale、
     // 相对 origin，从而与当前缩放/平移无关）；后续每次填充前先还原到原始几何，
@@ -5127,20 +5158,27 @@ export class Meta2d {
     const { origin: _origin, scale: _scale } = this.store.data;
     if (!this.fillViewSnapshot) {
       this.fillViewSnapshot = new Map();
-      const setFillViewSnapshot = (pen: any) => {
+      const setFillViewSnapshot = (pen: any, onlyTablePlus = false) => {
         const wr = pen.calculative.worldRect;
         this.fillViewSnapshot.set(pen.id, {
-          x: (wr.x - _origin.x) / _scale,
-          y: (wr.y - _origin.y) / _scale,
-          width: wr.width / _scale,
-          height: wr.height / _scale,
-          textWidth: pen.textWidth != null ? pen.textWidth / _scale : undefined,
-          colWidth: pen.colWidth,
-          styleWidths: pen.styles?.map((style: any) => style.width),
-          imageRatio: pen.imageRatio,
-          ratio: pen.ratio,
+          onlyTablePlus,
+          x: onlyTablePlus ? undefined : (wr.x - _origin.x) / _scale,
+          y: onlyTablePlus ? undefined : (wr.y - _origin.y) / _scale,
+          width: onlyTablePlus ? undefined : wr.width / _scale,
+          height: onlyTablePlus ? undefined : wr.height / _scale,
+          textWidth:
+            !onlyTablePlus && pen.textWidth != null
+              ? pen.textWidth / _scale
+              : undefined,
+          colWidth: pen.name === 'tablePlus' ? pen.colWidth : undefined,
+          styleWidths:
+            pen.name === 'tablePlus'
+              ? pen.styles?.map((style: any) => style.width)
+              : undefined,
+          imageRatio: onlyTablePlus ? undefined : pen.imageRatio,
+          ratio: onlyTablePlus ? undefined : pen.ratio,
           operationalRect:
-            pen.name === 'iframe' && pen.operationalRect
+            !onlyTablePlus && pen.name === 'iframe' && pen.operationalRect
               ? deepClone(pen.operationalRect)
               : undefined,
         });
@@ -5152,23 +5190,26 @@ export class Meta2d {
             return;
           }
           setFillViewSnapshot(pen);
+          if (pen.children?.length) {
+            getAllChildren(pen, this.store).forEach((cPen: any) => {
+              if (
+                cPen.name === 'tablePlus' &&
+                !this.fillViewSnapshot.has(cPen.id)
+              ) {
+                setFillViewSnapshot(cPen, true);
+              }
+            });
+          }
         });
       });
       this.store.data.pens
         .filter((pen) => pen.name === 'iframe')
-        .forEach(setFillViewSnapshot);
+        .forEach((pen) => setFillViewSnapshot(pen));
     } else {
       this.fillViewSnapshot.forEach((snap, id) => {
         const pen: any = this.store.pens[id];
         if (!pen) {
           return;
-        }
-        pen.x = _origin.x + snap.x * _scale;
-        pen.y = _origin.y + snap.y * _scale;
-        pen.width = snap.width * _scale;
-        pen.height = snap.height * _scale;
-        if (snap.textWidth !== undefined) {
-          pen.textWidth = snap.textWidth * _scale;
         }
         if (snap.colWidth !== undefined) {
           pen.colWidth = snap.colWidth;
@@ -5179,6 +5220,16 @@ export class Meta2d {
               style.width = snap.styleWidths[i];
             }
           });
+        }
+        if (snap.onlyTablePlus) {
+          return;
+        }
+        pen.x = _origin.x + snap.x * _scale;
+        pen.y = _origin.y + snap.y * _scale;
+        pen.width = snap.width * _scale;
+        pen.height = snap.height * _scale;
+        if (snap.textWidth !== undefined) {
+          pen.textWidth = snap.textWidth * _scale;
         }
         if (snap.imageRatio !== undefined) {
           pen.imageRatio = snap.imageRatio;
@@ -5235,6 +5286,7 @@ export class Meta2d {
           }
           let ratio =
             (this.canvas.width - left - right) / (rect.width - left - right);
+          const scaledTablePlusIds = new Set<string>();
           pens.forEach((pen) => {
             if (pen.image && pen.imageRatio) {
               if (pen.calculative.worldRect.width / this.canvas.width > 0.1) {
@@ -5242,14 +5294,7 @@ export class Meta2d {
                 pen.ratio = false;
               }
             }
-            if (pen.name === 'tablePlus') {
-              pen.colWidth = (pen.colWidth ?? 150) * ratio;
-              pen.styles.forEach((style) => {
-                if (style.width) {
-                  style.width = style.width * ratio;
-                }
-              });
-            }
+            scaleChildTablePlusWidth(pen, ratio, scaledTablePlusIds);
             if (Math.abs(fit.leftValue) < 1) {
               pen.calculative.worldRect.x =
                 rect.x -
@@ -5312,7 +5357,7 @@ export class Meta2d {
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.width / this.canvas.width > 0.8) {
+        if (worldRect.width / rect.width > 0.8) {
           let bfW = worldRect.width;
           pen.calculative.worldRect.x = worldRect.x - wGap / 2;
           pen.calculative.worldRect.width = worldRect.width + wGap;
@@ -5431,7 +5476,7 @@ export class Meta2d {
       );
       iframePens?.forEach((pen) => {
         const worldRect = pen.calculative.worldRect;
-        if (worldRect.height / this.canvas.height > 0.8) {
+        if (worldRect.height / rect.height > 0.8) {
           let bfH = worldRect.height;
           pen.calculative.worldRect.y = worldRect.y - hGap / 2;
           pen.calculative.worldRect.height = worldRect.height + hGap;
