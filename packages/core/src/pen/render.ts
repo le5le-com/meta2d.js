@@ -4037,20 +4037,20 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
   }
 }
 
-export function setElemImg(pen: Pen, elem: HTMLElement) {
+export async function setElemImg(pen: Pen, elem: HTMLElement) {
   if (!elem) {
     return;
   }
   //https://github.com/niklasvh/html2canvas
-  globalThis.html2canvas &&
-    globalThis.html2canvas(elem).then(function (canvas) {
-      // document.body.appendChild(canvas);
-      const img = new Image();
-      img.src = canvas.toDataURL('image/png', 0.1);
-      if (img.src.length > 10) {
-        pen.calculative.img = img;
-      }
-    });
+  if(globalThis.html2canvas){
+    const canvas = await globalThis.html2canvas(elem)
+    const img = new Image();
+    img.src = canvas.toDataURL('image/png', 0.1);
+    if (img.src.length > 10) {
+      pen.calculative.img = img;
+    }
+  }
+
 }
 
 /**

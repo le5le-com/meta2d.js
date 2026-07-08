@@ -1,4 +1,4 @@
-import {Pen, setElemPosition} from "../pen";
+import {Pen, setElemImg, setElemPosition} from "../pen";
 
 interface HtmlPen extends Pen {
   html: {
@@ -20,6 +20,7 @@ export function htmlDom(pen: HtmlPen) {
   if (!pen.onDestroy) {
     pen.onDestroy = destroy;
     pen.onResize = onResize;
+    pen.onRenderPenRaw = onRenderPenRaw
     pen.onMove = setDomScale;
   }
 
@@ -38,9 +39,12 @@ export function htmlDom(pen: HtmlPen) {
     } else {
       context.innerHTML = pen.html.content || '';
     }
-
+    context.onload = ()=>{
+      setElemImg(pen, pen.calculative.singleton.div.contentDocument.querySelector("body"));
+    }
     context.style.position = 'absolute';
     context.style.outline = 'none';
+    context.style.border = 'none';
     context.style.overflow = 'hidden';
     context.style.left = '-9999px';
     context.style.top = '-9999px';
@@ -82,4 +86,8 @@ function setDomScale(pen: HtmlPen) {
     div.style.top = worldRect.y + store.data.y - 1 / 2 * pen.calculative.singleton._height + 1 / 2 * worldRect.height + 'px';
     div.style.scale = pen.calculative.canvas.store.data.scale;
   });
+}
+
+ function onRenderPenRaw(pen){
+  setElemImg(pen, pen.calculative.singleton.div.contentDocument.querySelector("body"));
 }
