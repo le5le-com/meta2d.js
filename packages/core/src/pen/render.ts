@@ -1079,7 +1079,13 @@ export function drawImage(
   pen: Pen
 ) {
   const { x, y, width, height } = getImagePosition(pen);
-  const { worldIconRect, iconRotate, img } = pen.calculative;
+  const { worldIconRect, iconRotate } = pen.calculative;
+  let { img } = pen.calculative;
+  if ((ctx as any).getSerializedSvg && (img as any)?.toDataURL) {
+    const svgImg = new Image();
+    svgImg.src = (img as any).toDataURL('image/png');
+    img = svgImg;
+  }
   ctx.filter = pen.filter
   if (iconRotate) {
     const { x: centerX, y: centerY } = worldIconRect.center;
@@ -4044,10 +4050,12 @@ export async function setElemImg(pen: Pen, elem: HTMLElement) {
   //https://github.com/niklasvh/html2canvas
   if(globalThis.html2canvas){
     const canvas = await globalThis.html2canvas(elem)
-    const img = new Image();
-    img.src = canvas.toDataURL('image/png', 0.1);
-    if (img.src.length > 10) {
-      pen.calculative.img = img;
+    if (canvas) {
+      const img = new Image();
+      img.src = canvas.toDataURL('image/png', 0.1);
+      if (img.src.length > 10) {
+        pen.calculative.img = img;
+      }
     }
   }
 

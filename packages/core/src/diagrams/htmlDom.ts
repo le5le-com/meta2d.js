@@ -35,12 +35,10 @@ export function htmlDom(pen: HtmlPen) {
         context.style.overflow = 'hidden';
         context.style.border = 'none';
         (context as HTMLIFrameElement).scrolling = 'no';
+        updateRawImg(pen);
       };
     } else {
       context.innerHTML = pen.html.content || '';
-    }
-    context.onload = ()=>{
-      setElemImg(pen, pen.calculative.singleton.div.contentDocument.querySelector("body"));
     }
     context.style.position = 'absolute';
     context.style.outline = 'none';
@@ -50,10 +48,10 @@ export function htmlDom(pen: HtmlPen) {
     context.style.top = '-9999px';
 
     pen.calculative.canvas.externalElements.parentElement.appendChild(context);
+    pen.calculative.singleton.div = context;
 
     onResize(pen);
     setElemPosition(pen, context);
-    pen.calculative.singleton.div = context;
   }
 
   setDomScale(pen);
@@ -71,6 +69,7 @@ function onResize(pen: HtmlPen) {
   const {width, height} = (window as any).meta2d.getPenRect(pen);
   pen.calculative.singleton._width = width;
   pen.calculative.singleton._height = height;
+  requestAnimationFrame(() => updateRawImg(pen));
 }
 
 function setDomScale(pen: HtmlPen) {
@@ -88,6 +87,20 @@ function setDomScale(pen: HtmlPen) {
   });
 }
 
- function onRenderPenRaw(pen){
-  setElemImg(pen, pen.calculative.singleton.div.contentDocument.querySelector("body"));
+function updateRawImg(pen: HtmlPen) {
+  const div = pen.calculative.singleton?.div;
+  if (!div) {
+    return;
+  }
+  const elem = pen.html.iframe
+    ? (div as HTMLIFrameElement).contentDocument?.querySelector('body') as HTMLElement
+    : div as HTMLElement;
+  if (!elem) {
+    return;
+  }
+  setElemImg(pen, elem);
+}
+
+function onRenderPenRaw(pen: HtmlPen){
+  updateRawImg(pen);
 }

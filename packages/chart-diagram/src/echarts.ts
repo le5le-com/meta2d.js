@@ -146,6 +146,47 @@ function safeResize(pen: ChartPen): boolean {
   }
 }
 
+function setRawImg(pen: ChartPen, rawImg: HTMLCanvasElement | HTMLImageElement) {
+  if (!rawImg) {
+    return;
+  }
+  const img = rawImg as any;
+  pen.calculative.img = img;
+  pen.calculative.imgNaturalWidth = img.width || img.naturalWidth;
+  pen.calculative.imgNaturalHeight = img.height || img.naturalHeight;
+}
+
+function onRenderPenRaw(pen: ChartPen) {
+  const chart = pen.calculative?.singleton?.echart as any;
+  const div = pen.calculative?.singleton?.div as HTMLDivElement;
+  if (!chart || !div || pen.calculative?.singleton?.echartsReady === false) {
+    return;
+  }
+  setElemPosition(pen, div);
+  safeResize(pen);
+  chart.getZr?.().flush?.();
+  const canvas = chart.getRenderedCanvas?.({
+    pixelRatio: 2,
+  });
+  if (canvas?.width && canvas?.height) {
+    setRawImg(pen, canvas);
+    return;
+  }
+
+  const img = new Image();
+  img.onload = () => setRawImg(pen, img);
+  try {
+    img.src = chart.getDataURL({
+      pixelRatio: 2,
+    });
+  } catch (error) {
+    console.error('[meta2d:echarts] getDataURL failed.', {
+      penId: pen.id,
+      error,
+    });
+  }
+}
+
 export function echarts(pen: ChartPen): Path2D {
   let echarts = globalThis.echarts;
   if (!pen.echarts || !echarts) {
@@ -228,9 +269,7 @@ export function echarts(pen: ChartPen): Path2D {
               true
             );
             safeResize(pen);
-            setTimeout(() => {
-              onRenderPenRaw(pen);
-            }, 300);
+            setTimeout(() => onRenderPenRaw(pen), 300);
           });
         });
       }
@@ -257,6 +296,7 @@ export function echarts(pen: ChartPen): Path2D {
               if (applied) {
                 let _option = pen.calculative.singleton.echart.getOption();
                 pen.echarts.option = _option;
+                setTimeout(() => onRenderPenRaw(pen), 300);
               }
             }
           });
@@ -957,22 +997,6 @@ export function setEchartsOption(
   }
   const meta2d = pen.calculative.canvas.parent;
   meta2d.setValue({ id: pen.id, echarts }, { render: false, doEvent: false });
-}
-
-function onRenderPenRaw(pen: Pen) {
-  const img = new Image();
-  try {
-    img.src = pen.calculative.singleton?.echart?.getDataURL({
-      pixelRatio: 2,
-    });
-  } catch (error) {
-    console.error('[meta2d:echarts] getDataURL failed.', {
-      penId: pen.id,
-      error,
-    });
-    return;
-  }
-  pen.calculative.img = img;
 }
 
 function updateOption(_option, ratio, options?: Pick<Options, 'allowScript'>) {
