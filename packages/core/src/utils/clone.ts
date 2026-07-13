@@ -22,6 +22,7 @@ export function deepClone<T>(o: T, keepCalc = false): T {
       if (
         ['canvas', 'lastFrame', 'socketFn'].includes(key) ||
         o[key] instanceof HTMLImageElement ||
+        o[key] instanceof HTMLCanvasElement ||
         o[key] instanceof HTMLMediaElement
       ) {
         continue;
