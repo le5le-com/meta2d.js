@@ -2779,29 +2779,56 @@ function computeLineDashSegments(lineLength: number, dashArray: number[], offset
   return result;
 }
 
-function calculateLineFrameStates(line:Pen,offsetInstance:number = 0) {
-  let path:SVGGeometryElement
-  let from:Point = null
-  line.calculative.worldAnchors.forEach(pt=>{
-    if (from) {
-      path = createSvgPath(path,from,from.next,pt.prev,pt)
-    }
-    from = pt;
-  })
-  if(line.close){
-    let pt = line.calculative.worldAnchors[0]
-    path = createSvgPath(path,from,from.next,pt.prev,pt)
+function calculateLineFrameStates(line: Pen, offsetInstance: number = 0) {
+  const worldAnchors = line.calculative.worldAnchors;
+  if (!worldAnchors || worldAnchors.length < 2) {
+    return null;
   }
 
-  let instance = 0
-  if(line.animateReverse){
-    // TODO 延迟有问题 出现卡顿瞬间移动
-    instance = line.length - line.calculative.animatePos - (offsetInstance * line.calculative.canvas.store.data.scale)
-  }else {
-    instance = line.calculative.animatePos - offsetInstance * line.calculative.canvas.store.data.scale
+  // 把路径平移到原点附近，避免 worldAnchors 坐标值过大时
+  // SVG getPointAtLength / atan2 出现数值精度问题导致抖动
+  const offset = { x: worldAnchors[0].x, y: worldAnchors[0].y };
+  const norm = (p: Point): Point =>
+    p ? { ...p, x: p.x - offset.x, y: p.y - offset.y } : p;
+
+  let path: SVGGeometryElement;
+  let from: Point = null;
+  worldAnchors.forEach((pt) => {
+    if (from) {
+      const nFrom = norm(from);
+      nFrom.next = norm(from.next);
+      const nPt = norm(pt);
+      nPt.prev = norm(pt.prev);
+      path = createSvgPath(path, nFrom, nFrom.next, nPt.prev, nPt);
+    }
+    from = pt;
+  });
+  if (line.close) {
+    const pt = worldAnchors[0];
+    const nFrom = norm(from);
+    nFrom.next = norm(from.next);
+    const nPt = norm(pt);
+    nPt.prev = norm(pt.prev);
+    path = createSvgPath(path, nFrom, nFrom.next, nPt.prev, nPt);
   }
-  const pos = getLinePointPosAndAngle(path,instance)
-  return pos
+
+  let instance = 0;
+  if (line.animateReverse) {
+    // TODO 延迟有问题 出现卡顿瞬间移动
+    instance =
+      line.length -
+      line.calculative.animatePos -
+      offsetInstance * line.calculative.canvas.store.data.scale;
+  } else {
+    instance =
+      line.calculative.animatePos -
+      offsetInstance * line.calculative.canvas.store.data.scale;
+  }
+  const pos: any = getLinePointPosAndAngle(path, instance);
+  if (!pos) return null;
+  pos.x += offset.x;
+  pos.y += offset.y;
+  return pos;
 }
 /**
  * 全局 color
