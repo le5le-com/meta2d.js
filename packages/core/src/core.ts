@@ -606,12 +606,13 @@ export class Meta2d {
             });
           }
         }
-        Object.keys(e.extend).forEach((key)=>{
-          if(!['x','y','width','height'].includes(key)){
+        const extend = e.extend || {};
+        Object.keys(extend).forEach((key)=>{
+          if(!['x','y','width','height','relative','pen'].includes(key)){
             if(url.indexOf('?')!==-1){
-              url+=`&${key}=${e.extend[key]}`
+              url+=`&${key}=${extend[key]}`
             }else{
-              url+=`?${key}=${e.extend[key]}`
+              url+=`?${key}=${extend[key]}`
             }
           }
         })
@@ -619,7 +620,7 @@ export class Meta2d {
         if(Object.keys(data).length){
           data = null;
         }
-        this.canvas.dialog.show(e.value as any, url, e.extend, data);
+        this.canvas.dialog.show(e.value as any, url, e.extend ? { ...extend, pen } : undefined, data);
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
