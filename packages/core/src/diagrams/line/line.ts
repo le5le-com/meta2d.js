@@ -454,7 +454,9 @@ export function createSvgPath(path:SVGGeometryElement,from: Point, cp1: Point, c
 export function getLinePointPosAndAngle (path:SVGGeometryElement,distance: number){
   const totalLength = path.getTotalLength()
   if(distance<0 || distance>totalLength) return null
-  const delta = 0.01
+  // 坐标值较大时，固定 0.01 的 delta 会导致 atan2 精度不足，
+  // 按路径总长取一个相对安全的采样步长
+  const delta = Math.max(0.01, totalLength * 0.0001)
   const point1 = path.getPointAtLength(distance)
 
   const point2 = path.getPointAtLength(distance - delta)
