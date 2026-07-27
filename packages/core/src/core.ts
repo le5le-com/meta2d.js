@@ -4396,7 +4396,9 @@ export class Meta2d {
     if (old) {
       pen.events?.forEach((event, index) => {
         if (indexArr.includes(index)) {
-          this.events[event.action](pen, event);
+          if (this.events[event.action]) {
+            this.events[event.action](pen, event);
+          }
         }
       });
     } else {
@@ -4468,7 +4470,9 @@ export class Meta2d {
                   }
                 }, event.timeout);
               } else {
-                this.events[event.action](pen, event);
+                if (this.events[event.action]) {
+                  this.events[event.action](pen, event);
+                }
               }
             });
           }
@@ -4515,7 +4519,9 @@ export class Meta2d {
                 }
               }, event.timeout);
             } else {
-              this.events[event.action](pen, event);
+              if (this.events[event.action]) {
+                this.events[event.action](pen, event);
+              }
             }
           });
         }
@@ -4550,7 +4556,9 @@ export class Meta2d {
                       }
                     }, event.timeout);
                   } else {
-                    this.events[event.action](pen, event);
+                    if (this.events[event.action]) {
+                      this.events[event.action](pen, event);
+                    }
                   }
                 });
                 break;
@@ -4586,10 +4594,14 @@ export class Meta2d {
           item.event.actions.forEach((action) => {
             if(action.timeout){
               setTimeout(() => {
-                this.events[action.action](item.pen, action, data);
+                if (this.events[action.action]) {
+                  this.events[action.action](item.pen, action, data);
+                }
               }, action.timeout);
             }else{
-              this.events[action.action](item.pen, action, data);
+              if (this.events[action.action]) {
+                this.events[action.action](item.pen, action, data);
+              }
             }
           });
         }
@@ -4629,7 +4641,9 @@ export class Meta2d {
     this.store.data.dataEvents?.forEach((event, index) => {
       if (indexArr.includes(index)) {
         event.actions?.forEach((action) => {
-          this.events[action.action](data, action);
+          if (this.events[action.action]) {
+            this.events[action.action](data, action);
+          }
         });
       }
     });
