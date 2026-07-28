@@ -123,6 +123,7 @@ export class Meta2d {
     }
   ) => boolean | string;
   events: Record<number, (pen: Pen, e: Event, params?: any) => void> = {};
+  private setPropsRenderPending = false;
   map: ViewMap;
   mapTimer: any;
   /**
@@ -432,7 +433,7 @@ export class Meta2d {
             { render: false, doEvent: false }
           );
         });
-        this.render();
+        this.requestSetPropsRender();
         return;
       }
       console.warn('[meta2d] SetProps value is not an object');
@@ -1135,6 +1136,19 @@ export class Meta2d {
 
   render(patchFlags?: boolean | number) {
     this.canvas?.render(patchFlags);
+  }
+
+  private requestSetPropsRender() {
+    if (this.setPropsRenderPending) {
+      return;
+    }
+
+    this.setPropsRenderPending = true;
+    requestAnimationFrame(() => {
+      this.setPropsRenderPending = false;
+      // 同一批 setProps 的属性更新合并到一帧；外层已完成渲染时会直接跳过。
+      this.render(false);
+    });
   }
 
   async setBackgroundImage(url: string, data?: any) {
