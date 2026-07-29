@@ -1,17 +1,20 @@
 import { Meta2d } from "../core";
+import type { Pen } from '../pen';
 import { getMeta2dData } from "../utils";
 import { Meta2dStore } from '../store';
 
 interface DialogStyle{
-  x:number;
-  y:number;
-  width:number;
-  height:number;
+  x?: number | string;
+  y?: number | string;
+  width?: number | string;
+  height?: number | string;
   background?:string;
   maskBackground?:string;
   hideClose?:boolean;
   closeTop?:number;
   closeRight?:number;
+  relative?:boolean; // 是否相对于图元
+  pen?:Pen; // dialog 所属的图元
 }
 
 export class Dialog {
@@ -183,7 +186,7 @@ export class Dialog {
       return;
     }
     this.data = data;
-    
+
     title && (this.title.innerText = title);
     if(!title){
       this.dialog.style.padding = '0px';
@@ -277,27 +280,49 @@ export class Dialog {
       }
     }
   }
-  detailRect(rect?:any):{x:string,y:string,width:string,height:string}{
-    const keys = ['x','y','width','height']
-    if(rect) {
-      for(let key of keys) {
-        let value = rect[key];
-        if(value) {
-          if(Number(value)) {
-            rect[key] = value + 'px';
-          } else if(!value.match(/\d+(px|vh|vw|%)$/)){
-            value = parseFloat(value);
-            rect[key] = isNaN(value)? undefined: value + 'px';
-          }
-        }
+  detailRect(rect?:DialogStyle):{x:string,y:string,width:string,height:string}{
+    const x = this.formatRectValue(rect?.x);
+    const y = this.formatRectValue(rect?.y);
+    const width = this.formatRectValue(rect?.width);
+    const height = this.formatRectValue(rect?.height);
+    const worldRect = rect?.relative ? rect.pen?.calculative?.worldRect : undefined;
+
+    if (worldRect) {
+      const centerX = worldRect.center?.x ?? worldRect.x + worldRect.width / 2;
+      const centerY = worldRect.center?.y ?? worldRect.y + worldRect.height / 2;
+
+      return {
+        x: `calc(${centerX + this.store.data.x}px + ${x || '0px'})`,
+        y: `calc(${centerY + this.store.data.y}px + ${y || '0px'})`,
+        width: width || '80%',
+        height: height || '420px'
       }
     }
+
     return {
-      x: rect.x || '50%',
-      y: rect.y || '50%',
-      width: rect.width || '80%',
-      height:rect.height || '420px'
+      x: x || '50%',
+      y: y || '50%',
+      width: width || '80%',
+      height: height || '420px'
     }
+  }
+
+  private formatRectValue(value: number | string): string | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+    if (typeof value === 'number') {
+      return value + 'px';
+    }
+    const cssValue = value.trim();
+    if (!isNaN(Number(cssValue))) {
+      return Number(cssValue) + 'px';
+    }
+    if (/^-?\d+(\.\d+)?(px|vh|vw|%)$/.test(cssValue) || /^(calc|min|max|clamp)\(.+\)$/.test(cssValue)) {
+      return cssValue;
+    }
+    const numberValue = parseFloat(cssValue);
+    return isNaN(numberValue) ? undefined : numberValue + 'px';
   }
   hide() {
     this.box.style.display = 'none';
@@ -319,7 +344,7 @@ export class Dialog {
     this.box.onclick = undefined;
     this.close.onclick = undefined;
     this.dialogMeta2d?.destroy(true);
-  } 
+  }
 }
 
 function isSameOrigin(url) {

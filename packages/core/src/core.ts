@@ -123,6 +123,7 @@ export class Meta2d {
     }
   ) => boolean | string;
   events: Record<number, (pen: Pen, e: Event, params?: any) => void> = {};
+  private setPropsRenderPending = false;
   map: ViewMap;
   mapTimer: any;
   /**
@@ -432,7 +433,7 @@ export class Meta2d {
             { render: false, doEvent: false }
           );
         });
-        this.render();
+        this.requestSetPropsRender();
         return;
       }
       console.warn('[meta2d] SetProps value is not an object');
@@ -606,12 +607,13 @@ export class Meta2d {
             });
           }
         }
-        Object.keys(e.extend).forEach((key)=>{
-          if(!['x','y','width','height'].includes(key)){
+        const extend = e.extend || {};
+        Object.keys(extend).forEach((key)=>{
+          if(!['x','y','width','height','relative','pen'].includes(key)){
             if(url.indexOf('?')!==-1){
-              url+=`&${key}=${e.extend[key]}`
+              url+=`&${key}=${extend[key]}`
             }else{
-              url+=`?${key}=${e.extend[key]}`
+              url+=`?${key}=${extend[key]}`
             }
           }
         })
@@ -619,7 +621,7 @@ export class Meta2d {
         if(Object.keys(data).length){
           data = null;
         }
-        this.canvas.dialog.show(e.value as any, url, e.extend, data);
+        this.canvas.dialog.show(e.value as any, url, e.extend ? { ...extend, pen } : undefined, data);
       }
     };
     this.events[EventAction.SendData] = (pen: Pen, e: Event) => {
@@ -1134,6 +1136,19 @@ export class Meta2d {
 
   render(patchFlags?: boolean | number) {
     this.canvas?.render(patchFlags);
+  }
+
+  private requestSetPropsRender() {
+    if (this.setPropsRenderPending) {
+      return;
+    }
+
+    this.setPropsRenderPending = true;
+    requestAnimationFrame(() => {
+      this.setPropsRenderPending = false;
+      // 同一批 setProps 的属性更新合并到一帧；外层已完成渲染时会直接跳过。
+      this.render(false);
+    });
   }
 
   async setBackgroundImage(url: string, data?: any) {
@@ -4395,7 +4410,9 @@ export class Meta2d {
     if (old) {
       pen.events?.forEach((event, index) => {
         if (indexArr.includes(index)) {
-          this.events[event.action](pen, event);
+          if (this.events[event.action]) {
+            this.events[event.action](pen, event);
+          }
         }
       });
     } else {
@@ -4467,7 +4484,9 @@ export class Meta2d {
                   }
                 }, event.timeout);
               } else {
-                this.events[event.action](pen, event);
+                if (this.events[event.action]) {
+                  this.events[event.action](pen, event);
+                }
               }
             });
           }
@@ -4514,7 +4533,9 @@ export class Meta2d {
                 }
               }, event.timeout);
             } else {
-              this.events[event.action](pen, event);
+              if (this.events[event.action]) {
+                this.events[event.action](pen, event);
+              }
             }
           });
         }
@@ -4549,7 +4570,9 @@ export class Meta2d {
                       }
                     }, event.timeout);
                   } else {
-                    this.events[event.action](pen, event);
+                    if (this.events[event.action]) {
+                      this.events[event.action](pen, event);
+                    }
                   }
                 });
                 break;
@@ -4585,10 +4608,14 @@ export class Meta2d {
           item.event.actions.forEach((action) => {
             if(action.timeout){
               setTimeout(() => {
-                this.events[action.action](item.pen, action, data);
+                if (this.events[action.action]) {
+                  this.events[action.action](item.pen, action, data);
+                }
               }, action.timeout);
             }else{
-              this.events[action.action](item.pen, action, data);
+              if (this.events[action.action]) {
+                this.events[action.action](item.pen, action, data);
+              }
             }
           });
         }
@@ -4628,7 +4655,9 @@ export class Meta2d {
     this.store.data.dataEvents?.forEach((event, index) => {
       if (indexArr.includes(index)) {
         event.actions?.forEach((action) => {
-          this.events[action.action](data, action);
+          if (this.events[action.action]) {
+            this.events[action.action](data, action);
+          }
         });
       }
     });

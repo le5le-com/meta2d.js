@@ -80,17 +80,20 @@ export class Tooltip {
         console.log('titleFnJs', error);
       }
     }
-    return pen.titleFn ? pen.titleFn(pen) : String(pen.title);
+    const title = pen.titleFn ? pen.titleFn(pen) : pen.title;
+    return title == null ? undefined : String(title);
   }
 
   /**
    * 更改 tooltip dom 的文本
    * @returns 返回设置前的 rect
    */
-  private setText(pen: Pen): DOMRect {
+  private setText(pen: Pen, title = Tooltip.getTitle(pen)): DOMRect {
     const oldElemRect = this.box.getBoundingClientRect();
     let marked: typeof Marked = globalThis.marked;
-    const title = Tooltip.getTitle(pen);
+    if(!title){
+      return oldElemRect;
+    }
     if (marked) {
       this.text.innerHTML = marked(title);
       const a = this.text.getElementsByTagName('A');
@@ -119,7 +122,13 @@ export class Tooltip {
       return;
     }
 
-    const oldRect = this.setText(pen);
+    const title = Tooltip.getTitle(pen);
+    if (!title) {
+      this.hide();
+      return;
+    }
+
+    const oldRect = this.setText(pen, title);
     const newRect = this.box.getBoundingClientRect();
     this.changePositionByText(oldRect, newRect);
   }
@@ -150,7 +159,13 @@ export class Tooltip {
       return;
     }
 
-    this.setText(pen);
+    const title = Tooltip.getTitle(pen);
+    if (!title) {
+      this.hide();
+      return;
+    }
+
+    this.setText(pen, title);
     const elemRect = this.box.getBoundingClientRect();
     const rect = pen.calculative.worldRect;
     let x = pen.calculative.canvas.store.data.x + pos.x - elemRect.width / 2;
