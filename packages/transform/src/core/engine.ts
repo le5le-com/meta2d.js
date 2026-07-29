@@ -1,4 +1,4 @@
-import {Inject, Options, TransformData} from "../types";
+import type {Inject, Options, TransformData} from "../types";
 
 export function createTransformEngine(options:Options, inject:Inject){
   const context = createEngineContext(options,inject)
