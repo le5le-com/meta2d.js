@@ -326,6 +326,7 @@ export class Dialog {
     return isNaN(numberValue) ? undefined : numberValue + 'px';
   }
   hide() {
+    this.dialogMeta2d?.clear(false);
     this.box.style.display = 'none';
     this.box.style.opacity = '0';
     this.iframe.onload = null;
