@@ -250,15 +250,17 @@ export class Dialog {
       urlChange = true;
     }
 
-    this.iframe.onload = () => {
-      if(!this.dialogMeta2d||isIframe){
-        this.close.style.display = rect.hideClose? 'none':'block';
-        this.box.style.opacity = '1';
-      }
-    }
-    if(!urlChange&&(!this.dialogMeta2d||isIframe)){
-    //  this.box.style.display = 'block';
+    const showDialog = () => {
+      this.close.style.display = rect?.hideClose ? 'none' : 'block';
       this.box.style.opacity = '1';
+    };
+    this.iframe.onload = () => {
+      if (isIframe) {
+        showDialog();
+      }
+    };
+    if (!isIframe || !urlChange) {
+      showDialog();
     }
     if(!isIframe){
       this.meta2dDiv.style.display = 'block';
@@ -267,7 +269,6 @@ export class Dialog {
         this.dialogMeta2d =  new Meta2d(this.meta2dDiv);
         globalThis.meta2d = globalThis.mainMeta2d;
       }
-
       const meta2dData = await getMeta2dData(this.store, url);
       if(meta2dData){
         this.box.style.display = 'block';
@@ -327,6 +328,7 @@ export class Dialog {
   hide() {
     this.box.style.display = 'none';
     this.box.style.opacity = '0';
+    this.iframe.onload = null;
     this.iframe.setAttribute('src', 'about:blank');
     this.url = 'about:blank';
   }
