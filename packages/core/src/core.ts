@@ -6974,6 +6974,58 @@ export class Meta2d {
     }
     return line;
   }
+
+  /**
+   * 通过锚点绝对坐标添加一条连线
+   * @param points 锚点绝对坐标
+   * @param pen 连线的其它属性
+   * @param history 是否记入历史记录
+   */
+  async addLineByPoints(
+    points: Point[],
+    pen: Pen = {},
+    history = true
+  ): Promise<Pen> {
+    if (!points || points.length < 2) {
+      console.warn('addLineByPoints: 至少需要 2 个点');
+      return;
+    }
+
+    const { scale, origin } = this.store.data;
+    const worldPoints = points.map((pt) => ({
+      x: pt.x * scale + origin.x,
+      y: pt.y * scale + origin.y,
+    }));
+
+    const xs = worldPoints.map((p) => p.x);
+    const ys = worldPoints.map((p) => p.y);
+    const x = Math.min(...xs);
+    const y = Math.min(...ys);
+    const width = Math.max(...xs) - x;
+    const height = Math.max(...ys) - y;
+
+    const id = pen.id || s8();
+    const line: Pen = {
+      lineName: 'line',
+      ...pen,
+      id,
+      name: 'line',
+      type: PenType.Line,
+      x,
+      y,
+      width,
+      height,
+      anchors: worldPoints.map((pt, index) => ({
+        id: `${index}`,
+        penId: id,
+        x: width ? (pt.x - x) / width : 0,
+        y: height ? (pt.y - y) / height : 0,
+      })),
+    };
+
+    return await this.addPen(line, history, true);
+  }
+
   /**
    * 生成一个拷贝组合后的 画笔数组（组合图形），不影响原画布画笔，常用作 二次复用的组件
    * @param pens 画笔数组
