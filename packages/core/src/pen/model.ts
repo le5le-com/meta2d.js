@@ -612,6 +612,10 @@ export interface Pen extends Rect {
     frameEnd?: number;
     frameDuration?: number;
     animatePos?: number;
+    // 上一次推进连线动画的时刻（performance.now），用于按真实时间推进
+    lastAnimateTime?: number;
+    // 水珠动画的连续相位，不随 animatePos 回绕，保证跨循环不跳段
+    beadPhase?: number;
     // 已经循环次数
     cycleIndex?: number;
     // 一个循环动画的开始时间

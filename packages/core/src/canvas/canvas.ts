@@ -380,7 +380,6 @@ export class Canvas {
     this.externalElements.ondragover = (e) => e.preventDefault();
     this.externalElements.ondrop = this.ondrop;
     this.externalElements.oncontextmenu = (e) => e.preventDefault();
-    this.store.options.interval = 50;
     if(this.store.options.parentTouch){
       this.parentElement.ontouchstart = this.ontouchstart;
       this.parentElement.ontouchmove = this.ontouchmove;

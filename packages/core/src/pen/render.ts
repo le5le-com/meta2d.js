@@ -567,7 +567,8 @@ function getLinearGradient(
 function drawLinearGradientLine(
   ctx: CanvasRenderingContext2D,
   pen: Pen,
-  points: Point[]
+  points: Point[],
+  radius?: number
 ) {
   let colors = [];
   if (pen.calculative.gradientColorStop) {
@@ -576,151 +577,147 @@ function drawLinearGradientLine(
     colors = formatGradient(pen.calculative.lineGradientColors).colors;
     pen.calculative.gradientColorStop = colors;
   }
-  ctx.strokeStyle = getLinearGradient(
-    ctx,
-    points,
-    colors,
-    pen.calculative.lineWidth / 2
-  );
+  // 拐角切片会按转角加粗，渐变半径要跟着切片实际半径走，
+  // 否则条纹在拐角处会被压窄。
+  const r = radius == null ? pen.calculative.lineWidth / 2 : radius;
+  ctx.strokeStyle = getLinearGradient(ctx, points, colors, r);
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
   ctx.lineTo(points[1].x, points[1].y);
   ctx.stroke();
 }
 
+/**
+ * 只在整条渐变线的首尾补端帽。中间接头一律 butt，见 ctxDrawLinearGradientPath。
+ */
+function drawGradientEndCap(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  at: Point,
+  towards: Point,
+  cap: CanvasLineCap
+) {
+  if (!cap || cap === 'butt') {
+    return;
+  }
+  const dx = at.x - towards.x;
+  const dy = at.y - towards.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (!len) {
+    return;
+  }
+  const stub = 0.1;
+  ctx.save();
+  ctx.lineCap = cap;
+  drawLinearGradientLine(ctx, pen, [
+    { x: at.x - (dx / len) * stub, y: at.y - (dy / len) * stub },
+    at,
+  ]);
+  ctx.restore();
+}
+
 function ctxDrawLinearGradientPath(ctx: CanvasRenderingContext2D, pen: Pen) {
   const anchors = pen.calculative.worldAnchors;
-  let smoothLenth =
+  const smoothLenth =
     pen.calculative.lineWidth *
     (pen.calculative.gradientSmooth || pen.calculative.lineSmooth || 0);
+  // 接头一律 butt。round 端帽会沿直线方向凸出半个线宽，落到内弯的
+  // 拐角圆弧之外，正是接头处那道台阶的来源。smoothLenth 为 0 时没有
+  // 圆弧兜底，只能沿用原来的端帽。
+  const jointCap: CanvasLineCap =
+    smoothLenth > 0 ? 'butt' : pen.lineCap || 'round';
+  let firstSeg: [Point, Point] = null;
+  let lastSeg: [Point, Point] = null;
+  const seg = (a: Point, b: Point) => {
+    if (!firstSeg) {
+      firstSeg = [a, b];
+    }
+    lastSeg = [a, b];
+    drawLinearGradientLine(ctx, pen, [a, b]);
+  };
+
+  ctx.save();
+  ctx.lineCap = jointCap;
   for (let i = 0; i < anchors.length - 1; i++) {
     if (
       (pen.lineName === 'curve' || pen.lineName === 'mind') &&
       anchors[i].curvePoints
     ) {
       if (i > 0) {
-        let lastCurvePoints = anchors[i - 1].curvePoints;
-        if (lastCurvePoints) {
-          //上一个存在锚点
-          smoothTransition(
-            ctx,
-            pen,
-            smoothLenth,
-            lastCurvePoints[lastCurvePoints.length - 1],
-            anchors[i],
-            anchors[i].curvePoints[0]
-          );
-        } else {
-          smoothTransition(
-            ctx,
-            pen,
-            smoothLenth,
-            anchors[i - 1],
-            anchors[i],
-            anchors[i].curvePoints[0]
-          );
-        }
-        //获取当前相对于0的位置
-        let next = getSmoothAdjacent(
+        const lastCurvePoints = anchors[i - 1].curvePoints;
+        smoothTransition(
+          ctx,
+          pen,
           smoothLenth,
+          lastCurvePoints
+            ? lastCurvePoints[lastCurvePoints.length - 1]
+            : anchors[i - 1],
           anchors[i],
           anchors[i].curvePoints[0]
         );
-        drawLinearGradientLine(ctx, pen, [next, anchors[i].curvePoints[1]]);
+        seg(
+          getSmoothAdjacent(smoothLenth, anchors[i], anchors[i].curvePoints[0]),
+          anchors[i].curvePoints[1]
+        );
       } else {
-        drawLinearGradientLine(ctx, pen, [
-          anchors[i],
-          anchors[i].curvePoints[0],
-        ]);
-        drawLinearGradientLine(ctx, pen, [
-          anchors[i].curvePoints[0],
-          anchors[i].curvePoints[1],
-        ]);
+        seg(anchors[i], anchors[i].curvePoints[0]);
+        seg(anchors[i].curvePoints[0], anchors[i].curvePoints[1]);
       }
-      let len = anchors[i].curvePoints.length - 1;
+      const len = anchors[i].curvePoints.length - 1;
       for (let j = 1; j < len; j++) {
-        drawLinearGradientLine(ctx, pen, [
-          anchors[i].curvePoints[j],
-          anchors[i].curvePoints[j + 1],
-        ]);
+        seg(anchors[i].curvePoints[j], anchors[i].curvePoints[j + 1]);
       }
-      let last = getSmoothAdjacent(
-        smoothLenth,
-        anchors[i + 1],
-        anchors[i].curvePoints[len]
+      seg(
+        anchors[i].curvePoints[len],
+        getSmoothAdjacent(
+          smoothLenth,
+          anchors[i + 1],
+          anchors[i].curvePoints[len]
+        )
       );
-      drawLinearGradientLine(ctx, pen, [anchors[i].curvePoints[len], last]);
     } else {
-      let _next = anchors[i];
-      let _last = anchors[i + 1];
+      let _next: Point = anchors[i];
+      let _last: Point = anchors[i + 1];
       if (i > 0 && i < anchors.length - 1) {
-        //有突兀的地方
-        let lastCurvePoints = anchors[i - 1].curvePoints;
-        if (lastCurvePoints) {
-          smoothTransition(
-            ctx,
-            pen,
-            smoothLenth,
-            lastCurvePoints[lastCurvePoints.length - 1],
-            anchors[i],
-            anchors[i + 1]
-          );
-        } else {
-          smoothTransition(
-            ctx,
-            pen,
-            smoothLenth,
-            anchors[i - 1],
-            anchors[i],
-            anchors[i + 1]
-          );
-        }
-      }
-      if (i > 0 && i < anchors.length - 1) {
+        const lastCurvePoints = anchors[i - 1].curvePoints;
+        smoothTransition(
+          ctx,
+          pen,
+          smoothLenth,
+          lastCurvePoints
+            ? lastCurvePoints[lastCurvePoints.length - 1]
+            : anchors[i - 1],
+          anchors[i],
+          anchors[i + 1]
+        );
         _next = getSmoothAdjacent(smoothLenth, anchors[i], anchors[i + 1]);
       }
       if (i < anchors.length - 2) {
         _last = getSmoothAdjacent(smoothLenth, anchors[i + 1], anchors[i]);
       }
-      let flag = false;
-      if (i === 0) {
-        if (pen.fromLineCap && pen.fromLineCap !== 'butt') {
-          ctx.save();
-          flag = true;
-          ctx.lineCap = pen.fromLineCap;
-        }
-      }
-      if (i !== 0 && i === anchors.length - 2) {
-        if (pen.toLineCap && pen.toLineCap !== 'butt') {
-          ctx.save();
-          flag = true;
-          ctx.lineCap = pen.toLineCap;
-        }
-      }
-
-      drawLinearGradientLine(ctx, pen, [_next, _last]);
-      if (flag) {
-        ctx.restore();
-      }
-      if (anchors.length === 2 && i === 0) {
-        ctx.save();
-        flag = true;
-        ctx.lineCap = pen.toLineCap;
-        let _y = 0.1;
-        let _x = 0.1;
-        if (_next.x - _last.x === 0) {
-          _x = 0;
-        } else {
-          _y = ((_next.y - _last.y) / (_next.x - _last.x)) * 0.1;
-        }
-        drawLinearGradientLine(ctx, pen, [
-          { x: _last.x - _x, y: _last.y - _y },
-          _last,
-        ]);
-        ctx.restore();
-      }
+      seg(_next, _last);
     }
   }
+  ctx.restore();
+
+  if (!firstSeg || !lastSeg) {
+    return;
+  }
+  const defaultCap: CanvasLineCap = pen.lineCap || 'round';
+  drawGradientEndCap(
+    ctx,
+    pen,
+    firstSeg[0],
+    firstSeg[1],
+    pen.fromLineCap || defaultCap
+  );
+  drawGradientEndCap(
+    ctx,
+    pen,
+    lastSeg[1],
+    lastSeg[0],
+    pen.toLineCap || defaultCap
+  );
 }
 
 function getSmoothAdjacent(smoothLenth: number, p1: Point, p2: Point) {
@@ -764,18 +761,55 @@ function smoothTransition(
     contrlPoint,
     next
   );
+
+  const baseW = pen.calculative.lineWidth;
+  ctx.save();
+  ctx.lineCap = 'butt';
   for (let k = 0; k < points.length - 1; k++) {
-    drawLinearGradientLine(ctx, pen, [
-      {
-        x: points[k].x,
-        y: points[k].y,
-      },
-      {
-        x: points[k + 1].x,
-        y: points[k + 1].y,
-      },
-    ]);
+    const a = points[k];
+    const b = points[k + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const segLen = Math.hypot(dx, dy) || 1;
+    const ux = dx / segLen;
+    const uy = dy / segLen;
+
+    // 切片是斜着拼的，butt 端面沿弦向截断后，管径在弦法向上的投影
+    // 会变窄（看起来「缩颈」）。按相邻弦的平均转角做 1/cos(θ/2) 补偿。
+    let turn = 0;
+    let turnCount = 0;
+    if (k > 0) {
+      const px = a.x - points[k - 1].x;
+      const py = a.y - points[k - 1].y;
+      turn += Math.atan2(px * dy - py * dx, px * dx + py * dy);
+      turnCount++;
+    }
+    if (k < points.length - 2) {
+      const qx = points[k + 2].x - b.x;
+      const qy = points[k + 2].y - b.y;
+      turn += Math.atan2(dx * qy - dy * qx, dx * qx + dy * qy);
+      turnCount++;
+    }
+    if (turnCount > 1) {
+      turn /= turnCount;
+    }
+    const half = Math.abs(turn) / 2;
+    const cos = Math.max(Math.cos(half), 0.55);
+    const diameter = baseW / cos;
+
+    // 只补 butt 拼接在外沿留下的楔形缺口，多补会让条纹被「前方」切片覆盖而错位
+    const overlap = Math.min(
+      Math.max((diameter / 2) * Math.tan(half), 0.35),
+      segLen * 0.5
+    );
+    // 首尾切片同样外扩：此处弦向已与直管一致，压进去只是消除接缝的抗锯齿细线
+    const pA = { x: a.x - ux * overlap, y: a.y - uy * overlap };
+    const pB = { x: b.x + ux * overlap, y: b.y + uy * overlap };
+
+    ctx.lineWidth = diameter;
+    drawLinearGradientLine(ctx, pen, [pA, pB], diameter / 2);
   }
+  ctx.restore();
 }
 
 function smoothAnimateTransition(
@@ -2405,21 +2439,32 @@ function renderLineAnimate(
 ){
   let len = 0;
   switch (type) {
-    case LineAnimateType.Beads:
-      if (pen.animateReverse) {
-        ctx.lineDashOffset = pen.calculative.animatePos;
-      } else {
-        ctx.lineDashOffset = pen.length - pen.calculative.animatePos;
-      }
+    case LineAnimateType.Beads: {
       len = pen.calculative.lineWidth || 5;
       if (len < 5) {
         len = 5;
       }
-      const dash =
-        pen.animateLineDash &&
-        pen.animateLineDash.map((item) => (item * len) / 5);
-      ctx.setLineDash(dash || [len, len * 2]);
+      const dash = (pen.animateLineDash &&
+        pen.animateLineDash.map((item) => (item * len) / 5)) || [len, len * 2];
+      let period = 0;
+      for (const d of dash) {
+        period += d;
+      }
+      if (!(period > 0)) {
+        period = 1;
+      }
+      // 相位取一个 dash 周期的模，且用不回绕的 beadPhase：
+      // 一轮播完时不会整体跳一段，长线上也不会因 offset 过大丢精度。
+      const pos =
+        pen.calculative.beadPhase != null
+          ? pen.calculative.beadPhase
+          : pen.calculative.animatePos;
+      ctx.lineDashOffset = pen.animateReverse
+        ? ((pos % period) + period) % period
+        : ((-pos % period) + period) % period;
+      ctx.setLineDash(dash);
       break;
+    }
     case LineAnimateType.Dot:
       if (pen.animateReverse) {
         ctx.lineDashOffset = pen.calculative.animatePos;
@@ -3902,10 +3947,20 @@ function isLinear(value: unknown, key: string, pen: Pen): boolean {
   );
 }
 
+/**
+ * animateSpan 的速度基准间隔（毫秒）。
+ *
+ * 必须是常量，不能读 store.options.animateInterval：autoFPS 会在运行时把
+ * animateInterval 从 30 逐步降到 minFPSNumber，跟读它会让动画「先慢后快」。
+ */
+const ANIMATE_REF_INTERVAL = 30;
+
 export function setLineAnimate(pen: Pen, now: number) {
   if (pen.calculative.start === 0) {
     pen.calculative.start = undefined;
     pen.calculative.cycleStart = undefined;
+    pen.calculative.lastAnimateTime = undefined;
+    pen.calculative.beadPhase = undefined;
     return 0;
   }
 
@@ -3915,6 +3970,23 @@ export function setLineAnimate(pen: Pen, now: number) {
 
   if (!pen.animateSpan) {
     pen.animateSpan = 1;
+  }
+
+  // 首帧只做初始化，不推进，避免「先加一步再覆盖」造成起步速度异常
+  if (!pen.calculative.start) {
+    pen.calculative.start = Date.now();
+    pen.calculative.cycleStart = now;
+    const boot =
+      pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+    pen.calculative.animatePos = boot;
+    pen.calculative.beadPhase = boot;
+    pen.calculative.cycleIndex = 1;
+    pen.calculative.lastAnimateTime = performance.now();
+    return true;
+  }
+
+  if (!pen.calculative.cycleStart) {
+    pen.calculative.cycleStart = now;
   }
   const elapsed = (now - pen.calculative.cycleStart) / 1000; // 秒
 
@@ -3935,20 +4007,29 @@ export function setLineAnimate(pen: Pen, now: number) {
     // 更新动画位置
     pen.calculative.animatePos = progress * pen.length;
   }else{
-    pen.calculative.animatePos +=
-      pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
+    // 按真实经过时间推进。原实现每个动画帧固定加一个 animateSpan，
+    // requestAnimationFrame 的帧间隔抖动会直接变成速度抖动，
+    // 水珠这类等距图案上尤其明显。
+    //
+    // 用 performance.now()：Windows 上 Date.now() 粒度约 15ms，
+    // 拿它算帧间隔会出现「停一帧再跳一帧」。
+    const t = performance.now();
+    const last = pen.calculative.lastAnimateTime;
+    // 切后台再回来会攒出很大的 delta，钳住避免瞬移
+    const delta = last
+      ? Math.min(t - last, ANIMATE_REF_INTERVAL * 4)
+      : ANIMATE_REF_INTERVAL;
+    const step =
+      pen.animateSpan *
+      (pen.calculative.canvas.store.data.scale || 1) *
+      (delta / ANIMATE_REF_INTERVAL);
+    pen.calculative.animatePos += step;
+    // 水珠相位单独累计，不随线长回绕，避免 length % dashPeriod 造成跳变
+    pen.calculative.beadPhase = (pen.calculative.beadPhase || 0) + step;
+    pen.calculative.lastAnimateTime = t;
   }
 
-  if(!pen.calculative.cycleStart){
-    pen.calculative.cycleStart = now;
-  }
-
-  if (!pen.calculative.start) {
-    pen.calculative.start = Date.now();
-    pen.calculative.animatePos =
-      pen.animateSpan * (pen.calculative.canvas.store.data.scale || 1);
-    pen.calculative.cycleIndex = 1;
-  } else if (pen.calculative.animatePos > pen.length || (pen.curveAnimate && elapsed > pen.duration)) {
+  if (pen.calculative.animatePos > pen.length || (pen.curveAnimate && elapsed > pen.duration)) {
     // 播放到尾了
     ++pen.calculative.cycleIndex;
 
@@ -3957,10 +4038,15 @@ export function setLineAnimate(pen: Pen, now: number) {
       pen.currentAnimation = undefined;
       pen.calculative.start = undefined;
       pen.calculative.cycleStart = undefined;
+      pen.calculative.lastAnimateTime = undefined;
+      pen.calculative.beadPhase = undefined;
       return 0;
     }
     pen.calculative.cycleStart = undefined;
-    pen.calculative.animatePos = pen.animateSpan;
+    // 保留超出的部分，回绕时不丢步（beadPhase 不回绕，水珠相位保持连续）
+    pen.calculative.animatePos = pen.curveAnimate
+      ? pen.animateSpan
+      : pen.calculative.animatePos - pen.length;
   }
 
   return true;
