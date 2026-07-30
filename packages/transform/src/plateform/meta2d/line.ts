@@ -1,5 +1,11 @@
 import { perspectiveTransform } from "../../core/view";
-import type { PerspectiveOptions } from "../../types";
+import type { PerspectiveOptions, ViewState } from "../../types";
+import {
+  cancelTransformAnimation,
+  runViewAnimation,
+  setCurrentView,
+  targetViewOf,
+} from "./animate";
 import {
   anchorToWorld,
   canonicalPen,
@@ -90,8 +96,9 @@ export function applyLineTransform(
  *
  * @param meta2d Meta2d 实例
  * @param lines 目标连线（单个或数组）
- * @param options x/y/z 旋转角度、视距 dist、环绕中心 center；
- *                center 缺省时，以所有目标连线原始锚点的总包围盒中心作为统一环绕中心
+ * @param options x/y/z 旋转角度、视距 dist、环绕中心 center、动画 animation；
+ *                center 缺省时，以所有目标连线原始锚点的总包围盒中心作为统一环绕中心；
+ *                传入 animation 时从当前视角平滑动画过渡到目标视角
  * @returns 被变换的连线数组
  */
 export function transformLine(
@@ -99,8 +106,19 @@ export function transformLine(
   lines: PenLike | PenLike[],
   options: PerspectiveOptions = {}
 ): PenLike[] {
-  const pens = applyLineTransform(meta2d, lines, options);
-  meta2d.render();
+  const pens = (Array.isArray(lines) ? lines : [lines]).filter(Boolean);
+  const target = targetViewOf(options);
+  const applyFrame = (view: ViewState) => {
+    applyLineTransform(meta2d, pens, { ...options, ...view });
+    meta2d.render();
+  };
+  if (options.animation) {
+    runViewAnimation(meta2d, target, options.animation, applyFrame);
+  } else {
+    cancelTransformAnimation(meta2d);
+    applyFrame(target);
+    setCurrentView(meta2d, target);
+  }
   return pens;
 }
 
@@ -134,6 +152,8 @@ export function resetLineTransform(
   meta2d: Meta2dLike,
   lines: PenLike | PenLike[]
 ): void {
+  cancelTransformAnimation(meta2d);
   resetLineTransformCore(meta2d, lines);
+  setCurrentView(meta2d, {});
   meta2d.render();
 }

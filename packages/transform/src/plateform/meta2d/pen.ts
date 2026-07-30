@@ -1,5 +1,11 @@
 import { perspectiveTransform } from "../../core/view";
-import type { PerspectiveOptions, Point } from "../../types";
+import type { PerspectiveOptions, Point, ViewState } from "../../types";
+import {
+  cancelTransformAnimation,
+  runViewAnimation,
+  setCurrentView,
+  targetViewOf,
+} from "./animate";
 import {
   canonicalPen,
   centerOfPoints,
@@ -110,8 +116,9 @@ function calcProjectedQuad(corners: Point[], baseRotate: number) {
  *
  * @param meta2d Meta2d 实例
  * @param nodes 目标图元（单个或数组），连线与组合子图元会被忽略
- * @param options x/y/z 旋转角度、视距 dist、环绕中心 center；
- *                center 缺省时，以所有目标图元原始位置的总包围盒中心作为统一环绕中心
+ * @param options x/y/z 旋转角度、视距 dist、环绕中心 center、动画 animation；
+ *                center 缺省时，以所有目标图元原始位置的总包围盒中心作为统一环绕中心；
+ *                传入 animation 时从当前视角平滑动画过渡到目标视角
  * @returns 被变换的图元数组
  */
 export function transformNode(
@@ -119,8 +126,19 @@ export function transformNode(
   nodes: PenLike | PenLike[],
   options: PerspectiveOptions = {}
 ): PenLike[] {
-  const pens = applyNodeTransform(meta2d, nodes, options);
-  meta2d.render();
+  const pens = (Array.isArray(nodes) ? nodes : [nodes]).filter(Boolean);
+  const target = targetViewOf(options);
+  const applyFrame = (view: ViewState) => {
+    applyNodeTransform(meta2d, pens, { ...options, ...view });
+    meta2d.render();
+  };
+  if (options.animation) {
+    runViewAnimation(meta2d, target, options.animation, applyFrame);
+  } else {
+    cancelTransformAnimation(meta2d);
+    applyFrame(target);
+    setCurrentView(meta2d, target);
+  }
   return pens;
 }
 
@@ -161,6 +179,8 @@ export function resetNodeTransform(
   meta2d: Meta2dLike,
   nodes: PenLike | PenLike[]
 ): void {
+  cancelTransformAnimation(meta2d);
   resetNodeTransformCore(meta2d, nodes);
+  setCurrentView(meta2d, {});
   meta2d.render();
 }

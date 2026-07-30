@@ -1,4 +1,4 @@
-import type { Options, PerspectiveOptions, Point } from "../../types";
+import type { Options, PerspectiveOptions, Point, ViewState } from "../../types";
 import {
   centerOfPoints,
   getLineOriginAnchors,
@@ -14,9 +14,16 @@ import {
   applyNodeTransform,
   resetNodeTransformCore,
 } from "./pen";
+import {
+  cancelTransformAnimation,
+  runViewAnimation,
+  setCurrentView,
+  targetViewOf,
+} from "./animate";
 
 export * from "./line";
 export * from "./pen";
+export * from "./animate";
 
 export function createTransFormEngine(options: Options) {}
 
@@ -26,9 +33,12 @@ export function createTransFormEngine(options: Options) {}
  * （位置与大小变化）；缺省时所有目标共享同一个环绕中心，
  * 整个场景作为一个整体旋转。
  *
+ * 传入 animation 配置时，从当前视角平滑动画过渡到目标视角，
+ * 逐帧应用变换并渲染；onUpdate 回调可同步生成背景网格。
+ *
  * @param meta2d Meta2d 实例
  * @param pens 目标图元（单个或数组），组合子图元会被忽略（随父级联动）
- * @param options x/y/z 旋转角度、视距 dist、环绕中心 center
+ * @param options x/y/z 旋转角度、视距 dist、环绕中心 center、动画 animation
  * @returns 传入的图元数组
  */
 export function transformPens(
@@ -54,9 +64,22 @@ export function transformPens(
   }
 
   const opts = { ...options, center };
-  applyNodeTransform(meta2d, nodes, opts);
-  applyLineTransform(meta2d, lines, opts);
-  meta2d.render();
+  const target = targetViewOf(options);
+
+  const applyFrame = (view: ViewState) => {
+    const frameOpts = { ...opts, ...view };
+    applyNodeTransform(meta2d, nodes, frameOpts);
+    applyLineTransform(meta2d, lines, frameOpts);
+    meta2d.render();
+  };
+
+  if (options.animation) {
+    runViewAnimation(meta2d, target, options.animation, applyFrame);
+  } else {
+    cancelTransformAnimation(meta2d);
+    applyFrame(target);
+    setCurrentView(meta2d, target);
+  }
   return list;
 }
 
@@ -67,6 +90,7 @@ export function resetPensTransform(
   meta2d: Meta2dLike,
   pens: PenLike | PenLike[]
 ): void {
+  cancelTransformAnimation(meta2d);
   const list = (Array.isArray(pens) ? pens : [pens]).filter(Boolean);
   resetLineTransformCore(
     meta2d,
@@ -76,5 +100,6 @@ export function resetPensTransform(
     meta2d,
     list.filter((pen) => !pen.type)
   );
+  setCurrentView(meta2d, {});
   meta2d.render();
 }

@@ -11,6 +11,7 @@ export enum KeydownType {
 export const TRANSPARENT_COLOR = '#FFFFFF00'
 
 export interface Options {
+  alias?: string;
   color?: string;
   activeColor?: string;
   activeBackground?: string;

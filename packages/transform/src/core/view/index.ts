@@ -1,6 +1,8 @@
 import type {Point} from "../../types";
 import {Vector3D} from "../math";
 
+export * from "./grid";
+
 /**
  * @description 透视变换
  * 令z轴为0
