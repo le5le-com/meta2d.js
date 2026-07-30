@@ -93,6 +93,9 @@ import { Message, MessageOptions, messageList } from './message';
 import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
 import { le5leTheme } from './theme'
 const echartReg = /^echarts/;
+
+const GLOBALVARALIAS = "meta2d"
+
 export class Meta2d {
   store: Meta2dStore;
   canvas: Canvas;
@@ -140,7 +143,7 @@ export class Meta2d {
     this.register(commonPens());
     this.registerCanvasDraw({ cube });
     this.registerAnchors(commonAnchors());
-    globalThis.meta2d = this;
+    globalThis[opts.alias || GLOBALVARALIAS] = this;
     this.initEventFns();
     this.store.emitter.on('*', this.onEvent);
   }
