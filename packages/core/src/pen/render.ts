@@ -2834,7 +2834,7 @@ function calculateLineFrameStates(line: Pen, offsetInstance: number = 0) {
     // TODO 延迟有问题 出现卡顿瞬间移动
     instance =
       line.length -
-      line.calculative.animatePos -
+      line.calculative.animatePos +
       offsetInstance * line.calculative.canvas.store.data.scale;
   } else {
     instance =
