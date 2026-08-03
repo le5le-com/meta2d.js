@@ -2511,9 +2511,26 @@ function setElementAnimateOnLine(ctx:CanvasRenderingContext2D,line:Pen,type:stri
     case 'element':
       draw = globalStore.lineAnimateDraws[element]
       if(!draw)return;
+      draw = lineAnimateElementRender(draw)
       break
   }
   renderElementOnLine(ctx,line,draw)
+}
+
+/**
+ * 自定义元素动画：与 image/icon 分支保持一致，
+ * 先平移到线中心、旋转、再按缩放比例缩放，
+ * 用户注册的 draw 只需在以线中心为原点的未缩放坐标系中绘制（如 -w/2, -h/2 起绘）
+ */
+function lineAnimateElementRender(draw: Function) {
+  return function(ctx: CanvasRenderingContext2D, pen: Pen, state: any, index: number) {
+    const scale = pen.calculative.canvas.store.data.scale;
+
+    ctx.translate(state.x, state.y);
+    ctx.rotate((state.rotate * Math.PI) / 180);
+    ctx.scale(scale, scale);
+    draw(ctx, pen, state, index);
+  }
 }
 
 function lineAnimateImageRender(imgs: HTMLImageElement[]) {
