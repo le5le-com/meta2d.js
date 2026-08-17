@@ -212,6 +212,8 @@ export class Canvas {
 
   patchFlags = false;
   lastRender = 0;
+  // 批量数据更新期间暂缓实际绘制，由调用方在批次结束后统一渲染。
+  batchRendering = false;
   touchStart = 0;
   touchStartTimer: any;
   timer: any;
@@ -5131,6 +5133,10 @@ export class Canvas {
   }
 
   render = (patchFlags?: number | boolean) => {
+    if (this.batchRendering) {
+      this.patchFlags = true;
+      return;
+    }
     if (patchFlags) {
       this.opening = false;
     }
@@ -5171,7 +5177,7 @@ export class Canvas {
         this.store.options.animateInterval = this.store.options.interval
       }
     }
-
+    console.log("render");
     this.renderTimer = undefined;
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');

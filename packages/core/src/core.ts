@@ -3908,6 +3908,27 @@ export class Meta2d {
       return;
     }
 
+    // 扁平对象表示数据点集合时，直接进入批量绑定更新，避免
+    // socketCallback -> setValue -> setDatas 的重复分发。
+    if (
+      !Array.isArray(data) &&
+      data.constructor === Object &&
+      !data.id &&
+      !data.dataId &&
+      !data.tag
+    ) {
+      const bindDatas = Object.keys(data).map((key) => ({
+        dataId: key,
+        id: key,
+        value: data[key],
+      }));
+      if (bindDatas.length) {
+        this.setDatas(bindDatas, { render: false });
+        // 使用画布已有的帧率限制，合并同一帧内的多次网络推送。
+        this.render(true);
+      }
+      return;
+    }
     if (!Array.isArray(data)) {
       data = [data];
     }
@@ -3915,13 +3936,14 @@ export class Meta2d {
       return;
     }
     if (data[0].dataId) {
-      this.setDatas(data);
+      this.setDatas(data, { render: false });
     } else {
       data.forEach((_data: IValue) => {
         this.setValue(_data, { render: false });
       });
-      this.render();
     }
+    // 网络消息统一交给 requestAnimationFrame 限流渲染。
+    this.render(true);
   }
 
   // 绑定变量方式更新组件数据
@@ -3999,19 +4021,39 @@ export class Meta2d {
       );
     });
 
-    this.store.data.locked && this.doDataEvent(datas);
     let initPens: Pen[];
     let pens: Pen[];
     if (history) {
       initPens = [];
+      pens = [];
     }
-    penValues.forEach((value, pen) => {
-      this.setValue(value, { render: false, doEvent, history: false });
-      if (history) {
-        initPens.push(deepClone(pen, true));
-        pens.push(pen);
-      }
-    });
+
+    const batchRendering = this.canvas.batchRendering;
+    this.canvas.batchRendering = true;
+    try {
+      this.store.data.locked && this.doDataEvent(datas);
+      penValues.forEach((value, pen) => {
+        if (!value) {
+          return;
+        }
+        if (history) {
+          initPens.push(deepClone(pen, true));
+        }
+
+        // penValues 已按图元完成合并，直接更新，避免再次进入 setValue 分发。
+        this.updatePenValue(pen, value);
+
+        if (doEvent) {
+          this.store.emitter.emit('valueUpdate', pen);
+        }
+        if (history) {
+          pens.push(pen);
+        }
+      });
+    } finally {
+      this.canvas.batchRendering = batchRendering;
+    }
+    
     render && this.render();
 
     if (history) {
@@ -4102,25 +4144,7 @@ export class Meta2d {
       initPens = deepClone(pens);
     }
     pens.forEach((pen) => {
-      if(pen.name === 'echarts' && !pen.onBeforeValue){
-        const hasEchartsStartKey = Object.keys(data).some(key=>echartReg.test(key));
-        if(hasEchartsStartKey) return;
-      }
-      const afterData: IValue = pen.onBeforeValue
-        ? pen.onBeforeValue(pen, data as ChartData)
-        : data;
-      if (data.frames) {
-        this.stopAnimate([pen]);
-        if (!data.showDuration) {
-          data.showDuration = data.frames.reduce((total, item) => {
-            return total + item.duration;
-          }, 0);
-        }
-      }
-
-      setChildValue(pen, afterData);
-      this.canvas.updateValue(pen, afterData);
-      pen.onValue?.(pen);
+      this.updatePenValue(pen, data);
     });
 
     if (
@@ -4145,6 +4169,32 @@ export class Meta2d {
         this.store.emitter.emit('valueUpdate', pen);
       });
     render && this.render();
+  }
+
+  /**
+   * 执行单个图元的数据更新。
+   * setDatas 直接调用该方法，避免批量数据重复进入 setValue 的目标查找和分发逻辑。
+   */
+  private updatePenValue(pen: Pen, data: IValue) {
+    if(pen.name === 'echarts' && !pen.onBeforeValue){
+      const hasEchartsStartKey = Object.keys(data).some(key=>echartReg.test(key));
+      if(hasEchartsStartKey) return;
+    }
+    const afterData: IValue = pen.onBeforeValue
+      ? pen.onBeforeValue(pen, data as ChartData)
+      : data;
+    if (data.frames) {
+      this.stopAnimate([pen]);
+      if (!data.showDuration) {
+        data.showDuration = data.frames.reduce((total, item) => {
+          return total + item.duration;
+        }, 0);
+      }
+    }
+
+    setChildValue(pen, afterData);
+    this.canvas.updateValue(pen, afterData);
+    pen.onValue?.(pen);
   }
 
   /**
