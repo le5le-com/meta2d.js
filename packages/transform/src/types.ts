@@ -81,5 +81,8 @@ export interface GridBackgroundOptions extends PerspectiveOptions {
   background?: string; // 背景底色，默认 '#060c22'
   glow?: boolean; // 是否绘制中心光晕，默认 true
   glowColor?: string; // 中心光晕颜色，默认 'rgba(80,120,200,0.55)'
+  glowRadius?: number; // 光晕半径系数（相对画面半径），越小中心亮区越集中，默认 0.6
   vignette?: boolean; // 是否边缘压暗（网格向四周渐隐），默认 true
+  vignetteStart?: number; // 暗角起始半径系数（相对画面半径），越小暗角范围越大，默认 0.25
+  vignetteStrength?: number; // 暗角边缘最大不透明度 0~1，越大四周越暗，默认 0.97
 }

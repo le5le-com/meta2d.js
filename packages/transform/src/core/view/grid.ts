@@ -66,7 +66,10 @@ export function createGridBackground(
     background = "#060c22",
     glow = true,
     glowColor = "rgba(80,120,200,0.55)",
+    glowRadius = 0.6,
     vignette = true,
+    vignetteStart = 0.25,
+    vignetteStrength = 0.97,
   } = options;
 
   const canvas = createCanvas(width, height);
@@ -82,9 +85,9 @@ export function createGridBackground(
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, width, height);
 
-  // 中心光晕
+  // 中心光晕（收窄半径，让中心更亮、更集中）
   if (glow) {
-    const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, radius);
+    const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, radius * glowRadius);
     g.addColorStop(0, glowColor);
     g.addColorStop(1, withAlpha(glowColor, 0));
     ctx.fillStyle = g;
@@ -127,18 +130,19 @@ export function createGridBackground(
     ctx.stroke();
   }
 
-  // 边缘压暗，让网格线向四周渐隐
+  // 边缘压暗，让网格线向四周渐隐（与中心亮区形成明暗对比）
   if (vignette) {
     const v = ctx.createRadialGradient(
       c.x,
       c.y,
-      radius * 0.3,
+      radius * vignetteStart,
       c.x,
       c.y,
       radius
     );
     v.addColorStop(0, withAlpha(background, 0));
-    v.addColorStop(1, withAlpha(background, 0.9));
+    v.addColorStop(0.6, withAlpha(background, vignetteStrength * 0.55));
+    v.addColorStop(1, withAlpha(background, vignetteStrength));
     ctx.fillStyle = v;
     ctx.fillRect(0, 0, width, height);
   }
