@@ -5177,7 +5177,6 @@ export class Canvas {
         this.store.options.animateInterval = this.store.options.interval
       }
     }
-    console.log("render");
     this.renderTimer = undefined;
     this.lastRender = now;
     const offscreenCtx = this.offscreen.getContext('2d');
