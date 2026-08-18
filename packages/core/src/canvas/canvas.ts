@@ -5079,10 +5079,6 @@ export class Canvas {
     }
     pen.type && this.initLineRect(pen);
     if((pen.bkType && pen.gradientColors) || (pen.strokeType && pen.lineGradientColors)){
-      if (pen.calculative.gradientTimer) {
-        clearTimeout(pen.calculative.gradientTimer);
-      }
-      pen.calculative.gradientTimer = setTimeout(() => {
         if (pen.calculative.lineGradient) {
           pen.calculative.lineGradient = null;
         }
@@ -5092,9 +5088,6 @@ export class Canvas {
         if (pen.calculative.radialGradient) {
           pen.calculative.radialGradient = null;
         }
-        this.patchFlags = true;
-        pen.calculative.gradientTimer = undefined;
-      }, 50);
     }
   }
 
