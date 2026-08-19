@@ -4282,7 +4282,7 @@ export function calcInView(pen: Pen, calcChild = false) {
       pen.calculative.inView = false;
     }
   }
-  if(store.data.locked && pen.calculative.inView){
+  if (store.data.locked && pen.calculative.inView) {
     pen.calculative.inView = hasPermission(pen, store.options.roles);
   }
   // TODO: 语义化上，用 onValue 更合适，但 onValue 会触发 echarts 图形的重绘，没有必要
@@ -4292,20 +4292,37 @@ export function calcInView(pen: Pen, calcChild = false) {
     setElemPosition(pen, pen.calculative.singleton.div);
 }
 
-//基于角色判断权限 是否显示
-function hasPermission(pen: Pen, roles: string[]) {
-  if (!pen.roles?.length) {
-    if (pen.parentId) {
-      return hasPermission(getParent(pen, false), roles);
-    } else {
-      return pen.calculative.inView;
-    }
-  } else {
-    if(!roles?.length){
+/**
+ * 基于角色判断图元是否显示。
+ * 图元自身未配置角色时，继承最近父级的角色配置。
+ */
+function hasPermission(
+  pen: Pen | undefined,
+  roles?: readonly string[]
+): boolean {
+  const visited = new Set<Pen>();
+  let current = pen;
+
+  while (current) {
+    // 防止异常父子关系形成循环，导致无限递归。
+    if (visited.has(current)) {
       return false;
     }
-    return roles?.some((role) => pen.roles.includes(role));
+    visited.add(current);
+
+    if (current.roles?.length) {
+      return !!roles?.some((role) => current.roles.includes(role));
+    }
+
+    if (!current.parentId) {
+      return true;
+    }
+
+    current = getParent(current, false);
   }
+
+  // parentId 指向不存在的图元时，按无权限处理。
+  return false;
 }
 
 /**
