@@ -1,5 +1,3 @@
-import { makeSafeFn } from '@meta2d/core';
-
 export function time(pen: any, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;
   const { x, y, width, height } = pen.calculative.worldRect;
@@ -39,8 +37,7 @@ function formatTime(pen: any) {
   if (!pen.timeFormat) {
     return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} 星期${weeks[week]}`;
   }
-  let fn = makeSafeFn(
-    pen.calculative?.canvas?.store?.options,
+  let fn = new Function(
     'year',
     'month',
     'day',
