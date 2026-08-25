@@ -8432,8 +8432,23 @@ export class Canvas {
     // }
     this.inputDiv.oninput = (e: any) => {
       const pen = this.store.pens[this.inputDiv.dataset.penId];
+      const value = e.target.innerText;
+      if (pen?.dropdownList && !value.trim()) {
+        // 对象型下拉项选中时会把附加字段合并到图元，文本清空后需同步清空这些字段。
+        const dropdownValue: IValue = {};
+        pen.dropdownList.forEach((item) => {
+          if (typeof item !== 'object') {
+            return;
+          }
+          Object.keys(item).forEach((key) => {
+            if (key !== 'text') {
+              dropdownValue[key] = undefined;
+            }
+          });
+        });
+        this.updateValue(pen, dropdownValue);
+      }
       if(pen && pen.inputType === 'number'){
-        const value = e.target.innerText;
         const numericValue = toNumber(value); // 移除非数字字符
         // 如果输入的值不是纯数字，则替换为纯数字
         if (value !== numericValue) {
