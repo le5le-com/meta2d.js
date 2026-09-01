@@ -3409,7 +3409,7 @@ export class Meta2d {
         });
 
         arr.push({id:sql.bindId,value:data});
-        this.socketCallback(JSON.stringify(arr), { type: 'sql', url: `/api/iot/data/sql/${method}`,method });
+        this.socketCallback(JSON.stringify(arr), { type: 'sql', url: `/api/iot/data/sql/${method}`,method, net:sql});
       }
     }
   }
@@ -4053,7 +4053,7 @@ export class Meta2d {
     } finally {
       this.canvas.batchRendering = batchRendering;
     }
-    
+
     render && this.render();
 
     if (history) {
