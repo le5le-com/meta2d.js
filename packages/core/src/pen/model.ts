@@ -665,6 +665,7 @@ export interface Pen extends Rect {
     disabledColor?: string;
     disabledBackground?: string;
     disabledTextColor?:string; //禁用文字颜色
+    debug?: PenDebug; //调试数据，options.debug 开启后记录
   };
   lastConnected?:any;
   // 下划线相关配置属性
@@ -713,6 +714,11 @@ export interface Pen extends Rect {
     pen: Pen;
     fromPen: Pen
   }) => void;
+}
+
+// 图元调试数据，options.debug 开启对应项后记录
+export interface PenDebug {
+  renderTime?: number; // 图元最近一次渲染耗时（毫秒）
 }
 
 // 属性绑定变量

@@ -26,6 +26,7 @@ export * from './trapezoid';
 export * from './crosse';
 export * from './rightTriangle';
 export * from './parallelogram';
+export * from './frostedGlass';
 
 import { rectangle, square } from './rectangle';
 import { circle } from './circle';
@@ -58,6 +59,7 @@ import { trapezoid, trapezoidAnchors } from './trapezoid';
 import { crosse } from './crosse';
 import { rightTriangle, rightTriangleAnchors } from './rightTriangle';
 import { parallelogram, parallelogramAnchors } from './parallelogram';
+import { frostedGlassDom } from './frostedGlass';
 
 export function commonPens() {
   return {
@@ -96,6 +98,7 @@ export function commonPens() {
     crosse,
     rightTriangle,
     parallelogram,
+    frostedGlassDom,
   };
 }
 

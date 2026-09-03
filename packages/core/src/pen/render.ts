@@ -1661,6 +1661,12 @@ export function renderPen(
   pen: Pen,
   download?: boolean
 ) {
+  // debug：记录图元渲染耗时
+  const debug = pen.calculative.canvas.store.options.debug;
+  const debugRenderTime =
+    debug === true || (typeof debug === 'object' && !!debug.renderTime);
+  const debugStart = debugRenderTime ? performance.now() : 0;
+
   ctx.save();
   ctx.translate(0.5, 0.5);
   ctx.beginPath();
@@ -1862,11 +1868,14 @@ export function renderPen(
   }
 
   ctx.restore();
-}
 
-/**
- * 更改 ctx 的 lineCap 属性
- */
+  if (debugRenderTime) {
+    if (!pen.calculative.debug) {
+      pen.calculative.debug = {};
+    }
+    pen.calculative.debug.renderTime = performance.now() - debugStart;
+  }
+}
 export function setLineCap(ctx: CanvasRenderingContext2D, pen: Pen) {
   const lineCap = pen.lineCap || (pen.type ? 'round' : 'square');
   if (lineCap) {

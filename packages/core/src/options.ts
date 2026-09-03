@@ -10,6 +10,13 @@ export enum KeydownType {
 
 export const TRANSPARENT_COLOR = '#FFFFFF00'
 
+/**
+ * debug 调试配置，true 表示开启全部调试项
+ */
+export interface DebugOptions {
+  renderTime?: boolean; // 记录每个图元的渲染时间到 pen.calculative.debug.renderTime
+}
+
 export interface Options {
   alias?: string;
   color?: string;
@@ -148,6 +155,7 @@ export interface Options {
   roles?: string[];
   crossOrigin?: string;
   allowScript?: boolean; //是否允许脚本执行
+  debug?: boolean | DebugOptions; //是否开启调试，可选择性开启具体调试项
 }
 
 export const defaultOptions: Options = {
