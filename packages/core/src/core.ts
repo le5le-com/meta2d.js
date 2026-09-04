@@ -425,10 +425,13 @@ export class Meta2d {
           }
         }
 
+        let visibleChanged = false;
         pens.forEach((pen: Pen) => {
           if (_value.hasOwnProperty('visible')) {
             if (pen.visible !== _value.visible) {
-              this.setVisible(pen, _value.visible);
+              // 批量设置属性时统一在循环结束后更新尺寸，避免每个图元重复创建定时器。
+              visibleChanged = true;
+              this.setVisible(pen, _value.visible, false, false);
             }
           }
           this.setValue(
@@ -436,6 +439,9 @@ export class Meta2d {
             { render: false, doEvent: false }
           );
         });
+        if (visibleChanged) {
+          this.onSizeUpdate();
+        }
         this.requestSetPropsRender();
         return;
       }
@@ -2045,6 +2051,7 @@ export class Meta2d {
             {
               doEvent: false,
               history: false,
+              render: false,
             }
           );
         }
@@ -7277,18 +7284,28 @@ export class Meta2d {
     });
   }
 
-  setVisible(pen: Pen, visible: boolean, render = true) {
-    this.onSizeUpdate();
-    this.setValue({ id: pen.id, visible }, { render: false, doEvent: false });
+  setVisible(
+    pen: Pen,
+    visible: boolean,
+    render = true,
+    updateSize = true,
+    initImage = true
+  ) {
+    this.setValue(
+      { id: pen.id, visible },
+      { render: false, doEvent: false }
+    );
     if (pen.children) {
       for (const childId of pen.children) {
         const child = this.store.pens[childId];
-        child && this.setVisible(child, visible, false);
+        child && this.setVisible(child, visible, false, false, false);
       }
     }
-    let allPens = getAllChildren(pen, this.store);
-    allPens.push(pen);
-    this.initImageCanvas(allPens);
+    // hasImage 会递归检查当前图元的所有后代，无需先展开后代列表，
+    // 避免 setVisible 递归过程中对同一棵子树重复遍历。
+    const allPens = [pen];
+    updateSize && this.onSizeUpdate();
+    initImage && this.initImageCanvas(allPens);
     render && this.render();
   }
 
