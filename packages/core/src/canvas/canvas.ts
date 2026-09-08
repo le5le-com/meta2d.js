@@ -7024,7 +7024,7 @@ export class Canvas {
           originStatus.id = pen.id;
           this.parent.setValue(originStatus, {
             doEvent: false,
-            render: true,
+            render: false,
             history: false,
           });
         }
