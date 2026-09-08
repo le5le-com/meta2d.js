@@ -606,15 +606,14 @@ export class Canvas {
 
   onMessage = (e: MessageEvent) => {
     if (
-      typeof e.data !== 'string' ||
-      !e.data ||
-      e.data.startsWith('setImmediate') ||
-      e.data.startsWith('webpackHotUpdate') // 处理vue2 webpack4 热更新消息冲突问题
-    ) {
+      !e.data || (typeof e.data === 'string' && (
+      e.data.startsWith?.('setImmediate') ||
+      e.data.startsWith?.('webpackHotUpdate') // 处理vue2 webpack4 热更新消息冲突问题
+      ))) {
       return;
     }
 
-    let data = JSON.parse(e.data);
+    let data = typeof e.data === 'string' ? JSON.parse(e.data): e.data;
     if (typeof data === 'object') {
       if(data.name === 'onload'){
         this.dialog.iframe.contentWindow.postMessage(
