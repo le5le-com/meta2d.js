@@ -696,11 +696,14 @@ export class Meta2d {
         return;
       }
       const _pen = e.params ? this.findOne(e.params) : pen;
-      if (_pen.name !== 'iframe' || !_pen.iframe) {
+      const iframeName = ['iframe', 'htmlDom']
+      if (!iframeName.includes(_pen.name) && !_pen.iframe) {
         console.warn('不是嵌入页面');
         return;
       }
-      let params = queryURLParams(_pen.iframe.split('?')[1]);
+      let params: any = {}
+      _pen.iframe?
+        params = queryURLParams(_pen.iframe.split('?')[1]) : params = {id:_pen.id};
       let value: any = this.getSendData(e.data, pen);
       if(e.list){
         value = this.getEventData(e.list, pen);

@@ -22,9 +22,17 @@ export function htmlDom(pen: HtmlPen) {
     pen.onResize = onResize;
     pen.onRenderPenRaw = onRenderPenRaw
     pen.onMove = setDomScale;
+    pen.onBeforeValue = beforeValue;
   }
 
   if (!pen.calculative.singleton.div) {
+    // 外层包裹 div，负责定位与缩放
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.outline = 'none';
+    div.style.left = '-9999px';
+    div.style.top = '-9999px';
+
     const context: HTMLElement = pen.html.iframe
       ? document.createElement('iframe')
       : document.createElement('div');
@@ -40,18 +48,18 @@ export function htmlDom(pen: HtmlPen) {
     } else {
       context.innerHTML = pen.html.content || '';
     }
-    context.style.position = 'absolute';
+    context.style.width = '100%';
+    context.style.height = '100%';
     context.style.outline = 'none';
     context.style.border = 'none';
     context.style.overflow = 'hidden';
-    context.style.left = '-9999px';
-    context.style.top = '-9999px';
 
-    pen.calculative.canvas.externalElements.parentElement.appendChild(context);
-    pen.calculative.singleton.div = context;
+    div.appendChild(context);
+    pen.calculative.canvas.externalElements.parentElement.appendChild(div);
+    pen.calculative.singleton.div = div;
 
     onResize(pen);
-    setElemPosition(pen, context);
+    setElemPosition(pen, div);
   }
 
   setDomScale(pen);
@@ -63,6 +71,26 @@ function destroy(pen: any) {
     pen.calculative.singleton.div.remove();
     delete pen.calculative.singleton.div;
   }
+}
+
+// setValue 更新 html.content 时，同步到页面上真实的 DOM 元素
+function beforeValue(pen: HtmlPen, value: any) {
+  const content = value.html?.content ?? value['html.content'];
+  if (content !== undefined) {
+    const dom = pen.calculative.singleton?.div?.children[0] as HTMLElement;
+    if (dom) {
+      if (pen.html.iframe) {
+        // srcdoc 重新赋值会触发 onload，进而更新缩略图
+        (dom as HTMLIFrameElement).srcdoc = content;
+      } else {
+        dom.innerHTML = content;
+        dom.onload = ()=>{
+          requestAnimationFrame(() => updateRawImg(pen));
+        }
+      }
+    }
+  }
+  return value;
 }
 
 function onResize(pen: HtmlPen) {
@@ -92,9 +120,14 @@ function updateRawImg(pen: HtmlPen) {
   if (!div) {
     return;
   }
+  // 实际内容元素是包裹 div 的第一个子元素
+  const content = div.children[0] as HTMLElement;
+  if (!content) {
+    return;
+  }
   const elem = pen.html.iframe
-    ? (div as HTMLIFrameElement).contentDocument?.querySelector('body') as HTMLElement
-    : div as HTMLElement;
+    ? (content as HTMLIFrameElement).contentDocument?.querySelector('body') as HTMLElement
+    : content;
   if (!elem) {
     return;
   }
