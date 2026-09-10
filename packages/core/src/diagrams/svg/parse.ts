@@ -308,7 +308,7 @@ function getArcWorldPoints(
     dt += 2 * Math.PI;
   }
 
-  const points: number[] = [x1, y1, x2, y2];
+  const points: number[] = [x1, y1];
 
   function addPointIfOnArc(t: number) {
     const tEnd = t1 + dt;
@@ -351,8 +351,9 @@ function getArcWorldPoints(
     addPointIfOnArc(t);
     addPointIfOnArc(t + Math.PI);
   } else {
-    addPointIfOnArc(0);
-    addPointIfOnArc(Math.PI);
+
+    addPointIfOnArc(Math.PI / 2);
+    addPointIfOnArc((3 * Math.PI) / 2);
   }
 
   // y-extremes: tan(t) = ry * cos(phi) / (rx * sin(phi))
@@ -365,6 +366,8 @@ function getArcWorldPoints(
     addPointIfOnArc((3 * Math.PI) / 2);
   }
 
+  // 终点放最后，作为下一条命令的当前点
+  points.push(x2, y2);
   return points;
 }
 
