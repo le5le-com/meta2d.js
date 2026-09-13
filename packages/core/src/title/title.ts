@@ -1,5 +1,6 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
+import { t } from '../locale';
 
 export class Title {
   box: HTMLElement;
@@ -58,7 +59,7 @@ export class Title {
    */
   private setText(anchor: Point) {
     // this.box.title = anchor.title;
-    this.box.innerText = anchor.title;
+    this.box.innerText = anchor.title ? t(anchor.title) : anchor.title;
   }
 
   /**

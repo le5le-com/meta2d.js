@@ -138,6 +138,7 @@ import { Scroll } from '../scroll';
 import { CanvasImage } from './canvasImage';
 import { MagnifierCanvas } from './magnifierCanvas';
 import { lockedError } from '../utils/error';
+import { t } from '../locale';
 import { Meta2d } from '../core';
 import { Dialog } from '../dialog';
 import { setter } from '../utils/object';
@@ -8550,7 +8551,7 @@ export class Canvas {
     }
     if (!pen.dropdownList.length) {
       const none = document.createElement('div');
-      none.innerText = 'None';
+      none.innerText = t('无');
       none.style.padding = '5px 12px';
       none.style.color = '#ddd';
       this.dropdown.appendChild(none);
@@ -8562,21 +8563,21 @@ export class Canvas {
       .replace(/\<br\>/g, '');
     let i = 0;
     for (const item of pen.dropdownList) {
-      const t = typeof item === 'string' ? item : item.text;
+      const itemText = typeof item === 'string' ? item : item.text;
       if (search && text) {
-        if (t.includes(text)) {
+        if (itemText.includes(text)) {
           // 过滤
-          this.dropdownAppendOption(t, i);
+          this.dropdownAppendOption(t(itemText), i);
         }
       } else {
-        this.dropdownAppendOption(t, i);
+        this.dropdownAppendOption(t(itemText), i);
       }
       ++i;
     }
 
     if (!this.dropdown.hasChildNodes()) {
       const none = document.createElement('div');
-      none.innerText = 'None';
+      none.innerText = t('无');
       none.style.padding = '5px 12px';
       none.style.color = '#ddd';
       this.dropdown.appendChild(none);

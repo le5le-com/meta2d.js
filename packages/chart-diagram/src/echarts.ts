@@ -15,6 +15,7 @@ import {
 } from '@meta2d/core';
 import type { Options } from '@meta2d/core';
 import type { EChartsOption } from 'echarts';
+import { translateEchartsOption } from './translateOption';
 
 const eventNameMap = {
   'enter':'mouseover',
@@ -1001,6 +1002,10 @@ export function setEchartsOption(
 
 function updateOption(_option, ratio, options?: Pick<Options, 'allowScript'>) {
   const option = deepClone(_option);
+
+  // 自动翻译 option 中的用户可见文本
+  const translatedOption = translateEchartsOption(option);
+
   // if (option.grid) {
   //   let props = ['top', 'bottom', 'left', 'right'];
   //   for (let i = 0; i < props.length; i++) {
@@ -1018,19 +1023,19 @@ function updateOption(_option, ratio, options?: Pick<Options, 'allowScript'>) {
   //   }
   // }
 
-  if (option.dataZoom) {
+  if (translatedOption.dataZoom) {
     let props = ['right', 'top', 'width', 'height', 'left', 'bottom'];
     for (let i = 0; i < props.length; i++) {
-      option.dataZoom.forEach((item) => {
+      translatedOption.dataZoom.forEach((item) => {
         if (!isNaN(item[props[i]])) {
           item[props[i]] *= ratio;
         }
       });
     }
   }
-  deepSetValue(option, keyWords, ratio);
-  deepNewFunction(option, funKeyWords, options);
-  return option;
+  deepSetValue(translatedOption, keyWords, ratio);
+  deepNewFunction(translatedOption, funKeyWords, options);
+  return translatedOption;
 }
 
 function dotNotationToObject(dotNotationObj,pen) {

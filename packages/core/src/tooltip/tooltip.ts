@@ -4,6 +4,7 @@ import { Meta2dStore } from '../store';
 import type { marked as Marked } from 'marked';
 import { getParent } from '../pen';
 import { makeSafeFn } from '../utils';
+import { t } from '../locale';
 
 export class Tooltip {
   box: HTMLElement;
@@ -94,14 +95,16 @@ export class Tooltip {
     if(!title){
       return oldElemRect;
     }
+    // 翻译标题文本
+    const translatedTitle = t(title);
     if (marked) {
-      this.text.innerHTML = marked(title);
+      this.text.innerHTML = marked(translatedTitle);
       const a = this.text.getElementsByTagName('A');
       for (let i = 0; i < a.length; ++i) {
         a[i].setAttribute('target', '_blank');
       }
     } else {
-      this.text.innerHTML = title;
+      this.text.innerHTML = translatedTitle;
     }
     return oldElemRect;
   }
