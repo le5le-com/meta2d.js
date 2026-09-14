@@ -5274,7 +5274,9 @@ export class Meta2d {
           imageRatio: onlyTablePlus ? undefined : pen.imageRatio,
           ratio: onlyTablePlus ? undefined : pen.ratio,
           operationalRect:
-            !onlyTablePlus && pen.name === 'iframe' && pen.operationalRect
+            !onlyTablePlus &&
+            (pen.name === 'iframe' || pen.name === 'htmlDom') &&
+            pen.operationalRect
               ? deepClone(pen.operationalRect)
               : undefined,
         });
@@ -5299,7 +5301,7 @@ export class Meta2d {
         });
       });
       this.store.data.pens
-        .filter((pen) => pen.name === 'iframe')
+        .filter((pen) => pen.name === 'iframe' || pen.name === 'htmlDom')
         .forEach((pen) => setFillViewSnapshot(pen));
     } else {
       this.fillViewSnapshot.forEach((snap, id) => {
@@ -5333,7 +5335,10 @@ export class Meta2d {
         if (snap.ratio !== undefined) {
           pen.ratio = snap.ratio;
         }
-        if (pen.name === 'iframe' && snap.operationalRect) {
+        if (
+          (pen.name === 'iframe' || pen.name === 'htmlDom') &&
+          snap.operationalRect
+        ) {
           pen.operationalRect = deepClone(snap.operationalRect);
           pen.onBeforeValue?.(pen, {
             operationalRect: pen.operationalRect,

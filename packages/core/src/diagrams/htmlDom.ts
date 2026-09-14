@@ -1,4 +1,10 @@
 import {Pen, setElemImg, setElemPosition} from "../pen";
+import {
+  beforeOperationalRectValue,
+  generateAroundDiv,
+  operationalRectMouseMove,
+  updatePointerEvents,
+} from './operationalRect';
 
 interface HtmlPen extends Pen {
   html: {
@@ -22,6 +28,7 @@ export function htmlDom(pen: HtmlPen) {
     pen.onResize = onResize;
     pen.onRenderPenRaw = onRenderPenRaw
     pen.onMove = setDomScale;
+    pen.onMouseMove = operationalRectMouseMove;
     pen.onBeforeValue = beforeValue;
   }
 
@@ -58,6 +65,7 @@ export function htmlDom(pen: HtmlPen) {
     pen.calculative.canvas.externalElements.parentElement.appendChild(div);
     pen.calculative.singleton.div = div;
 
+    generateAroundDiv(pen);
     onResize(pen);
     setElemPosition(pen, div);
   }
@@ -67,6 +75,7 @@ export function htmlDom(pen: HtmlPen) {
 }
 
 function destroy(pen: any) {
+  updatePointerEvents(pen);
   if (pen.calculative.singleton && pen.calculative.singleton.div) {
     pen.calculative.singleton.div.remove();
     delete pen.calculative.singleton.div;
@@ -90,6 +99,7 @@ function beforeValue(pen: HtmlPen, value: any) {
       }
     }
   }
+  beforeOperationalRectValue(pen, value);
   return value;
 }
 
