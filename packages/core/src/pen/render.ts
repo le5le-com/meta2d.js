@@ -48,6 +48,7 @@ import { pSBC, rgba, cubicBezierY } from '../utils';
 import { Canvas } from '../canvas';
 import { isEmptyText } from '../utils/tool';
 import { TRANSPARENT_COLOR } from "../options";
+import { t } from '../locale';
 
 const LINE = "line";
 const REPEAT = "repeat"
@@ -1188,7 +1189,7 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     });
     ctx.textBaseline = 'top';
     ctx.fillStyle = pen.placeholderColor || '#c0c0c0';
-    const textLineWidth = ctx.measureText(pen.placeholder || '请输入').width;
+    const textLineWidth = ctx.measureText(pen.placeholder || t('请输入')).width;
     const rect = pen.calculative.worldTextRect;
     let x = 0;
     const oneRowHeight = fontSize * lineHeight;
@@ -1204,9 +1205,9 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
       y = rect.height - oneRowHeight;
     }
     ctx.fillText(
-      pen.placeholder || '请输入',
+      pen.placeholder || t('请输入'),
       rect.x + x,
-      rect.y + y + getTextBaselineOffset(ctx, pen.placeholder || '请输入', oneRowHeight)
+      rect.y + y + getTextBaselineOffset(ctx, pen.placeholder || t('请输入'), oneRowHeight)
     );
     ctx.restore();
   }
@@ -1277,9 +1278,9 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
       getTextBaselineOffset(ctx, text, oneRowHeight);
     // 字间距
     if(pen.letterSpacing){
-      fillTextWithSpacing(ctx,text,drawRectX + x, y,pen.calculative.letterSpacing);
+      fillTextWithSpacing(ctx, text ? t(text) : text, drawRectX + x, y, pen.calculative.letterSpacing);
     }else{
-      ctx.fillText(text, drawRectX + x, y);
+      ctx.fillText(text ? t(text) : text, drawRectX + x, y);
     }
     // 下划线
     const { textDecorationColor, textDecorationDash, textDecoration } = pen;
@@ -1420,7 +1421,7 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
   });
 
   const w = ctx.measureText(text).width;
-  let t: string;
+  let repeatText: string;
 
   let prev: Point;
   for (const anchor of pen.calculative.worldAnchors) {
@@ -1432,9 +1433,9 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
     const dis = distance(prev, anchor);
 
     const n = Math.floor(dis / w);
-    t = '';
+    repeatText = '';
     for (let i = 0; i < n; i++) {
-      t += text;
+      repeatText += text;
     }
 
     const angle = calcRotate(prev, anchor) - 270;
@@ -1446,7 +1447,7 @@ function drawFillText(ctx: CanvasRenderingContext2D, pen: Pen, text: string) {
       ctx.rotate(rotate);
       ctx.translate(-x, -y);
     }
-    ctx.fillText(t, prev.x, prev.y + lineHeight / 2);
+    ctx.fillText(repeatText ? t(repeatText) : repeatText, prev.x, prev.y + lineHeight / 2);
     ctx.restore();
     prev = anchor;
   }

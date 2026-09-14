@@ -1,3 +1,5 @@
+import { t } from '@meta2d/core';
+
 export function time(pen: any, ctx?: CanvasRenderingContext2D): Path2D {
   const path = !ctx ? new Path2D() : ctx;
   const { x, y, width, height } = pen.calculative.worldRect;
@@ -21,7 +23,7 @@ export function time(pen: any, ctx?: CanvasRenderingContext2D): Path2D {
 
 function formatTime(pen: any) {
   //更多 https://blog.csdn.net/Endeavorseven/article/details/101310628
-  const weeks = ['天', '一', '二', '三', '四', '五', '六'];
+  const weeks = ['日', '一', '二', '三', '四', '五', '六'].map(t);
   const now = new Date();
   const year = now.getFullYear();
   let pad = '';
@@ -35,7 +37,7 @@ function formatTime(pen: any) {
   const minutes = (now.getMinutes() + '').padStart(2, pad);
   const seconds = (now.getSeconds() + '').padStart(2, pad);
   if (!pen.timeFormat) {
-    return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} 星期${weeks[week]}`;
+    return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} ${t('星期')}${weeks[week]}`;
   }
   let fn = new Function(
     'year',

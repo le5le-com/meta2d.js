@@ -92,6 +92,7 @@ import { HotkeyType } from './data';
 import { Message, MessageOptions, messageList } from './message';
 import { closeJetLinks, connectJetLinks, getSendData, sendJetLinksData } from './utils/jetLinks';
 import { le5leTheme } from './theme'
+import { t as _t, setLocale as setLocaleModule, addLocale as addLocaleModule, Meta2dTranslations } from './locale';
 const echartReg = /^echarts/;
 
 const GLOBALVARALIAS = "meta2d"
@@ -7330,6 +7331,14 @@ export class Meta2d {
   setElemPosition = setElemPosition;
 
   setLifeCycleFunc = setLifeCycleFunc;
+
+  setLocale(locale: string): void {
+    setLocaleModule(locale);
+  }
+
+  addLocale(locale: string, translations: Meta2dTranslations): void {
+    addLocaleModule(locale, translations);
+  }
   destroy(onlyData?: boolean) {
     this.clear(false);
     clearIframes();

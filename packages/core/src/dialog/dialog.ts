@@ -2,6 +2,7 @@ import { Meta2d } from "../core";
 import type { Pen } from '../pen';
 import { getMeta2dData } from "../utils";
 import { Meta2dStore } from '../store';
+import { t } from '../locale';
 
 interface DialogStyle{
   x?: number | string;
@@ -187,7 +188,7 @@ export class Dialog {
     }
     this.data = data;
 
-    title && (this.title.innerText = title);
+    title && (this.title.innerText = title ? t(title) : title);
     if(!title){
       this.dialog.style.padding = '0px';
       this.title.style.display = 'none';

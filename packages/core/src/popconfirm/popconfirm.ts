@@ -1,6 +1,7 @@
 import { Pen } from '../pen';
 import { Point } from '../point';
 import { Meta2dStore } from '../store';
+import { t } from '../locale';
 
 const status = {
   'success':{
@@ -44,8 +45,8 @@ export class Popconfirm {
     this.confirm.className = 'confirm';
     this.cancel.className = 'cancel';
 
-    this.confirm.innerHTML = '确定';
-    this.cancel.innerHTML = '取消';
+    this.confirm.innerHTML = t('确定');
+    this.cancel.innerHTML = t('取消');
     this.icon.innerHTML = status.info.icon;
     this.box.appendChild(this.text);
     this.box.appendChild(this.arrowUp);
@@ -152,7 +153,7 @@ export class Popconfirm {
 
   showModal(pen: Pen,pos:Point,title?:string): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      this.text.innerHTML = title || '确认执行操作吗？';
+      this.text.innerHTML = title || t('确认执行操作吗？');
       this.show(pen,pos);
       this.confirm.onclick = () => {
         resolve(true);
