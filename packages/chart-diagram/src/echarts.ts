@@ -77,6 +77,7 @@ export interface ChartPen extends Pen {
     dataMap?:any; // 数据映射，sql 查询结果的映射
     autoGetTime: boolean; // 趋势图是否自动获取时间
     initJs?: string; // 初始化js
+    scaleDom?: boolean; // 缩放画布时，内部 dom 通过 transform: scale 同步缩放（不再重算 option 与 resize）
   };
   calculative?: {
     partialOption?: any; // 部分更新的 option
@@ -157,13 +158,44 @@ function setRawImg(pen: ChartPen, rawImg: HTMLCanvasElement | HTMLImageElement) 
   pen.calculative.imgNaturalHeight = img.height || img.naturalHeight;
 }
 
+function getOptionRatio(pen: ChartPen): number {
+  if (pen.echarts?.scaleDom) {
+    return 1;
+  }
+  return pen.calculative.canvas.store.data.scale || 1;
+}
+
+function setEchartsElemPosition(pen: ChartPen, div: HTMLDivElement) {
+  setElemPosition(pen, div);
+  if (!pen.echarts?.scaleDom || !div) {
+    return;
+  }
+  const scale = pen.calculative.canvas.store.data.scale || 1;
+  if (scale === 1) {
+    return;
+  }
+  const worldRect = pen.calculative.worldRect;
+  const width = worldRect.width / scale;
+  const height = worldRect.height / scale;
+  div.style.width = width + 'px';
+  div.style.height = height + 'px';
+  div.style.transformOrigin = '0 0';
+  const rotate = pen.calculative.rotate || 0;
+  // 先 scale 到世界大小，再绕图元中心旋转
+  div.style.transform = rotate
+    ? `scale(${scale}) translate(${width / 2}px, ${
+        height / 2
+      }px) rotate(${rotate}deg) translate(${-width / 2}px, ${-height / 2}px)`
+    : `scale(${scale})`;
+}
+
 function onRenderPenRaw(pen: ChartPen) {
   const chart = pen.calculative?.singleton?.echart as any;
   const div = pen.calculative?.singleton?.div as HTMLDivElement;
   if (!chart || !div || pen.calculative?.singleton?.echartsReady === false) {
     return;
   }
-  setElemPosition(pen, div);
+  setEchartsElemPosition(pen, div);
   safeResize(pen);
   chart.getZr?.().flush?.();
   const canvas = chart.getRenderedCanvas?.({
@@ -235,7 +267,7 @@ export function echarts(pen: ChartPen): Path2D {
     document.body.appendChild(div);
     // 2. 加载到div layer
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
-    setElemPosition(pen, div);
+    setEchartsElemPosition(pen, div);
 
     // 3. 解析echarts数据
     pen.calculative.singleton.div = div;
@@ -264,7 +296,7 @@ export function echarts(pen: ChartPen): Path2D {
               pen,
               updateOption(
                 pen.echarts.option,
-                pen.calculative.canvas.store.data.scale,
+                getOptionRatio(pen),
                 pen.calculative.canvas.store.options
               ),
               true
@@ -306,7 +338,7 @@ export function echarts(pen: ChartPen): Path2D {
             pen,
             updateOption(
               pen.echarts.option,
-              pen.calculative.canvas.store.data.scale,
+              getOptionRatio(pen),
               pen.calculative.canvas.store.options
             ),
             true
@@ -386,7 +418,7 @@ function destory(pen: Pen) {
 
 function move(pen: Pen) {
   pen.calculative.singleton.div &&
-    setElemPosition(pen, pen.calculative.singleton.div);
+    setEchartsElemPosition(pen as ChartPen, pen.calculative.singleton.div);
 }
 
 function resize(pen: ChartPen) {
@@ -426,7 +458,11 @@ function scaleFn(pen: ChartPen) {
     return;
   }
   let echarts = globalThis.echarts;
-  setElemPosition(pen, pen.calculative.singleton.div);
+  setEchartsElemPosition(pen, pen.calculative.singleton.div);
+  if (pen.echarts.scaleDom) {
+    // dom 已通过 transform 缩放，无需重算 option 与 resize
+    return;
+  }
   // let option = pen.echarts.option;
   // if (!pen.beforeScale) {
   //   pen.beforeScale = pen.calculative.canvas.store.data.scale;
@@ -466,7 +502,7 @@ function value(pen: ChartPen) {
   if (!pen.calculative.singleton.echart) {
     return;
   }
-  setElemPosition(pen, pen.calculative.singleton.div);
+  setEchartsElemPosition(pen, pen.calculative.singleton.div);
   if (pen.calculative.singleton.echartsReady) {
     if (pen.calculative.partialOption) {
       //部分更新
@@ -484,7 +520,7 @@ function value(pen: ChartPen) {
         pen,
         updateOption(
           pen.echarts.option,
-          pen.calculative.canvas.store.data.scale,
+          getOptionRatio(pen),
           pen.calculative.canvas.store.options
         ),
         true
