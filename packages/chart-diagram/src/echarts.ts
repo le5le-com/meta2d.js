@@ -268,7 +268,9 @@ export function echarts(pen: ChartPen): Path2D {
     // 2. 加载到div layer
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
     setEchartsElemPosition(pen, div);
-
+    if(pen.echarts.scaleDom){
+      pen.disableTransform = true;
+    }
     // 3. 解析echarts数据
     pen.calculative.singleton.div = div;
     pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
