@@ -29,9 +29,11 @@ export enum ReplaceMode {
 }
 let keyWords = [
   'fontSize',
+  'lineHeight', // ECharts textStyle 行高 —— 关键！缺失会导致 legend 行数/列数在缩放时剧烈变化
   'nameGap',
   'margin',
   'width' /*线条宽度*/,
+  'height', // 补充：ECharts legend/grid/tooltip/rich 等组件的 height
   'symbolSize' /*结点大小*/,
   'itemWidth', // 图例宽度
   'itemHeight', // 图例高度
@@ -55,7 +57,29 @@ let keyWords = [
   'symbolOffset',
   'shadowOffsetY',
   'shadowOffsetX',
-  'itemGap'
+  'itemGap',
+  // 补充：ECharts legend 滚动/翻页相关
+  'pageIconSize', // 翻页箭头图标大小
+  'scrollIconSize', // 滚动条图标大小
+  'pageItemGap', // 翻页按钮与图例的间距
+  'pageTextGap', // 翻页文字间距
+  // 补充：ECharts border 相关
+  'borderWidth', // 边框宽度（legend/title/tooltip/graphic 等）
+  'borderRadius', // 圆角半径
+  // 补充：ECharts title 相关
+  'itemGap', // title 主副标题间距（已存在，保留）
+  // 补充：ECharts axis/label 相关
+  'labelWidth', // axis label 宽度
+  'labelHeight', // axis label 高度
+  // 补充：ECharts radar/gauge 相关
+  'centerX',
+  'centerY',
+  'radius2', // radar 半径
+  'startAngle', // gauge 起始角度
+  'endAngle', // gauge 结束角度
+  // 补充：ECharts rich text 内部尺寸
+  'richWidth', // rich text 宽度
+  'richHeight', // rich text 高度
 ];
 
 const funKeyWords = ['formatter', 'color'];
