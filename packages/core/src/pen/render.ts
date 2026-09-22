@@ -1460,6 +1460,10 @@ export function drawIcon(
   pen: Pen
 ) {
   const store = pen.calculative.canvas.store;
+  const iconRect = pen.calculative.worldIconRect;
+  if(!iconRect){
+    return;
+  }
   ctx.save();
   ctx.shadowColor = '';
   ctx.shadowBlur = 0;
@@ -1467,7 +1471,7 @@ export function drawIcon(
   ctx.shadowOffsetY = 0;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const iconRect = pen.calculative.worldIconRect;
+
   let x = iconRect.x + iconRect.width / 2;
   let y = iconRect.y + iconRect.height / 2;
 
