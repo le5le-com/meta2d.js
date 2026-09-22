@@ -3884,7 +3884,11 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
 
       const current =
         pen.prevFrame[k] + (frame[k] - pen.prevFrame[k]) * process;
-      pen.calculative[k] = Math.round(current * 100) / 100;
+      if(['lineWidth'].includes(k)){
+        pen.calculative[k] = Math.round(current * 100) / 100*scale;
+      }else{
+        pen.calculative[k] = Math.round(current * 100) / 100;
+      }
     } else {
       if (k === 'visible') {
         if (pen.calculative.image) {
