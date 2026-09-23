@@ -29,9 +29,11 @@ export enum ReplaceMode {
 }
 let keyWords = [
   'fontSize',
+  'lineHeight', // ECharts textStyle 行高 —— 关键！缺失会导致 legend 行数/列数在缩放时剧烈变化
   'nameGap',
   'margin',
   'width' /*线条宽度*/,
+  'height', // 补充：ECharts legend/grid/tooltip/rich 等组件的 height
   'symbolSize' /*结点大小*/,
   'itemWidth', // 图例宽度
   'itemHeight', // 图例高度
@@ -55,7 +57,29 @@ let keyWords = [
   'symbolOffset',
   'shadowOffsetY',
   'shadowOffsetX',
-  'itemGap'
+  'itemGap',
+  // 补充：ECharts legend 滚动/翻页相关
+  'pageIconSize', // 翻页箭头图标大小
+  'scrollIconSize', // 滚动条图标大小
+  'pageItemGap', // 翻页按钮与图例的间距
+  'pageTextGap', // 翻页文字间距
+  // 补充：ECharts border 相关
+  'borderWidth', // 边框宽度（legend/title/tooltip/graphic 等）
+  'borderRadius', // 圆角半径
+  // 补充：ECharts title 相关
+  'itemGap', // title 主副标题间距（已存在，保留）
+  // 补充：ECharts axis/label 相关
+  'labelWidth', // axis label 宽度
+  'labelHeight', // axis label 高度
+  // 补充：ECharts radar/gauge 相关
+  'centerX',
+  'centerY',
+  'radius2', // radar 半径
+  'startAngle', // gauge 起始角度
+  'endAngle', // gauge 结束角度
+  // 补充：ECharts rich text 内部尺寸
+  'richWidth', // rich text 宽度
+  'richHeight', // rich text 高度
 ];
 
 const funKeyWords = ['formatter', 'color'];
@@ -166,14 +190,19 @@ function getOptionRatio(pen: ChartPen): number {
 }
 
 function setEchartsElemPosition(pen: ChartPen, div: HTMLDivElement) {
+  if (!div) {
+    return;
+  }
+
+  // scaleDom 使用自己的变换，避免被通用 DOM 定位逻辑覆盖。
+  if (pen.echarts?.scaleDom) {
+    pen.disableTransform = true;
+  }
   setElemPosition(pen, div);
-  if (!pen.echarts?.scaleDom || !div) {
+  if (!pen.echarts?.scaleDom) {
     return;
   }
   const scale = pen.calculative.canvas.store.data.scale || 1;
-  if (scale === 1) {
-    return;
-  }
   const worldRect = pen.calculative.worldRect;
   const width = worldRect.width / scale;
   const height = worldRect.height / scale;
@@ -251,7 +280,6 @@ export function echarts(pen: ChartPen): Path2D {
   if (!pen.calculative.singleton) {
     pen.calculative.singleton = {};
   }
-
   const path = new Path2D();
   const worldRect = pen.calculative.worldRect;
 
@@ -267,6 +295,10 @@ export function echarts(pen: ChartPen): Path2D {
     document.body.appendChild(div);
     // 2. 加载到div layer
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
+    if (pen.echarts.scaleDom !== false) {
+      pen.echarts.scaleDom = true;
+    }
+    // 初始化前确定实际布局尺寸，避免先按世界尺寸绘制后再被 CSS 二次缩放。
     setEchartsElemPosition(pen, div);
 
     // 3. 解析echarts数据
@@ -274,6 +306,7 @@ export function echarts(pen: ChartPen): Path2D {
     pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
     initEvent(pen);
     pen.calculative.singleton.echartsReady = true;
+
     if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) {
       if (pen.echarts.geoJson) {
         echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);

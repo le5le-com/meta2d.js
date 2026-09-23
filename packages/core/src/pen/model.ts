@@ -78,7 +78,7 @@ export const needPatchFlagsPenRectProps = [
   'showChild',
 ];
 
-export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate'];
+export const needCalcIconRectProps = ['iconLeft', 'iconTop', 'iconRotate','icon'];
 
 export const needImgCanvasPatchFlagsProps =  ['globalAlpha', 'flipY', 'flipX', 'x', 'y', 'width', 'height','iconWidth', 'iconHeight', 'imageRatio', 'iconLeft','iconTop', 'iconAlign', 'rotate', 'visible'];
 
@@ -369,6 +369,7 @@ export interface Pen extends Rect {
   reverseProgress?: boolean;
   progressGradientColors?: string;
   externElement?: boolean;
+  disableTransform?: boolean; // 是否禁用setElemPosition transform
 
   autoPolyline?: boolean;
   affectByTheme?: boolean; // 是否被主题影响，true,希望被主题改变样式，false，不希望被主题改变样式

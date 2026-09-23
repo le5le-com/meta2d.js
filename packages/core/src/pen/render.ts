@@ -1460,6 +1460,10 @@ export function drawIcon(
   pen: Pen
 ) {
   const store = pen.calculative.canvas.store;
+  const iconRect = pen.calculative.worldIconRect;
+  if(!iconRect){
+    return;
+  }
   ctx.save();
   ctx.shadowColor = '';
   ctx.shadowBlur = 0;
@@ -1467,7 +1471,7 @@ export function drawIcon(
   ctx.shadowOffsetY = 0;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const iconRect = pen.calculative.worldIconRect;
+
   let x = iconRect.x + iconRect.width / 2;
   let y = iconRect.y + iconRect.height / 2;
 
@@ -3897,7 +3901,11 @@ export function setNodeAnimateProcess(pen: Pen, process: number) {
 
       const current =
         pen.prevFrame[k] + (frame[k] - pen.prevFrame[k]) * process;
-      pen.calculative[k] = Math.round(current * 100) / 100;
+      if(['lineWidth'].includes(k)){
+        pen.calculative[k] = Math.round(current * 100) / 100*scale;
+      }else{
+        pen.calculative[k] = Math.round(current * 100) / 100;
+      }
     } else {
       if (k === 'visible') {
         if (pen.calculative.image) {
@@ -4069,17 +4077,20 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
       ? pen.calculative.cssDisplay || 'inline'
       : 'none'; // 是否隐藏元素
   }
-  !pen.calculative.rotate && (pen.calculative.rotate = 0);
-  elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
-  if (!pen.calculative.rotate) {
-    if (pen.calculative.flipX) {
-      elem.style.transform = `rotateY(180deg)`;
-    }
-    if (pen.calculative.flipY) {
-      elem.style.transform = `rotateX(180deg)`;
-    }
-    if (pen.calculative.flipX && pen.calculative.flipY) {
-      elem.style.transform = `rotateZ(180deg)`;
+
+  if (!pen.disableTransform) {
+    !pen.calculative.rotate && (pen.calculative.rotate = 0);
+    elem.style.transform = `rotate(${pen.calculative.rotate}deg)`;
+    if (!pen.calculative.rotate) {
+      if (pen.calculative.flipX) {
+        elem.style.transform = `rotateY(180deg)`;
+      }
+      if (pen.calculative.flipY) {
+        elem.style.transform = `rotateX(180deg)`;
+      }
+      if (pen.calculative.flipX && pen.calculative.flipY) {
+        elem.style.transform = `rotateZ(180deg)`;
+      }
     }
   }
   elem.style.zIndex =
