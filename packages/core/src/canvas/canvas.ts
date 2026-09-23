@@ -5078,7 +5078,12 @@ export class Canvas {
       });
     }
     pen.type && this.initLineRect(pen);
-    if((pen.bkType && pen.gradientColors) || (pen.strokeType && pen.lineGradientColors)){
+    if(
+      (pen.bkType && pen.gradientColors) ||
+      (pen.strokeType && pen.lineGradientColors) ||
+      //background为linear渐变字符串时也会生成背景渐变缓存，位置/尺寸变化需清除
+      (typeof pen.background === 'string' && pen.background.startsWith('linear-gradient'))
+    ){
         if (pen.calculative.lineGradient) {
           pen.calculative.lineGradient = null;
         }
@@ -8824,6 +8829,16 @@ export class Canvas {
       pen.calculative.gradientColorStop = undefined;
     }
     if (data.gradientColors) {
+      pen.calculative.gradient = undefined;
+      pen.calculative.radialGradient = undefined;
+    }
+    if (data.background !== undefined) {
+      //background可能是渐变来源（linear-gradient字符串兼容gradientColors），需清掉渐变缓存
+      pen.calculative.gradient = undefined;
+      pen.calculative.radialGradient = undefined;
+    }
+    if (data.bkType !== undefined) {
+      //bkType切换会改变渐变来源（background/gradientColors），需清掉渐变缓存
       pen.calculative.gradient = undefined;
       pen.calculative.radialGradient = undefined;
     }
