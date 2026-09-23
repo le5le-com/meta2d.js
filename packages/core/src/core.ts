@@ -432,6 +432,10 @@ export class Meta2d {
             if (pen.visible !== _value.visible) {
               // 批量设置属性时统一在循环结束后更新尺寸，避免每个图元重复创建定时器。
               visibleChanged = true;
+              this.store.emitter.emit('setProps-visible', {
+                pen: pen,
+                visible: _value.visible,
+              });
               this.setVisible(pen, _value.visible, false, false);
             }
           }
@@ -7310,6 +7314,7 @@ export class Meta2d {
         child && this.setVisible(child, visible, false, false, false);
       }
     }
+    render && (this.store.emitter.emit('visible',{pen:pen,visible}));
     // hasImage 会递归检查当前图元的所有后代，无需先展开后代列表，
     // 避免 setVisible 递归过程中对同一棵子树重复遍历。
     const allPens = [pen];
