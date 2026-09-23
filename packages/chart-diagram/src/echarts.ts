@@ -190,14 +190,19 @@ function getOptionRatio(pen: ChartPen): number {
 }
 
 function setEchartsElemPosition(pen: ChartPen, div: HTMLDivElement) {
+  if (!div) {
+    return;
+  }
+
+  // scaleDom 使用自己的变换，避免被通用 DOM 定位逻辑覆盖。
+  if (pen.echarts?.scaleDom) {
+    pen.disableTransform = true;
+  }
   setElemPosition(pen, div);
-  if (!pen.echarts?.scaleDom || !div) {
+  if (!pen.echarts?.scaleDom) {
     return;
   }
   const scale = pen.calculative.canvas.store.data.scale || 1;
-  if (scale === 1) {
-    return;
-  }
   const worldRect = pen.calculative.worldRect;
   const width = worldRect.width / scale;
   const height = worldRect.height / scale;
@@ -275,7 +280,6 @@ export function echarts(pen: ChartPen): Path2D {
   if (!pen.calculative.singleton) {
     pen.calculative.singleton = {};
   }
-
   const path = new Path2D();
   const worldRect = pen.calculative.worldRect;
 
@@ -291,15 +295,18 @@ export function echarts(pen: ChartPen): Path2D {
     document.body.appendChild(div);
     // 2. 加载到div layer
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
-    setEchartsElemPosition(pen, div);
-    if(pen.echarts.scaleDom){
-      pen.disableTransform = true;
+    if (pen.echarts.scaleDom !== false) {
+      pen.echarts.scaleDom = true;
     }
+    // 初始化前确定实际布局尺寸，避免先按世界尺寸绘制后再被 CSS 二次缩放。
+    setEchartsElemPosition(pen, div);
+
     // 3. 解析echarts数据
     pen.calculative.singleton.div = div;
     pen.calculative.singleton.echart = echarts.init(div, pen.echarts.theme);
     initEvent(pen);
     pen.calculative.singleton.echartsReady = true;
+
     if (pen.echarts.geoName && !echarts.getMap(pen.echarts.geoName)) {
       if (pen.echarts.geoJson) {
         echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
