@@ -182,14 +182,14 @@ function getLinearGradientPoints(
   return [perpX1, perpY1, perpX2, perpY2];
 }
 
-function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
-  const { worldRect, gradientColors, gradientRadius } = pen.calculative;
-  if (!gradientColors) {
-    return;
-  }
-  let color = pen.calculative.gradientColors;
+function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen, gradientColors?: string) {
+  const { worldRect, gradientRadius } = pen.calculative;
+  let color = gradientColors || pen.calculative.gradientColors;
   if(pen.calculative.checked){
     color = pen.calculative.onGradientColors;
+  }
+  if (!color) {
+    return;
   }
   const { width, height, center } = worldRect;
   const { x: centerX, y: centerY } = center;
@@ -214,13 +214,13 @@ function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
   return grd;
 }
 
-function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen) {
+function getBkGradient(ctx: CanvasRenderingContext2D, pen: Pen, gradientColors?: string) {
   const { x, y, ex, width, height, center } = pen.calculative.worldRect;
   let points = [
     { x: ex, y: y + height / 2 },
     { x: x, y: y + height / 2 },
   ];
-  let color = pen.calculative.gradientColors;
+  let color = gradientColors || pen.calculative.gradientColors;
   if(pen.calculative.checked){
     color = pen.calculative.onGradientColors;
   }
@@ -1775,37 +1775,54 @@ export function renderPen(
   } else {
     let back: string | CanvasGradient | CanvasPattern;
     const backgroundStr = pen.calculative.background || '';
+    let bkType = pen.calculative.bkType;
+    let gradientColors = pen.calculative.gradientColors;
 
-    if(typeof backgroundStr === 'string' && backgroundStr.startsWith('linear-gradient')){
-      //让background为linear开头的兼容到gradientColors
-      pen.calculative.gradientColors = backgroundStr;
-      pen.calculative.bkType = Gradient.Linear;
+    if (bkType === undefined || bkType === null) {
+      //未指定bkType时的兼容逻辑
+      if(typeof backgroundStr === 'string' && backgroundStr.startsWith('linear-gradient')){
+        //让background为linear开头的兼容到gradientColors
+        gradientColors = gradientColors || backgroundStr;
+        bkType = Gradient.Linear;
+      } else if (!backgroundStr && gradientColors) {
+        bkType = Gradient.Linear;
+      }
     }
-    if (pen.calculative.bkType === Gradient.Linear) {
-      if (pen.calculative.gradientColors) {
+    if (bkType === Gradient.Linear) {
+      if (gradientColors) {
         // if (!pen.type) {
         //连线不考虑渐进背景
         if (pen.calculative.gradient) {
           //位置变化/放大缩小操作不会触发重新计算
           back = pen.calculative.gradient;
         } else {
-          back = getBkGradient(ctx, pen);
+          back = getBkGradient(ctx, pen, gradientColors);
           pen.calculative.gradient = back;
         }
         // }
       } else {
         back = drawBkLinearGradient(ctx, pen);
       }
-    } else if (pen.calculative.bkType === Gradient.Radial) {
-      if (pen.calculative.gradientColors) {
+    } else if (bkType === Gradient.Radial) {
+      if (gradientColors) {
         if (pen.calculative.radialGradient) {
           back = pen.calculative.radialGradient;
         } else {
-          back = getBkRadialGradient(ctx, pen);
+          back = getBkRadialGradient(ctx, pen, gradientColors);
           pen.calculative.radialGradient = back;
         }
       } else {
         back = drawBkRadialGradient(ctx, pen);
+      }
+    } else if (
+      typeof backgroundStr === 'string' &&
+      backgroundStr.startsWith('linear-gradient')
+    ) {
+      if (pen.calculative.gradient) {
+        back = pen.calculative.gradient;
+      } else {
+        back = getBkGradient(ctx, pen, backgroundStr);
+        pen.calculative.gradient = back;
       }
     } else {
       back = pen.calculative.background || store.styles.penBackground;
