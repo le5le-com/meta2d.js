@@ -7629,7 +7629,7 @@ export class Canvas {
   }
 
   setFollowers(pens: Pen[] = this.store.active){
-    if (!pens) {
+    if (!pens || pens.length === 0) {
       return;
     }
     if(pens.length < 2){
