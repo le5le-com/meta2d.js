@@ -106,7 +106,8 @@ export enum LineAnimateType {
   Dot, // 圆点
   Arrow, // 箭头,
   WaterDrop, // 水滴
-  Custom // 自定义动画
+  Custom, // 自定义动画
+  Breath // 呼吸
 }
 
 export enum lineAnimateTargetType {

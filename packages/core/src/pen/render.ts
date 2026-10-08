@@ -2436,6 +2436,26 @@ function renderLineAnimate(
 ){
   let len = 0;
   switch (type) {
+    case LineAnimateType.Breath: {
+      const progress = pen.length > 0
+        ? Math.max(0, Math.min(1, (pen.calculative.animatePos || 0) / pen.length))
+        : 0;
+      // 复用连线动画进度，让整条线的线宽和光晕平滑地由弱变强，再恢复。
+      const strength = (1 - Math.cos(2 * Math.PI * progress)) / 2;
+      // 基础线宽已经缩放，动画峰值线宽仍需按画布比例缩放。
+      const lineWidth = pen.calculative.lineWidth;
+      const maxLineWidth = Math.max(
+        lineWidth,
+        (pen.calculative.animateLineWidth ?? 0) * store.data.scale
+      );
+      ctx.lineWidth = lineWidth + (maxLineWidth - lineWidth) * strength;
+      ctx.shadowBlur = pen.animateShadow
+        ? Math.max(0, pen.animateShadowBlur ?? (pen.animateLineWidth || 6)) * strength
+        : 0;
+      ctx.lineDashOffset = 0;
+      ctx.setLineDash([]);
+      break;
+    }
     case LineAnimateType.Beads:
       if (pen.animateReverse) {
         ctx.lineDashOffset = pen.calculative.animatePos;
