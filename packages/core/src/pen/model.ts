@@ -626,6 +626,7 @@ export interface Pen extends Rect {
     canvas?: Canvas;
 
     iframe?: string;
+    iframeKey?: string;
     video?: string;
     audio?: string;
     media?: HTMLMediaElement;
