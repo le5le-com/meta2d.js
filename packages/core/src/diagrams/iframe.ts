@@ -11,6 +11,24 @@ const iframes:{
   [key: string]: HTMLElement;
 } = {};
 
+/**
+ * 从iframe URL中提取key用于匹配
+ * 如果URL中有id参数，返回id值；否则返回完整URL
+ */
+function getIframeKey(iframeUrl: string): string {
+  if (!iframeUrl) {
+    return '';
+  }
+  try {
+    const url = new URL(iframeUrl, window.location.href);
+    const id = url.searchParams.get('id');
+    return id || iframeUrl;
+  } catch (e) {
+    // 如果URL解析失败，返回原始字符串
+    return iframeUrl;
+  }
+}
+
 export function clearIframes() {
   for(const key in iframes){
     iframes[key]?.remove();
@@ -20,7 +38,7 @@ export function clearIframes() {
 
 export function updateIframes(pens: Pen[]) {
   for(const key in iframes){
-    if (!pens.some((pen) => pen.name == 'iframe' && pen.iframe == key)) {
+    if (!pens.some((pen) => pen.name == 'iframe' && getIframeKey(pen.iframe) == key)) {
       iframes[key]?.remove();
       delete iframes[key];
     }
@@ -28,9 +46,11 @@ export function updateIframes(pens: Pen[]) {
 }
 
 function matchIframe(pen: Pen) {
-  const div = iframes[pen.iframe];
+  const key = getIframeKey(pen.iframe);
+  const div = iframes[key];
   if (div) {
     pen.calculative.singleton.div = div;
+    pen.calculative.iframeKey = key;
     generateAroundDiv(pen);
     return true;
   }
@@ -76,6 +96,7 @@ export function iframe(pen: Pen) {
     iframe.src = pen.iframe;
     iframe.allowFullscreen = true;
     pen.calculative.iframe = pen.iframe;
+    pen.calculative.iframeKey = getIframeKey(pen.iframe);
     div.appendChild(iframe);
     generateAroundDiv(pen);
   }
@@ -93,9 +114,9 @@ function destory(pen: Pen) {
     if (!pen.calculative.canvas.store.data.locked) {
       // 手动删除iframe
       pen.calculative.singleton.div.remove();
-      iframes[pen.calculative.iframe] = null;
+      iframes[pen.calculative.iframeKey] = null;
     }else{
-      iframes[pen.calculative.iframe] = pen.calculative.singleton.div;
+      iframes[pen.calculative.iframeKey] = pen.calculative.singleton.div;
       delete pen.calculative.singleton.div;
     }
   }
@@ -109,8 +130,14 @@ function move(pen: Pen) {
 function beforeValue(pen: Pen, value: any) {
   if (value.iframe) {
     if (pen.calculative.singleton.div) {
-      pen.calculative.singleton.div.children[0].src = value.iframe;
-      pen.calculative.iframe = value.iframe;
+      const newKey = getIframeKey(value.iframe);
+      const oldKey = pen.calculative.iframeKey;
+      // 只有key不同时才切换iframe地址
+      if (newKey !== oldKey) {
+        pen.calculative.singleton.div.children[0].src = value.iframe;
+        pen.calculative.iframe = value.iframe;
+        pen.calculative.iframeKey = newKey;
+      }
     }
   }
   beforeOperationalRectValue(pen, value);
