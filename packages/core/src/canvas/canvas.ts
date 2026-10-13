@@ -4329,13 +4329,16 @@ export class Canvas {
           if(pen.path){
             !this.store.data.paths[pen.pathId]&&(this.store.data.paths[pen.pathId] = pen.path);
           }
+          pen.calculative.canvas = this;
           // 先放进去，pens 可能是子节点在前，而父节点在后
           this.store.pens[pen.id] = pen;
           if (pen.parentId) {
-            !this.store.pens[pen.parentId].children &&
-              (this.store.pens[pen.parentId].children = []);
-            if (!this.store.pens[pen.parentId].children.includes(pen.id)) {
-              this.store.pens[pen.parentId].children.push(pen.id);
+            const parentPen = this.store.pens[pen.parentId];
+            if (parentPen) {
+              !parentPen.children && (parentPen.children = []);
+              if (!parentPen.children.includes(pen.id)) {
+                parentPen.children.push(pen.id);
+              }
             }
           }
           if (pen.type && pen.lastConnected) {
@@ -4343,7 +4346,6 @@ export class Canvas {
               this.store.pens[key]&&(this.store.pens[key].connectedLines = pen.lastConnected[key]);
             }
           }
-          pen.calculative.canvas = this;
         });
         action.pens.reverse().forEach((aPen) => {
           const pen = this.store.pens[aPen.id];
