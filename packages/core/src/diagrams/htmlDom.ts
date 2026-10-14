@@ -5,6 +5,7 @@ import {
   operationalRectMouseMove,
   updatePointerEvents,
 } from './operationalRect';
+import {debounce} from "@meta2d/core";
 
 interface HtmlPen extends Pen {
   html: {
@@ -102,12 +103,13 @@ function beforeValue(pen: HtmlPen, value: any) {
   beforeOperationalRectValue(pen, value);
   return value;
 }
+const fun = (pen:HtmlPen)=> updateRawImg(pen)
 
 function onResize(pen: HtmlPen) {
   const {width, height} = (window as any).meta2d.getPenRect(pen);
   pen.calculative.singleton._width = width;
   pen.calculative.singleton._height = height;
-  requestAnimationFrame(() => updateRawImg(pen));
+  debounce(fun,1000,pen)
 }
 
 function setDomScale(pen: HtmlPen) {
