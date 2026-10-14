@@ -11,7 +11,7 @@ export function rectangle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if(!pen.setTheme){
     pen.setTheme = setTheme;
   }
-  let wr = pen.calculative.borderRadius || 0,
+  let wr = pen.calculative.borderRadius * pen.calculative.canvas.store.data.scale || 0,
     hr = wr;
   const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
   if (wr < 1) {
