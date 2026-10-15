@@ -5,7 +5,7 @@ import {
   operationalRectMouseMove,
   updatePointerEvents,
 } from './operationalRect';
-import {debounce} from "@meta2d/core";
+import {debounce} from "../utils";
 
 interface HtmlPen extends Pen {
   html: {
