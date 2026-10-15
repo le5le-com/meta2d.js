@@ -176,7 +176,11 @@ importers:
         specifier: ^4.0.1
         version: 4.5.6
 
-  packages/transform: {}
+  packages/transform:
+    dependencies:
+      '@meta2d/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/utils:
     dependencies:

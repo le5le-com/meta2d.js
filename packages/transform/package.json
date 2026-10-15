@@ -1,13 +1,33 @@
 {
   "name": "@meta2d/transform",
-  "version": "0.0.1",
-  "description": "图元变换库，实现视角动态2d变伪3d的效果",
+  "version": "1.0.0",
+  "description": "The transform library based on le5le meta2d.",
   "main": "index.ts",
+  "types": "index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "copy": "shx cp package.build.json ../../dist/transform/package.json",
+    "build": "tsc && npm run copy"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "meta2d",
+    "canvas",
+    "transform"
+  ],
+  "author": "alsmile123@qq.com",
   "license": "MIT",
-  "type": "module"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@meta2d/core": "workspace:*"
+  },
+  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
 }
