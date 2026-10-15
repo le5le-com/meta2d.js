@@ -40,6 +40,9 @@ export function htmlDom(pen: HtmlPen) {
     div.style.outline = 'none';
     div.style.left = '-9999px';
     div.style.top = '-9999px';
+    if (pen.ignoreEvent) {
+      div.style.pointerEvents = 'none';
+    }
 
     const context: HTMLElement = pen.html.iframe
       ? document.createElement('iframe')
@@ -98,6 +101,13 @@ function beforeValue(pen: HtmlPen, value: any) {
           requestAnimationFrame(() => updateRawImg(pen));
         }
       }
+    }
+  }
+  // setValue 动态切换 ignoreEvent 时，同步更新 DOM 的 pointer-events
+  if (value.ignoreEvent !== undefined) {
+    const div = pen.calculative.singleton?.div;
+    if (div) {
+      div.style.pointerEvents = value.ignoreEvent ? 'none' : '';
     }
   }
   beforeOperationalRectValue(pen, value);

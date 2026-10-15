@@ -4126,7 +4126,7 @@ export function setElemPosition(pen: Pen, elem: HTMLElement) {
     // gif 组合后，作为子节点可通过 lockedOnCombine 来决定自身的 locked 状态
     elem.style.userSelect = 'initial';
     elem.style.pointerEvents = 'initial';
-    if (pen.name === 'gif') {
+    if (pen.name === 'gif' || pen.ignoreEvent) {
       elem.style.userSelect = 'none';
       elem.style.pointerEvents = 'none';
     }
