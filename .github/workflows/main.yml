@@ -48,7 +48,8 @@ jobs:
       - name: Publish core
         run: |
           cd dist/core
-          npm publish
+          # 1.x.x 版本使用 legacy tag，忽略 npm 上的 2.x 版本
+          npm publish --tag legacy
         continue-on-error: true
 
       - name: Publish meta2d.js
