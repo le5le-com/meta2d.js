@@ -39,6 +39,10 @@ function formatTime(pen: any) {
   if (!pen.timeFormat) {
     return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} ${t('星期')}${weeks[week]}`;
   }
+  let timeFormat = (pen.timeFormat + '').trim();
+  if (!timeFormat.startsWith('`')) {
+    timeFormat = `\`${timeFormat}\``;
+  }
   let fn = new Function(
     'year',
     'month',
@@ -47,7 +51,7 @@ function formatTime(pen: any) {
     'hours',
     'minutes',
     'seconds',
-    `return ${pen.timeFormat}`
+    `return ${timeFormat}`
   );
   const time = fn(year, month, day, weeks[week], hours, minutes, seconds);
   fn = null;
