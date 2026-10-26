@@ -11,12 +11,17 @@ export function rectangle(pen: Pen, ctx?: CanvasRenderingContext2D): Path2D {
   if(!pen.setTheme){
     pen.setTheme = setTheme;
   }
-  let wr = pen.calculative.borderRadius * pen.calculative.canvas.store.data.scale || 0,
-    hr = wr;
+  const borderRadius = pen.calculative.borderRadius || 0;
+  const scale = pen.calculative.canvas.store.data.scale;
+  let wr = borderRadius,
+    hr = borderRadius;
   const { x, y, width, height, ex, ey } = pen.calculative.worldRect;
-  if (wr < 1) {
-    wr = width * wr;
-    hr = height * hr;
+  if (borderRadius < 1) {
+    wr = width * borderRadius;
+    hr = height * borderRadius;
+  } else {
+    wr *= scale;
+    hr *= scale;
   }
   let r = wr < hr ? wr : hr;
   if (width < 2 * r) {
