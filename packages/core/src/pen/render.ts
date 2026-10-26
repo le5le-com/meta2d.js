@@ -3851,6 +3851,21 @@ export function setOrbitAnimate(pen: Pen, now: number) {
     rect.pivot.x += deltaX;
     rect.pivot.y += deltaY;
   }
+
+  if (pen.lookAtCenter) {
+    // 初始旋转角代表图元配置后的顶点方向，需要作为固定偏移保留。
+    // 每帧使用目标绝对角度计算旋转差，避免累计旋转产生偏差。
+    const currentRotate = pen.calculative.rotate || 0;
+    const centerAngle = calcRotate(targetCenter, nextCenter);
+    const initialRotate = pen.calculative.initRect.rotate || 0;
+    const targetRotate = centerAngle + initialRotate;
+    let rotateDelta = targetRotate - currentRotate;
+    rotateDelta = ((rotateDelta + 540) % 360) - 180;
+    if (rotateDelta) {
+      rotatePen(pen, rotateDelta, rect);
+    }
+  }
+
   pen.calculative.x = rect.x;
   pen.calculative.y = rect.y;
   pen.calculative.patchFlags = true;

@@ -337,6 +337,8 @@ export interface Pen extends Rect {
   speed?: number;
   // 环绕动画：起始角度（度），默认 0
   startAngle?: number;
+  // 环绕动画：是否让图元顶点始终朝向中心，并保留图元的初始旋转偏移，默认 false
+  lookAtCenter?: boolean;
   // 环绕动画：是否显示椭圆轨道辅助线
   showOrbitLine?: boolean;
   // 环绕动画：轨道辅助线颜色
