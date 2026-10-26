@@ -22,7 +22,9 @@ import {
   calcMoveDock,
   calcTextLines,
   setNodeAnimate,
+  setOrbitAnimate,
   setLineAnimate,
+  renderOrbitLine,
   calcPenRect,
   setChildrenActive,
   getParent,
@@ -5206,6 +5208,13 @@ export class Canvas {
     const ctx = this.offscreen.getContext('2d') as CanvasRenderingContext2D;
     ctx.strokeStyle = this.store.styles.color;//getGlobalColor(this.store);
 
+    // 轨道线位于普通图元下方，避免遮挡节点内容。
+    for (const pen of this.store.data.pens) {
+      if (pen.canvasLayer !== CanvasLayer.CanvasTemplate && pen.calculative.inView) {
+        renderOrbitLine(ctx, pen);
+      }
+    }
+
     for (const pen of this.store.data.pens) {
       if (!isFinite(pen.x)) {
         continue;
@@ -7361,7 +7370,10 @@ export class Canvas {
           active = true;
         }
         if (!pen.type) {
-          if (setNodeAnimate(pen, now)) {
+          const animateResult = pen.animate === 'orbit'
+            ? setOrbitAnimate(pen, now)
+            : setNodeAnimate(pen, now);
+          if (animateResult) {
             if (pen.calculative.patchFlags) {
               calcCenter(pen.calculative.worldRect);
               this.updatePenRect(pen, {

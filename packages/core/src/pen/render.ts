@@ -3775,6 +3775,139 @@ export function setNodeAnimate(pen: Pen, now: number) {
     return true;
   }
 
+/**
+ * 执行节点环绕动画。speed 兼容两种取值：
+ * 1-10 为界面滑块档位，按 60fps 的时间基准换算成角速度，
+ * 5 档对应旧的默认角速度 0.012 弧度/帧；小于 0.1 的小数视为旧版
+ * 弧度/帧配置直接使用，保证历史数据不受影响。
+ */
+const orbitSpeedToRadians = (speed: number) =>
+  speed > 0 && speed <= 0.1 ? speed : (speed * 0.012) / 5;
+
+export function setOrbitAnimate(pen: Pen, now: number) {
+  if (pen.calculative.start === 0) {
+    pen.calculative.start = undefined;
+    return 0;
+  }
+
+  const rawSpeed = Number(pen.speed);
+  const speed = orbitSpeedToRadians(rawSpeed);
+  const semiMajor = Math.max(0, Number(pen.semiMajor) || 180);
+  const semiMinor = Math.max(0, Number(pen.semiMinor) || 80);
+  const target = pen.orbitTargetId
+    ? pen.calculative.canvas.store.pens[pen.orbitTargetId]
+    : undefined;
+  const targetCenter = target?.calculative?.worldRect?.center;
+  if (
+    !targetCenter ||
+    target === pen ||
+    !Number.isFinite(rawSpeed) ||
+    rawSpeed === 0
+  ) {
+    pen.calculative.start = undefined;
+    return 0;
+  }
+
+  if (!pen.animateCycle) {
+    pen.animateCycle = Infinity;
+  }
+
+  if (!pen.calculative.start) {
+    pen.calculative.start = now;
+    pen.calculative.frameStart = now;
+    pen.calculative.cycleIndex = 1;
+    pen.calculative.initRect = deepClone(pen.calculative.worldRect);
+    pen.calculative.prevFrameRect = deepClone(pen.calculative.worldRect);
+    pen.calculative.initRect.rotate = pen.calculative.rotate || 0;
+  }
+
+  const elapsedFrames = Math.max(0, (now - pen.calculative.start) * 60 / 1000);
+  const startAngle = (Number(pen.startAngle) || 0) * Math.PI / 180;
+  const orbitAngle = startAngle + speed * elapsedFrames;
+  const revolutions = Math.abs(speed * elapsedFrames) / (Math.PI * 2);
+  const finished = revolutions >= pen.animateCycle;
+  const angle = finished
+    ? startAngle + Math.sign(speed) * Math.PI * 2 * pen.animateCycle
+    : orbitAngle;
+  const rotation = (Number(pen.ellipseRotate) || 0) * Math.PI / 180;
+  const scale = pen.calculative.canvas.store.data.scale || 1;
+  const x = semiMajor * Math.cos(angle);
+  const y = semiMinor * Math.sin(angle);
+  const offsetX = (x * Math.cos(rotation) - y * Math.sin(rotation)) * scale;
+  const offsetY = (x * Math.sin(rotation) + y * Math.cos(rotation)) * scale;
+  const rect = pen.calculative.worldRect;
+  const oldCenter = rect.center || { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+  const nextCenter = {
+    x: targetCenter.x + offsetX,
+    y: targetCenter.y + offsetY,
+  };
+  const deltaX = nextCenter.x - oldCenter.x;
+  const deltaY = nextCenter.y - oldCenter.y;
+  rect.x = nextCenter.x - rect.width / 2;
+  rect.y = nextCenter.y - rect.height / 2;
+  calcRightBottom(rect);
+  calcCenter(rect);
+  if (rect.pivot) {
+    rect.pivot.x += deltaX;
+    rect.pivot.y += deltaY;
+  }
+  pen.calculative.x = rect.x;
+  pen.calculative.y = rect.y;
+  pen.calculative.patchFlags = true;
+
+  if (finished) {
+    pen.currentAnimation = undefined;
+    pen.calculative.start = undefined;
+    return 0;
+  }
+  return true;
+}
+
+/** 绘制节点环绕动画的椭圆轨道辅助线。 */
+export function renderOrbitLine(ctx: CanvasRenderingContext2D, pen: Pen) {
+  if (pen.type || !pen.animations?.length) {
+    return;
+  }
+
+  let animation: any;
+  if (pen.currentAnimation !== undefined) {
+    animation = pen.animations[pen.currentAnimation];
+    if (animation?.animate !== 'orbit') {
+      return;
+    }
+  } else {
+    animation = pen.animations.find((item) => item.animate === 'orbit');
+  }
+  if (!animation?.showOrbitLine) {
+    return;
+  }
+
+  const target = animation.orbitTargetId
+    ? pen.calculative.canvas.store.pens[animation.orbitTargetId]
+    : undefined;
+  const center = target?.calculative?.worldRect?.center;
+  if (!center || target === pen) {
+    return;
+  }
+
+  const scale = pen.calculative.canvas.store.data.scale || 1;
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(
+    center.x,
+    center.y,
+    Math.max(0, Number(animation.semiMajor) || 180) * scale,
+    Math.max(0, Number(animation.semiMinor) || 80) * scale,
+    (Number(animation.ellipseRotate) || 0) * Math.PI / 180,
+    0,
+    Math.PI * 2,
+  );
+  ctx.strokeStyle = animation.orbitColor || '#42b98355';
+  ctx.lineWidth = Math.max(0.1, Number(animation.orbitLineWidth) || 1) * scale;
+  ctx.stroke();
+  ctx.restore();
+}
+
 // 把前一个动画帧初始化为播放前状态
 export function initPrevFrame(pen: Pen) {
   pen.prevFrame = {};

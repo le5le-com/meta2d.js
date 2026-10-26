@@ -303,6 +303,7 @@ export interface Pen extends Rect {
 
   // Cycle count. Infinite if == 0.
   animateCycle?: number;
+  animate?: string;
   nextAnimate?: string;
   // TODO: video 与 动画公用该属性，可能是个问题
   autoPlay?: boolean;
@@ -323,6 +324,25 @@ export interface Pen extends Rect {
   animateLineDash?: number[];
   animateReverse?: boolean;
   animateTimingFunction?: string[] | string; // 三次贝塞尔时间函数两控制点的坐标参数: number[]
+  // 节点环绕动画配置
+  // 环绕动画：围绕的目标节点 id，不能是当前节点自身
+  orbitTargetId?: string;
+  // 环绕动画：椭圆轨道的水平半轴，默认 180
+  semiMajor?: number;
+  // 环绕动画：椭圆轨道的垂直半轴，默认 80
+  semiMinor?: number;
+  // 环绕动画：椭圆轨道整体旋转角度（度），默认 0
+  ellipseRotate?: number;
+  // 环绕动画：速度档位 1-10（5 为旧版默认角速度 0.012 弧度/帧），旧配置可用小数弧度
+  speed?: number;
+  // 环绕动画：起始角度（度），默认 0
+  startAngle?: number;
+  // 环绕动画：是否显示椭圆轨道辅助线
+  showOrbitLine?: boolean;
+  // 环绕动画：轨道辅助线颜色
+  orbitColor?: string;
+  // 环绕动画：轨道辅助线宽度，默认 1
+  orbitLineWidth?: number;
   // 结束动画后，是否保持动画状态
   keepAnimateState?: boolean;
 

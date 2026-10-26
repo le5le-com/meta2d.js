@@ -2013,8 +2013,13 @@ export class Meta2d {
       if (pen.calculative.pause) {
         const d = Date.now() - pen.calculative.pause;
         pen.calculative.pause = undefined;
-        pen.calculative.frameStart += d;
-        pen.calculative.frameEnd += d;
+        if (pen.animate === 'orbit') {
+          pen.calculative.start += d;
+          pen.calculative.frameStart += d;
+        } else {
+          pen.calculative.frameStart += d;
+          pen.calculative.frameEnd += d;
+        }
       } else {
         let index = -1;
         if (params !== undefined && pen.animations) {

@@ -69,6 +69,8 @@ export class Dialog {
     this.box.appendChild(this.dialog);
     parentElement.appendChild(this.box);
 
+    this.box.oncontextmenu = (e) => { e.preventDefault() };
+
     this.dialog.onclick = (e) => {
       e.stopPropagation();
     };

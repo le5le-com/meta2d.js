@@ -11,6 +11,12 @@ const iframes:{
   [key: string]: HTMLElement;
 } = {};
 
+interface IframePen extends Pen {
+  allow?: string;
+  referrerPolicy?: ReferrerPolicy;
+  sandbox?: string;
+}
+
 /**
  * 从iframe URL中提取key用于匹配
  * 如果URL中有id参数，返回id值；否则返回完整URL
@@ -57,7 +63,7 @@ function matchIframe(pen: Pen) {
   return false;
 }
 
-export function iframe(pen: Pen) {
+export function iframe(pen: IframePen) {
   if (!pen.onDestroy) {
     pen.onDestroy = destory;
     pen.onMove = move;
@@ -95,6 +101,9 @@ export function iframe(pen: Pen) {
     iframe.style.border = 'none';
     iframe.src = pen.iframe;
     iframe.allowFullscreen = true;
+    pen.allow && (iframe.allow = pen.allow);
+    pen.referrerPolicy && (iframe.referrerPolicy = pen.referrerPolicy);
+    pen.sandbox && (iframe.sandbox = pen.sandbox); 
     pen.calculative.iframe = pen.iframe;
     pen.calculative.iframeKey = getIframeKey(pen.iframe);
     div.appendChild(iframe);
