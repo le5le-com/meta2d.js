@@ -293,20 +293,60 @@ export function getLineLength(pen: Pen): number {
   return len;
 }
 
-export function createLineSvgPath(line:Pen) {
-  let path:SVGGeometryElement
-  let from:Point = null
-  line.calculative.worldAnchors.forEach(pt=>{
+type LineSvgPathCache = {
+  key: string;
+  path: SVGGeometryElement;
+};
+
+const lineSvgPathCache = new WeakMap<Pen, LineSvgPathCache>();
+
+export function createLineSvgPath(line: Pen, offset?: Point) {
+  const worldAnchors = line.calculative.worldAnchors;
+  const pointKey = (point?: Point) =>
+    point ? `${point.x},${point.y}` : '';
+  const key = `${line.close ? 1 : 0};${pointKey(offset)};${worldAnchors
+    .map(
+      (pt) =>
+        `${pointKey(pt)}:${pointKey(pt.next)}:${pointKey(pt.prev)}`
+    )
+    .join(';')}`;
+  const cached = lineSvgPathCache.get(line);
+  if (cached?.key === key) {
+    return cached.path;
+  }
+
+  const norm = (point: Point): Point =>
+    point && offset
+      ? { ...point, x: point.x - offset.x, y: point.y - offset.y }
+      : point;
+  let path: SVGGeometryElement;
+  let from: Point = null;
+  worldAnchors.forEach((pt) => {
     if (from) {
-      path = createSvgPath(path,from,from.next,pt.prev,pt)
+      path = createSvgPath(
+        path,
+        norm(from),
+        norm(from.next),
+        norm(pt.prev),
+        norm(pt)
+      );
     }
     from = pt;
-  })
-  if(line.close){
-    let pt = line.calculative.worldAnchors[0]
-    path = createSvgPath(path,from,from.next,pt.prev,pt)
+  });
+  if (line.close) {
+    const pt = worldAnchors[0];
+    path = createSvgPath(
+      path,
+      norm(from),
+      norm(from.next),
+      norm(pt.prev),
+      norm(pt)
+    );
   }
-  return path
+  if (path) {
+    lineSvgPathCache.set(line, { key, path });
+  }
+  return path;
 }
 /**
  * 连线在 rect 内， 连线与 rect 相交
@@ -451,8 +491,11 @@ export function createSvgPath(path:SVGGeometryElement,from: Point, cp1: Point, c
   return path
 }
 // 获取线段的某个点的导数和位置
-export function getLinePointPosAndAngle (path:SVGGeometryElement,distance: number){
-  const totalLength = path.getTotalLength()
+export function getLinePointPosAndAngle (
+  path: SVGGeometryElement,
+  distance: number,
+  totalLength: number = path.getTotalLength()
+){
   if(distance<0 || distance>totalLength) return null
   // 坐标值较大时，固定 0.01 的 delta 会导致 atan2 精度不足，
   // 按路径总长取一个相对安全的采样步长

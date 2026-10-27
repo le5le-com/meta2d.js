@@ -12,7 +12,6 @@ import {
   getLineRect,
   getSplitAnchor,
   getLinePointPosAndAngle,
-  createSvgPath,
   getLineLength,
   createLineSvgPath,
   renderLineDirectionMarkers,
@@ -2665,15 +2664,16 @@ function lineAnimateIconRender(icon:any) {
 function renderElementOnLine(ctx: CanvasRenderingContext2D, line:Pen, draw:Function) {
   const scale = line.calculative.canvas.store.data.scale
   const len = getLineLength(line) / scale
+  const path = createLineSvgPath(line, line.calculative.worldAnchors[0])
 
   if (line.lineAnimateLoopMode) {
-    renderLoopElementsOnLine(ctx, line, draw, len, scale)
+    renderLoopElementsOnLine(ctx, line, draw, len, scale, path)
   } else {
     // 原有的间隔重复模式
     const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : (line.lineAnimateDash?.split(',').map(i=>Number(i)) || [10,20])
     const elesPos = computeLineDashSegments(len,dash,line.lineAnimateDashOffset,line.lineAnimateElementCount)
     elesPos.forEach((i,index)=>{
-      const pos:any = calculateLineFrameStates(line,i.start)
+      const pos:any = calculateLineFrameStates(line,i.start,path)
       if(!pos)return
       try {
         ctx.save()
@@ -2695,7 +2695,8 @@ function renderLoopElementsOnLine(
   line: Pen,
   draw: Function,
   len: number,
-  scale: number
+  scale: number,
+  path?: SVGGeometryElement
 ) {
   const dash = Array.isArray(line.lineAnimateDash)? line.lineAnimateDash : (line.lineAnimateDash?.split(',').map(i=>Number(i)) || [10,20])
 
@@ -2734,7 +2735,7 @@ function renderLoopElementsOnLine(
 
             try {
               ctx.save()
-              const pos: any = calculateLineFrameStates(line, offsetInstance)
+              const pos: any = calculateLineFrameStates(line, offsetInstance, path)
               if (pos) {
                 draw(ctx, line, pos, elementIndex)
               }
@@ -2774,7 +2775,7 @@ function renderLoopElementsOnLine(
 
             try {
               ctx.save()
-              const pos: any = calculateLineFrameStates(line, offsetInstance)
+              const pos: any = calculateLineFrameStates(line, offsetInstance, path)
               if (pos) {
                 draw(ctx, line, pos, elementIndex)
               }
@@ -2847,7 +2848,11 @@ function computeLineDashSegments(lineLength: number, dashArray: number[], offset
   return result;
 }
 
-function calculateLineFrameStates(line: Pen, offsetInstance: number = 0) {
+function calculateLineFrameStates(
+  line: Pen,
+  offsetInstance: number = 0,
+  path?: SVGGeometryElement
+) {
   const worldAnchors = line.calculative.worldAnchors;
   if (!worldAnchors || worldAnchors.length < 2) {
     return null;
@@ -2855,30 +2860,8 @@ function calculateLineFrameStates(line: Pen, offsetInstance: number = 0) {
 
   // 把路径平移到原点附近，避免 worldAnchors 坐标值过大时
   // SVG getPointAtLength / atan2 出现数值精度问题导致抖动
-  const offset = { x: worldAnchors[0].x, y: worldAnchors[0].y };
-  const norm = (p: Point): Point =>
-    p ? { ...p, x: p.x - offset.x, y: p.y - offset.y } : p;
-
-  let path: SVGGeometryElement;
-  let from: Point = null;
-  worldAnchors.forEach((pt) => {
-    if (from) {
-      const nFrom = norm(from);
-      nFrom.next = norm(from.next);
-      const nPt = norm(pt);
-      nPt.prev = norm(pt.prev);
-      path = createSvgPath(path, nFrom, nFrom.next, nPt.prev, nPt);
-    }
-    from = pt;
-  });
-  if (line.close) {
-    const pt = worldAnchors[0];
-    const nFrom = norm(from);
-    nFrom.next = norm(from.next);
-    const nPt = norm(pt);
-    nPt.prev = norm(pt.prev);
-    path = createSvgPath(path, nFrom, nFrom.next, nPt.prev, nPt);
-  }
+  const offset = worldAnchors[0];
+  path ??= createLineSvgPath(line, offset);
 
   let instance = 0;
   if (line.animateReverse) {
@@ -2892,7 +2875,7 @@ function calculateLineFrameStates(line: Pen, offsetInstance: number = 0) {
       line.calculative.animatePos -
       offsetInstance * line.calculative.canvas.store.data.scale;
   }
-  const pos: any = getLinePointPosAndAngle(path, instance);
+  const pos: any = getLinePointPosAndAngle(path, instance, line.length);
   if (!pos) return null;
   pos.x += offset.x;
   pos.y += offset.y;
