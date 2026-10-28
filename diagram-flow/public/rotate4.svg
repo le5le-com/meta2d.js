@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>rotate4</title>
+    <defs>
+        <path d="M8.24273106,8.50385357 L8,8.5 L8,12 L4,8 L8,4 L8,7.5 C12.6090673,7.5 16.3613215,11.168453 16.4962434,15.7448397 L16.5,16 L20,16 L16,20 L12,16 L15.5,16 C15.5,11.9390827 12.2725256,8.63198248 8.24273106,8.50385357 Z" id="path-1"></path>
+        <filter x="-40.1%" y="-40.1%" width="185.4%" height="186.4%" filterUnits="objectBoundingBox" id="filter-2">
+            <feMorphology radius="1" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
+            <feOffset dx="0" dy="1" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="1.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="rotate4" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="透明底图" fill-opacity="0" fill="#FFFFFF" x="0" y="0" width="16" height="16"></rect>
+        <g id="路径" transform="translate(12.000000, 12.000000) scale(-1, -1) translate(-12.000000, -12.000000) ">
+            <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+            <path stroke="#FFFFFF" stroke-width="1" d="M8.5,2.79289322 L8.5,7.01365433 C10.7380047,7.13620316 12.7582434,8.07641228 14.2671154,9.54063675 C15.7910135,11.0194428 16.7932045,13.0327879 16.9714543,15.2781227 L16.9714543,15.2781227 L21.126401,15.5807058 L16,20.7071068 L10.7928932,15.5 L14.9824182,15.5 C14.8629059,13.8065673 14.1410456,12.2794352 13.0297653,11.1315764 C11.9110658,9.97605428 10.3977653,9.20478011 8.70704123,9.03524368 L8.70704123,9.03524368 L8.4227591,13.1298659 L3.29289322,8 L8.5,2.79289322 Z" fill="#000000" fill-rule="evenodd"></path>
+        </g>
+    </g>
+</svg>

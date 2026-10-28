@@ -1,12 +1,14 @@
-# core
+# @meta2d/core
 
-The core of meta2d.
+乐吾乐 Meta2d.js 的高性能 2D 引擎核心库，提供高性能绘画、编辑（拖拽、缩放、旋转、属性设置）、动画、事件交互、实时数据等开箱即用的功能，方便实现图形编辑、在线设计、动态数字可视化、Web 组态、架构图、流程设计等场景。
 
-# How to Contribute
+# 核心机制
 
-If you have any comment or advice, please report your issue, or make any change as you wish and submit an PR.
-
-alsmile123@qq.com
+- 数据驱动
+- 局部渲染
+- 多线程
+- 生命周期管理
+- 注册扩展机制
 
 # License
 

@@ -1,1 +1,1 @@
-export * from './src/svg';
+export { parseSvg } from './src/svg';

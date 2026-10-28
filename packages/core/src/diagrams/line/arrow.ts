@@ -1,310 +1,158 @@
-import { Pen, LineAnimateType } from '../../pen';
-import { Point } from '../../point';
-import { deepClone } from '../../utils';
-import { getBezierPoint, getQuadraticPoint } from './curve';
+import { calcRotate, Pen, Point } from '../../models';
 
-//箭头动画
-export function drawArrow(
-  pen: Pen,
-  ctx?: CanvasRenderingContext2D | Path2D
-): Path2D {
-  const path = !ctx ? new Path2D() : ctx;
-  let worldAnchors = pen.calculative.worldAnchors;
-  let scale = pen.calculative.canvas.store.data.scale;
-  let size = (pen.calculative.animateLineWidth || 6) * scale; // 箭头大小
-  let arrowLength = (pen.animateLineWidth*2 || 12) * scale; // 箭头长度
-  if(pen.lineAnimateType === LineAnimateType.WaterDrop){
-    arrowLength = (pen.animateLineWidth*4 || 24) * scale; // 水滴长度
-  }
-  let d = (pen.animateInterval || 100) * scale; // 箭头间距
-  let smoothLenth = pen.calculative.lineWidth *(pen.calculative.lineSmooth || 0)//*scale;
-  let lineWidth = (pen.calculative.animateLineWidth/2 || 3) * scale;
-  if (pen.animateReverse) {
-    //箭头反向
-    arrowLength = -arrowLength;
-    size = -size;
-  }
-  if (worldAnchors.length > 1) {
-    let from: Point; // 上一个点
-    let lastLength = 0;
-    if(pen.close){
-      worldAnchors = deepClone(worldAnchors);
-      worldAnchors.push(worldAnchors[0]);
-    }
-    if(['polyline','line'].includes(pen.lineName)){
-      for (let i = 0; i < worldAnchors.length; i++) {
-        let pt = worldAnchors[i];
-        //获取箭头角度
-        if (from) {
-          let angle = getAngle(from, pt);
-          let newP = {
-            x:
-              from.x +
-              ((pen.calculative.animatePos - lastLength) % d) *
-                Math.cos((angle * Math.PI) / 180),
-            y:
-              from.y -
-              ((pen.calculative.animatePos - lastLength) % d) *
-                Math.sin((angle * Math.PI) / 180),
-          };
-          if (pen.animateReverse) {
-            newP = {
-              x:
-                from.x +
-                ((pen.length - (pen.calculative.animatePos + lastLength)) % d) *
-                  Math.cos((angle * Math.PI) / 180),
-              y:
-                from.y -
-                ((pen.length - (pen.calculative.animatePos + lastLength)) % d) *
-                  Math.sin((angle * Math.PI) / 180),
-            };
-          }
-          let newPTFrom = Math.sqrt(
-            (newP.x - from.x) ** 2 + (newP.y - from.y) ** 2
-          );
-          let ptTFrom = Math.sqrt((pt.x - from.x) ** 2 + (pt.y - from.y) ** 2);
-          while (newPTFrom < ptTFrom) {
-            if (
-              ((pen.animateReverse && newPTFrom - arrowLength < ptTFrom) || //不允许超出连线绘制
-              (!pen.animateReverse &&
-                newPTFrom > arrowLength)) &&
-                newPTFrom > (smoothLenth+arrowLength) &&
-                ptTFrom - newPTFrom > smoothLenth
-            ) {
-              if(pen.lineAnimateType === LineAnimateType.Arrow){
-                arrow(path, newP, size, angle, lineWidth, arrowLength);
-              }else if(pen.lineAnimateType === LineAnimateType.WaterDrop){
-                waterDrop(path, newP, pen.animateReverse, angle, lineWidth, arrowLength);
-              }
-            }
-            newP.x += d * Math.cos((angle * Math.PI) / 180);
-            newP.y -= d * Math.sin((angle * Math.PI) / 180);
-            newPTFrom = Math.sqrt(
-              (newP.x - from.x) ** 2 + (newP.y - from.y) ** 2
-            );
-          }
-        }
-        from = pt;
-      }
-    }else{
-      let from: Point; // 上一个点
-      let pos = (pen.calculative.animatePos % d) / d;
-      if(pos>1){
-        pos = 1
-      }
-      if(pen.animateReverse){
-        pos = 1-pos;
-      }
-      let step = 1 / (worldAnchors[0].lineLength / d);
-      let lastPos = pos * step;
-      let i;
-      worldAnchors.forEach((pt: Point) => {
-        let to = pt;
-        if (from) {
-          step = 1 / (from.lineLength / d);
-          // pos = pos % step;
-          if (from.next) {
-            if (to.prev) {
-              for ( i = lastPos; i < 1; i += step) {
-                let point = getBezierPoint(i, from, from.next, to.prev, to);
-                let pointNext = getBezierPoint(
-                  i + 0.001,
-                  from,
-                  from.next,
-                  to.prev,
-                  to,
-                );
-                let angle = getAngle(point, pointNext);
-                if (pen.lineAnimateType === LineAnimateType.Arrow) {
-                  arrow(path, point, size, angle, lineWidth, arrowLength);
-                } else if (
-                  pen.lineAnimateType === LineAnimateType.WaterDrop
-                ) {
-                  waterDrop(
-                    path,
-                    point,
-                    pen.animateReverse,
-                    angle,
-                    lineWidth,
-                    arrowLength,
-                  );
-                }
-              }
-            } else {
-              for (i = lastPos; i < 1; i += step) {
-                let point = getQuadraticPoint(i, from, from.next, to);
-                let pointNext = getQuadraticPoint(
-                  i + 0.001,
-                  from,
-                  from.next,
-                  to,
-                );
-                let angle = getAngle(point, pointNext);
-                if (pen.lineAnimateType === LineAnimateType.Arrow) {
-                  arrow(path, point, size, angle, lineWidth, arrowLength);
-                } else if (
-                  pen.lineAnimateType === LineAnimateType.WaterDrop
-                ) {
-                  waterDrop(
-                    path,
-                    point,
-                    pen.animateReverse,
-                    angle,
-                    lineWidth,
-                    arrowLength,
-                  );
-                }
-              }
-            }
-          } else {
-            if (to.prev) {
-              for (i = lastPos; i < 1; i += step) {
-                let point = getQuadraticPoint(i, from, to.prev, to);
-                let pointNext = getQuadraticPoint(
-                  i + 0.001,
-                  from,
-                  to.prev,
-                  to,
-                );
-                let angle = getAngle(point, pointNext);
-                if (pen.lineAnimateType === LineAnimateType.Arrow) {
-                  arrow(path, point, size, angle, lineWidth, arrowLength);
-                } else if (
-                  pen.lineAnimateType === LineAnimateType.WaterDrop
-                ) {
-                  waterDrop(
-                    path,
-                    point,
-                    pen.animateReverse,
-                    angle,
-                    lineWidth,
-                    arrowLength,
-                  );
-                }
-              }
-            } else {
-              let angle = getAngle(from, to);
-              for (i = lastPos; i < 1; i += step) {
-                let point = {
-                  x: from.x + (to.x - from.x) * i,
-                  y: from.y + (to.y - from.y) * i,
-                };
-                if (pen.lineAnimateType === LineAnimateType.Arrow) {
-                  arrow(path, point, size, angle, lineWidth, arrowLength);
-                } else if (
-                  pen.lineAnimateType === LineAnimateType.WaterDrop
-                ) {
-                  waterDrop(
-                    path,
-                    point,
-                    pen.animateReverse,
-                    angle,
-                    lineWidth,
-                    arrowLength,
-                  );
-                }
-              }
-            }
-          }
-        }
-        from = pt;
-        if(!i){
-          i = lastPos;
-        }else {
-          lastPos = i-1
-        }
-      });
-    }
-  }
-  if (path instanceof Path2D) return path;
-}
+const arrows: Record<string, (ctx: CanvasRenderingContext2D, point: Point, size?: number) => void> = {};
 
-//获取两点连线和水平线的夹角
-function getAngle(p1, p2) {
-  let dx = p2.x - p1.x;
-  let dy = p2.y - p1.y;
-  let angle = (Math.atan(dy / dx) * 180) / Math.PI;
-  if (p2.x >= p1.x) {
-    angle = -angle;
+export function fromArrow(ctx: CanvasRenderingContext2D, pen: Pen) {
+  if (!arrows[pen.fromArrow]) {
+    return;
+  }
+  const from = pen.anchors[0];
+  const { x, y } = from;
+  const pt: Point = { x, y };
+  if (from.cp1) {
+    pt.rotate = calcRotate(from.cp1, from) + 90;
   } else {
-    angle = 180 - angle;
+    const p = pen.anchors[1];
+    if (!p) {
+      return;
+    }
+    if (p.cp2) {
+      pt.rotate = calcRotate(p.cp2, from) + 90;
+    } else {
+      pt.rotate = calcRotate(p, from) + 90;
+    }
   }
-  return angle;
+  ctx.save();
+  ctx.beginPath();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+  ctx.lineJoin = 'round';
+  if (pen.fromArrowColor) {
+    ctx.strokeStyle = pen.fromArrowColor;
+  }
+  if (pen.fromArrowFillColor) {
+    ctx.fillStyle = pen.fromArrowFillColor;
+  } else {
+    ctx.fillStyle = ctx.strokeStyle;
+  }
+  arrows[pen.fromArrow](ctx, pt, pen.fromArrowSize);
+  ctx.restore();
 }
 
-//获取p相对rp旋转_angle后的点坐标
-function getRotatePoint(p: Point, rp: Point, _angle: number) {
-  let angle = ((180 - _angle) * Math.PI) / 180;
-  return {
-    x: (p.x - rp.x) * Math.cos(angle) - (p.y - rp.y) * Math.sin(angle) + rp.x,
-    y: (p.x - rp.x) * Math.sin(angle) + (p.y - rp.y) * Math.cos(angle) + rp.y,
-  };
+export function toArrow(ctx: CanvasRenderingContext2D, pen: Pen) {
+  if (!arrows[pen.toArrow] || pen.anchors.length < 2) {
+    return;
+  }
+
+  const to = pen.anchors[pen.anchors.length - 1];
+  const { x, y } = to;
+  const pt: Point = { x, y };
+  if (to.cp2) {
+    pt.rotate = calcRotate(to.cp2, to) + 90;
+  } else {
+    const p = pen.anchors[pen.anchors.length - 2];
+    if (p.cp1) {
+      pt.rotate = calcRotate(p.cp1, to) + 90;
+    } else {
+      pt.rotate = calcRotate(p, to) + 90;
+    }
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+  ctx.lineJoin = 'round';
+  if (pen.toArrowColor) {
+    ctx.strokeStyle = pen.toArrowColor;
+  }
+  if (pen.toArrowFillColor) {
+    ctx.fillStyle = pen.toArrowFillColor;
+  } else {
+    ctx.fillStyle = ctx.strokeStyle;
+  }
+  arrows[pen.toArrow](ctx, pt, pen.toArrowSize);
+  ctx.restore();
 }
 
-//标准箭头
-function arrow(path:CanvasRenderingContext2D |Path2D, newP:Point, size:number, angle:number, lineWidth:number, arrowLength:number){
-  let pr = getRotatePoint(
-    { x: newP.x + size, y: newP.y + 0.57*size },
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  let pl = getRotatePoint(
-    { x: newP.x + size, y: newP.y - 0.57*size },
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  let pr1 = getRotatePoint(
-    { x: newP.x + size, y: newP.y + lineWidth/2 },
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  let pr2 = getRotatePoint(
-    { x: newP.x + arrowLength, y: newP.y + lineWidth/2},
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  let pl1 = getRotatePoint(
-    { x: newP.x + size, y: newP.y - lineWidth/2 },
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  let pl2 = getRotatePoint(
-    { x: newP.x + arrowLength, y: newP.y - lineWidth/2 },
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  path.moveTo(pr.x, pr.y);
-  path.lineTo(newP.x, newP.y);
-  path.lineTo(pl.x, pl.y);
-  path.lineTo(pl1.x, pl1.y);
-  path.lineTo(pl2.x, pl2.y);
-  path.lineTo(pr2.x, pr2.y);
-  path.lineTo(pr1.x, pr1.y);
-  path.lineTo(pr.x, pr.y);
-}
+arrows.triangle = (ctx: CanvasRenderingContext2D, point: Point, size = 10) => {
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const fromX = point.x - size;
+  ctx.moveTo(fromX, point.y - size / 3);
+  ctx.lineTo(point.x, point.y);
+  ctx.lineTo(fromX, point.y + size / 3);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
+};
 
-//水滴
-function waterDrop(path:CanvasRenderingContext2D |Path2D, newP:Point, reverse:boolean, angle:number, lineWidth:number, arrowLength:number){
-  let dis = lineWidth/2;
-  if(reverse){
-    dis = -lineWidth/2;
-  }
-  let pl1 = getRotatePoint(
-    { x: newP.x, y: newP.y + dis },
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  let pE = getRotatePoint(
-    { x: newP.x + arrowLength, y: newP.y  },
-    { x: newP.x, y: newP.y },
-    angle
-  );
-  let rAngle =Math.PI/2;
-  if(reverse){
-    rAngle = -Math.PI/2;
-  }
-  path.moveTo(newP.x, newP.y);
-  path.arc(newP.x, newP.y, lineWidth/2, -rAngle-angle/180*Math.PI, rAngle-angle/180*Math.PI, false);
-  path.lineTo(pE.x, pE.y);
-  path.lineTo(pl1.x, pl1.y);
-}
+arrows.reverseTriangle = (ctx: CanvasRenderingContext2D, point: Point, size = 10) => {
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const fromX = point.x - size / 2;
+  ctx.moveTo(point.x, point.y - size / 2);
+  ctx.lineTo(fromX, point.y);
+  ctx.lineTo(point.x, point.y + size / 2);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
+};
+
+arrows.circle = (ctx: CanvasRenderingContext2D, point: Point, size = 8) => {
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const r = size / 2;
+  ctx.arc(point.x - r, point.y, r, 0, 2 * Math.PI);
+  ctx.stroke();
+  ctx.fill();
+};
+
+arrows.diamond = (ctx: CanvasRenderingContext2D, point: Point, size = 12) => {
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const fromX = point.x - size;
+  const r = size / 2;
+  ctx.moveTo(fromX, point.y);
+  ctx.lineTo(fromX + r, point.y - r / 2);
+  ctx.lineTo(point.x, point.y);
+  ctx.lineTo(fromX + r, point.y + r / 2);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
+};
+
+arrows.line = (ctx: CanvasRenderingContext2D, point: Point, size = 10) => {
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const fromX = point.x - size;
+  ctx.moveTo(fromX, point.y - size / 3);
+  ctx.lineTo(point.x, point.y);
+  ctx.lineTo(fromX, point.y + size / 3);
+  ctx.stroke();
+};
+
+arrows.lineUp = (ctx: CanvasRenderingContext2D, point: Point, size = 10) => {
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const fromX = point.x - size;
+  ctx.moveTo(fromX, point.y - size / 2);
+  ctx.lineTo(point.x, point.y);
+  ctx.stroke();
+};
+
+arrows.lineDown = (ctx: CanvasRenderingContext2D, point: Point, size = 10) => {
+  ctx.translate(point.x, point.y);
+  ctx.rotate((point.rotate * Math.PI) / 180);
+  ctx.translate(-point.x, -point.y);
+  const fromX = point.x - size;
+  ctx.moveTo(fromX, point.y + size / 2);
+  ctx.lineTo(point.x, point.y);
+  ctx.stroke();
+};

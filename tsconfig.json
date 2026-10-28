@@ -1,28 +1,39 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": ".",
+    "ignoreDeprecations": "5.0",
+    "rootDir": "./packages",
     "outDir": "./dist",
     "sourceMap": true,
     "declaration": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "esnext",
     "allowJs": true,
-    "lib": [
-      "es2018",
-      "es2020.string",
-      "dom",
-      "es2021.string"
-    ],
-    "downlevelIteration": true,
+    "lib": ["esnext", "dom", "webworker"],
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports":true,
-    "types": ["node","offscreencanvas"],
+    "allowSyntheticDefaultImports": true,
+    "types": ["node", "offscreencanvas", "vite/client"],
     "paths": {
-      "@meta2d/*": ["packages/*"],
-    }
+      "*": ["./*"],
+      "@meta2d/*": ["./packages/*"]
+    },
+    "strict": false,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false
   },
   "include": ["packages/**/*"],
-  "exclude": ["node_modules", "dist","meta2d.js", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist", "meta2d.js", "**/*.spec.ts", "diagram-flow"],
+  "ts-node": {
+    "transpileOnly": true
+  }
 }

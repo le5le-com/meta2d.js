@@ -1,0 +1,24 @@
+{
+  "name": "performance-test",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@antv/g6": "^5.1.1",
+    "@meta2d/core": "^2.0.0",
+    "fabric": "^6.9.1",
+    "konva": "^10.0.12",
+    "leafer-ui": "^1.12.2",
+    "pixi.js": "^8.14.3",
+    "stats.js": "^0.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@meta2d/echarts",
+  "version": "2.0.0",
+  "description": "The @meta2d/echarts is a wrapper for echarts using meta2d.js.",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
+  "scripts": {
+    "copy": "shx cp package.build.json ../../dist/echarts/package.json",
+    "build": "tsc && npm run copy"
+  },
+  "keywords": [
+    "Meta2d.js",
+    "echarts"
+  ],
+  "author": "le5le.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
+  "dependencies": {
+    "@meta2d/core": "workspace:*",
+    "echarts": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

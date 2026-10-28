@@ -1,0 +1,19 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "prettier" // Prettier 优先
+  ],
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": "warn", // console.warn 提醒，不报错
+    "no-unused-vars": "error" // 变量写了不用，报错
+  }
+}

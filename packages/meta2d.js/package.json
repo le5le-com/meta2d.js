@@ -1,38 +1,43 @@
 {
   "name": "meta2d.js",
-  "version": "1.1.17",
-  "description": "The bundle of meta2d.",
-  "main": "meta2d.js",
+  "version": "2.0.0",
+  "description": "Meta2d.js UMD bundle for CDN and direct script inclusion",
+  "main": "../../dist/meta2d.js/meta2d.min.js",
+  "types": "../../dist/meta2d.js/meta2d.d.ts",
   "scripts": {
-    "copy": "shx cp package.build.json ../../dist/meta2d.js/package.json",
-    "build": "webpack && npm run copy "
+    "build": "node build.js && node ../../scripts/fix-worker-paths-relative.js",
+    "build:vite": "vite build && node ../../scripts/fix-worker-paths-relative.js",
+    "preview": "vite preview"
   },
   "keywords": [
-    "meta2d.js"
+    "Meta2d.js",
+    "2D",
+    "canvas",
+    "umd",
+    "bundle"
   ],
-  "author": "alsmile123@qq.com",
+  "author": "le5le.com",
   "license": "MIT",
-  "dependencies": {
-    "@meta2d/core": "workspace:*",
-    "@meta2d/class-diagram": "workspace:*",
-    "@meta2d/sequence-diagram": "workspace:*",
-    "@meta2d/activity-diagram": "workspace:*",
-    "@meta2d/flow-diagram": "workspace:*",
-    "@meta2d/chart-diagram": "workspace:*",
-    "@meta2d/form-diagram": "workspace:*",
-    "@meta2d/fta-diagram": "workspace:*",
-    "@meta2d/le5le-charts": "workspace:*"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
   },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
   "devDependencies": {
-    "copyfiles": "latest",
-    "path": "latest",
-    "ts-loader": "latest",
-    "typescript": "^5.6.3",
-    "webpack": "latest",
-    "webpack-cli": "latest"
+    "terser": "^5.36.0",
+    "tslib": "^2.8.1",
+    "typescript": "latest",
+    "vite": "^6.0.7"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+  "dependencies": {
+    "@meta2d/chart": "workspace:*",
+    "@meta2d/core": "workspace:*",
+    "@meta2d/echarts": "workspace:*",
+    "@meta2d/form": "workspace:*",
+    "@meta2d/fta": "workspace:*",
+    "@meta2d/uml": "workspace:*"
+  }
 }

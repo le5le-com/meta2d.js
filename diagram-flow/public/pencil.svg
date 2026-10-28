@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>1.基础/3.icon/系统/铅笔</title>
+    <defs>
+        <filter x="-133.3%" y="-39.0%" width="366.7%" height="177.9%" filterUnits="objectBoundingBox" id="filter-1">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="1.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+    </defs>
+    <g id="1.基础/3.icon/系统/铅笔" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="透明底图" fill-opacity="0" fill="#FFFFFF" x="0" y="0" width="16" height="16"></rect>
+        <g id="编组" filter="url(#filter-1)" transform="translate(11.813235, 12.186765) rotate(-315.000000) translate(-11.813235, -12.186765) translate(8.813235, 1.922640)" fill-rule="nonzero">
+            <path d="M5,4 L1,4 L1,15.723016 L3,19.056 L5,15.723016 L5,4 Z M5,1 L1,1 L1,3 L5,3 L5,1 Z" id="形状结合" fill="#FFFFFF"></path>
+            <path d="M6,15.723016 C6,15.90426 5.95074217,16.0820964 5.85749293,16.2375118 L3.42874646,20.2854226 C3.28667238,20.5222127 2.97954226,20.5989952 2.74275212,20.4569211 C2.67237732,20.4146963 2.61347842,20.3557974 2.57125354,20.2854226 L0.142507074,16.2375118 C0.0492578333,16.0820964 0,15.90426 0,15.723016 L0,1 C0,0.44771525 0.44771525,7.27595761e-12 1,7.27595761e-12 L5,7.27595761e-12 C5.55228475,7.27595761e-12 6,0.44771525 6,1 L6,15.723016 Z M5,4 L1,4 L1,15.723016 L3,19.056 L5,15.723016 L5,4 Z M5,1 L1,1 L1,3 L5,3 L5,1 Z" id="形状结合" fill="#000000"></path>
+        </g>
+    </g>
+</svg>

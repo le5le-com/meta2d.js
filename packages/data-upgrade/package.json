@@ -1,0 +1,32 @@
+{
+  "name": "@meta2d/data-upgrade",
+  "version": "2.0.0",
+  "description": "The tool of upgrading data from v1 to v2",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "copy": "shx cp package.build.json ../../dist/data-upgrade/package.json",
+    "build": "tsc && npm run copy"
+  },
+  "keywords": [
+    "Meta2d.js",
+    "2D",
+    "canvas"
+  ],
+  "author": "le5le.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le5le-com/meta2d.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "homepage": "https://github.com/le5le-com/meta2d.js#readme",
+  "dependencies": {
+    "@meta2d/core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

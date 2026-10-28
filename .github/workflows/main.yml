@@ -3,10 +3,10 @@ name: Publish to npm on release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v2.*'
 
 permissions:
-  id-token: write  # Required for OIDC
+  id-token: write
   contents: read
 
 jobs:
@@ -14,22 +14,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
-          version: 10.33.2
+          version: 12.15.0
 
       - name: Install dependencies
         run: pnpm install --ignore-scripts --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Extract version from tag
         id: extract_version
@@ -40,7 +40,7 @@ jobs:
           cd dist/core
           npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
 
-      - name: Update meta2d.js version
+      - name: Update bundle version
         run: |
           cd dist/meta2d.js
           npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
@@ -48,73 +48,42 @@ jobs:
       - name: Publish core
         run: |
           cd dist/core
-          # 1.x.x 版本使用 legacy tag，忽略 npm 上的 2.x 版本
-          npm publish --tag legacy
+          npm publish
         continue-on-error: true
 
-      - name: Publish meta2d.js
+      - name: Publish bundle
         run: |
           cd dist/meta2d.js
           npm publish
         continue-on-error: true
 
-      - name: Publish activity
-        run: |
-          cd dist/activity-diagram
-          npm publish
-        continue-on-error: true
-
       - name: Publish chart
         run: |
-          cd dist/chart-diagram
+          cd dist/chart
           npm publish
         continue-on-error: true
 
-      - name: Publish class
+      - name: Publish data-upgrade
         run: |
-          cd dist/class-diagram
-          npm publish --access public
+          cd dist/data-upgrade
+          npm publish
         continue-on-error: true
 
-      - name: Publish flow
+      - name: Publish echarts
         run: |
-          cd dist/flow-diagram
+          cd dist/echarts
           npm publish
         continue-on-error: true
 
       - name: Publish form
         run: |
-          cd dist/form-diagram
+          cd dist/form
           npm publish
         continue-on-error: true
 
       - name: Publish fta
         run: |
-          cd dist/fta-diagram
-          npm publish
-        continue-on-error: true
-
-      - name: Publish le5le-charts
-        run: |
-          cd dist/le5le-charts
-          npm publish
-        continue-on-error: true
-
-      - name: Publish sequence
-        run: |
-          cd dist/sequence-diagram
-          npm publish
-        continue-on-error: true
-
-      - name: Publish plugin-mind-collapse
-        run: |
-          cd dist/plugin-mind-collapse
-          npm publish
-        continue-on-error: true
-
-      - name: Publish plugin-mind-core
-        run: |
-          cd dist/plugin-mind-core
+          cd dist/fta
           npm publish
         continue-on-error: true
 
@@ -124,14 +93,8 @@ jobs:
           npm publish
         continue-on-error: true
 
-      - name: Publish utils
+      - name: Publish uml
         run: |
-          cd dist/utils
-          npm publish
-        continue-on-error: true
-
-      - name: Publish vue
-        run: |
-          cd dist/vue
+          cd dist/uml
           npm publish
         continue-on-error: true

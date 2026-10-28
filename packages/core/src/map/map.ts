@@ -1,247 +1,406 @@
-import { Canvas } from '../canvas';
-import { calcRightBottom, getRect, translateRect } from '../rect';
+import type { Meta2d } from '../meta2d';
+import { getBoundary } from '../models';
+import type { Pen, Point, Rect } from '../models';
 
+const MAP_WIDTH = 320;
+const MAP_HEIGHT = 180;
+const MAP_PADDING = 5;
+const MAP_BORDER = 1;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * 画布鹰眼地图。地图使用独立的 DOM 容器和 PNG 缩略图，蓝色框只表示当前主画布视口。
+ */
 export class ViewMap {
-  box: HTMLElement;
-  readonly boxWidth = 320;
-  readonly boxHeight = 180;
-  readonly ratio = this.boxWidth / this.boxHeight;
-  readonly padding = 5;
-  img: HTMLImageElement;
-  isShow: boolean;
-  isDown: boolean;
-  view: HTMLElement; // 可视区域外框
-  timer: any;
-  constructor(public parent: Canvas) {
+  readonly boxWidth = MAP_WIDTH;
+  readonly boxHeight = MAP_HEIGHT;
+  readonly padding = MAP_PADDING;
+  readonly ratio = MAP_WIDTH / MAP_HEIGHT;
+
+  readonly box: HTMLDivElement;
+  readonly img: HTMLImageElement;
+  readonly view: HTMLDivElement;
+
+  isShow = false;
+  private isDown = false;
+  private refreshTimer?: number;
+  private requestId = 0;
+  private exporting = false;
+  private refreshPending = false;
+  private dragOffset: Point = { x: 0, y: 0 };
+  private imageUrl?: string;
+  private contentRect?: Rect;
+  private displayRect?: Rect;
+  private readonly container: HTMLElement;
+  private readonly originalContainerPosition?: string;
+
+  private readonly onViewChange = () => {
+    if (this.isShow) {
+      this.setView();
+    }
+  };
+  private readonly onContentChange = () => this.scheduleRefresh();
+
+  constructor(private readonly parent: Meta2d) {
     this.box = document.createElement('div');
-    this.img = new Image();
+    this.img = document.createElement('img');
     this.view = document.createElement('div');
 
-    this.box.appendChild(this.img);
-    this.box.appendChild(this.view);
-    this.parent.externalElements?.parentElement.appendChild(this.box);
-
     this.box.className = 'meta2d-map';
-    this.box.onmousedown = this.onMouseDown;
-    this.box.onmousemove = this.onMouseMove;
-    this.box.onmouseup = this.onMouseUp;
-    this.box.onwheel = this.onWheel;
-
-    let sheet: any;
-    for (let i = 0; i < document.styleSheets.length; i++) {
-      if (document.styleSheets[i].title === 'le5le/map') {
-        sheet = document.styleSheets[i];
-      }
+    this.img.alt = '画布鹰眼地图';
+    this.img.draggable = false;
+    this.box.append(this.img, this.view);
+    this.container = this.parent.parentElement || document.body;
+    if (this.container !== document.body && getComputedStyle(this.container).position === 'static') {
+      this.originalContainerPosition = this.container.style.position;
+      this.container.style.position = 'relative';
     }
+    this.container.appendChild(this.box);
+    this.initStyle();
 
-    if (!sheet) {
-      let style = document.createElement('style');
-      style.type = 'text/css';
-      style.title = 'le5le.com/map';
-      document.head.appendChild(style);
+    this.box.addEventListener('pointerdown', this.onPointerDown);
+    this.box.addEventListener('pointermove', this.onPointerMove);
+    this.box.addEventListener('pointerup', this.onPointerUp);
+    this.box.addEventListener('pointercancel', this.onPointerUp);
+    this.box.addEventListener('wheel', this.onWheel, { passive: false });
 
-      style = document.createElement('style');
-      style.type = 'text/css';
-      document.head.appendChild(style);
-      sheet = style.sheet;
-      sheet.insertRule(
-        `.meta2d-map{display:flex;width:${
-          this.boxWidth + 2 * this.padding
-        }px;height:${this.boxHeight + 2 * this.padding}px;padding:${
-          this.padding
-        }px;background:#f4f4f4;border:1px solid #ffffff;box-shadow: 0px 0px 14px 0px rgba(0,10,38,0.30);border-radius:8px;position:absolute;z-index:9999;right:0;bottom:0;justify-content:center;align-items:center;cursor:default;user-select:none;overflow: hidden;}`
-      );
-      sheet.insertRule(
-        '.meta2d-map img{max-width:100%;max-height:100%;pointer-events: none;}'
-      );
-      sheet.insertRule(
-        '.meta2d-map div{pointer-events: none;border:1px solid #1890ff;position:absolute}'
-      );
-    }
+    this.parent.on('scale', this.onViewChange);
+    this.parent.on('translate', this.onViewChange);
+    this.parent.on('resizeView', this.onViewChange);
+    this.parent.on('opened', this.onContentChange);
+    this.parent.on('layer', this.onContentChange);
+    this.parent.on('valueUpdate', this.onContentChange);
   }
 
   show() {
-    this.box.style.display = 'flex';
-
-    const data = this.parent.store.data;
-    if (data.pens.length) {
-      this.img.style.display = 'block';
-      this.img.src = this.parent.toPng(0, undefined, true);
-      this.setView();
-    } else {
-      this.img.style.display = 'none';
-    }
     this.isShow = true;
+    this.box.style.display = 'block';
+    this.refreshImage();
   }
 
   hide() {
-    this.box.style.display = 'none';
     this.isShow = false;
+    this.isDown = false;
+    this.box.style.display = 'none';
+  }
+
+  scheduleRefresh(delay = 200) {
+    if (!this.isShow) {
+      return;
+    }
+    if (this.refreshTimer !== undefined) {
+      window.clearTimeout(this.refreshTimer);
+    }
+    this.refreshTimer = window.setTimeout(() => {
+      this.refreshTimer = undefined;
+      this.refreshImage();
+    }, delay);
   }
 
   setView() {
-    const data = this.parent.store.data;
-    if (data.pens.length) {
-      let rect = getRect(data.pens);
-      const vW =
-        this.parent.store.data.width || this.parent.store.options.width;
-      const vH =
-        this.parent.store.data.height || this.parent.store.options.height;
-      if (vW && vH) {
-        //大屏
-        rect = {
-          x: this.parent.store.data.origin.x,
-          y: this.parent.store.data.origin.y,
-          width: vW * this.parent.store.data.scale,
-          height: vH * this.parent.store.data.scale,
-        };
-      }else{
-        clearTimeout(this.timer);
-        this.timer = setTimeout(()=>{
-          if(this.parent.store.bkImg){
-            this.img.src = this.parent.toPng(0, undefined, true);
-          }
-        },300);
-      }
-      // rect += data.x y 得到相对坐标
-      translateRect(rect, data.x, data.y);
-      const rectRatio = rect.width / rect.height;
-      if (rectRatio > this.ratio) {
-        // 上下留白，扩大高度
-        const height = rect.width / this.ratio;
-        rect.y -= (height - rect.height) / 2;
-        rect.height = height;
-        calcRightBottom(rect);
-      } else {
-        // 左右留白，扩大宽度
-        const width = rect.height * this.ratio;
-        rect.x -= (width - rect.width) / 2;
-        rect.width = width;
-        calcRightBottom(rect);
-      }
-      const canvasRect = this.parent.canvasRect;
-      let left = 0,
-        top = 0;
-      if (rect.x < 0) {
-        left = -rect.x / rect.width;
-      } else if (rect.x + rect.width > canvasRect.width) {
-        let space = 0;
-        if (canvasRect.width > rect.width) {
-          // 均已左上角为起点，这种场景需要剪掉一个留白
-          space = canvasRect.width - rect.width;
-        }
-        left = (-rect.x + space) / rect.width;
-      }
+    const contentRect = this.contentRect || this.getContentRect();
+    if (!contentRect) {
+      this.img.style.display = 'none';
+      this.view.style.display = 'none';
+      return;
+    }
 
-      if (rect.y < 0) {
-        top = -rect.y / rect.height;
-      } else if (rect.y + rect.height > canvasRect.height) {
-        let space = 0;
-        if (canvasRect.height > rect.height) {
-          space = canvasRect.height - rect.height;
-        }
-        top = (-rect.y + space) / rect.height;
-      }
+    const viewport = this.getViewportRect();
+    const displayRect = this.getDisplayRect(contentRect, viewport);
+    this.displayRect = displayRect;
 
-      const width =
-        canvasRect.width > rect.width ? 1 : canvasRect.width / rect.width;
-      const height =
-        canvasRect.height > rect.height ? 1 : canvasRect.height / rect.height;
-      this.view.style.left = this.padding + left * this.boxWidth + 'px';
-      this.view.style.width = width * this.boxWidth + 'px';
-      this.view.style.top = this.padding + top * this.boxHeight + 'px';
-      this.view.style.height = height * this.boxHeight + 'px';
+    const contentLeft = (contentRect.x - displayRect.x) / displayRect.width;
+    const contentTop = (contentRect.y - displayRect.y) / displayRect.height;
+    const contentWidth = contentRect.width / displayRect.width;
+    const contentHeight = contentRect.height / displayRect.height;
+    this.img.style.left = `${this.padding + contentLeft * this.boxWidth}px`;
+    this.img.style.top = `${this.padding + contentTop * this.boxHeight}px`;
+    this.img.style.width = `${contentWidth * this.boxWidth}px`;
+    this.img.style.height = `${contentHeight * this.boxHeight}px`;
+
+    const left = clamp((viewport.x - displayRect.x) / displayRect.width, 0, 1);
+    const top = clamp((viewport.y - displayRect.y) / displayRect.height, 0, 1);
+    const right = clamp((viewport.x + viewport.width - displayRect.x) / displayRect.width, 0, 1);
+    const bottom = clamp((viewport.y + viewport.height - displayRect.y) / displayRect.height, 0, 1);
+    this.view.style.left = `${this.padding + left * this.boxWidth}px`;
+    this.view.style.top = `${this.padding + top * this.boxHeight}px`;
+    this.view.style.width = `${Math.max(0, right - left) * this.boxWidth}px`;
+    this.view.style.height = `${Math.max(0, bottom - top) * this.boxHeight}px`;
+    this.view.style.display = 'block';
+  }
+
+  destroy() {
+    this.isShow = false;
+    this.isDown = false;
+    if (this.refreshTimer !== undefined) {
+      window.clearTimeout(this.refreshTimer);
+      this.refreshTimer = undefined;
+    }
+    this.parent.off('scale', this.onViewChange);
+    this.parent.off('translate', this.onViewChange);
+    this.parent.off('resizeView', this.onViewChange);
+    this.parent.off('opened', this.onContentChange);
+    this.parent.off('layer', this.onContentChange);
+    this.parent.off('valueUpdate', this.onContentChange);
+    this.box.removeEventListener('pointerdown', this.onPointerDown);
+    this.box.removeEventListener('pointermove', this.onPointerMove);
+    this.box.removeEventListener('pointerup', this.onPointerUp);
+    this.box.removeEventListener('pointercancel', this.onPointerUp);
+    this.box.removeEventListener('wheel', this.onWheel);
+    if (this.imageUrl) {
+      URL.revokeObjectURL(this.imageUrl);
+      this.imageUrl = undefined;
+    }
+    this.box.remove();
+    if (this.originalContainerPosition !== undefined) {
+      this.container.style.position = this.originalContainerPosition;
     }
   }
 
-  private onMouseDown = (e: MouseEvent) => {
+  private refreshImage() {
+    if (this.exporting) {
+      this.refreshPending = true;
+      return;
+    }
+    const contentRect = this.getContentRect();
+    this.contentRect = contentRect;
+    if (!contentRect) {
+      this.img.style.display = 'none';
+      this.view.style.display = 'none';
+      return;
+    }
+
+    this.img.style.display = 'block';
+    this.setView();
+    const currentRequest = ++this.requestId;
+    const pens = Array.from(this.parent.penMap.values());
+    this.exporting = true;
+    void this.parent.toPng(
+      {
+        pens,
+        backgroundImage: true,
+      },
+      (buffer, error) => {
+        this.exporting = false;
+        if (error) {
+          this.consumePendingRefresh();
+          return;
+        }
+        if (!this.isShow || currentRequest !== this.requestId) {
+          this.consumePendingRefresh();
+          return;
+        }
+        const url = URL.createObjectURL(new Blob([buffer], { type: 'image/png' }));
+        if (this.imageUrl) {
+          URL.revokeObjectURL(this.imageUrl);
+        }
+        this.imageUrl = url;
+        this.img.src = url;
+        this.setView();
+        this.consumePendingRefresh();
+      },
+    ).catch(() => {
+      this.exporting = false;
+      this.consumePendingRefresh();
+    });
+  }
+
+  private consumePendingRefresh() {
+    if (!this.refreshPending) {
+      return;
+    }
+    this.refreshPending = false;
+    this.scheduleRefresh(0);
+  }
+
+  private getContentRect(): Rect | undefined {
+    const width = this.parent.data.width;
+    const height = this.parent.data.height;
+    if (width && height) {
+      return { x: 0, y: 0, width, height, ex: width, ey: height };
+    }
+
+    const pens = Array.from(this.parent.penMap.values()).filter((pen) => !pen.parentId && pen.visible !== false);
+    if (!pens.length) {
+      return undefined;
+    }
+    const boundary = getBoundary(pens, this.parent.textBoxs);
+    const rect = boundary.box || boundary;
+    const rectWidth = rect.width || ((rect.ex || 0) - (rect.x || 0));
+    const rectHeight = rect.height || ((rect.ey || 0) - (rect.y || 0));
+    if (!Number.isFinite(rectWidth) || !Number.isFinite(rectHeight) || rectWidth <= 0 || rectHeight <= 0) {
+      return undefined;
+    }
+    return {
+      x: rect.x || 0,
+      y: rect.y || 0,
+      width: rectWidth,
+      height: rectHeight,
+      ex: (rect.x || 0) + rectWidth,
+      ey: (rect.y || 0) + rectHeight,
+    };
+  }
+
+  private getViewportRect(): Rect {
+    const scale = this.parent.data.scale || 1;
+    const width = this.parent.topElement.clientWidth || this.parent.renderCanvas.clientWidth;
+    const height = this.parent.topElement.clientHeight || this.parent.renderCanvas.clientHeight;
+    return {
+      x: -this.parent.data.x / scale,
+      y: -this.parent.data.y / scale,
+      width: width / scale,
+      height: height / scale,
+    };
+  }
+
+  private getDisplayRect(content: Rect, viewport: Rect): Rect {
+    let x = Math.min(content.x || 0, viewport.x || 0);
+    let y = Math.min(content.y || 0, viewport.y || 0);
+    let width = Math.max((content.ex || 0), (viewport.x || 0) + (viewport.width || 0)) - x;
+    let height = Math.max((content.ey || 0), (viewport.y || 0) + (viewport.height || 0)) - y;
+    width = Math.max(width, 1);
+    height = Math.max(height, 1);
+    const rectRatio = width / height;
+    if (rectRatio > this.ratio) {
+      const nextHeight = width / this.ratio;
+      y -= (nextHeight - height) / 2;
+      height = nextHeight;
+    } else {
+      const nextWidth = height * this.ratio;
+      x -= (nextWidth - width) / 2;
+      width = nextWidth;
+    }
+    return { x, y, width, height, ex: x + width, ey: y + height };
+  }
+
+  private getMapPoint(e: PointerEvent | WheelEvent): Point {
+    const rect = this.box.getBoundingClientRect();
+    const x = clamp(e.clientX - rect.left - MAP_BORDER - this.padding, 0, this.boxWidth);
+    const y = clamp(e.clientY - rect.top - MAP_BORDER - this.padding, 0, this.boxHeight);
+    const display = this.displayRect || this.contentRect;
+    return {
+      x: (display?.x || 0) + (x / this.boxWidth) * (display?.width || 1),
+      y: (display?.y || 0) + (y / this.boxHeight) * (display?.height || 1),
+    };
+  }
+
+  private onPointerDown = (e: PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     this.isDown = true;
+    this.box.setPointerCapture?.(e.pointerId);
+    const point = this.getMapPoint(e);
+    const viewport = this.getViewportRect();
+    const inViewport =
+      point.x >= viewport.x &&
+      point.x <= viewport.x + viewport.width &&
+      point.y >= viewport.y &&
+      point.y <= viewport.y + viewport.height;
+    this.dragOffset = inViewport
+      ? {
+          x: point.x - (viewport.x + viewport.width / 2),
+          y: point.y - (viewport.y + viewport.height / 2),
+        }
+      : { x: 0, y: 0 };
+    this.gotoView({ x: point.x - this.dragOffset.x, y: point.y - this.dragOffset.y });
   };
 
-  private onMouseMove = (e: MouseEvent) => {
+  private onPointerMove = (e: PointerEvent) => {
+    if (!this.isDown) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
-
-    if (this.isDown) {
-      try {
-        this.parent.gotoView(
-          e.offsetX / this.box.clientWidth,
-          e.offsetY / this.box.clientHeight
-        );
-      } catch (e) {
-        console.warn(e.message);
-        this.isDown = false;
-      }
-    }
+    const point = this.getMapPoint(e);
+    this.gotoView({ x: point.x - this.dragOffset.x, y: point.y - this.dragOffset.y });
   };
 
-  private onMouseUp = (e: MouseEvent) => {
+  private onPointerUp = (e: PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    try {
-      this.parent.gotoView(
-        e.offsetX / this.box.clientWidth,
-        e.offsetY / this.box.clientHeight
-      );
-    } catch (e) {
-      console.warn(e.message);
-    } finally {
-      this.isDown = false;
-    }
+    this.isDown = false;
+    this.box.releasePointerCapture?.(e.pointerId);
   };
 
   private onWheel = (e: WheelEvent) => {
-    //放大镜缩放
-    let scaleOff = 0.015;
-    if (this.parent.store.options.scaleOff) {
-      scaleOff = this.parent.store.options.scaleOff;
-      if (e.deltaY > 0) {
-        scaleOff = -this.parent.store.options.scaleOff;
-      }
-    } else {
-      let isMac = /mac os /i.test(navigator.userAgent);
-      if (isMac) {
-        if (!e.ctrlKey) {
-          scaleOff *= (e as any).wheelDeltaY / 240;
-        } else if (e.deltaY > 0) {
-          scaleOff *= -1;
-        }
-      } else {
-        let offset = 0.2;
-        if (e.deltaY.toString().indexOf('.') !== -1) {
-          offset = 0.01;
-        }
-        if (e.deltaY > 0) {
-          scaleOff = -offset;
-        } else {
-          scaleOff = offset;
-        }
-      }
-    }
-    let { offsetX: x, offsetY: y } = e;
-
-    const width =
-      this.parent.store.data.width || this.parent.store.options.width;
-    const height =
-      this.parent.store.data.height || this.parent.store.options.height;
-    if (width && height) {
-      //大屏
-      x =
-        (x / this.boxWidth) * width * this.parent.store.data.scale +
-        this.parent.store.data.origin.x +
-        this.parent.store.data.x;
-      y =
-        (y / this.boxHeight) * height * this.parent.store.data.scale +
-        this.parent.store.data.origin.y +
-        this.parent.store.data.y;
-    } else {
-      const rect = this.parent.parent.getRect();
-      x = (x / this.boxWidth) * rect.width + rect.x + this.parent.store.data.x;
-      y =
-        (y / this.boxHeight) * rect.height + rect.y + this.parent.store.data.y;
-    }
-    this.parent.scale(this.parent.store.data.scale + scaleOff, { x, y });
+    e.preventDefault();
+    e.stopPropagation();
+    const point = this.getMapPoint(e);
+    const topRect = this.parent.topElement.getBoundingClientRect();
+    const scale = this.parent.data.scale || 1;
+    this.parent.scale(scale + this.getWheelOffset(e), {
+      x: topRect.left + this.parent.data.x + point.x * scale,
+      y: topRect.top + this.parent.data.y + point.y * scale,
+    });
   };
+
+  private getWheelOffset(e: WheelEvent) {
+    let offset = this.parent.options.scaleOffset || 0.015;
+    if (this.parent.options.scaleOffset) {
+      return e.deltaY > 0 ? -offset : offset;
+    }
+    const isMac = /mac os /i.test(navigator.userAgent);
+    if (isMac && !e.ctrlKey) {
+      return offset * ((e as WheelEvent & { wheelDeltaY?: number }).wheelDeltaY || 0) / 240;
+    }
+    if (e.deltaY > 0) {
+      return -((e.deltaY.toString().includes('.') ? 0.01 : 0.2));
+    }
+    return e.deltaY.toString().includes('.') ? 0.01 : 0.2;
+  }
+
+  private gotoView(point: Point) {
+    const viewport = this.getViewportRect();
+    const content = this.contentRect || this.getContentRect();
+    if (!content) {
+      return;
+    }
+    // 将视口中心限制在内容边界内，避免连续拖动把画布无限推离地图范围。
+    const minCenterX = (content.x || 0) + (viewport.width || 0) / 2;
+    const maxCenterX = (content.ex || 0) - (viewport.width || 0) / 2;
+    const minCenterY = (content.y || 0) + (viewport.height || 0) / 2;
+    const maxCenterY = (content.ey || 0) - (viewport.height || 0) / 2;
+    const centerX = clamp(point.x, Math.min(minCenterX, maxCenterX), Math.max(minCenterX, maxCenterX));
+    const centerY = clamp(point.y, Math.min(minCenterY, maxCenterY), Math.max(minCenterY, maxCenterY));
+    this.parent.setViewPosition(
+      this.parent.data.x + (viewport.x + viewport.width / 2 - centerX) * (this.parent.data.scale || 1),
+      this.parent.data.y + (viewport.y + viewport.height / 2 - centerY) * (this.parent.data.scale || 1),
+    );
+  }
+
+  private initStyle() {
+    Object.assign(this.box.style, {
+      display: 'none',
+      position: 'absolute',
+      right: '0',
+      bottom: '0',
+      zIndex: '9999',
+      width: `${this.boxWidth}px`,
+      height: `${this.boxHeight}px`,
+      padding: `${this.padding}px`,
+      boxSizing: 'content-box',
+      background: '#f4f4f4',
+      border: '1px solid #fff',
+      borderRadius: '8px',
+      boxShadow: '0 0 14px 0 rgba(0,10,38,0.30)',
+      overflow: 'hidden',
+      userSelect: 'none',
+      touchAction: 'none',
+    });
+    Object.assign(this.img.style, {
+      position: 'absolute',
+      pointerEvents: 'none',
+      objectFit: 'fill',
+    });
+    Object.assign(this.view.style, {
+      display: 'none',
+      position: 'absolute',
+      pointerEvents: 'none',
+      border: '1px solid #1890ff',
+      boxSizing: 'border-box',
+    });
+  }
 }

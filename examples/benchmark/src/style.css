@@ -1,0 +1,744 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+body {
+  background: #f6f8fc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== 控制区（高度极度压缩） ========== */
+.control-bar {
+  padding: 0.5rem 1rem 0.55rem;
+  background: #ffffff;
+  border-bottom: 1px solid #eef2f8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  align-items: flex-start;
+  position: relative;
+  z-index: 100;
+}
+
+/* 第一栏：库切换 —— 平铺按钮，极小高度 */
+.lib-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.lib-btn {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.7rem;
+  background: #f9fbfe;
+  border: 1px solid #e4e9f2;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #42526b;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.lib-btn:hover {
+  background: #eef3ff;
+  border-color: #c8d6f0;
+}
+
+.lib-btn.active {
+  background: #2a5cff;
+  border-color: #2a5cff;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 6px -2px rgba(42, 92, 255, 0.4);
+}
+
+.lib-btn .lib-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.lib-btn.active .lib-dot {
+  opacity: 1;
+}
+
+/* 模式切换按钮样式 */
+.mode-btn {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.7rem;
+  background: #f0f7ff;
+  border: 1px solid #a8c5ff;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #2a5cff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  line-height: 1.2;
+  margin-left: 0.5rem;
+}
+
+.mode-btn:hover {
+  background: #e3f0ff;
+  border-color: #7aa8ff;
+  box-shadow: 0 2px 6px -2px rgba(42, 92, 255, 0.25);
+}
+
+.mode-btn:active {
+  transform: scale(0.98);
+}
+
+/* 编辑模式高亮 */
+.mode-btn.mode-edit {
+  background: #d81b60;
+  border-color: #d81b60;
+  color: #fff;
+  font-weight: 600;
+}
+
+.mode-btn.mode-edit:hover {
+  background: #c2185b;
+  border-color: #c2185b;
+  box-shadow: 0 2px 6px -2px rgba(216, 27, 96, 0.4);
+}
+
+.mode-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.mode-text {
+  font-weight: 600;
+}
+
+/* 示例按钮样式 */
+.example-btn {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.7rem;
+  background: #f0f7ff;
+  border: 1px solid #a8c5ff;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #2a5cff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  line-height: 1.2;
+  margin-left: 0.5rem;
+}
+
+.example-btn:hover {
+  background: #e3f0ff;
+  border-color: #7aa8ff;
+  box-shadow: 0 2px 6px -2px rgba(42, 92, 255, 0.25);
+}
+
+.example-btn:active {
+  transform: scale(0.98);
+}
+
+.example-btn span:first-child {
+  font-size: 0.85rem;
+}
+
+/* 第二栏：四个维度下拉，压缩高度 */
+.dim-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.dim-dropdown {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 130px;
+  max-width: 100%;
+}
+
+/* 触发按钮 —— 紧凑 */
+.dim-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.7rem;
+  background: #f9fbfe;
+  border: 1px solid #e4e9f2;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #1d2e4a;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  letter-spacing: -0.01em;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.dim-trigger:hover {
+  background: #ffffff;
+  border-color: #c8d6f0;
+}
+
+.dim-trigger.open {
+  border-color: #2a5cff;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(42, 92, 255, 0.1);
+}
+
+.dim-trigger .dim-name {
+  color: #5e6f8d;
+  font-weight: 500;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.dim-trigger .dim-value {
+  color: #0b1b2f;
+  font-weight: 600;
+  font-size: 0.75rem;
+  background: #eef2f9;
+  padding: 0.1rem 0.5rem;
+  border-radius: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+  line-height: 1.3;
+}
+
+.dim-trigger .arrow {
+  flex-shrink: 0;
+  width: 8px;
+  height: 5px;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235e6f8d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  transition: transform 0.12s ease;
+}
+
+.dim-trigger.open .arrow {
+  transform: rotate(180deg);
+}
+
+/* 下拉面板 —— 紧凑 */
+.dim-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #ffffff;
+  border: 1px solid #e4e9f2;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px -8px rgba(10, 30, 60, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  padding: 0.5rem;
+  display: none;
+  flex-direction: column;
+  gap: 0.4rem;
+  animation: fadeIn 0.1s ease;
+  min-width: 180px;
+}
+
+.dim-panel.show {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 预设按钮组 —— 紧凑 */
+.dim-panel .preset-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.dim-panel .preset-btn {
+  padding: 0.2rem 0.6rem;
+  background: #f2f5fc;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #1d2e4a;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.dim-panel .preset-btn:hover {
+  background: #e4eaff;
+}
+
+.dim-panel .preset-btn.selected {
+  background: #2a5cff;
+  color: white;
+  font-weight: 600;
+}
+
+/* 分隔线 */
+.dim-panel .divider {
+  height: 1px;
+  background: #f0f4fa;
+  margin: 0.1rem 0;
+}
+
+/* 自定义输入行 —— 紧凑 */
+.dim-panel .custom-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dim-panel .custom-row input {
+  flex: 1;
+  border: 1px solid #dde3ed;
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+  color: #0b1b2f;
+  background: #fbfdff;
+  outline: none;
+  transition: 0.1s;
+  font-weight: 500;
+  min-width: 0;
+  width: 60px;
+  line-height: 1.3;
+}
+
+.dim-panel .custom-row input::placeholder {
+  color: #a9b8d0;
+  font-weight: 400;
+}
+
+.dim-panel .custom-row input:focus {
+  border-color: #2a5cff;
+  box-shadow: 0 0 0 2px rgba(42, 92, 255, 0.1);
+  background: #ffffff;
+}
+
+.dim-panel .custom-row .apply-btn {
+  flex-shrink: 0;
+  padding: 0.25rem 0.65rem;
+  background: #0b1b2f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.1s;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.dim-panel .custom-row .apply-btn:hover {
+  background: #1d2e4a;
+}
+
+.dim-panel .unit-hint {
+  font-size: 0.6rem;
+  color: #8a99b4;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 刷新时间区块样式 */
+.dim-panel .refresh-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dim-panel .refresh-label {
+  font-size: 0.62rem;
+  color: #8a99b4;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* 性能指标面板 */
+.performance-panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 90;
+  min-width: 150px;
+}
+
+.perf-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.perf-label {
+  font-size: 0.7rem;
+  color: #5e6f8d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.perf-value {
+  font-size: 1.5rem;
+  color: #0b1b2f;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ========== 画布区域（全宽占满） ========== */
+.canvas-area {
+  flex: 1;
+  background: #fafcff;
+  border-top: 1px solid #eef2f8;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b7c5dd;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.canvas-area canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.canvas-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.7;
+}
+
+.canvas-placeholder svg {
+  opacity: 0.5;
+}
+
+.canvas-hint {
+  font-size: 0.8rem;
+  color: #9aabca;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.25rem 1rem;
+  border-radius: 100px;
+  backdrop-filter: blur(2px);
+}
+
+.error-message {
+  color: #ff4444;
+  font-size: 0.9rem;
+  padding: 1rem;
+  background: rgba(255, 68, 68, 0.1);
+  border-radius: 8px;
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+  .control-bar {
+    padding: 0.4rem 0.75rem 0.45rem;
+    gap: 0.3rem;
+  }
+  .lib-btn {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.5rem;
+  }
+  .dim-trigger {
+    padding: 0.2rem 0.4rem 0.2rem 0.55rem;
+    font-size: 0.7rem;
+    gap: 0.25rem;
+  }
+  .dim-trigger .dim-name {
+    font-size: 0.6rem;
+  }
+  .dim-trigger .dim-value {
+    font-size: 0.68rem;
+    padding: 0.05rem 0.4rem;
+    max-width: 65px;
+  }
+  .dim-panel {
+    left: 0;
+    right: auto;
+    min-width: 190px;
+  }
+  .performance-panel {
+    top: 70px;
+    right: 10px;
+    padding: 0.75rem;
+    min-width: 120px;
+  }
+}
+
+/* ========== 性能探针面板（仅 meta2d） ========== */
+.perf-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  width: 540px;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e4e9f2;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(31, 45, 71, 0.14);
+  z-index: 200;
+  font-size: 0.72rem;
+  color: #2c3a52;
+  overflow: hidden;
+}
+
+.perf-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #eef2f8;
+  background: #f9fbfe;
+  flex-shrink: 0;
+}
+
+.perf-title {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.perf-status {
+  margin-left: auto;
+  color: #7285a3;
+  font-size: 0.68rem;
+}
+
+.perf-fold {
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  border: 1px solid #e4e9f2;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  color: #42526b;
+}
+
+.perf-body {
+  overflow: auto;
+  padding: 0.5rem 0.6rem 0.6rem;
+}
+
+.perf-body.folded {
+  display: none;
+}
+
+.perf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.45rem;
+}
+
+.perf-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid #e4e9f2;
+  border-radius: 100px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.perf-btn {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid #d7e0ef;
+  border-radius: 100px;
+  background: #f4f8ff;
+  color: #2f4c86;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.perf-btn:hover:not(:disabled) {
+  background: #e7f0ff;
+}
+
+.perf-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.perf-btn.ghost {
+  background: #fff;
+  color: #6b7c99;
+}
+
+/* 编辑模式高亮，避免忘记自己还停在编辑态 */
+.perf-btn.on {
+  background: #d81b60;
+  border-color: #d81b60;
+  color: #fff;
+}
+
+.perf-btn.on:hover:not(:disabled) {
+  background: #c2185b;
+}
+
+/* 手动验证行：与上方探针动作区分开 */
+.perf-manual {
+  padding-top: 0.4rem;
+  border-top: 1px dashed #e4e9f2;
+}
+
+.perf-manual-label {
+  color: #42526b;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.perf-manual-hint {
+  color: #93a2bd;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  flex: 1 1 100%;
+}
+
+.perf-sub {
+  margin: 0.5rem 0 0.2rem;
+  font-weight: 600;
+  color: #42526b;
+}
+
+.perf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf-table td {
+  padding: 0.16rem 0.3rem;
+  border-bottom: 1px solid #f2f5fa;
+  vertical-align: top;
+}
+
+.perf-table td.k {
+  color: #6b7c99;
+  white-space: nowrap;
+}
+
+.perf-table td.v {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.perf-table td.e {
+  color: #93a2bd;
+  white-space: nowrap;
+}
+
+.perf-table td.m {
+  width: 1.1rem;
+  text-align: center;
+}
+
+.perf-table td.n {
+  color: #93a2bd;
+  line-height: 1.35;
+}
+
+.perf-table .ok {
+  color: #1f9d55;
+  font-weight: 700;
+}
+
+.perf-table .bad {
+  color: #d94b4b;
+  font-weight: 700;
+}
+
+.perf-hint {
+  color: #93a2bd;
+  line-height: 1.5;
+}
+
+.perf-ok {
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  background: #eefaf2;
+  color: #1f7a48;
+  line-height: 1.5;
+}
+
+.perf-bad {
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  background: #fdeeee;
+  color: #a53535;
+  line-height: 1.5;
+}

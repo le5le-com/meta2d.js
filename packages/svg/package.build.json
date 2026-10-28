@@ -1,19 +1,14 @@
 {
   "name": "@meta2d/svg",
-  "version": "1.0.7",
-  "description": "parse svg string to le5le meta2d pens.",
+  "version": "2.0.0",
+  "description": "The svg library based on meta2d.js.",
   "main": "index.js",
   "types": "index.d.ts",
-  "scripts": {
-    "copy": "copyfiles  package.json ../../dist/svg/",
-    "build": "tsc && npm run copy"
-  },
   "keywords": [
-    "meta2d",
-    "svg",
-    "canvas"
+    "Meta2d.js",
+    "svg"
   ],
-  "author": "alsmile123@qq.com",
+  "author": "le5le.com",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -23,14 +18,13 @@
     "url": "https://github.com/le5le-com/meta2d.js/issues"
   },
   "homepage": "https://github.com/le5le-com/meta2d.js#readme",
-  "peerDependencies": {
-    "@meta2d/core": "^1.0.0"
-  },
   "dependencies": {
-    "fast-xml-parser": "^4.0.1"
+    "fast-xml-parser": "^4.2.5"
+  },
+  "peerDependencies": {
+    "@meta2d/core": "^2.0.0"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+  }
 }

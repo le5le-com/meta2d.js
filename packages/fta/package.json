@@ -1,0 +1,22 @@
+{
+  "name": "@meta2d/fta",
+  "version": "2.0.0",
+  "description": "Fault tree analysis diagrams for meta2d.",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
+  "scripts": {
+    "copy": "shx cp package.build.json ../../dist/fta/package.json",
+    "build": "tsc && npm run copy"
+  },
+  "keywords": ["Meta2d.js", "fta"],
+  "author": "le5le.com",
+  "license": "MIT",
+  "dependencies": {
+    "@meta2d/core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

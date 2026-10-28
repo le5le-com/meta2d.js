@@ -1,260 +1,68 @@
-import { Direction } from '../../data';
-import { facePen, getToAnchor, Pen } from '../../pen';
-import { distance, Point, PrevNextType, rotatePoint } from '../../point';
-import { Meta2dStore } from '../../store';
-import { s8 } from '../../utils';
+import { Pen } from '../../models';
+import { fromArrow, toArrow } from './arrow';
 
-export function curve(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
-  if (!pen.calculative.worldAnchors) {
-    pen.calculative.worldAnchors = [];
+export function curve(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  options?: any,
+  data?: any
+) {
+  if (!pen.anchors || pen.anchors.length < 2) {
+    return;
   }
 
-  if (mousedwon) {
-    if (pen.calculative.activeAnchor) {
-      pen.calculative.activeAnchor.next = {
-        penId: pen.id,
-        x: mousedwon.x,
-        y: mousedwon.y,
-      };
-      if (
-        distance(
-          pen.calculative.activeAnchor.next,
-          pen.calculative.activeAnchor
-        ) < 5
-      ) {
-        pen.calculative.activeAnchor.next = undefined;
+
+  ctx.beginPath();
+  const first = pen.anchors[0];
+  ctx.moveTo(first.x, first.y);
+
+  for (let i = 1; i < pen.anchors.length; i++) {
+    const from = pen.anchors[i - 1];
+    const to = pen.anchors[i];
+
+    if (from.cp1) {
+      if (to.cp2) {
+        ctx.bezierCurveTo(from.cp1.x, from.cp1.y, to.cp2.x, to.cp2.y, to.x, to.y);
       } else {
-        pen.calculative.activeAnchor.prev = {
-          ...pen.calculative.activeAnchor.next,
-        };
-        rotatePoint(
-          pen.calculative.activeAnchor.prev,
-          180,
-          pen.calculative.activeAnchor
-        );
+        ctx.quadraticCurveTo(from.cp1.x, from.cp1.y, to.x, to.y);
+      }
+    } else {
+      if (to.cp2) {
+        ctx.quadraticCurveTo(to.cp2.x, to.cp2.y, to.x, to.y);
+      } else {
+        ctx.lineTo(to.x, to.y);
       }
     }
-  } else {
-    const from = pen.calculative.worldAnchors[0];
-    if (!from.next) {
-      const fromFace = facePen(from, store.pens[from.connectTo]);
-      calcCurveCP(from, fromFace, 50);
-      from.prev = undefined;
-    }
-
-    const to =
-      pen.calculative.worldAnchors[pen.calculative.worldAnchors.length - 1];
-    if (to && to !== from && !to.prev) {
-      const toFace = facePen(to, store.pens[to.connectTo]);
-      calcCurveCP(to, toFace, -50);
-      to.next = undefined;
-    }
-  }
-}
-
-function calcCurveCP(pt: Point, d: Direction, dis: number) {
-  switch (d) {
-    case Direction.Up:
-      pt.prev = {
-        penId: pt.penId,
-        x: pt.x,
-        y: pt.y + dis,
-      };
-      pt.next = {
-        penId: pt.penId,
-        x: pt.x,
-        y: pt.y - dis,
-      };
-      break;
-    case Direction.Right:
-      pt.prev = {
-        penId: pt.penId,
-        x: pt.x - dis,
-        y: pt.y,
-      };
-      pt.next = {
-        penId: pt.penId,
-        x: pt.x + dis,
-        y: pt.y,
-      };
-      break;
-    case Direction.Bottom:
-      pt.prev = {
-        penId: pt.penId,
-        x: pt.x,
-        y: pt.y - dis,
-      };
-      pt.next = {
-        penId: pt.penId,
-        x: pt.x,
-        y: pt.y + dis,
-      };
-      break;
-    case Direction.Left:
-      pt.prev = {
-        penId: pt.penId,
-        x: pt.x + dis,
-        y: pt.y,
-      };
-      pt.next = {
-        penId: pt.penId,
-        x: pt.x - dis,
-        y: pt.y,
-      };
-      break;
-  }
-}
-
-// Get a point in quadratic.
-// pos - The position of point in quadratic. It is expressed as a percentage(0 - 1).
-export function getQuadraticPoint(
-  step: number,
-  from: Point,
-  cp: Point,
-  to: Point
-) {
-  const pos = 1 - step;
-  const x = pos * pos * from.x + 2 * pos * step * cp.x + step * step * to.x;
-  const y = pos * pos * from.y + 2 * pos * step * cp.y + step * step * to.y;
-  return { x, y, step };
-}
-
-// Get a point in bezier.
-// pos - The position of point in bezier. It is expressed as a percentage(0 - 1).
-export function getBezierPoint(
-  step: number,
-  from: Point,
-  cp1: Point,
-  cp2: Point,
-  to: Point
-) {
-  const { x: x1, y: y1 } = from;
-  const { x: x2, y: y2 } = to;
-  const { x: cx1, y: cy1 } = cp1;
-  const { x: cx2, y: cy2 } = cp2;
-
-  const pos = 1 - step;
-  const x =
-    x1 * pos * pos * pos +
-    3 * cx1 * step * pos * pos +
-    3 * cx2 * step * step * pos +
-    x2 * step * step * step;
-  const y =
-    y1 * pos * pos * pos +
-    3 * cy1 * step * pos * pos +
-    3 * cy2 * step * step * pos +
-    y2 * step * step * step;
-  return { x, y, step };
-}
-
-function lerp(pt1: Point, pt2: Point, t: number) {
-  return {
-    x: pt1.x + t * (pt2.x - pt1.x),
-    y: pt1.y + t * (pt2.y - pt1.y),
-  };
-}
-
-export function getSplitAnchor(pen: Pen, pt: Point, index: number) {
-  let from = pen.calculative.worldAnchors[index];
-  let to = pen.calculative.worldAnchors[index + 1];
-  if(!to && pen.close){
-    to = pen.calculative.worldAnchors[0];
-  }
-  const t = pt.step;
-  let anchor: Point;
-  if (from.next && to.prev) {
-    const p0 = from;
-    const p1 = from.next;
-    const p2 = to.prev;
-    const p3 = to;
-    const p4 = lerp(p0, p1, t);
-    const p5 = lerp(p1, p2, t);
-    const p6 = lerp(p2, p3, t);
-    const p7: Point = lerp(p4, p5, t);
-    const p8: Point = lerp(p5, p6, t);
-    anchor = lerp(p7, p8, t);
-    p7.penId = pen.id;
-    anchor.prev = p7;
-    p8.penId = pen.id;
-    anchor.next = p8;
-    from.next.x = p4.x;
-    from.next.y = p4.y;
-    to.prev.x = p6.x;
-    to.prev.y = p6.y;
-  } else if (from.next || to.prev) {
-    const p0 = from;
-    const p1 = from.next || to.prev;
-    const p2 = to;
-    const p3: Point = lerp(p0, p1, t);
-    const p4: Point = lerp(p1, p2, t);
-    anchor = pt;
-    p3.penId = pen.id;
-    p4.penId = pen.id;
-    anchor.prev = p3;
-    anchor.next = p4;
-    from.next = undefined;
-    to.prev = undefined;
-  } else {
-    // 并非贝塞尔点，即 from 和 to 之间是一条直线
-    anchor = pt;
   }
 
-  anchor.penId = pen.id;
-  anchor.id = s8();
-  anchor.prevNextType = PrevNextType.Bilateral;
-  return anchor;
-}
+  if (pen.close && pen.anchors.length > 2) {
+    const last = pen.anchors[pen.anchors.length - 1];
 
-export function mind(store: Meta2dStore, pen: Pen, mousedwon?: Point) {
-  if (!pen.calculative.worldAnchors) {
-    pen.calculative.worldAnchors = [];
-  }
-
-  if (pen.calculative.worldAnchors.length < 2) {
-    return;
-  }
-
-  let from = pen.calculative.activeAnchor;
-  let to = mousedwon || getToAnchor(pen);
-  if (!from || !to) {
-    return;
-  }
-
-  const dis = 20;
-
-  const fromPen = store.pens[from.connectTo];
-  let fromFace = facePen(from, fromPen);
-  if (fromFace === Direction.None) {
-    if (to.x > from.x) {
-      fromFace = Direction.Right;
+    if (last.cp1) {
+      if (first.cp2) {
+        ctx.bezierCurveTo(last.cp1.x, last.cp1.y, first.cp2.x, first.cp2.y, first.x, first.y);
+      } else {
+        ctx.quadraticCurveTo(last.cp1.x, last.cp1.y, first.x, first.y);
+      }
     } else {
-      fromFace = Direction.Left;
+      if (first.cp2) {
+        ctx.quadraticCurveTo(first.cp2.x, first.cp2.y, first.x, first.y);
+      } else {
+        ctx.lineTo(first.x, first.y);
+      }
     }
   }
-  from.next = {
-    id: s8(),
-    penId: pen.id,
-    x: from.x,
-    y: from.y,
-    prevNextType: 2,
-  };
-  to.prev = { id: s8(), penId: pen.id, x: to.x, y: to.y, prevNextType: 2 };
-  switch (fromFace) {
-    case Direction.Up:
-      from.next.y -= dis;
-      to.prev.y = from.y;
-      break;
-    case Direction.Bottom:
-      from.next.y += dis;
-      to.prev.y = from.y;
-      break;
-    case Direction.Left:
-      from.next.x -= dis;
-      to.prev.x = from.x;
-      break;
-    default:
-      from.next.x += dis;
-      to.prev.x = from.x;
-      break;
+  ctx.stroke();
+
+  if (pen.fromArrow) {
+    fromArrow(ctx, pen);
   }
+  if (pen.toArrow) {
+    toArrow(ctx, pen);
+  }
+}
+
+/** mind 连线使用 1.0 的 mind 控制柄规则，路径绘制与普通曲线保持一致。 */
+export function mind(ctx: CanvasRenderingContext2D, pen: Pen, options?: any, data?: any) {
+  curve(ctx, pen, options, data);
 }

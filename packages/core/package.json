@@ -1,19 +1,19 @@
 {
   "name": "@meta2d/core",
-  "version": "1.1.19",
-  "description": "@meta2d/core: Powerful, Beautiful, Simple, Open - Web-Based 2D At Its Best .",
-  "main": "index.ts",
+  "version": "2.0.0",
+  "description": "The core of Meta2d.js",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "copy": "cp package.build.json ../../dist/core/package.json",
+    "build": "tsc && npm run copy"
   },
   "keywords": [
-    "meta2d",
-    "diagram",
+    "Meta2d.js",
     "2D",
     "canvas"
   ],
-  "author": "alsmile123@qq.com",
+  "author": "le5le.com",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -25,15 +25,16 @@
   "homepage": "https://github.com/le5le-com/meta2d.js#readme",
   "devDependencies": {
     "@types/marked": "^4.0.3",
-    "@types/offscreencanvas": "latest",
-    "@types/zrender": "^4.0.0"
+    "@types/offscreencanvas": "latest"
   },
   "dependencies": {
-    "mitt": "^2.1.0",
-    "mqtt": "^4.2.6"
+    "@zumer/snapdom": "^1.9.14",
+    "gifwarp": "^0.1.1",
+    "@lvcabral/upng":"^2.3.0",
+    "mitt": "^3.0.1",
+    "mqtt": "^5.14.1"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "gitHead": "78f2a53ca1839c89b56e2e498d17ba4eb987ad14"
+  }
 }

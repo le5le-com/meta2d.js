@@ -1,0 +1,37 @@
+{
+  "name": "meta2d.js",
+  "version": "2.0.0",
+  "description": "Meta2d.js 浏览器分包版本 - 核心引擎 + 按需加载图库",
+  "main": "meta2d.min.js",
+  "module": "meta2d.min.js",
+  "types": "types/index.d.ts",
+  "files": [
+    "*.js",
+    "*.js.map",
+    "types/"
+  ],
+  "keywords": [
+    "meta2d",
+    "canvas",
+    "diagram",
+    "topology",
+    "flowchart",
+    "uml",
+    "visualization"
+  ],
+  "author": "le5le.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/le5le-com/meta2d.js.git",
+    "directory": "packages/meta2d.js"
+  },
+  "bugs": {
+    "url": "https://github.com/le5le-com/meta2d.js/issues"
+  },
+  "homepage": "https://meta2d.le5le.com",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

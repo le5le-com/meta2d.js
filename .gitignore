@@ -25,3 +25,9 @@ dist/
 .vscode/
 vendor
 
+target/
+.mooncakes/
+
+demo/
+.plans/
+.docs/

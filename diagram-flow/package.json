@@ -1,0 +1,39 @@
+{
+  "name": "diagram-flow",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "start": "vite --host --port 80",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@meta2d/core": "workspace:*",
+    "@meta2d/echarts": "workspace:*",
+    "@meta2d/data-upgrade": "workspace:*",
+    "dayjs": "^1.11.18",
+    "file-saver": "^2.0.5",
+    "localforage": "^1.10.0",
+    "mitt": "^2.1.0",
+    "monaco-editor": "^0.38.0",
+    "tdesign-icons-vue-next": "^0.2.6",
+    "tdesign-vue-next": "^1.17.1",
+    "vue": "^3.5.22",
+    "vue-i18n": "^11.1.12",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.2",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^22.18.12",
+    "@types/offscreencanvas": "^2019.7.3",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vitejs/plugin-vue-jsx": "^4.2.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "postcss-import": "^14.1.0",
+    "postcss-nested": "^6.2.0",
+    "typescript": "~5.6.3",
+    "vite": "^6.4.1",
+    "vue-tsc": "^2.2.12"
+  }
+}

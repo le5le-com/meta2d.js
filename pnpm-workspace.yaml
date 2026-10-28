@@ -1,2 +1,7 @@
 packages:
-  - 'packages/*'
+  - packages/*
+  - diagram-flow
+  - examples/*
+
+onlyBuiltDependencies:
+  - esbuild

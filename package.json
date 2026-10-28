@@ -1,23 +1,29 @@
 {
-  "name": "meta2d",
-  "version": "1.0.0",
+  "name": "meta2d.js",
+  "version": "2.0.0",
+  "description": "Powerful, Beautiful, Simple, Open Web-Based 2D",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
+  "main": "index.js",
   "scripts": {
-    "start": "",
-    "copyCorePJ":"shx cp ./packages/core/package.build.json ./dist/core/package.json",
-    "build": "pnpm -r build && npm run copyCorePJ"
+    "build": "pnpm -r build && node scripts/fix-worker-paths.mjs",
+    "start": "vite ./examples/base --open"
   },
+  "keywords": [
+    "le5le",
+    "2d",
+    "meta2d",
+    "diagram",
+    "canvas"
+  ],
   "devDependencies": {
     "@types/node": "latest",
     "@types/offscreencanvas": "^2019.7.3",
-    "shx": "0.3.4",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.2"
-  }
+    "copyfiles": "^2.4.1",
+    "shx": "^0.4.0",
+    "typescript": "latest",
+    "vite": "^6.3.5"
+  },
+  "author": "le5le.com",
+  "license": "MIT",
+  "packageManager": "pnpm@10.19.0+sha256.1c5f5ee59267e4e2e1bfd335f432a18dc48f9a9944094d5d2649757e725ad376"
 }
