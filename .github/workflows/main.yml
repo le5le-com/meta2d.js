@@ -45,56 +45,20 @@ jobs:
           cd dist/meta2d.js
           npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version --allow-same-version
 
-      - name: Publish core
+      - name: Publish all packages
         run: |
-          cd dist/core
-          npm publish
-        continue-on-error: true
-
-      - name: Publish bundle
-        run: |
-          cd dist/meta2d.js
-          npm publish
-        continue-on-error: true
-
-      - name: Publish chart
-        run: |
-          cd dist/chart
-          npm publish
-        continue-on-error: true
-
-      - name: Publish data-upgrade
-        run: |
-          cd dist/data-upgrade
-          npm publish
-        continue-on-error: true
-
-      - name: Publish echarts
-        run: |
-          cd dist/echarts
-          npm publish
-        continue-on-error: true
-
-      - name: Publish form
-        run: |
-          cd dist/form
-          npm publish
-        continue-on-error: true
-
-      - name: Publish fta
-        run: |
-          cd dist/fta
-          npm publish
-        continue-on-error: true
-
-      - name: Publish svg
-        run: |
-          cd dist/svg
-          npm publish
-        continue-on-error: true
-
-      - name: Publish uml
-        run: |
-          cd dist/uml
-          npm publish
-        continue-on-error: true
+          failed=0
+          for dir in dist/*/; do
+            [ -f "$dir/package.json" ] || continue
+            cd "$dir"
+            pkg=$(node -p "require('./package.json').name")
+            ver=$(node -p "require('./package.json').version")
+            if npm view "$pkg@$ver" version >/dev/null 2>&1; then
+              echo "== $pkg@$ver already published, skip"
+            else
+              echo "== publishing $pkg@$ver"
+              npm publish --provenance || failed=1
+            fi
+            cd - > /dev/null
+          done
+          exit $failed
