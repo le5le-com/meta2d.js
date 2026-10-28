@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/echarts",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "The @meta2d/echarts is a wrapper for echarts using meta2d.js.",
   "main": "index.js",
   "module": "index.js",

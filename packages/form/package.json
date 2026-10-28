@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/form",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "The @meta2d/form is a wrapper for form using meta2d.js.",
   "main": "index.js",
   "module": "index.js",

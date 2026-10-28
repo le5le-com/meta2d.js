@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/chart",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "The charting library based on meta2d.js.",
   "main": "index.js",
   "types": "index.d.ts",

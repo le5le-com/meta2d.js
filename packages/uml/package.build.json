@@ -1,6 +1,6 @@
 {
   "name": "@meta2d/uml",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "The @meta2d/uml is a wrapper for uml using meta2d.js.",
   "main": "index.js",
   "module": "index.js",
