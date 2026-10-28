@@ -27,7 +27,7 @@ jobs:
         run: pnpm install --ignore-scripts --frozen-lockfile
 
       - name: Build
-        run: pnpm run build
+        run: pnpm --filter './packages/*' -r build
 
       - name: Extract version from tag
         id: extract_version
@@ -36,12 +36,12 @@ jobs:
       - name: Update core version
         run: |
           cd dist/core
-          npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
+          npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version --allow-same-version
 
       - name: Update bundle version
         run: |
           cd dist/meta2d.js
-          npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
+          npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version --allow-same-version
 
       - name: Publish core
         run: |
