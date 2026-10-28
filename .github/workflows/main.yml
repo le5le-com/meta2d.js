@@ -27,7 +27,9 @@ jobs:
         run: pnpm install --ignore-scripts --frozen-lockfile
 
       - name: Build
-        run: pnpm --filter './packages/*' -r build
+        run: |
+          pnpm --filter './packages/*' -r build
+          node scripts/fix-worker-paths.mjs
 
       - name: Extract version from tag
         id: extract_version
