@@ -25,5 +25,5 @@
   },
   "author": "le5le.com",
   "license": "MIT",
-  "packageManager": "pnpm@10.19.0+sha256.1c5f5ee59267e4e2e1bfd335f432a18dc48f9a9944094d5d2649757e725ad376"
+  "packageManager": "pnpm@12.16.1"
 }

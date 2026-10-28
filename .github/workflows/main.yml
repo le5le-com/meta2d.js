@@ -22,8 +22,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - uses: pnpm/action-setup@v6
-        with:
-          version: 12.15.0
 
       - name: Install dependencies
         run: pnpm install --ignore-scripts --frozen-lockfile

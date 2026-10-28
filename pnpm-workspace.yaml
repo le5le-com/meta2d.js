@@ -3,5 +3,6 @@ packages:
   - diagram-flow
   - examples/*
 
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+  canvas: true
+  esbuild: true
