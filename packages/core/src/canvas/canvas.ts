@@ -834,6 +834,8 @@ export class Canvas {
         if (this.drawingLine) {
           this.drawingLine.calculative.drawlineH =
             !this.drawingLine.calculative.drawlineH;
+          // 标记当前线段的方向由 Ctrl 显式指定，避免被折线的自动交替规则覆盖。
+          this.drawingLine.calculative.drawlineHByCtrl = true;
         } else if (!this.hotkeyType) {
           this.patchFlags = true;
           this.hotkeyType = HotkeyType.Select;
@@ -2187,6 +2189,7 @@ export class Canvas {
         });
       }
       this.drawingLine.calculative.drawlineH = undefined;
+      this.drawingLine.calculative.drawlineHByCtrl = undefined;
       this.drawingLineName !== 'polyline' && this.drawline();
     }
 
@@ -4667,6 +4670,8 @@ export class Canvas {
         this.drawingLine.calculative.worldAnchors.pop();
       }
     }
+    // Ctrl 方向只在绘制当前线段时生效，完成后不应写入成品图元。
+    this.drawingLine.calculative.drawlineHByCtrl = undefined;
     const rect = getLineRect(this.drawingLine);
     Object.assign(this.drawingLine, rect);
     this.drawingLine.calculative.worldRect = rect;

@@ -405,7 +405,9 @@ function getNextPoints(pen: Pen, from: Point, to: Point) {
   let index = pen.calculative.worldAnchors.findIndex(
     (anchor) => anchor.id == from.id
   );
-  if (index > 1) {
+  // 未通过 Ctrl 指定方向时，后续线段沿用自动交替规则。
+  // Ctrl 指定后跳过此分支，避免自动规则覆盖用户对当前线段的切换。
+  if (index > 1 && !pen.calculative.drawlineHByCtrl) {
     let prev = pen.calculative.worldAnchors[index - 1];
     if (prev.x === from.x && prev.y !== from.y) {
       //水平

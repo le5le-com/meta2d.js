@@ -609,6 +609,8 @@ export interface Pen extends Rect {
     inView?: boolean;
     // 辅助变量，画线时，动态计算锚点是否时水平方向
     drawlineH?: boolean;
+    // 画折线时，本段方向是否由 Ctrl 显式切换
+    drawlineHByCtrl?: boolean;
 
     // 节点是否有图片
     hasImage?: boolean;
