@@ -2400,7 +2400,7 @@ export class Canvas {
         activePen &&
         this.store.data.locked &&
         (activePen.locked === undefined ||
-          activePen.locked < LockState.DisableMove)
+          activePen.locked < LockState.DisableMove)&& activePen?.onMouseMove
       ) {
         // 图元鼠标按下后移动交互
         activePen?.onMouseMove?.(activePen, this.mousePos);
