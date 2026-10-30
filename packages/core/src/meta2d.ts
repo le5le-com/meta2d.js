@@ -1210,6 +1210,11 @@ export class Meta2d extends HTMLElement {
       ...data,
       iconfonts: Array.from(new Set([...configuredIconfonts, ...dataIconfonts])),
     };
+    // 打开已有图纸时，DOM 图元运行在当前 Shadow DOM 中，需要把图纸声明的字体样式注入主线程。
+    // 渲染 Worker 会单独加载 iconfonts，但 Worker 中的字体不会作用到 menuDom 等 DOM 图元。
+    for (const cssUrl of this.data.iconfonts || []) {
+      injectIconfontCss(cssUrl, this.shadowRoot);
+    }
     const theme = themeManager.apply(this, this.data.theme || 'dark');
     if (!this.data.scale) {
       this.data.scale = 1;

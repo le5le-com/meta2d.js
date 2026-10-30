@@ -58,6 +58,9 @@ let options: Options = {};
 
 let dpr = 1;
 let ctx: OffscreenCanvasRenderingContext2D;
+let renderCanvas: OffscreenCanvas;
+let contextPending = true;
+let deferredMessages: MessageEvent[] = [];
 let width: number;
 let height: number;
 let data: any = { x: 0, y: 0 };
@@ -126,6 +129,8 @@ let matrix: DOMMatrix;
 
 let destoryed = false;
 let lastAnimate = 0;
+// 图标字体是异步加载的；字体加载完成前的首帧可能使用回退字体，需要在完成后补一次重绘。
+let dataGeneration = 0;
 
 let textOutsides = {};
 let inputtingPen: string;
@@ -196,7 +201,7 @@ let lastExit = 0;
  */
 let renderTag: number | string = '';
 
-self.onmessage = (e: MessageEvent) => {
+function dispatchMessage(e: MessageEvent) {
   // 第六十六轮：攒着的 Patch（见 deferPatch）必须在任何别的消息碰画布之前画掉，保证先后次序不变；
   // Patch 自己在 onPatch 里决定合并还是先冲掉再画
   if (pendingPatch && e.data.action !== WorkerMessage.Patch) {
@@ -228,7 +233,38 @@ self.onmessage = (e: MessageEvent) => {
     return;
   }
   workerFns[e.data.action](e);
+}
+
+self.onmessage = (e: MessageEvent) => {
+  // Chrome 中 Worker 的 OffscreenCanvas 在首次 getContext 时会固定字体后端。
+  // 首次打开图纸时先等待图标字体加载，避免上下文缓存回退字体；期间暂存依赖画布的消息。
+  const action = e.data.action;
+  if (
+    contextPending &&
+    action !== WorkerMessage.Init &&
+    action !== WorkerMessage.Data &&
+    action !== WorkerMessage.Destory &&
+    action !== WorkerMessage.FontLoad
+  ) {
+    deferredMessages.push(e);
+    return;
+  }
+  dispatchMessage(e);
 };
+
+function createRenderContext() {
+  if (ctx || !renderCanvas) {
+    return;
+  }
+  ctx = renderCanvas.getContext('2d');
+  contextPending = false;
+}
+
+function flushDeferredMessages() {
+  const messages = deferredMessages;
+  deferredMessages = [];
+  messages.forEach(dispatchMessage);
+}
 
 function onPerfProbe(e: MessageEvent) {
   // 探针消息是主线程最后发的，它在队列里排了多久 = 这个 worker 当前积压了多少。
@@ -261,8 +297,7 @@ function onInit(e: MessageEvent) {
   width = e.data.canvas.width;
   height = e.data.canvas.height;
   dpr = e.data.dpr || 1;
-  ctx = e.data.canvas.getContext('2d');
-  resetRender();
+  renderCanvas = e.data.canvas;
 }
 
 function onResize(e: MessageEvent) {
@@ -342,6 +377,7 @@ async function onRegisterPen(e: MessageEvent) {
 }
 
 function onData(e: MessageEvent) {
+  const generation = ++dataGeneration;
   penMap.clear();
   lastInActivePens = undefined;
   lastActiveBoundary = undefined;
@@ -376,10 +412,23 @@ function onData(e: MessageEvent) {
   }
 
   pathBBoxs = e.data.pathBBoxs;
-  loadIconfonts(data.iconfonts);
+  if (!ctx) {
+    // 首次创建上下文必须晚于图标字体加载，否则 Chrome 会把回退字体固定到该上下文。
+    contextPending = true;
+    void loadIconfonts(data.iconfonts).then(() => {
+      if (destoryed || generation !== dataGeneration) {
+        return;
+      }
+      createRenderContext();
+      resetRender();
+      e.data.data.pens && (patchPens.length = 0);
+      flushDeferredMessages();
+    });
+    return;
+  }
 
+  loadIconfontsAndRedraw(data.iconfonts);
   resetRender();
-
   e.data.data.pens && (patchPens.length = 0);
 }
 
@@ -1971,8 +2020,28 @@ function onGifFetched(e: MessageEvent) {
 function onIconFetch(e: MessageEvent) {
   const { iconfonts } = e.data;
   if (iconfonts?.length) {
-    loadIconfonts(iconfonts);
+    loadIconfontsAndRedraw(iconfonts);
   }
+}
+
+/**
+ * 加载图标字体后补画当前视口。
+ * 打开数据时 render Worker 通常先收到 calc 的首个视口消息，字体尚未就绪就已经完成首帧，
+ * 如果没有这次补画，后续只有 hover/拖拽等交互才会把图标重新画出来。
+ */
+function loadIconfontsAndRedraw(iconfonts?: string[]) {
+  if (!iconfonts?.length) {
+    return;
+  }
+
+  void loadIconfonts(iconfonts).then(() => {
+    if (destoryed || !inViewPenIds.length) {
+      return;
+    }
+
+    // 复用完整视口重绘逻辑，保持平移快路径的像素状态与当前画布一致。
+    fullRepaintView();
+  });
 }
 
 async function onFontLoad(e: MessageEvent) {

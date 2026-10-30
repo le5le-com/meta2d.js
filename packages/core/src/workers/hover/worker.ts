@@ -238,7 +238,7 @@ function onData(e: MessageEvent) {
 
   Object.assign(data, e.data.data);
   pathBBoxs = e.data.pathBBoxs;
-  loadIconfonts(data.iconfonts);
+  loadIconfontsAndRedraw(data.iconfonts);
   render();
 }
 
@@ -498,8 +498,21 @@ function onImageFetched(e: MessageEvent) {
 function onIconFetch(e: MessageEvent) {
   const { iconfonts } = e.data;
   if (iconfonts?.length) {
-    loadIconfonts(iconfonts);
+    loadIconfontsAndRedraw(iconfonts);
   }
+}
+
+/** 字体加载完成后重绘交互层，避免首帧使用回退字体后一直不刷新。 */
+function loadIconfontsAndRedraw(iconfonts?: string[]) {
+  if (!iconfonts?.length) {
+    return;
+  }
+
+  void loadIconfonts(iconfonts).then(() => {
+    if (ctx) {
+      render();
+    }
+  });
 }
 
 function onCollaborate(e: MessageEvent) {
