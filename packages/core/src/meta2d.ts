@@ -101,7 +101,6 @@ import {
   PatchRectProps,
   BackgroundType,
   InteractiveType,
-  TextJustifyContents,
   TextDecoration,
   gradientToCss,
   getAllPens,
@@ -527,6 +526,10 @@ export class Meta2d extends HTMLElement {
           border: 1px solid #1890ff80;
           width:auto;
           height: auto;
+          display: flex;
+          flex-direction: column;
+          /* 图元未设置水平对齐方式时，编辑框中的文本默认居中。 */
+          text-align: center;
           caret-color: #f5222d;
         }
         #input::selection {
@@ -3947,9 +3950,21 @@ export class Meta2d extends HTMLElement {
       inputBox.style.transformOrigin = '';
     }
 
-    this.inputElement.style.textAlign = `${TextAligns[pen.textAlign || 2]}`;
-    inputBox.style.justifyContent = `${TextJustifyContents[pen.textAlign || 2]}`;
-    inputBox.style.alignItems = `${TextVerticals[pen.textVertical || 2]}`;
+    // 兼容历史数据中的字符串对齐值；缺省或非法值统一按居中处理，避免浏览器默认左对齐。
+    const rawTextAlign = pen.textAlign as number | 'left' | 'center' | 'right' | undefined;
+    const textAlign =
+      typeof rawTextAlign === 'string'
+        ? rawTextAlign === 'left' || rawTextAlign === 'right' || rawTextAlign === 'center'
+          ? rawTextAlign
+          : 'center'
+        : TextAligns[rawTextAlign || 2] || 'center';
+    this.inputElement.style.textAlign = textAlign;
+    inputBox.style.justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
+    const textVertical = TextVerticals[pen.textVertical || 2] || 'center';
+    inputBox.style.alignItems = textVertical;
+    // 输入框受图元边界约束时高度为 100%，需要在可编辑元素内部完成垂直对齐。
+    this.inputElement.style.justifyContent = textVertical;
+    this.inputElement.style.alignItems = 'stretch';
 
     const textData = this.data as Meta2dData &
       Pick<Pen, 'fontFamily' | 'fontSize' | 'fontWeight' | 'fontStyle' | 'lineHeight'>;
