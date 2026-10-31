@@ -9140,7 +9140,12 @@ export class Canvas {
         );
       }
     }
-    for (const pen of this.store.data.pens) {
+    const pens = [...this.store.data.pens].sort(
+      (a, b) =>
+        (a.canvasLayer ?? CanvasLayer.CanvasMain) -
+        (b.canvasLayer ?? CanvasLayer.CanvasMain)
+    );
+    for (const pen of pens) {
       // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
       if (!isShowChild(pen, this.store) || pen.visible == false) {
         continue;
@@ -9228,7 +9233,12 @@ export class Canvas {
     // // 平移画布，画笔的 worldRect 不变化
     ctx.translate(-oldRect.x + p[3], -oldRect.y + p[0]);
 
-    for (const pen of this.store.data.pens) {
+    const sortedPens = [...this.store.data.pens].sort(
+      (a, b) =>
+        (a.canvasLayer ?? CanvasLayer.CanvasMain) -
+        (b.canvasLayer ?? CanvasLayer.CanvasMain)
+    );
+    for (const pen of sortedPens) {
       if (ids.includes(pen.id)) {
         // 不使用 calculative.inView 的原因是，如果 pen 在 view 之外，那么它的 calculative.inView 为 false，但是它的绘制还是需要的
         if (!isShowChild(pen, this.store) || pen.visible == false) {
