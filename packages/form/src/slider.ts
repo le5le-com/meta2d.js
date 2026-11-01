@@ -1,4 +1,6 @@
 import type { Meta2d, Pen, Point, Rect } from '@meta2d/core';
+import { dispatchEvent } from '@meta2d/core/src/meta2d-event';
+import {EventType} from '@meta2d/core/src/models';
 import { pSBC } from '@meta2d/core/src/utils';
 import { formPen } from './common';
 
@@ -120,7 +122,9 @@ function mouseMove(this: Meta2d, pen: Pen, point: Point) {
 
 function mouseUp(this: Meta2d, source: Pen) {
   const pen = this.penMap.get(source.id);
-  pen && this.emitter.emit('change', pen);
+  if (!pen) return false;
+  this.emitter.emit('change', pen);
+  dispatchEvent.call(this, pen, EventType.Change);
   return false;
 }
 

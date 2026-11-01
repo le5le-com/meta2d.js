@@ -113,6 +113,7 @@ import {
   EventType,
   HandleType,
   InputMode,
+  Event,
 } from './models';
 import { addPath, getPathBBoxCache, getPathBBoxs } from './workers/utility/svg';
 import { getLocalVars, getter, s8 } from './utils';
@@ -237,6 +238,8 @@ export class Meta2d extends HTMLElement {
   options: Options = structuredClone(defaultOptions);
 
   penMap: Map<string, Pen> = new Map();
+  // EventType.Message 消息名索引：key=消息名, value=[{penId, event}]
+  messageEventMap: Map<string, Array<{ penId: string; event: Event }>> = new Map();
   componentElementMap: Map<string, HTMLElement> = new Map();
   componentInstanceMap: Map<string, any> = new Map();
   map?: ViewMap;
@@ -573,6 +576,10 @@ export class Meta2d extends HTMLElement {
     this.queueScheduled = false;
     this.queueInFlight.clear();
     this.scheduleQueue();
+
+    // 监听所有 emitter 事件，将消息名匹配的 EventType.Message 事件派发给对应 pen
+    // 索引由 initMessageEvents() 在 open() 后建立，避免每次 emit 全量遍历 penMap
+    this.emitter.on('*', this.dispatchMessageEvents);
   }
 
   private initDom(shadowRoot: ShadowRoot) {
@@ -1169,6 +1176,43 @@ export class Meta2d extends HTMLElement {
     return loadFontResources(this, fontFaceCss);
   }
 
+  initMessageEvents() {
+    this.messageEventMap.clear();
+    for (const pen of this.penMap.values()) {
+      for (const event of pen.events ?? []) {
+        if (event.type === EventType.Message && event.message) {
+          const list = this.messageEventMap.get(event.message);
+          if (list) {
+            list.push({ penId: pen.id, event });
+          } else {
+            this.messageEventMap.set(event.message, [{ penId: pen.id, event }]);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * 将消息名为 type 的 EventType.Message 事件按 pen 分组后派发，仅运行模式生效
+   */
+  private dispatchMessageEvents = (type: string) => {
+    if (this.options.mode !== Mode.Run) return;
+    const list = this.messageEventMap.get(type);
+    if (!list?.length) return;
+    const groups = new Map<string, Event[]>();
+    for (const { penId, event } of list) {
+      const pen = this.penMap.get(penId);
+      if (!pen) continue;
+      const arr = groups.get(penId);
+      if (arr) arr.push(event);
+      else groups.set(penId, [event]);
+    }
+    for (const [penId, events] of groups) {
+      const pen = this.penMap.get(penId);
+      if (pen) dispatchEvent.call(this, pen, events);
+    }
+  };
+
   open(data?: Meta2dData) {
     // 输入中换数据：先退出输入，否则之后失焦触发的 exitTextInput 会去读已不存在的图元
     this.cancelTextInput();
@@ -1223,6 +1267,7 @@ export class Meta2d extends HTMLElement {
       this.data.scale = 1;
     }
     const animatePens = dealData(this.data.pens, this.penMap);
+    this.initMessageEvents();
     this.data.paths && getPathBBoxs(this.data.paths);
     // 项目初始化函数
     if (this.data.initJs?.trim()) {
@@ -2967,12 +3012,17 @@ export class Meta2d extends HTMLElement {
       if (!shouldPreventEvent && this.options.mode === Mode.Run) {
         const p = this.penMap.get(pen.id);
         if (p.triggers) {
+          const keys = Object.keys(val);
           for (const trigger of p.triggers) {
+            if (!trigger.events?.length) {
+              continue;
+            }
+            // 本次修改的属性与该触发器无关，则整个触发器不重新判定
+            if (!trigger.events.some((event) => !event.conditions?.length || isRelated(event.conditions, keys))) {
+              continue;
+            }
+            // 同一触发器下的事件互斥：按顺序判断，第一个条件成立的事件执行后，后续事件不再执行
             for (const event of trigger.events) {
-              // 判断k是否被监听，条件是否成立
-              if (event.conditions?.length && !isRelated(event.conditions, Object.keys(val))) {
-                break;
-              }
               if (shouldExecute.call(this, pen, event)) {
                 executeActions.call(this, pen, event.actions);
                 break;

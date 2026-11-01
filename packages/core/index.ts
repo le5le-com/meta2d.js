@@ -7,3 +7,4 @@ export * from './src/utils';
 export * from './src/map';
 export * from './src/diagrams/base/elements';
 export * from './src/perf/types';
+export { dispatchEvent } from './src/meta2d-event';

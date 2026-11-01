@@ -181,6 +181,7 @@ export interface PenAction {
 export interface Event {
   type?: EventType; // 事件类型，主要用于鼠标、键盘、消息等交互事件
   name?: string; // 事件名称，交互事件事件可忽略
+  message?: string; // EventType.Message 时监听的消息名
   isAny?: boolean; // 是否满足任意条件即可触发
   conditions?: Condition[]; // 条件列表
   actions?: PenAction[];
