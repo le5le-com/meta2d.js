@@ -127,6 +127,7 @@ import { default as mitt, Emitter } from 'mitt';
 import { snapdom } from '@zumer/snapdom';
 import { executeActions, shouldExecute, isRelated } from './meta2d-event';
 import { Dialog } from './component/dialog';
+import { Tooltip } from './component/tooltip';
 import { MessageBox, MessageOptions, closeAll } from './component/messageBox';
 import { ViewMap } from './map';
 import { registerSvgDraws } from './utils/svg/registry';
@@ -217,6 +218,7 @@ export class Meta2d extends HTMLElement {
   inputElement: HTMLElement;
 
   dialog?: Dialog;
+  tooltip?: Tooltip;
   resizeObserver?: ResizeObserver;
   private viewportWidth = 0;
   private viewportHeight = 0;
@@ -644,6 +646,8 @@ export class Meta2d extends HTMLElement {
     this.topElement.addEventListener('keyup', this.onKeyUp);
 
     this.clientRect = this.topElement.getBoundingClientRect();
+
+    this.tooltip = new Tooltip(this);
   }
 
   private preventEvent(e: MouseEvent) {
@@ -1232,6 +1236,7 @@ export class Meta2d extends HTMLElement {
     this.gifLoadingPens.clear();
     // hover 的 onData 会清空它的图片缓存，这里跟着清
     this.hoverImageSizes.clear();
+    this.tooltip?.reset();
     this.interactionStateMachine.state = InteractionMode.None;
     this.drawingLineFrom = undefined;
     this.drawingLineTo = undefined;
@@ -4358,7 +4363,7 @@ export class Meta2d extends HTMLElement {
     if (!elem || !val) {
       return;
     }
-    // 由 setViewPosition 对每个 HTML 图元逐个调用，必须是 O(1) 判定
+        // 由 setViewPosition 对每个 HTML 图元逐个调用，必须是 O(1) 判定
     if (!this.inViewPenIdSet?.has(val.id) || val.visible === false) {
       elem.style.visibility = 'hidden';
       return;
@@ -4637,6 +4642,8 @@ export class Meta2d extends HTMLElement {
     this.hoverMoveFrame && cancelAnimationFrame(this.hoverMoveFrame);
     this.map?.destroy();
     this.map = undefined;
+    this.tooltip?.destroy();
+    this.tooltip = undefined;
     this.toPngCallbacks.clear();
     this.renderWorker.postMessage({ action: WorkerMessage.Destory });
     this.calcWorker.postMessage({ action: WorkerMessage.Destory });

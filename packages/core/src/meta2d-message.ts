@@ -548,6 +548,7 @@ function onDragPens(this: Meta2d, e: MessageEvent) {
 
 function onPick(this: Meta2d, e: MessageEvent) {
   this.hoverTopId = e.data.topId;
+  this.tooltip?.pick(e.data.topId || (e.data.topOnly ? this.hover?.id : e.data.hover?.id));
   if (e.data.topOnly) {
     return;
   }
@@ -636,6 +637,7 @@ function onPickAnchor(this: Meta2d, e: MessageEvent) {
   if ('topId' in e.data) {
     this.hoverTopId = e.data.topId;
   }
+  this.tooltip?.pick(this.hoverTopId || e.data.hover?.id || this.hover?.id);
   this.hoverCp = e.data.cp;
   this.hoverLinePoint = e.data.linePoint;
 
@@ -979,6 +981,13 @@ function onPatch(this: Meta2d, e: MessageEvent) {
     }
   }
 
+  if (this.tooltip?.active) {
+    this.tooltip.refresh(new Set([
+      ...(update || []).map((pen) => pen.id),
+      ...(e.data.remove || []).map((pen: Pen) => pen.id),
+      ...(e.data.add || []).map((pen: Pen) => pen.id),
+    ]));
+  }
   // 更新gif渲染区域
   if (gifPens.length) {
     this.calcWorker.postMessage({ action: WorkerMessage.CalcPenBoundary, pens: gifPens });
