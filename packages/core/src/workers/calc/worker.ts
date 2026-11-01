@@ -898,12 +898,16 @@ function onPatch(e: MessageEvent) {
         delete _pen.calculative.lineSegments;
         delete _pen.calculative.gradientSegments;
       }
-      if (hoverId === _pen.id) {
-        // 主线程已经丢弃旧 hover；Calc 也必须按下一次命中重新计算边界并发送完整 Pick。
-        hoverId = undefined;
-        _anchor = undefined;
-        _cp = undefined;
-      }
+    }
+    // 与主线程 onPatch 的 hoverGeometryChanged 条件一致：主线程已经丢弃旧 hover；
+    // Calc 也必须按下一次命中重新计算边界并发送完整 Pick。
+    if (
+      hoverId === _pen.id &&
+      (pen.patchFlag & PatchFlag.Rect || (_pen.category === PenCategory.Line && ('lineSmooth' in pen || pen.anchors)))
+    ) {
+      hoverId = undefined;
+      _anchor = undefined;
+      _cp = undefined;
     }
     if (pen.textBox) {
       textBoxs[pen.id] = pen.textBox;

@@ -910,9 +910,12 @@ function onPatch(this: Meta2d, e: MessageEvent) {
     }
     if (
       this.hover?.id === pen.id &&
-      (item.anchors || 'lineSmooth' in item || ((item.patchFlag || 0) & PatchFlag.Rect))
+      (((item.patchFlag || 0) & PatchFlag.Rect) ||
+        (pen.category === PenCategory.Line && (item.anchors || 'lineSmooth' in item)))
     ) {
       // hover 保存的是拾取时的结构化克隆。几何更新后继续使用会在 Hover 画布重绘旧路径，形成残影。
+      // anchors 只对连线算几何：节点的完整补丁也会带 anchors（如表格 render 的空 setValue），
+      // 误判会在按下后清空 hover，后续 mousemove 跳过图元 mouseMove 直接拖动图元。
       hoverGeometryChanged = true;
     }
     const activeIndex = this.activePens.findIndex((activePen) => activePen.id === pen.id);
