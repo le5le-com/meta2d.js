@@ -63,6 +63,7 @@ import {
   getAllFollowers,
   calcChildrenInitRect,
   needImgCanvasPatchFlagsProps,
+  isGradientString,
 } from '../pen';
 import {
   calcRotate,
@@ -5090,8 +5091,10 @@ export class Canvas {
     if(
       (pen.bkType && pen.gradientColors) ||
       (pen.strokeType && pen.lineGradientColors) ||
-      //background为linear渐变字符串时也会生成背景渐变缓存，位置/尺寸变化需清除
-      (typeof pen.background === 'string' && pen.background.startsWith('linear-gradient'))
+      //background为渐变字符串（linear/radial）时也会生成背景渐变缓存，位置/尺寸变化需清除
+      isGradientString(pen.background) ||
+      //未指定bkType时会按gradientColors推断渐变类型
+      ((pen.bkType === undefined || pen.bkType === null) && pen.gradientColors)
     ){
         if (pen.calculative.lineGradient) {
           pen.calculative.lineGradient = null;

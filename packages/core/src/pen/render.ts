@@ -191,14 +191,18 @@ function getBkRadialGradient(ctx: CanvasRenderingContext2D, pen: Pen, gradientCo
   if (!color) {
     return;
   }
-  const { width, height, center } = worldRect;
-  const { x: centerX, y: centerY } = center;
-  let r = width;
-  if (r < height) {
-    r = height;
+  const { x, y, width, height, center } = worldRect;
+  const scale = pen.calculative.canvas?.store?.data?.scale || 1;
+  const { colors, position } = formatGradient(color, { width: width / scale, height: height / scale });
+  let centerX = center.x;
+  let centerY = center.y;
+  let r = Math.max(width, height) * 0.5;
+  if (position && (position.x !== 0.5 || position.y !== 0.5)) {
+    // 偏心径向渐变：半径取到最远角的距离（CSS farthest-corner），保证铺满图元
+    centerX = x + width * position.x;
+    centerY = y + height * position.y;
+    r = Math.hypot(Math.max(position.x, 1 - position.x) * width, Math.max(position.y, 1 - position.y) * height);
   }
-  r *= 0.5;
-  const { colors } = formatGradient(color);
   const grd = ctx.createRadialGradient(
     centerX,
     centerY,
@@ -356,8 +360,54 @@ function getGradientR(angle: number, width: number, height: number) {
   return r;
 }
 
-function formatGradient(color: string) {
-  if (typeof color !== 'string' || !color.startsWith('linear-gradient')) {
+/** 是否为 CSS 渐变字符串（linear-gradient / radial-gradient） */
+export function isGradientString(color: unknown): color is string {
+  return typeof color === 'string' && /^\s*(linear|radial)-gradient\s*\(/.test(color);
+}
+
+/** 是否为 CSS 径向渐变字符串 */
+export function isRadialGradientString(color: unknown): color is string {
+  return typeof color === 'string' && /^\s*radial-gradient\s*\(/.test(color);
+}
+
+/** 径向渐变的形状/尺寸/位置描述（radial-gradient 第一段），如 circle、ellipse at center、circle at 30% 40% */
+const RADIAL_PREFIX_RE = /^(circle|ellipse|closest-side|closest-corner|farthest-side|farthest-corner|at\s)|\sat\s/i;
+
+/** 解析 radial-gradient 中 at 后的位置，返回相对 worldRect 的 0~1 比例（px 按图元未缩放尺寸换算） */
+function parseRadialPosition(prefix: string, width: number, height: number): { x: number; y: number } | undefined {
+  const m = prefix.match(/\bat\s+(.+)$/i);
+  if (!m) return;
+  const tokens = m[1].trim().split(/\s+/);
+  const toRatio = (token: string, size: number): number | undefined => {
+    if (token.endsWith('%')) return parseFloat(token) / 100;
+    if (token.endsWith('px')) return size ? parseFloat(token) / size : undefined;
+    return undefined;
+  };
+  let x: number | undefined;
+  let y: number | undefined;
+  const pending: string[] = [];
+  for (const token of tokens) {
+    const k = token.toLowerCase();
+    if (k === 'left') x = 0;
+    else if (k === 'right') x = 1;
+    else if (k === 'top') y = 0;
+    else if (k === 'bottom') y = 1;
+    else if (k === 'center') pending.push('center');
+    else pending.push(token);
+  }
+  // 未通过关键字确定的轴，按出现顺序依次填入 x、y
+  for (const token of pending) {
+    const v = token === 'center' ? 0.5 : undefined;
+    if (x === undefined) x = v ?? toRatio(token, width);
+    else if (y === undefined) y = v ?? toRatio(token, height);
+  }
+  if (x === undefined && y === undefined) return;
+  return { x: x ?? 0.5, y: y ?? 0.5 };
+}
+
+function formatGradient(color: string, rect?: { width: number; height: number }) {
+  const radial = isRadialGradientString(color);
+  if (!isGradientString(color)) {
     return {
       angle: 0,
       colors: [],
@@ -377,9 +427,15 @@ function formatGradient(color: string) {
 
   let angle = 0;
   let colorStartIndex = 0;
+  let position: { x: number; y: number } | undefined;
 
   const firstPart = parts[0].trim();
-  if (firstPart.endsWith('deg')) {
+  if (radial) {
+    if (RADIAL_PREFIX_RE.test(firstPart)) {
+      colorStartIndex = 1;
+      if (rect) position = parseRadialPosition(firstPart, rect.width, rect.height);
+    }
+  } else if (firstPart.endsWith('deg')) {
     angle = parseFloat(firstPart);
     colorStartIndex = 1;
   } else if (firstPart.startsWith('to ')) {
@@ -396,17 +452,18 @@ function formatGradient(color: string) {
   }
 
   if (rawStops.length === 0) {
-    return { angle, colors: [] };
+    return { angle, colors: [], position };
   }
 
   fillMissingOffsets(rawStops);
 
   const colors = rawStops.map((stop) => ({
     color: stop.color,
-    i: stop.offset! / 100,
+    // addColorStop 只接受 0~1，超出会抛异常
+    i: Math.max(0, Math.min(1, stop.offset! / 100)),
   }));
 
-  return { angle, colors };
+  return { angle, colors, position };
 }
 
 function splitByCommaRespectingParens(str: string): string[] {
@@ -1788,14 +1845,18 @@ export function renderPen(
     let gradientColors = pen.calculative.gradientColors;
 
     if (bkType === undefined || bkType === null) {
-      //未指定bkType时的兼容逻辑
-      if(typeof backgroundStr === 'string' && backgroundStr.startsWith('linear-gradient')){
-        //让background为linear开头的兼容到gradientColors
+      //未指定bkType时的兼容逻辑：按渐变字符串类型推断线性/径向
+      if (isGradientString(backgroundStr)) {
+        //让background为渐变字符串时兼容到gradientColors
         gradientColors = gradientColors || backgroundStr;
-        bkType = Gradient.Linear;
+        bkType = isRadialGradientString(gradientColors) ? Gradient.Radial : Gradient.Linear;
       } else if (!backgroundStr && gradientColors) {
-        bkType = Gradient.Linear;
+        bkType = isRadialGradientString(gradientColors) ? Gradient.Radial : Gradient.Linear;
       }
+    }
+    // bkType 为线性但渐变字符串是 radial-gradient（如 AI 生成）：按字符串实际类型绘制径向渐变
+    if (bkType === Gradient.Linear && isRadialGradientString(gradientColors)) {
+      bkType = Gradient.Radial;
     }
     if (bkType === Gradient.Linear) {
       if (gradientColors) {
@@ -1823,10 +1884,14 @@ export function renderPen(
       } else {
         back = drawBkRadialGradient(ctx, pen);
       }
-    } else if (
-      typeof backgroundStr === 'string' &&
-      backgroundStr.startsWith('linear-gradient')
-    ) {
+    } else if (isRadialGradientString(backgroundStr)) {
+      if (pen.calculative.radialGradient) {
+        back = pen.calculative.radialGradient;
+      } else {
+        back = getBkRadialGradient(ctx, pen, backgroundStr);
+        pen.calculative.radialGradient = back;
+      }
+    } else if (isGradientString(backgroundStr)) {
       if (pen.calculative.gradient) {
         back = pen.calculative.gradient;
       } else {
