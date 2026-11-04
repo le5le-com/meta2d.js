@@ -62,7 +62,8 @@ export const needCalcTextRectProps = [
   'whiteSpace',
   'ellipsis',
   'keepDecimal',
-  'letterSpacing'
+  'letterSpacing',
+  'textCurve',
 ];
 
 export const needSetPenProps = ['x', 'y', 'width', 'height', 'flipX', 'flipY'];
@@ -230,6 +231,8 @@ export interface Pen extends Rect {
   whiteSpace?: WhiteSpace;
   ellipsis?: boolean;
   letterSpacing?: number;
+  /** 文字曲线轨迹：曲线经过的点，坐标为相对文字区域的 0~1 比例，至少 2 个点；不设置则为普通排版 */
+  textCurve?: { x: number; y: number }[];
 
   image?: string;
   icon?: string;
@@ -492,6 +495,10 @@ export interface Pen extends Rect {
     worldIconRect?: Rect;
     worldTextRect?: Rect;
     textDrawRect?: Rect;
+    /** 曲线排版时每个字符的位置与角度 */
+    textCurveGlyphs?: { ch: string; x: number; y: number; angle: number }[];
+    /** 计算曲线布局时使用的字体，字体变化需重新计算 */
+    textCurveFont?: string;
     svgRect?: Rect;
 
     // 执行动画前的初始位置
@@ -862,6 +869,7 @@ export const formatAttrs: Set<string> = new Set([
   'ellipsis',
   'hiddenText',
   'keepDecimal',
+  'textCurve',
   'borderWidth',
   'borderColor',
   'animateLineWidth',

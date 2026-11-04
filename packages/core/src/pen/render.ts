@@ -17,6 +17,7 @@ import {
   renderLineDirectionMarkers,
 } from '../diagrams';
 import { Direction, inheritanceProps } from '../data';
+import { drawCurveText, isCurveText } from './curveText';
 import {
   calcRotate,
   distance,
@@ -1247,7 +1248,10 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
     lineHeight,
   });
 
-  (!pen.calculative.textDrawRect || pen.calculative.fontsChecked) && calcTextDrawRect(ctx, pen);
+  (!pen.calculative.textDrawRect ||
+    pen.calculative.fontsChecked ||
+    (isCurveText(pen) && pen.calculative.textCurveFont !== ctx.font)) &&
+    calcTextDrawRect(ctx, pen);
   const {
     x: drawRectX,
     y: drawRectY,
@@ -1262,6 +1266,12 @@ function drawText(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
 
   const textAlign = pen.textAlign || store.options.textAlign;
+  // 曲线排版（布局已在 calcTextDrawRect 中计算）
+  if (isCurveText(pen)) {
+    drawCurveText(ctx, pen);
+    ctx.restore();
+    return;
+  }
   const oneRowHeight = fontSize * lineHeight;
   pen.calculative.textLines && pen.calculative.textLines.forEach((text, i) => {
     const textLineWidth = pen.calculative.textLineWidths[i];

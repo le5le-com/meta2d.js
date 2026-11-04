@@ -3,6 +3,7 @@ import { Canvas } from '../canvas';
 import { calcRightBottom, Rect } from '../rect';
 import { getFont } from './render';
 import { isEmptyText } from '../utils/tool';
+import { calcCurveTextLayout, isCurveText } from './curveText';
 
 export function calcTextRect(pen: Pen) {
   const {
@@ -98,6 +99,11 @@ export function calcTextDrawRect(ctx: CanvasRenderingContext2D, pen: Pen) {
       pen.calculative.fontsChecked = false;
     }
   }
+  // 曲线排版：textDrawRect 为曲线文字的实际包围盒
+  if (isCurveText(pen)) {
+    calcCurveTextLayout(ctx, pen);
+    return;
+  }
   const textWidth = calcTextAdaptionWidth(ctx, pen); // 多行文本最大宽度
 
   let x = rect.x + (rect.width - textWidth) / 2;
@@ -153,6 +159,11 @@ export function calcTextLines(pen: Pen, text = pen.calculative.text) {
     if (!isNaN(textNum)) {
       textStr = textNum.toFixed(keepDecimal)
     }
+  }
+  // 曲线排版：沿曲线单行绘制，不换行、不省略
+  if (isCurveText(pen)) {
+    calc.textLines = [textStr.replace(/\n/g, '')];
+    return calc.textLines;
   }
   let lines: string[] = [];
   const oneRowHeight = calc.fontSize * calc.lineHeight;
