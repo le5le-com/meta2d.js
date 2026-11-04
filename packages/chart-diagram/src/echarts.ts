@@ -312,15 +312,20 @@ export function echarts(pen: ChartPen): Path2D {
         echarts.registerMap(pen.echarts.geoName, pen.echarts.geoJson);
       } else if (pen.echarts.geoUrl) {
         pen.calculative.singleton.echartsReady = false;
-        fetch(pen.echarts.geoUrl).then((e) => {
-          e.text().then((data: any) => {
+        fetch(pen.echarts.geoUrl)
+          .then((e) => e.text())
+          .then((data: any) => {
             if (typeof data === 'string') {
               try {
                 data = JSON.parse(data);
               } catch {}
             }
-            if (data.constructor !== Object && data.constructor !== Array) {
+            if (data?.constructor !== Object && data?.constructor !== Array) {
               console.warn('Invalid data:', data);
+              return;
+            }
+            // 异步返回时图元可能已被销毁或替换 echarts 配置
+            if (!pen.calculative.singleton?.echart || !pen.echarts) {
               return;
             }
             echarts.registerMap(pen.echarts.geoName, data);
@@ -336,8 +341,13 @@ export function echarts(pen: ChartPen): Path2D {
             );
             safeResize(pen);
             setTimeout(() => onRenderPenRaw(pen), 300);
+          })
+          .catch((error) => {
+            console.error('[meta2d:echarts] load geoUrl failed.', {
+              penId: pen.id,
+              error,
+            });
           });
-        });
       }
     }
 
@@ -365,6 +375,11 @@ export function echarts(pen: ChartPen): Path2D {
                 setTimeout(() => onRenderPenRaw(pen), 300);
               }
             }
+          }).catch((error) => {
+            console.error('[meta2d:echarts] initJs failed.', {
+              penId: pen.id,
+              error,
+            });
           });
         }else{
           safeSetOption(
@@ -571,24 +586,33 @@ function beforeValue(pen: ChartPen, value: any) {
         echarts.registerMap(value.echarts.geoName, value.echarts.geoJson);
       } else if (value.echarts.geoUrl) {
         pen.calculative.singleton.echartsReady = false;
-        fetch(value.echarts.geoUrl).then((e) => {
-          e.text().then((data: any) => {
+        fetch(value.echarts.geoUrl)
+          .then((e) => e.text())
+          .then((data: any) => {
             if (typeof data === 'string') {
               try {
                 data = JSON.parse(data);
               } catch {}
             }
-            if (data.constructor !== Object && data.constructor !== Array) {
+            if (data?.constructor !== Object && data?.constructor !== Array) {
               console.warn('Invalid data:', data);
               return;
             }
             echarts.registerMap(value.echarts.geoName, data);
+            if (!pen.calculative.singleton?.echart) {
+              return;
+            }
             pen.calculative.singleton.echartsReady = true;
             // @ts-ignore
             pen.onValue(pen);
             return false;
+          })
+          .catch((error) => {
+            console.error('[meta2d:echarts] load geoUrl failed.', {
+              penId: pen.id,
+              error,
+            });
           });
-        });
       }
     }
     // 整体传参，不做处理
@@ -1074,6 +1098,10 @@ function updateOption(_option, ratio, options?: Pick<Options, 'allowScript'>) {
 
   // 自动翻译 option 中的用户可见文本
   const translatedOption = translateEchartsOption(option);
+  // option 为空时直接返回，由 safeSetOption 跳过，避免读取 dataZoom 报错
+  if (!translatedOption || typeof translatedOption !== 'object') {
+    return translatedOption;
+  }
 
   // if (option.grid) {
   //   let props = ['top', 'bottom', 'left', 'right'];
@@ -1092,7 +1120,8 @@ function updateOption(_option, ratio, options?: Pick<Options, 'allowScript'>) {
   //   }
   // }
 
-  if (translatedOption.dataZoom) {
+  // dataZoom 可能是对象而非数组，仅数组时按比例缩放
+  if (Array.isArray(translatedOption.dataZoom)) {
     let props = ['right', 'top', 'width', 'height', 'left', 'bottom'];
     for (let i = 0; i < props.length; i++) {
       translatedOption.dataZoom.forEach((item) => {
