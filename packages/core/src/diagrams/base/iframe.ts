@@ -67,26 +67,29 @@ function create(this: Meta2d, pen: Pen) {
   this.componentElementMap.set(pen.id, div);
   generateAroundDiv.call(this, pen);
 
-  iframe.onmouseleave = (e) => {
-    enableOverlayPointerEvents(this);
+  iframe.onmouseleave = () => {
+    closeOperationalRect(this, div);
   };
 }
 
 function mouseMove(this: Meta2d, _pen: Pen, e: any) {
-  if (this.options.mode === Mode.Edit) {
+  const pen = this.penMap.get(_pen.id);
+  // 与 setElementStyle 一致：运行模式或锁定时 iframe 才可交互
+  if (!pen || (this.options.mode === Mode.Edit && !pen.locked)) {
     return;
   }
-  const pen = this.penMap.get(_pen.id);
-  if (initOperationalRect(pen.operationalRect)) {
-    if (
-      pen.isBottom &&
-      e.x > pen.x + pen.width * pen.operationalRect.x &&
-      e.x < pen.x + pen.width * (pen.operationalRect.x + pen.operationalRect.width) &&
-      e.y > pen.y + pen.height * pen.operationalRect.y &&
-      e.y < pen.y + pen.height * (pen.operationalRect.y + pen.operationalRect.height)
-    ) {
-      disableOverlayPointerEvents(this);
-    }
+  if (!initOperationalRect(pen.operationalRect)) {
+    return;
+  }
+  const rect = pen.operationalRect;
+  // 鼠标在画布上移入四个 div 包围的矩形区域时，交给 iframe 响应
+  if (
+    e.x > pen.x + pen.width * rect.x &&
+    e.x < pen.x + pen.width * (rect.x + rect.width) &&
+    e.y > pen.y + pen.height * rect.y &&
+    e.y < pen.y + pen.height * (rect.y + rect.height)
+  ) {
+    openOperationalRect(this, pen);
   }
 }
 
@@ -256,31 +259,45 @@ function generateAroundDiv(this: Meta2d, pen: any) {
   left.style.backgroundColor = pen.blurBackground;
   div.appendChild(left);
 
-  // 仅在 bottom 层且锁定状态下控制指针事件
-  if (!pen.isBottom || (this.options.mode === Mode.Edit && !pen.locked) || pen.zIndex >= 5) {
+  // 外层容器由样式强制不接收鼠标事件（见 meta2d.ts 中的 [data-operational-rect]），
+  // 默认 iframe 和四周 div 也不接收，鼠标事件全部交给画布；移入中间区域时由 mouseMove 打开
+  div.setAttribute(OPERATIONAL_RECT_ATTR, '');
+  setChildrenPointerEvents(div, 'none');
+
+  // 鼠标从中间区域移到四周 div，或移出容器时，恢复画布默认交互
+  const close = () => closeOperationalRect(this, div);
+  top.onmouseenter = close;
+  bottom.onmouseenter = close;
+  right.onmouseenter = close;
+  left.onmouseenter = close;
+  div.onmouseleave = close;
+}
+
+const OPERATIONAL_RECT_ATTR = 'data-operational-rect';
+
+function setChildrenPointerEvents(div: HTMLElement, value: string) {
+  for (const child of Array.from(div.children)) {
+    (child as HTMLElement).style.pointerEvents = value;
+  }
+}
+
+// 打开可操作区域：iframe 接收中间区域的事件，四周 div 接收事件用于检测鼠标移出
+function openOperationalRect(meta2d: Meta2d, pen: Pen) {
+  const div = meta2d.componentElementMap.get(pen.id);
+  if (!div?.hasAttribute(OPERATIONAL_RECT_ATTR)) {
     return;
   }
+  setChildrenPointerEvents(div, 'auto');
+  // 底层 iframe 被画布盖住，需要让画布各层放行鼠标事件
+  pen.isBottom && disableOverlayPointerEvents(meta2d);
+}
 
-  const iframe = div.children[0] as HTMLIFrameElement;
-  const meta2d = this;
-
-  // 鼠标进入 iframe 可交互区域时，禁用覆盖层指针事件
-  const disableOverlay = () => {
-    disableOverlayPointerEvents(meta2d);
-  };
-
-  // 鼠标进入周围 div 或离开父容器时，恢复覆盖层指针事件
-  const enableOverlay = () => {
-    enableOverlayPointerEvents(meta2d);
-  };
-
-  //TODO 没有效果
-  // iframe.onmouseenter = disableOverlay;
-  top.onmouseenter = enableOverlay;
-  bottom.onmouseenter = enableOverlay;
-  right.onmouseenter = enableOverlay;
-  left.onmouseenter = enableOverlay;
-  div.onmouseleave = enableOverlay;
+// 关闭可操作区域：鼠标事件重新交给画布
+function closeOperationalRect(meta2d: Meta2d, div: HTMLElement) {
+  if (div.hasAttribute(OPERATIONAL_RECT_ATTR)) {
+    setChildrenPointerEvents(div, 'none');
+  }
+  enableOverlayPointerEvents(meta2d);
 }
 
 function initOperationalRect(operationalRect: any) {

@@ -507,6 +507,10 @@ export class Meta2d extends HTMLElement {
           border: none;
           outline: none;
           background: none;
+          /* DOM 图元（iframe 等）超出画布时裁剪掉，避免溢出后被 focus 滚动带动外层编辑器整体平移；
+             clip 不会生成滚动容器，hidden 作为旧浏览器兜底 */
+          overflow: hidden;
+          overflow: clip;
         }
         :host > * {
           position: absolute;
