@@ -521,6 +521,11 @@ export class Meta2d extends HTMLElement {
           width: 100%;
           height: 100%;
         }
+        /* 带可操作区域的 iframe 外层容器不接收鼠标事件，由内部 iframe 和四周 div 按需开关（见 diagrams/base/iframe.ts）；
+           需要 !important 覆盖 setElementStyle 写入的内联 pointer-events */
+        [data-operational-rect] {
+          pointer-events: none !important;
+        }
         #input-box {
           position: absolute;
           display: flex;
@@ -1271,7 +1276,8 @@ export class Meta2d extends HTMLElement {
     for (const cssUrl of this.data.iconfonts || []) {
       injectIconfontCss(cssUrl, this.shadowRoot);
     }
-    const theme = themeManager.apply(this, this.data.theme || 'dark');
+    // 打开图纸时保留图纸自身的背景色等配置，主题仅补齐缺省值
+    const theme = themeManager.apply(this, this.data.theme || 'dark', true);
     if (!this.data.scale) {
       this.data.scale = 1;
     }
