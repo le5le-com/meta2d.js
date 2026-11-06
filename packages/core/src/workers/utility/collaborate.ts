@@ -651,7 +651,7 @@ export function onCollaborateCallback(this: Meta2d, e: MessageEvent) {
       });
     } else {
       // 多人协作实时数据
-      this.data.seq = data.seq;
+      this.data.saveSeq = data.seq;
 
       // 多人协作历史数据
       if (data.msgs?.length) {

@@ -61,7 +61,7 @@ export interface Meta2dData {
   paths?: { [key: string]: string };
   iconfonts?: string[];
 
-  seq?: number; // 多人协作序列
+  saveSeq?: number; // 多人协作序列
 }
 
 export interface Layout {
