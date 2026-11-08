@@ -4,13 +4,11 @@
 
 Meta2d.js 是一个 「**数据驱动显示** + **动态交互**」 2d 可视化引擎，具有绘图、动画、消息、事件、实时数据通信、条件告警、生命周期、图形自定义、扩展等功能，方便快速实现 Web 组态、SCADA，表报、流程图、中控可视化等可视化需求。
 
-<center style="display:flex;justify-content:center">
-<img style="height:100px;margin: 10px" src="1.png" >
-
-<img style="height:100px;margin: 10px" src="2.png" >
-
-<img style="height:100px;margin: 10px" src="3.webp"> 
-</center>
+<div style="display:flex;justify-content:center;gap:10px;flex-wrap:nowrap;">
+<img style="height:200px;margin: 10px" src="1.png" >
+<img style="height:200px;margin: 10px" src="2.png" >
+<img style="height:200px;margin: 10px" src="3.webp"> 
+</div>
 
 <br>
 

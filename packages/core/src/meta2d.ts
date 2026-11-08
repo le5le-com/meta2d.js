@@ -1815,9 +1815,14 @@ export class Meta2d extends HTMLElement {
     const data = structuredClone(this.data);
     const pens = Array.from(this.penMap.values()).sort((a, b) => a.index - b.index);
     for (const pen of pens) {
+      
       // 克隆图元对象，避免修改 penMap 中的原始数据
       const clonedPen = structuredClone(pen);
       delete clonedPen.index;
+      // 删除临时计算属性，不导出
+      if (clonedPen.calculative) {
+        delete clonedPen.calculative;
+      }
 
       // 其他清理
       // ...

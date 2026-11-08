@@ -4,13 +4,11 @@
 
 Meta2d.js is a 2D visualization engine built around **data-driven display** and **dynamic interaction**. It covers drawing, animation, messages, events, real-time data communication, conditional alarms, lifecycle hooks, custom shapes and extensions. You can use it to build web SCADA/HMI, reports, flowcharts, control-room dashboards and similar visualizations.
 
-<center style="display:flex;justify-content:center">
-<img style="height:100px;margin: 10px" src="1.png" >
-
-<img style="height:100px;margin: 10px" src="2.png" >
-
-<img style="height:100px;margin: 10px" src="3.webp">
-</center>
+<div style="display:flex;justify-content:center;gap:10px;flex-wrap:nowrap;">
+<img style="height:150px;margin: 10px" src="1.png" >
+<img style="height:150px;margin: 10px" src="2.png" >
+<img style="height:150px;margin: 10px" src="3.webp">
+</div>
 
 <br>
 
