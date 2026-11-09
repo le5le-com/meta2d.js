@@ -1,4 +1,5 @@
 import { InputMode, Pen, TextDecoration, TextVertical, TextWrap, TextAlign } from '@meta2d/core';
+import { upgradeScript } from './script';
 
 const domShapes = ['gif', 'iframe', 'video', 'echarts', 'highcharts', 'lightningCharts', 'vue'];
 
@@ -188,12 +189,14 @@ const converRules = [
     source: 'globalAlpha',
   },
   {
+    // 1.0 鼠标提示文字（Markdown / HTML）保持原内容。
     target: 'tooltip',
     source: 'title',
   },
   {
     target: 'tooltipJs',
     source: 'titleFnJs',
+    transform: (pen: any) => upgradeScript(pen.titleFnJs),
   },
   {
     target: 'borderRadius',
