@@ -1540,9 +1540,26 @@ export function updateConnectedLine(line: Pen, nodeMap: Map<string, Pen>): Pen {
       continue;
     }
 
+    const oldX = lineAnchor.x;
+    const oldY = lineAnchor.y;
     const point = getPenAnchorPosition(node, nodeAnchor);
+    const dx = point.x - oldX;
+    const dy = point.y - oldY;
+
     lineAnchor.x = point.x;
     lineAnchor.y = point.y;
+
+    // curve 和 mind 连线的控制点需要随着端点一起移动,保持曲线形状
+    if ((line.type === 'curve' || line.type === 'mind') && (dx !== 0 || dy !== 0)) {
+      if (lineAnchor.cp1) {
+        lineAnchor.cp1.x += dx;
+        lineAnchor.cp1.y += dy;
+      }
+      if (lineAnchor.cp2) {
+        lineAnchor.cp2.x += dx;
+        lineAnchor.cp2.y += dy;
+      }
+    }
   }
 
   if (line.type === 'orthogonal' && line.anchors.length >= 2) {
