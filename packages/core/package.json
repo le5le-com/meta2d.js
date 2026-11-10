@@ -28,6 +28,7 @@
     "@types/offscreencanvas": "latest"
   },
   "dependencies": {
+    "@meta2d/math": "workspace:*",
     "@zumer/snapdom": "^1.9.14",
     "gifwarp": "^0.1.1",
     "@lvcabral/upng":"^2.3.0",

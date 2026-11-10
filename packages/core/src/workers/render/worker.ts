@@ -1,5 +1,6 @@
 import { PlayState, WorkerMessage } from '../../types';
 import { penDefines } from '../../diagrams';
+import { setVectors } from '../../models/vector/store';
 import { fillDefaultAnchors } from '../../diagrams/base';
 import { renderLineGradientPath } from '../../diagrams/line/gradient';
 import {
@@ -172,6 +173,7 @@ const workerFns: { [key: number]: Function } = {
   [WorkerMessage.Data]: onData,
   [WorkerMessage.DataChunk]: onDataChunk,
   [WorkerMessage.AddPath]: onAddPath,
+  [WorkerMessage.AddVectors]: onAddVectors,
   [WorkerMessage.UpdateView]: onUpdateView,
   [WorkerMessage.Hover]: onHover,
   [WorkerMessage.Active]: onActive,
@@ -386,6 +388,7 @@ function onData(e: MessageEvent) {
 
   cancalAnimation();
 
+  setVectors(e.data.data.vectors);
   if (e.data.data.pens) {
     data = e.data.data;
     // 主线程没发的默认锚点（见 elideDefaultAnchors）
@@ -444,6 +447,10 @@ function onDataChunk(e: MessageEvent) {
     trackInkPad(pen);
   }
   self.postMessage({ action: WorkerMessage.DataChunkDone, from: 'render', loadSeq: e.data.loadSeq });
+}
+
+function onAddVectors(e: MessageEvent) {
+  setVectors(e.data.vectors);
 }
 
 function onAddPath(e: MessageEvent) {

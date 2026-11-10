@@ -114,6 +114,9 @@ import {
   HandleType,
   InputMode,
   Event,
+  VectorGeom,
+  setVectors,
+  collectVectorRefs,
 } from './models';
 import { addPath, getPathBBoxCache, getPathBBoxs } from './workers/utility/svg';
 import { getLocalVars, getter, s8 } from './utils';
@@ -1274,6 +1277,7 @@ export class Meta2d extends HTMLElement {
     const animatePens = dealData(this.data.pens, this.penMap);
     this.initMessageEvents();
     this.data.paths && getPathBBoxs(this.data.paths);
+    setVectors(this.data.vectors);
     // 项目初始化函数
     if (this.data.initJs?.trim()) {
       try {
@@ -1302,7 +1306,7 @@ export class Meta2d extends HTMLElement {
 
       this.calcWorker.postMessage({
         action: WorkerMessage.Data,
-        data: firstData,
+        data: firstData.vectors ? { ...firstData, vectors: undefined } : firstData,
         canvasWidth: this.renderCanvas.clientWidth,
         canvasHeight: this.renderCanvas.clientHeight,
         progressive: load && { loadSeq: load.seq, total: load.total, bounds: load.bounds },
@@ -1332,6 +1336,8 @@ export class Meta2d extends HTMLElement {
       canvasWidth: this.hoverCanvas.clientWidth,
       canvasHeight: this.hoverCanvas.clientHeight,
       pathBBoxs: this.options.mode === Mode.Edit ? getPathBBoxCache() : undefined,
+      // 拖拽预览会绘制矢量图元，需要共享几何。不按模式过滤：之后从运行模式切到编辑模式时不会再补发
+      vectors: this.data.vectors,
     });
 
     this.utilityWorker.postMessage({
@@ -2045,6 +2051,44 @@ export class Meta2d extends HTMLElement {
     // ...
   }
 
+  /**
+   * 新增矢量图元的共享几何（CAD 块、Visio 母版）。必须在 addPens 引用它们之前调用。
+   * 同 id 已存在时覆盖（定义按内容生成 id 时等价于去重）。
+   */
+  addVectors(vectors: Record<string, VectorGeom>, broadcast = true) {
+    if (!vectors || !Object.keys(vectors).length) {
+      return;
+    }
+    this.data.vectors = { ...(this.data.vectors || {}), ...vectors };
+    setVectors(vectors);
+    this.renderWorker.postMessage({ action: WorkerMessage.AddVectors, vectors });
+    this.hoverWorker.postMessage({ action: WorkerMessage.AddVectors, vectors });
+    if (broadcast && this.collaborate) {
+      this.utilityWorker.postMessage({
+        action: WorkerMessage.Patch,
+        patch: { documentData: { vectors: { upsert: vectors } } },
+      });
+    }
+  }
+
+  /** pens 中矢量图元（直接或间接）引用到的共享几何定义 */
+  private collectReferencedVectors(pens: Pen[]) {
+    if (!this.data.vectors) {
+      return undefined;
+    }
+    const resolve = (id: string) => this.data.vectors[id];
+    const ids = new Set<string>();
+    for (const pen of pens) {
+      pen.vector && collectVectorRefs(pen.vector.items, resolve, ids);
+    }
+    if (!ids.size) {
+      return undefined;
+    }
+    const out: Record<string, VectorGeom> = {};
+    ids.forEach((id) => this.data.vectors[id] && (out[id] = this.data.vectors[id]));
+    return out;
+  }
+
   async addPens(pens: Pen[], mode?: Mode, parentId?: string) {
     dealData(pens, this.penMap);
     if (!mode && this.beforeAdd && !(await this.beforeAdd(pens))) {
@@ -2119,13 +2163,15 @@ export class Meta2d extends HTMLElement {
             .filter((id): id is string => Boolean(id && this.data.paths?.[id]))
             .map((id) => [id, this.data.paths[id]]),
         );
+        const referencedVectors = this.collectReferencedVectors(pens);
+        const documentData: any = {};
+        Object.keys(referencedPaths).length && (documentData.paths = { upsert: referencedPaths });
+        referencedVectors && (documentData.vectors = { upsert: referencedVectors });
         const patch = {
           add: pens,
           beforeUpdate,
           update,
-          ...(Object.keys(referencedPaths).length
-            ? { documentData: { paths: { upsert: referencedPaths } } }
-            : {}),
+          ...(Object.keys(documentData).length ? { documentData } : {}),
         };
         this.utilityWorker.postMessage({
           action: WorkerMessage.Patch,
