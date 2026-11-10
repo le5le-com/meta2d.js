@@ -17,6 +17,7 @@ import {
   calcTextLines,
   calcTextRect,
   calcIconRect,
+  applyIconFont,
   calcImageRect,
   ColorType,
   createBackgroundGradient,
@@ -2680,7 +2681,6 @@ export function renderImage(ctx: OffscreenCanvasRenderingContext2D, pen: Pen, im
 
 export function renderIcon(ctx: OffscreenCanvasRenderingContext2D, pen: Pen) {
   const rect = calcIconRect(pen);
-  const size = pen.iconSize || Math.min(rect.width, rect.height);
 
   let fill: string;
 
@@ -2691,7 +2691,7 @@ export function renderIcon(ctx: OffscreenCanvasRenderingContext2D, pen: Pen) {
   }
 
   ctx.save();
-  ctx.font = `${pen.iconWeight || 'normal'} ${size}px ${pen.iconFamily}`;
+  applyIconFont(ctx, pen, rect);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = pen.iconGradient

@@ -1027,6 +1027,33 @@ export function calcIconRect(
   };
 }
 
+/**
+ * 设置图标字体并返回最终字号。
+ * 未指定 iconSize 时，字号默认取图标区域宽高的较小值；
+ * 若字形本身是宽字形（步进宽度大于 1em），按图元可用宽度等比缩小字号，保证图标完整显示。
+ */
+export function applyIconFont(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen,
+  rect: Rect,
+): number {
+  const fontPrefix = `${pen.iconWeight || 'normal'} `;
+  const fontSuffix = `px ${pen.iconFamily}`;
+  let size = pen.iconSize || Math.min(rect.width, rect.height);
+  ctx.font = `${fontPrefix}${size}${fontSuffix}`;
+
+  if (!pen.iconSize && size > 0) {
+    const maxWidth = pen.iconWidth || pen.width;
+    const glyphWidth = ctx.measureText(pen.icon).width;
+    if (glyphWidth > maxWidth) {
+      size = (size * maxWidth) / glyphWidth;
+      ctx.font = `${fontPrefix}${size}${fontSuffix}`;
+    }
+  }
+
+  return size;
+}
+
 export function calcImageRect(pen: Pen, image: CanvasImageSource): Rect {
   const rect = {
     x: pen.x,

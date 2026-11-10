@@ -23,6 +23,7 @@ import {
   getFont,
   createGradient,
   calcIconRect,
+  applyIconFont,
   calcImageRect,
   createTextGradient,
   TextDecoration,
@@ -2087,7 +2088,6 @@ function renderImage(ctx: CanvasRenderingContext2D, pen: Pen, image: CanvasImage
 
 export function renderIcon(ctx: CanvasRenderingContext2D, pen: Pen) {
   const rect = calcIconRect(pen);
-  const size = pen.iconSize || Math.min(rect.width, rect.height);
   let fill: string;
 
   if (pen.disabled) {
@@ -2097,7 +2097,7 @@ export function renderIcon(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
 
   ctx.save();
-  ctx.font = `${pen.iconWeight || 'normal'} ${size}px ${pen.iconFamily}`;
+  applyIconFont(ctx, pen, rect);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = pen.iconGradient

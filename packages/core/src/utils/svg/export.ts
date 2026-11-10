@@ -3,6 +3,7 @@ import { renderLineGradientPath } from '../../diagrams/line/gradient';
 import type { Meta2d } from '../../meta2d';
 import {
   calcIconRect,
+  applyIconFont,
   calcImageRect,
   calcTextLines,
   calcTextRect,
@@ -241,13 +242,12 @@ function renderImage(ctx: CanvasRenderingContext2D, pen: Pen, image: CanvasImage
 
 function renderIcon(ctx: CanvasRenderingContext2D, meta2d: Meta2d, pen: Pen) {
   const rect = calcIconRect(pen);
-  const size = pen.iconSize || Math.min(rect.width, rect.height);
   const fill = pen.disabled
     ? pen.disabledTextColor || pen.disabledColor || pSBC(0.4, pen.iconColor)
     : pen.iconColor || pen.textColor || pen.color || meta2d.data.textColor || meta2d.data.color || meta2d.options.color;
 
   ctx.save();
-  ctx.font = `${pen.iconWeight || 'normal'} ${size}px ${pen.iconFamily}`;
+  applyIconFont(ctx, pen, rect);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = pen.iconGradient
