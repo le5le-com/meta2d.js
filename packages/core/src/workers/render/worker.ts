@@ -249,8 +249,19 @@ self.onmessage = (e: MessageEvent) => {
     action !== WorkerMessage.Destory &&
     action !== WorkerMessage.FontLoad
   ) {
-    deferredMessages.push(e);
-    return;
+    if (
+      !dataGeneration &&
+      renderCanvas &&
+      action !== WorkerMessage.Option &&
+      action !== WorkerMessage.RegisterPen
+    ) {
+      createRenderContext();
+      resetRender();
+      flushDeferredMessages();
+    } else {
+      deferredMessages.push(e);
+      return;
+    }
   }
   dispatchMessage(e);
 };
