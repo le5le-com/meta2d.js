@@ -1,12 +1,5 @@
 /**
  * 矢量图元中间表示（Vector IR）。
- *
- * CAD（DXF）、Visio（VSDX）等外部格式的解析器都输出这一种数据，core 里只有一个通用解释器
- * （diagrams/base/vector.ts）负责绘制。设计约束：
- * 1. 纯数据（可 JSON 序列化、可 structuredClone 到 Worker），不含函数；
- * 2. 局部坐标系，Y 轴向下；几何在 bbox 内，绘制时整体映射到 pen 的矩形，所以缩放图元不用改几何；
- * 3. 指令集小而固定：解析器把各种曲线（SPLINE、NURBS、凸度圆弧…）在解析期化成这几种基础指令，
- *    新格式只需要写解析器，不需要改解释器。
  */
 
 import type { Box, Matrix } from '@meta2d/math';

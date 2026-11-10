@@ -3,16 +3,7 @@ import { estimateTextWidth } from './geom';
 
 /**
  * 把解析出来的数据转成 meta2d 原生、可编辑的图元。
- *
- * 矢量图元（type: 'vector'）适合表达任意几何，但文字放在几何里就只能看不能改。这里约定：
- * - 文字一律生成原生 `text` 图元：双击改内容，属性面板改字号、颜色、字体、粗斜体、对齐；
- * - 形状图元的主颜色写到 pen.color / pen.background / pen.lineWidth，几何里用 '$fg' / '$bg' / '$lw' 引用，
- *   属性面板改颜色、线宽立即生效（见 diagrams/base/vector.ts）。
- *
- * 只依赖纯数据模块，解析器在 Worker / Node 中也能调用。
  */
-
-/** meta2d 的 TextAlign / TextVertical 取值（与 models/pen/const.ts 一致，这里不引入以免拉起运行时依赖） */
 const ALIGN = { left: 1, center: 2, right: 3 } as const;
 const VERTICAL = { top: 1, middle: 2, bottom: 3 } as const;
 
@@ -31,12 +22,6 @@ export interface EditableTextOptions {
 
 /**
  * IR 文字项 → 原生 text 图元。
- *
- * 几何对应关系：IR 文字以锚点 (x, y) + 对齐方式定位、绕锚点旋转 r；
- * 原生文字以框 (x, y, width, height) 定位、绕框中心旋转 rotate（角度）。
- * 先在「未旋转」的文字坐标系里算出框相对锚点的位置，再把框中心绕锚点转过去，二者画出来的位置一致。
- *
- * 镜像文字（m=1，CAD 镜像块里的字）按正常方向生成：可编辑文字镜像显示没有意义，且 meta2d 没有对应属性。
  */
 export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): any {
   const size = item.h;
