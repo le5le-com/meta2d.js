@@ -14,13 +14,16 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "paths": {
-      "@meta2d/core": ["../core"]
+      "@meta2d/core": ["../core"],
+      "@meta2d/math": ["../math"]
     }
   },
   "include": [
     "index.ts",
     "../core/src/**/*",
-    "../core/index.ts"
+    "../core/index.ts",
+    "../math/src/**/*",
+    "../math/index.ts"
   ],
   "exclude": [
     "node_modules",

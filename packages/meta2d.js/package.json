@@ -38,6 +38,7 @@
     "@meta2d/echarts": "workspace:*",
     "@meta2d/form": "workspace:*",
     "@meta2d/fta": "workspace:*",
+    "@meta2d/math": "workspace:*",
     "@meta2d/uml": "workspace:*"
   }
 }

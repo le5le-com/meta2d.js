@@ -382,6 +382,9 @@ importers:
       '@meta2d/fta':
         specifier: workspace:*
         version: link:../fta
+      '@meta2d/math':
+        specifier: workspace:*
+        version: link:../math
       '@meta2d/uml':
         specifier: workspace:*
         version: link:../uml
