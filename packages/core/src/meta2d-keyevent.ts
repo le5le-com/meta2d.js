@@ -998,8 +998,12 @@ export function translatePens(this: Meta2d, dx: number, dy: number, logAction?: 
 
   // 整条连线发生平移时，两端不再位于原图元锚点上，必须立即断开双向连接。
   // 此时 beforeUpdate 已保存移动前的连线快照，节点快照和断连结果继续并入同一次操作，保证撤销与协作一致。
+  // 但如果连线的两端节点也同时被选中一起移动，则应保持连接关系。
   const translatedLineIds = new Set(
     update.filter((pen) => pen.category === PenCategory.Line).map((pen) => pen.id),
+  );
+  const movedNodeIds = new Set(
+    update.filter((pen) => pen.category !== PenCategory.Line).map((pen) => pen.id),
   );
   const disconnectedNodes = new Map<string, Pen>();
   const recordNodeBeforeDisconnect = (pen: Pen) => {
@@ -1016,6 +1020,18 @@ export function translatePens(this: Meta2d, dx: number, dy: number, logAction?: 
     const endpoints = [line.anchors[0], line.anchors[line.anchors.length - 1]].filter(
       (anchor, index, anchors) => anchor && anchors.findIndex((item) => item.id === anchor.id) === index,
     );
+
+    // 检查连线的两端节点是否都在移动的节点集合中
+    const connectedNodeIds = endpoints
+      .filter((anchor) => anchor.connectedPen)
+      .map((anchor) => anchor.connectedPen);
+    const allNodesMoving = connectedNodeIds.length > 0 && connectedNodeIds.every((nodeId) => movedNodeIds.has(nodeId));
+
+    // 如果连线的所有已连接节点都在一起移动，则保持连接，不断开
+    if (allNodesMoving) {
+      continue;
+    }
+
     for (const endpoint of endpoints) {
       if (!endpoint.connectedPen) {
         continue;

@@ -437,12 +437,12 @@ async function sendHttpDataInMainThread(this: Meta2d, datasource: any, pen: Pen,
 
     // 执行 callback，this 绑定到 meta2d 实例
     try {
-      const fn = new Function('context', 'data', 'pen', callback) as (
-        context: { meta2d: Meta2d },
-        data: any,
+      const fn = new Function('pen', 'data', 'context', callback) as (
         pen: Pen,
+        data: any,
+        context: { meta2d: Meta2d },
       ) => void;
-      fn({ meta2d: this }, JSON.stringify(responseData), pen);
+      fn(pen, JSON.stringify(responseData), { meta2d: this });
     } catch (error: any) {
       console.error('[meta2d] callback 执行失败:', error);
     }

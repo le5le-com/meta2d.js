@@ -292,22 +292,29 @@ class ThemeManager {
     }
   }
 
-  apply(meta2d: Meta2d, name: string): Meta2dTheme {
+  /**
+   * 应用主题。
+   * keepData 为 true 时（打开图纸），图纸自身保存的背景色、前景色、标尺颜色优先，主题值只作缺省补齐；
+   * 为 false 时（主动切换主题），用主题值覆盖。
+   */
+  apply(meta2d: Meta2d, name: string, keepData = false): Meta2dTheme {
     const state = this.getState(meta2d);
     const resolvedName = state.registry.has(name) ? name : 'dark';
     if (resolvedName !== name) {
       console.warn(`未找到主题 ${name}，已回退到 dark。`);
     }
     const theme = state.registry.get(resolvedName) || defaultThemes.dark;
-    meta2d.data.theme = resolvedName;
-    meta2d.data.background = theme.background;
-    meta2d.data.color = theme.color;
-    meta2d.data.textColor = theme.color;
-    meta2d.data.rule = {
-      ...meta2d.data.rule,
-      color: theme.ruleColor,
-      background: theme.ruleOptions.background,
-      textColor: theme.ruleOptions.textColor,
+    const data = meta2d.data;
+    const rule = data.rule;
+    data.theme = resolvedName;
+    data.background = (keepData && data.background) || theme.background;
+    data.color = (keepData && data.color) || theme.color;
+    data.textColor = (keepData && data.textColor) || theme.color;
+    data.rule = {
+      ...rule,
+      color: (keepData && rule?.color) || theme.ruleColor,
+      background: (keepData && rule?.background) || theme.ruleOptions.background,
+      textColor: (keepData && rule?.textColor) || theme.ruleOptions.textColor,
     };
     meta2d.options.background = theme.background;
     meta2d.options.color = theme.color;

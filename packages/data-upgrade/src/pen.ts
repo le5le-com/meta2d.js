@@ -18,7 +18,8 @@ import {
 import { applyPenRules } from './pen-rules';
 import { upgradeScript } from './script';
 
-const delProps = ['props','canvasLayer','zIndex'];
+// 提示函数是运行时缓存；升级只保留提示文字和脚本，由新版悬停时重新编译。
+const delProps = ['props','canvasLayer','zIndex', 'titleFn', 'tooltipFn'];
 
 const convertFrames = (frames: any[], linear: boolean) => {
   return frames.map((item: any) => {
@@ -243,7 +244,24 @@ const convertNetworkToDatasource = (network: any): any => {
   return network;
 };
 
+// 1.0 动作统一带 timeout（延迟执行），2.0 同名字段，需随动作保留。
 const transformAction = (action: any): PenAction => {
+  const newAction = transformActionPayload(action);
+  if (newAction && action.timeout) {
+    newAction.timeout = action.timeout;
+  }
+  return newAction;
+};
+
+// 废弃动作（SendPropData/SendVarData 等）返回 undefined，由调用方过滤，避免 2.0 执行时 events[type] 不存在而报错。
+const transformActions = (actions: any[]): PenAction[] => {
+  return (actions || [])
+    .filter((item: any) => item && Object.keys(item).length > 0)
+    .map((item: any) => transformAction(item))
+    .filter(Boolean);
+};
+
+const transformActionPayload = (action: any): PenAction => {
   switch (action.action) {
     case PenActionType.Link:
       return {
@@ -355,24 +373,35 @@ const transformAction = (action: any): PenAction => {
   }
 };
 
-const transformWhere = (where: any): Condition => {
+// 1.0 老格式 where：无 type 且无比较时直接执行，2.0 中对应“无条件”，返回空数组。
+// where.value 是固定值，不是图元 id，因此 targetType 必须为 Value，否则 2.0 会按图元 id 取值而报错。
+const transformWhere = (where: any): Condition[] => {
   if (where?.type === 'custom') {
-    return {
-      type: ConditionType.Function,
-      fn: upgradeScript(where?.fnJs),
-    };
+    return where.fnJs ? [{ type: ConditionType.Function, fn: upgradeScript(where.fnJs) }] : [];
   }
-  return {
-    type: ConditionType.Compare,
-    operator: where?.comparison,
-    targetType: TargetType.Pen,
-    target: where?.value,
-    key: where?.key,
-    label: where?.key,
-  };
+  if (!where?.key || !where?.comparison) {
+    return [];
+  }
+  return [
+    {
+      type: ConditionType.Compare,
+      operator: where.comparison,
+      targetType: TargetType.Value,
+      target: where.value,
+      key: where.key,
+      label: where.key,
+    },
+  ];
 };
 
-const transCondition = (condition: any): Condition => {
+// 1.0 conditionType 取值为 'and' | 'or'
+const isAnyCondition = (conditionType: string) => conditionType === 'or';
+
+// defaultKey：realTimes 联动的条件不带 key，比较的是所属 realTime.key
+const transCondition = (condition: any, defaultKey?: string): Condition => {
+  if (defaultKey && !condition.key) {
+    condition = { ...condition, key: defaultKey };
+  }
   if (condition.type === 'fn') {
     return {
       type: ConditionType.Function,
@@ -421,12 +450,24 @@ const EventTypeMap: Record<string, EventType> = {
   reset: EventType.Reset,
 };
 
+// EventType.Message 需带上监听的消息名，2.0 按 event.message 建立消息索引
+const withMessage = (newEvent: any, event: any) => {
+  if (newEvent.type === EventType.Message && event.message) {
+    newEvent.message = event.message;
+  }
+  return newEvent;
+};
+
 const convertEvents = (newPen: Pen, pen: any) => {
   if (pen.events?.length) {
     const action = pen.events[0].action;
     if (action !== undefined) {
       for (let i = 0; i < pen.events.length; i++) {
         const event = pen.events[i];
+        const actions = transformActions([event]);
+        if (!actions.length) {
+          continue;
+        }
 
         if (event.name === 'valueUpdate') {
           if (!newPen.triggers) {
@@ -437,15 +478,15 @@ const convertEvents = (newPen: Pen, pen: any) => {
             events: [
               {
                 name: '联动1',
-                conditions: [transformWhere(event.where)],
-                actions: [transformAction(event)],
+                conditions: transformWhere(event.where),
+                actions,
                 isAny: false,
               },
             ],
           };
 
           let index = -1;
-          if (event.where.key) {
+          if (event.where?.key) {
             index = newPen.triggers.findIndex((el: any) => el.events[0]?.conditions?.[0]?.key === event.where.key);
           }
           if (index !== -1 && newPen.triggers[index]?.events?.length) {
@@ -468,32 +509,36 @@ const convertEvents = (newPen: Pen, pen: any) => {
           if (!newPen.events) {
             newPen.events = [];
           }
-          newPen.events.push({
-            type: EventTypeMap[event.name],
-            name: event.name,
-            isAny: false,
-            conditions: [transformWhere(event.where)],
-            actions: [transformAction(event)],
-          });
+          newPen.events.push(
+            withMessage(
+              {
+                type: EventTypeMap[event.name],
+                name: event.name,
+                isAny: false,
+                conditions: transformWhere(event.where),
+                actions,
+              },
+              event,
+            ),
+          );
         }
       }
     } else {
       const events = [];
       for (let i = 0; i < pen.events.length; i++) {
         const event = pen.events[i];
-        events.push({
-          type: EventTypeMap[event.name],
-          name: event.name,
-          isAny: event.conditionType === 'any' ? true : false,
-          conditions: event.conditions?.map((item: any) => {
-            return transCondition(item);
-          }) || [],
-          actions: event.actions
-            .filter((item: any) => Object.keys(item).length > 0)
-            .map((item: any) => {
-              return transformAction(item);
-            }),
-        });
+        events.push(
+          withMessage(
+            {
+              type: EventTypeMap[event.name],
+              name: event.name,
+              isAny: isAnyCondition(event.conditionType),
+              conditions: event.conditions?.map((item: any) => transCondition(item)) || [],
+              actions: transformActions(event.actions),
+            },
+            event,
+          ),
+        );
       }
       newPen.events = events;
     }
@@ -501,28 +546,42 @@ const convertEvents = (newPen: Pen, pen: any) => {
   delete pen.events;
 };
 
+// 1.0 有两处联动：pen.triggers[].status（状态，命中第一条即停止）和 realTimes[].triggers（每条独立执行）。
+// 2.0 每个 Trigger 内命中第一条 event 即停止，因此 realTimes 的每条联动各自转为一个 Trigger，保持独立执行。
+// convertEvents 可能已把老格式 valueUpdate 写入 newPen.triggers，这里追加而不是覆盖。
 const convertTriggers = (newPen: Pen, pen: any) => {
-  if (pen.triggers?.length) {
-    const triggers = [];
-    for (const trigger of pen.triggers) {
+  const triggers = newPen.triggers ?? [];
+  for (const trigger of pen.triggers ?? []) {
+    triggers.push({
+      name: trigger.name,
+      events: (trigger.status ?? []).map((event: any) => ({
+        name: event.name,
+        isAny: isAnyCondition(event.conditionType),
+        conditions: (event.conditions ?? []).map((item: any) => transCondition(item)),
+        actions: transformActions(event.actions),
+      })),
+    });
+  }
+
+  for (const realTime of pen.realTimes ?? []) {
+    for (const trigger of realTime.triggers ?? []) {
       triggers.push({
-        name: trigger.name,
-        events: trigger.status.map((event: any) => {
-          return {
-            name: event.name,
-            isAny: event.conditionType === 'any' ? true : false,
-            conditions: event.conditions.map((item: any) => {
-              return transCondition(item);
-            }),
-            actions: event.actions
-              .filter((item: any) => Object.keys(item).length > 0)
-              .map((item: any) => {
-                return transformAction(item);
-              }),
-          };
-        }),
+        name: `${realTime.label || realTime.key}-${trigger.name}`,
+        events: [
+          {
+            name: trigger.name,
+            isAny: isAnyCondition(trigger.conditionType),
+            conditions: (trigger.conditions ?? []).map((item: any) => transCondition(item, realTime.key)),
+            actions: transformActions(trigger.actions),
+          },
+        ],
       });
     }
+    // 联动已迁移到 pen.triggers，realTimes 会原样转为 properties，不再保留
+    delete realTime.triggers;
+  }
+
+  if (triggers.length) {
     newPen.triggers = triggers;
   }
   delete pen.triggers;

@@ -510,6 +510,10 @@ export class Meta2d extends HTMLElement {
           border: none;
           outline: none;
           background: none;
+          /* DOM 图元（iframe 等）超出画布时裁剪掉，避免溢出后被 focus 滚动带动外层编辑器整体平移；
+             clip 不会生成滚动容器，hidden 作为旧浏览器兜底 */
+          overflow: hidden;
+          overflow: clip;
         }
         :host > * {
           position: absolute;
@@ -519,6 +523,11 @@ export class Meta2d extends HTMLElement {
           outline: none;
           width: 100%;
           height: 100%;
+        }
+        /* 带可操作区域的 iframe 外层容器不接收鼠标事件，由内部 iframe 和四周 div 按需开关（见 diagrams/base/iframe.ts）；
+           需要 !important 覆盖 setElementStyle 写入的内联 pointer-events */
+        [data-operational-rect] {
+          pointer-events: none !important;
         }
         #input-box {
           position: absolute;
@@ -1270,7 +1279,8 @@ export class Meta2d extends HTMLElement {
     for (const cssUrl of this.data.iconfonts || []) {
       injectIconfontCss(cssUrl, this.shadowRoot);
     }
-    const theme = themeManager.apply(this, this.data.theme || 'dark');
+    // 打开图纸时保留图纸自身的背景色等配置，主题仅补齐缺省值
+    const theme = themeManager.apply(this, this.data.theme || 'dark', true);
     if (!this.data.scale) {
       this.data.scale = 1;
     }

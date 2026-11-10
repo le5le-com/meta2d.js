@@ -1027,6 +1027,33 @@ export function calcIconRect(
   };
 }
 
+/**
+ * 设置图标字体并返回最终字号。
+ * 未指定 iconSize 时，字号默认取图标区域宽高的较小值；
+ * 若字形本身是宽字形（步进宽度大于 1em），按图元可用宽度等比缩小字号，保证图标完整显示。
+ */
+export function applyIconFont(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pen: Pen,
+  rect: Rect,
+): number {
+  const fontPrefix = `${pen.iconWeight || 'normal'} `;
+  const fontSuffix = `px ${pen.iconFamily}`;
+  let size = pen.iconSize || Math.min(rect.width, rect.height);
+  ctx.font = `${fontPrefix}${size}${fontSuffix}`;
+
+  if (!pen.iconSize && size > 0) {
+    const maxWidth = pen.iconWidth || pen.width;
+    const glyphWidth = ctx.measureText(pen.icon).width;
+    if (glyphWidth > maxWidth) {
+      size = (size * maxWidth) / glyphWidth;
+      ctx.font = `${fontPrefix}${size}${fontSuffix}`;
+    }
+  }
+
+  return size;
+}
+
 export function calcImageRect(pen: Pen, image: CanvasImageSource): Rect {
   const rect = {
     x: pen.x,
@@ -1540,9 +1567,26 @@ export function updateConnectedLine(line: Pen, nodeMap: Map<string, Pen>): Pen {
       continue;
     }
 
+    const oldX = lineAnchor.x;
+    const oldY = lineAnchor.y;
     const point = getPenAnchorPosition(node, nodeAnchor);
+    const dx = point.x - oldX;
+    const dy = point.y - oldY;
+
     lineAnchor.x = point.x;
     lineAnchor.y = point.y;
+
+    // curve 和 mind 连线的控制点需要随着端点一起移动,保持曲线形状
+    if ((line.type === 'curve' || line.type === 'mind') && (dx !== 0 || dy !== 0)) {
+      if (lineAnchor.cp1) {
+        lineAnchor.cp1.x += dx;
+        lineAnchor.cp1.y += dy;
+      }
+      if (lineAnchor.cp2) {
+        lineAnchor.cp2.x += dx;
+        lineAnchor.cp2.y += dy;
+      }
+    }
   }
 
   if (line.type === 'orthogonal' && line.anchors.length >= 2) {
