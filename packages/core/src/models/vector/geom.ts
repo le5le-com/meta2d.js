@@ -1,5 +1,5 @@
 /**
- * Vector IR 的几何工具，供各格式解析器共用（DXF、Visio …）。
+ * Vector IR 的构建工具，供外部格式解析器生成矢量图元数据（通用矩阵、曲线算法在 @meta2d/math）。
  *
  * 核心是 VectorBuilder：解析器用**源格式自己的坐标系**调用 moveTo / lineTo / ellipse …，
  * 构建器按当前矩阵（Y 轴翻转、块插入变换、OCS 镜像等）换算成 IR 坐标，同时累计包围盒。

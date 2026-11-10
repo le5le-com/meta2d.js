@@ -1,7 +1,7 @@
 /**
  * @meta2d/math —— 2D 几何基础：仿射矩阵、包围盒、曲线（椭圆弧、凸度圆弧、NURBS、Catmull-Rom）。
  *
- * 零依赖、纯函数，core 和各格式解析器（@meta2d/dxf、@meta2d/visio）共用，可在 Worker / Node 中运行。
+ * 零依赖、纯函数，core 与外部格式解析器（CAD、Visio 等）共用，可在 Worker / Node 中运行。
  *
  * 矩阵约定：Matrix = [a, b, c, d, e, f]，与 Canvas `transform(a, b, c, d, e, f)`、SVG `matrix()` 同序：
  *   x' = a·x + c·y + e，y' = b·x + d·y + f
