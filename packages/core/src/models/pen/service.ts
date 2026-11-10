@@ -3,7 +3,7 @@ import { getDirection, getOrthogonalPoint, rotatePoint, simplifyOrthogonalPoints
 import { expandRect, getRectOfPoints, Rect, rotateRect, translateRect } from '../rect';
 import { BackgroundType, PatchFlag, PenCategory, TextAlign, TextVertical, TextWrap } from './const';
 import { Pen } from './pen';
-import { Vector2D } from '../../math';
+import { rotateVector } from '../../math';
 import { s8 } from '../../utils';
 import { Gradient } from './types';
 import { GradientType, Align } from './const';
@@ -917,12 +917,12 @@ export function resizePen(
   const dx = oldCenter.x - oldBoundaryCenter.x;
   const dy = oldCenter.y - oldBoundaryCenter.y;
 
-  const [localX, localY] = new Vector2D(dx, dy).rotate(-rad).toArray();
+  const [localX, localY] = rotateVector(dx, dy, -rad);
 
   const scaledLocalX = localX * scaleX;
   const scaledLocalY = localY * scaleY;
 
-  const [newDx, newDy] = new Vector2D(scaledLocalX, scaledLocalY).rotate(rad).toArray();
+  const [newDx, newDy] = rotateVector(scaledLocalX, scaledLocalY, rad);
 
   const newCenter = {
     x: newBoundaryCenter.x + newDx,
@@ -945,12 +945,12 @@ export function resizePen(
   const pivotDx = pen.pivot.x - oldBoundaryCenter.x;
   const pivotDy = pen.pivot.y - oldBoundaryCenter.y;
 
-  const [localPivotX, localPivotY] = new Vector2D(pivotDx, pivotDy).rotate(-rad).toArray();
+  const [localPivotX, localPivotY] = rotateVector(pivotDx, pivotDy, -rad);
 
   const scaledPivotX = localPivotX * scaleX;
   const scaledPivotY = localPivotY * scaleY;
 
-  const [newPivotDx, newPivotDy] = new Vector2D(scaledPivotX, scaledPivotY).rotate(rad).toArray();
+  const [newPivotDx, newPivotDy] = rotateVector(scaledPivotX, scaledPivotY, rad);
 
   pen.pivot.x = newBoundaryCenter.x + newPivotDx;
   pen.pivot.y = newBoundaryCenter.y + newPivotDy;

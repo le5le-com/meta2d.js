@@ -131,6 +131,6 @@ export class Matrix3x3 {
 
   // 复合变换矩阵
   static compose(...matrices: Matrix3x3[]): Matrix3x3 {
-    return matrices.reduce((result, matrix) => result.multiply(matrix), Matrix3x3.identity());
+    return matrices.reduce((result, matrix) => matrix.multiply(result), Matrix3x3.identity());
   }
 }
