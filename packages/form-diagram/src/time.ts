@@ -40,6 +40,21 @@ function formatTime(pen: any) {
     return `${year}:${month}:${day} ${hours}:${minutes}:${seconds} ${t('星期')}${weeks[week]}`;
   }
   let timeFormat = (pen.timeFormat + '').trim();
+
+  // 基于标准时间标记进行替换：YYYY、MM、DD、HH、mm、ss、d
+  const hasStandardFormat = /YYYY|MM|DD|HH|mm|ss|dddd/.test(timeFormat);
+  if (hasStandardFormat) {
+    let result = timeFormat;
+    result = result.replace(/YYYY/g, year.toString());
+    result = result.replace(/MM/g, month);
+    result = result.replace(/DD/g, day);
+    result = result.replace(/HH/g, hours);
+    result = result.replace(/mm/g, minutes);
+    result = result.replace(/ss/g, seconds);
+    result = result.replace(/dddd/g, weeks[week]);
+    return result;
+  }
+
   if (!timeFormat.startsWith('`')) {
     timeFormat = `\`${timeFormat}\``;
   }
