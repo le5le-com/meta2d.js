@@ -1,4 +1,5 @@
-import { clearIframes, commonAnchors, commonPens, cube, updateIframes, reset, updateFormData } from './diagrams';
+import { clearIframes, commonAnchors, commonPens, cube, vector, updateIframes, reset, updateFormData } from './diagrams';
+import { collectVectorRefs, getVector, setVectors, VectorGeom } from './vector';
 import { EventType, Handler, WildcardHandler } from 'mitt';
 import { Canvas } from './canvas';
 import { Options, PenPlugin, PluginOptions } from './options';
@@ -142,7 +143,7 @@ export class Meta2d {
     this.setDatabyOptions(opts);
     this.init(parent);
     this.register(commonPens());
-    this.registerCanvasDraw({ cube });
+    this.registerCanvasDraw({ cube, vector });
     this.registerAnchors(commonAnchors());
     globalThis[opts.alias || GLOBALVARALIAS] = this;
     this.initEventFns();
@@ -1151,6 +1152,37 @@ export class Meta2d {
     return await this.canvas.addPens(pens, history, abs);
   }
 
+  /**
+   * 添加矢量图元（name: 'vector'）引用的共享几何（CAD 块、Visio 母版）。
+   * 追加解析结果到当前图纸时，先 addVectors(doc.vectors) 再 addPens(doc.pens)。
+   */
+  addVectors(vectors: Record<string, VectorGeom>) {
+    if (!vectors || !Object.keys(vectors).length) {
+      return;
+    }
+    this.store.data.vectors = { ...(this.store.data.vectors || {}), ...vectors };
+    setVectors(vectors);
+  }
+
+  /** 图元（含子孙引用）用到的共享几何。当前图纸里没有的定义从全局仓库补齐（跨图纸粘贴的图元） */
+  private collectReferencedVectors(pens: Pen[]) {
+    const own = this.store.data.vectors || {};
+    const resolve = (id: string) => own[id] || getVector(id);
+    const ids = new Set<string>();
+    for (const pen of pens) {
+      pen.vector && collectVectorRefs(pen.vector.items, resolve, ids);
+    }
+    if (!ids.size) {
+      return undefined;
+    }
+    const out: Record<string, VectorGeom> = {};
+    ids.forEach((id) => {
+      const def = resolve(id);
+      def && (out[id] = def);
+    });
+    return out;
+  }
+
   render(patchFlags?: boolean | number) {
     this.canvas?.render(patchFlags);
   }
@@ -1275,6 +1307,8 @@ export class Meta2d {
       updateIframes(data.pens);
       this.setBackgroundImage(data.bkImage, data);
       Object.assign(this.store.data, data);
+      // 矢量图元（CAD 块等）的共享几何：同步到全局仓库，供跨图纸复制粘贴的图元兜底解析
+      setVectors(this.store.data.vectors);
       this.store.data.pens = [];
       // 第一遍赋初值
       for (const pen of data.pens) {
@@ -2561,8 +2595,18 @@ export class Meta2d {
 
   data(): Meta2dData {
     this.initBinds();
-    const data: Meta2dData = deepClone(this.store.data);
-    const { pens, paths } = this.store.data;
+    const { pens, paths, vectors } = this.store.data;
+    // 共享几何不参与深拷贝（只读数据，可能很大），下面按引用重新收集
+    this.store.data.vectors = undefined;
+    let data: Meta2dData;
+    try {
+      data = deepClone(this.store.data);
+    } finally {
+      this.store.data.vectors = vectors;
+    }
+    // 只保留图元用到的共享几何（与 paths 一样，删除的图元不再携带定义）
+    const referencedVectors = this.collectReferencedVectors(pens);
+    referencedVectors ? (data.vectors = referencedVectors) : delete data.vectors;
     data.version = pkg.version;
     // TODO: 未在 delete 时清除，避免撤销等操作。
     // 清除一些未使用到的 paths

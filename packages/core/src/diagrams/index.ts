@@ -27,6 +27,7 @@ export * from './crosse';
 export * from './rightTriangle';
 export * from './parallelogram';
 export * from './frostedGlass';
+export * from './vector';
 
 import { rectangle, square } from './rectangle';
 import { circle } from './circle';

@@ -8,3 +8,4 @@ export * from './src/point';
 export * from './src/event';
 export * from './src/store';
 export * from './src/theme';
+export * from './src/vector';

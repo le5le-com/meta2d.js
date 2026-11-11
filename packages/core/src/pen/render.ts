@@ -1837,6 +1837,7 @@ export function renderPen(
   const backgroundImg = pen.calculative.backgroundImg;
   if (pen.calculative.backgroundImage && backgroundImg) {
     ctx.fillStyle = fill || ctx.createPattern(backgroundImg, REPEAT);
+    setVectorFill(ctx, pen, true);
     fill = true;
   } else {
     let back: string | CanvasGradient | CanvasPattern;
@@ -1902,6 +1903,7 @@ export function renderPen(
       back = pen.calculative.background || store.styles.penBackground;
     }
     ctx.fillStyle = fill || back;
+    setVectorFill(ctx, pen, !!(fill || back));
     fill = !!back;
   }
   // }
@@ -1972,6 +1974,20 @@ export function renderPen(
     pen.calculative.debug.renderTime = performance.now() - debugStart;
   }
 }
+/**
+ * 矢量图元（name: 'vector'）的 '$bg' 填充取当前状态的背景（悬停 / 选中 / 禁用背景、渐变、背景图），
+ * 没有背景时不填充。在 ctx.fillStyle 设置好之后调用
+ */
+function setVectorFill(
+  ctx: CanvasRenderingContext2D,
+  pen: Pen,
+  hasFill: boolean
+) {
+  if (pen.name === 'vector') {
+    pen.calculative.fillStyles = hasFill ? [ctx.fillStyle] : undefined;
+  }
+}
+
 export function setLineCap(ctx: CanvasRenderingContext2D, pen: Pen) {
   const lineCap = pen.lineCap || (pen.type ? 'round' : 'square');
   if (lineCap) {
@@ -2126,6 +2142,7 @@ export function renderPenRaw(
   } else {
     ctxDrawPath(false, ctx, pen, store, fill);
 
+    setVectorFill(ctx, pen, !!fill);
     ctxDrawCanvas(ctx, pen);
   }
 
@@ -4636,6 +4653,14 @@ function ctxDrawCanvas(ctx: CanvasRenderingContext2D, pen: Pen) {
     ctx.restore();
   }
 }
+/**
+ * drawCommand 指令解释器（parseType: 'visio' | 'dxf' | 'canvas'）。
+ *
+ * @deprecated parseType 为 'dxf' 的部分仅用于兼容旧版 @meta2d/dxf（1.0.x）生成的图纸。
+ * 新版 @meta2d/dxf 输出 name: 'vector' 的矢量图元（见 diagrams/vector.ts、vector/），
+ * 不再生成 drawCommand：drawCommand 每帧逐条解释、按 worldRect / dxfOrigin 换算坐标，块引用深拷贝展开，
+ * 大图纸很慢，且颜色 ByLayer / ByBlock、OCS 镜像、HATCH 等无法正确表达。
+ */
 function drawFuncGenerator(ctx: CanvasRenderingContext2D, pen: any) {
   // 进行数据的预处理
   const drawCommand:Array<any> = pen.drawCommand;
@@ -4698,6 +4723,9 @@ function commandTransfer(command,pen,startX,startY){
   return map[pen.parseType]?.(command,pen,startX,startY) || command;
 }
 
+/**
+ * @deprecated 仅用于显示旧版 @meta2d/dxf（1.0.x）生成的 drawCommand 图纸，新版输出 vector 图元
+ */
 function dealWithDXF(command,pen,startX,startY) {
   const { x, y, width, height } = pen.calculative.worldRect;
   const {originWidth,originHeight} = pen.dxfOrigin;

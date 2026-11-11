@@ -8,6 +8,7 @@ import { Point } from '../point';
 import { globalStore } from './global';
 import { Rect } from '../rect';
 import { Event, Trigger } from '../event';
+import type { VectorGeom } from '../vector/types';
 
 export interface Meta2dData {
   pens: Pen[];
@@ -51,6 +52,8 @@ export interface Meta2dData {
   textColor?: string; // 画笔文字颜色
   penBackground?: string; // 画笔默认背景色
   paths?: { [key: string]: string }; // paths 该图纸使用到的 svgPath ，打开后需要保存到 globalStore.paths
+  /** 矢量图元（name: 'vector'）的共享几何（CAD 块、Visio 母版），被 pen.vector 内的引用项按 id 使用 */
+  vectors?: Record<string, VectorGeom>;
   bkImage?: string; // 背景图片
   http?: string; // http 请求 Url
   httpTimeInterval?: number; // http 请求间隔

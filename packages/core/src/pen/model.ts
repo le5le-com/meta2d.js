@@ -2,6 +2,7 @@ import { Point } from '../point';
 import { Rect } from '../rect';
 import { Event, RealTime, Trigger } from '../event';
 import { Canvas } from '../canvas';
+import type { VectorGeom } from '../vector/types';
 
 export enum PenType {
   Node,
@@ -233,6 +234,14 @@ export interface Pen extends Rect {
   letterSpacing?: number;
   /** 文字曲线轨迹：曲线经过的点，坐标为相对文字区域的 0~1 比例，至少 2 个点；不设置则为普通排版 */
   textCurve?: { x: number; y: number }[];
+
+  /**
+   * name 为 'vector' 的矢量图元几何（CAD / Visio 等外部格式解析结果），见 vector/types.ts。
+   * 几何在局部坐标中，绘制时 bbox 映射到图元矩形；块引用的共享定义在 Meta2dData.vectors 中
+   */
+  vector?: VectorGeom;
+  /** 矢量图元着色：固定颜色也改用图元颜色（pen.color / 悬停 / 选中色），可把整个 CAD 块改成同一种颜色 */
+  vectorTint?: boolean;
 
   image?: string;
   icon?: string;
@@ -686,6 +695,8 @@ export interface Pen extends Rect {
     gradient?: CanvasGradient; //临时渐进色 防止每次都计算
     lineGradient?: CanvasGradient;
     radialGradient?: CanvasGradient;
+    /** 当前状态的背景（渲染期临时状态，矢量图元的 '$bg' 填充使用），由 renderPen / renderPenRaw 设置 */
+    fillStyles?: (string | CanvasGradient | CanvasPattern)[];
     gradientColorStop?: ColorStop[]; //临时 连线ColorStop
     gradientTimer?: any;
     animateLineWidth?: number;
