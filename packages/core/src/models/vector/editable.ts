@@ -32,8 +32,18 @@ export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): 
   const width = Math.max(textWidth * 1.08 + size * 0.2, size);
   const height = rowHeight * lines.length;
 
+  // 镜像文字（CAD 负缩放块 / OCS 镜像里的文字，item.m）：原生文字不能镜像字形。
+  // 「旋转 r、沿基线镜像」= 「旋转 r+π、左右镜像」，去掉左右镜像即得正向可读、覆盖同一区域的文字：
+  // 旋转加 π，左右对齐对调（垂直对齐不变）。不处理时文字会上下颠倒
+  let a: 'left' | 'center' | 'right' =
+    item.a === 'right' || item.a === 'end' ? 'right' : item.a === 'center' ? 'center' : 'left';
+  let r = item.r || 0;
+  if (item.m) {
+    r += Math.PI;
+    r > Math.PI && (r -= Math.PI * 2);
+    a = a === 'left' ? 'right' : a === 'right' ? 'left' : a;
+  }
   // 框相对锚点的位置（未旋转坐标，Y 向下）
-  const a = item.a === 'right' || item.a === 'end' ? 'right' : item.a === 'center' ? 'center' : 'left';
   const left = a === 'left' ? 0 : a === 'center' ? -width / 2 : -width;
   // 首行基线 / 顶 / 中 / 底 → 框顶。原生文字每行在 rowHeight 中垂直居中，字形约占 [基线-0.8h, 基线+0.2h]
   const pad = (rowHeight - size) / 2;
@@ -58,7 +68,6 @@ export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): 
       top = -pad - size * 0.8;
   }
 
-  const r = item.r || 0;
   // 框中心（未旋转）相对锚点
   const cx0 = left + width / 2;
   const cy0 = top + height / 2;
