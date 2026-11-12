@@ -97,6 +97,7 @@ export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): 
     textWrap: fixed ? 0 : 2,
     ellipsis: false,
     textAutoSize: !fixed,
+    ...(fixed ? { textUnit: 1, textWidth: 1 } : {}),
     // 文字图元不需要连线锚点
     disableAnchor: true,
     anchors: [] as any[],
