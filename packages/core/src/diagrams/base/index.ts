@@ -14,6 +14,7 @@ import { triangle, triangleAnchors } from './triangle';
 import { pentagram } from './pentagram';
 import { cube } from './cube';
 import { svgPath } from './svgPath';
+import { vector } from './vector';
 
 export const basePenDefines = [
   {
@@ -117,6 +118,10 @@ export const basePenDefines = [
   {
     type: 'svgPath',
     draw: svgPath,
+  },
+  {
+    type: 'vector',
+    draw: vector,
   }
 ];
 

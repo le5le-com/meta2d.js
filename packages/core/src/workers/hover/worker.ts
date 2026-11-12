@@ -1,5 +1,6 @@
 import { CollaboratePointer, Mode, Options, WorkerMessage } from '../../types';
 import { penDefines } from '../../diagrams';
+import { setVectors } from '../../models/vector/store';
 import { renderLineGradientPath } from '../../diagrams/line/gradient';
 import {
   Rect,
@@ -112,6 +113,7 @@ const workerFns: { [key: number]: Function } = {
   [WorkerMessage.RegisterPen]: onRegisterPen,
   [WorkerMessage.Data]: onData,
   [WorkerMessage.AddPath]: onAddPath,
+  [WorkerMessage.AddVectors]: onAddVectors,
   [WorkerMessage.DragOver]: onDragOver,
   [WorkerMessage.TranslateScale]: onTranslateScale,
   [WorkerMessage.Hover]: onHover,
@@ -237,10 +239,15 @@ function onData(e: MessageEvent) {
   activeLine = undefined;
   images = {};
 
+  setVectors(e.data.vectors);
   Object.assign(data, e.data.data);
   pathBBoxs = e.data.pathBBoxs;
   loadIconfontsAndRedraw(data.iconfonts);
   render();
+}
+
+function onAddVectors(e: MessageEvent) {
+  setVectors(e.data.vectors);
 }
 
 function onAddPath(e: MessageEvent) {

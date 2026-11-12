@@ -31,6 +31,7 @@ import { toPngFns } from '../../models/pen/handle';
 import { getPathBBox, getPathBBoxCache } from '../../workers/utility/svg';
 import { pSBC } from '../color';
 import { getSvgDraw } from './registry';
+import { drawVector } from '../../diagrams/base/vector';
 
 type SvgContext = CanvasRenderingContext2D & {
   getSerializedSvg: () => string;
@@ -483,6 +484,9 @@ function renderPen(ctx: SvgContext, meta2d: Meta2d, pen: Pen, assets: SvgAssets)
 
     if (pen.pathId) {
       renderSvgPath(ctx, meta2d, pen);
+    } else if (pen.type === 'vector') {
+      // canvas2svg 不支持 Path2D，逐条指令写入；共享几何直接取文档数据
+      drawVector(ctx, pen, { cache: false, resolve: (id) => meta2d.data.vectors?.[id] });
     } else {
       const draw = getSvgDraw(meta2d, pen.type);
       if (draw) {

@@ -66,4 +66,5 @@ export enum WorkerMessage {
   DataChunk, // 主线程 → render / calc：分批打开时视口外的后续图元（见 Meta2d.planProgressiveLoad）
   DataChunkDone, // render / calc → 主线程：一批 DataChunk 处理完（分批打开的背压）
   AnimRendered, // render → 主线程 → calc：一批 RenderAnimation 已画完（动画背压，见 calc/animate.ts 的 animInFlight）
+  AddVectors,
 }

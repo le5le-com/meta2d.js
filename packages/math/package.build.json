@@ -1,0 +1,12 @@
+{
+  "name": "@meta2d/math",
+  "version": "2.0.0",
+  "description": "2D geometry for meta2d.js: affine matrices, bounding boxes, arcs, NURBS. Zero dependencies.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "keywords": ["Meta2d.js", "math", "geometry", "matrix"],
+  "author": "le5le.com",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/le5le-com/meta2d.js.git" },
+  "publishConfig": { "access": "public" }
+}

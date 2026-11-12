@@ -1,3 +1,1 @@
-export * from './matrix';
-export * from './val';
-export * from './vector';
+export * from '@meta2d/math';

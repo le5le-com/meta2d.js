@@ -1,4 +1,4 @@
-import { Gradient, Pen, Point, Trigger } from '../models';
+import { Gradient, Pen, Point, Trigger, VectorGeom } from '../models';
 
 export interface Meta2dData {
   id?: string;
@@ -45,6 +45,8 @@ export interface Meta2dData {
   vars?: { [key: string]: any }[]; // 全局变量。key: {name,...}
 
   paths?: { [key: string]: string };
+  /** 矢量图元的共享几何（CAD 块、Visio 母版），被 pen.vector 内的引用项按 id 使用 */
+  vectors?: Record<string, VectorGeom>;
   iconfonts?: string[];
 
   saveSeq?: number; // 多人协作序列

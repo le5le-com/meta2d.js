@@ -1,5 +1,6 @@
-import { Matrix3x3 } from './matrix';
+import { Matrix3x3 } from './matrix3x3';
 
+/** 2D 向量（面向对象写法）；批量计算请用 applyMatrix / rotateVector 等纯函数 */
 export class Vector2D {
   x: number;
   y: number;

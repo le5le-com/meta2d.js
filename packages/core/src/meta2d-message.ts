@@ -178,7 +178,8 @@ async function onUpdateView(this: Meta2d, e: MessageEvent) {
   let t = probe.now();
   postView.call(this, {
     action: WorkerMessage.UpdateView,
-    data: { ...this.data, pens: [] },
+    // vectors 只在 open / addVectors 时同步；随视口消息发送会让 render 的 viewSig 每次平移都序列化全部块定义
+    data: { ...this.data, pens: [], vectors: undefined },
     penIds: e.data.penIds,
     width: e.data.width,
     height: e.data.height,

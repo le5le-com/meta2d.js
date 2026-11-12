@@ -94,6 +94,7 @@ export default defineConfig({
     extensions: ['.ts', '.js', '.json'],
     alias: {
       '@meta2d/core': resolve(__dirname, '../core'),
+      '@meta2d/math': resolve(__dirname, '../math'),
     },
   },
 

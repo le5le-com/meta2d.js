@@ -1,5 +1,5 @@
 import { ResizePoints } from '../../const';
-import { limitAbs, Matrix3x3, Vector2D } from '../../math';
+import { applyMatrix, invertMatrix, limitAbs, rotateMatrix, rotateVector } from '../../math';
 import { Pen } from '../pen';
 import { Point, pointInVertices, rotatePoint, scalePoint } from '../point';
 import { Rect } from './rect';
@@ -419,11 +419,7 @@ export function resizeRect(rect: Rect, sizeDirection: number, dx: number, dy: nu
   const localOppY = oppositeCp.y * height;
 
   // 将鼠标位移转换到矩形的局部坐标系
-  const [localDx, localDy] = new Vector2D(adjustedDx, adjustedDy)
-    .transform(
-      Matrix3x3.rotate(rad).inverse() // 旋转矩阵的逆矩阵
-    )
-    .toArray();
+  const [localDx, localDy] = applyMatrix(invertMatrix(rotateMatrix(rad)), adjustedDx, adjustedDy); // 旋转矩阵的逆矩阵
 
   // 计算新的控制点位置（局部坐标）
   let newLocalCpX = localCpX;
@@ -534,9 +530,7 @@ export function resizeRect(rect: Rect, sizeDirection: number, dx: number, dy: nu
     const centerOffsetX = newLocalCenterX - width / 2;
     const centerOffsetY = newLocalCenterY - height / 2;
 
-    const [globalCenterOffsetX, globalCenterOffsetY] = new Vector2D(centerOffsetX, centerOffsetY)
-      .rotate(rad)
-      .toArray();
+    const [globalCenterOffsetX, globalCenterOffsetY] = rotateVector(centerOffsetX, centerOffsetY, rad);
 
     const newGlobalCenterX = originalCenterX + globalCenterOffsetX;
     const newGlobalCenterY = originalCenterY + globalCenterOffsetY;

@@ -1,6 +1,6 @@
 import { WorkerMessage } from '../../types';
 import type { Datasource, Meta2dData } from '../../types';
-import type { Pen } from '../../models';
+import type { Pen, VectorGeom } from '../../models';
 import { collaboratePageKeys, defaultCollaborateColors } from '../../const';
 import type { Meta2d } from '../../meta2d';
 import { getPathBBox, getPathBBoxCache } from './svg';
@@ -18,6 +18,9 @@ interface CollaborateDocumentDataPatch {
   };
   paths?: {
     upsert?: Record<string, string>;
+  };
+  vectors?: {
+    upsert?: Record<string, VectorGeom>;
   };
   iconfonts?: {
     add?: string[];
@@ -96,7 +99,7 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isCollaborateDocumentDataPatch(value: unknown): value is CollaborateDocumentDataPatch {
-  if (!hasOnlyKeys(value, ['page', 'datasources', 'paths', 'iconfonts'])) return false;
+  if (!hasOnlyKeys(value, ['page', 'datasources', 'paths', 'vectors', 'iconfonts'])) return false;
 
   const page = value.page;
   if (page !== undefined) {
@@ -137,6 +140,20 @@ function isCollaborateDocumentDataPatch(value: unknown): value is CollaborateDoc
       paths.upsert !== undefined &&
       (!isRecord(paths.upsert) ||
         Object.entries(paths.upsert).some(([id, path]) => !isNonEmptyString(id) || !isNonEmptyString(path)))
+    ) {
+      return false;
+    }
+  }
+
+  const vectors = value.vectors;
+  if (vectors !== undefined) {
+    if (!hasOnlyKeys(vectors, ['upsert'])) return false;
+    if (
+      vectors.upsert !== undefined &&
+      (!isRecord(vectors.upsert) ||
+        Object.entries(vectors.upsert).some(
+          ([id, geom]) => !isNonEmptyString(id) || !isRecord(geom) || !isRecord(geom.bbox) || !Array.isArray(geom.items),
+        ))
     ) {
       return false;
     }
@@ -246,6 +263,12 @@ export function applyCollaboratePatch(this: Meta2d, value: unknown): boolean {
       }
       this.renderWorker.postMessage({ action: WorkerMessage.AddPath, paths: pathResources });
       if (this.options.mode) this.hoverWorker.postMessage({ action: WorkerMessage.AddPath, paths: pathResources });
+    }
+
+    const vectorDefs = documentData?.vectors?.upsert;
+    if (vectorDefs && Object.keys(vectorDefs).length) {
+      // 远端来的定义只在本地落地，不再回传
+      this.addVectors(vectorDefs, false);
     }
 
     const addIconfonts = documentData?.iconfonts?.add || [];
