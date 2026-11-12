@@ -837,19 +837,13 @@ function isAncestor(penMap: Map<string, Pen>, ancestor: Pen, pen: Pen): boolean 
  * 处理参考线
  */
 function handleGuidelineMouseDown(this: Meta2d): void {
-  if (!(this.options.rule?.enable || this.data.rule?.enable)) {
+  const rule = this.options.rule;
+  if (!rule?.enable) {
     return;
   }
   if (!this.mousedown) return;
 
-  let style: number;
-  if (this.data.rule?.enable) {
-    style = this.data.rule?.style;
-  } else if (this.options.rule?.enable) {
-    style = this.options.rule?.style;
-  }
-
-  const ruleSize = RuleStyleConfigs[style || RuleStyle.Simple].ruleSize;
+  const ruleSize = RuleStyleConfigs[rule.style || RuleStyle.Simple].ruleSize;
   let pos = null;
   let isVertical = null;
   if (this.mousedown.offsetX > ruleSize && this.mousedown.offsetY <= ruleSize) {
@@ -1774,7 +1768,7 @@ export function dragPens(
 
   if (this.options.alignGrid) {
     // 仅当没有吸附对齐时，才网格对齐
-    const gridSize = this.data.grid?.size || this.options.grid?.size || 20;
+    const gridSize = this.options.grid?.size || 20;
 
     if (snap.offsetX === 0) {
       // 使用图元左上角的 x 坐标对齐网格线
@@ -1902,7 +1896,7 @@ export function dragPensDone(
 
   // 网格对齐逻辑（与 dragPens 保持一致）
   if (this.options.alignGrid) {
-    const gridSize = this.data.grid?.size || this.options.grid?.size || 20;
+    const gridSize = this.options.grid?.size || 20;
 
     if (snap.offsetX === 0) {
       // 使用图元左上角的 x 坐标对齐网格线

@@ -1,6 +1,7 @@
 export enum RuleStyle {
   Simple,
   Strip,
+  Adaptive = 2,
 }
 
 // 添加配置对象与RuleStyle关联

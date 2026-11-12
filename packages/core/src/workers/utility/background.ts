@@ -54,7 +54,7 @@ export async function renderBackground(options: Options, data: Meta2dData) {
     ctx.fillRect(x, y, pageWidth, pageHeight);
   }
 
-  const grid = { ...options.grid, ...data.grid };
+  const grid = { ...options.grid };
   if (grid.enable) {
     drawGrid(data, grid, x, y, pageWidth, pageHeight);
   }

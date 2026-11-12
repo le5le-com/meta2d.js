@@ -1,4 +1,3 @@
-import { RuleStyle } from '../types';
 import { Gradient, Pen, Point, Trigger } from '../models';
 
 export interface Meta2dData {
@@ -15,19 +14,6 @@ export interface Meta2dData {
   background?: string;
   backgroundGradient?: Gradient; // 固定尺寸画布的背景渐变
   backgroundImage?: string;
-  grid?: {
-    enable?: boolean;
-    color?: string;
-    size?: number;
-    rotate?: number;
-  };
-  rule?: {
-    enable?: boolean;
-    style?: RuleStyle; // 标尺样式
-    color?: string;
-    background?: string; //背景颜色
-    textColor?: string; //文字颜色
-  };
   color?: string; // 画笔默认 color
   lineGradient?: Gradient; // 画笔默认线条渐变
   textColor?: string; // 画笔文字颜色

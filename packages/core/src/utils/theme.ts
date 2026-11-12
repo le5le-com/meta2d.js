@@ -305,12 +305,12 @@ class ThemeManager {
     }
     const theme = state.registry.get(resolvedName) || defaultThemes.dark;
     const data = meta2d.data;
-    const rule = data.rule;
+    const rule = meta2d.options.rule || {};
     data.theme = resolvedName;
     data.background = (keepData && data.background) || theme.background;
     data.color = (keepData && data.color) || theme.color;
     data.textColor = (keepData && data.textColor) || theme.color;
-    data.rule = {
+    meta2d.options.rule = {
       ...rule,
       color: (keepData && rule?.color) || theme.ruleColor,
       background: (keepData && rule?.background) || theme.ruleOptions.background,
@@ -351,7 +351,6 @@ class ThemeManager {
       background: meta2d.data.background,
       color: meta2d.data.color,
       textColor: meta2d.data.textColor,
-      rule: meta2d.data.rule,
     };
     const options = {
       background: meta2d.options.background,

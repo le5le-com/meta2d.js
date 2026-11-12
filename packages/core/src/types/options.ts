@@ -20,6 +20,7 @@ export interface Options {
     enable?: boolean;
     color?: string;
     size?: number;
+    rotate?: number;
   };
   rule?: {
     enable?: boolean;

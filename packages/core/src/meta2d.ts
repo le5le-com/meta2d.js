@@ -1263,12 +1263,16 @@ export class Meta2d extends HTMLElement {
     // 打开新图纸时保留实例初始化阶段配置的图标字体，避免数据未携带 iconfonts 时覆盖宿主配置。
     const configuredIconfonts = this.data.iconfonts || [];
     const dataIconfonts = data?.iconfonts || [];
+    const pageData = { ...data } as Meta2dData & { grid?: unknown; rule?: unknown };
+    // 旧图纸可能仍携带网格和标尺字段；运行配置现统一由 options 管理。
+    delete pageData.grid;
+    delete pageData.rule;
     this.data = {
       x: 0,
       y: 0,
       scale: 1,
       pens: [],
-      ...data,
+      ...pageData,
       iconfonts: Array.from(new Set([...configuredIconfonts, ...dataIconfonts])),
     };
     // 打开已有图纸时，DOM 图元运行在当前 Shadow DOM 中，需要把图纸声明的字体样式注入主线程。
@@ -1355,8 +1359,6 @@ export class Meta2d extends HTMLElement {
         background: this.data.background,
         backgroundGradient: this.data.backgroundGradient,
         backgroundImage: this.data.backgroundImage,
-        grid: this.data.grid,
-        rule: this.data.rule,
         messageNormalizer: this.data.messageNormalizer || '',
         vars: this.data.vars,
         mock: this.data.mock,
@@ -2474,16 +2476,8 @@ export class Meta2d extends HTMLElement {
     this.map?.hide();
   }
 
-  toggleRule(enabled = !(this.data.rule?.enable ?? this.options.rule?.enable)) {
-    this.data.rule = {
-      ...this.options.rule,
-      ...this.data.rule,
-      enable: enabled,
-    };
-    this.utilityWorker.postMessage({
-      action: WorkerMessage.Option,
-      data: this.data,
-    });
+  toggleRule(enabled = !this.options.rule?.enable) {
+    this.setOptions({ rule: { ...this.options.rule, enable: enabled } });
     return enabled;
   }
 

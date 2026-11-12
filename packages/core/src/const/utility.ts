@@ -17,6 +17,12 @@ export const RuleStyleConfigs: Record<RuleStyle, RuleConfig> = {
     minorEndPos: 21,
     textTop: 2,
   },
+  [RuleStyle.Adaptive]: {
+    ruleSize: 24,
+    minorStartPos: 18,
+    minorEndPos: 24,
+    textTop: 2,
+  },
 };
 
 export const GridColor = '#e7e7e7'; // 网格颜色

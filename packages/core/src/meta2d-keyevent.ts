@@ -353,17 +353,7 @@ function r(this: Meta2d, e: KeyboardEvent) {
   }
 
   if (e.altKey) {
-    if (!this.data.grid) {
-      this.data.grid = {
-        enable: true,
-      };
-    }
-
-    this.data.grid.enable = !this.data.grid.enable;
-    this.utilityWorker.postMessage({
-      action: WorkerMessage.Option,
-      data: this.data,
-    });
+    this.setOptions({ grid: { ...this.options.grid, enable: !this.options.grid?.enable } });
     return;
   }
 

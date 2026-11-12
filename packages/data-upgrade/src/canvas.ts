@@ -13,16 +13,6 @@ export function buildMeta2dData(data: any, pens: Pen[]): Meta2dData {
     scale: 1,
     background: data.background,
     backgroundImage: data.bkImage,
-    grid: {
-      enable: data.grid,
-      color: data.gridColor,
-      size: data.gridSize,
-      rotate: data.gridRotate,
-    },
-    rule: {
-      enable: data.rule,
-      color: data.ruleColor,
-    },
     color: data.color,
     textColor: data.textColor,
     penBackground: data.penBackground,
