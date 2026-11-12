@@ -1,5 +1,5 @@
 import type { VectorTextItem } from './types';
-import { estimateTextWidth } from './geom';
+import { estimateTextWidth, textItemLines } from './geom';
 
 /**
  * 把解析出来的数据转成 meta2d 1.0 原生、可编辑的图元。
@@ -27,11 +27,15 @@ export interface EditableTextOptions {
  */
 export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): any {
   const size = item.h;
-  const lines = item.text.split('\n');
+  // 定宽文字（CAD MTEXT 参考框，item.bw）：图元宽度固定为框宽，交给原生文字按宽度自动换行（whiteSpace 缺省）。
+  // 原生文字不支持宽度因子，字形按 1 绘制，框宽同样除以宽度因子，使每行字数与 CAD 一致
+  const fixed = item.bw > 0;
+  const lines = fixed ? textItemLines(item) : item.text.split('\n');
   const rowHeight = size * LINE_HEIGHT;
-  const textWidth = estimateTextWidth(item.text, size) * (item.w || 1);
   // 留一点余量：估算宽度不准时不至于被裁剪
-  const width = Math.max(textWidth * 1.08 + size * 0.2, size);
+  const width = fixed
+    ? Math.max(item.bw / (item.w || 1), size)
+    : Math.max(estimateTextWidth(item.text, size) * (item.w || 1) * 1.08 + size * 0.2, size);
   const height = rowHeight * lines.length;
 
   // 镜像文字（CAD 负缩放块 / OCS 镜像里的文字，item.m）：原生文字不能镜像字形。
@@ -93,8 +97,8 @@ export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): 
     lineHeight: LINE_HEIGHT,
     textAlign: a,
     textBaseline: baseline,
-    // 不自动换行、不省略，保持与原图一致
-    whiteSpace: 'nowrap',
+    // 自适应宽度的文字不自动换行；定宽文字按图元宽度自动换行（whiteSpace 缺省：中文逐字、英文按单词）。均不省略
+    whiteSpace: fixed ? undefined : 'nowrap',
     ellipsis: false,
     // 文字图元不需要连线锚点
     disableAnchor: true,
