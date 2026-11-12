@@ -14,6 +14,7 @@ import {
   VectorPathData,
   VectorStyle,
   VectorTextItem,
+  textItemLines,
 } from '../../models';
 
 /**
@@ -235,7 +236,8 @@ function drawText(ctx: Ctx, item: VectorTextItem, state: DrawState) {
   ctx.textAlign = item.a || 'left';
   ctx.textBaseline = item.b || 'alphabetic';
   ctx.fillStyle = color;
-  const lines = item.text.split('\n');
+  // 定宽文字（item.bw）按框宽自动换行
+  const lines = textItemLines(item);
   const lh = (item.lh || 1.25) * size;
   // 多行时整段对齐：middle 以整段中线对齐锚点，bottom 以末行对齐锚点，其余首行对齐锚点（与 textItemBox 一致）
   let y0 = 0;

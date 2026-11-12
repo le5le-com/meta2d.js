@@ -114,21 +114,82 @@ export function estimateTextWidth(text: string, height: number) {
   for (const line of text.split('\n')) {
     let w = 0;
     for (const ch of line) {
-      const code = ch.codePointAt(0);
-      if (code > 0x2e80) w += 1;
-      else if (ch === ' ') w += 0.35;
-      else if (/[A-Z0-9mwMW]/.test(ch)) w += 0.7;
-      else w += 0.55;
+      w += charWidth(ch);
     }
     max = Math.max(max, w);
   }
   return max * height;
 }
 
+/** 字符宽度（字高的倍数），与 estimateTextWidth 一致 */
+function charWidth(ch: string) {
+  if (ch.codePointAt(0) > 0x2e80) return 1;
+  if (ch === ' ') return 0.35;
+  if (/[A-Z0-9mwMW]/.test(ch)) return 0.7;
+  return 0.55;
+}
+
+/** 换行的最小片段：连续 ASCII 可见字符（单词、编号）为一段，其余字符各自一段 */
+function splitWords(text: string) {
+  return text.match(/[\x21-\x7e]+|[\s\S]/gu) || [];
+}
+
+/** 最宽的不可拆分片段宽度（字高的倍数） */
+export function maxWordWidth(text: string) {
+  let max = 0;
+  for (const word of splitWords(text)) {
+    let w = 0;
+    for (const ch of word) w += charWidth(ch);
+    max = Math.max(max, w);
+  }
+  return max;
+}
+
+/**
+ * 定宽文字的自动换行（CAD MTEXT 参考框宽度）：按 maxWidth（与 height 同单位，已扣除宽度因子）折行。
+ * 规则同 AutoCAD：中日韩字符逐字可断，连续的 ASCII 字符（单词、编号）不拆开，
+ * 单个单词超宽时独占一行溢出，空格可在行尾吞掉。maxWidth 无效时只按 \n 分行
+ */
+export function wrapTextLines(text: string, height: number, maxWidth?: number): string[] {
+  const paragraphs = text.split('\n');
+  if (!(maxWidth > 0) || !(height > 0)) return paragraphs;
+  const limit = maxWidth / height + 1e-6;
+  const lines: string[] = [];
+  for (const para of paragraphs) {
+    let line = '';
+    let lw = 0;
+    for (const word of splitWords(para)) {
+      let ww = 0;
+      for (const ch of word) ww += charWidth(ch);
+      if (line && lw + ww > limit) {
+        lines.push(line.replace(/ +$/, ''));
+        if (word === ' ') {
+          line = '';
+          lw = 0;
+          continue;
+        }
+        line = word;
+        lw = ww;
+      } else {
+        line += word;
+        lw += ww;
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/** 文字项实际显示的行（定宽文字按 bw 自动换行） */
+export function textItemLines(item: VectorTextItem): string[] {
+  return wrapTextLines(item.text, item.h, item.bw > 0 ? item.bw / (item.w || 1) : undefined);
+}
+
 export function textItemBox(item: VectorTextItem): VectorBox {
-  const lines = item.text.split('\n').length;
+  const textLines = textItemLines(item);
+  const lines = textLines.length;
   const lh = (item.lh || 1.25) * item.h;
-  const w = estimateTextWidth(item.text, item.h) * (item.w || 1);
+  const w = Math.max(estimateTextWidth(textLines.join('\n'), item.h) * (item.w || 1), item.bw || 0);
   const h = item.h + lh * (lines - 1);
   let x0 = 0;
   if (item.a === 'center') x0 = -w / 2;
@@ -505,6 +566,8 @@ export function transformItem(item: VectorItem, m: VectorMatrix, k = matrixScale
       }
       const w = (item.w || 1) * (ws / hs);
       Math.abs(w - 1) > 1e-3 ? (out.w = w) : delete out.w;
+      // 定宽文字的框宽沿基线方向缩放
+      item.bw > 0 && (out.bw = item.bw * ws);
       return out;
     }
   }

@@ -1,5 +1,5 @@
 import type { VectorTextItem } from './types';
-import { estimateTextWidth } from './geom';
+import { estimateTextWidth, maxWordWidth, textItemLines } from './geom';
 
 /**
  * 把解析出来的数据转成 meta2d 原生、可编辑的图元。
@@ -25,11 +25,13 @@ export interface EditableTextOptions {
  */
 export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): any {
   const size = item.h;
-  const lines = item.text.split('\n');
+  const fixed = item.bw > 0;
+  const lines = fixed ? textItemLines(item) : item.text.split('\n');
   const rowHeight = size * LINE_HEIGHT;
-  const textWidth = estimateTextWidth(item.text, size) * (item.w || 1);
   // 留一点余量：估算宽度不准时不至于换行
-  const width = Math.max(textWidth * 1.08 + size * 0.2, size);
+  const width = fixed
+    ? Math.max(item.bw / (item.w || 1), maxWordWidth(item.text) * size * 1.1, size)
+    : Math.max(estimateTextWidth(item.text, size) * (item.w || 1) * 1.08 + size * 0.2, size);
   const height = rowHeight * lines.length;
 
   // 镜像文字（CAD 负缩放块 / OCS 镜像里的文字，item.m）：原生文字不能镜像字形。
@@ -90,10 +92,11 @@ export function textItemToPen(item: VectorTextItem, opts: EditableTextOptions): 
     lineHeight: LINE_HEIGHT,
     textAlign: ALIGN[a],
     textVertical: VERTICAL[vertical],
-    // 不自动换行（TextWrap.Nowrap = 2）、不省略，保持与原图一致；双击编辑后按内容自动调整框大小
-    textWrap: 2,
+    // 自适应宽度的文字：不自动换行（TextWrap.Nowrap = 2），双击编辑后按内容自动调整框大小；
+    // 定宽文字：按图元宽度自动换行（TextWrap.Normal = 0，中文逐字、英文按单词），可拖动宽度重新排版。均不省略
+    textWrap: fixed ? 0 : 2,
     ellipsis: false,
-    textAutoSize: true,
+    textAutoSize: !fixed,
     // 文字图元不需要连线锚点
     disableAnchor: true,
     anchors: [] as any[],
