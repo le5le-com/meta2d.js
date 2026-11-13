@@ -20,7 +20,7 @@ import {
 /**
  * 通用矢量图元（type: 'vector'）的解释器。
  *
- * 数据：pen.vector = { bbox, items }（见 models/vector/types.ts）。几何在局部坐标中，
+ * 数据：pen.vector = { bbox, items }（见 @meta2d/drawir）。几何在局部坐标中，
  * 绘制时把 bbox 映射到 pen 的矩形，所以缩放、拖拽图元都不需要改几何数据。
  *
  * 运行在 render / hover worker（OffscreenCanvas）和主线程（导出 SVG）中，只依赖纯数据。

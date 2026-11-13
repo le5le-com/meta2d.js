@@ -1,4 +1,4 @@
-import type { VectorGeom, VectorItem } from './types';
+import type { VectorGeom, VectorItem } from '@meta2d/drawir';
 
 /**
  * 共享几何（CAD 块、Visio 母版）仓库。

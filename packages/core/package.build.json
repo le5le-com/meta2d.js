@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/le5le-com/meta2d.js#readme",
   "dependencies": {
+    "@meta2d/drawir": "^2.0.0",
     "@meta2d/math": "^2.0.0",
     "@zumer/snapdom": "^1.9.14",
     "gifwarp": "^0.1.1",

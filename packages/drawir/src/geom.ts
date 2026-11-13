@@ -39,7 +39,6 @@ import {
   translateMatrix,
 } from '@meta2d/math';
 
-// 矩阵、包围盒、曲线等通用几何已移到 @meta2d/math；这里重新导出，保持 models/vector 原有的导出面不变
 export * from '@meta2d/math';
 
 
@@ -123,7 +122,7 @@ export function estimateTextWidth(text: string, height: number) {
 
 /** 字符宽度（字高的倍数），与 estimateTextWidth 一致 */
 function charWidth(ch: string) {
-  if (ch.codePointAt(0) > 0x2e80) return 1;
+  if ((ch.codePointAt(0) || 0) > 0x2e80) return 1;
   if (ch === ' ') return 0.35;
   if (/[A-Z0-9mwMW]/.test(ch)) return 0.7;
   return 0.55;
@@ -152,7 +151,7 @@ export function maxWordWidth(text: string) {
  */
 export function wrapTextLines(text: string, height: number, maxWidth?: number): string[] {
   const paragraphs = text.split('\n');
-  if (!(maxWidth > 0) || !(height > 0)) return paragraphs;
+  if (!(maxWidth && maxWidth > 0) || !(height > 0)) return paragraphs;
   const limit = maxWidth / height + 1e-6;
   const lines: string[] = [];
   for (const para of paragraphs) {
@@ -182,7 +181,7 @@ export function wrapTextLines(text: string, height: number, maxWidth?: number): 
 
 /** 文字项实际显示的行（定宽文字按 bw 自动换行） */
 export function textItemLines(item: VectorTextItem): string[] {
-  return wrapTextLines(item.text, item.h, item.bw > 0 ? item.bw / (item.w || 1) : undefined);
+  return wrapTextLines(item.text, item.h, (item.bw || 0) > 0 ? item.bw! / (item.w || 1) : undefined);
 }
 
 export function textItemBox(item: VectorTextItem): VectorBox {
@@ -471,24 +470,6 @@ export function isDynamicColor(c: VectorColor | undefined) {
 }
 
 /**
- * 图元框的最小边长（画布坐标）。core 的视口筛选会跳过宽或高小于 2 的普通图元（isTinyPen），
- * 而 CAD 里的水平线、竖线包围盒某个方向恰好为 0，必须撑开，否则整张图的横竖线全部不显示。
- */
-export const MIN_PEN_SIZE = 2;
-
-/** 由几何包围盒得到图元的 x / y / width / height：细的方向撑到 MIN_PEN_SIZE 并居中，几何不变 */
-export function penRectOfGeom(bbox: VectorBox) {
-  const width = Math.max(bbox.width, MIN_PEN_SIZE);
-  const height = Math.max(bbox.height, MIN_PEN_SIZE);
-  return {
-    x: bbox.x - (width - bbox.width) / 2,
-    y: bbox.y - (height - bbox.height) / 2,
-    width,
-    height,
-  };
-}
-
-/**
  * 按矩阵变换整条路径数据。椭圆弧在相似变换下解析变换，否则转成贝塞尔。
  */
 export function transformPathData(d: VectorPathData, m: VectorMatrix): VectorPathData {
@@ -567,7 +548,7 @@ export function transformItem(item: VectorItem, m: VectorMatrix, k = matrixScale
       const w = (item.w || 1) * (ws / hs);
       Math.abs(w - 1) > 1e-3 ? (out.w = w) : delete out.w;
       // 定宽文字的框宽沿基线方向缩放
-      item.bw > 0 && (out.bw = item.bw * ws);
+      (item.bw || 0) > 0 && (out.bw = item.bw! * ws);
       return out;
     }
   }

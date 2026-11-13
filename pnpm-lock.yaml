@@ -298,6 +298,31 @@ importers:
         specifier: ^6.0.7
         version: 6.4.2(@types/node@25.9.1)(terser@5.51.2)
 
+  examples/import:
+    dependencies:
+      '@meta2d/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@meta2d/drawir':
+        specifier: workspace:*
+        version: link:../../packages/drawir
+      '@meta2d/dxf':
+        specifier: link:../../../meta2d-dxf
+        version: link:../../../meta2d-dxf
+      '@meta2d/math':
+        specifier: workspace:*
+        version: link:../../packages/math
+      '@meta2d/vsdx':
+        specifier: link:../../../meta2d-vsdx
+        version: link:../../../meta2d-vsdx
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.7
+        version: 6.4.2(@types/node@26.6.6)(terser@5.51.2)
+
   packages/chart:
     dependencies:
       '@meta2d/core':
@@ -309,6 +334,9 @@ importers:
       '@lvcabral/upng':
         specifier: ^2.3.0
         version: 2.3.0
+      '@meta2d/drawir':
+        specifier: workspace:*
+        version: link:../drawir
       '@meta2d/math':
         specifier: workspace:*
         version: link:../math
@@ -337,6 +365,16 @@ importers:
       '@meta2d/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/drawir:
+    dependencies:
+      '@meta2d/math':
+        specifier: workspace:*
+        version: link:../math
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/echarts:
     dependencies:

@@ -15,7 +15,7 @@ import {
 } from './const';
 import { Point } from '../point';
 import { Rect } from '../rect';
-import type { VectorGeom } from '../vector/types';
+import type { VectorGeom } from '@meta2d/drawir';
 
 export interface Pen extends Rect {
   parentId?: string;
@@ -163,7 +163,7 @@ export interface Pen extends Rect {
   pathId?: string; // svgPath类型图元的在pathMap中的id
   pathFill?: boolean; // 默认storke，有background则执行fill，fill颜色为background。否则fill代替storke，background无效
 
-  /** type 为 'vector' 的矢量图元几何（CAD / Visio 等外部格式解析结果），见 models/vector/types.ts */
+  /** type 为 'vector' 的矢量图元几何（CAD / Visio 等外部格式解析结果），见 @meta2d/drawir */
   vector?: VectorGeom;
   /** 矢量图元着色：true 时几何中的固定颜色也改用图元颜色（pen.color / 悬停色 / 选中色），用于整体改色、高亮 */
   vectorTint?: boolean;

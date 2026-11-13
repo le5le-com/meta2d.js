@@ -33,31 +33,28 @@ export const VectorOpSize = [3, 3, 7, 5, 1, 9];
 /**
  * 颜色取值：
  * - 普通 CSS 颜色字符串：固定颜色
- * - `'$fg'`：前景色。顶层是图元当前描边色（随 pen.color、悬停、选中、主题变化），块引用里可被 ref.c 覆盖
- * - `'$bg'`：图元背景（pen.background / 渐变 / 悬停背景），图元没有背景时不填充
+ * - `'$fg'`：由渲染后端使用文档或调用方提供的前景色解析，块引用里可被 ref.c 覆盖
+ * - `'$bg'`：由渲染后端使用文档或调用方提供的背景色解析，没有背景时不填充
  * - `'none'`：不绘制
  */
 export type VectorColor = string;
+export type VectorLineCap = 'butt' | 'round' | 'square';
+export type VectorLineJoin = 'bevel' | 'round' | 'miter';
+export type VectorFillRule = 'nonzero' | 'evenodd';
+export type VectorTextAlign = 'left' | 'right' | 'center' | 'start' | 'end';
+export type VectorTextBaseline = 'top' | 'hanging' | 'middle' | 'alphabetic' | 'ideographic' | 'bottom';
 
 export interface VectorStyle {
-  /** 描边色，缺省 = `'$fg'` */
   stroke?: VectorColor;
-  /** 填充色，缺省 = 不填充 */
   fill?: VectorColor;
-  /**
-   * 线宽，局部坐标单位（随图元缩放，真实几何宽度，如 CAD 多段线全局宽度）。缺省用图元线宽；比图元线宽细时取图元线宽，避免缩小后看不见。
-   * '$lw'：完全由图元的 lineWidth 决定（可在属性面板修改），配合 stroke: '$fg'、fill: '$bg' 使用，图元的外观就和原生图元一样可编辑
-   */
+  /** 局部单位线宽；'$lw' 由文档或渲染调用方的 lineWidth 决定。 */
   lw?: number | '$lw';
-  /** 显示线宽，屏幕像素，不随缩放变化（如 CAD 的打印线宽）。与 lw 同时存在时取两者在屏幕上较粗的 */
+  /** 与缩放无关的显示线宽，具体像素语义由后端实现。 */
   px?: number;
-  /** 虚线，局部坐标单位 */
   dash?: number[];
-  cap?: CanvasLineCap;
-  join?: CanvasLineJoin;
-  /** 填充规则，缺省 nonzero */
-  rule?: CanvasFillRule;
-  /** 透明度 0-1 */
+  cap?: VectorLineCap;
+  join?: VectorLineJoin;
+  rule?: VectorFillRule;
   alpha?: number;
 }
 
@@ -87,9 +84,9 @@ export interface VectorTextItem {
   /** 镜像：字形沿基线翻转（CAD 中负缩放 / 镜像块里的文字），绘制时在旋转后 scale(1, -1) */
   m?: 1;
   /** 水平对齐，缺省 left */
-  a?: CanvasTextAlign;
+  a?: VectorTextAlign;
   /** 垂直基线，缺省 alphabetic */
-  b?: CanvasTextBaseline;
+  b?: VectorTextBaseline;
   /** 行高倍数，缺省 1.25 */
   lh?: number;
   font?: string;
@@ -125,7 +122,7 @@ export interface VectorHatchLine {
 /** 引用共享几何（CAD 块 / Visio 母版），只存一份定义，多处引用 */
 export interface VectorRefItem {
   t: 'r';
-  /** 共享几何 id，见 Meta2dData.vectors */
+  /** 共享几何 id，见 VectorDocument.vectors */
   id: string;
   /** 定义坐标 → 当前坐标 */
   m: VectorMatrix;
@@ -139,16 +136,21 @@ export type VectorItem = VectorPathItem | VectorTextItem | VectorHatchItem | Vec
 export type VectorBox = Box;
 
 export interface VectorGeom {
-  /** 几何在局部坐标中的范围，绘制时映射到 pen 的 x/y/width/height */
+  /** 几何自身坐标系中的范围。 */
   bbox: VectorBox;
   items: VectorItem[];
 }
 
-/** 解析器的统一输出：可直接 meta2d.open()，也可 addVectors + addPens 追加到当前图纸 */
-export interface VectorDocument {
-  pens: any[];
-  /** 共享几何定义 */
+/** 纯矢量文档：只有几何、指令和共享定义，不包含任何编辑器或平台对象。 */
+export interface VectorDocument extends VectorGeom {
   vectors?: Record<string, VectorGeom>;
   width?: number;
   height?: number;
+  /** '$fg' 的缺省颜色。 */
+  color?: string;
+  /** '$bg' 的缺省填充及页面背景。 */
+  background?: string;
+  lineWidth?: number;
+  lineDash?: number[];
+  [key: string]: any;
 }

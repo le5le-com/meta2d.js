@@ -1,0 +1,15 @@
+{
+  "name": "@meta2d/drawir",
+  "version": "2.0.0",
+  "description": "Vector IR for meta2d.js: path / text / hatch / ref items and builders, shared by core and format parsers (DXF, Visio...).",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "keywords": ["Meta2d.js", "vector", "ir", "cad", "visio"],
+  "author": "le5le.com",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/le5le-com/meta2d.js.git" },
+  "dependencies": {
+    "@meta2d/math": "^2.0.0"
+  },
+  "publishConfig": { "access": "public" }
+}
