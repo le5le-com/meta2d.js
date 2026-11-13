@@ -2732,6 +2732,7 @@ export class Meta2d extends HTMLElement {
     }
 
     this.patch(undefined, undefined, beforeUpdate, update);
+    this.updateActiveBoundary(update);
 
     if (options?.mode) {
       if (options?.record) {
@@ -2845,6 +2846,25 @@ export class Meta2d extends HTMLElement {
     if (updatePens.length) {
       this.patch(undefined, undefined, beforePens, updatePens, {});
     }
+    this.updateActiveBoundary([...partial.update, ...updatePens]);
+  }
+
+  private updateActiveBoundary(update: Pen[]) {
+    if (this.options.mode !== Mode.Edit || !this.activePens?.length) {
+      return;
+    }
+    const activeIds = new Set(this.activePens.map((pen) => pen.id));
+    if (!update.some((pen) => activeIds.has(pen.id) && (pen.patchFlag & PatchFlag.Rect))) {
+      return;
+    }
+
+    // 属性补丁先进入计算线程，再用完整选中集合重算控制框；不能携带旧边界，否则会保留旧位置和尺寸。
+    // 仅刷新选中状态，避免重复触发选中事件；拖拽的补丁仍沿用原有控制框逻辑。
+    this.calcWorker.postMessage({
+      action: WorkerMessage.Active,
+      pens: this.activePens,
+      update: true,
+    });
   }
 
   // 把vals: IValue[]转化成pens
