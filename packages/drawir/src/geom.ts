@@ -8,6 +8,8 @@ import {
   VectorBox,
   VectorColor,
   VectorGeom,
+  VectorGradient,
+  VectorPaint,
   VectorHatchLine,
   VectorItem,
   VectorMatrix,
@@ -471,8 +473,23 @@ export function transformHatchLine(m: VectorMatrix, line: VectorHatchLine): Vect
 }
 
 /** 颜色是否为 IR 中的动态取值 */
-export function isDynamicColor(c: VectorColor | undefined) {
+export function isDynamicColor(c: VectorPaint | undefined) {
   return c === '$fg' || c === '$bg';
+}
+
+/** 是否为 IR 渐变（不是颜色字符串，也不是 CanvasGradient / CanvasPattern） */
+export function isGradient(c: unknown): c is VectorGradient {
+  return !!c && typeof c === 'object' && Array.isArray((c as VectorGradient).stops);
+}
+
+/** 渐变随几何变换：左乘到渐变矩阵 */
+export function transformGradient(g: VectorGradient, m: VectorMatrix): VectorGradient {
+  return { ...g, m: g.m ? multiplyMatrix(m, g.m) : m };
+}
+
+/** 渐变的代表色（中间色标），供不支持渐变的后端退化使用 */
+export function gradientFallback(g: VectorGradient): string {
+  return g.stops[Math.floor(g.stops.length / 2)]?.c ?? 'none';
 }
 
 /**
@@ -520,6 +537,8 @@ export function transformItem(item: VectorItem, m: VectorMatrix, k = matrixScale
         const s: VectorStyle = { ...item.s };
         typeof s.lw === 'number' && (s.lw *= k);
         s.dash && (s.dash = s.dash.map((v) => v * k));
+        isGradient(s.fill) && (s.fill = transformGradient(s.fill, m));
+        isGradient(s.stroke) && (s.stroke = transformGradient(s.stroke, m));
         out.s = s;
       }
       return out;

@@ -59,7 +59,8 @@ export interface VectorPensData {
   granularity: VectorGranularity;
 }
 
-const isFixed = (c: string | undefined) => !!c && c !== 'none' && c[0] !== '$';
+/** 固定颜色（不含 '$fg' / '$bg' / 'none' 和渐变）才能提升到图元属性 */
+const isFixed = (c: unknown): c is string => typeof c === 'string' && !!c && c !== 'none' && c[0] !== '$';
 
 function randomId() {
   return Math.random().toString(36).slice(2, 8);
