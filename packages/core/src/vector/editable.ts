@@ -1,5 +1,5 @@
-import type { VectorTextItem } from './types';
-import { estimateTextWidth, textItemLines } from './geom';
+import type { VectorTextItem } from '@meta2d/drawir';
+import { estimateTextWidth, textItemLines } from '@meta2d/drawir';
 
 /**
  * 把解析出来的数据转成 meta2d 1.0 原生、可编辑的图元。

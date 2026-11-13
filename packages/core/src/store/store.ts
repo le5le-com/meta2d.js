@@ -8,7 +8,7 @@ import { Point } from '../point';
 import { globalStore } from './global';
 import { Rect } from '../rect';
 import { Event, Trigger } from '../event';
-import type { VectorGeom } from '../vector/types';
+import type { VectorGeom } from '@meta2d/drawir';
 
 export interface Meta2dData {
   pens: Pen[];

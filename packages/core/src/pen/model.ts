@@ -2,7 +2,7 @@ import { Point } from '../point';
 import { Rect } from '../rect';
 import { Event, RealTime, Trigger } from '../event';
 import { Canvas } from '../canvas';
-import type { VectorGeom } from '../vector/types';
+import type { VectorGeom } from '@meta2d/drawir';
 
 export enum PenType {
   Node,

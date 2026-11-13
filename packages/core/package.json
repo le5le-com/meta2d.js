@@ -29,6 +29,8 @@
     "@types/zrender": "^4.0.0"
   },
   "dependencies": {
+    "@meta2d/drawir": "workspace:*",
+    "@meta2d/math": "workspace:*",
     "mitt": "^2.1.0",
     "mqtt": "^4.2.6"
   },

@@ -30,6 +30,8 @@
     "@types/zrender": "^4.0.0"
   },
   "dependencies": {
+    "@meta2d/drawir": "^1.0.0",
+    "@meta2d/math": "^1.0.0",
     "mitt": "^2.1.0",
     "mqtt": "^4.2.6"
   },
