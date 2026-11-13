@@ -72,6 +72,8 @@ interface DrawState {
   /** 图元线宽（世界坐标），供 lw: '$lw' 使用 */
   penLw: number;
   depth: number;
+  /** 进入 drawVector 时（映射到局部坐标之前）的变换：图元背景渐变、图案所在的坐标系 */
+  base?: DOMMatrix;
 }
 
 const pathCache = new WeakMap<VectorPathData, Path2D>();
@@ -188,6 +190,48 @@ function applyStroke(ctx: Ctx, s: VectorStyle | undefined, state: DrawState) {
   s?.join && (ctx.lineJoin = s.join);
 }
 
+/**
+ * 用画布坐标的渐变 / 图案绘制局部坐标的路径。
+ *
+ * 图元背景（线性 / 径向渐变、背景图）和渐变前景色由渲染器按图元框在画布坐标中创建，
+ * 而矢量几何在局部坐标中绘制（drawVector 先把 bbox 映射到图元框）。Canvas 的渐变、图案坐标
+ * 跟随绘制时的当前变换解释，直接 fill / stroke 会把画布坐标的渐变当成局部坐标，
+ * 整个图元落在渐变线的一端，只剩一种颜色。这里把路径变换回进入 drawVector 时的坐标系再绘制，
+ * 与原生图元的渐变完全一致；描边线宽、虚线按局部 → 画布的缩放换算。
+ *
+ * 不能使用 Path2D 或读不到变换（导出 SVG 等）时返回 false，由调用方按原方式绘制。
+ */
+function paintInBase(ctx: Ctx, path: Path2D | undefined, state: DrawState, fill: boolean, rule?: CanvasFillRule): boolean {
+  if (!path || !state.base) {
+    return false;
+  }
+  let rel: DOMMatrix;
+  try {
+    rel = state.base.inverse().multiply(ctx.getTransform());
+  } catch {
+    return false;
+  }
+  const world = new Path2D();
+  world.addPath(path, rel);
+  ctx.save();
+  ctx.setTransform(state.base);
+  if (fill) {
+    ctx.fill(world, rule);
+  } else {
+    const k = Math.sqrt(Math.abs(rel.a * rel.d - rel.b * rel.c)) || 1;
+    ctx.lineWidth *= k;
+    const dash = ctx.getLineDash?.();
+    dash?.length && ctx.setLineDash(dash.map((v) => v * k));
+    ctx.lineDashOffset *= k;
+    ctx.stroke(world);
+  }
+  ctx.restore();
+  return true;
+}
+
+/** 渐变、图案（非字符串颜色）需要在画布坐标中绘制 */
+const isPaint = (style: unknown) => !!style && typeof style !== 'string';
+
 function drawPathItem(ctx: Ctx, d: VectorPathData, s: VectorStyle | undefined, state: DrawState) {
   const fill = s?.fill;
   // 线宽跟随图元且图元线宽为 0：不描边（与 meta2d 原生图元「线宽 0 = 无边框」一致）
@@ -200,19 +244,19 @@ function drawPathItem(ctx: Ctx, d: VectorPathData, s: VectorStyle | undefined, s
   if (fill === '$bg') {
     for (const bg of state.bgs) {
       ctx.fillStyle = bg;
-      path ? ctx.fill(path, s?.rule) : ctx.fill(s?.rule);
+      (isPaint(bg) && paintInBase(ctx, path, state, true, s?.rule)) || (path ? ctx.fill(path, s?.rule) : ctx.fill(s?.rule));
     }
   } else {
     const color = resolveColor(fill, state, 'none');
     if (color) {
       ctx.fillStyle = color;
-      path ? ctx.fill(path, s?.rule) : ctx.fill(s?.rule);
+      (isPaint(color) && paintInBase(ctx, path, state, true, s?.rule)) || (path ? ctx.fill(path, s?.rule) : ctx.fill(s?.rule));
     }
   }
   if (stroke) {
     ctx.strokeStyle = stroke;
     applyStroke(ctx, s, state);
-    path ? ctx.stroke(path) : ctx.stroke();
+    (isPaint(stroke) && paintInBase(ctx, path, state, false)) || (path ? ctx.stroke(path) : ctx.stroke());
   }
   alpha != undefined && (ctx.globalAlpha = oldAlpha);
 }
@@ -585,6 +629,12 @@ export function drawVector(ctx: Ctx, pen: Pen, opts: VectorDrawOptions = {}) {
   if (!Number.isFinite(sx) || !Number.isFinite(sy)) {
     return;
   }
+  let base: DOMMatrix | undefined;
+  try {
+    base = ctx.getTransform?.();
+  } catch {
+    // 导出 SVG 的 Canvas 模拟实现可能不支持 getTransform
+  }
   ctx.save();
   const ox = bbox.width > 0 ? inner.x : inner.x + inner.width / 2;
   const oy = bbox.height > 0 ? inner.y : inner.y + inner.height / 2;
@@ -624,6 +674,7 @@ export function drawVector(ctx: Ctx, pen: Pen, opts: VectorDrawOptions = {}) {
       tint: !!pen.vectorTint,
       penLw,
       depth: 0,
+      base,
     },
     opts.resolve || getVector,
   );

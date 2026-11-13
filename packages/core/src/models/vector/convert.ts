@@ -104,6 +104,7 @@ export function vectorDocumentToPens(doc: VectorDocument, options: VectorConvert
       if (it.t === 'p') return it.s?.fill === '$bg' || it.s?.stroke === '$bg';
       if (it.t === 't') return it.fill === '$bg';
       if (it.t === 'h') return it.stroke === '$bg';
+      if (it.t === 'i') return false;
       if (depth > 24) return false;
       if (!bgCache.has(it.id)) {
         bgCache.set(it.id, false);
