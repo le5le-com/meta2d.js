@@ -222,6 +222,9 @@ export function textItemBox(item: VectorTextItem): VectorBox {
   return acc.box();
 }
 
+/** 图片项的单位正方形 */
+const UNIT_BOX: VectorBox = { x: 0, y: 0, width: 1, height: 1 };
+
 /**
  * 计算几何的包围盒。
  * @param resolve 根据 id 取共享几何（用于 ref），找不到时忽略该引用
@@ -257,6 +260,9 @@ export function computeItemsBox(items: VectorItem[], resolve?: (id: string) => V
         def && acc.addBox(transformBox(item.m, def.bbox));
         break;
       }
+      case 'i':
+        acc.addBox(transformBox(item.m, UNIT_BOX));
+        break;
     }
   }
   return acc.box();
@@ -526,6 +532,11 @@ export function transformItem(item: VectorItem, m: VectorMatrix, k = matrixScale
       };
     case 'r':
       return { ...item, m: multiplyMatrix(m, item.m) };
+    case 'i': {
+      const out = { ...item, m: multiplyMatrix(m, item.m) };
+      item.radius && (out.radius = item.radius * k);
+      return out;
+    }
     case 't': {
       const [x, y] = applyMatrix(m, item.x, item.y);
       const ux = Math.cos(item.r || 0);

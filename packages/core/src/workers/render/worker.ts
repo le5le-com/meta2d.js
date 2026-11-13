@@ -1,6 +1,7 @@
 import { PlayState, WorkerMessage } from '../../types';
 import { penDefines } from '../../diagrams';
 import { setVectors } from '../../models/vector/store';
+import { onVectorImageLoad } from '../../diagrams/base/vector';
 import { fillDefaultAnchors } from '../../diagrams/base';
 import { renderLineGradientPath } from '../../diagrams/line/gradient';
 import {
@@ -2048,6 +2049,21 @@ function onIconFetch(e: MessageEvent) {
  * 打开数据时 render Worker 通常先收到 calc 的首个视口消息，字体尚未就绪就已经完成首帧，
  * 如果没有这次补画，后续只有 hover/拖拽等交互才会把图标重新画出来。
  */
+// 矢量图元里的图片（IR 图片项）加载完成：合并到一次完整重绘
+let vectorImageTimer: any;
+onVectorImageLoad(() => {
+  if (vectorImageTimer) {
+    return;
+  }
+  vectorImageTimer = setTimeout(() => {
+    vectorImageTimer = undefined;
+    if (destoryed || !inViewPenIds.length) {
+      return;
+    }
+    fullRepaintView();
+  }, 16);
+});
+
 function loadIconfontsAndRedraw(iconfonts?: string[]) {
   if (!iconfonts?.length) {
     return;

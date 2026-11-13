@@ -8,6 +8,7 @@ import {
   VectorColor,
   VectorGeom,
   VectorHatchItem,
+  VectorImageItem,
   VectorItem,
   VectorOp,
   VectorOpSize,
@@ -396,6 +397,119 @@ function drawHatch(ctx: Ctx, item: VectorHatchItem, state: DrawState) {
   ctx.restore();
 }
 
+// ---------------------------------------------------------------------------
+// 图片项（t: 'i'）：异步加载并缓存，加载完成后通知重绘
+// ---------------------------------------------------------------------------
+
+type VectorImageSource = CanvasImageSource & { width: number; height: number };
+
+interface VectorImageEntry {
+  img?: VectorImageSource;
+  failed?: boolean;
+}
+
+const imageCache = new Map<string, VectorImageEntry>();
+const imageListeners = new Set<(src: string) => void>();
+
+/** 监听矢量图元里的图片加载完成（渲染器据此重绘），返回取消监听的函数 */
+export function onVectorImageLoad(cb: (src: string) => void) {
+  imageListeners.add(cb);
+  return () => {
+    imageListeners.delete(cb);
+  };
+}
+
+function loadVectorImage(src: string): Promise<VectorImageSource> {
+  if (typeof Image !== 'undefined') {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      // data: / blob: 不需要跨域；其它地址按匿名跨域加载，否则画布被污染后不能导出图片
+      /^(data|blob):/i.test(src) || (img.crossOrigin = 'anonymous');
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+  // Worker：没有 Image，用 fetch + createImageBitmap
+  return fetch(src)
+    .then((r) => r.blob())
+    .then((b) => createImageBitmap(b));
+}
+
+/** 取已加载的图片；第一次取时开始加载，返回 undefined */
+export function getVectorImage(src: string): VectorImageSource | undefined {
+  let entry = imageCache.get(src);
+  if (!entry) {
+    entry = {};
+    imageCache.set(src, entry);
+    const e = entry;
+    loadVectorImage(src).then(
+      (img) => {
+        e.img = img;
+        imageListeners.forEach((cb) => cb(src));
+      },
+      () => {
+        e.failed = true;
+      },
+    );
+  }
+  return entry.img;
+}
+
+function drawImageItem(ctx: Ctx, item: VectorImageItem, img: VectorImageSource | undefined) {
+  if (!img || !item.src) {
+    return;
+  }
+  const m = item.m;
+  // 框在局部坐标中的宽高（单位正方形两条边经 m 后的长度）
+  const bw = Math.hypot(m[0], m[1]);
+  const bh = Math.hypot(m[2], m[3]);
+  const iw = img.width;
+  const ih = img.height;
+  if (!(bw > 0 && bh > 0 && iw > 0 && ih > 0)) {
+    return;
+  }
+  ctx.save();
+  ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+  item.alpha != undefined && (ctx.globalAlpha *= item.alpha);
+  if (item.radius > 0) {
+    // 单位正方形里的圆角：两个方向的缩放不同，用椭圆角
+    const rx = Math.min(item.radius / bw, 0.5);
+    const ry = Math.min(item.radius / bh, 0.5);
+    const H = Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(rx, 0);
+    ctx.lineTo(1 - rx, 0);
+    ctx.ellipse(1 - rx, ry, rx, ry, 0, -H, 0);
+    ctx.lineTo(1, 1 - ry);
+    ctx.ellipse(1 - rx, 1 - ry, rx, ry, 0, 0, H);
+    ctx.lineTo(rx, 1);
+    ctx.ellipse(rx, 1 - ry, rx, ry, 0, H, Math.PI);
+    ctx.lineTo(0, ry);
+    ctx.ellipse(rx, ry, rx, ry, 0, Math.PI, Math.PI + H);
+    ctx.closePath();
+    ctx.clip();
+  }
+  try {
+    if (item.fit === 'contain') {
+      const s = Math.min(bw / iw, bh / ih);
+      const dw = (iw * s) / bw;
+      const dh = (ih * s) / bh;
+      ctx.drawImage(img, (1 - dw) / 2, (1 - dh) / 2, dw, dh);
+    } else if (item.fit === 'cover') {
+      const s = Math.max(bw / iw, bh / ih);
+      const sw = bw / s;
+      const sh = bh / s;
+      ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, 1, 1);
+    } else {
+      ctx.drawImage(img, 0, 0, 1, 1);
+    }
+  } catch {
+    // 图片解码失败、SVG 导出的模拟画布不支持该图片源
+  }
+  ctx.restore();
+}
+
 function drawItems(
   ctx: Ctx,
   items: VectorItem[],
@@ -412,6 +526,9 @@ function drawItems(
         break;
       case 'h':
         drawHatch(ctx, item, state);
+        break;
+      case 'i':
+        drawImageItem(ctx, item, getVectorImage(item.src));
         break;
       case 'r': {
         if (state.depth >= MAX_DEPTH) {
