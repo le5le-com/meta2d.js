@@ -130,7 +130,30 @@ export interface VectorRefItem {
   c?: VectorColor;
 }
 
-export type VectorItem = VectorPathItem | VectorTextItem | VectorHatchItem | VectorRefItem;
+/**
+ * 图片：把图片画进单位正方形 (0,0)-(1,1)，再经 m 变换到局部坐标（旋转、斜切、镜像都在 m 里）。
+ * 图片加载是异步的，由渲染后端缓存，加载完成后重绘
+ */
+export interface VectorImageItem {
+  t: 'i';
+  /** 图片地址：URL、data URL 或 blob URL */
+  src: string;
+  /** 单位正方形 → 局部坐标 */
+  m: VectorMatrix;
+  /** 不透明度 0~1，缺省 1 */
+  alpha?: number;
+  /** 圆角半径（局部坐标单位） */
+  radius?: number;
+  /**
+   * 图片在框内的适配方式：
+   * - `'fill'`（缺省）：拉伸填满
+   * - `'contain'`：等比缩放、完整显示、居中
+   * - `'cover'`：等比缩放、铺满、居中裁剪
+   */
+  fit?: 'fill' | 'contain' | 'cover';
+}
+
+export type VectorItem = VectorPathItem | VectorTextItem | VectorHatchItem | VectorRefItem | VectorImageItem;
 
 /** 轴对齐矩形（即 @meta2d/math 的 Box） */
 export type VectorBox = Box;
