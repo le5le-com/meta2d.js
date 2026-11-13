@@ -663,6 +663,18 @@ function drawItems(
       case 'h':
         drawHatch(ctx, item, state);
         break;
+      case 'c': {
+        // 裁剪（蒙版 / 容器内容裁剪）：内容只在裁剪路径内可见
+        if (state.depth >= MAX_DEPTH || !item.items.length) {
+          break;
+        }
+        const path = preparePath(ctx, item.d, state);
+        ctx.save();
+        path ? ctx.clip(path, item.rule) : ctx.clip(item.rule);
+        drawItems(ctx, item.items, { ...state, depth: state.depth + 1 }, resolve);
+        ctx.restore();
+        break;
+      }
       case 'i':
         drawImageItem(ctx, item, getVectorImage(item.src));
         break;

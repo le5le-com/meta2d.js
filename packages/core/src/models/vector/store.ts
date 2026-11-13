@@ -40,6 +40,7 @@ export function collectVectorRefs(
       out.add(item.id);
       collectVectorRefs(resolve(item.id)?.items, resolve, out);
     }
+    item.t === 'c' && collectVectorRefs(item.items, resolve, out);
   }
   return out;
 }

@@ -265,6 +265,22 @@ export function computeItemsBox(items: VectorItem[], resolve?: (id: string) => V
       case 'i':
         acc.addBox(transformBox(item.m, UNIT_BOX));
         break;
+      case 'c': {
+        // 可见范围 = 裁剪路径框 ∩ 内容框
+        const clip = new BoxAccumulator();
+        accumulatePathBox(item.d, clip);
+        const inner = computeItemsBox(item.items, resolve);
+        if (clip.empty || !item.items.length) break;
+        const x0 = Math.max(clip.minX, inner.x);
+        const y0 = Math.max(clip.minY, inner.y);
+        const x1 = Math.min(clip.maxX, inner.x + inner.width);
+        const y1 = Math.min(clip.maxY, inner.y + inner.height);
+        if (x1 >= x0 && y1 >= y0) {
+          acc.add(x0, y0);
+          acc.add(x1, y1);
+        }
+        break;
+      }
     }
   }
   return acc.box();
@@ -551,6 +567,8 @@ export function transformItem(item: VectorItem, m: VectorMatrix, k = matrixScale
       };
     case 'r':
       return { ...item, m: multiplyMatrix(m, item.m) };
+    case 'c':
+      return { ...item, d: transformPathData(item.d, m), items: item.items.map((it) => transformItem(it, m, k)) };
     case 'i': {
       const out = { ...item, m: multiplyMatrix(m, item.m) };
       item.radius && (out.radius = item.radius * k);

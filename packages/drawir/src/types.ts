@@ -189,7 +189,21 @@ export interface VectorImageItem {
   fit?: 'fill' | 'contain' | 'cover';
 }
 
-export type VectorItem = VectorPathItem | VectorTextItem | VectorHatchItem | VectorRefItem | VectorImageItem;
+/**
+ * 裁剪：items 只在裁剪路径 d 内可见（Canvas clip），可嵌套。
+ * 用于设计稿的蒙版（mask）、容器的内容裁剪（clip content）等
+ */
+export interface VectorClipItem {
+  t: 'c';
+  /** 裁剪路径（局部坐标），多个闭合环 */
+  d: VectorPathData;
+  /** 裁剪路径的填充规则，缺省 nonzero */
+  rule?: VectorFillRule;
+  /** 被裁剪的内容（同一局部坐标） */
+  items: VectorItem[];
+}
+
+export type VectorItem = VectorPathItem | VectorTextItem | VectorHatchItem | VectorRefItem | VectorImageItem | VectorClipItem;
 
 /** 轴对齐矩形（即 @meta2d/math 的 Box） */
 export type VectorBox = Box;
