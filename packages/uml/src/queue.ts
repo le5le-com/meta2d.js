@@ -1,6 +1,5 @@
 import { Pen } from '@meta2d/core';
 export function flowQueue(ctx: CanvasRenderingContext2D, pen: Pen) {
-  console.log('flowQueue', pen);
   const { x, y, width, height, ex, ey } = pen;
 
   ctx.beginPath();
