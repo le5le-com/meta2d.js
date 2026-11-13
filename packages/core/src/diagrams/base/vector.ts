@@ -7,6 +7,11 @@ import {
   VectorBox,
   VectorColor,
   VectorGeom,
+  VectorGradient,
+  VectorPaint,
+  isGradient,
+  isIdentity,
+  invertMatrix,
   VectorHatchItem,
   VectorImageItem,
   VectorItem,
@@ -151,6 +156,87 @@ function resolveColor(c: VectorColor | undefined, state: DrawState, fallback: 'f
   return c;
 }
 
+/** 填充 / 描边：渐变原样返回（着色模式下改用前景色），颜色同 resolveColor */
+function resolvePaint(c: VectorPaint | undefined, state: DrawState, fallback: 'fg' | 'none') {
+  if (isGradient(c)) {
+    return state.tint ? state.fg : c;
+  }
+  return resolveColor(c, state, fallback);
+}
+
+/** IR 渐变 → CanvasGradient（局部坐标 / 渐变空间），按渐变对象缓存 */
+const gradientCache = new WeakMap<VectorGradient, CanvasGradient>();
+
+function canvasGradient(ctx: Ctx, g: VectorGradient): CanvasGradient | undefined {
+  let cg = gradientCache.get(g);
+  if (cg) {
+    return cg;
+  }
+  const ok = (...v: number[]) => v.every(Number.isFinite);
+  if (g.type === 'radial') {
+    const r0 = Math.max(g.r0 || 0, 0);
+    const r1 = Math.max(g.r1 ?? 1, 0);
+    if (!ok(g.x0, g.y0, g.x1, g.y1, r0, r1)) return undefined;
+    cg = ctx.createRadialGradient(g.x0, g.y0, r0, g.x1, g.y1, r1);
+  } else {
+    if (!ok(g.x0, g.y0, g.x1, g.y1)) return undefined;
+    cg = ctx.createLinearGradient(g.x0, g.y0, g.x1, g.y1);
+  }
+  for (const st of g.stops || []) {
+    try {
+      cg.addColorStop(Math.min(1, Math.max(0, st.o)), st.c);
+    } catch {
+      // 无法解析的颜色
+    }
+  }
+  gradientCache.set(g, cg);
+  return cg;
+}
+
+/**
+ * 用 IR 渐变填充 / 描边路径。渐变坐标在渐变空间，g.m 把它映射到局部坐标：
+ * - 没有 m：直接在局部坐标中创建渐变；
+ * - 有 m：Path2D 按 m 的逆变换到渐变空间，再在 transform(m) 下绘制；
+ *   没有 Path2D 时当前路径已按构建时的变换固定，transform(m) 只影响渐变的解释，直接绘制即可。
+ * 描边线宽、虚线按 m 的缩放反向换算，保持局部坐标中的粗细。
+ */
+function paintGradient(ctx: Ctx, path: Path2D | undefined, g: VectorGradient, fill: boolean, rule?: CanvasFillRule) {
+  const cg = canvasGradient(ctx, g);
+  if (!cg) {
+    return;
+  }
+  ctx.save();
+  let target = path;
+  const m = g.m;
+  if (m && !isIdentity(m)) {
+    const inv = invertMatrix(m);
+    if (!inv) {
+      ctx.restore();
+      return;
+    }
+    if (path) {
+      target = new Path2D();
+      target.addPath(path, { a: inv[0], b: inv[1], c: inv[2], d: inv[3], e: inv[4], f: inv[5] });
+    }
+    ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+    if (!fill) {
+      const k = matrixScale(m) || 1;
+      ctx.lineWidth /= k;
+      const dash = ctx.getLineDash?.();
+      dash?.length && ctx.setLineDash(dash.map((v) => v / k));
+    }
+  }
+  if (fill) {
+    ctx.fillStyle = cg;
+    target ? ctx.fill(target, rule) : ctx.fill(rule);
+  } else {
+    ctx.strokeStyle = cg;
+    target ? ctx.stroke(target) : ctx.stroke();
+  }
+  ctx.restore();
+}
+
+
 /** 虚线一个周期在屏幕上不足这么多像素时按实线画：看不出虚线，而且逐段描边非常慢 */
 const MIN_DASH_PERIOD_PX = 3;
 
@@ -235,7 +321,7 @@ const isPaint = (style: unknown) => !!style && typeof style !== 'string';
 function drawPathItem(ctx: Ctx, d: VectorPathData, s: VectorStyle | undefined, state: DrawState) {
   const fill = s?.fill;
   // 线宽跟随图元且图元线宽为 0：不描边（与 meta2d 原生图元「线宽 0 = 无边框」一致）
-  const stroke = s?.lw === ('$lw' as any) && state.penLw === 0 ? undefined : resolveColor(s?.stroke, state, 'fg');
+  const stroke = s?.lw === ('$lw' as any) && state.penLw === 0 ? undefined : resolvePaint(s?.stroke, state, 'fg');
   const path = preparePath(ctx, d, state);
   const alpha = s?.alpha;
   const oldAlpha = ctx.globalAlpha;
@@ -247,16 +333,22 @@ function drawPathItem(ctx: Ctx, d: VectorPathData, s: VectorStyle | undefined, s
       (isPaint(bg) && paintInBase(ctx, path, state, true, s?.rule)) || (path ? ctx.fill(path, s?.rule) : ctx.fill(s?.rule));
     }
   } else {
-    const color = resolveColor(fill, state, 'none');
-    if (color) {
+    const color = resolvePaint(fill, state, 'none');
+    if (isGradient(color)) {
+      paintGradient(ctx, path, color, true, s?.rule);
+    } else if (color) {
       ctx.fillStyle = color;
       (isPaint(color) && paintInBase(ctx, path, state, true, s?.rule)) || (path ? ctx.fill(path, s?.rule) : ctx.fill(s?.rule));
     }
   }
   if (stroke) {
-    ctx.strokeStyle = stroke;
     applyStroke(ctx, s, state);
-    (isPaint(stroke) && paintInBase(ctx, path, state, false)) || (path ? ctx.stroke(path) : ctx.stroke());
+    if (isGradient(stroke)) {
+      paintGradient(ctx, path, stroke, false);
+    } else {
+      ctx.strokeStyle = stroke;
+      (isPaint(stroke) && paintInBase(ctx, path, state, false)) || (path ? ctx.stroke(path) : ctx.stroke());
+    }
   }
   alpha != undefined && (ctx.globalAlpha = oldAlpha);
 }
