@@ -89,7 +89,11 @@ export function vectorDocumentToPens(doc: VectorDocument, options: VectorConvert
   // 共享几何加命名空间，引用项同步改名
   const rename = (id: string) => (ns ? `${ns}:${id}` : id);
   const renameItems = (items: VectorItem[]): VectorItem[] =>
-    ns ? items.map((it) => (it.t === 'r' ? { ...it, id: rename(it.id) } : it)) : items;
+    ns
+      ? items.map((it) =>
+          it.t === 'r' ? { ...it, id: rename(it.id) } : it.t === 'c' ? { ...it, items: renameItems(it.items) } : it,
+        )
+      : items;
   const vectors: Record<string, VectorGeom> = {};
   for (const id in doc.vectors || {}) {
     const g = doc.vectors[id];
@@ -105,6 +109,7 @@ export function vectorDocumentToPens(doc: VectorDocument, options: VectorConvert
       if (it.t === 't') return it.fill === '$bg';
       if (it.t === 'h') return it.stroke === '$bg';
       if (it.t === 'i') return false;
+      if (it.t === 'c') return depth <= 24 && usesBg(it.items, depth + 1);
       if (depth > 24) return false;
       if (!bgCache.has(it.id)) {
         bgCache.set(it.id, false);
