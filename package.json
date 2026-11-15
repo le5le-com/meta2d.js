@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build": "pnpm -r build && node scripts/fix-worker-paths.mjs",
-    "start": "vite ./examples/base --open"
+    "start": "vite ./examples/base --open",
+    "test": "node --test scripts/*.test.mjs"
   },
   "keywords": [
     "le5le",

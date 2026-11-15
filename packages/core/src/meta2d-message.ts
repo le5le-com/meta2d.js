@@ -179,7 +179,9 @@ async function onUpdateView(this: Meta2d, e: MessageEvent) {
   postView.call(this, {
     action: WorkerMessage.UpdateView,
     // vectors 只在 open / addVectors 时同步；随视口消息发送会让 render 的 viewSig 每次平移都序列化全部块定义
-    data: { ...this.data, pens: [], vectors: undefined },
+    // x / y / scale 必须取 calc 算 penIds 时的那一份快照：这里读 this.data 会拿到更新的视口，
+    // render 就会用 A 视口的图元列表配 B 视口的变换，平移量被算成 0 → 跳过绘制，图元等下一次交互才出现。
+    data: { ...this.data, ...e.data.viewport, pens: [], vectors: undefined },
     penIds: e.data.penIds,
     width: e.data.width,
     height: e.data.height,
