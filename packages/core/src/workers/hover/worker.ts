@@ -1090,6 +1090,7 @@ function onDragLineAnchorCp1(e: MessageEvent) {
     self.postMessage({
       action: WorkerMessage.DrawingLine,
       pen: activeLine,
+      controlPointDrag: true,
     });
 
     drawingLine = undefined;
@@ -1140,6 +1141,7 @@ function onDragLineAnchorCp2(e: MessageEvent) {
     self.postMessage({
       action: WorkerMessage.DrawingLine,
       pen: activeLine,
+      controlPointDrag: true,
     });
 
     drawingLine = undefined;

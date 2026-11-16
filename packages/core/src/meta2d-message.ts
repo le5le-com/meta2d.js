@@ -1251,7 +1251,10 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
       }
     }
 
-    this.setOptions({ anchorMode: AnchorMode.Hidden });
+    // 控制柄和中间锚点拖拽保留显示模式；明确的 None 表示中间锚点，不能将缺省消息误判为中间锚点。
+    if (!e.data.controlPointDrag && e.data.dragAnchorType !== DragAnchorType.None) {
+      this.setOptions({ anchorMode: AnchorMode.Hidden });
+    }
   } else {
     line.id = s8();
 

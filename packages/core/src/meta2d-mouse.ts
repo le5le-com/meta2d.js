@@ -1249,8 +1249,19 @@ function handleDrawingLineDragAnchor(this: Meta2d): void {
       render: true,
     });
 
-    // 设置 anchorMode，使拖动锚点时也能检测目标图元的锚点
-    if (this.options.anchorMode !== AnchorMode.Drawline) {
+    // DragPens 只标记拖动状态，需显式重绘旧区域以擦除底层连线；不能依赖切换锚点模式触发全量重绘。
+    this.calcWorker.postMessage({
+      action: WorkerMessage.CalcPenBoundary,
+      pens: this.activePens,
+      render: true,
+    });
+
+    // 控制柄和中间锚点只调整连线形状，只有首尾普通锚点需要切换连线模式。
+    if (
+      !this.mousedown.lineAnchorCp &&
+      getDragAnchorType.call(this) !== DragAnchorType.None &&
+      this.options.anchorMode !== AnchorMode.Drawline
+    ) {
       this.setOptions({ anchorMode: AnchorMode.Drawline });
     }
   }
