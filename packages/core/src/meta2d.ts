@@ -326,6 +326,8 @@ export class Meta2d extends HTMLElement {
   lineType = 'curve';
   /** 当前正在创建或重连的连线类型，避免已有连线被全局 lineType 覆盖。 */
   drawingLineType?: string;
+  /** 重绘已有连线起点时为 true，跨多次点击保留方向。 */
+  drawingLineDragFrom = false;
   /** 画线过程中空格切换前的操作线型；一条线结束时清理（见 meta2d-keyevent restoreDrawingLineType） */
   drawingLineTypeBefore?: string;
   /** 按 O 进入正交连线模式前的 lineType；退出连线模式时还原 */

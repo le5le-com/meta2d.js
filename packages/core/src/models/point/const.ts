@@ -5,10 +5,10 @@ export enum HandleType {
 }
 
 export enum TwoWay {
-  Both,
-  In,
-  Out,
-  None,
+  Both, // 允许出线和入线
+  In, // 仅允许入线
+  Out, // 仅允许出线
+  None, // 禁止连接
 }
 
 // 方向，顺时针，上右下左

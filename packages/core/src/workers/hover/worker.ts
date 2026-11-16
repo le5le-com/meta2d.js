@@ -4,6 +4,7 @@ import { setVectors } from '../../models/vector/store';
 import { renderLineGradientPath } from '../../diagrams/line/gradient';
 import {
   Rect,
+  canConnectAnchor,
   Point,
   Pen,
   flipRender,
@@ -587,7 +588,7 @@ function onDrawingLine(e: MessageEvent) {
     return;
   }
 
-  if (hoverAnchor && e.data.point) {
+  if (hoverAnchor && e.data.point && canConnectAnchor(hoverAnchor, !drawingLine || dragAnchorType === DragAnchorType.From)) {
     e.data.point.host = hover;
 
     let x = hoverAnchor.x;

@@ -1,6 +1,13 @@
 import { s8 } from '../../utils';
-import { Direction } from './const';
+import { Direction, TwoWay } from './const';
 import { Point } from './point';
+
+/** 按连线端点方向检查目标锚点；未配置时兼容旧数据，默认双向。 */
+export function canConnectAnchor(anchor: Point | undefined, from: boolean): boolean {
+  if (!anchor) return false;
+  const twoWay = anchor.twoWay ?? TwoWay.Both;
+  return twoWay === TwoWay.Both || twoWay === (from ? TwoWay.Out : TwoWay.In);
+}
 
 export function scalePoint(pt: Point, scale: number, center: Point) {
   pt.x = center.x - (center.x - pt.x) * scale;

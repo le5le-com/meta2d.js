@@ -1,4 +1,4 @@
-import { Point } from '../point';
+import { canConnectAnchor, Point } from '../point';
 import { Pen, LinePathSegment } from './pen';
 import { s8 } from '../../utils';
 // 二维线性插值，按照百分比（0-1的小数）取得从一个值过度到另外一个值的中间值
@@ -543,6 +543,11 @@ export function connectLine(pen: Pen, anchor: Point, line: Pen, lineAnchor: Poin
     return;
   }
 
+  const from = line.anchors?.[0];
+  if (!lineAnchor || !canConnectAnchor(anchor, lineAnchor === from || (!!lineAnchor.id && lineAnchor.id === from?.id))) {
+    return;
+  }
+
   anchor.id ||= s8();
   lineAnchor.id ||= s8();
 
@@ -617,7 +622,11 @@ export function reconnectLine(
   if (target) {
     const targetPen = penMap.get(target.penId);
     const targetAnchor = targetPen?.anchors?.find((anchor) => anchor.id === target.anchorId);
-    if (targetPen && targetAnchor && targetPen.id !== line.id) {
+    const from = line.anchors?.[0];
+    if (
+      targetPen && targetAnchor && targetPen.id !== line.id &&
+      canConnectAnchor(targetAnchor, lineAnchor === from || (!!lineAnchor.id && lineAnchor.id === from?.id))
+    ) {
       markBeforeChange(targetPen);
       connectLine(targetPen, targetAnchor, line, lineAnchor);
     }

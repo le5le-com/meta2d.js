@@ -7,6 +7,7 @@ import { loadDragImages } from './meta2d-message';
 import { dispatchEvent } from './meta2d-event';
 import {
   calcRotate,
+  canConnectAnchor,
   dropFns,
   EventType,
   getAllChildren,
@@ -516,12 +517,15 @@ function persistDynamicAnchor(this: Meta2d): Point | undefined {
 
 /** 从当前悬浮锚点统一进入连线状态，并保存真实起点引用。 */
 function startDrawingLineFromHoverAnchor(this: Meta2d): boolean {
+  if (!canConnectAnchor(this.hoverAnchor, true)) return true;
   const anchor = persistDynamicAnchor.call(this);
   const pen = this.hover?.id ? this.penMap.get(this.hover.id) : undefined;
   if (!pen || pen.locked || pen.disableAnchor || !anchor) {
     return true;
   }
 
+  if (!canConnectAnchor(anchor, true)) return true;
+  this.drawingLineDragFrom = false;
   this.drawingLineFrom = anchor.id ? { penId: pen.id, anchorId: anchor.id } : undefined;
   this.drawingLineTo = undefined;
   this.drawingLineType = this.lineType;
@@ -541,9 +545,19 @@ function startDrawingLineFromHoverAnchor(this: Meta2d): boolean {
 
 /** 在连线完成前固化终点锚点，并保存稳定的图元/锚点 ID。 */
 function prepareDrawingLineTarget(this: Meta2d): void {
+  this.drawingLineTo = undefined;
+  if (!canUseDrawingLineTarget.call(this)) return;
   const anchor = persistDynamicAnchor.call(this);
   const pen = this.hover?.id ? this.penMap.get(this.hover.id) : undefined;
   this.drawingLineTo = pen && anchor?.id ? { penId: pen.id, anchorId: anchor.id } : undefined;
+}
+
+/** 重绘起点需要目标允许出线，普通绘制和重绘终点需要目标允许入线。 */
+function canUseDrawingLineTarget(this: Meta2d): boolean {
+  const from = this.interactionStateMachine.state === InteractionMode.DrawingLineDragAnchor
+    ? getDragAnchorType.call(this) === DragAnchorType.From
+    : this.drawingLineDragFrom;
+  return canConnectAnchor(this.hoverAnchor, from);
 }
 
 /**
@@ -563,6 +577,7 @@ function handleDrawingLineDown(this: Meta2d): boolean {
   // 4. mind 固定为两个锚点，第二个锚点生成后立即完成
   const lineType = this.drawingLineType ?? this.lineType;
   const isAnchorTarget = this.hoverType === HoverType.NodeAnchor || this.hoverType === HoverType.LineAnchor;
+  if (isAnchorTarget && this.mousedown.button !== 2 && !canUseDrawingLineTarget.call(this)) return true;
   const shouldFinish = this.mousedown.button === 2 || isAnchorTarget || lineType === 'mind';
 
   if (isAnchorTarget && this.mousedown.button !== 2) {
@@ -620,6 +635,7 @@ function handleDrawinglineReady(this: Meta2d): boolean {
     this.interactionStateMachine.transition(InteractionMode.DrawingLineReady);
     this.drawingLineFrom = undefined;
     this.drawingLineTo = undefined;
+    this.drawingLineDragFrom = false;
     this.drawingLineType = this.lineType;
 
     // 如果存在活动的画笔，则清除活动状态
@@ -1156,6 +1172,7 @@ function handleDrawingLineDragMove(this: Meta2d): void {
   }
 
   const isDragFrom = this.interactionStateMachine.state === InteractionMode.DrawingLineDragFrom;
+  this.drawingLineDragFrom = isDragFrom;
   // 端点重连属于已有连线编辑，整个手势必须沿用该连线自身类型。
   this.drawingLineType = this.activePens[0].type;
   this.hoverWorker.postMessage({
@@ -1397,6 +1414,7 @@ export function handleMouseUp(this: Meta2d, e: MouseEvent): void {
 function handleDrawingLineUp(this: Meta2d, e: any): void {
   const lineType = this.drawingLineType ?? this.lineType;
   const isAnchorTarget = this.hoverType === HoverType.NodeAnchor || this.hoverType === HoverType.LineAnchor;
+  if (isAnchorTarget && e.button !== 2 && !canUseDrawingLineTarget.call(this)) return;
   const shouldFinish = e.button === 2 || isAnchorTarget || lineType === 'mind';
 
   if (isAnchorTarget && e.button !== 2) {
