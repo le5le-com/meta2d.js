@@ -17,6 +17,7 @@ import {
   rectToPoints,
   getRectOfPoints,
   getAllPens,
+  canConnectAnchor,
 } from '../../models';
 import { options, paint, penMap, textBoxs, view } from './vars';
 import { probe } from '../../perf/probe';
@@ -790,6 +791,56 @@ function paintState(pen: Pen, x: number, y: number): Paint {
     return Paint.Stroke;
   }
   return hitCtx.isPointInPath(x, y) ? Paint.Inside : Paint.None;
+}
+
+/** 新建连线命中已连接的线端点时，将拾取目标还原为重合的图元锚点。 */
+export function resolveConnectedLineAnchor(
+  result: ReturnType<typeof pick>,
+  x: number,
+  y: number,
+  connectFrom?: boolean,
+): ReturnType<typeof pick> {
+  const { pen, anchor, cp } = result || {};
+  if (
+    connectFrom === undefined || !options.anchorMode || cp || pen?.category !== PenCategory.Line ||
+    !anchor?.connectedPen || !anchor.connectedAnchor || pen.close ||
+    (anchor.id !== pen.anchors?.[0]?.id && anchor.id !== pen.anchors?.at(-1)?.id)
+  ) {
+    return result;
+  }
+  // 非显式画线模式下，选中线的端点用于拖动编辑，不能被其连接的节点抢走。
+  if (connectFrom && activePen?.id === pen.id && !(options.anchorMode & AnchorMode.Drawline)) {
+    return result;
+  }
+  const target = penMap.get(anchor.connectedPen);
+  const targetAnchor = target?.anchors?.find((point) => point.id === anchor.connectedAnchor);
+  if (target?.category === PenCategory.Line) {
+    return result;
+  }
+  // 已失效或禁止连接的真实目标不能借助已有线端点绕过限制。
+  if (!target || !targetAnchor || target.visible === false || target.disableAnchor || isLocked(target) ||
+      hiddenByParent(target) || targetAnchor.visible === false || targetAnchor.disabled ||
+      !canConnectAnchor(targetAnchor, connectFrom)) {
+    return {};
+  }
+
+  // 锚点存储的是翻转、旋转前坐标，与普通拾取保持相同的逆变换和屏幕命中半径。
+  if (target.rotate) {
+    const pivot = target.pivot || { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+    const angle = -target.rotate * Math.PI / 180;
+    const dx = x - pivot.x;
+    const dy = y - pivot.y;
+    x = dx * Math.cos(angle) - dy * Math.sin(angle) + pivot.x;
+    y = dx * Math.sin(angle) + dy * Math.cos(angle) + pivot.y;
+  }
+  if (target.flipX) x = target.x + target.ex - x;
+  if (target.flipY) y = target.y + target.ey - y;
+  const radius = handleRadius(HANDLE_PICK_PX);
+  if (Math.abs(x - targetAnchor.x) >= radius || Math.abs(y - targetAnchor.y) >= radius) {
+    return result;
+  }
+  hoverAnchorId = targetAnchor.id;
+  return { pen: target, anchor: targetAnchor, top: result.top };
 }
 
 /** 父级隐藏，或父级 showChild 只显示别的子图元 ⇒ 画不出来，也不该被拾取 */

@@ -2050,6 +2050,20 @@ function onEsc(e: MessageEvent) {
       rollback: true,
     });
   } else {
+    // 完成绘制时临时线已进入 activePens；拒绝后必须一起移除，避免后续交互继续引用它。
+    const discardedLine = drawingLine || activeLine;
+    if (discardedLine && !discardedLine.id) {
+      activePens = activePens?.filter((pen) => pen !== discardedLine);
+      if (!activePens?.length) {
+        activePens = undefined;
+        activeBoundary = undefined;
+      }
+      if (hover === discardedLine) {
+        hover = undefined;
+        hoverBoundary = undefined;
+        hoverAnchor = undefined;
+      }
+    }
     activeLine = undefined;
   }
 

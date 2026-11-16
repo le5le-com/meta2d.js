@@ -7,6 +7,7 @@ import {
   afterUpdateFns,
   BackgroundType,
   calcLineRect,
+  canConnectAnchor,
   connectLine,
   reconnectLine,
   dealData,
@@ -1094,6 +1095,43 @@ function onTextAutoSize(this: Meta2d, e: MessageEvent) {
   }
 }
 
+/** 在修改图元连接关系前校验新连线，避免拒绝后留下连接记录或撤销记录。 */
+function canCreateDrawingLine(this: Meta2d, line: Pen): boolean {
+  const { disableEmptyLine, disableRepeatLine } = this.options;
+  if (!disableEmptyLine && !disableRepeatLine) {
+    return true;
+  }
+
+  const resolve = (ref: Meta2d['drawingLineFrom'], from: boolean) => {
+    const pen = ref && this.penMap.get(ref.penId);
+    const anchor = pen?.anchors?.find((item) => item.id === ref.anchorId);
+    return anchor && canConnectAnchor(anchor, from) ? ref : undefined;
+  };
+  const from = resolve(this.drawingLineFrom, true);
+  const to = resolve(this.drawingLineTo, false);
+  if (disableEmptyLine && (!from || !to || line.anchors?.length < 2 || !line.anchors)) {
+    return false;
+  }
+  if (!disableRepeatLine || !from || !to) {
+    return true;
+  }
+
+  const matches = (point: Point | undefined, ref: Meta2d['drawingLineFrom']) =>
+    point?.connectedPen === ref.penId && point?.connectedAnchor === ref.anchorId;
+  // 重复与线型、路径和箭头无关，同一对图元锚点反向连接也视为重复。
+  for (const pen of this.penMap.values()) {
+    if (pen.category !== PenCategory.Line || pen.anchors?.length < 2 || !pen.anchors) {
+      continue;
+    }
+    const first = pen.anchors[0];
+    const last = pen.anchors.at(-1);
+    if ((matches(first, from) && matches(last, to)) || (matches(first, to) && matches(last, from))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // 连线绘画完成回调消息
 async function onDrawingLine(this: Meta2d, e: MessageEvent) {
   // 一条线结束（完成、点数不够被取消、被 beforeConnectLine 拒绝都走这里）⇒ 撤销画线中空格切的线型
@@ -1111,6 +1149,21 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
   // 生命周期回调传入真实起终点图元，调用方可基于连接双方决定是否允许建立连线。
   if (!e.data.rollback && this.beforeConnectLine && !(await this.beforeConnectLine(line, fromPen, toPen))) {
     this.hoverWorker.postMessage({ action: WorkerMessage.DrawingLine, esc: true });
+    this.interactionStateMachine.state = InteractionMode.None;
+    this.drawingLineFrom = undefined;
+    this.drawingLineTo = undefined;
+    return;
+  }
+
+  // 放在异步钩子之后复查，确保等待期间新增的连线或失效的锚点也参与校验。
+  if (!line.id && !e.data.rollback && !canCreateDrawingLine.call(this, line)) {
+    // 分段点击完成时，临时线已进入 Worker 活动状态；按完整取消流程同步清理各线程。
+    // 使用专门的 Esc 消息，避免把取消动作再次交给绘线入口处理。
+    this.hoverWorker.postMessage({ action: WorkerMessage.Esc });
+    this.clearActive();
+    this.activeBoundary = undefined;
+    this.mousedown = undefined;
+    this.draggingAnchor = undefined;
     this.interactionStateMachine.state = InteractionMode.None;
     this.drawingLineFrom = undefined;
     this.drawingLineTo = undefined;

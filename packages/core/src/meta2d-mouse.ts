@@ -977,7 +977,17 @@ function flushPick(this: Meta2d): void {
   if (!pos || !this.calcWorker) {
     return;
   }
-  this.calcWorker.postMessage({ action: WorkerMessage.Pick, x: pos.x, y: pos.y });
+  const state = this.interactionStateMachine.state;
+  // 新建连线时解析重合的已连接端点；已有连线重连仍保留原来的端点编辑语义。
+  const connectFrom = !this.editingAnchor && this.options.mode === Mode.Edit
+    ? state === InteractionMode.None
+      ? true
+      : (state === InteractionMode.DrawingLine || state === InteractionMode.DrawingLineReady) &&
+          !this.activePens?.some((pen) => pen.category === PenCategory.Line)
+        ? false
+        : undefined
+    : undefined;
+  this.calcWorker.postMessage({ action: WorkerMessage.Pick, x: pos.x, y: pos.y, connectFrom });
 }
 
 /**

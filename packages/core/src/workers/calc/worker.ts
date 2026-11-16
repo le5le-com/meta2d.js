@@ -21,6 +21,7 @@ import {
   initPickGrid,
   onActive,
   pick,
+  resolveConnectedLineAnchor,
   remove,
   onActiveAnchor,
   overDock,
@@ -469,7 +470,7 @@ function onPick(e: MessageEvent) {
 
   const _tPick = probe.now();
   const { pen, anchor, linePoint, cp, rotatePoint, sizePoint, sizeDirection, top } =
-    pick(e.data.x, e.data.y) || {};
+    resolveConnectedLineAnchor(pick(e.data.x, e.data.y), e.data.x, e.data.y, e.data.connectFrom) || {};
   probe.time('pick', _tPick);
   // 最上层命中（Alt 直接选中用）。选中目标没变、只是在同一编组的子图元间移动时，单独补一条轻量消息
   const topId = top?.id;
@@ -514,19 +515,19 @@ function onPick(e: MessageEvent) {
       const { penIds, boundary } = getPensInPenBoundary(pen);
       if (anchor) {
         // 移入新锚点
-        if (!_anchor || anchor.x !== _anchor.x || anchor.y !== _anchor.y) {
-          _anchor = anchor;
-          self.postMessage({
-            action: WorkerMessage.PickAnchor,
-            hover: pen,
-            boundary,
-            penIds,
-            anchor,
-            linePoint,
-            cp,
-            topId,
-          });
-        }
+        // 图元已切换，即使锚点坐标重合也必须通知主线程，避免仍连接到上一条线。
+        _anchor = anchor;
+        _cp = cp;
+        self.postMessage({
+          action: WorkerMessage.PickAnchor,
+          hover: pen,
+          boundary,
+          penIds,
+          anchor,
+          linePoint,
+          cp,
+          topId,
+        });
       } else {
         self.postMessage({
           action: WorkerMessage.Pick,

@@ -135,6 +135,10 @@ export interface Options {
 
   /** 连线预设 */
   drawingLineOptions?: DrawingLineOptions;
+  /** 新建连线时，两端必须连接到有效的图元锚点 */
+  disableEmptyLine?: boolean;
+  /** 禁止新建连接同一对图元锚点的重复连线，反向连接也视为重复 */
+  disableRepeatLine?: boolean;
 
   fromArrow?: string;
   toArrow?: string;
