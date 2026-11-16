@@ -142,7 +142,7 @@ const defaultThemes: Readonly<Record<'dark' | 'light', Meta2dTheme>> = {
   dark: {
     color: '#bdc7db',
     background: '#1e2430',
-    parentBackground: '#080b0f',
+    parentBackground: '#12171f',
     ruleColor: '#222E47',
     ruleOptions: { background: '#121924', textColor: '#6E7B91' },
     variables: darkVariables,
