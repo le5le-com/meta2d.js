@@ -53,7 +53,7 @@ import {
 import { Options } from '../../types';
 import { deepClone, pSBC } from '../../utils';
 import { loadIconfonts } from '../utility/iconfont';
-import { loadFontFaceCss } from '../utility/fonts';
+import { createFontRedraw, loadFontFaceCss } from '../utility/fonts';
 import { fetchImage } from '../utility/image';
 import { probe } from '../../perf/probe';
 
@@ -267,12 +267,15 @@ self.onmessage = (e: MessageEvent) => {
   dispatchMessage(e);
 };
 
+const fontRedraw = createFontRedraw(() => !!ctx && !destoryed, redrawTextAfterFontsReady);
+
 function createRenderContext() {
   if (ctx || !renderCanvas) {
     return;
   }
   ctx = renderCanvas.getContext('2d');
   contextPending = false;
+  fontRedraw.flush();
 }
 
 function flushDeferredMessages() {
@@ -2082,32 +2085,22 @@ function loadIconfontsAndRedraw(iconfonts?: string[]) {
 async function onFontLoad(e: MessageEvent) {
   const { fontFaceCss } = e.data;
   try {
-    await loadFontFaceCss(fontFaceCss);
-    redrawTextAfterFontsReady();
+    await loadFontFaceCss(fontFaceCss, fontRedraw.notify, '渲染线程');
   } catch (error) {
     console.warn('渲染线程字体加载失败，已使用回退字体', error);
   }
 }
 
 function redrawTextAfterFontsReady() {
-  patchPens = [];
-  for (const id of inViewPenIds) {
-    const pen = penMap.get(id);
-    if (!pen) {
-      continue;
-    }
-
-    // 首帧可能使用了回退字体，必须清理测量结果后重新计算。
+  // 视口外图元也可能保留回退字体的测量结果，必须一起失效。
+  textOutsides = {};
+  for (const pen of penMap.values()) {
     pen.textLines = undefined;
     pen.textBox = undefined;
     pen.text && calcTextRect(pen);
     trackInkPad(pen);
-    patchPens.push(pen);
   }
-
-  resetRender();
-  renderPens(ctx);
-  patchPens = [];
+  fullRepaintView();
 }
 
 function cancalAnimation() {
@@ -3376,6 +3369,7 @@ function onUpdateAnimateState(e: MessageEvent) {
 }
 
 function onDestory(e: MessageEvent) {
+  fontRedraw.dispose();
   ctx = null;
   penDraws = null;
   data = null;

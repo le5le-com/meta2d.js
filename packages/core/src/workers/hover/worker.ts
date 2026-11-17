@@ -43,7 +43,7 @@ import {
 } from '../../models';
 import { deepClone, pSBC, rgba, s8 } from '../../utils';
 import { loadIconfonts } from '../utility/iconfont';
-import { loadFontFaceCss } from '../utility/fonts';
+import { createFontRedraw, loadFontFaceCss } from '../utility/fonts';
 import { DragAnchorType } from './const';
 import { probe } from '../../perf/probe';
 
@@ -190,11 +190,14 @@ function registerDefault() {
 }
 registerDefault();
 
+const fontRedraw = createFontRedraw(() => !!ctx, redrawHoverTextAfterFontsReady);
+
 function onInit(e: MessageEvent) {
   width = e.data.canvas.width;
   height = e.data.canvas.height;
   dpr = e.data.dpr || 1;
   ctx = e.data.canvas.getContext('2d');
+  fontRedraw.flush();
   options = e.data.options || {};
   render();
 }
@@ -541,8 +544,7 @@ function onCollaborate(e: MessageEvent) {
 async function onFontLoad(e: MessageEvent) {
   const { fontFaceCss } = e.data;
   try {
-    await loadFontFaceCss(fontFaceCss);
-    redrawHoverTextAfterFontsReady();
+    await loadFontFaceCss(fontFaceCss, fontRedraw.notify, '交互线程');
   } catch (error) {
     console.warn('交互线程字体加载失败，已使用回退字体', error);
   }
@@ -566,6 +568,14 @@ function redrawHoverTextAfterFontsReady() {
     }
     pen.textLines = undefined;
     pen.textBox = undefined;
+    // 交互层绘制直接消费 textLines，失效后必须重新测量，避免拖动文字消失。
+    if (pen.text) {
+      ctx.save();
+      ctx.font = getFont(pen, data);
+      calcTextRect(pen);
+      calcTextLines(ctx, pen);
+      ctx.restore();
+    }
   }
   render();
 }
@@ -2234,6 +2244,7 @@ function renderSnap() {
 }
 
 function onDestory(e: MessageEvent) {
+  fontRedraw.dispose();
   ctx = null;
   data = null;
   hover = null;

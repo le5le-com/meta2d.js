@@ -1,4 +1,5 @@
 import { WorkerMessage } from '../../types';
+import { invalidateFontCache } from '../../utils/font';
 
 export interface FontSource {
   fontFamily: string;
@@ -152,11 +153,13 @@ export function loadFontSource({ fontFamily, src, descriptors }: FontSource): Pr
   const cacheKey = `${fontFamily}|${src}|${JSON.stringify(descriptors || {})}`;
   let promise = fontPromises.get(cacheKey);
   if (!promise) {
-    promise = new FontFace(fontFamily, src, descriptors)
-      .load()
+    // 构造或 load 同步抛错也必须转为拒绝，避免中断其他字体的启动。
+    promise = Promise.resolve()
+      .then(() => new FontFace(fontFamily, src, descriptors).load())
       .then(async (fontFace) => {
         const fonts = getFontFaceSet();
         fonts.add?.(fontFace);
+        invalidateFontCache();
         // Worker 中等待 self.fonts.ready 在部分浏览器会一直挂起。
         // FontFace.load 已保证单个资源就绪，仅主线程需再等待文档字体集合。
         if (typeof document !== 'undefined') {
@@ -174,13 +177,67 @@ export function loadFontSource({ fontFamily, src, descriptors }: FontSource): Pr
   return promise;
 }
 
-export async function loadFontFaceCss(fontFaceCss: string): Promise<void> {
+export async function loadFontFaceCss(
+  fontFaceCss: string,
+  onLoaded?: () => void,
+  target = '主线程'
+): Promise<void> {
   const sources = parseFontFaceCss(fontFaceCss);
   if (!sources.length) {
     throw new Error('字体 CSS 中未找到有效的 @font-face 声明');
   }
 
-  await Promise.all(sources.map(loadFontSource));
+  // 每个成功的字体立即通知绘制端，不受其他字体失败或仍在下载的影响。
+  const results = await Promise.allSettled(sources.map(async (source) => {
+    try {
+      await loadFontSource(source);
+    } catch (error) {
+      console.warn(`${target}字体“${source.fontFamily}”加载失败：${source.src}`, error);
+      throw error;
+    }
+    onLoaded?.();
+  }));
+  const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+  if (failures.length) {
+    throw new AggregateError(failures.map((result) => result.reason), `${target}部分字体加载失败`);
+  }
+}
+
+/** 合并同一帧的字体更新；上下文尚未就绪时保留通知，销毁后忽略迟到结果。 */
+export function createFontRedraw(isReady: () => boolean, redraw: () => void) {
+  let pending = false;
+  let disposed = false;
+  let frame: number | undefined;
+  const flush = () => {
+    if (disposed || !pending || frame !== undefined || !isReady()) {
+      return;
+    }
+    frame = requestAnimationFrame(() => {
+      frame = undefined;
+      if (disposed || !isReady()) {
+        return;
+      }
+      pending = false;
+      redraw();
+    });
+  };
+  return {
+    notify() {
+      if (!disposed) {
+        pending = true;
+        flush();
+      }
+    },
+    flush,
+    dispose() {
+      disposed = true;
+      pending = false;
+      if (frame !== undefined) {
+        cancelAnimationFrame(frame);
+        frame = undefined;
+      }
+    },
+  };
 }
 
 function withFontLoadTimeout(task: Promise<void>, target: string): Promise<void> {

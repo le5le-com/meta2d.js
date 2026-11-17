@@ -5,6 +5,7 @@ import { BackgroundType, PatchFlag, PenCategory, TextAlign, TextVertical, TextWr
 import { Pen } from './pen';
 import { rotateVector } from '../../math';
 import { s8 } from '../../utils';
+import { fontCacheSuffix } from '../../utils/font';
 import { Gradient } from './types';
 import { GradientType, Align } from './const';
 import { defaultAnchorFns } from './handle';
@@ -253,7 +254,7 @@ export function getFont(
   const fontFamily = pen.fontFamily ?? data?.fontFamily ?? 'Arial';
   const lineHeight = pen.lineHeight ?? data?.lineHeight ?? 1.5;
 
-  return `${fontStyle} ${fontWeight} ${fontSize}px/${lineHeight} ${fontFamily}`;
+  return `${fontStyle} ${fontWeight} ${fontSize}px/${lineHeight} ${fontFamily}${fontCacheSuffix()}`;
 }
 
 export function createLineGradient(
