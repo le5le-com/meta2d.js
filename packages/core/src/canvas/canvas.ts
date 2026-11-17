@@ -4129,7 +4129,11 @@ export class Canvas {
     action.origin = deepClone(origin);
     action.scale = scale;
 
-    if (action.type !== EditType.Update && action.pens) {
+    if (
+      action.type !== EditType.Update &&
+      action.type !== EditType.Delete &&
+      action.pens
+    ) {
       action.pens.forEach((pen) => {
         pen.calculative &&
           (pen.calculative.layer = this.store.data.pens.findIndex(
@@ -7902,6 +7906,7 @@ export class Canvas {
       const delPen = this.store.pens[pen.id];
       if(delPen && delPen.calculative){
         delPen.calculative.active = undefined;
+        delPen.calculative.layer = i;
       }
       if(delPen.pathId){
         delPen.path = this.store.data.paths[pen.pathId];
