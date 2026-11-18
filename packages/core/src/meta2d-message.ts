@@ -11,6 +11,7 @@ import {
   connectLine,
   reconnectLine,
   dealData,
+  createFns,
   destroyFns,
   dragoverFns,
   mouseEnterFns,
@@ -973,9 +974,14 @@ function onPatch(this: Meta2d, e: MessageEvent) {
     this.renderWorker.postMessage({ action: WorkerMessage.Hover });
   }
   if (e.data.add) {
+    const removedIds = new Set<string>((e.data.remove || []).map((pen: Pen) => pen.id));
     for (const pen of e.data.add) {
       pen.patchFlag = undefined;
       this.penMap.set(pen.id, pen);
+      if (removedIds.has(pen.id) && createFns[pen.type]) {
+        const element = createFns[pen.type].call(this, pen);
+        if (element) this.setElementStyle(element, pen);
+      }
 
       if (pen.type === 'gif' && pen.image && this.imageStates[pen.image]) {
         gifPens.push(pen);
@@ -995,6 +1001,13 @@ function onPatch(this: Meta2d, e: MessageEvent) {
     this.calcWorker.postMessage({ action: WorkerMessage.CalcPenBoundary, pens: gifPens });
   }
   svgResized.length && loadImages.call(this, svgResized);
+
+  if (e.data.add?.length || e.data.remove?.length) {
+    // 增删事务（含组件替换与撤销）完成后，重新建立绑定和消息索引。
+    this.calcBoundDataPoints();
+    this.initMessageEvents();
+    if (e.data.add?.length) loadImages.call(this, e.data.add.map((pen: Pen) => pen.id));
+  }
 
   // 等主线程 penMap 写入最新层级后再通知界面，避免图层树读取到旧顺序。
   if (layerUpdated) {
@@ -1021,6 +1034,7 @@ function onPatch(this: Meta2d, e: MessageEvent) {
     ackSeq: e.data.queued ? e.data.seq : undefined,
   });
   this.map?.scheduleRefresh();
+  this.emitter.emit('patchApplied', { seq: e.data.seq });
 }
 
 /** render 画完一批动画 ⇒ 转给 calc，它才发下一批（动画背压，见 calc/animate.ts 的 animInFlight） */

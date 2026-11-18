@@ -650,9 +650,6 @@ function onPatch(e: MessageEvent) {
     });
   };
   if (e.data.add) {
-    for (const pen of e.data.add) {
-      add(makePen(pen));
-    }
     newPens.push(...e.data.add);
   }
   if (e.data.update) {
@@ -805,6 +802,9 @@ function onPatch(e: MessageEvent) {
     }
     remove(pen);
   });
+
+  // 先清理旧图元和空间索引，再新增；同 ID 替换不能把刚加入的图元删掉。
+  addPens((e.data.add || []).map((pen: Pen) => makePen(pen)));
 
   // ⚠ 这里原来是一个被反复覆盖的 `let oldCells`：beforeUpdate 里每个带 Rect 的
   // 图元都往同一个变量上写，循环结束后只剩**最后一个**图元的旧格子；下面

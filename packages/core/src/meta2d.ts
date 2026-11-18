@@ -2401,6 +2401,37 @@ export class Meta2d extends HTMLElement {
     ++this.actionIndex;
   }
 
+  /** 提交包含增删改的一个编辑事务，保留调用方已分配的 ID 和图层顺序。 */
+  applyAction(action: Action) {
+    const paths: Record<string, { path: string; rect: Rect }> = {};
+    for (const pen of action.add || []) {
+      if (pen.path) {
+        this.data.paths ||= {};
+        const { id, rect } = addPath(this.data.paths, pen.path);
+        pen.pathId = id;
+        paths[id] = { path: pen.path, rect };
+        delete pen.path;
+      }
+    }
+    if (Object.keys(paths).length) {
+      this.renderWorker.postMessage({ action: WorkerMessage.AddPath, paths });
+      this.hoverWorker.postMessage({ action: WorkerMessage.AddPath, paths });
+    }
+    this.pushAction(action);
+    const seq = this.patch(action.add, action.remove, action.beforeUpdate, action.update);
+    if (this.collaborate) {
+      const referencedPaths = Object.fromEntries(
+        (action.add || []).filter((pen) => pen.pathId && this.data.paths?.[pen.pathId])
+          .map((pen) => [pen.pathId, this.data.paths[pen.pathId]]),
+      );
+      this.utilityWorker.postMessage({
+        action: WorkerMessage.Patch,
+        patch: { ...action, documentData: { paths: { upsert: referencedPaths } } },
+      });
+    }
+    return seq;
+  }
+
   undo() {
     const action = this.getUndoAction();
     if (action) {
@@ -2629,9 +2660,11 @@ export class Meta2d extends HTMLElement {
    *   - 回声不带 update（主线程这份就是最新的，见 queuedUpdates），render 画完回 PatchRendered（背压）。
    */
   patch(add: Pen[], remove?: Pen[], beforeUpdate?: Pen[], update?: Pen[], queued?: { partial?: boolean }) {
+    const replacing = new Set(remove?.map((pen) => pen.id));
     if (add) {
       for (const pen of add) {
-        if (!createFns[pen.type]) {
+        // 同 ID 替换必须等旧元素销毁后再创建，撤销、重做也走相同顺序。
+        if (replacing.has(pen.id) || !createFns[pen.type]) {
           continue;
         }
         const elem = createFns[pen.type].call(this, pen);
@@ -2700,6 +2733,7 @@ export class Meta2d extends HTMLElement {
       }
     }
     this.emitter.emit('patch', { add, remove, beforeUpdate, update });
+    return seq;
   }
 
   setValue(val: IValue | IValue[], options?: ValueOptions) {
