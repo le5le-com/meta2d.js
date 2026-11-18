@@ -1199,7 +1199,8 @@ function handleDrawingLineDragMove(this: Meta2d): void {
     render: true,
   });
 
-  this.setOptions({ anchorMode: AnchorMode.Drawline });
+  // 端点重连临时启用连线模式，同时保留用户的悬停锚点显示设置。
+  this.setOptions({ anchorMode: (this.options.anchorMode & AnchorMode.Hover) | AnchorMode.Drawline });
   this.interactionStateMachine.transition(InteractionMode.DrawingLine);
 }
 
@@ -1262,7 +1263,7 @@ function handleDrawingLineDragAnchor(this: Meta2d): void {
       getDragAnchorType.call(this) !== DragAnchorType.None &&
       this.options.anchorMode !== AnchorMode.Drawline
     ) {
-      this.setOptions({ anchorMode: AnchorMode.Drawline });
+      this.setOptions({ anchorMode: (this.options.anchorMode & AnchorMode.Hover) | AnchorMode.Drawline });
     }
   }
 

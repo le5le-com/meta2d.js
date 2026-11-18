@@ -1267,7 +1267,8 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
 
     // 控制柄和中间锚点拖拽保留显示模式；明确的 None 表示中间锚点，不能将缺省消息误判为中间锚点。
     if (!e.data.controlPointDrag && e.data.dragAnchorType !== DragAnchorType.None) {
-      this.setOptions({ anchorMode: AnchorMode.Hidden });
+      // 端点重连完成后退出绘图工具，保留原有的悬停显示位。
+      this.setOptions({ anchorMode: this.options.anchorMode & AnchorMode.Hover });
     }
   } else {
     line.id = s8();
