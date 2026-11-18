@@ -2957,110 +2957,122 @@ async function onMagnifier(e: MessageEvent) {
 
 async function onToPng(e: MessageEvent) {
   const params = e.data.params || { padding: 2 };
-  const pens: Pen[] = [];
-  const points: Point[] = [];
-  if (params.pens?.length) {
-    let pen: Pen;
-    for (const id of params.pens) {
-      pen = penMap.get(id);
-      if (!pen) continue;
+  try {
+    const pens: Pen[] = [];
+    const points: Point[] = [];
+    if (params.pens?.length) {
+      let pen: Pen;
+      for (const id of params.pens) {
+        pen = penMap.get(id);
+        if (!pen) continue;
 
-      pens.push(pen);
-      const pts = rectToPoints(pen);
-      points.push(...pts);
-
-      if (pen.textBox) {
-        const pts = rectToPoints(pen.textBox);
+        pens.push(pen);
+        const pts = rectToPoints(pen);
         points.push(...pts);
+
+        if (pen.textBox) {
+          const pts = rectToPoints(pen.textBox);
+          points.push(...pts);
+        }
+      }
+    } else {
+      for (const value of penMap.values()) {
+        pens.push(value);
+        const pts = rectToPoints(value);
+        points.push(...pts);
+
+        if (value.textBox) {
+          const pts = rectToPoints(value.textBox);
+          points.push(...pts);
+        }
       }
     }
-  } else {
-    for (const value of penMap.values()) {
-      pens.push(value);
-      const pts = rectToPoints(value);
-      points.push(...pts);
+    let rect: Rect;
+    if (!params.pensOnly && data.width && data.height) {
+      // 固定尺寸画布始终导出完整画布，避免鹰眼或下载图片只包含局部图元。
+      rect = {
+        x: 0,
+        y: 0,
+        width: data.width,
+        height: data.height,
+        ex: data.width,
+        ey: data.height,
+      };
+    } else {
+      rect = getRectOfPoints(points);
+    }
+    if (params.pensOnly && (!params.pens?.length || pens.length !== params.pens.length)) {
+      throw new Error('导出的图元已不存在');
+    }
+    // padding 沿用原有接口语义，在画布或图元基础区域之外继续扩展。
+    expandRect(rect, params.padding);
 
-      if (value.textBox) {
-        const pts = rectToPoints(value.textBox);
-        points.push(...pts);
+    if (!Number.isFinite(rect.width) || !Number.isFinite(rect.height) || rect.width <= 0 || rect.height <= 0) {
+      self.postMessage({
+        action: WorkerMessage.ToPng,
+        requestId: params.requestId,
+        error: '图片导出区域无效。宽高必须是大于0的有限数值',
+      });
+      return;
+    }
+
+    let scale = 1;
+    params.maxWidth = params.maxWidth || 1920;
+    if (rect.width > params.maxWidth) {
+      scale = params.maxWidth / rect.width;
+    }
+    const width = rect.width * scale;
+    const height = rect.height * scale;
+    if (width > 32767 || height > 32767 || height * width > 268435456) {
+      self.postMessage({
+        action: WorkerMessage.ToPng,
+        requestId: params.requestId,
+        error: '图片尺寸过大。宽高不能超过32767像素，并且宽*高不能超过268435456像素',
+      });
+      return;
+    }
+
+    const offscreen = new OffscreenCanvas(width, height);
+    const ctx = offscreen.getContext('2d');
+
+    // 裁剪原点也需要按比例缩放，且导出不能污染画布全局变换。
+    ctx.setTransform(new DOMMatrix().scale(scale).translate(-rect.x, -rect.y));
+
+    // 设置默认选项
+    ctx.strokeStyle = options.color;
+    if (data.lineWidth) {
+      ctx.lineWidth = data.lineWidth / (scale || 1);
+    } else {
+      ctx.lineWidth = 1 / (scale || 1);
+    }
+    ctx.textBaseline = 'middle';
+
+    if (params.backgroundImage && data.backgroundImage) {
+      const imageBitmap = await fetchImage(data.backgroundImage);
+      if (imageBitmap) {
+        ctx.drawImage(imageBitmap, rect.x, rect.y, rect.width, rect.height);
       }
+    } else if (data.width && data.height && data.backgroundGradient) {
+      ctx.fillStyle = createGradient(ctx, rect.x, rect.y, rect.width, rect.height, data.backgroundGradient);
+      ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+    } else if (data.background) {
+      ctx.fillStyle = data.background;
+      ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
     }
-  }
-  let rect: Rect;
-  if (data.width && data.height) {
-    // 固定尺寸画布始终导出完整画布，避免鹰眼或下载图片只包含局部图元。
-    rect = {
-      x: 0,
-      y: 0,
-      width: data.width,
-      height: data.height,
-      ex: data.width,
-      ey: data.height,
-    };
-  } else {
-    rect = getRectOfPoints(points);
-  }
-  // padding 沿用原有接口语义，在画布或图元基础区域之外继续扩展。
-  expandRect(rect, params.padding);
 
-  if (!Number.isFinite(rect.width) || !Number.isFinite(rect.height) || rect.width <= 0 || rect.height <= 0) {
+    renderPens(ctx, pens, undefined, e.data.imgMap);
+
+    const blob: Blob = await offscreen.convertToBlob({ type: 'image/png' });
+    const buffer: ArrayBuffer = await blob.arrayBuffer();
+    self.postMessage({ action: WorkerMessage.ToPng, requestId: params.requestId, buffer }, [buffer]);
+  } catch (error) {
     self.postMessage({
-      action: WorkerMessage.ToPng,
-      requestId: params.requestId,
-      error: '图片导出区域无效。宽高必须是大于0的有限数值',
+      action: WorkerMessage.ToPng, requestId: params.requestId,
+      error: error instanceof Error ? error.message : '图片导出失败',
     });
-    return;
+  } finally {
+    for (const bitmap of Object.values(e.data.imgMap || {}) as ImageBitmap[]) bitmap.close();
   }
-
-  let scale = 1;
-  params.maxWidth = params.maxWidth || 1920;
-  if (rect.width > params.maxWidth) {
-    scale = params.maxWidth / rect.width;
-  }
-  const width = rect.width * scale;
-  const height = rect.height * scale;
-  if (width > 32767 || height > 32767 || height * width > 268435456) {
-    self.postMessage({
-      action: WorkerMessage.ToPng,
-      requestId: params.requestId,
-      error: '图片尺寸过大。宽高不能超过32767像素，并且宽*高不能超过268435456像素',
-    });
-    return;
-  }
-
-  const offscreen = new OffscreenCanvas(width, height);
-  const ctx = offscreen.getContext('2d');
-
-  matrix = new DOMMatrix().translate(-rect.x, -rect.y).scale(scale);
-  ctx.setTransform(matrix);
-
-  // 设置默认选项
-  ctx.strokeStyle = options.color;
-  if (data.lineWidth) {
-    ctx.lineWidth = data.lineWidth / (scale || 1);
-  } else {
-    ctx.lineWidth = 1 / (scale || 1);
-  }
-  ctx.textBaseline = 'middle';
-
-  if (params.backgroundImage && data.backgroundImage) {
-    const imageBitmap = await fetchImage(data.backgroundImage);
-    if (imageBitmap) {
-      ctx.drawImage(imageBitmap, rect.x, rect.y, rect.width, rect.height);
-    }
-  } else if (data.width && data.height && data.backgroundGradient) {
-    ctx.fillStyle = createGradient(ctx, rect.x, rect.y, rect.width, rect.height, data.backgroundGradient);
-    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-  } else if (data.background) {
-    ctx.fillStyle = data.background;
-    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-  }
-
-  renderPens(ctx, pens, undefined, e.data.imgMap);
-
-  const blob: Blob = await offscreen.convertToBlob({ type: 'image/png' });
-  const buffer: ArrayBuffer = await blob.arrayBuffer();
-  self.postMessage({ action: WorkerMessage.ToPng, requestId: params.requestId, buffer }, [buffer]);
 }
 
 function onRenderAnimation(e: MessageEvent) {

@@ -1069,6 +1069,15 @@ export class Meta2d extends HTMLElement {
     this.renderWorker = new Worker(new URL('./workers/render/index.ts', import.meta.url), {
       type: 'module',
     });
+    // Worker 崩溃或消息解码失败时，结束图片请求，避免调用方永久等待。
+    const failImages = () => {
+      for (const callback of this.toPngCallbacks.values()) {
+        callback(new ArrayBuffer(0), '图片渲染线程异常');
+      }
+      this.toPngCallbacks.clear();
+    };
+    this.renderWorker.addEventListener('error', failImages);
+    this.renderWorker.addEventListener('messageerror', failImages);
     const Offscreen = this.renderCanvas.transferControlToOffscreen();
     this.renderWorker.postMessage(
       { action: WorkerMessage.Init, canvas: Offscreen, dpr: this.dpr, options: this.options },
@@ -1835,7 +1844,7 @@ export class Meta2d extends HTMLElement {
     const data = structuredClone(this.data);
     const pens = Array.from(this.penMap.values()).sort((a, b) => a.index - b.index);
     for (const pen of pens) {
-      
+
       // 克隆图元对象，避免修改 penMap 中的原始数据
       const clonedPen = structuredClone(pen);
       delete clonedPen.index;
@@ -4413,56 +4422,87 @@ export class Meta2d extends HTMLElement {
     }
   }
 
+  /** 指定图元自动包含组合后代，导出不改变画布状态。 */
+  async pensToImage(
+    pens: Pen[],
+    options: { padding?: Padding; maxWidth?: number; backgroundImage?: boolean } = {},
+  ): Promise<Blob> {
+    if (!pens?.length || pens.some((pen) => !pen?.id || !this.penMap.has(pen.id))) {
+      throw new Error('请传入当前画布中的有效图元');
+    }
+    const targets = getAllPens(this.penMap, pens).sort((a, b) => (a.index || 0) - (b.index || 0));
+    return new Promise<Blob>((resolve, reject) => {
+      void this.exportImage({ ...options, padding: options.padding ?? 2, pens: targets }, (buffer, error) => {
+        if (error || !buffer?.byteLength) reject(new Error(error || '图片导出失败'));
+        else resolve(new Blob([buffer], { type: 'image/png' }));
+      }, true).catch(reject);
+    });
+  }
+
   async toPng(
-    params: {
-      pens?: Pen[];
-      padding?: Padding;
-      backgroundImage?: boolean;
-      maxWidth?: number;
-    } = {},
+    params: { pens?: Pen[]; padding?: Padding; maxWidth?: number; backgroundImage?: boolean } = {},
     callback?: (buffer: ArrayBuffer, error?: string) => void,
   ) {
-    // 分批打开还没补完时，render 手里还缺视口外的图元，导出的图会缺一块
-    await this.whenLoaded();
-    const pens: any[] = [];
-    const imgMap: { [key: string]: ImageBitmap } = {};
+    return this.exportImage(params, callback);
+  }
+
+  private async exportImage(
+    params: { pens?: Pen[]; padding?: Padding; maxWidth?: number; backgroundImage?: boolean },
+    callback?: (buffer: ArrayBuffer, error?: string) => void,
+    pensOnly = false,
+  ) {
+    const requestId = ++this.toPngRequestId;
+    if (callback) this.toPngCallbacks.set(requestId, callback);
     const imageBitmaps: ImageBitmap[] = [];
-    if (!params.pens) {
-      params.pens = [];
-      for (const pen of this.penMap.values()) {
-        params.pens.push(pen);
-      }
-    }
-    if (params.pens) {
-      for (const pen of params.pens) {
-        pens.push(pen.id);
-
-        if (pen.category === PenCategory.HtmlElement) {
-          let imageBitmap: ImageBitmap | undefined;
-          if (toPngFns[pen.type]) {
-            imageBitmap = await toPngFns[pen.type].call(this, pen);
-          } else {
-            const blob = await snapdom.toBlob(this.componentElementMap.get(pen.id), { type: 'png' });
-            imageBitmap = await createImageBitmap(blob);
-          }
-
-          // DOM 图元允许导出失败并返回空结果，不能把 undefined 放入 Worker 的传输列表。
-          if (!imageBitmap) {
-            continue;
-          }
-          imgMap[pen.id] = imageBitmap;
-          imageBitmaps.push(imageBitmap);
+    try {
+      // 分批打开还没补完时，render 手里还缺视口外的图元，导出的图会缺一块
+      await this.whenLoaded();
+      if (callback && !this.toPngCallbacks.has(requestId)) return;
+      const pens: string[] = [];
+      const imgMap: { [key: string]: ImageBitmap } = {};
+      if (!params.pens) {
+        params.pens = [];
+        for (const pen of this.penMap.values()) {
+          params.pens.push(pen);
         }
       }
-    }
+      if (params.pens) {
+        for (const pen of params.pens) {
+          pens.push(pen.id);
 
-    const requestId = ++this.toPngRequestId;
-    const requestParams = { ...params, requestId };
-    requestParams.pens = pens.length ? pens : undefined;
-    if (callback) {
-      this.toPngCallbacks.set(requestId, callback);
+          if (pen.category === PenCategory.HtmlElement) {
+            let imageBitmap: ImageBitmap | undefined;
+            if (toPngFns[pen.type]) {
+              imageBitmap = await toPngFns[pen.type].call(this, pen);
+            } else {
+              const blob = await snapdom.toBlob(this.componentElementMap.get(pen.id), { type: 'png' });
+              imageBitmap = await createImageBitmap(blob);
+            }
+
+            // DOM 图元允许导出失败并返回空结果，不能把 undefined 放入 Worker 的传输列表。
+            if (!imageBitmap) {
+              if (pensOnly) throw new Error('DOM 图元截图失败');
+              continue;
+            }
+            imgMap[pen.id] = imageBitmap;
+            imageBitmaps.push(imageBitmap);
+          }
+        }
+      }
+
+      const requestParams = { ...params, requestId, pensOnly, pens: pens.length ? pens : undefined };
+      if (callback && !this.toPngCallbacks.has(requestId)) {
+        imageBitmaps.forEach((bitmap) => bitmap.close());
+        return;
+      }
+      this.renderWorker.postMessage({ action: WorkerMessage.ToPng, params: requestParams, imgMap }, imageBitmaps);
+    } catch (error) {
+      imageBitmaps.forEach((bitmap) => bitmap.close());
+      const pending = this.toPngCallbacks.get(requestId);
+      this.toPngCallbacks.delete(requestId);
+      if (pending) pending(new ArrayBuffer(0), error instanceof Error ? error.message : '图片导出失败');
+      else if (!callback) throw error;
     }
-    this.renderWorker.postMessage({ action: WorkerMessage.ToPng, params: requestParams, imgMap }, imageBitmaps);
   }
 
   async toSvg(defs?: string[]): Promise<void> {
