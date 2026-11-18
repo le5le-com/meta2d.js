@@ -93,20 +93,43 @@ export function iframe(pen: IframePen) {
     pen.calculative.canvas.externalElements?.parentElement.appendChild(div);
     setElemPosition(pen, div);
     pen.calculative.singleton.div = div;
-    const iframe = document.createElement('iframe');
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.scrolling = pen.scrolling || 'no';
-    iframe.frameBorder = '0';
-    iframe.style.border = 'none';
-    iframe.src = pen.iframe;
-    iframe.allowFullscreen = true;
-    pen.allow && (iframe.allow = pen.allow);
-    pen.referrerPolicy && (iframe.referrerPolicy = pen.referrerPolicy);
-    pen.sandbox && (iframe.sandbox = pen.sandbox); 
-    pen.calculative.iframe = pen.iframe;
-    pen.calculative.iframeKey = getIframeKey(pen.iframe);
-    div.appendChild(iframe);
+
+    // 如果有配置地址，创建 iframe；否则显示默认占位内容
+    if (pen.iframe) {
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.scrolling = pen.scrolling || 'no';
+      iframe.frameBorder = '0';
+      iframe.style.border = 'none';
+      iframe.src = pen.iframe;
+      iframe.allowFullscreen = true;
+      pen.allow && (iframe.allow = pen.allow);
+      pen.referrerPolicy && (iframe.referrerPolicy = pen.referrerPolicy);
+      pen.sandbox && (iframe.sandbox = pen.sandbox);
+      pen.calculative.iframe = pen.iframe;
+      pen.calculative.iframeKey = getIframeKey(pen.iframe);
+      div.appendChild(iframe);
+    } else {
+      // 默认占位内容
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '100%';
+      placeholder.style.height = '100%';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.backgroundColor = '#f5f5f5';
+      placeholder.style.border = '1px dashed #d9d9d9';
+      placeholder.style.color = '#999';
+      placeholder.style.fontSize = '14px';
+      placeholder.style.fontFamily = 'Arial, sans-serif';
+      placeholder.style.textAlign = 'center';
+      placeholder.innerHTML = '<div>📄<br/>请配置 iframe 地址</div>';
+      pen.calculative.iframe = '';
+      pen.calculative.iframeKey = '';
+      div.appendChild(placeholder);
+    }
+
     generateAroundDiv(pen);
   }
 
@@ -136,14 +159,56 @@ function move(pen: Pen) {
     setElemPosition(pen, pen.calculative.singleton.div);
 }
 
-function beforeValue(pen: Pen, value: any) {
-  if (value.iframe) {
-    if (pen.calculative.singleton.div) {
-      const newKey = getIframeKey(value.iframe);
-      const oldKey = pen.calculative.iframeKey;
-      // 只有key不同时才切换iframe地址
-      if (newKey !== oldKey) {
-        pen.calculative.singleton.div.children[0].src = value.iframe;
+function beforeValue(pen: IframePen, value: any) {
+  if (value.iframe !== undefined && pen.calculative.singleton.div) {
+    const newKey = getIframeKey(value.iframe);
+    const oldKey = pen.calculative.iframeKey;
+    const hasOldIframe = !!pen.calculative.iframe;
+    const hasNewIframe = !!value.iframe;
+
+    // 情况1：从无地址到有地址，需要替换占位内容为 iframe
+    if (!hasOldIframe && hasNewIframe) {
+      pen.calculative.singleton.div.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.scrolling = pen.scrolling || 'no';
+      iframe.frameBorder = '0';
+      iframe.style.border = 'none';
+      iframe.src = value.iframe;
+      iframe.allowFullscreen = true;
+      pen.allow && (iframe.allow = pen.allow);
+      pen.referrerPolicy && (iframe.referrerPolicy = pen.referrerPolicy);
+      pen.sandbox && (iframe.sandbox = pen.sandbox);
+      pen.calculative.singleton.div.appendChild(iframe);
+      pen.calculative.iframe = value.iframe;
+      pen.calculative.iframeKey = newKey;
+    }
+    // 情况2：从有地址到无地址，需要替换 iframe 为占位内容
+    else if (hasOldIframe && !hasNewIframe) {
+      pen.calculative.singleton.div.innerHTML = '';
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '100%';
+      placeholder.style.height = '100%';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.backgroundColor = '#f5f5f5';
+      placeholder.style.border = '1px dashed #d9d9d9';
+      placeholder.style.color = '#999';
+      placeholder.style.fontSize = '14px';
+      placeholder.style.fontFamily = 'Arial, sans-serif';
+      placeholder.style.textAlign = 'center';
+      placeholder.innerHTML = '<div>📄<br/>请配置 iframe 地址</div>';
+      pen.calculative.singleton.div.appendChild(placeholder);
+      pen.calculative.iframe = '';
+      pen.calculative.iframeKey = '';
+    }
+    // 情况3：都有地址且 key 不同，只更新 iframe.src
+    else if (hasOldIframe && hasNewIframe && newKey !== oldKey) {
+      const iframeElement = pen.calculative.singleton.div.children[0] as HTMLIFrameElement;
+      if (iframeElement && iframeElement.tagName === 'IFRAME') {
+        iframeElement.src = value.iframe;
         pen.calculative.iframe = value.iframe;
         pen.calculative.iframeKey = newKey;
       }
