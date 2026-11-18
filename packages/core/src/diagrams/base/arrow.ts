@@ -43,7 +43,7 @@ export function rightArrow(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.lineTo(x, cy + shaftHalf);
   ctx.closePath();
   ctx.stroke();
-  
+
   if (pen.fillStyles && pen.fillStyles.length > 0) {
     for (const fillStyle of pen.fillStyles) {
       ctx.fillStyle = fillStyle;
@@ -57,8 +57,8 @@ export function twowayArrow(ctx: CanvasRenderingContext2D, pen: Pen) {
   const cy = y + height / 2;
   const headLen = Math.min(width * 0.4, height);
   const shaftHalf = Math.max(1, height * 0.25);
-  const leftBaseX = x + headLen;  
-  const rightBaseX = x + width - headLen; 
+  const leftBaseX = x + headLen;
+  const rightBaseX = x + width - headLen;
 
   ctx.beginPath();
   ctx.moveTo(leftBaseX, cy - shaftHalf);
@@ -69,8 +69,9 @@ export function twowayArrow(ctx: CanvasRenderingContext2D, pen: Pen) {
   ctx.lineTo(rightBaseX, cy + shaftHalf);
   ctx.lineTo(leftBaseX, cy + shaftHalf);
   ctx.lineTo(leftBaseX, y + height);
-  ctx.lineTo(x, cy); 
+  ctx.lineTo(x, cy);
   ctx.lineTo(leftBaseX, y);
+  ctx.closePath();
   ctx.stroke();
 
   if (pen.fillStyles && pen.fillStyles.length > 0) {
