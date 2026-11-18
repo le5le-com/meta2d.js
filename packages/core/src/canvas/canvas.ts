@@ -1494,6 +1494,9 @@ export class Canvas {
           const str = JSON.stringify(pen.events).replace(regex, match => this.randomIdObj[match]);
           pen.events = JSON.parse(str);
         }
+        if((pen as any).extraStyles){
+          (pen as any).extraStyles = (pen as any).extraStyles.replace(regex, match => this.randomIdObj[match]);
+        }
       }
     }
     for (const pen of pens) {
