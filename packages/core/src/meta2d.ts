@@ -20,7 +20,7 @@ import {
   InteractionMode,
 } from './types';
 import { RotateCursors, collaboratePageKeys, defaultOptions } from './const';
-import { copy, cut, KeydownFns, paste, translatePens } from './meta2d-keyevent';
+import { KeydownFns, translatePens } from './meta2d-keyevent';
 import { loadImages, messageFns, perfWaiters } from './meta2d-message';
 import { PerfReport } from './perf/types';
 import { probe } from './perf/probe';
@@ -104,8 +104,11 @@ import {
   TextDecoration,
   gradientToCss,
   getAllPens,
+  makePensId,
+  outermostPens,
   flipPen,
   translatePen,
+  translateRect,
   Padding,
   PenCategory,
   ConnectLine,
@@ -157,6 +160,8 @@ const ProgressiveChunk = 2500;
 const ProgressiveInflight = 2;
 /** calc 的首屏回话等不到时，过多久照样开始补后批（ms） */
 const ProgressiveStartTimeout = 1500;
+
+const ClipboardName = 'le5le-clipboard';
 
 /**
  * setValue 队列的差量条目（见 Meta2d.valsToPens 的 partial）。
@@ -488,9 +493,109 @@ export class Meta2d extends HTMLElement {
     return ['theme', 'rule', 'scroll'];
   }
 
-  onCopy = copy.bind(this);
-  onCut = cut.bind(this);
-  onPaste = paste.bind(this);
+  onCopy = async (e?: KeyboardEvent) => {
+    if (!this.activePens?.length) {
+      return;
+    }
+    if (e && !e.ctrlKey && !e.metaKey) {
+      return;
+    }
+
+    // 剪贴板里就是完整的一份：选中图元连同全部子孙，先序（父在前）。
+    // 先去掉祖先也被选中的图元，否则子图元可能排在父图元前面，粘贴后层级就不是「父在前」了。
+    const add: Pen[] = getAllPens(this.penMap, outermostPens(this.penMap, this.activePens)).map((pen) =>
+      structuredClone(pen),
+    );
+
+    if (!this.activeBoundary.pivot) {
+      this.activeBoundary.pivot = {
+        x: this.activeBoundary.x + this.activeBoundary.width / 2,
+        y: this.activeBoundary.y + this.activeBoundary.height / 2,
+      };
+    }
+
+    const clipboard = JSON.stringify({
+      povit: this.activeBoundary.pivot,
+      pens: add,
+    });
+
+    if (this.options.clipboard !== false && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(clipboard);
+      } catch {
+        localStorage.setItem(ClipboardName, clipboard);
+      }
+    } else {
+      localStorage.setItem(ClipboardName, clipboard);
+    }
+  };
+
+  onCut = (e?: KeyboardEvent) => {
+    if (e && !e.ctrlKey && !e.metaKey) {
+      return;
+    }
+
+    void this.onCopy();
+    if (this.activePens.length) {
+      void this.deletePens(this.activePens, Mode.Edit);
+    }
+  };
+
+  onPaste = async (e?: KeyboardEvent) => {
+    let clipboardText: string;
+    if (this.options.clipboard !== false && navigator.clipboard) {
+      try {
+        clipboardText = await navigator.clipboard.readText();
+      } catch {
+        clipboardText = localStorage.getItem(ClipboardName);
+      }
+    } else {
+      clipboardText = localStorage.getItem(ClipboardName);
+    }
+
+    let clipboard: any;
+    if (clipboardText) {
+      try {
+        clipboard = JSON.parse(clipboardText);
+      } catch {
+        return;
+      }
+    }
+
+    if (!clipboard?.povit) {
+      return;
+    }
+
+    let position = this.mousePos;
+    if (e?.altKey) {
+      // 视图中心粘贴
+      position = {
+        x: (this.clientRect.width / 2 - this.data.x) / this.data.scale,
+        y: (this.clientRect.height / 2 - this.data.y) / this.data.scale,
+      };
+    } else if (e?.shiftKey) {
+      // 原位粘贴
+      position = clipboard.povit;
+    }
+
+    let dx = position?.x - clipboard.povit.x;
+    let dy = position?.y - clipboard.povit.y;
+    if (!e || isNaN(dx) || isNaN(dy)) {
+      dx = 20;
+      dy = 20;
+    }
+
+    // copy 时已经带上全部子孙；不能再根据旧 id 从当前画布查找，否则可能产生重复子图元。
+    const add: Pen[] = [];
+    for (const pen of clipboard.pens) {
+      const item = structuredClone(pen);
+      translateRect(item, dx, dy);
+      add.push(item);
+    }
+
+    makePensId(add);
+    this.addPens(add, Mode.Edit);
+  };
 
   constructor() {
     super();

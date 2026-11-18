@@ -3,14 +3,11 @@ import { KeyEventPen } from './const/keyEvent';
 import { Meta2d } from './meta2d';
 import { scaleCanvas, resizePens } from './meta2d-mouse';
 import {
-  getAllPens,
   getBlock,
   HandleType,
   IndexPlan,
-  outermostPens,
   planAfterBlock,
   planAppendToParent,
-  makePensId,
   patchClone,
   PatchFlag,
   Pen,
@@ -85,15 +82,13 @@ export const KeydownFns: { [key: string]: Function } = {
   V: v,
   w: w,
   W: w,
-  x: cut,
-  X: cut,
+  x: x,
+  X: x,
   y: y,
   Y: y,
   z: z,
   Z: z,
 };
-
-const ClipboardName = 'le5le-clipboard';
 
 export function scaleUp(this: Meta2d, e: KeyboardEvent) {
   this.scale(this.data.scale + 0.1);
@@ -217,7 +212,7 @@ function b(this: Meta2d, e: KeyboardEvent) {
 
 function c(this: Meta2d, e: KeyboardEvent) {
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
-    copy.call(this);
+    void this.onCopy(e);
     return;
   }
 }
@@ -389,7 +384,7 @@ function v(this: Meta2d, e: KeyboardEvent) {
   }
 
   if (e.ctrlKey || e.metaKey) {
-    paste.call(this, e);
+    void this.onPaste(e);
     return;
   }
 
@@ -411,18 +406,14 @@ function w(this: Meta2d, e: KeyboardEvent) {
   }
 }
 
+function x(this: Meta2d, e: KeyboardEvent) {
+  this.onCut(e);
+}
+
 function y(this: Meta2d, e: KeyboardEvent) {
   if (e.ctrlKey || e.metaKey) {
     this.redo();
   }
-}
-
-export function cut(this: Meta2d, e?: KeyboardEvent) {
-  if (e && !e.ctrlKey && !e.metaKey) {
-    return;
-  }
-  copy.call(this);
-  del.call(this);
 }
 
 function z(this: Meta2d, e: KeyboardEvent) {
@@ -795,42 +786,6 @@ export function selectPens(this: Meta2d, invert?: boolean) {
   this.selectAll(invert);
 }
 
-export async function copy(this: Meta2d, e?: KeyboardEvent) {
-  if (!this.activePens || !this.activePens.length) {
-    return;
-  }
-  if (e && !e.ctrlKey && !e.metaKey) {
-    return;
-  }
-  // 剪贴板里就是完整的一份：选中图元连同全部子孙，先序（父在前）。
-  // 先去掉祖先也被选中的图元，否则子图元可能排在父图元前面，粘贴后层级就不是「父在前」了
-  const add: Pen[] = getAllPens(this.penMap, outermostPens(this.penMap, this.activePens)).map((pen) =>
-    structuredClone(pen),
-  );
-
-  if (!this.activeBoundary.pivot) {
-    this.activeBoundary.pivot = {
-      x: this.activeBoundary.x + this.activeBoundary.width / 2,
-      y: this.activeBoundary.y + this.activeBoundary.height / 2,
-    };
-  }
-
-  const clipboard = JSON.stringify({
-    povit: this.activeBoundary.pivot,
-    pens: add,
-  });
-
-  if (this.options.clipboard !== false && navigator.clipboard) {
-    try {
-      await navigator.clipboard.writeText(clipboard);
-    } catch {
-      localStorage.setItem(ClipboardName, clipboard);
-    }
-  } else {
-    localStorage.setItem(ClipboardName, clipboard);
-  }
-}
-
 function addPenByKey(this: Meta2d, e: KeyboardEvent) {
   const penType = e.key.toLowerCase();
   const templatePen = structuredClone(KeyEventPen[penType]);
@@ -854,65 +809,6 @@ function addPenByKey(this: Meta2d, e: KeyboardEvent) {
   }
 
   const add = [templatePen];
-  this.addPens(add, Mode.Edit);
-}
-
-export async function paste(this: Meta2d, e?: KeyboardEvent) {
-  let clipboardText: string;
-  if (this.options.clipboard !== false && navigator.clipboard) {
-    try {
-      clipboardText = await navigator.clipboard?.readText();
-    } catch {
-      clipboardText = localStorage.getItem(ClipboardName);
-    }
-  } else {
-    clipboardText = localStorage.getItem(ClipboardName);
-  }
-
-  let clipboard: any;
-  if (clipboardText) {
-    try {
-      clipboard = JSON.parse(clipboardText);
-    } catch (e) {
-      return;
-    }
-  }
-
-  if (!clipboard || !clipboard.povit) {
-    return;
-  }
-
-  let position = this.mousePos; // 鼠标位置粘贴
-  if (e?.altKey) {
-    // 视图中心粘贴
-    position = {
-      x: (this.clientRect.width / 2 - this.data.x) / this.data.scale,
-      y: (this.clientRect.height / 2 - this.data.y) / this.data.scale,
-    };
-  } else if (e?.shiftKey) {
-    // 原位粘贴
-    position = clipboard.povit;
-  }
-
-  let dx = position?.x - clipboard.povit.x;
-  let dy = position?.y - clipboard.povit.y;
-  if (!e || isNaN(dx) || isNaN(dy)) {
-    dx = 20;
-    dy = 20;
-  }
-
-  // 剪贴板在 copy 时已经带上了全部子孙。不能再按原 id 去当前画布里查子孙追加：
-  // 同一个旧 id 出现两次，makePensId 只把后一份挂进新父图元的 children，前一份成了孤儿
-  // （parentId 指向新父图元、children 里却没有它；位置还是原图元粘贴时的位置）。
-  // 剪贴板也可能来自别的页面，当前画布里的同 id 图元与它无关。
-  const add: Pen[] = [];
-  for (const pen of clipboard.pens) {
-    const item = structuredClone(pen);
-    translateRect(item, dx, dy);
-    add.push(item);
-  }
-
-  makePensId(add);
   this.addPens(add, Mode.Edit);
 }
 
