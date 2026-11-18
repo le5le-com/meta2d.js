@@ -1,6 +1,6 @@
 <template>
   <div class="props">
-    <div v-if="pen.events.length">
+    <div v-if="pen.events?.length">
       <t-collapse
         v-model="openedCollapses"
         :borderless="true"
@@ -10,15 +10,9 @@
         <t-collapse-panel v-for="(item, i) in pen.events" :value="i">
           <template #header>
             <div @click.stop class="head flex">
-              <t-select
-                v-model="item.name"
-                style="width: 40%"
-                @change="eventNameChange"
-                :options="options"
-                autoWidth
-              />
+              <t-select v-model="item.type" style="width: 40%" :options="options" autoWidth />
               <t-input
-                v-if="item.name === 'message'"
+                v-if="item.type === EventType.Message"
                 style="width: 93px; margin-left: 20px"
                 v-model="item.message"
                 :placeholder="$t('消息名')"
@@ -37,7 +31,6 @@
             </t-space>
           </template>
           <Actions :data="pen.events[i]" />
-          <!-- <Conditions :data="pen.events[i]" /> -->
         </t-collapse-panel>
       </t-collapse>
       <t-divider />
@@ -61,88 +54,58 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeMount, onUnmounted, ref, computed, getCurrentInstance } from 'vue';
+import { onBeforeMount, ref, toRaw, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Actions from './Actions.vue';
-// import Conditions from './Conditions.vue';
 import { DeleteIcon } from 'tdesign-icons-vue-next';
+import { EventType, Meta2d, Mode } from '@meta2d/core';
+import Actions from './Actions.vue';
+import { useSelection } from './services/selections';
+
 const { t } = useI18n();
-const props = defineProps<{
-  pen: any;
-}>();
-const options: any = [
-  {
-    value: 'click',
-    content: t('单击'),
-  },
-  {
-    value: 'dblclick',
-    content: t('双击'),
-    divider: true,
-  },
-  {
-    value: 'contextmenu',
-    content: t('鼠标右键'),
-  },
-  {
-    value: 'enter',
-    content: t('鼠标移入'),
-  },
-  {
-    value: 'leave',
-    content: t('鼠标移出'),
-    divider: true,
-  },
-  {
-    value: 'active',
-    content: t('获得焦点'),
-  },
-  {
-    value: 'inactive',
-    content: t('失去焦点'),
-    divider: true,
-  },
-  {
-    value: 'mousedown',
-    content: t('鼠标按下'),
-  },
-  {
-    value: 'mouseup',
-    content: t('鼠标抬起'),
-    divider: true,
-  },
-  {
-    value: 'message',
-    content: t('监听全局消息'),
-  },
-];
+const { selections } = useSelection();
+const { pen } = toRefs(selections) as any;
+
+// 选择框读取 label，下拉菜单读取 content，两者取相同文案
+const options = [
+  { value: EventType.Click, label: t('单击') },
+  { value: EventType.Dblclick, label: t('双击'), divider: true },
+  { value: EventType.Contextmenu, label: t('鼠标右键') },
+  { value: EventType.Enter, label: t('鼠标移入') },
+  { value: EventType.Leave, label: t('鼠标移出'), divider: true },
+  { value: EventType.Active, label: t('获得焦点') },
+  { value: EventType.Inactive, label: t('失去焦点'), divider: true },
+  { value: EventType.Mousedown, label: t('鼠标按下') },
+  { value: EventType.Mouseup, label: t('鼠标抬起'), divider: true },
+  { value: EventType.Message, label: t('监听全局消息') },
+].map((item) => ({ ...item, content: item.label }));
 
 const openedCollapses = ref([0]);
 
 onBeforeMount(() => {
-  if (!props.pen.events) {
-    props.pen.events = [];
-  }
-
-  for (const item of options) {
-    item.label = item.content;
+  if (pen.value && !pen.value.events) {
+    pen.value.events = [];
   }
 });
 
-const addEvent = (e: any) => {
-  props.pen.events.push({ name: e.value });
-  if (props.pen.name === 'echarts') {
-    // initEvent(props.pen);
-  }
-};
+// selections.pen 是克隆对象，事件配置变化后同步回画布；切换图元时不写入
+watch(
+  () => [pen.value?.id, pen.value?.events] as const,
+  ([id, events], [previousId]) => {
+    if (!id || id !== previousId) {
+      return;
+    }
+    const meta2d = document.querySelector('le5le-meta2d') as unknown as Meta2d;
+    meta2d.setValue({ id, events: toRaw(events) }, { mode: Mode.Edit });
+  },
+  { deep: true },
+);
 
-const eventNameChange = () => {
-  if (props.pen.name === 'echarts') {
-    // initEvent(props.pen);
+const addEvent = (e: { value: EventType }) => {
+  if (!pen.value.events) {
+    pen.value.events = [];
   }
+  pen.value.events.push({ type: e.value, actions: [] });
 };
-
-onUnmounted(() => {});
 </script>
 <style lang="postcss" scoped>
 .props {
