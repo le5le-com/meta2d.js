@@ -1146,6 +1146,52 @@ function canCreateDrawingLine(this: Meta2d, line: Pen): boolean {
   return true;
 }
 
+/** 端点重连提交前再次解析目标，防止旧拾取结果把节点连接写成线与线连接。 */
+function resolveReconnectTarget(this: Meta2d, line: Pen, dragAnchorType: DragAnchorType): void {
+  if (dragAnchorType !== DragAnchorType.From && dragAnchorType !== DragAnchorType.To) return;
+  const ref = this.drawingLineTo;
+  const targetLine = ref && this.penMap.get(ref.penId);
+  const anchor = targetLine?.anchors?.find((point) => point.id === ref.anchorId);
+  if (targetLine?.category !== PenCategory.Line || targetLine.close || !anchor?.connectedPen ||
+      !anchor.connectedAnchor ||
+      (anchor.id !== targetLine.anchors[0]?.id && anchor.id !== targetLine.anchors.at(-1)?.id)) return;
+  const target = this.penMap.get(anchor.connectedPen);
+  if (target?.category === PenCategory.Line) return;
+  const targetAnchor = target?.anchors?.find((point) => point.id === anchor.connectedAnchor);
+  const from = dragAnchorType === DragAnchorType.From;
+  if (!target || target.id === line.id || !targetAnchor || target.disableAnchor ||
+      targetAnchor.disabled || targetAnchor.visible === false || !canConnectAnchor(targetAnchor, from)) {
+    this.drawingLineTo = undefined;
+    return;
+  }
+  // 与拾取规则一致，父级锁定、隐藏和未显示的子图元都不能通过线端点绕过。
+  for (let pen = target; pen; pen = pen.parentId && this.penMap.get(pen.parentId)) {
+    const parent = pen.parentId && this.penMap.get(pen.parentId);
+    if (pen.locked || pen.visible === false ||
+        (parent?.showChild != undefined && parent.children?.[parent.showChild] !== pen.id)) {
+      this.drawingLineTo = undefined;
+      return;
+    }
+  }
+  const point = from ? line.anchors?.[0] : line.anchors?.at(-1);
+  if (!point) return;
+  let { x, y } = point;
+  if (target.rotate) {
+    const pivot = target.pivot || { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+    const angle = -target.rotate * Math.PI / 180;
+    const dx = x - pivot.x;
+    const dy = y - pivot.y;
+    x = dx * Math.cos(angle) - dy * Math.sin(angle) + pivot.x;
+    y = dx * Math.sin(angle) + dy * Math.cos(angle) + pivot.y;
+  }
+  if (target.flipX) x = target.x + target.ex - x;
+  if (target.flipY) y = target.y + target.ey - y;
+  const radius = Math.max(5, 6 / (this.data.scale || 1));
+  if (Math.abs(x - targetAnchor.x) < radius && Math.abs(y - targetAnchor.y) < radius) {
+    this.drawingLineTo = { penId: target.id, anchorId: targetAnchor.id };
+  }
+}
+
 // 连线绘画完成回调消息
 async function onDrawingLine(this: Meta2d, e: MessageEvent) {
   // 一条线结束（完成、点数不够被取消、被 beforeConnectLine 拒绝都走这里）⇒ 撤销画线中空格切的线型
@@ -1158,6 +1204,9 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
     return;
   }
 
+  if (line.id && !e.data.rollback) {
+    resolveReconnectTarget.call(this, line, e.data.dragAnchorType);
+  }
   const fromPen = this.drawingLineFrom ? this.penMap.get(this.drawingLineFrom.penId) : undefined;
   const toPen = this.drawingLineTo ? this.penMap.get(this.drawingLineTo.penId) : undefined;
   // 生命周期回调传入真实起终点图元，调用方可基于连接双方决定是否允许建立连线。
@@ -1182,6 +1231,63 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
     this.drawingLineFrom = undefined;
     this.drawingLineTo = undefined;
     return;
+  }
+
+  const storedLine = line.id && this.penMap.get(line.id);
+  // 异步连接钩子可能改变图元状态，落地前再检查一次目标。
+  if (storedLine && !e.data.rollback) resolveReconnectTarget.call(this, line, e.data.dragAnchorType);
+  const dragFrom = e.data.dragAnchorType === DragAnchorType.From;
+  const dragEndpoint = dragFrom || e.data.dragAnchorType === DragAnchorType.To;
+  if (storedLine && dragEndpoint && !e.data.rollback &&
+      (this.options.disableEmptyLine || this.options.disableRepeatLine)) {
+    const target = this.drawingLineTo;
+    const targetPen = target && this.penMap.get(target.penId);
+    const targetAnchor = targetPen?.anchors?.find((anchor) => anchor.id === target.anchorId);
+    const other = dragFrom ? storedLine.anchors?.at(-1) : storedLine.anchors?.[0];
+    const otherPen = other?.connectedPen && this.penMap.get(other.connectedPen);
+    const otherAnchor = otherPen?.anchors?.find((anchor) => anchor.id === other.connectedAnchor);
+    const validEndpoints = targetAnchor && targetPen.id !== line.id && canConnectAnchor(targetAnchor, dragFrom) &&
+      otherAnchor && canConnectAnchor(otherAnchor, !dragFrom);
+    let repeated = false;
+    if (this.options.disableRepeatLine && validEndpoints) {
+      // 用重连后的目标与未移动端判重，排除当前线自身；同一锚点对反向连接也算重复。
+      const matchesTarget = (point: Point | undefined) =>
+        point?.connectedPen === target.penId && point?.connectedAnchor === target.anchorId;
+      const matchesOther = (point: Point | undefined) =>
+        point?.connectedPen === other.connectedPen && point?.connectedAnchor === other.connectedAnchor;
+      for (const existing of this.penMap.values()) {
+        if (existing.id === line.id || existing.category !== PenCategory.Line || !existing.anchors ||
+            existing.anchors.length < 2) continue;
+        const first = existing.anchors[0];
+        const last = existing.anchors.at(-1);
+        if ((matchesTarget(first) && matchesOther(last)) || (matchesTarget(last) && matchesOther(first))) {
+          repeated = true;
+          break;
+        }
+      }
+    }
+    if ((this.options.disableEmptyLine && !validEndpoints) || repeated) {
+      // Worker 完成绘制时已丢弃拖动快照，不能依赖 Esc 回包恢复。
+      // 主线程尚未修改连接关系，以已保存的线及子图元覆盖预览，不产生撤销或协作记录。
+      const restored = patchClone(storedLine, { patchFlag: PatchFlag.Active | PatchFlag.Rect });
+      const restoredPens = [restored, ...getAllChildren(this.penMap, storedLine).map((pen) =>
+        patchClone(pen, { patchFlag: PatchFlag.Active | PatchFlag.Rect }))];
+      this.hoverWorker.postMessage({ action: WorkerMessage.Esc });
+      this.patch(undefined, undefined, undefined, restoredPens);
+      this.activePens = [storedLine];
+      this.activeBoundary = {
+        x: storedLine.x, y: storedLine.y, ex: storedLine.ex, ey: storedLine.ey,
+        width: storedLine.width, height: storedLine.height,
+      };
+      this.interactionStateMachine.state = InteractionMode.None;
+      this.drawingLineFrom = undefined;
+      this.drawingLineTo = undefined;
+      this.mousedown = undefined;
+      this.draggingAnchor = undefined;
+      this.setOptions({ anchorMode: this.options.anchorMode & AnchorMode.Hover });
+      this.calcWorker.postMessage({ action: WorkerMessage.Active, pens: [restored] });
+      return;
+    }
   }
 
   let add: Pen[];

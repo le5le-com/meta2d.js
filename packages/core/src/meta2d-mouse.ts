@@ -978,14 +978,15 @@ function flushPick(this: Meta2d): void {
     return;
   }
   const state = this.interactionStateMachine.state;
-  // 新建连线时解析重合的已连接端点；已有连线重连仍保留原来的端点编辑语义。
+  // 开始编辑时保留源端点的拾取；拖动后按被修改端点的方向解析目标图元锚点。
   const connectFrom = !this.editingAnchor && this.options.mode === Mode.Edit
     ? state === InteractionMode.None
       ? true
-      : (state === InteractionMode.DrawingLine || state === InteractionMode.DrawingLineReady) &&
-          !this.activePens?.some((pen) => pen.category === PenCategory.Line)
-        ? false
-        : undefined
+      : state === InteractionMode.DrawingLineDragAnchor
+        ? getDragAnchorType.call(this) === DragAnchorType.From
+        : state === InteractionMode.DrawingLine || state === InteractionMode.DrawingLineReady
+          ? this.drawingLineDragFrom
+          : undefined
     : undefined;
   this.calcWorker.postMessage({ action: WorkerMessage.Pick, x: pos.x, y: pos.y, connectFrom });
 }

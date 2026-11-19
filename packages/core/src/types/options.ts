@@ -135,9 +135,9 @@ export interface Options {
 
   /** 连线预设 */
   drawingLineOptions?: DrawingLineOptions;
-  /** 新建连线时，两端必须连接到有效的图元锚点 */
+  /** 连线两端必须连接有效锚点；已有连线端点重连无效时恢复原连接 */
   disableEmptyLine?: boolean;
-  /** 禁止新建连接同一对图元锚点的重复连线，反向连接也视为重复 */
+  /** 禁止连接同一对图元锚点的重复连线（含反向）；已有连线重连重复时恢复原连接 */
   disableRepeatLine?: boolean;
 
   fromArrow?: string;

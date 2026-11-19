@@ -793,7 +793,7 @@ function paintState(pen: Pen, x: number, y: number): Paint {
   return hitCtx.isPointInPath(x, y) ? Paint.Inside : Paint.None;
 }
 
-/** 新建连线命中已连接的线端点时，将拾取目标还原为重合的图元锚点。 */
+/** 新建或重连时命中已连接的线端点，将目标还原为重合的图元锚点。 */
 export function resolveConnectedLineAnchor(
   result: ReturnType<typeof pick>,
   x: number,
