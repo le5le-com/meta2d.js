@@ -69,9 +69,9 @@ export function renderRule(options: Options, data: Meta2dData, guideLines?: Guid
     ctx.lineWidth = 1 / dpr;
     ctx.beginPath();
     const edge = alignStrokeCoordinate(ruleSize);
-    ctx.moveTo(edge, edge);
+    ctx.moveTo(0, edge);
     ctx.lineTo(logicalWidth, edge);
-    ctx.moveTo(edge, edge);
+    ctx.moveTo(edge, 0);
     ctx.lineTo(edge, logicalHeight);
     ctx.stroke();
     ctx.restore();
