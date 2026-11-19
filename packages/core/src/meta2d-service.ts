@@ -58,41 +58,57 @@ export function snapToPen(this: Meta2d, x: number, y: number) {
       continue;
     }
 
+    // 使用 activePens 中各图元的真实坐标，而不是 activeBoundary 的聚合坐标
     if (offsetX === 0) {
-      const srcX = [this.activeBoundary.x, this.activeBoundary.pivot.x, this.activeBoundary.ex];
-      const dstX = [pen.x, pen.pivot.x, pen.ex];
-      for (const sx of srcX) {
-        for (const dx of dstX) {
-          let offset = sx + x - dx;
-          if (Math.abs(offset) <= minX) {
-            minX = Math.abs(offset);
-            offsetX = offset;
-            xLine = {
-              x: dx,
-              y: Math.min(pen.y, this.activeBoundary.y + y),
-              ex: dx,
-              ey: Math.max(pen.ey, this.activeBoundary.ey + y),
-            };
+      const dstX = [Math.round(pen.x), pen.pivot?.x ? Math.round(pen.pivot.x) : Math.round(pen.x + pen.width / 2), Math.round(pen.ex)];
+      for (const activePen of this.activePens) {
+        const srcX = [activePen.x, activePen.pivot?.x || activePen.x + activePen.width / 2, activePen.ex];
+        for (const sx of srcX) {
+          for (const dx of dstX) {
+            // 计算最终坐标的小数部分和取整值
+            let finalPos = sx + x;
+            let finalRounded = Math.round(finalPos);
+            let offset = finalRounded - dx;
+
+            if (Math.abs(offset) <= minX) {
+              minX = Math.abs(offset);
+              // 补偿偏差：确保最终坐标取整后等于目标
+              offsetX = offset - (finalPos - Math.round(sx + x));
+              xLine = {
+                x: dx,
+                y: Math.min(pen.y, Math.min(...this.activePens.map(p => p.y)) + y),
+                ex: dx,
+                ey: Math.max(pen.ey, Math.max(...this.activePens.map(p => p.ey)) + y),
+              };
+            }
           }
         }
       }
     }
 
+    // 使用 activePens 中各图元的真实坐标，而不是 activeBoundary 的聚合坐标
     if (offsetY === 0) {
-      const srcY = [this.activeBoundary.y, this.activeBoundary.pivot.y, this.activeBoundary.ey];
-      const dstY = [pen.y, pen.pivot.y, pen.ey];
-      for (const sy of srcY) {
-        for (const dy of dstY) {
-          let offset = sy + y - dy;
-          if (Math.abs(offset) <= minY) {
-            minY = Math.abs(offset);
-            offsetY = offset;
-            yLine = {
-              x: Math.min(pen.x, this.activeBoundary.x + x),
-              y: dy,
-              ex: Math.max(pen.ex, this.activeBoundary.ex + x),
-              ey: dy,
-            };
+      const dstY = [Math.round(pen.y), pen.pivot?.y ? Math.round(pen.pivot.y) : Math.round(pen.y + pen.height / 2), Math.round(pen.ey)];
+      for (const activePen of this.activePens) {
+        const srcY = [activePen.y, activePen.pivot?.y || activePen.y + activePen.height / 2, activePen.ey];
+        for (const sy of srcY) {
+          for (const dy of dstY) {
+            // 计算最终坐标的小数部分和取整值
+            let finalPos = sy + y;
+            let finalRounded = Math.round(finalPos);
+            let offset = finalRounded - dy;
+
+            if (Math.abs(offset) <= minY) {
+              minY = Math.abs(offset);
+              // 补偿偏差：确保最终坐标取整后等于目标
+              offsetY = offset - (finalPos - Math.round(sy + y));
+              yLine = {
+                x: Math.min(pen.x, Math.min(...this.activePens.map(p => p.x)) + x),
+                y: dy,
+                ex: Math.max(pen.ex, Math.max(...this.activePens.map(p => p.ex)) + x),
+                ey: dy,
+              };
+            }
           }
         }
       }
