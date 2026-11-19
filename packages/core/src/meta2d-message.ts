@@ -1204,13 +1204,108 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
     return;
   }
 
-  if (line.id && !e.data.rollback) {
-    resolveReconnectTarget.call(this, line, e.data.dragAnchorType);
+  // 预检和复检共用校验及回退逻辑，避免无效连接触发业务回调或留下临时状态。
+  const validateDrawingLine = (): boolean => {
+    if (!line.id && !e.data.rollback && !canCreateDrawingLine.call(this, line)) {
+      // 分段点击完成时，临时线已进入 Worker 活动状态；按完整取消流程同步清理各线程。
+      // 使用专门的 Esc 消息，避免把取消动作再次交给绘线入口处理。
+      this.hoverWorker.postMessage({ action: WorkerMessage.Esc });
+      this.clearActive();
+      this.activeBoundary = undefined;
+      this.mousedown = undefined;
+      this.draggingAnchor = undefined;
+      this.interactionStateMachine.state = InteractionMode.None;
+      this.drawingLineFrom = undefined;
+      this.drawingLineTo = undefined;
+      return false;
+    }
+
+    const storedLine = line.id && this.penMap.get(line.id);
+    // 每次校验都重新解析目标，兼顾前置预检和异步回调后的复检。
+    if (storedLine && !e.data.rollback) resolveReconnectTarget.call(this, line, e.data.dragAnchorType);
+    const dragFrom = e.data.dragAnchorType === DragAnchorType.From;
+    const dragEndpoint = dragFrom || e.data.dragAnchorType === DragAnchorType.To;
+    if (storedLine && dragEndpoint && !e.data.rollback &&
+        (this.options.disableEmptyLine || this.options.disableRepeatLine)) {
+      const target = this.drawingLineTo;
+      const targetPen = target && this.penMap.get(target.penId);
+      const targetAnchor = targetPen?.anchors?.find((anchor) => anchor.id === target.anchorId);
+      const other = dragFrom ? storedLine.anchors?.at(-1) : storedLine.anchors?.[0];
+      const otherPen = other?.connectedPen && this.penMap.get(other.connectedPen);
+      const otherAnchor = otherPen?.anchors?.find((anchor) => anchor.id === other.connectedAnchor);
+      const validEndpoints = targetAnchor && targetPen.id !== line.id && canConnectAnchor(targetAnchor, dragFrom) &&
+        otherAnchor && canConnectAnchor(otherAnchor, !dragFrom);
+      let repeated = false;
+      if (this.options.disableRepeatLine && validEndpoints) {
+        // 用重连后的目标与未移动端判重，排除当前线自身；同一锚点对反向连接也算重复。
+        const matchesTarget = (point: Point | undefined) =>
+          point?.connectedPen === target.penId && point?.connectedAnchor === target.anchorId;
+        const matchesOther = (point: Point | undefined) =>
+          point?.connectedPen === other.connectedPen && point?.connectedAnchor === other.connectedAnchor;
+        for (const existing of this.penMap.values()) {
+          if (existing.id === line.id || existing.category !== PenCategory.Line || !existing.anchors ||
+              existing.anchors.length < 2) continue;
+          const first = existing.anchors[0];
+          const last = existing.anchors.at(-1);
+          if ((matchesTarget(first) && matchesOther(last)) || (matchesTarget(last) && matchesOther(first))) {
+            repeated = true;
+            break;
+          }
+        }
+      }
+      if ((this.options.disableEmptyLine && !validEndpoints) || repeated) {
+        // Worker 完成绘制时已丢弃拖动快照，不能依赖 Esc 回包恢复。
+        // 主线程尚未修改连接关系，以已保存的线及子图元覆盖预览，不产生撤销或协作记录。
+        const restored = patchClone(storedLine, { patchFlag: PatchFlag.Active | PatchFlag.Rect });
+        const restoredPens = [restored, ...getAllChildren(this.penMap, storedLine).map((pen) =>
+          patchClone(pen, { patchFlag: PatchFlag.Active | PatchFlag.Rect }))];
+        this.hoverWorker.postMessage({ action: WorkerMessage.Esc });
+        this.patch(undefined, undefined, undefined, restoredPens);
+        this.activePens = [storedLine];
+        this.activeBoundary = {
+          x: storedLine.x, y: storedLine.y, ex: storedLine.ex, ey: storedLine.ey,
+          width: storedLine.width, height: storedLine.height,
+        };
+        this.interactionStateMachine.state = InteractionMode.None;
+        this.drawingLineFrom = undefined;
+        this.drawingLineTo = undefined;
+        this.mousedown = undefined;
+        this.draggingAnchor = undefined;
+        this.setOptions({ anchorMode: this.options.anchorMode & AnchorMode.Hover });
+        this.calcWorker.postMessage({ action: WorkerMessage.Active, pens: [restored] });
+        return false;
+      }
+    }
+    return true;
+  };
+
+  if (!validateDrawingLine()) {
+    return;
+  }
+  // 新建线始终交给业务校验；已有线只有端点的图元或锚点关联变化才触发。
+  // 使用预检解析后的有效目标，与 reconnectLine 的落地规则一致，悬空端移动不算连接变化。
+  let shouldCheckConnection = !line.id;
+  const dragFrom = e.data.dragAnchorType === DragAnchorType.From;
+  const dragEndpoint = dragFrom || e.data.dragAnchorType === DragAnchorType.To;
+  if (line.id && dragEndpoint && !e.data.controlPointDrag) {
+    const storedLine = this.penMap.get(line.id);
+    const previous = dragFrom ? storedLine?.anchors?.[0] : storedLine?.anchors?.at(-1);
+    const endpoint = dragFrom ? line.anchors?.[0] : line.anchors?.at(-1);
+    const target = this.drawingLineTo;
+    const targetPen = target && this.penMap.get(target.penId);
+    const targetAnchor = targetPen?.anchors?.find((anchor) => anchor.id === target.anchorId);
+    const validTarget = targetAnchor && targetPen.id !== line.id && canConnectAnchor(targetAnchor, dragFrom)
+      ? target
+      : undefined;
+    shouldCheckConnection = !!endpoint && (
+      previous?.connectedPen !== validTarget?.penId || previous?.connectedAnchor !== validTarget?.anchorId
+    );
   }
   const fromPen = this.drawingLineFrom ? this.penMap.get(this.drawingLineFrom.penId) : undefined;
   const toPen = this.drawingLineTo ? this.penMap.get(this.drawingLineTo.penId) : undefined;
   // 生命周期回调传入真实起终点图元，调用方可基于连接双方决定是否允许建立连线。
-  if (!e.data.rollback && this.beforeConnectLine && !(await this.beforeConnectLine(line, fromPen, toPen))) {
+  if (!e.data.rollback && shouldCheckConnection && this.beforeConnectLine &&
+      !(await this.beforeConnectLine(line, fromPen, toPen))) {
     this.hoverWorker.postMessage({ action: WorkerMessage.DrawingLine, esc: true });
     this.interactionStateMachine.state = InteractionMode.None;
     this.drawingLineFrom = undefined;
@@ -1218,76 +1313,9 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
     return;
   }
 
-  // 放在异步钩子之后复查，确保等待期间新增的连线或失效的锚点也参与校验。
-  if (!line.id && !e.data.rollback && !canCreateDrawingLine.call(this, line)) {
-    // 分段点击完成时，临时线已进入 Worker 活动状态；按完整取消流程同步清理各线程。
-    // 使用专门的 Esc 消息，避免把取消动作再次交给绘线入口处理。
-    this.hoverWorker.postMessage({ action: WorkerMessage.Esc });
-    this.clearActive();
-    this.activeBoundary = undefined;
-    this.mousedown = undefined;
-    this.draggingAnchor = undefined;
-    this.interactionStateMachine.state = InteractionMode.None;
-    this.drawingLineFrom = undefined;
-    this.drawingLineTo = undefined;
+  // 异步回调期间可能新增重复连线或使锚点失效，提交前必须再次校验。
+  if (!validateDrawingLine()) {
     return;
-  }
-
-  const storedLine = line.id && this.penMap.get(line.id);
-  // 异步连接钩子可能改变图元状态，落地前再检查一次目标。
-  if (storedLine && !e.data.rollback) resolveReconnectTarget.call(this, line, e.data.dragAnchorType);
-  const dragFrom = e.data.dragAnchorType === DragAnchorType.From;
-  const dragEndpoint = dragFrom || e.data.dragAnchorType === DragAnchorType.To;
-  if (storedLine && dragEndpoint && !e.data.rollback &&
-      (this.options.disableEmptyLine || this.options.disableRepeatLine)) {
-    const target = this.drawingLineTo;
-    const targetPen = target && this.penMap.get(target.penId);
-    const targetAnchor = targetPen?.anchors?.find((anchor) => anchor.id === target.anchorId);
-    const other = dragFrom ? storedLine.anchors?.at(-1) : storedLine.anchors?.[0];
-    const otherPen = other?.connectedPen && this.penMap.get(other.connectedPen);
-    const otherAnchor = otherPen?.anchors?.find((anchor) => anchor.id === other.connectedAnchor);
-    const validEndpoints = targetAnchor && targetPen.id !== line.id && canConnectAnchor(targetAnchor, dragFrom) &&
-      otherAnchor && canConnectAnchor(otherAnchor, !dragFrom);
-    let repeated = false;
-    if (this.options.disableRepeatLine && validEndpoints) {
-      // 用重连后的目标与未移动端判重，排除当前线自身；同一锚点对反向连接也算重复。
-      const matchesTarget = (point: Point | undefined) =>
-        point?.connectedPen === target.penId && point?.connectedAnchor === target.anchorId;
-      const matchesOther = (point: Point | undefined) =>
-        point?.connectedPen === other.connectedPen && point?.connectedAnchor === other.connectedAnchor;
-      for (const existing of this.penMap.values()) {
-        if (existing.id === line.id || existing.category !== PenCategory.Line || !existing.anchors ||
-            existing.anchors.length < 2) continue;
-        const first = existing.anchors[0];
-        const last = existing.anchors.at(-1);
-        if ((matchesTarget(first) && matchesOther(last)) || (matchesTarget(last) && matchesOther(first))) {
-          repeated = true;
-          break;
-        }
-      }
-    }
-    if ((this.options.disableEmptyLine && !validEndpoints) || repeated) {
-      // Worker 完成绘制时已丢弃拖动快照，不能依赖 Esc 回包恢复。
-      // 主线程尚未修改连接关系，以已保存的线及子图元覆盖预览，不产生撤销或协作记录。
-      const restored = patchClone(storedLine, { patchFlag: PatchFlag.Active | PatchFlag.Rect });
-      const restoredPens = [restored, ...getAllChildren(this.penMap, storedLine).map((pen) =>
-        patchClone(pen, { patchFlag: PatchFlag.Active | PatchFlag.Rect }))];
-      this.hoverWorker.postMessage({ action: WorkerMessage.Esc });
-      this.patch(undefined, undefined, undefined, restoredPens);
-      this.activePens = [storedLine];
-      this.activeBoundary = {
-        x: storedLine.x, y: storedLine.y, ex: storedLine.ex, ey: storedLine.ey,
-        width: storedLine.width, height: storedLine.height,
-      };
-      this.interactionStateMachine.state = InteractionMode.None;
-      this.drawingLineFrom = undefined;
-      this.drawingLineTo = undefined;
-      this.mousedown = undefined;
-      this.draggingAnchor = undefined;
-      this.setOptions({ anchorMode: this.options.anchorMode & AnchorMode.Hover });
-      this.calcWorker.postMessage({ action: WorkerMessage.Active, pens: [restored] });
-      return;
-    }
   }
 
   let add: Pen[];
