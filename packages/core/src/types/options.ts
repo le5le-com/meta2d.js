@@ -152,6 +152,7 @@ export interface Options {
   activeBackground?: string;
   hoverColor?: string;
   hoverBackground?: string;
+  snapLineColor?: string; // 对齐线颜色
   anchorColor?: string;
   hoverAnchorColor?: string;
   anchorRadius?: number;

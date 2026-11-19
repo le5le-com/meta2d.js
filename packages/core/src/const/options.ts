@@ -41,6 +41,7 @@ export const defaultOptions: Options = {
   hoverAnchorColor: '#FF4101',
   color: '#222222',
   activeColor: '#278df8',
+  snapLineColor: '#278df8',
   hoverColor: 'rgba(39,141,248,0.8)',
   anchorRadius: 4,
   anchorBackground: '#fff',

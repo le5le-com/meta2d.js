@@ -2225,8 +2225,8 @@ function renderText(ctx: CanvasRenderingContext2D, pen: Pen) {
 
 function renderSnap() {
   ctx.save();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = options.activeColor;
+  ctx.lineWidth = 1 / (data.scale || 1);
+  ctx.strokeStyle = options.snapLineColor;
   ctx.setLineDash([6, 3]);
   if (snap.xLine) {
     ctx.beginPath();
