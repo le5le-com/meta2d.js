@@ -153,6 +153,7 @@ export interface Options {
   hoverColor?: string;
   hoverBackground?: string;
   snapLineColor?: string; // 对齐线颜色
+  snapLineDash?: number[]; // 对齐线虚线样式，对应 setLineDash；未配置或空数组时为实线
   anchorColor?: string;
   hoverAnchorColor?: string;
   anchorRadius?: number;

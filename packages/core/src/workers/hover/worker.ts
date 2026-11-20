@@ -2227,7 +2227,7 @@ function renderSnap() {
   ctx.save();
   ctx.lineWidth = 1 / (data.scale || 1);
   ctx.strokeStyle = options.snapLineColor;
-  ctx.setLineDash([6, 3]);
+  ctx.setLineDash(options.snapLineDash ?? []);
   if (snap.xLine) {
     ctx.beginPath();
     ctx.moveTo(snap.xLine.x, snap.xLine.y);
