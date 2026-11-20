@@ -20,7 +20,7 @@ export function pentagon(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
 }
 
-// 五边形锚点：5个顶点（使用相对坐标）
+// 五边形锚点：5个顶点，返回画布绝对坐标
 export function pentagonAnchors(pen: Pen) {
   const points = [
     { x: 0.5, y: 0 },   // 顶点
@@ -31,7 +31,7 @@ export function pentagonAnchors(pen: Pen) {
   ];
   return points.map((item, index) => ({
     id: index.toString(),
-    x: item.x,
-    y: item.y,
+    x: pen.x + pen.width * item.x,
+    y: pen.y + pen.height * item.y,
   }));
 }

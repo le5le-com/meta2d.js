@@ -19,7 +19,7 @@ export function triangle(ctx: CanvasRenderingContext2D, pen: Pen) {
   }
 }
 
-// 三角形锚点：顶点+三边中点（使用相对坐标）
+// 三角形锚点：顶点+三边中点，返回画布绝对坐标
 export function triangleAnchors(pen: Pen) {
   const points = [
     { x: 0.5, y: 0 },    // 顶点
@@ -29,7 +29,7 @@ export function triangleAnchors(pen: Pen) {
   ];
   return points.map((item, index) => ({
     id: index.toString(),
-    x: item.x,
-    y: item.y,
+    x: pen.x + pen.width * item.x,
+    y: pen.y + pen.height * item.y,
   }));
 }
