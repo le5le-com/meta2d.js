@@ -659,6 +659,10 @@ export class Meta2d extends HTMLElement {
           text-align: center;
           caret-color: #f5222d;
         }
+        #input:empty {
+          /* 空内容没有可参与 flex 对齐的文本行，覆盖内联满高，让外层按文字对齐方式定位光标。 */
+          height: 1lh !important;
+        }
         #input::selection {
           background: #9fffbe;
         }
