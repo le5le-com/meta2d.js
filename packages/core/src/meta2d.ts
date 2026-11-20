@@ -1412,6 +1412,14 @@ export class Meta2d extends HTMLElement {
       this.data.scale = 1;
     }
     const animatePens = dealData(this.data.pens, this.penMap);
+    // 设置 GIF 初始播放状态：只根据 autoPlay 配置决定
+    // pen.play 是运行时属性，不从图纸数据加载
+    for (const pen of this.penMap.values()) {
+      if (pen.type === 'gif') {
+        // 根据 autoPlay 设置初始播放状态
+        pen.play = pen.autoPlay ? PlayState.Playing : PlayState.None;
+      }
+    }
     this.initMessageEvents();
     this.data.paths && getPathBBoxs(this.data.paths);
     setVectors(this.data.vectors);
@@ -4710,7 +4718,7 @@ export class Meta2d extends HTMLElement {
   }
 
   startAnimate(
-    idOrTagOrPens: string | Pen[],
+    idOrTagOrPens?: string | Pen[],
     options?: { stop?: boolean; pause?: boolean; name?: string; currentAnimation?: number },
   ) {
     let pens: Pen[];
@@ -4721,22 +4729,41 @@ export class Meta2d extends HTMLElement {
     }
 
     if (!pens) {
-      // 如果没有指定图元，获取所有设置了 autoPlay: true 的图元
-      pens = Array.from(this.penMap.values()).filter(pen => pen.autoPlay);
+      // 无目标时只控制设置了 autoPlay 的图元
+      pens = Array.from(this.penMap.values()).filter((pen) => pen.autoPlay);
       if (!pens.length) {
         return;
       }
     }
 
-    const penIds = [];
+    let state = PlayState.Playing;
+    let animateAction = WorkerMessage.StartAnimate;
+    if (options?.pause) {
+      state = PlayState.Paused;
+      animateAction = WorkerMessage.PauseAnimate;
+    } else if (options?.stop) {
+      state = PlayState.None;
+      animateAction = WorkerMessage.StopAnimate;
+    }
+
+    const gifPenIds = [];
+    const animatePenIds = [];
     const animationMap: { [penId: string]: Animation } = {};
     const connectedLines: { [peiId: string]: ConnectLine[] } = {};
+
     for (const pen of pens) {
+      // 处理 GIF 播放状态
+      if (pen.type === 'gif') {
+        pen.play = state;
+        gifPenIds.push(pen.id);
+      }
+
+      // 处理普通动画
       if (!pen.animations) {
         continue;
       }
 
-      penIds.push(pen.id);
+      animatePenIds.push(pen.id);
       if (options?.currentAnimation != undefined) {
         animationMap[pen.id] = pen.animations[options.currentAnimation];
         pen.currentAnimation = options.currentAnimation;
@@ -4752,34 +4779,22 @@ export class Meta2d extends HTMLElement {
       }
     }
 
-    let action = WorkerMessage.StartAnimate;
-    if (options?.pause) {
-      action = WorkerMessage.PauseAnimate;
-    } else if (options?.stop) {
-      action = WorkerMessage.StopAnimate;
+    // 发送 GIF 播放状态更新到 render Worker
+    if (gifPenIds.length) {
+      this.renderWorker.postMessage({ action: WorkerMessage.UpdateAnimateState, penIds: gifPenIds, state });
     }
 
-    let state = PlayState.Playing;
-    if (options?.pause) {
-      state = PlayState.Paused;
-    } else if (options?.stop) {
-      state = PlayState.None;
+    // 发送普通动画控制到 calc Worker
+    if (animatePenIds.length) {
+      this.calcWorker.postMessage({ action: animateAction, penIds: animatePenIds, animationMap, connectedLines });
     }
-
-    if (options) {
-      options.pause = undefined;
-      options.stop = undefined;
-    }
-
-    this.renderWorker.postMessage({ action: WorkerMessage.UpdateAnimateState, penIds, state });
-    this.calcWorker.postMessage({ action, penIds, animationMap, connectedLines });
   }
 
-  pauseAnimate(idOrTagOrPens: string | Pen[]) {
+  pauseAnimate(idOrTagOrPens?: string | Pen[]) {
     this.startAnimate(idOrTagOrPens, { pause: true });
   }
 
-  stopAnimate(idOrTagOrPens: string | Pen[]) {
+  stopAnimate(idOrTagOrPens?: string | Pen[]) {
     this.startAnimate(idOrTagOrPens, { stop: true });
   }
 

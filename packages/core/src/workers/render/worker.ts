@@ -420,7 +420,7 @@ function onData(e: MessageEvent) {
     });
 
     images = {};
-    gifs = {};
+    // gifs 按 URL 缓存帧数据，不清空以支持跨图纸复用
     penBoundarys = {};
     gifPlayers = {};
     hoverId = undefined;
@@ -2025,13 +2025,17 @@ function onImageFetched(e: MessageEvent) {
 }
 
 function onGifFetched(e: MessageEvent) {
-  Object.assign(gifs, e.data.gifMap);
+  // 缓存命中时 gifMap 可能为空
+  if (e.data.gifMap) {
+    Object.assign(gifs, e.data.gifMap);
+  }
+
   for (const pen of e.data.gifPens) {
     gifPlayers[pen.id] = {
       index: 0,
       lastTime: 0,
       image: pen.image,
-      play: pen.play,
+      play: pen.play === PlayState.Playing,
     };
   }
 
@@ -3370,14 +3374,36 @@ function applyAnimationItem(data: any): Pen[] | undefined {
 
 function onUpdateAnimateState(e: MessageEvent) {
   const { penIds, state } = e.data;
+  const gifPens = new Map<string, Pen>();
+  const gifRects = [];
+
   penIds.forEach((id: string) => {
     const pen = penMap.get(id);
     if (!pen) return;
     pen.play = state;
+
+    const player = gifPlayers[id];
+    if (!player) return;
+    player.play = state === PlayState.Playing;
+
+    // 停止动画时回到第一帧
+    if (state === PlayState.None) {
+      player.index = 0;
+      const item = penBoundarys[id];
+      if (item?.boundary) {
+        item.penIds.forEach((penId: string) => {
+          const itemPen = penMap.get(penId);
+          itemPen && gifPens.set(penId, itemPen);
+        });
+        gifRects.push(alignedClipRect(item.boundary));
+      }
+    }
   });
-  // 动画停止后的重绘由 calc 的 onStopAnimate 发 RenderAnimation 完成（带区域，先清后画）。
-  // 这里不能直接 renderPens(ctx)：patchPens / boundary 是上一次绘制留下的，boundary 常为空或是别处的区域 ⇒
-  // 不清屏叠画，半透明连线变深且整条颜色不一致。
+
+  // 停止时重绘 GIF 回首帧
+  if (gifRects.length) {
+    drawMergedAnim([...gifPens.values()].sort((a, b) => a.index - b.index), gifRects, 'gif');
+  }
 }
 
 function onDestory(e: MessageEvent) {

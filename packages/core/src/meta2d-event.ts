@@ -268,13 +268,16 @@ function onStartAnimate(this: Meta2d, pen: Pen, e: PenAction) {
   if (pens.length) {
     const stopPens = [];
     pens.forEach((pen: Pen) => {
+      if (!pen.animations) {
+        return;
+      }
       let idx = pen.animations.findIndex((item) => item.name === params);
       if (idx !== pen.currentAnimation) {
         stopPens.push(pen);
       }
     });
     // 动画切换
-    this.stopAnimate(stopPens);
+    stopPens.length && this.stopAnimate(stopPens);
     this.startAnimate(pens, { name: params });
     return;
   }

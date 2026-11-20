@@ -261,9 +261,8 @@ export async function loadImages(this: Meta2d, inViewIds: string[]) {
       // 已加载够大的 URL（平移时几乎全是）原来每条视口都给每个 SVG 图元 patchClone 一份再整批丢掉
       svgImages[pen.image].pens.push(pen);
     } else if (pen.type === 'gif') {
-      if (pen.autoPlay) {
-        pen.play = PlayState.Playing;
-      }
+      // play 状态已在 open() 中根据 autoPlay 设置，这里不再修改
+      // 直接使用当前状态
       const gifPen = patchClone(pen, { image: pen.image, play: pen.play });
       if (this.imageStates[pen.image]) {
         // GIF 帧按 URL 复用，但播放器按图元 ID 保存。资源命中缓存时仍要为新进入视口的实例初始化播放器。
@@ -1532,7 +1531,8 @@ function noticePlayGif(this: Meta2d, gifMap: any, pens: Pen[]) {
     const current = this.penMap.get(pen.id);
     if (current?.type === 'gif' && current.image === pen.image) {
       this.gifPlayerImages.set(pen.id, pen.image);
-      currentPens.push(pen);
+      // pen 已经包含 image，只需要更新 play 状态
+      currentPens.push(patchClone(pen, { image: pen.image, play: current.play }));
     }
   }
 
