@@ -493,11 +493,11 @@ export class Meta2d extends HTMLElement {
     return ['theme', 'rule', 'scroll'];
   }
 
-  onCopy = async (e?: KeyboardEvent) => {
+  onCopy = async (e?: KeyboardEvent | ClipboardEvent) => {
     if (!this.activePens?.length) {
       return;
     }
-    if (e && !e.ctrlKey && !e.metaKey) {
+    if (e && 'key' in e && !e.ctrlKey && !e.metaKey) {
       return;
     }
 
@@ -528,6 +528,7 @@ export class Meta2d extends HTMLElement {
     } else {
       localStorage.setItem(ClipboardName, clipboard);
     }
+    this.emitter.emit('copy', { pens: add, source: 'clipboard' });
   };
 
   onCut = (e?: KeyboardEvent) => {
@@ -594,7 +595,9 @@ export class Meta2d extends HTMLElement {
     }
 
     makePensId(add);
-    this.addPens(add, Mode.Edit);
+    if (await this.addPens(add, Mode.Edit)) {
+      this.emitter.emit('paste', { pens: add });
+    }
   };
 
   constructor() {
@@ -2218,10 +2221,14 @@ export class Meta2d extends HTMLElement {
   }
 
   async addPens(pens: Pen[], mode?: Mode, parentId?: string) {
-    dealData(pens, this.penMap);
-    if (!mode && this.beforeAdd && !(await this.beforeAdd(pens))) {
-      return;
+    if (!pens?.length) {
+      return false;
     }
+    // dealData 会写入 penMap；所有新增入口必须先通过校验，拒绝时不能残留图元或历史记录。
+    if (this.beforeAdd && !(await this.beforeAdd(pens))) {
+      return false;
+    }
+    dealData(pens, this.penMap);
 
     let beforeUpdate: Pen[];
     let update: Pen[];
@@ -2372,6 +2379,7 @@ export class Meta2d extends HTMLElement {
 
     // 同一图元可能因为 image 和 background 被推进去两次；loadImages 按 id 逐个处理，这里去重
     loadImages.call(this, Array.from(new Set(needLoadImages)));
+    return true;
   }
 
   async deletePens(pens: Pen[], mode?: Mode) {
@@ -2575,6 +2583,7 @@ export class Meta2d extends HTMLElement {
           clear: true,
         });
       }
+      this.emitter.emit('undo', { action });
     }
   }
 
@@ -2607,6 +2616,7 @@ export class Meta2d extends HTMLElement {
           clear: true,
         });
       }
+      this.emitter.emit('redo', { action });
     }
   }
 

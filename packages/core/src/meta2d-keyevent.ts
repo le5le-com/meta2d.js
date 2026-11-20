@@ -1041,4 +1041,20 @@ export function translatePens(this: Meta2d, dx: number, dy: number, logAction?: 
       patch: { beforeUpdate, update },
     });
   }
+  // 整线移动只通知实际解除的端点；节点与线一起移动且连接保持时不发送。
+  for (const id of translatedLineIds) {
+    const previous = beforeUpdateMap.get(id);
+    const current = updateMap.get(id);
+    for (const [index, anchor] of (previous?.anchors || []).entries()) {
+      if (index !== 0 && index !== previous.anchors.length - 1) continue;
+      if (!anchor.connectedPen || !anchor.connectedAnchor) continue;
+      const next = index === 0 ? current?.anchors?.[0] : current?.anchors?.at(-1);
+      if (next?.connectedPen === anchor.connectedPen && next?.connectedAnchor === anchor.connectedAnchor) continue;
+      const pen = this.penMap.get(anchor.connectedPen);
+      this.emitter.emit('disconnectLine', {
+        line: current, lineAnchor: next || anchor, pen,
+        anchor: pen?.anchors?.find((item) => item.id === anchor.connectedAnchor),
+      });
+    }
+  }
 }

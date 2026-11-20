@@ -1454,6 +1454,32 @@ async function onDrawingLine(this: Meta2d, e: MessageEvent) {
     action: WorkerMessage.Active,
     pens: [line],
   });
+  // 仅手动绘线接入锚点或拖动端点改变连接时通知；取消回滚和路径编辑不发送。
+  if (!e.data.rollback && !e.data.controlPointDrag && (isNewLine || dragEndpoint)) {
+    const previous = isNewLine ? undefined : beforeUpdate?.find((pen) => pen.id === line.id);
+    for (const endpoint of ['from', 'to'] as const) {
+      // 已有线只检查本次拖动的端点；拐点和控制柄调整不涉及连接关系。
+      if (!isNewLine && (!dragEndpoint || e.data.controlPointDrag || (endpoint === 'from') !== dragFrom)) continue;
+      if (endpoint === 'to' && (previous?.anchors?.length || 0) <= 1 && (line.anchors?.length || 0) <= 1) continue;
+      const oldAnchor = endpoint === 'from' ? previous?.anchors?.[0] : previous?.anchors?.at(-1);
+      const newAnchor = endpoint === 'from' ? line.anchors?.[0] : line.anchors?.at(-1);
+      if (oldAnchor?.connectedPen === newAnchor?.connectedPen && oldAnchor?.connectedAnchor === newAnchor?.connectedAnchor) continue;
+      if (oldAnchor?.connectedPen && oldAnchor.connectedAnchor) {
+        const pen = this.penMap.get(oldAnchor.connectedPen);
+        this.emitter.emit('disconnectLine', {
+          line, lineAnchor: newAnchor || oldAnchor, pen,
+          anchor: pen?.anchors?.find((item) => item.id === oldAnchor.connectedAnchor),
+        });
+      }
+      if (newAnchor?.connectedPen && newAnchor.connectedAnchor) {
+        const pen = this.penMap.get(newAnchor.connectedPen);
+        this.emitter.emit('connectLine', {
+          line, lineAnchor: newAnchor || oldAnchor, pen,
+          anchor: pen?.anchors?.find((item) => item.id === newAnchor.connectedAnchor),
+        });
+      }
+    }
+  }
 }
 
 function noticeDrawImages(this: Meta2d, imageMap: any, pens: Pen[]) {

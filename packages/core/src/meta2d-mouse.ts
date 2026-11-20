@@ -1963,16 +1963,20 @@ export function dragPensDone(
     // 只取最外层再展开：父图元与子图元同时选中时子图元只复制一份，且顺序是先序（父在前）
     const pens = getAllPens(this.penMap, outermostPens(this.penMap, this.activePens));
     for (const pen of pens) {
-      if (pen.autoPlay) {
-        pen.play = PlayState.Playing;
-      }
       const item = structuredClone(pen);
+      if (item.autoPlay) {
+        item.play = PlayState.Playing;
+      }
       translateRect(item, dx, dy);
       add.push(item);
     }
 
     makePensId(add);
-    this.addPens(add, Mode.Edit, this.dropPen?.id);
+    void this.addPens(add, Mode.Edit, this.dropPen?.id).then((added) => {
+      if (added) {
+        this.emitter.emit('copy', { pens: add, source: 'drag' });
+      }
+    });
 
     this.draggingPens = undefined;
 
