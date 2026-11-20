@@ -1098,11 +1098,7 @@ export class Meta2d extends HTMLElement {
 
       // 如果已经加载了数据，触发重新渲染以显示新注册的图元
       if (this.penMap.size > 0) {
-        const penIds = Array.from(this.penMap.keys());
-        this.renderWorker.postMessage({
-          action: WorkerMessage.UpdateView,
-          penIds,
-        });
+        this.render();
       }
     } catch (e) {
       console.error('注册图形库错误：', e);
@@ -2037,6 +2033,14 @@ export class Meta2d extends HTMLElement {
         },
       });
     }
+  }
+
+  /**
+   * 请求渲染线程清屏并全量重绘当前视口，始终跳过视口像素复用和零位移跳帧。
+   * 异步执行，返回时不代表绘制完成；使用已同步到渲染线程的数据，属性修改仍应通过 setValue 等接口提交。
+   */
+  render(): void {
+    this.renderWorker.postMessage({ action: WorkerMessage.Render });
   }
 
   setMode(mode: Mode) {

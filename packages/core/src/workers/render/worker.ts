@@ -177,6 +177,7 @@ const workerFns: { [key: number]: Function } = {
   [WorkerMessage.AddPath]: onAddPath,
   [WorkerMessage.AddVectors]: onAddVectors,
   [WorkerMessage.UpdateView]: onUpdateView,
+  [WorkerMessage.Render]: fullRepaintView,
   [WorkerMessage.Hover]: onHover,
   [WorkerMessage.Active]: onActive,
   [WorkerMessage.Patch]: onPatch,
@@ -1111,7 +1112,7 @@ function tryPanBlit(d: any, resized: boolean): boolean {
   // ⇒ 视口和文档级选项都和上一次画的时候一样，画布上的像素**已经是对的**。
   //
   // 前提是「`UpdateView` 不会捎带**需要重绘**的变化」。发往 render worker 的 `UpdateView`
-  // 全工程只有 calc 的三个发送点：`onResize` / `onData` / `onTranslateScale`
+  // 常规发送点是 calc 的 `onResize` / `onData` / `onTranslateScale`
   // （calc 的 `onOption` **不发** —— 别照着旧注释找）。逐条核：
   //   · `onTranslateScale`：纯视口，正是这条要跳的；
   //   · `onResize`：`resize` 在上面的阶梯里排在 `zero` 之前，走不到这里；
@@ -1120,9 +1121,8 @@ function tryPanBlit(d: any, resized: boolean): boolean {
   //     **依赖一个投递顺序**：`meta2d.ts` 里 Data 先发 renderWorker 再发 calcWorker，
   //     而 calc 那条 `UpdateView` 还要绕一趟主线程才到 render ⇒ render 的 `onData`
   //     必定在前。谁要是把那两次 postMessage 调了个个儿，这条就不成立了。
-  // 图元内容的其他变化走 `Patch` / `RenderAnimation`，各自带自己的重绘。
-  // 万一以后有人把 `UpdateView` 当成「重画一切」的信号来用，症状是**画面停止更新**，
-  // 那就是这里要先改。
+  // 分批加载的 `onDataChunk` 通过 repaint 标记使旧像素作废；其他内容变化走 `Patch` / `RenderAnimation`。
+  // 强制全量重绘应调用 `Meta2d.render()`，通过独立 `Render` 消息直接走 fullRepaintView，不能借用 UpdateView。
   //
   // **不许动 paintedX/Y**：位移舍入成 0 不等于真的没动（|trueX − paintedX| < 0.5）。
   // 若每次都把 paintedX 追平到 trueX，像素留在原地而参照点一路爬，亚像素误差就会
@@ -1274,10 +1274,8 @@ function sampleViewTrip(e: MessageEvent) {
 }
 
 /**
- * 全量重绘当前视口 —— 慢路径的那一段，一字未改，只是抽成了函数。
- *
- * 抽它只为一个目的：让像素审计的基准和真实的慢路径是**同一段代码**。
- * 基准要是另写一份，比出来的差异就说不清是「快路径错了」还是「两份基准本来就不一样」。
+ * 清屏并全量重绘当前视口，供视口慢路径、像素审计和公开 render() 共用。
+ * Render 消息直接调用此函数，不经过 tryPanBlit，也不发送视口背压回执。
  */
 function fullRepaintView() {
   resetRender();
@@ -2194,7 +2192,7 @@ function resetRender() {
   applyTransform();
 
   // M7a：清屏 ⇒「画布上现在什么都没有」，作废搬运的前提。
-  // 只有真正把当前视口画完的那一方（`onUpdateView`）才有资格写回 paintedX/Y。
+  // 只有真正全量重绘当前视口的 `fullRepaintView` 才有资格写回 paintedX/Y。
   //
   // 这么写是**故意保守**的：`onResize` / `onOption` / `onSetData` 也走 resetRender，
   // 它们有的会接着整屏重画、有的不会（`onSetData` 就不画），逐个去判断「画完没有」

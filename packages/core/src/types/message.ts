@@ -4,6 +4,7 @@ export enum WorkerMessage {
   Option,
   RegisterPen,
   Data,
+  /** 仅同步视口及可见图元集合；允许复用像素或跳过绘制，强制全量重绘请调用 Meta2d.render()。 */
   UpdateView,
   DragOver,
   Patch,
@@ -67,4 +68,6 @@ export enum WorkerMessage {
   DataChunkDone, // render / calc → 主线程：一批 DataChunk 处理完（分批打开的背压）
   AnimRendered, // render → 主线程 → calc：一批 RenderAnimation 已画完（动画背压，见 calc/animate.ts 的 animInFlight）
   AddVectors,
+  /** 主线程 → render：清屏并全量重绘当前视口，不经过视口快路径。 */
+  Render,
 }
