@@ -15,7 +15,7 @@
   "license": "MIT",
   "dependencies": {
     "@meta2d/core": "workspace:*",
-    "fast-xml-parser": "^4.2.5"
+    "fast-xml-parser": "^4.2.5 || ^5"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

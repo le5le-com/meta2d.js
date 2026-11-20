@@ -1,6 +1,6 @@
 import { deepClone, getRectOfPoints, Pen, Rect, s8 } from '@meta2d/core';
 import { getRect, parseSvgPath } from './parse';
-import { XMLParser } from 'fast-xml-parser/src/fxp';
+import { XMLParser } from 'fast-xml-parser';
 
 const selfName = ':@';
 const contentProp = '#text';
