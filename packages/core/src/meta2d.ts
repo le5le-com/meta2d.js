@@ -3368,7 +3368,7 @@ export class Meta2d extends HTMLElement {
           continue;
         }
 
-        translatePen(this.penMap, pen, offsetX, offsetY, beforeUpdate, update);
+        translatePen(this.penMap, pen, offsetX, offsetY, beforeUpdate, update, PatchFlag.Rect);
       }
 
       if (!update.length) {
@@ -3472,7 +3472,7 @@ export class Meta2d extends HTMLElement {
         noAlignPens.push(patchClone(pen, { container: pen.container, textBox: pen.textBox }));
         continue;
       }
-      translatePen(this.penMap, pen, offsetX, offsetY, beforeUpdate, update);
+      translatePen(this.penMap, pen, offsetX, offsetY, beforeUpdate, update, PatchFlag.Rect);
     }
 
     const beforeBoundary = structuredClone(this.activeBoundary);
@@ -3542,7 +3542,7 @@ export class Meta2d extends HTMLElement {
 
       const offsetX = direction === AlignType.HorizontalDistribute ? offset : 0;
       const offsetY = direction === AlignType.VerticalDistribute ? offset : 0;
-      translatePen(this.penMap, pen, offsetX, offsetY, beforeUpdate, update);
+      translatePen(this.penMap, pen, offsetX, offsetY, beforeUpdate, update, PatchFlag.Rect);
     }
 
     if (update.length === 0) {
