@@ -181,13 +181,12 @@ async function onUpdateView(this: Meta2d, e: MessageEvent) {
   postView.call(this, {
     action: WorkerMessage.UpdateView,
     // vectors 只在 open / addVectors 时同步；随视口消息发送会让 render 的 viewSig 每次平移都序列化全部块定义
-    data: { ...this.data, pens: [], vectors: undefined },
+    // 视口必须与 calc 计算 penIds 时一致，避免混用新视口后被 panBlit 误判为无需重绘。
+    data: { ...this.data, ...e.data.viewport, pens: [], vectors: undefined },
     penIds: e.data.penIds,
     width: e.data.width,
     height: e.data.height,
     // calc 发出这一条的时刻（由 calc 盖章）—— 和下面 `postedAt` 一起量 calc→主线程那一截。
-    // ⚠ 注意 `data` 是**此刻**的 `this.data` 快照，不是 calc 算这一条时的视口：
-    // 第十四轮 42% 的投递视口一动没动，怀疑就出在这个时间差上（§0.5-H18 ⑥）。
     calcSentAt: e.data.sentAt,
     // 内容变了、render 必须整屏重画（见 calc onDataChunk）
     repaint: e.data.repaint,
