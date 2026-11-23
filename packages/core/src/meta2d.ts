@@ -107,6 +107,7 @@ import {
   makePensId,
   outermostPens,
   flipPen,
+  rotatePen,
   translatePen,
   translateRect,
   Padding,
@@ -3154,6 +3155,78 @@ export class Meta2d extends HTMLElement {
       }
     }
 
+    // 先把组合矩形变化展开成子图元的值，再统一生成补丁，保证即时、队列和撤销路径一致。
+    // 按父到子的顺序传播；同一批显式指定的子图元属性优先，避免重复缩放或覆盖独立配置。
+    const rectKeys = ['x', 'y', 'width', 'height'] as const;
+    const groupRects = Array.from(oldPenMap.keys()).filter(
+      (pen) => pen.children?.length && [...rectKeys, 'rotate'].some((key) => oldPenMap.get(pen)[key] !== undefined),
+    );
+    for (const pen of getAllPens(this.penMap, outermostPens(this.penMap, groupRects))) {
+      const val = oldPenMap.get(pen);
+      const angle = val?.rotate !== undefined ? val.rotate - (pen.rotate || 0) : 0;
+      if (!pen.children?.length || !val || (!angle && !rectKeys.some((key) => val[key] !== undefined && val[key] !== pen[key]))) {
+        continue;
+      }
+      const newRect: Rect = {
+        x: val.x ?? pen.x,
+        y: val.y ?? pen.y,
+        width: val.width ?? pen.width,
+        height: val.height ?? pen.height,
+      };
+      for (const id of pen.children) {
+        const child = this.penMap.get(id);
+        if (!child) continue;
+        const start = { x: child.x, y: child.y };
+        const end = { x: child.x + child.width, y: child.y + child.height };
+        // 复用锚点的矩形映射；原组合宽或高为零时只平移该轴，避免产生无穷值。
+        resizeAnchor(start, pen, newRect);
+        resizeAnchor(end, pen, newRect);
+        const childValue: IValue = {
+          id: child.id,
+          x: start.x,
+          y: start.y,
+          width: end.x - start.x,
+          height: end.y - start.y,
+        };
+        if (angle) {
+          // 只旋转当前层的副本，下一层由外部循环继续传播，避免多层组合重复旋转。
+          const rotated = patchClone(child);
+          Object.assign(rotated, childValue);
+          rotated.rotate = child.rotate || 0;
+          rotated.pivot = child.pivot ? { ...child.pivot } : {
+            x: child.x + child.width / 2,
+            y: child.y + child.height / 2,
+          };
+          resizeAnchor(rotated.pivot, pen, newRect);
+          rotated.anchors?.forEach((anchor) => resizeAnchor(anchor, child, rotated));
+          const pivot = pen.pivot ? { ...pen.pivot } : {
+            x: pen.x + pen.width / 2,
+            y: pen.y + pen.height / 2,
+          };
+          resizeAnchor(pivot, pen, newRect);
+          rotatePen(this.penMap, rotated, angle, val.pivot || pivot);
+          if (rotated.category === PenCategory.Line) {
+            calcLineRect(rotated);
+            childValue.anchors = rotated.anchors;
+            childValue.width = rotated.width;
+            childValue.height = rotated.height;
+          } else {
+            childValue.rotate = rotated.rotate;
+          }
+          childValue.x = rotated.x;
+          childValue.y = rotated.y;
+          childValue.pivot = rotated.pivot;
+        }
+        oldPenMap.set(child, {
+          ...childValue,
+          ...oldPenMap.get(child),
+        });
+        if (!preventEventByPen.has(child)) {
+          preventEventByPen.set(child, preventEventByPen.get(pen) === true);
+        }
+      }
+    }
+
     // 按图层排序
     const oldPens = Array.from(oldPenMap.keys());
 
@@ -3243,24 +3316,24 @@ export class Meta2d extends HTMLElement {
         pen.pathVals[k] = val[k];
       }
 
-      if (
-        geometry &&
-        pen.category !== PenCategory.Line &&
-        (val?.x !== undefined || val?.y !== undefined || val?.width !== undefined || val?.height !== undefined) &&
-        !Array.isArray(val?.anchors) &&
-        pen.anchors?.length
-      ) {
+      const rectChanged = geometry && rectKeys.some((key) => val[key] !== undefined);
+      if (rectChanged) {
         const newRect = { x: pen.x, y: pen.y, width: pen.width, height: pen.height };
-        pen.anchors.forEach((anchor) => resizeAnchor(anchor, oldRect, newRect));
-        if (pen.connectedLines?.length) {
-          rectUpdatedNodes.push(pen);
+        if (!Array.isArray(val.anchors)) {
+          pen.anchors?.forEach((anchor) => resizeAnchor(anchor, oldRect, newRect));
         }
+        if (pen.pivot && val.pivot === undefined) {
+          resizeAnchor(pen.pivot, oldRect, newRect);
+        }
+      }
+      if ((rectChanged || val.rotate !== undefined) && pen.connectedLines?.length) {
+        rectUpdatedNodes.push(pen);
       }
 
       if (
         geometry &&
         pen.category === PenCategory.Line &&
-        Array.isArray(val?.anchors) &&
+        (rectChanged || Array.isArray(val?.anchors)) &&
         pen.anchors?.length >= 2
       ) {
         calcLineRect(pen);
