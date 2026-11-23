@@ -258,6 +258,8 @@ function onResize(e: MessageEvent) {
     action: WorkerMessage.UpdateView,
     penIds,
     imagePenIds: inViewImageIds,
+    // penIds 是按下述视口算出来的；主线程此刻的 data 可能已经变了，必须带快照（见 onUpdateView）
+    viewport: { x, y, scale },
     resizeId: e.data.resizeId,
     width: e.data.width,
     height: e.data.height,
@@ -403,6 +405,8 @@ function onData(e: MessageEvent) {
     action: WorkerMessage.UpdateView,
     penIds,
     imagePenIds: inViewImageIds,
+    // penIds 是按下述视口算出来的；主线程此刻的 data 可能已经变了，必须带快照（见 onUpdateView）
+    viewport: { x, y, scale },
     // 分批打开：主线程收到这条（首屏视口）才开始补后批（见 Meta2d.startProgressiveLoad）
     loadSeq: prog?.loadSeq,
   });
@@ -434,6 +438,8 @@ function onDataChunk(e: MessageEvent) {
       action: WorkerMessage.UpdateView,
       penIds: calcInViewPens(),
       imagePenIds: inViewImageIds,
+      // penIds 是按下述视口算出来的；主线程此刻的 data 可能已经变了，必须带快照（见 onUpdateView）
+      viewport: { x, y, scale },
       // 视口没动、内容多了 ⇒ render 必须整屏重画。不带它的话 render 的平移快路径判「位移为零」一笔不画
       // （见 render tryPanBlit 的 view:skip），补进来的图元要等下一次平移才出现
       repaint: true,
@@ -459,6 +465,8 @@ function onTranslateScale(e: MessageEvent) {
     action: WorkerMessage.UpdateView,
     penIds,
     imagePenIds: inViewImageIds,
+    // penIds 是按下述视口算出来的；主线程此刻的 data 可能已经变了，必须带快照（见 onUpdateView）
+    viewport: { x, y, scale },
     // 第 4.6 步（只量不改行为）：盖一个跨线程可比的时间戳，
     // 让 render 侧能把「一圈往返」里 calc→主线程的那一截单独量出来（结论 29）。
     sentAt: probe.on ? Date.now() : undefined,

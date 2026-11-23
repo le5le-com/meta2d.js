@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>meta2d panBlit 首屏漏画 — 最小复现</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font: 13px/1.5 -apple-system, "Segoe UI", sans-serif;
+      }
+      le5le-meta2d {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+      #hud {
+        position: fixed;
+        left: 16px;
+        top: 16px;
+        z-index: 9;
+        max-width: 460px;
+        padding: 12px 14px;
+        border-radius: 8px;
+        background: rgba(20, 24, 32, 0.88);
+        color: #e6edf3;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+      }
+      #hud b {
+        color: #ffd479;
+      }
+      #diff {
+        font-size: 22px;
+        font-weight: 700;
+      }
+      #diff.bad {
+        color: #ff7b72;
+      }
+      #diff.good {
+        color: #3fb950;
+      }
+      #hud button {
+        margin: 8px 8px 0 0;
+        padding: 4px 10px;
+        border: 1px solid #444c56;
+        border-radius: 6px;
+        background: #21262d;
+        color: #e6edf3;
+        cursor: pointer;
+      }
+      #hud pre {
+        margin: 8px 0 0;
+        max-height: 180px;
+        overflow: auto;
+        font-size: 11px;
+        color: #9da7b3;
+      }
+    </style>
+  </head>
+  <body>
+    <le5le-meta2d></le5le-meta2d>
+
+    <div id="hud">
+      <div>当前画布 vs 完整重画（<code>canvasAudit</code>）差异像素</div>
+      <div id="diff">…</div>
+      <div id="state">初始化中…</div>
+      <div>
+        <button id="again">重新 open + fitView</button>
+        <button id="toggle">panBlit: on</button>
+      </div>
+      <pre id="log"></pre>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

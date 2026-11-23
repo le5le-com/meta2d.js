@@ -298,6 +298,12 @@ importers:
         specifier: ^6.0.7
         version: 6.4.2(@types/node@25.9.1)(terser@5.51.2)
 
+  examples/fitview-repro:
+    devDependencies:
+      vite:
+        specifier: ^6.4.2
+        version: 6.4.2(@types/node@26.6.6)(terser@5.51.2)
+
   examples/import:
     dependencies:
       '@meta2d/core':
