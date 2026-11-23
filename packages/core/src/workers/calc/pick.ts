@@ -373,7 +373,7 @@ export function pick(
   // 判断是否选中了连线锚点
   if (options.mode && !activePen?.locked && activePen?.category === PenCategory.Line) {
     pen = activePen;
-    const anchors = pen.anchors || [];
+    const anchors = pen.disableAnchor ? [] : pen.anchors || [];
 
     if (pen.rotate) {
       let pivot = pen.pivot;
@@ -502,7 +502,7 @@ export function pick(
       ) {
         if (!item.locked && (options.anchorMode || item.category === PenCategory.Line)) {
           // 判断是否在锚点上
-          const anchors = item.anchors || [];
+          const anchors = item.disableAnchor ? [] : item.anchors || [];
           for (let pt of anchors) {
             if (Math.abs(x - pt.x) < hr && Math.abs(y - pt.y) < hr) {
               hoverAnchorId = pt.id;
@@ -606,7 +606,7 @@ export function pick(
       // 例外是 group：它不绘制，不能挡住下面子图元的锚点（连线要连到子图元上）
       if (options.anchorMode && (!sel || sel.type === 'group')) {
         // 判断是否在锚点上
-        const anchors = item.anchors || [];
+        const anchors = item.disableAnchor ? [] : item.anchors || [];
         for (let pt of anchors) {
           if (Math.abs(x - pt.x) < hr && Math.abs(y - pt.y) < hr) {
             pen = item;

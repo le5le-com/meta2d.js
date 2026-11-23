@@ -1,4 +1,4 @@
-import { deepClone, getRectOfPoints, Pen, Rect, s8 } from '@meta2d/core';
+import { deepClone, getRectOfPoints, Pen, Point, Rect, s8 } from '@meta2d/core';
 import { getRect, parseSvgPath } from './parse';
 import { XMLParser } from 'fast-xml-parser';
 
@@ -7,7 +7,7 @@ const contentProp = '#text';
 
 let allRect: Rect;
 let shapeScale: number; // 图形缩小比例
-let anchorsArr = [];
+let anchorsArr: Point[] = [];
 const gradientMap = {};
 let style = undefined;
 let linearGradient: Gradient[] = [];
@@ -37,6 +37,7 @@ export function parseSvg(svg: string): Pen[] {
   linearGradient = [];
 
   svgs.forEach((svg) => {
+    anchorsArr = [];
     const selfProperty = svg[selfName];
     allRect = transformContainerRect(selfProperty);
 
@@ -76,22 +77,36 @@ export function parseSvg(svg: string): Pen[] {
     });
 
     const combinePens: Pen[] = transformCombines(selfProperty, children);
-    pens.push(...combinePens);
-  });
+    const root = combinePens[combinePens.length - 1];
+    const scaleX = allRect.width ? root.width / allRect.width : 1;
+    const scaleY = allRect.height ? root.height / allRect.height : 1;
 
-  if (pens.length > 0) {
-    // group 图元现在在数组最后，给它设置锚点
-    const lastPen = pens[pens.length - 1];
-    if (lastPen.type === 'group') {
-      setAnchor(lastPen);
-      // 确保所有子图元都解锁
-      pens.forEach((pen) => {
-        if (pen.parentId === lastPen.id) {
+    // 子图元与连接锚点一起从 viewBox 坐标缩放到外层组合，避免悬停框与实际图形错位。
+    setAnchor(root);
+    combinePens.forEach((pen) => {
+      if (pen !== root) {
+        pen.x = root.x + (pen.x - root.x) * scaleX;
+        pen.y = root.y + (pen.y - root.y) * scaleY;
+        pen.width *= scaleX;
+        pen.height *= scaleY;
+        pen.ex = pen.x + pen.width;
+        pen.ey = pen.y + pen.height;
+        if (pen.parentId === root.id) {
           pen.locked = false;
         }
+        pen.disableAnchor = true;
+        // 连线锚点还承担路径几何，必须保留；普通子图元显式置空，阻止 Core 补默认锚点。
+        if (pen.type !== 'line') {
+          pen.anchors = [];
+        }
+      }
+      pen.anchors?.forEach((anchor) => {
+        anchor.x = root.x + (anchor.x - root.x) * scaleX;
+        anchor.y = root.y + (anchor.y - root.y) * scaleY;
       });
-    }
-  }
+    });
+    pens.push(...combinePens);
+  });
 
   return pens;
 }
@@ -240,7 +255,7 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
         pen = transformPolygon(childProperty, pen);
       } else if (child.polyline) {
         pen = transformPolyline(childProperty, pen);
-        collectPolylineAnchors(pen);
+        collectLineAnchors(pen);
       } else if (child.text) {
         pen = transformText(childProperty, child.text, pen);
       } else if (child.image) {
@@ -275,7 +290,7 @@ function transformCombines(selfProperty, children: any[]): Pen[] {
 /**
  * 收集矩形/圆形的锚点（边界锚点）
  */
-function collectAnchors(pen: any) {
+function collectAnchors(pen: Pen) {
   const circleAnchors = [
     { x: pen.x + pen.width * 0.5, y: pen.y },
     { x: pen.x + pen.width, y: pen.y + pen.height * 0.5 },
@@ -283,55 +298,27 @@ function collectAnchors(pen: any) {
     { x: pen.x, y: pen.y + pen.height * 0.5 },
   ];
 
-  circleAnchors.forEach((item) => {
-    // 只收集边界上的锚点
-    if (
-      item.x <= allRect.x + 1 ||
-      item.x >= allRect.x + allRect.width - 1 ||
-      item.y <= allRect.y + 1 ||
-      item.y >= allRect.y + allRect.height - 1
-    ) {
-      anchorsArr.push({ x: item.x, y: item.y, id: s8() });
-    }
-  });
+  circleAnchors.forEach(collectAnchor);
 }
 
 /**
  * 收集连线锚点
  */
-function collectLineAnchors(pen: any) {
-  pen.anchors?.forEach((anchor) => {
-    const x = pen.x + anchor.x * pen.width;
-    const y = pen.y + anchor.y * pen.height;
-
-    if (
-      x <= allRect.x + 1 ||
-      x >= allRect.x + allRect.width - 1 ||
-      y <= allRect.y + 1 ||
-      y >= allRect.y + allRect.height - 1
-    ) {
-      anchorsArr.push({ x, y, id: s8() });
-    }
-  });
+function collectLineAnchors(pen: Pen) {
+  pen.anchors?.forEach(collectAnchor);
 }
 
 /**
- * 收集折线锚点
+ * 沿用 1.0 的外围 1% 容差；2.0 锚点已经是扣除 viewBox 原点的绝对坐标。
  */
-function collectPolylineAnchors(pen: any) {
-  pen.anchors?.forEach((anchor) => {
-    const x = pen.x + anchor.x * pen.width;
-    const y = pen.y + anchor.y * pen.height;
-
-    if (
-      x <= allRect.x + 1 ||
-      x >= allRect.x + allRect.width - 1 ||
-      y <= allRect.y + 1 ||
-      y >= allRect.y + allRect.height - 1
-    ) {
-      anchorsArr.push({ x, y, id: s8() });
-    }
-  });
+function collectAnchor({ x, y }: Point) {
+  if (
+    (x <= allRect.width * 0.01 || x >= allRect.width * 0.99 ||
+      y <= allRect.height * 0.01 || y >= allRect.height * 0.99) &&
+    !anchorsArr.some((anchor) => anchor.x === x && anchor.y === y)
+  ) {
+    anchorsArr.push({ x, y });
+  }
 }
 
 /**
@@ -747,7 +734,7 @@ function transformPolyline(childProperty: any, pen: any) {
 function transformText(childProperty, textContent, pen: any) {
   const text = textContent[0]?.[contentProp];
   const width = measureText(text, pen);
-  const height = pen.fontSize || 16;
+  const height = (pen.fontSize || 16) / shapeScale;
 
   let { offsetX, offsetY } = getTranslate(childProperty.transform);
 
