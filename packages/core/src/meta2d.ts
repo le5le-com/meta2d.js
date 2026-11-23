@@ -123,6 +123,7 @@ import {
 } from './models';
 import { addPath, getPathBBoxCache, getPathBBoxs } from './workers/utility/svg';
 import { getLocalVars, getter, s8 } from './utils';
+import { resizeAnchor, updateConnectedLines } from './models/pen/service';
 
 import { penDefines } from './diagrams';
 import { elideDefaultAnchors } from './diagrams/base';
@@ -3163,6 +3164,7 @@ export class Meta2d extends HTMLElement {
     // activePens 的 id → 下标。原来是在下面的循环里对每个 pen 做一次
     // activePens 线性扫描，2000 个 val × 2000 个选中图元 = 4e6 次比较。
     const activeIndexById = new Map<string, number>();
+    const rectUpdatedNodes: Pen[] = [];
     if (this.activePens) {
       for (let i = 0; i < this.activePens.length; i++) {
         activeIndexById.set(this.activePens[i].id, i);
@@ -3203,6 +3205,7 @@ export class Meta2d extends HTMLElement {
         : geometry
           ? definedGeometry(pen, patchFlag)
           : ({ id: pen.id, type: pen.type, index: pen.index, patchFlag } as Pen);
+      const oldRect = { x: pen.x, y: pen.y, width: pen.width, height: pen.height };
       pen.__val = val;
       let style: boolean;
       let interactive: InteractiveType;
@@ -3238,6 +3241,20 @@ export class Meta2d extends HTMLElement {
         }
         oldPen.pathVals[k] = getter(pen, k);
         pen.pathVals[k] = val[k];
+      }
+
+      if (
+        geometry &&
+        pen.category !== PenCategory.Line &&
+        (val?.x !== undefined || val?.y !== undefined || val?.width !== undefined || val?.height !== undefined) &&
+        !Array.isArray(val?.anchors) &&
+        pen.anchors?.length
+      ) {
+        const newRect = { x: pen.x, y: pen.y, width: pen.width, height: pen.height };
+        pen.anchors.forEach((anchor) => resizeAnchor(anchor, oldRect, newRect));
+        if (pen.connectedLines?.length) {
+          rectUpdatedNodes.push(pen);
+        }
       }
 
       if (
@@ -3318,6 +3335,39 @@ export class Meta2d extends HTMLElement {
       } else {
         beforePens.push(oldPen);
         updatePens.push(structuredClone(pen));
+      }
+    }
+
+    if (rectUpdatedNodes.length) {
+      const lineIds = new Set(rectUpdatedNodes.flatMap((pen) => pen.connectedLines!.map((item) => item.penId)));
+      const lines = Array.from(lineIds)
+        .map((id) => this.penMap.get(id))
+        .filter((line): line is Pen => !!line && line.category === PenCategory.Line);
+      if (lines.length) {
+        const nodeMap = new Map<string, Pen>();
+        for (const line of lines) {
+          for (const anchor of line.anchors || []) {
+            const node = anchor.connectedPen ? this.penMap.get(anchor.connectedPen) : undefined;
+            if (node) nodeMap.set(node.id, node);
+          }
+        }
+        const beforeLineMap = new Map(lines.map((line) => [line.id, patchClone(line, { patchFlag: PatchFlag.Rect })]));
+        updateConnectedLines(lines, Array.from(nodeMap.values()));
+        for (const line of lines) {
+          if (!beforePens.some((pen) => pen.id === line.id) && !partial?.beforeUpdate.some((pen) => pen.id === line.id)) {
+            beforePens.push(beforeLineMap.get(line.id)!);
+          }
+          const updatedLine = patchClone(line, { patchFlag: PatchFlag.Rect });
+          const updateIndex = updatePens.findIndex((pen) => pen.id === line.id);
+          const partialIndex = partial?.update.findIndex((pen) => pen.id === line.id) ?? -1;
+          if (updateIndex >= 0) {
+            updatePens[updateIndex] = updatedLine;
+          } else if (partialIndex >= 0) {
+            Object.assign(partial!.update[partialIndex], updatedLine);
+          } else {
+            updatePens.push(updatedLine);
+          }
+        }
       }
     }
   }

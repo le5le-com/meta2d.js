@@ -968,7 +968,7 @@ export function resizePen(
   }
 }
 
-function resizeAnchor(anchor: Point, oldRect: Rect, newRect: Rect) {
+export function resizeAnchor(anchor: Point, oldRect: Rect, newRect: Rect) {
   resizeAnchorPoint(anchor, oldRect, newRect);
   anchor.cp1 && resizeAnchorPoint(anchor.cp1, oldRect, newRect);
   anchor.cp2 && resizeAnchorPoint(anchor.cp2, oldRect, newRect);
