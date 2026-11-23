@@ -1031,7 +1031,8 @@ export function onActive(e: MessageEvent) {
     activeBoundary = boundary;
 
     const activeIds = [];
-    for (const pen of e.data.pens) {
+    // 包含全部后代，避免拖动多层组合时深层子图元被重画在旧位置。
+    for (const pen of activePens) {
       activeIds.push(pen.id);
     }
     self.postMessage({
