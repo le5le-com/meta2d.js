@@ -85,6 +85,8 @@ export function patchClone(pen: Pen, props?: any) {
     length: pen.length,
     index: pen.index,
     interactive: pen.interactive,
+    // 拾取回传需要保留禁用状态，主线程据此设置禁用光标。
+    disabled: pen.disabled,
     locked: pen.locked,
     visible: pen.visible,
     bkType: pen.bkType,

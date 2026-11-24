@@ -578,6 +578,10 @@ function onPick(this: Meta2d, e: MessageEvent) {
     delete this.hover.container;
   } else if (this.hover) {
     delete this.hover.container;
+    if (this.options.anchorMode < AnchorMode.Drawline) {
+      this.topElement.style.cursor =
+        this.hover.disabled === true ? 'not-allowed' : this.hover.interactive ? 'pointer' : 'default';
+    }
     if (this.hover.interactive) {
       this.renderWorker.postMessage({
         action: WorkerMessage.Hover,
@@ -585,10 +589,6 @@ function onPick(this: Meta2d, e: MessageEvent) {
         boundary: e.data.boundary,
         penIds: e.data.penIds,
       });
-
-      if (this.options.anchorMode < AnchorMode.Drawline) {
-        this.topElement.style.cursor = 'pointer';
-      }
     } else if (lastHover?.interactive) {
       // 从可交互图元移到普通图元时，render Worker 仍保留旧 hoverId，必须显式清除。
       this.renderWorker.postMessage({ action: WorkerMessage.Hover });
@@ -721,7 +721,7 @@ function onPickAnchor(this: Meta2d, e: MessageEvent) {
             : 'pointer'
           : 'default';
     } else if (this.options.anchorMode < AnchorMode.Drawline) {
-      this.topElement.style.cursor = 'pointer';
+      this.topElement.style.cursor = this.hover?.disabled === true ? 'not-allowed' : 'pointer';
     }
     this.hoverType = HoverType.None;
     this.hoverWorker.postMessage({ action: WorkerMessage.PickAnchor });
