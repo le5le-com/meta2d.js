@@ -56,6 +56,7 @@ import { loadIconfonts } from '../utility/iconfont';
 import { createFontRedraw, loadFontFaceCss } from '../utility/fonts';
 import { fetchImage } from '../utility/image';
 import { probe } from '../../perf/probe';
+import { AnimationTextLayoutKeys } from '../../const/group';
 
 let options: Options = {};
 
@@ -3328,6 +3329,7 @@ function applyAnimationItem(data: any): Pen[] | undefined {
     const pen = penMap.get(id);
     if (!pen) return;
     if (changedProperties && changedProperties[id]) {
+      const textLayoutChanged = Object.keys(changedProperties[id]).some((key) => AnimationTextLayoutKeys.has(key));
       // 与 calc 那处同一个坑（第六十四轮）：`x ?? y` 在坐标恰好为 0 时为假 ⇒ 文字框那一帧不跟着走
       if (changedProperties[id].x != undefined || changedProperties[id].y != undefined) {
         if (pen.textBox) {
@@ -3353,14 +3355,11 @@ function applyAnimationItem(data: any): Pen[] | undefined {
           }
         }
       }
-      if (changedProperties[id].text) {
-        pen.textLines = null;
-        if (!pen.textRectX || !pen.textRectY) {
-          calcTextRect(pen);
-        }
-      }
-
       Object.assign(pen, changedProperties[id]);
+      if (textLayoutChanged) {
+        pen.textLines = null;
+        pen.text && calcTextRect(pen);
+      }
       // 动画能改 lineWidth / rotate / shadow* / 文字 ⇒ 墨迹余量跟着变。
       // 每帧每个动画图元一次 inkBox（400 个 ≈ 20µs/帧），是 M7a 快路径正确性的租金。
       trackInkPad(pen);

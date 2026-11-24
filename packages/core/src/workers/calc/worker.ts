@@ -11,6 +11,7 @@ import {
   onStartAnimate,
   onStopAnimate,
   rebaseAnimate,
+  patchGroupAnimations,
   removeAnimate,
   updateAnimate,
 } from './animate';
@@ -950,6 +951,14 @@ function onPatch(e: MessageEvent) {
       }
     }
   });
+
+  patchGroupAnimations(
+    e.data.update || [],
+    Boolean(
+      e.data.add?.length || e.data.remove?.length ||
+      e.data.update?.some((pen: Pen) => 'parentId' in pen || 'children' in pen),
+    ),
+  );
 
   probe.time('patch:apply', _tApply);
 

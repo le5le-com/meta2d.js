@@ -1,22 +1,5 @@
 import { AnchorMode, Options } from '../types';
 
-/** 组合 setValue 时需要同步到后代的可视样式字段。 */
-export const GroupStyleProps = [
-  'color', 'background', 'backgrounds', 'bkType', 'backgroundImage', 'gradient', 'opacity',
-  'hoverColor', 'hoverBackground', 'activeColor', 'activeBackground', 'disabledColor', 'disabledBackground',
-  'disabledTextColor', 'blur', 'blurBackground', 'lineWidth', 'lineDash', 'lineDashOffset', 'lineCap', 'lineJoin',
-  'lineSmooth', 'lineGradient', 'lineType', 'lineImage', 'fromArrow', 'toArrow', 'fromArrowSize', 'toArrowSize',
-  'fromArrowColor', 'toArrowColor', 'fromArrowFillColor', 'toArrowFillColor', 'fromLineCap', 'toLineCap',
-  'borderWidth', 'borderColor', 'borderRadius', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY',
-  'textVisible', 'fontFamily', 'fontSize', 'lineHeight', 'letterSpacing', 'fontStyle', 'fontWeight', 'textShadow',
-  'textShadowColor', 'textShadowBlur', 'textShadowOffsetX', 'textShadowOffsetY', 'textWidth', 'textHeight', 'textUnit',
-  'textTop', 'textBottom', 'textLeft', 'textRight', 'textColor', 'textAlign', 'textVertical', 'textBackground',
-  'textGradient', 'textHoverColor', 'textActiveColor', 'textFlip', 'textRotate', 'textWrap', 'ellipsis', 'keepDecimal',
-  'textDecoration', 'textDecorationDash', 'textDecorationColor', 'iconTop', 'iconLeft', 'iconWidth', 'iconHeight',
-  'iconRotate', 'iconColor', 'iconFamily', 'iconWeight', 'iconSize', 'iconAlign', 'iconGradient', 'pathFill',
-  'vectorTint', 'imageRadius', 'progressColors',
-] as const;
-
 /** 多人协作成员的默认调色板。调用方可通过 Options.collaborateColors 覆盖。 */
 export const defaultCollaborateColors = [
   '#E34D59',

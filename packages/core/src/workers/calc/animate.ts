@@ -1,5 +1,15 @@
 import { WorkerMessage } from '../../types';
-import { Animation, ConnectLine, Frame, Pen, PenCategory, Rect, scaleRect, updateNodeLines } from '../../models';
+import {
+  Animation, ConnectLine, Frame, Pen, PenCategory, Point, Rect, calcLineRect, patchClone,
+  resizeAnchor, scaleRect, updateConnectedLine, updateNodeLines,
+} from '../../models';
+import {
+  GroupAnimationGeometryKeys,
+  GroupAnimationGeometryOutputKeys,
+  GroupStylePropSet,
+  GroupTextStyleKeySet,
+  identityGroupTransform,
+} from '../../const/group';
 import { boundaryScan, getCells, getPensInPenBoundary, updatePenCell } from './pick';
 import { options, penMap, view, viewWorld } from './vars';
 import { probe } from '../../perf/probe';
@@ -69,6 +79,7 @@ export interface Player {
   currentState?: Pen; // 当前帧的当前动画值
   counter: number;
   lastTime: number;
+  pausedAt?: number;
 
   connectedLines?: ConnectLine[];
 }
@@ -76,8 +87,321 @@ export interface Player {
 // 动画播放器
 let players: { [penId: string]: Player } = {};
 
+interface GroupTransform {
+  a: number; b: number; c: number; d: number; e: number; f: number;
+  sx: number; sy: number; rotate: number;
+  flipX: boolean; flipY: boolean;
+}
+
+interface GroupNode {
+  base: Pen;
+  parent?: GroupNode;
+  tree: GroupAnimation;
+  held?: Player;
+  transform?: GroupTransform;
+  styles?: Pen;
+}
+
+interface GroupAnimation {
+  nodes: GroupNode[];
+  styleKeys: string[];
+  hasGeometry: boolean;
+  dirty: boolean;
+  commits: Set<string>;
+}
+
+// 仅缓存参与组合动画的图元；普通动画不遍历后代，也不准备这些基准。
+const groupNodes = new Map<string, GroupNode>();
+const groupAnimations = new Set<GroupAnimation>();
+
+/** 只在启动或父子关系变化时重建先序列表，重叠组合共享一份未动画的基准。 */
+function rebuildGroupAnimations(snapshots: Pen[] = []) {
+  const previous = new Map(groupNodes);
+  const supplied = new Map(snapshots.map((pen) => [pen.id, pen]));
+  const roots = new Set<string>();
+  for (const id in players) {
+    if (penMap.get(id)?.children?.length || previous.has(id)) {
+      let root = id;
+      let parent = penMap.get(id)?.parentId;
+      while (parent && penMap.has(parent)) {
+        if (players[parent]?.animation?.frames?.length) root = parent;
+        parent = penMap.get(parent).parentId;
+      }
+      // 已结束并保留的祖先仍参与子动画合成，直到这个组合内的播放器全部退出。
+      const oldRoot = previous.get(id)?.tree.nodes[0]?.base.id;
+      if (oldRoot && penMap.has(oldRoot)) root = oldRoot;
+      let ancestor = penMap.get(root)?.parentId;
+      while (ancestor) {
+        if (players[ancestor]?.animation?.frames?.length) root = ancestor;
+        ancestor = penMap.get(ancestor)?.parentId;
+      }
+      roots.add(root);
+    }
+  }
+  groupNodes.clear();
+  groupAnimations.clear();
+  for (const id of roots) {
+    if (groupNodes.has(id)) continue;
+    const tree: GroupAnimation = { nodes: [], styleKeys: [], hasGeometry: false, dirty: true, commits: new Set() };
+    const keys = new Set<string>();
+    const retained = new Map<string, GroupNode>();
+    const stack: { id: string; parent?: GroupNode }[] = [{ id }];
+    while (stack.length) {
+      const entry = stack.pop();
+      const pen = penMap.get(entry.id);
+      if (!pen || groupNodes.has(pen.id)) continue;
+      const old = previous.get(pen.id);
+      const source = old?.base || supplied.get(pen.id) || players[pen.id]?.pen || pen;
+      const base = structuredClone(source);
+      base.children = pen.children;
+      base.parentId = pen.parentId;
+      const node: GroupNode = {
+        base,
+        parent: entry.parent, tree, held: old?.held,
+      };
+      groupNodes.set(pen.id, node);
+      retained.set(pen.id, node);
+      tree.nodes.push(node);
+      const player = players[pen.id] || node.held;
+      for (const frame of player?.animation?.frames || []) {
+        for (const key in frame.properties) {
+          if (GroupStylePropSet.has(key)) keys.add(key);
+          else if (GroupAnimationGeometryKeys.includes(key as (typeof GroupAnimationGeometryKeys)[number])) tree.hasGeometry = true;
+        }
+      }
+      for (let i = (pen.children?.length || 0) - 1; i >= 0; i--) {
+        stack.push({ id: pen.children[i], parent: node });
+      }
+    }
+    for (const [penId, node] of retained) {
+      if (node.held) tree.commits.add(penId);
+    }
+    tree.styleKeys = Array.from(keys);
+    groupAnimations.add(tree);
+  }
+}
+
+function transformPoint(point: Point, matrix: GroupTransform) {
+  const { x, y } = point;
+  point.x = matrix.a * x + matrix.c * y + matrix.e;
+  point.y = matrix.b * x + matrix.d * y + matrix.f;
+  delete point.absoluteX;
+  delete point.absoluteY;
+  if (point.cp1) transformPoint(point.cp1, matrix);
+  if (point.cp2) transformPoint(point.cp2, matrix);
+}
+
+function sameAnchors(a: Point[] = [], b: Point[] = []) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const p = a[i], q = b[i];
+    if (p.x !== q.x || p.y !== q.y || p.cp1?.x !== q.cp1?.x || p.cp1?.y !== q.cp1?.y ||
+      p.cp2?.x !== q.cp2?.x || p.cp2?.y !== q.cp2?.y) return false;
+  }
+  return true;
+}
+
+/** 将当前组合的局部变换与祖先变换合成，后代每帧只需映射一次。 */
+function groupTransform(base: Pen, pen: Pen, parent: GroupTransform): GroupTransform {
+  const scaleX = base.width ? pen.width / base.width : 1;
+  const scaleY = base.height ? pen.height / base.height : 1;
+  const flipX = Boolean(base.flipX) !== Boolean(pen.flipX);
+  const flipY = Boolean(base.flipY) !== Boolean(pen.flipY);
+  const sx = scaleX * (flipX ? -1 : 1);
+  const sy = scaleY * (flipY ? -1 : 1);
+  const angle = (pen.rotate || 0) - (base.rotate || 0);
+  const rad = angle * Math.PI / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const pivot = pen.pivot;
+  const dx = (flipX ? pen.x + pen.width : pen.x) - base.x * sx - pivot.x;
+  const dy = (flipY ? pen.y + pen.height : pen.y) - base.y * sy - pivot.y;
+  const a = cos * sx, b = sin * sx, c = -sin * sy, d = cos * sy;
+  const e = cos * dx - sin * dy + pivot.x;
+  const f = sin * dx + cos * dy + pivot.y;
+  return {
+    a: parent.a * a + parent.c * b, b: parent.b * a + parent.d * b,
+    c: parent.a * c + parent.c * d, d: parent.b * c + parent.d * d,
+    e: parent.a * e + parent.c * f + parent.e, f: parent.b * e + parent.d * f + parent.f,
+    sx: parent.sx * sx, sy: parent.sy * sy, rotate: parent.rotate + angle,
+    flipX: parent.flipX !== flipX, flipY: parent.flipY !== flipY,
+  };
+}
+
+function groupNodeValue(node: GroupNode, permanent: boolean): Pen {
+  const base = node.base;
+  const player = permanent ? node.held : players[base.id] || node.held;
+  const state = player?.currentState;
+  const ownStyles: Pen = {};
+  for (const key of node.tree.styleKeys) {
+    if (state && key in state && state[key] !== undefined) ownStyles[key] = state[key];
+  }
+  node.styles = { ...node.parent?.styles, ...ownStyles };
+  const result: Pen = { id: base.id };
+  for (const key of node.tree.styleKeys) {
+    result[key] = key in node.styles ? node.styles[key] : base[key];
+  }
+  if (!node.tree.hasGeometry) return result;
+
+  const local: Pen = { ...base };
+  if (state) Object.assign(local, state);
+  local.rotate ||= 0;
+  local.pivot = state?.pivot ? { ...state.pivot } : base.pivot ? { ...base.pivot } : {
+    x: base.x + base.width / 2, y: base.y + base.height / 2,
+  };
+  // 默认中心跟随局部矩形；自定义中心也按同一矩形映射，不逐帧累乘。
+  if (!state?.pivot) resizeAnchor(local.pivot, base, local);
+  if (state?.scale !== undefined) scaleRect(local, state.scale, local.pivot);
+  const inherited = node.parent?.transform || identityGroupTransform;
+  // 子动画在组合的坐标空间内计算，样式最后覆盖继承值，不受播放器启动顺序影响。
+  const center: Point = { x: local.x + local.width / 2, y: local.y + local.height / 2 };
+  transformPoint(center, inherited);
+  result.width = local.width * Math.abs(inherited.sx);
+  result.height = local.height * Math.abs(inherited.sy);
+  result.x = center.x - result.width / 2;
+  result.y = center.y - result.height / 2;
+  result.rotate = (inherited.flipX !== inherited.flipY ? -local.rotate : local.rotate) + inherited.rotate;
+  result.flipX = Boolean(local.flipX) !== inherited.flipX;
+  result.flipY = Boolean(local.flipY) !== inherited.flipY;
+  result.pivot = { ...local.pivot };
+  transformPoint(result.pivot, inherited);
+  if (base.anchors) {
+    result.anchors = patchClone(base).anchors;
+    const own = groupTransform(base, local, identityGroupTransform);
+    for (const anchor of result.anchors) {
+      if (base.category === PenCategory.Line) {
+        transformPoint(anchor, own);
+        transformPoint(anchor, inherited);
+      } else {
+        resizeAnchor(anchor, base, local);
+        resizeAnchor(anchor, local, result);
+      }
+    }
+  }
+  if (base.category === PenCategory.Line) calcLineRect(result);
+  result.ex = result.x + result.width;
+  result.ey = result.y + result.height;
+  if (base.container) {
+    const start = { x: base.container.x, y: base.container.y };
+    const end = { x: base.container.ex, y: base.container.ey };
+    resizeAnchor(start, base, result);
+    resizeAnchor(end, base, result);
+    result.container = { x: start.x, y: start.y, ex: end.x, ey: end.y,
+      width: end.x - start.x, height: end.y - start.y };
+  }
+  node.transform = base.children?.length ? groupTransform(base, local, inherited) : inherited;
+  return result;
+}
+
+/** 合成一个组合内的全部变化，只查一次脏区、发一条消息；样式帧不维护几何网格。 */
+function flushGroupAnimations() {
+  for (const tree of groupAnimations) {
+    if (!tree.dirty) continue;
+    tree.dirty = false;
+  const changedProperties: Record<string, Pen> = {};
+    const affected: Pen[] = [];
+    const lines = new Set<string>();
+    const elements: Pen[] = [];
+    for (const node of tree.nodes) {
+      const reg = penMap.get(node.base.id);
+      if (!reg) continue;
+      const value = groupNodeValue(node, false);
+      const change: Pen = {};
+      let geometry = false;
+      if (tree.hasGeometry) {
+        for (const key of GroupAnimationGeometryOutputKeys) {
+          const old = (reg as any)[key], next = (value as any)[key];
+          const differs = key === 'pivot'
+            ? old?.x !== next?.x || old?.y !== next?.y
+            : key === 'anchors'
+              ? !sameAnchors(old, next)
+              : key === 'container'
+                ? old?.x !== next?.x || old?.y !== next?.y || old?.ex !== next?.ex || old?.ey !== next?.ey
+              : old !== next;
+          if (differs) { (change as any)[key] = next; geometry = true; }
+        }
+      }
+      for (const key of tree.styleKeys) {
+        if (reg[key] !== value[key]) change[key] = value[key];
+      }
+      if (!Object.keys(change).length) continue;
+      affected.push({ ...reg, ...patchClone(reg) });
+      const cells = geometry ? getCells(reg) : undefined;
+      Object.assign(reg, value);
+      if (geometry) {
+        reg.calculative = undefined;
+        updatePenCell(reg, cells);
+        for (const line of reg.connectedLines || []) lines.add(line.penId);
+      }
+      if (Object.keys(change).some((key) => GroupTextStyleKeySet.has(key))) {
+        change.text = reg.text;
+      }
+      if (reg.category === PenCategory.HtmlElement) elements.push({ ...reg });
+      changedProperties[reg.id] = change;
+      affected.push(reg);
+    }
+    for (const id of lines) {
+      const line = penMap.get(id);
+      if (!line || groupNodes.has(id)) continue;
+      affected.push(patchClone(line));
+      const cells = getCells(line);
+      updateConnectedLine(line, penMap);
+      line.calculative = undefined;
+      updatePenCell(line, cells);
+      changedProperties[id] = { ...changedProperties[id], ...patchClone(line) };
+      affected.push(line);
+    }
+    const groupUpdatedPens: Pen[] = [];
+    const active = tree.nodes.some((node) => players[node.base.id]);
+    if (!active && tree.commits.size) {
+      for (const node of tree.nodes) {
+        const value = groupNodeValue(node, true);
+        if (penMap.has(node.base.id)) groupUpdatedPens.push(value);
+      }
+      tree.commits.clear();
+    }
+    if (affected.length || groupUpdatedPens.length || elements.length) {
+      const cull = !affected.length || offView(affected);
+      const region = cull ? {} : getPensInPenBoundary(affected);
+      if (!cull) probe.on && probeAnimMsg();
+      emitAnim({ action: WorkerMessage.RenderAnimation, ...region, cull, changedProperties,
+        updatedPens: groupUpdatedPens.length ? groupUpdatedPens : undefined, elementPens: elements });
+    }
+    if (!active) {
+      for (const node of tree.nodes) groupNodes.delete(node.base.id);
+      groupAnimations.delete(tree);
+    }
+  }
+}
+
+function finishGroupPlayer(player: Player) {
+  const node = groupNodes.get(player.pen.id);
+  if (!node) return false;
+  node.held = player.animation.keepAnimationState ? player : undefined;
+  node.tree.dirty = true;
+  if (node.held) node.tree.commits.add(player.pen.id);
+  return true;
+}
+
+/** 外部补丁只更新命中的动画基准，结构变化才重建后代列表。 */
+export function patchGroupAnimations(update: Pen[] = [], structural = false) {
+  if (!groupNodes.size) return;
+  for (const value of update) {
+    const node = groupNodes.get(value.id);
+    if (!node) continue;
+    for (const key of [...GroupAnimationGeometryKeys, ...GroupStylePropSet, 'parentId', 'children', 'text']) {
+      if (key in value) node.base[key] = value[key];
+    }
+    const reg = penMap.get(value.id);
+    if (reg?.container) node.base.container = { ...reg.container };
+    node.tree.dirty = true;
+  }
+  if (structural) rebuildGroupAnimations();
+}
+
 export function onStartAnimate(e: MessageEvent) {
-  const { penIds, animationMap, connectedLines } = e.data;
+  const { penIds, animationMap, connectedLines, groupPens } = e.data;
+  const groupPenMap = new Map<string, Pen>((groupPens || []).map((pen: Pen) => [pen.id, pen]));
   if (!penIds || penIds.length === 0) {
     return;
   }
@@ -89,12 +413,16 @@ export function onStartAnimate(e: MessageEvent) {
   for (const id of penIds) {
     // 继续播放
     if (players[id]) {
+      if (!players[id].play && players[id].pausedAt) {
+        players[id].lastTime += performance.now() - players[id].pausedAt;
+        players[id].pausedAt = undefined;
+      }
       players[id].play = true;
       continue;
     }
 
     const pen = penMap.get(id);
-    const animation = animationMap[pen.id];
+    const animation = animationMap[id];
     if (!pen || !animation) {
       continue;
     }
@@ -107,6 +435,9 @@ export function onStartAnimate(e: MessageEvent) {
       lastTime: 0,
     };
 
+    const source = groupNodes.get(id)?.base || groupPenMap.get(id);
+    if (source) players[id].pen = { ...source, ...patchClone(source) };
+
     if (connectedLines[id]) {
       players[id].connectedLines = connectedLines[id];
     }
@@ -118,7 +449,7 @@ export function onStartAnimate(e: MessageEvent) {
       players[id].currentFrameIndex = 0;
       const initState = {} as Pen;
       for (const key in players[id].currentFrame.properties) {
-        initState[key] = pen[key];
+        initState[key] = players[id].pen[key];
         if (key === 'scale') {
           initState[key] = 1;
         }
@@ -133,7 +464,7 @@ export function onStartAnimate(e: MessageEvent) {
             } else if (key === 'scale') {
               initState[key] = 1;
             } else {
-              initState[key] = pen[key];
+              initState[key] = players[id].pen[key];
             }
           }
         }
@@ -146,6 +477,7 @@ export function onStartAnimate(e: MessageEvent) {
       players[id].lastTime = performance.now();
     }
   }
+  rebuildGroupAnimations(groupPens);
 }
 
 export function onPauseAnimate(e: MessageEvent) {
@@ -157,6 +489,7 @@ export function onPauseAnimate(e: MessageEvent) {
   for (const id of penIds) {
     if (players[id]) {
       players[id].play = false;
+      players[id].pausedAt = performance.now();
     }
   }
 }
@@ -177,6 +510,7 @@ export function onStopAnimate(e: MessageEvent) {
   }
   try {
     stopPlayers(penIds);
+    flushGroupAnimations();
   } finally {
     if (batching) {
       const batch = animBatch;
@@ -189,12 +523,17 @@ export function onStopAnimate(e: MessageEvent) {
 function stopPlayers(penIds: string[]) {
   for (const id of penIds) {
     const player = players[id];
+    if (player && !player.animation?.lineAnimation && finishGroupPlayer(player)) {
+      delete players[id];
+      continue;
+    }
     if (player?.animation?.lineAnimation) {
       // 连线动画停止：linePosition 归零并按连线区域清空重画一次，把最后一帧的动画画面擦掉。
       // render 那边 onUpdateAnimateState 不再自己重画 —— 它拿不到这条线的区域，沿用上一次的 boundary
       // 不清屏（或只清一部分）就叠画，半透明连线整条/局部变深。
       player.animation.lineAnimation.position = 0;
       updateLineProperties(player);
+      if (groupNodes.has(id)) finishGroupPlayer(player);
     } else if (player?.animation && !player.animation.keepAnimationState) {
       // 恢复到初始状态
       if (player.originalState) {
@@ -262,7 +601,7 @@ export function rebaseAnimate(before: Pen | undefined, after: Pen) {
 
 /** 这个图元现在是否挂着动画播放器（播放或暂停都算 —— 两种情况下 render 都画在动画几何上） */
 export function isAnimating(id: string) {
-  return !!players[id];
+  return !!players[id] || groupNodes.has(id);
 }
 
 /**
@@ -298,6 +637,8 @@ export function removeAnimate(id: string) {
 /** 换数据（open）时调用：旧图元的播放器全部作废，否则会继续为已不存在的图元发 RenderAnimation */
 export function clearAnimate() {
   players = {};
+  groupNodes.clear();
+  groupAnimations.clear();
   animInFlight = 0;
   cancalAnimation();
 }
@@ -420,6 +761,7 @@ function animate() {
         updateLineProperties(player);
 
         if (player.animation.cycle && player.counter > player.animation.cycle) {
+          if (groupNodes.has(penId)) finishGroupPlayer(player);
           delete players[penId];
           if (Object.keys(players).length === 0) {
             cancalAnimation();
@@ -580,6 +922,8 @@ function animate() {
       updateNodeProperties(player, pens);
     }
 
+    flushGroupAnimations();
+
     // M4 第 1 步：整趟的更新合成一条发出
     if (animBatch) {
       const batch = animBatch;
@@ -682,6 +1026,12 @@ function updateLineProperties(player: Player) {
 
 // 根据节点动画状态更新属性并计算重绘列表
 function updateNodeProperties(player: Player, pens: Pen[], updatedPens?: Pen[]) {
+  const groupNode = groupNodes.get(player.pen.id);
+  if (groupNode) {
+    if (!players[player.pen.id]) finishGroupPlayer(player);
+    groupNode.tree.dirty = true;
+    return;
+  }
   const changedProperties: { [penId: string]: Pen } = {};
 
   // 添加到重绘列表

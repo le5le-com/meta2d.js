@@ -1655,11 +1655,14 @@ function onRenderAnimation(this: Meta2d, e: MessageEvent) {
   // M4 第 1 步：一帧合成一条（batch）时，逐条摘下 updatedPens，整批转发一次，再一次性 setValue
   if (e.data.batch) {
     let all: any[] | undefined;
+    const elements = new Map<string, Pen>();
     for (const item of e.data.batch) {
       if (item.updatedPens?.length) {
         (all || (all = [])).push(...item.updatedPens);
       }
+      for (const pen of item.elementPens || []) elements.set(pen.id, pen);
       item.updatedPens = undefined;
+      item.elementPens = undefined;
     }
     const _tR = probe.now();
     this.renderWorker.postMessage(e.data);
@@ -1667,6 +1670,10 @@ function onRenderAnimation(this: Meta2d, e: MessageEvent) {
     const _tH = probe.now();
     this.hoverWorker.postMessage(e.data);
     probe.time('main:fwd:hover', _tH);
+    for (const pen of elements.values()) {
+      const elem = this.componentElementMap.get(pen.id);
+      elem && this.setElementStyle(elem, { ...this.penMap.get(pen.id), ...pen });
+    }
     if (all?.length) {
       const _tV = probe.now();
       this.setValue(all);
@@ -1675,15 +1682,21 @@ function onRenderAnimation(this: Meta2d, e: MessageEvent) {
     return;
   }
 
-  const { updatedPens } = e.data;
+  const { updatedPens, elementPens } = e.data;
 
   e.data.updatedPens = undefined;
+  e.data.elementPens = undefined;
   const _tR = probe.now();
   this.renderWorker.postMessage(e.data);
   probe.time('main:fwd:render', _tR);
   const _tH = probe.now();
   this.hoverWorker.postMessage(e.data);
   probe.time('main:fwd:hover', _tH);
+
+  for (const pen of elementPens || []) {
+    const elem = this.componentElementMap.get(pen.id);
+    elem && this.setElementStyle(elem, { ...this.penMap.get(pen.id), ...pen });
+  }
 
   if (updatedPens?.length) {
     const _tV = probe.now();

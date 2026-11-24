@@ -19,7 +19,7 @@ import {
   PlayState,
   InteractionMode,
 } from './types';
-import { GroupStyleProps, RotateCursors, collaboratePageKeys, defaultOptions } from './const';
+import { GroupStylePropSet, RotateCursors, collaboratePageKeys, defaultOptions } from './const';
 import { KeydownFns, translatePens } from './meta2d-keyevent';
 import { loadImages, messageFns, perfWaiters } from './meta2d-message';
 import { PerfReport } from './perf/types';
@@ -162,8 +162,6 @@ const ProgressiveChunk = 2500;
 const ProgressiveInflight = 2;
 /** calc 的首屏回话等不到时，过多久照样开始补后批（ms） */
 const ProgressiveStartTimeout = 1500;
-
-const GroupStylePropSet = new Set<string>(GroupStyleProps);
 
 const ClipboardName = 'le5le-clipboard';
 
@@ -4895,6 +4893,7 @@ export class Meta2d extends HTMLElement {
     const animatePenIds = [];
     const animationMap: { [penId: string]: Animation } = {};
     const connectedLines: { [peiId: string]: ConnectLine[] } = {};
+    const groupPenMap = new Map<string, Pen>();
 
     for (const pen of pens) {
       // 处理 GIF 播放状态
@@ -4909,6 +4908,9 @@ export class Meta2d extends HTMLElement {
       }
 
       animatePenIds.push(pen.id);
+      if (pen.children?.length) {
+        for (const child of getAllPens(this.penMap, [pen])) groupPenMap.set(child.id, child);
+      }
       if (options?.currentAnimation != undefined) {
         animationMap[pen.id] = pen.animations[options.currentAnimation];
         pen.currentAnimation = options.currentAnimation;
@@ -4931,7 +4933,13 @@ export class Meta2d extends HTMLElement {
 
     // 发送普通动画控制到 calc Worker
     if (animatePenIds.length) {
-      this.calcWorker.postMessage({ action: animateAction, penIds: animatePenIds, animationMap, connectedLines });
+      this.calcWorker.postMessage({
+        action: animateAction,
+        penIds: animatePenIds,
+        animationMap,
+        connectedLines,
+        groupPens: Array.from(groupPenMap.values()),
+      });
     }
   }
 
