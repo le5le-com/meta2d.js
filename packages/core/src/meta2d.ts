@@ -19,7 +19,7 @@ import {
   PlayState,
   InteractionMode,
 } from './types';
-import { RotateCursors, collaboratePageKeys, defaultOptions } from './const';
+import { GroupStyleProps, RotateCursors, collaboratePageKeys, defaultOptions } from './const';
 import { KeydownFns, translatePens } from './meta2d-keyevent';
 import { loadImages, messageFns, perfWaiters } from './meta2d-message';
 import { PerfReport } from './perf/types';
@@ -162,6 +162,8 @@ const ProgressiveChunk = 2500;
 const ProgressiveInflight = 2;
 /** calc 的首屏回话等不到时，过多久照样开始补后批（ms） */
 const ProgressiveStartTimeout = 1500;
+
+const GroupStylePropSet = new Set<string>(GroupStyleProps);
 
 const ClipboardName = 'le5le-clipboard';
 
@@ -3155,18 +3157,31 @@ export class Meta2d extends HTMLElement {
       }
     }
 
-    // 先把组合矩形变化展开成子图元的值，再统一生成补丁，保证即时、队列和撤销路径一致。
+    // 先把组合几何和样式变化展开成子图元的值，再统一生成补丁，保证即时、队列和撤销路径一致。
     // 按父到子的顺序传播；同一批显式指定的子图元属性优先，避免重复缩放或覆盖独立配置。
     const rectKeys = ['x', 'y', 'width', 'height'] as const;
-    const groupRects = Array.from(oldPenMap.keys()).filter(
-      (pen) => pen.children?.length && [...rectKeys, 'rotate'].some((key) => oldPenMap.get(pen)[key] !== undefined),
+    const groupUpdates = Array.from(oldPenMap.keys()).filter(
+      (pen) => {
+        const value = oldPenMap.get(pen);
+        return (
+          pen.children?.length &&
+          value &&
+          ([...rectKeys, 'rotate'].some((key) => value[key] !== undefined) ||
+            Object.keys(value).some((key) => GroupStylePropSet.has(key) && value[key] !== undefined))
+        );
+      },
     );
-    for (const pen of getAllPens(this.penMap, outermostPens(this.penMap, groupRects))) {
+    for (const pen of getAllPens(this.penMap, outermostPens(this.penMap, groupUpdates))) {
       const val = oldPenMap.get(pen);
       const angle = val?.rotate !== undefined ? val.rotate - (pen.rotate || 0) : 0;
-      if (!pen.children?.length || !val || (!angle && !rectKeys.some((key) => val[key] !== undefined && val[key] !== pen[key]))) {
+      if (!pen.children?.length || !val) {
         continue;
       }
+      const hasGeometryUpdate =
+        !!angle || rectKeys.some((key) => val[key] !== undefined && val[key] !== pen[key]);
+      const styleKeys = Object.keys(val).filter((key) => GroupStylePropSet.has(key) && val[key] !== undefined);
+      if (!hasGeometryUpdate && !styleKeys.length) continue;
+
       const newRect: Rect = {
         x: val.x ?? pen.x,
         y: val.y ?? pen.y,
@@ -3176,46 +3191,49 @@ export class Meta2d extends HTMLElement {
       for (const id of pen.children) {
         const child = this.penMap.get(id);
         if (!child) continue;
-        const start = { x: child.x, y: child.y };
-        const end = { x: child.x + child.width, y: child.y + child.height };
-        // 复用锚点的矩形映射；原组合宽或高为零时只平移该轴，避免产生无穷值。
-        resizeAnchor(start, pen, newRect);
-        resizeAnchor(end, pen, newRect);
-        const childValue: IValue = {
-          id: child.id,
-          x: start.x,
-          y: start.y,
-          width: end.x - start.x,
-          height: end.y - start.y,
-        };
-        if (angle) {
-          // 只旋转当前层的副本，下一层由外部循环继续传播，避免多层组合重复旋转。
-          const rotated = patchClone(child);
-          Object.assign(rotated, childValue);
-          rotated.rotate = child.rotate || 0;
-          rotated.pivot = child.pivot ? { ...child.pivot } : {
-            x: child.x + child.width / 2,
-            y: child.y + child.height / 2,
-          };
-          resizeAnchor(rotated.pivot, pen, newRect);
-          rotated.anchors?.forEach((anchor) => resizeAnchor(anchor, child, rotated));
-          const pivot = pen.pivot ? { ...pen.pivot } : {
-            x: pen.x + pen.width / 2,
-            y: pen.y + pen.height / 2,
-          };
-          resizeAnchor(pivot, pen, newRect);
-          rotatePen(this.penMap, rotated, angle, val.pivot || pivot);
-          if (rotated.category === PenCategory.Line) {
-            calcLineRect(rotated);
-            childValue.anchors = rotated.anchors;
-            childValue.width = rotated.width;
-            childValue.height = rotated.height;
-          } else {
-            childValue.rotate = rotated.rotate;
+        const childValue: IValue = { id: child.id };
+        if (hasGeometryUpdate) {
+          const start = { x: child.x, y: child.y };
+          const end = { x: child.x + child.width, y: child.y + child.height };
+          // 复用锚点的矩形映射；原组合宽或高为零时只平移该轴，避免产生无穷值。
+          resizeAnchor(start, pen, newRect);
+          resizeAnchor(end, pen, newRect);
+          childValue.x = start.x;
+          childValue.y = start.y;
+          childValue.width = end.x - start.x;
+          childValue.height = end.y - start.y;
+          if (angle) {
+            // 只旋转当前层的副本，下一层由外部循环继续传播，避免多层组合重复旋转。
+            const rotated = patchClone(child);
+            Object.assign(rotated, childValue);
+            rotated.rotate = child.rotate || 0;
+            rotated.pivot = child.pivot ? { ...child.pivot } : {
+              x: child.x + child.width / 2,
+              y: child.y + child.height / 2,
+            };
+            resizeAnchor(rotated.pivot, pen, newRect);
+            rotated.anchors?.forEach((anchor) => resizeAnchor(anchor, child, rotated));
+            const pivot = pen.pivot ? { ...pen.pivot } : {
+              x: pen.x + pen.width / 2,
+              y: pen.y + pen.height / 2,
+            };
+            resizeAnchor(pivot, pen, newRect);
+            rotatePen(this.penMap, rotated, angle, val.pivot || pivot);
+            if (rotated.category === PenCategory.Line) {
+              calcLineRect(rotated);
+              childValue.anchors = rotated.anchors;
+              childValue.width = rotated.width;
+              childValue.height = rotated.height;
+            } else {
+              childValue.rotate = rotated.rotate;
+            }
+            childValue.x = rotated.x;
+            childValue.y = rotated.y;
+            childValue.pivot = rotated.pivot;
           }
-          childValue.x = rotated.x;
-          childValue.y = rotated.y;
-          childValue.pivot = rotated.pivot;
+        }
+        for (const key of styleKeys) {
+          childValue[key] = val[key];
         }
         oldPenMap.set(child, {
           ...childValue,
