@@ -151,6 +151,8 @@ export interface SqlConfig extends ConnectConfig {
 
 export interface DataPoint {
   key: string; // 属性key
+  nodeType?: 'group' | 'device' | 'property'; // 节点类型，未设置时按属性处理
+  dataPoints?: DataPoint[]; // 分组或设备下的子节点
 
   name?: string; // 数据点名称
   type?: string; // 数据点类型
