@@ -1494,6 +1494,9 @@ export class Canvas {
           const str = JSON.stringify(pen.events).replace(regex, match => this.randomIdObj[match]);
           pen.events = JSON.parse(str);
         }
+        if((pen as any).extraStyles){
+          (pen as any).extraStyles = (pen as any).extraStyles.replace(regex, match => this.randomIdObj[match]);
+        }
       }
     }
     for (const pen of pens) {
@@ -7061,10 +7064,6 @@ export class Canvas {
       }
       this.updatePenRect(pen, { worldRectIsReady: true });
       this.updateLines(pen);
-      if (pen.image && pen.name !== 'gif') {
-        this.canvasImage.init();
-        this.canvasImageBottom.init();
-      }
       if (pen.calculative.text !== pen.text) {
         pen.calculative.text = pen.text;
         calcTextLines(pen);
@@ -7074,6 +7073,9 @@ export class Canvas {
       }
       pen.calculative.initRect = undefined;
     }
+    // 组合图元自身可能没有 image，但其子图元会绘制到独立图片层。
+    // 无论是否恢复到初始状态，都需在动画结束后重建静态图片层。
+    this.initImageCanvas([pen]);
   }
 
   updateLines(pen: Pen, change?: boolean) {
