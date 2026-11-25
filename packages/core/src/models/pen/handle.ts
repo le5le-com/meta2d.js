@@ -75,6 +75,10 @@ export const changeThemeFns: {
   [key: string]: (meta2d: any, pen: Pen, params: any) => void;
 } = {};
 
+export const localeChangeFns: {
+  [key: string]: (meta2d: any, pen: Pen) => void;
+} = {};
+
 // 图元销毁
 export const destroyFns: {
   [key: string]: (meta2d: any, pen: Pen) => void;

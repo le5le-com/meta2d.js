@@ -1,5 +1,6 @@
 import { Meta2d } from '../meta2d';
 import { Mode } from '../types';
+import { t } from '../locale';
 
 let hasStyle = false;
 
@@ -59,6 +60,7 @@ export class Dialog {
   /** 弹窗子画布的扩展注册必须完成后才能打开图纸数据。 */
   registerPromise?: Promise<void>;
   private loadRequestId = 0;
+  private currentTitle = '';
   private readonly isolatedEventHandler = (event: Event) => {
     // 让子画布先完成自身事件处理，再阻止事件继续影响弹窗遮罩或父画布。
     event.stopPropagation();
@@ -222,7 +224,8 @@ export class Dialog {
       return;
     }
 
-    this.title.innerText = title || '';
+    this.currentTitle = title || '';
+    this.refreshLocale();
     if (!title) {
       this.dialog.style.padding = '0px';
       this.title.style.display = 'none';
@@ -288,6 +291,10 @@ export class Dialog {
       this.close.style.display = config.hideClose ? 'none' : 'block';
       this.box.style.opacity = '1';
     }
+  }
+
+  refreshLocale() {
+    this.title.innerText = this.currentTitle ? t(this.currentTitle) : '';
   }
   detailRect(rect?: any): { x: string; y: string; width: string; height: string } {
     const keys = ['x', 'y', 'width', 'height'];

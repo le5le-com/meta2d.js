@@ -70,4 +70,5 @@ export enum WorkerMessage {
   AddVectors,
   /** 主线程 → render：清屏并全量重绘当前视口，不经过视口快路径。 */
   Render,
+  Locale,
 }

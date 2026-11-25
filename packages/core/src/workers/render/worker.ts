@@ -1,4 +1,5 @@
 import { PlayState, WorkerMessage } from '../../types';
+import { addLocale, setLocale } from '../../locale';
 import { penDefines } from '../../diagrams';
 import { setVectors } from '../../models/vector/store';
 import { onVectorImageLoad } from '../../diagrams/base/vector';
@@ -179,6 +180,7 @@ const workerFns: { [key: number]: Function } = {
   [WorkerMessage.AddVectors]: onAddVectors,
   [WorkerMessage.UpdateView]: onUpdateView,
   [WorkerMessage.Render]: fullRepaintView,
+  [WorkerMessage.Locale]: onLocale,
   [WorkerMessage.Hover]: onHover,
   [WorkerMessage.Active]: onActive,
   [WorkerMessage.Patch]: onPatch,
@@ -369,6 +371,16 @@ function onOption(e: MessageEvent) {
   renderPens(ctx);
 
   patchPens = [];
+}
+
+function onLocale(e: MessageEvent) {
+  setLocale(e.data.locale);
+  addLocale(e.data.locale, e.data.translations || {});
+  for (const pen of penMap.values()) {
+    pen.textLines = undefined;
+    pen.textBox = undefined;
+  }
+  if (ctx) fullRepaintView();
 }
 
 async function onRegisterPen(e: MessageEvent) {

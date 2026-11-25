@@ -1,5 +1,6 @@
 import { s8 } from '../utils';
 import { Meta2d } from '../meta2d';
+import { t } from '../locale';
 
 let hasStyle = false;
 const status = {
@@ -64,7 +65,8 @@ export class MessageBox {
     this.icon.className = 'icon';
     this.text.className = 'text';
     this.icon.innerHTML = status[options.theme || 'info'].icon;
-    this.text.innerHTML = options.content || '';
+    this.content = options.content || '';
+    this.text.innerHTML = t(this.content);
 
     this.box.appendChild(this.icon);
     this.box.appendChild(this.text);
@@ -145,6 +147,10 @@ export class MessageBox {
     (this.icon.children[0] as HTMLElement).style.fill = status[this.theme].color;
   }
 
+  refreshLocale() {
+    this.text.innerHTML = t(this.content || '');
+  }
+
   setPosition(placement: string, index: number = 0) {
     switch (placement) {
       case 'top':
@@ -191,4 +197,10 @@ export function closeAll() {
   for (let key in messageList) {
     messageList[key]?.close();
   }
+}
+
+export function refreshMessageBoxes(meta2d?: Meta2d) {
+  Object.values(messageList).forEach((message) => {
+    if (message && (!meta2d || message.meta2d === meta2d)) message.refreshLocale();
+  });
 }

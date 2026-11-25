@@ -58,6 +58,7 @@ import {
   afterUpdateFns,
   beforeUpdateFns,
   changeThemeFns,
+  localeChangeFns,
   calcLineRect,
   dealData,
   destroyFns,
@@ -136,12 +137,19 @@ import { snapdom } from '@zumer/snapdom';
 import { executeActions, shouldExecute, isRelated } from './meta2d-event';
 import { Dialog } from './component/dialog';
 import { Tooltip } from './component/tooltip';
-import { MessageBox, MessageOptions, closeAll } from './component/messageBox';
+import { MessageBox, MessageOptions, closeAll, refreshMessageBoxes } from './component/messageBox';
 import { ViewMap } from './map';
 import { registerSvgDraws } from './utils/svg/registry';
 import { themeManager, type ThemeInput } from './utils/theme';
 import { loadFonts as loadFontResources } from './workers/utility/fonts';
 import { injectIconfontCss } from './workers/utility/iconfont';
+import {
+  addLocale as addLocaleModule,
+  getLocaleSnapshot,
+  onLocaleChange,
+  setLocale as setLocaleModule,
+  type Meta2dTranslations,
+} from './locale';
 import {
   resetCollaborateColors,
   sanitizeCollaborateDatasource,
@@ -242,6 +250,7 @@ export class Meta2d extends HTMLElement {
   private windowResizeStyles?: Record<WindowResizeStyleProperty, WindowResizeStyle>;
   private windowResizeViewHandler?: (payload?: { resizeId?: number }) => void;
   private initialized = false;
+  private removeLocaleListener?: () => void;
   private connectionId = 0;
   resizeId = 0;
 
@@ -694,6 +703,7 @@ export class Meta2d extends HTMLElement {
     this.createCalcWorker();
     this.createHoverWorker();
     this.createUtilityWorker();
+    this.initLocale();
     this.setOptions(this.options);
     this.registerDefault();
     this.topElement.focus();
@@ -710,6 +720,34 @@ export class Meta2d extends HTMLElement {
     // 监听所有 emitter 事件，将消息名匹配的 EventType.Message 事件派发给对应 pen
     // 索引由 initMessageEvents() 在 open() 后建立，避免每次 emit 全量遍历 penMap
     this.emitter.on('*', this.dispatchMessageEvents);
+  }
+
+  private initLocale() {
+    this.removeLocaleListener = onLocaleChange((locale, translations) => this.updateLocale(locale, translations));
+    const { locale, translations } = getLocaleSnapshot();
+    this.updateLocale(locale, translations);
+  }
+
+  private updateLocale(locale: string, translations: Record<string, string>) {
+    const message = { action: WorkerMessage.Locale, locale, translations };
+    this.renderWorker?.postMessage(message);
+    this.hoverWorker?.postMessage(message);
+    this.dialog?.refreshLocale();
+    this.tooltip?.refresh();
+    refreshMessageBoxes(this);
+    for (const pen of this.penMap.values()) {
+      localeChangeFns[pen.type]?.call(this, pen);
+    }
+  }
+
+  /** 设置全局显示语言，并刷新当前页面中已创建的画布实例。 */
+  setLocale(locale: string) {
+    setLocaleModule(locale);
+  }
+
+  /** 合并指定语言的翻译词条；若该语言正处于启用状态，会立即刷新显示。 */
+  addLocale(locale: string, translations: Meta2dTranslations) {
+    addLocaleModule(locale, translations);
   }
 
   private initDom(shadowRoot: ShadowRoot) {
@@ -1012,6 +1050,9 @@ export class Meta2d extends HTMLElement {
       if (item.changeTheme) {
         changeThemeFns[item.type] = item.changeTheme;
       }
+      if (item.localeChange) {
+        localeChangeFns[item.type] = item.localeChange;
+      }
       if (item.destroy) {
         destroyFns[item.type] = item.destroy;
       }
@@ -1075,6 +1116,9 @@ export class Meta2d extends HTMLElement {
         }
         if (item.changeTheme) {
           changeThemeFns[item.type] = item.changeTheme;
+        }
+        if (item.localeChange) {
+          localeChangeFns[item.type] = item.localeChange;
         }
         if (item.destroy) {
           destroyFns[item.type] = item.destroy;
@@ -1143,6 +1187,9 @@ export class Meta2d extends HTMLElement {
       }
       if (item.changeTheme) {
         changeThemeFns[item.type] = item.changeTheme;
+      }
+      if (item.localeChange) {
+        localeChangeFns[item.type] = item.localeChange;
       }
       if (item.destroy) {
         destroyFns[item.type] = item.destroy;
@@ -5072,6 +5119,8 @@ export class Meta2d extends HTMLElement {
   }
 
   private dispose() {
+    this.removeLocaleListener?.();
+    this.removeLocaleListener = undefined;
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     this.resizeFrame && cancelAnimationFrame(this.resizeFrame);

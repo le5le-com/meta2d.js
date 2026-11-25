@@ -3,6 +3,7 @@ import type { Pen } from '../models/pen/pen';
 import type { Point } from '../models/point/point';
 import { PenCategory } from '../models/pen/const';
 import { AnchorMode, InteractionMode } from '../types';
+import { t } from '../locale';
 
 /** 每个画布实例独立的主线程提示框，样式和事件均限制在当前 Shadow DOM。 */
 export class Tooltip {
@@ -167,8 +168,9 @@ export class Tooltip {
       const content = owner.tooltipFn ? owner.tooltipFn(owner) : owner.tooltip;
       if (content == null || content === '') return;
       const markdown = (globalThis as any).marked;
-      const html = typeof markdown === 'function' ? markdown(String(content)) :
-        markdown?.parse ? markdown.parse(String(content)) : String(content);
+      const translated = t(String(content));
+      const html = typeof markdown === 'function' ? markdown(translated) :
+        markdown?.parse ? markdown.parse(translated) : translated;
       if (typeof html !== 'string') throw new TypeError('Tooltip only supports synchronous Markdown rendering');
       this.text.innerHTML = html;
       this.text.querySelectorAll('a').forEach((link) => {

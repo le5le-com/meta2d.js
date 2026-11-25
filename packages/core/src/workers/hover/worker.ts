@@ -1,4 +1,5 @@
 import { CollaboratePointer, Mode, Options, WorkerMessage } from '../../types';
+import { addLocale, setLocale } from '../../locale';
 import { penDefines } from '../../diagrams';
 import { setVectors } from '../../models/vector/store';
 import { renderLineGradientPath } from '../../diagrams/line/gradient';
@@ -111,6 +112,7 @@ const workerFns: { [key: number]: Function } = {
   [WorkerMessage.Init]: onInit,
   [WorkerMessage.Resize]: onResize,
   [WorkerMessage.Option]: onOption,
+  [WorkerMessage.Locale]: onLocale,
   [WorkerMessage.RegisterPen]: onRegisterPen,
   [WorkerMessage.Data]: onData,
   [WorkerMessage.AddPath]: onAddPath,
@@ -216,6 +218,12 @@ function onOption(e: MessageEvent) {
   probe.hookPostMessage();
   Object.assign(data, e.data.data);
   render();
+}
+
+function onLocale(e: MessageEvent) {
+  setLocale(e.data.locale);
+  addLocale(e.data.locale, e.data.translations || {});
+  redrawHoverTextAfterFontsReady();
 }
 
 async function onRegisterPen(e: MessageEvent) {

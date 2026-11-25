@@ -10,6 +10,7 @@ import { Gradient } from './types';
 import { GradientType, Align } from './const';
 import { defaultAnchorFns } from './handle';
 import { getCurveSegmentPoints, getLineSegmentsLength, getSegmentPointByPosition } from './line';
+import { t } from '../../locale';
 
 const ellipsis = '...';
 
@@ -1110,7 +1111,7 @@ export function calcTextLines(ctx: CanvasRenderingContext2D | OffscreenCanvasRen
   const textHeight = getTextLayoutHeight(pen);
 
   // 保留图元原始文本，保留小数位只影响当前绘制结果，不能污染业务数据。
-  let text = pen.text == undefined ? '' : String(pen.text);
+  let text = pen.text == undefined ? '' : t(String(pen.text));
   if (pen.keepDecimal != undefined && text.trim() !== '' && !isNaN(+text)) {
     text = (+text).toFixed(pen.keepDecimal);
   }
