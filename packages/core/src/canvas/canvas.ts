@@ -7274,6 +7274,22 @@ export class Canvas {
       return;
     }
 
+    const nextAnimateName = pen.nextAnimateName;
+    if (nextAnimateName) {
+      // Wait for completed pens to be removed and their node state restored.
+      requestAnimationFrame(() => {
+        pens.forEach((target) => {
+          if (this.store.pens[target.id] !== target) return;
+          if (!target.animations?.some((animation) => animation.name === nextAnimateName)) {
+            console.warn('Next animation not found:', target.id, nextAnimateName);
+            return;
+          }
+          this.parent.startAnimate([target], nextAnimateName);
+        });
+      });
+      return;
+    }
+
     pens.forEach((pen) => {
       if (pen.calculative.pause) {
         const d = Date.now() - pen.calculative.pause;
@@ -7297,6 +7313,7 @@ export class Canvas {
               let autoIndex = pen.animations?.findIndex((i) => i.autoPlay);
               let index = autoIndex === -1 ? 0 : autoIndex;
               const animate = deepClone(pen.animations[index]);
+              animate.nextAnimateName = pen.animations[index].nextAnimateName;
               delete animate.name;
               animate.currentAnimation = index;
               if (!pen.type && animate.frames) {
@@ -7318,6 +7335,7 @@ export class Canvas {
             if (pen.animations?.length) {
               //默认执行line的第一个动画
               const animate = deepClone(pen.animations[0]);
+              animate.nextAnimateName = pen.animations[0].nextAnimateName;
               delete animate.name;
               animate.currentAnimation = 0;
               this.parent.setValue(

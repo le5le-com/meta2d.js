@@ -317,6 +317,8 @@ export interface Pen extends Rect {
   animateCycle?: number;
   animate?: string;
   nextAnimate?: string;
+  /** Target animation name; omitted for legacy chaining behavior. */
+  nextAnimateName?: string;
   // TODO: video 与 动画公用该属性，可能是个问题
   autoPlay?: boolean;
   playLoop?: boolean;

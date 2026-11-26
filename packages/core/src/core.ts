@@ -2081,6 +2081,7 @@ export class Meta2d {
         }
         if (index !== -1 && index !== undefined) {
           const animate = deepClone(pen.animations[index]);
+          animate.nextAnimateName = pen.animations[index].nextAnimateName;
           if (!animate.animateCycle) {
             animate.animateCycle = 0;
           }
